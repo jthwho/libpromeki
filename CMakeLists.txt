@@ -698,6 +698,8 @@ set(PROMEKI_HEADERS
     include/promeki/fourcc.h
     include/promeki/framerate.h
     include/promeki/future.h
+    include/promeki/h264bitstream.h
+    include/promeki/hevcbitstream.h
     include/promeki/iodevice.h
     include/promeki/json.h
     include/promeki/keyevent.h
@@ -810,6 +812,8 @@ set(PROMEKI_SOURCES
     src/core/fourcc.cpp
     src/core/framepacer.cpp
     src/core/framerate.cpp
+    src/core/h264bitstream.cpp
+    src/core/hevcbitstream.cpp
     src/core/histogram.cpp
     src/core/iodevice.cpp
     src/core/json.cpp
@@ -1571,8 +1575,10 @@ if(PROMEKI_BUILD_TESTS)
         tests/framesync.cpp
         tests/framerate.cpp
         tests/future.cpp
+        tests/h264bitstream.cpp
         tests/hashmap.cpp
         tests/hashset.cpp
+        tests/hevcbitstream.cpp
         tests/histogram.cpp
         tests/iodevice.cpp
         tests/json.cpp

@@ -13,6 +13,7 @@
 #include <promeki/string.h>
 #include <promeki/umid.h>
 #include <promeki/file.h>
+#include <promeki/fourcc.h>
 #include <promeki/list.h>
 
 using namespace promeki;
@@ -531,7 +532,11 @@ TEST_CASE("QuickTimeWriter: keyframe flags survive round trip via stss") {
                 QuickTime qt = QuickTime::createWriter(tmp);
                 REQUIRE(qt.open() == Error::Ok);
                 uint32_t vid = 0;
-                REQUIRE(qt.addVideoTrack(PixelDesc(PixelDesc::H264),
+                // Use a generic compressed codec (JPEG) for this test —
+                // we're exercising the stss plumbing, not codec-specific
+                // bitstream handling, and the writer's H.264/HEVC paths
+                // insist on well-formed Annex-B input.
+                REQUIRE(qt.addVideoTrack(PixelDesc(PixelDesc::JPEG_YUV8_422_Rec709),
                                          Size2Du32(32, 32),
                                          FrameRate(FrameRate::RationalType(24, 1)),
                                          &vid) == Error::Ok);
@@ -1057,3 +1062,170 @@ TEST_CASE("QuickTimeWriter: fragmented layout emits udta in the init moov") {
 
         std::remove(tmp.cstr());
 }
+
+// ============================================================================
+// H.264 write: Annex-B → AVCC conversion + avcC sample-description box
+// ============================================================================
+
+namespace {
+
+/**
+ * @brief Build an Annex-B access unit containing SPS + PPS + IDR with
+ *        known bytes.
+ *
+ * The payload after the profile bytes is arbitrary — the writer only
+ * parses profile_idc / constraint flags / level_idc from the first
+ * four bytes of the SPS (including the NAL header).  A real decoder
+ * would not play this, but the container-layer plumbing (Annex-B
+ * split, AVCC conversion, avcC extraction and emission) exercises
+ * every code path we care about.
+ */
+std::vector<uint8_t> buildCannedH264AccessUnit() {
+        // SPS: NAL header 0x67 (type 7), profile=0x42 (Baseline),
+        // compat=0xe0, level=0x1e, + trailing byte.
+        const std::vector<uint8_t> sps = { 0x67, 0x42, 0xe0, 0x1e, 0xa0 };
+        const std::vector<uint8_t> pps = { 0x68, 0xce, 0x3c, 0x80 };
+        const std::vector<uint8_t> idr = { 0x65, 0x88, 0x84, 0x11, 0x22, 0x33 };
+        std::vector<uint8_t> au;
+        au.insert(au.end(), { 0x00, 0x00, 0x00, 0x01 });
+        au.insert(au.end(), sps.begin(), sps.end());
+        au.insert(au.end(), { 0x00, 0x00, 0x00, 0x01 });
+        au.insert(au.end(), pps.begin(), pps.end());
+        au.insert(au.end(), { 0x00, 0x00, 0x00, 0x01 });
+        au.insert(au.end(), idr.begin(), idr.end());
+        return au;
+}
+
+/** @brief Wrap a vector of bytes as a shared Buffer::Ptr. */
+Buffer::Ptr bufferFromBytes(const std::vector<uint8_t> &bytes) {
+        Buffer b(bytes.size());
+        std::memcpy(b.data(), bytes.data(), bytes.size());
+        b.setSize(bytes.size());
+        return Buffer::Ptr::create(std::move(b));
+}
+
+/** @brief Returns the full file contents of @p path as a byte vector. */
+std::vector<uint8_t> readAllBytes(const String &path) {
+        std::vector<uint8_t> out;
+        FILE *fp = std::fopen(path.cstr(), "rb");
+        if(!fp) return out;
+        std::fseek(fp, 0, SEEK_END);
+        long sz = std::ftell(fp);
+        std::fseek(fp, 0, SEEK_SET);
+        out.resize(static_cast<size_t>(sz));
+        size_t nread = std::fread(out.data(), 1, static_cast<size_t>(sz), fp);
+        std::fclose(fp);
+        out.resize(nread);
+        return out;
+}
+
+/** @brief Scan @p buf for the 4-byte sequence @p needle.  Returns SIZE_MAX if missing. */
+size_t findBytes(const std::vector<uint8_t> &buf, const uint8_t *needle, size_t nlen) {
+        if(buf.size() < nlen) return SIZE_MAX;
+        for(size_t i = 0; i + nlen <= buf.size(); ++i) {
+                if(std::memcmp(buf.data() + i, needle, nlen) == 0) return i;
+        }
+        return SIZE_MAX;
+}
+
+} // namespace
+
+TEST_CASE("QuickTimeWriter: H.264 Annex-B input is stored as AVCC with avcC box") {
+        const String tmp = "/tmp/qt_writer_h264_avcC.mov";
+        std::remove(tmp.cstr());
+
+        const std::vector<uint8_t> au = buildCannedH264AccessUnit();
+
+        {
+                QuickTime qt = QuickTime::createWriter(tmp);
+                REQUIRE(qt.open() == Error::Ok);
+                uint32_t vid = 0;
+                REQUIRE(qt.addVideoTrack(PixelDesc(PixelDesc::H264),
+                                         Size2Du32(16, 16),
+                                         FrameRate(FrameRate::RationalType(24, 1)),
+                                         &vid) == Error::Ok);
+                QuickTime::Sample s;
+                s.data     = bufferFromBytes(au);
+                s.duration = 1;
+                s.keyframe = true;
+                REQUIRE(qt.writeSample(vid, s) == Error::Ok);
+                REQUIRE(qt.finalize() == Error::Ok);
+        }
+
+        SUBCASE("raw file contains avc1 sample entry and avcC child box") {
+                const std::vector<uint8_t> file = readAllBytes(tmp);
+                REQUIRE(file.size() > 0);
+
+                const uint8_t avc1[4] = { 'a', 'v', 'c', '1' };
+                const uint8_t avcC[4] = { 'a', 'v', 'c', 'C' };
+                CHECK(findBytes(file, avc1, 4) != SIZE_MAX);
+                size_t avcCOffset = findBytes(file, avcC, 4);
+                REQUIRE(avcCOffset != SIZE_MAX);
+                // avcC box is preceded by its 4-byte size + 4-byte type.
+                // Payload starts at avcCOffset+4; byte 0 = configurationVersion.
+                REQUIRE(avcCOffset + 9 <= file.size());
+                CHECK(file[avcCOffset + 4] == 0x01);         // configurationVersion
+                CHECK(file[avcCOffset + 4 + 1] == 0x42);     // profile_idc (Baseline)
+                CHECK(file[avcCOffset + 4 + 2] == 0xe0);     // profile_compatibility
+                CHECK(file[avcCOffset + 4 + 3] == 0x1e);     // level_idc
+                // Byte 4 of the record: top 6 bits reserved = 111111, low 2 bits =
+                // lengthSizeMinusOne = 3 → 0xff.
+                CHECK(file[avcCOffset + 4 + 4] == 0xff);
+        }
+
+        SUBCASE("reader resolves the avc1 track as PixelDesc::H264") {
+                QuickTime qt = QuickTime::createReader(tmp);
+                REQUIRE(qt.open() == Error::Ok);
+                REQUIRE(qt.tracks().size() == 1);
+                const QuickTime::Track &v = qt.tracks()[0];
+                CHECK(v.type() == QuickTime::Video);
+                CHECK(v.pixelDesc().id() == PixelDesc::H264);
+                CHECK(v.sampleCount() == 1);
+        }
+
+        SUBCASE("reader extracts the avcC configuration record") {
+                QuickTime qt = QuickTime::createReader(tmp);
+                REQUIRE(qt.open() == Error::Ok);
+                REQUIRE(qt.tracks().size() == 1);
+                const QuickTime::Track &v = qt.tracks()[0];
+                REQUIRE(v.codecConfig().isValid());
+                CHECK(v.codecConfigType() == FourCC("avcC"));
+                const Buffer::Ptr &cfg = v.codecConfig();
+                REQUIRE(cfg->size() >= 5);
+                const uint8_t *p = static_cast<const uint8_t *>(cfg->data());
+                CHECK(p[0] == 0x01);       // configurationVersion
+                CHECK(p[1] == 0x42);       // profile_idc (Baseline)
+                CHECK(p[2] == 0xe0);       // profile_compatibility
+                CHECK(p[3] == 0x1e);       // level_idc
+                CHECK(p[4] == 0xff);       // lengthSizeMinusOne byte
+        }
+
+        SUBCASE("written sample payload is length-prefixed, not Annex-B") {
+                // Read the raw sample bytes back via the reader.  The
+                // stored form must start with a 4-byte big-endian NAL
+                // length (not a 00 00 00 01 start code).
+                QuickTime qt = QuickTime::createReader(tmp);
+                REQUIRE(qt.open() == Error::Ok);
+                QuickTime::Sample s;
+                REQUIRE(qt.readSample(0, 0, s) == Error::Ok);
+                REQUIRE(s.data.isValid());
+                REQUIRE(s.data->size() >= 4);
+                const uint8_t *p = static_cast<const uint8_t *>(s.data->data());
+                // First 4 bytes must be a sensible length (< total size).
+                uint32_t firstLen = (static_cast<uint32_t>(p[0]) << 24) |
+                                    (static_cast<uint32_t>(p[1]) << 16) |
+                                    (static_cast<uint32_t>(p[2]) <<  8) |
+                                    (static_cast<uint32_t>(p[3]));
+                CHECK(firstLen < s.data->size());
+                CHECK(firstLen > 0);
+                // And must not be a start code: the first NAL byte that
+                // follows the prefix cannot be 0x00.  Since parameter
+                // sets (SPS / PPS) are stripped from samples for the
+                // @c avc1 sample entry, the first NAL in the stored
+                // sample is the IDR slice, whose first byte is 0x65.
+                CHECK(p[4] == 0x65);
+        }
+
+        std::remove(tmp.cstr());
+}
+

@@ -9,6 +9,7 @@
 #include <promeki/mediaconfig.h>
 #include <promeki/enums.h>
 #include <promeki/frame.h>
+#include <promeki/framerate.h>
 #include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/mediadesc.h>
@@ -53,6 +54,7 @@ MediaIO::FormatDesc MediaIOTask_VideoEncoder::formatDesc() {
                                         : VariantSpec().setDefault(def));
                         };
                         s(MediaConfig::VideoCodec);
+                        s(MediaConfig::FrameRate);
                         s(MediaConfig::BitrateKbps);
                         s(MediaConfig::MaxBitrateKbps);
                         s(MediaConfig::VideoRcMode);
@@ -107,7 +109,16 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandOpen &cmd) {
         // The entire caller-visible MediaConfig flows unfiltered into
         // the encoder so keys it understands are honoured and ones it
         // doesn't are quietly ignored (the VideoEncoder contract).
-        enc->configure(cfg);
+        // Stamp the effective FrameRate from the upstream MediaDesc so
+        // the encoder's rate-control math (bits-per-frame, HRD buffer,
+        // H.264 VUI timing) uses the real stream rate rather than
+        // whatever default the backend picked — callers rarely set
+        // MediaConfig::FrameRate explicitly on a transform stage.
+        MediaIO::Config encCfg = cfg;
+        if(cmd.pendingMediaDesc.frameRate().isValid()) {
+                encCfg.set(MediaConfig::FrameRate, cmd.pendingMediaDesc.frameRate());
+        }
+        enc->configure(encCfg);
 
         _capacity = cfg.getAs<int>(MediaConfig::Capacity, 8);
         if(_capacity < 1) _capacity = 1;
@@ -136,6 +147,7 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandOpen &cmd) {
         _multiImageWarned = false;
         _closed           = false;
         _outputQueue.clear();
+        _pendingSrcFrames.clear();
 
         cmd.mediaDesc     = outDesc;
         if(!outDesc.audioList().isEmpty()) cmd.audioDesc = outDesc.audioList()[0];
@@ -160,10 +172,11 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandClose &cmd) {
                 // to drain again — most consumers won't, but the
                 // contract stays honest either way.
                 _encoder->flush();
-                drainEncoderInto(Frame::Ptr());
+                drainEncoderInto();
                 delete _encoder;
                 _encoder = nullptr;
         }
+        _pendingSrcFrames.clear();
         _codec = VideoCodec();
         _capacity = 0;
         _frameCount = 0;
@@ -244,9 +257,14 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandWrite &cmd) {
                 stampWorkEnd();
                 return err;
         }
+        // Record the source frame so the matching packet — which may
+        // not emerge until a later submit if the encoder returned
+        // NEED_MORE_INPUT on this one — can be paired back up with its
+        // original metadata and audio in drainEncoderInto.
+        _pendingSrcFrames.pushToBack(cmd.frame);
         _frameCount++;
         _framesEncoded++;
-        drainEncoderInto(cmd.frame);
+        drainEncoderInto();
 
         cmd.currentFrame = _frameCount;
         cmd.frameCount   = _frameCount;
@@ -254,7 +272,7 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandWrite &cmd) {
         return Error::Ok;
 }
 
-void MediaIOTask_VideoEncoder::drainEncoderInto(const Frame::Ptr &srcFrame) {
+void MediaIOTask_VideoEncoder::drainEncoderInto() {
         if(_encoder == nullptr) return;
         while(true) {
                 MediaPacket::Ptr pkt = _encoder->receivePacket();
@@ -267,11 +285,24 @@ void MediaIOTask_VideoEncoder::drainEncoderInto(const Frame::Ptr &srcFrame) {
                         continue;
                 }
 
+                // Pair the packet with the oldest queued source Frame
+                // — that's the one that produced this packet even if
+                // an intervening submit called drainEncoderInto too.
+                // The queue can legitimately be empty on a late flush
+                // if the caller already drained everything previously;
+                // in that case the output still carries the packet
+                // but with no audio / frame metadata.
+                Frame::Ptr origin;
+                if(!_pendingSrcFrames.isEmpty()) {
+                        origin = _pendingSrcFrames.front();
+                        _pendingSrcFrames.remove(0);
+                }
+
                 Frame::Ptr outFrame = Frame::Ptr::create();
                 Frame     *out = outFrame.modify();
-                if(srcFrame.isValid()) {
-                        out->metadata() = srcFrame->metadata();
-                        for(const auto &a : srcFrame->audioList()) {
+                if(origin.isValid()) {
+                        out->metadata() = origin->metadata();
+                        for(const auto &a : origin->audioList()) {
                                 out->audioList().pushToBack(a);
                         }
                 }

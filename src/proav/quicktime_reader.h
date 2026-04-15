@@ -14,6 +14,8 @@
 #include <promeki/quicktime.h>
 #include <promeki/list.h>
 
+#include "quicktime_atom.h"
+
 PROMEKI_NAMESPACE_BEGIN
 
 class File;
@@ -127,6 +129,29 @@ class QuickTimeReader : public QuickTime::Impl {
                 /** @brief Parses a @c tmcd sample-entry, capturing flags/scale. */
                 Error parseTimecodeSampleEntry(int64_t entryPayloadOffset, int64_t entryPayloadEnd,
                                                TimecodeTrackInfo &info);
+
+                /**
+                 * @brief Parses a visual (video) sample entry.
+                 *
+                 * Reads the fixed fields of the visual sample entry
+                 * (width/height, compressor name, depth, etc.) and
+                 * populates @p track with the derived size, pixelDesc
+                 * (resolved from @p entryType via the PixelDesc
+                 * registry), and software metadata.
+                 *
+                 * On entry, @c stream must be positioned immediately
+                 * after the visual sample entry's 16-byte common header
+                 * (size + type + 6 reserved bytes + 2 byte
+                 * data_reference_index). On return, @c stream points
+                 * at the first byte after the fixed fields — callers
+                 * that expect codec-specific child boxes (e.g. @c avcC,
+                 * @c hvcC, @c colr, @c pasp) should walk
+                 * <tt>[stream.pos(), entryPayloadEnd)</tt> from there.
+                 */
+                Error parseVideoSampleEntry(quicktime_atom::ReadStream &stream,
+                                            FourCC entryType,
+                                            int64_t entryPayloadEnd,
+                                            QuickTime::Track &track);
 
                 /** @brief Parses @c udta at the given range into _containerMetadata. */
                 Error parseUdta(int64_t payloadOffset, int64_t payloadEnd);

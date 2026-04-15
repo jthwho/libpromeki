@@ -84,9 +84,13 @@ class MediaIOTask_VideoDecoder : public MediaIOTask {
 
                 // Drains every currently-available image out of the
                 // underlying decoder and pushes one Frame per image
-                // onto @c _outputQueue, preserving @p srcFrame's audio
-                // and metadata.
-                void drainDecoderInto(const Frame::Ptr &srcFrame);
+                // onto @c _outputQueue.  Each emitted image is paired
+                // with the oldest queued source packet Frame (see
+                // @c _pendingSrcFrames) so its audio / frame-level
+                // metadata travel with the right input even across
+                // the DPB / reorder buffering delay every H.264 /
+                // HEVC decoder has on startup.
+                void drainDecoderInto();
 
                 VideoCodec            _codec;
                 VideoDecoder         *_decoder = nullptr;
@@ -94,6 +98,15 @@ class MediaIOTask_VideoDecoder : public MediaIOTask {
                 bool                  _outputPixelDescSet = false;
                 int                   _capacity = 8;
                 List<Frame::Ptr>      _outputQueue;
+
+                // FIFO of source Frames awaiting a decoded image.  One
+                // entry is pushed per packet handed to @c submitPacket
+                // and popped per image emitted by the decoder.  Without
+                // this, images emerging from the DPB warmup / reorder
+                // buffer are stamped with the wrong input Frame's
+                // metadata, which shows up as off-by-N timecode /
+                // audio after an encode/decode round trip.
+                List<Frame::Ptr>      _pendingSrcFrames;
                 int64_t               _frameCount = 0;
                 int64_t               _readCount = 0;
                 int64_t               _packetsDecoded = 0;

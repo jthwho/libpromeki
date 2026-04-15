@@ -503,5 +503,42 @@ void ObjectBase::connect(Signal<Args...> *signal, Slot<Args...> *slot) {
         );
 }
 
+// Context-aware Signal::connect overload.  Defined here because it
+// needs ObjectBase and EventLoop to be complete — signal.h forward
+// declares ObjectBase and only stores the declaration.  The wrapping
+// bridge lambda captures @p owner and uses its @c eventLoop() at
+// emit time, matching Qt's @c Qt::AutoConnection: direct invocation
+// on the owner's own thread, @c postCallable marshalling otherwise.
+template <typename... Args>
+size_t Signal<Args...>::connect(Function slot, ObjectBase *owner) {
+        // Passing a null @ref ObjectBase context is a programmer error
+        // — the whole point of this overload is to anchor dispatch to
+        // the owner's EventLoop, and there is no loop to anchor to
+        // when @p owner is null.  Callers that explicitly want the
+        // raw, same-thread-only behaviour should use the @c void*
+        // overload with @c nullptr instead.
+        PROMEKI_ASSERT(owner != nullptr);
+        return connect(
+                [slot = std::move(slot), owner](Args... args) {
+                        EventLoop *ownerLoop   = owner->eventLoop();
+                        EventLoop *currentLoop = EventLoop::current();
+                        if(ownerLoop == nullptr || ownerLoop == currentLoop) {
+                                slot(args...);
+                                return;
+                        }
+                        // Copy args into a tuple, hop to the owner's
+                        // EventLoop, then unpack and invoke.  Requires
+                        // every Args type to be copy-constructible,
+                        // which is the same restriction the Slot-based
+                        // ObjectBase::connect path already carries via
+                        // VariantList packing.
+                        ownerLoop->postCallable(
+                                [slot, tup = std::make_tuple(std::move(args)...)]() {
+                                        std::apply(slot, tup);
+                                });
+                },
+                static_cast<void *>(owner));
+}
+
 PROMEKI_NAMESPACE_END
 

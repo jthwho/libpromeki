@@ -248,12 +248,30 @@ Error FrameSync::pushFrame(const Frame::Ptr &frame) {
                 }
                 _queue.pushToBack(qf);
 
-                // Append audio to the resampler input FIFO.
+                // Append audio to the resampler input FIFO.  The
+                // resampler operates in native float, so non-native
+                // inputs (e.g. PCMI_S16LE coming from the QuickTime
+                // reader's @c sowt audio) are converted up front —
+                // skipping conversion would cause produceAudio() to
+                // discard the buffer at the @c isNative() check and
+                // emit silence instead.
                 if(!frame->audioList().isEmpty()) {
                         const Audio::Ptr &aud = frame->audioList()[0];
                         if(aud.isValid() && aud->samples() > 0) {
                                 updateSourceAudioRate(*aud, qf.audioTsNs);
-                                _audioInput.pushToBack(aud);
+                                Audio::Ptr toQueue = aud;
+                                if(!aud->isNative()) {
+                                        Audio conv = aud->convertTo(AudioDesc::NativeType);
+                                        if(conv.isValid()) {
+                                                toQueue = Audio::Ptr::create(std::move(conv));
+                                        } else {
+                                                promekiWarn("FrameSync[%s]: convertTo native float failed; "
+                                                            "dropping audio buffer",
+                                                            _name.cstr());
+                                                toQueue = Audio::Ptr();
+                                        }
+                                }
+                                if(toQueue.isValid()) _audioInput.pushToBack(toQueue);
                         }
                 }
 
@@ -476,10 +494,16 @@ Audio::Ptr FrameSync::produceAudio(int64_t targetSamples) {
 
         // Allocate output.  The full sample count is always produced
         // (we pad with silence if the resampler or input runs dry).
-        Audio out(_targetAudioDesc, targetSamples);
+        // The internal resampler operates in native float, and the
+        // pull side casts via @c data<float>() — so the output buffer
+        // is allocated as native float regardless of @c _targetAudioDesc 's
+        // declared sample format.  Downstream consumers that need a
+        // different sample format must convert via @c Audio::convertTo.
+        AudioDesc outDesc(AudioDesc::NativeType, targetRate, channels);
+        Audio out(outDesc, targetSamples);
         out.resize(targetSamples);
+        out.zero();
         float *outPtr = out.data<float>();
-        std::memset(outPtr, 0, (size_t)targetSamples * channels * sizeof(float));
 
         long outWritten = 0;
         while(outWritten < (long)targetSamples) {

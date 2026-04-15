@@ -30,8 +30,10 @@
 #include <promeki/pixeldesc.h>
 #include <promeki/buffer.h>
 #include <promeki/cuda.h>
+#include <promeki/framerate.h>
 #include <promeki/logger.h>
 #include <promeki/enums.h>
+#include <promeki/metadata.h>
 #include <promeki/videocodec.h>
 
 #include <deque>
@@ -164,11 +166,15 @@ class NvencVideoEncoder::Impl {
                         Slot *slot = acquireFreeSlot();
                         if(!slot) return setError(Error::TryAgain, "no free NVENC slot");
 
-                        // Copy NV12 payload into the locked NVENC input buffer.
+                        // Copy NV12 payload into the locked NVENC input
+                        // buffer.  uploadNV12 also records the locked
+                        // pitch onto @p slot so we pass the correct
+                        // value to nvEncEncodePicture below.
                         if(Error err = uploadNV12(frame, slot); err.isError()) {
                                 _freeSlots.push_back(slot);
                                 return err;
                         }
+                        slot->imageMeta = frame.metadata();
 
                         NV_ENC_PIC_PARAMS pic{};
                         pic.version        = NV_ENC_PIC_PARAMS_VER;
@@ -177,7 +183,7 @@ class NvencVideoEncoder::Impl {
                         pic.bufferFmt      = NV_ENC_BUFFER_FORMAT_NV12;
                         pic.inputWidth     = _width;
                         pic.inputHeight    = _height;
-                        pic.inputPitch     = _width;
+                        pic.inputPitch     = slot->pitch;
                         pic.pictureStruct  = NV_ENC_PIC_STRUCT_FRAME;
                         pic.frameIdx       = _frameIdx;
                         pic.inputTimeStamp = _frameIdx;
@@ -280,6 +286,20 @@ class NvencVideoEncoder::Impl {
                         NV_ENC_INPUT_PTR   in         = nullptr;
                         NV_ENC_OUTPUT_PTR  out        = nullptr;
                         MediaTimeStamp     pts;
+                        // Metadata attached to the source Image when it
+                        // was submitted.  Copied verbatim onto the
+                        // emitted MediaPacket so per-image state that
+                        // can't live in the codec bitstream (Timecode,
+                        // MediaTimeStamp, user keys) survives the
+                        // encode/decode round trip.
+                        Metadata           imageMeta;
+                        // Pitch returned by nvEncLockInputBuffer for
+                        // this slot's input surface.  NVENC allocates
+                        // the pitched buffer; we have to pass the same
+                        // pitch back to nvEncEncodePicture so rows
+                        // aren't mis-interpreted when the allocated
+                        // pitch is not equal to the image width.
+                        uint32_t           pitch      = 0;
                         bool               hasOutput  = false;
                 };
 
@@ -405,6 +425,17 @@ class NvencVideoEncoder::Impl {
                                 encCfg.encodeCodecConfig.hevcConfig.idrPeriod = effectiveIdr;
                         }
 
+                        // Honour the caller-supplied FrameRate — NVENC
+                        // uses this for rate-control math (CBR / VBR
+                        // bits-per-frame target, HRD buffer math) and
+                        // for SPS/VUI timing info in H.264 / HEVC.  The
+                        // library hook is MediaConfig::FrameRate; the
+                        // MediaIOTask_VideoEncoder stamps it from the
+                        // pending MediaDesc before calling configure().
+                        const FrameRate fallback(FrameRate::RationalType(30, 1));
+                        FrameRate fr = _cfg.getAs<FrameRate>(MediaConfig::FrameRate, fallback);
+                        if(!fr.isValid()) fr = fallback;
+
                         NV_ENC_INITIALIZE_PARAMS init{};
                         init.version         = NV_ENC_INITIALIZE_PARAMS_VER;
                         init.encodeGUID      = encGuid;
@@ -414,8 +445,8 @@ class NvencVideoEncoder::Impl {
                         init.encodeHeight    = _height;
                         init.darWidth        = _width;
                         init.darHeight       = _height;
-                        init.frameRateNum    = 30;
-                        init.frameRateDen    = 1;
+                        init.frameRateNum    = fr.numerator();
+                        init.frameRateDen    = fr.denominator();
                         init.enablePTD       = 1;
                         init.encodeConfig    = &encCfg;
 
@@ -539,6 +570,7 @@ class NvencVideoEncoder::Impl {
                         // pitch bytes.
                         auto *dst   = static_cast<uint8_t *>(lk.bufferDataPtr);
                         const auto pitch = lk.pitch;
+                        slot->pitch = pitch;
 
                         const uint8_t *yPlane  = static_cast<const uint8_t *>(frame.plane(0)->data());
                         const uint8_t *uvPlane = frame.planes().size() > 1
@@ -599,6 +631,16 @@ class NvencVideoEncoder::Impl {
                         pkt.modify()->setPts(slot->pts);
                         pkt.modify()->setDts(slot->pts);
                         if(isKey) pkt.modify()->addFlag(MediaPacket::Keyframe);
+                        // Carry per-image metadata across the codec
+                        // boundary: things like Timecode and user keys
+                        // that don't live in the H.264 / HEVC bitstream
+                        // ride along on the MediaPacket and get
+                        // re-applied to the decoded Image by the
+                        // matching VideoDecoder.
+                        if(!slot->imageMeta.isEmpty()) {
+                                pkt.modify()->metadata() = slot->imageMeta;
+                                slot->imageMeta = Metadata();
+                        }
                         return pkt;
                 }
 

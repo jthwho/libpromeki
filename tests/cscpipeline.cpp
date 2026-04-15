@@ -829,43 +829,64 @@ TEST_CASE("CSC fast-path cross-validation") {
                 {PixelDesc::YUV8_422_UYVY_Rec709,     PixelDesc::RGBA8_sRGB, 35},
                 {PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_420_SemiPlanar_Rec709, 35},
                 {PixelDesc::YUV8_420_SemiPlanar_Rec709, PixelDesc::RGBA8_sRGB, 35},
+                {PixelDesc::RGB8_sRGB,                PixelDesc::YUV8_420_SemiPlanar_Rec709, 35},
+                {PixelDesc::YUV8_420_SemiPlanar_Rec709, PixelDesc::RGB8_sRGB,  35},
+                {PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_420_NV21_Rec709, 35},
+                {PixelDesc::YUV8_420_NV21_Rec709,     PixelDesc::RGBA8_sRGB, 35},
+                {PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_422_SemiPlanar_Rec709, 35},
+                {PixelDesc::YUV8_422_SemiPlanar_Rec709, PixelDesc::RGBA8_sRGB, 35},
                 {PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_422_Planar_Rec709, 35},
                 {PixelDesc::YUV8_422_Planar_Rec709,   PixelDesc::RGBA8_sRGB, 35},
                 {PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_420_Planar_Rec709, 35},
                 {PixelDesc::YUV8_420_Planar_Rec709,   PixelDesc::RGBA8_sRGB, 35},
         };
 
-        Image src = makeGradientRGBA8(16, 2);
-        REQUIRE(src.isValid());
+        // Exercise several widths so the SIMD fast-paths get hit at
+        // exact vector boundaries and at partial tails of various
+        // lengths (the scalar-tail handler and remaining-pair chroma
+        // handler must agree with the full-scalar reference).
+        // Widths chosen to exercise the NV12 / YUYV SIMD fast-paths
+        // at multiple vector-width alignments, and the scalar-tail /
+        // odd-pixel handling in the 4:2:2 / 4:2:0 kernels:
+        //   16, 17, 30, 31: below 2*Nq on AVX-512 (pure scalar)
+        //   32, 33:         SIMD iter + (optional) scalar/odd tail
+        //   48, 63:         SIMD iter + scalar-pair tail, odd trailing pixel
+        size_t widths[] = {16, 17, 30, 31, 32, 33, 48, 63};
 
-        for(const auto &p : pairs) {
-                PixelDesc srcPD(p.src);
-                PixelDesc dstPD(p.dst);
-                CSCPipeline fp(srcPD, dstPD);
-                REQUIRE(fp.isFastPath());
+        for(size_t w : widths) {
+                Image src = makeGradientRGBA8(w, 2);
+                REQUIRE(src.isValid());
 
-                Image fpSrc = (p.src == PixelDesc::RGBA8_sRGB) ? src :
-                              src.convert(srcPD, src.metadata(), scalarConfig());
-                REQUIRE(fpSrc.isValid());
+                for(const auto &p : pairs) {
+                        PixelDesc srcPD(p.src);
+                        PixelDesc dstPD(p.dst);
+                        CSCPipeline fp(srcPD, dstPD);
+                        REQUIRE(fp.isFastPath());
 
-                Image dstOpt = fpSrc.convert(dstPD, fpSrc.metadata());
-                Image dstScalar = fpSrc.convert(dstPD, fpSrc.metadata(), scalarConfig());
-                REQUIRE(dstOpt.isValid());
-                REQUIRE(dstScalar.isValid());
+                        Image fpSrc = (p.src == PixelDesc::RGBA8_sRGB) ? src :
+                                      src.convert(srcPD, src.metadata(), scalarConfig());
+                        REQUIRE(fpSrc.isValid());
 
-                int maxDiff = 0;
-                for(int pl = 0; pl < static_cast<int>(dstPD.planeCount()); pl++) {
-                        size_t bytes = dstOpt.plane(pl)->size();
-                        const uint8_t *o = static_cast<const uint8_t *>(dstOpt.data(pl));
-                        const uint8_t *s = static_cast<const uint8_t *>(dstScalar.data(pl));
-                        for(size_t i = 0; i < bytes; i++) {
-                                int d = std::abs((int)o[i] - (int)s[i]);
-                                if(d > maxDiff) maxDiff = d;
+                        Image dstOpt = fpSrc.convert(dstPD, fpSrc.metadata());
+                        Image dstScalar = fpSrc.convert(dstPD, fpSrc.metadata(), scalarConfig());
+                        REQUIRE(dstOpt.isValid());
+                        REQUIRE(dstScalar.isValid());
+
+                        int maxDiff = 0;
+                        for(int pl = 0; pl < static_cast<int>(dstPD.planeCount()); pl++) {
+                                size_t bytes = dstOpt.plane(pl)->size();
+                                const uint8_t *o = static_cast<const uint8_t *>(dstOpt.data(pl));
+                                const uint8_t *s = static_cast<const uint8_t *>(dstScalar.data(pl));
+                                for(size_t i = 0; i < bytes; i++) {
+                                        int d = std::abs((int)o[i] - (int)s[i]);
+                                        if(d > maxDiff) maxDiff = d;
+                                }
                         }
+                        INFO(srcPD.name() << " -> " << dstPD.name()
+                             << "  width=" << w
+                             << "  maxDiff=" << maxDiff << "  tol=" << p.tolerance);
+                        CHECK(maxDiff <= p.tolerance);
                 }
-                INFO(srcPD.name() << " -> " << dstPD.name()
-                     << "  maxDiff=" << maxDiff << "  tol=" << p.tolerance);
-                CHECK(maxDiff <= p.tolerance);
         }
 }
 

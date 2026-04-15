@@ -442,48 +442,18 @@ Error QuickTimeReader::parseTrak(int64_t payloadOffset, int64_t payloadEnd) {
                 stream.skip(4); // version+flags
                 uint32_t entryCount = stream.readU32();
                 if(entryCount > 0) {
+                        int64_t  entryStart = stream.pos();
                         uint32_t entrySize = stream.readU32();
                         FourCC   entryType = stream.readFourCC();
                         stream.skip(6);                // reserved[6]
                         stream.skip(2);                // data_reference_index
                         int64_t entryHeaderBytes = 16; // size+type+reserved+data_ref
+                        int64_t entryPayloadEnd = entryStart + static_cast<int64_t>(entrySize);
                         int64_t entryRemain = static_cast<int64_t>(entrySize) - entryHeaderBytes;
 
                         if(track.type() == QuickTime::Video) {
-                                // Visual sample entry (QuickTime form)
-                                stream.skip(2);  // version
-                                stream.skip(2);  // revision
-                                stream.skip(4);  // vendor
-                                stream.skip(4);  // temporal quality
-                                stream.skip(4);  // spatial quality
-                                uint16_t w = stream.readU16();
-                                uint16_t h = stream.readU16();
-                                stream.skip(4);  // horiz res
-                                stream.skip(4);  // vert res
-                                stream.skip(4);  // data size
-                                stream.skip(2);  // frame count
-                                String compName = readPascalString(stream, 32);
-                                stream.skip(2);  // depth
-                                stream.skip(2);  // pre-defined
+                                parseVideoSampleEntry(stream, entryType, entryPayloadEnd, track);
                                 entryRemain -= 2+2+4+4+4+2+2+4+4+4+2+32+2+2;
-                                if(!stream.isError()) {
-                                        if(w > 0 && h > 0) {
-                                                track.setSize(Size2Du32(w, h));
-                                        }
-                                        PixelDesc pd = pixelDescForQuickTimeFourCC(entryType);
-                                        if(pd.isValid()) {
-                                                track.setPixelDesc(pd);
-                                        } else {
-                                                promekiWarn("QuickTime: unknown video codec FourCC '%c%c%c%c'",
-                                                        (entryType.value() >> 24) & 0xff,
-                                                        (entryType.value() >> 16) & 0xff,
-                                                        (entryType.value() >>  8) & 0xff,
-                                                        (entryType.value() >>  0) & 0xff);
-                                        }
-                                        if(!compName.isEmpty()) {
-                                                track.metadata().set(Metadata::Software, compName);
-                                        }
-                                }
                         } else if(track.type() == QuickTime::Audio) {
                                 // Audio sample entry (QuickTime v0/v1)
                                 uint16_t sampleEntryVersion = stream.readU16();
@@ -980,6 +950,80 @@ Error QuickTimeReader::parseEditList(int64_t edtsPayloadOffset, int64_t edtsPayl
 // ---------------------------------------------------------------------------
 // tmcd — timecode sample entry capture
 // ---------------------------------------------------------------------------
+
+Error QuickTimeReader::parseVideoSampleEntry(quicktime_atom::ReadStream &stream,
+                                             FourCC entryType,
+                                             int64_t entryPayloadEnd,
+                                             QuickTime::Track &track) {
+        // Visual sample entry (QuickTime form). Caller has already
+        // consumed the 16-byte common header (size + type + 6 reserved
+        // + 2 data_reference_index). We read the fixed-size fields
+        // here and leave the stream positioned at the first byte after
+        // them — Phase 4 will walk [stream.pos(), entryPayloadEnd) for
+        // codec-specific child boxes (avcC / hvcC / colr / pasp).
+        stream.skip(2);  // version
+        stream.skip(2);  // revision
+        stream.skip(4);  // vendor
+        stream.skip(4);  // temporal quality
+        stream.skip(4);  // spatial quality
+        uint16_t w = stream.readU16();
+        uint16_t h = stream.readU16();
+        stream.skip(4);  // horiz res
+        stream.skip(4);  // vert res
+        stream.skip(4);  // data size
+        stream.skip(2);  // frame count
+        String compName = readPascalString(stream, 32);
+        stream.skip(2);  // depth
+        stream.skip(2);  // pre-defined
+        if(stream.isError()) return Error::CorruptData;
+
+        if(w > 0 && h > 0) {
+                track.setSize(Size2Du32(w, h));
+        }
+        PixelDesc pd = pixelDescForQuickTimeFourCC(entryType);
+        if(pd.isValid()) {
+                track.setPixelDesc(pd);
+        } else {
+                promekiWarn("QuickTime: unknown video codec FourCC '%c%c%c%c'",
+                        (entryType.value() >> 24) & 0xff,
+                        (entryType.value() >> 16) & 0xff,
+                        (entryType.value() >>  8) & 0xff,
+                        (entryType.value() >>  0) & 0xff);
+        }
+        if(!compName.isEmpty()) {
+                track.metadata().set(Metadata::Software, compName);
+        }
+
+        // Walk any codec-specific child boxes that follow the fixed
+        // visual-sample-entry fields.  @c avcC / @c hvcC carry the
+        // out-of-band decoder configuration record that a decoder
+        // needs before it can ingest the length-prefixed VCL NALs
+        // stored in @c mdat — capture it onto the Track so the
+        // MediaIOTask layer can hand it to a decoder without
+        // re-reading the container.
+        while(stream.pos() < entryPayloadEnd && !stream.isError()) {
+                Box childBox;
+                Error cbErr = readBoxHeader(stream, childBox, entryPayloadEnd);
+                if(cbErr.isError()) break;
+                if(childBox.type == FourCC("avcC") || childBox.type == FourCC("hvcC")) {
+                        Buffer::Ptr payload = Buffer::Ptr::create(
+                                static_cast<size_t>(childBox.payloadSize));
+                        if(payload && childBox.payloadSize > 0) {
+                                Error rd = stream.readBytes(payload->data(),
+                                                            childBox.payloadSize);
+                                if(rd.isError()) return rd;
+                                payload->setSize(static_cast<size_t>(childBox.payloadSize));
+                                track.setCodecConfig(payload);
+                                track.setCodecConfigType(childBox.type);
+                        } else {
+                                stream.skip(childBox.payloadSize);
+                        }
+                } else {
+                        stream.skip(childBox.payloadSize);
+                }
+        }
+        return Error::Ok;
+}
 
 Error QuickTimeReader::parseTimecodeSampleEntry(int64_t entryPayloadOffset,
                                                 int64_t entryPayloadEnd,

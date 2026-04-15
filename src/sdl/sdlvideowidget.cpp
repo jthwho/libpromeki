@@ -15,6 +15,8 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+PROMEKI_DEBUG(SDLVideoWidget);
+
 SDLVideoWidget::SDLVideoWidget(ObjectBase *parent) : Widget(parent) {
         setSizePolicy(SizeExpanding);
         return;
@@ -25,6 +27,7 @@ SDLVideoWidget::~SDLVideoWidget() {
                 SDL_DestroyTexture(_texture);
                 _texture = nullptr;
         }
+        promekiDebug("%p destroyed: %lu frms, %lu fast", this, (long unsigned)_frameCount, (long unsigned)_framesFastPath);
         return;
 }
 
@@ -189,6 +192,7 @@ bool SDLVideoWidget::isDirectlyMappable(const PixelDesc &pd) {
 
 bool SDLVideoWidget::uploadCurrentImage() {
         if(!_currentImage.isValid()) return false;
+        _frameCount++;
 
         const PixelDesc &srcPd = _currentImage.pixelDesc();
 
@@ -199,6 +203,7 @@ bool SDLVideoWidget::uploadCurrentImage() {
         if(!srcPd.isCompressed()) {
                 uint32_t sdlFmt = mapPixelDesc(srcPd);
                 if(sdlFmt != 0) {
+                        _framesFastPath++;
                         ensureTexture(_currentImage.width(),
                                       _currentImage.height(), sdlFmt,
                                       mapColorspace(srcPd));

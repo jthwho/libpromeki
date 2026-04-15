@@ -258,8 +258,81 @@ void FastPathNV12toRGBA8(const void *const *srcPlanes,
         const uint8_t *chromaLine = static_cast<const uint8_t *>(srcPlanes[1]);
         uint8_t *dst = static_cast<uint8_t *>(dstPlanes[0]);
 
+        // SIMD decode using reformulated BT.709 coefficients so every
+        // intermediate fits in i16:
+        //   c = y - 16, d = cb - 128, e = cr - 128
+        //   R = c + e + ((42*c + 203*e + 128) >> 8)
+        //   G = c + ((42*c - 55*d - 136*e + 128) >> 8)
+        //   B = c + 2*d + ((42*c + 29*d + 128) >> 8)
+        // (Original coefficients 298/459/541 split as 256+42, 256+203, 512+29.)
+        //
+        // One iteration produces 2*Nq output pixels from Nq chroma pairs.
+        const hn::Rebind<uint8_t,  hn::ScalableTag<float>>    du8q;     // Nq u8
+        const hn::Rebind<uint16_t, hn::ScalableTag<float>>    du16q;    // Nq u16
+        const hn::Rebind<int16_t,  hn::ScalableTag<float>>    di16q;    // Nq i16
+        const hn::Rebind<uint8_t,  hn::ScalableTag<uint16_t>> du8h;     // 2*Nq u8
+        const size_t Nq = hn::Lanes(du8q);
+
+        const auto kC16   = hn::Set(di16q, int16_t(16));
+        const auto kC128  = hn::Set(di16q, int16_t(128));
+        const auto kBias  = hn::Set(di16q, int16_t(128));
+        const auto k42    = hn::Set(di16q, int16_t(42));
+        const auto k203   = hn::Set(di16q, int16_t(203));
+        const auto km55   = hn::Set(di16q, int16_t(-55));
+        const auto km136  = hn::Set(di16q, int16_t(-136));
+        const auto k29    = hn::Set(di16q, int16_t(29));
+        const auto kAlpha = hn::Set(du8h, uint8_t(255));
+
+        size_t x = 0;
+        for(; x + 2 * Nq <= width; x += 2 * Nq) {
+                hn::Vec<decltype(du8q)> yE8, yO8, cb8, cr8;
+                hn::LoadInterleaved2(du8q, lumaLine + x,  yE8, yO8);
+                hn::LoadInterleaved2(du8q, chromaLine + x, cb8, cr8);
+
+                auto yE = hn::BitCast(di16q, hn::PromoteTo(du16q, yE8));
+                auto yO = hn::BitCast(di16q, hn::PromoteTo(du16q, yO8));
+                auto cb = hn::BitCast(di16q, hn::PromoteTo(du16q, cb8));
+                auto cr = hn::BitCast(di16q, hn::PromoteTo(du16q, cr8));
+                auto cE = hn::Sub(yE, kC16);
+                auto cO = hn::Sub(yO, kC16);
+                auto d  = hn::Sub(cb, kC128);
+                auto e  = hn::Sub(cr, kC128);
+
+                auto k42e_common = hn::MulAdd(e, k203, kBias);
+                auto rE = hn::Add(hn::Add(cE, e), hn::ShiftRight<8>(hn::MulAdd(cE, k42, k42e_common)));
+                auto rO = hn::Add(hn::Add(cO, e), hn::ShiftRight<8>(hn::MulAdd(cO, k42, k42e_common)));
+
+                auto gde_common = hn::MulAdd(d, km55, hn::MulAdd(e, km136, kBias));
+                auto gE = hn::Add(cE, hn::ShiftRight<8>(hn::MulAdd(cE, k42, gde_common)));
+                auto gO = hn::Add(cO, hn::ShiftRight<8>(hn::MulAdd(cO, k42, gde_common)));
+
+                auto k29d_common = hn::MulAdd(d, k29, kBias);
+                auto twoD = hn::Add(d, d);
+                auto bE = hn::Add(hn::Add(cE, twoD), hn::ShiftRight<8>(hn::MulAdd(cE, k42, k29d_common)));
+                auto bO = hn::Add(hn::Add(cO, twoD), hn::ShiftRight<8>(hn::MulAdd(cO, k42, k29d_common)));
+
+                // Interleave even/odd pixel results and pack back to u8.
+                // Use the Whole variants so lanes from both 128-bit blocks
+                // of the source vectors are merged linearly on AVX-256/512
+                // (plain InterleaveLower/Upper operates per-block and would
+                // swap blocks in the combined output).
+                auto rLo = hn::InterleaveWholeLower(di16q, rE, rO);
+                auto rHi = hn::InterleaveWholeUpper(di16q, rE, rO);
+                auto gLo = hn::InterleaveWholeLower(di16q, gE, gO);
+                auto gHi = hn::InterleaveWholeUpper(di16q, gE, gO);
+                auto bLo = hn::InterleaveWholeLower(di16q, bE, bO);
+                auto bHi = hn::InterleaveWholeUpper(di16q, bE, bO);
+
+                auto r = hn::Combine(du8h, hn::DemoteTo(du8q, rHi), hn::DemoteTo(du8q, rLo));
+                auto g = hn::Combine(du8h, hn::DemoteTo(du8q, gHi), hn::DemoteTo(du8q, gLo));
+                auto b = hn::Combine(du8h, hn::DemoteTo(du8q, bHi), hn::DemoteTo(du8q, bLo));
+
+                hn::StoreInterleaved4(r, g, b, kAlpha, du8h, dst + x * 4);
+        }
+
+        // Scalar tail: whole pairs first
         size_t pairs = width / 2;
-        for(size_t i = 0; i < pairs; i++) {
+        for(size_t i = x / 2; i < pairs; i++) {
                 int y0 = lumaLine[i * 2];
                 int y1 = lumaLine[i * 2 + 1];
                 int cb = chromaLine[i * 2];
@@ -268,10 +341,9 @@ void FastPathNV12toRGBA8(const void *const *srcPlanes,
                 yuv709ToRgba8(y1, cb, cr, dst + i * 8 + 4);
         }
         if(width & 1) {
-                size_t i = pairs;
                 int y0 = lumaLine[width - 1];
-                int cb = chromaLine[i * 2];
-                int cr = chromaLine[i * 2 + 1];
+                int cb = chromaLine[pairs * 2];
+                int cr = chromaLine[pairs * 2 + 1];
                 yuv709ToRgba8(y0, cb, cr, dst + (width - 1) * 4);
         }
         return;
@@ -290,17 +362,93 @@ void FastPathRGBA8toNV12(const void *const *srcPlanes,
         uint8_t *lumaLine = static_cast<uint8_t *>(dstPlanes[0]);
         uint8_t *chromaLine = static_cast<uint8_t *>(dstPlanes[1]);
 
-        // Luma: every pixel
-        for(size_t x = 0; x < width; x++) {
+        // Luma (SIMD): y = ((47*r + 157*g + 16*b + 128) >> 8) + 16, u16-safe.
+        // LoadInterleaved4 uses the quarter-width u8 tag (Nq lanes).
+        const hn::Rebind<uint8_t,  hn::ScalableTag<float>>    du8q;
+        const hn::Rebind<uint16_t, hn::ScalableTag<float>>    du16q;
+        const hn::Rebind<int16_t,  hn::ScalableTag<float>>    di16q;
+        const hn::Rebind<uint8_t,  hn::ScalableTag<uint16_t>> du8h;
+        const size_t Nq = hn::Lanes(du8q);
+        const auto c47   = hn::Set(du16q, uint16_t(47));
+        const auto c157  = hn::Set(du16q, uint16_t(157));
+        const auto c16m  = hn::Set(du16q, uint16_t(16));
+        const auto c128  = hn::Set(du16q, uint16_t(128));
+        const auto c16b  = hn::Set(du16q, uint16_t(16));
+
+        size_t x = 0;
+        for(; x + Nq <= width; x += Nq) {
+                hn::Vec<decltype(du8q)> r, g, b, a;
+                hn::LoadInterleaved4(du8q, src + x * 4, r, g, b, a);
+                auto r16 = hn::PromoteTo(du16q, r);
+                auto g16 = hn::PromoteTo(du16q, g);
+                auto b16 = hn::PromoteTo(du16q, b);
+                auto acc = hn::MulAdd(r16, c47,
+                           hn::MulAdd(g16, c157,
+                           hn::MulAdd(b16, c16m, c128)));
+                auto y16 = hn::Add(hn::ShiftRight<8>(acc), c16b);
+                auto y8  = hn::DemoteTo(du8q, y16);
+                hn::StoreU(y8, du8q, lumaLine + x);
+        }
+        for(; x < width; x++) {
                 int r = src[x * 4 + 0], g = src[x * 4 + 1], b = src[x * 4 + 2];
                 int y, cb, cr;
                 rgba8ToYCbCr709(r, g, b, &y, &cb, &cr);
                 lumaLine[x] = clipU8(y);
         }
 
-        // Chroma: average pairs horizontally
+        // Chroma (SIMD): horizontally average adjacent pixel pairs,
+        // then apply BT.709:
+        //   Cb = ((-26*r -  87*g + 112*b + 128) >> 8) + 128
+        //   Cr = (( 112*r - 102*g -  10*b + 128) >> 8) + 128
+        // With r,g,b in [0,255], all intermediates fit in i16.
+        // One iteration produces Nq (cb,cr) pairs from 2*Nq input pixels.
+        //
+        // LoadInterleaved4 uses the half-width u8 tag (2*Nq lanes);
+        // we then BitCast to u16 to mask/shift even vs. odd pixel bytes
+        // (little-endian: low byte = even, high byte = odd pixel).
+        const auto cByteMask = hn::Set(du16q, uint16_t(0x00FF));
+        const auto cOne      = hn::Set(du16q, uint16_t(1));
+        const auto km26    = hn::Set(di16q, int16_t(-26));
+        const auto km87    = hn::Set(di16q, int16_t(-87));
+        const auto cK112   = hn::Set(di16q, int16_t(112));
+        const auto km102   = hn::Set(di16q, int16_t(-102));
+        const auto km10    = hn::Set(di16q, int16_t(-10));
+        const auto cBias128 = hn::Set(di16q, int16_t(128));
+
         size_t pairs = width / 2;
-        for(size_t i = 0; i < pairs; i++) {
+        size_t i = 0;
+        for(; i + Nq <= pairs; i += Nq) {
+                hn::Vec<decltype(du8h)> r8, g8, b8, a8;
+                hn::LoadInterleaved4(du8h, src + i * 8, r8, g8, b8, a8);
+                auto rU = hn::BitCast(du16q, r8);
+                auto gU = hn::BitCast(du16q, g8);
+                auto bU = hn::BitCast(du16q, b8);
+                auto rE = hn::And(rU, cByteMask);
+                auto rO = hn::ShiftRight<8>(rU);
+                auto gE = hn::And(gU, cByteMask);
+                auto gO = hn::ShiftRight<8>(gU);
+                auto bE = hn::And(bU, cByteMask);
+                auto bO = hn::ShiftRight<8>(bU);
+                auto rAvg = hn::BitCast(di16q,
+                                hn::ShiftRight<1>(hn::Add(hn::Add(rE, rO), cOne)));
+                auto gAvg = hn::BitCast(di16q,
+                                hn::ShiftRight<1>(hn::Add(hn::Add(gE, gO), cOne)));
+                auto bAvg = hn::BitCast(di16q,
+                                hn::ShiftRight<1>(hn::Add(hn::Add(bE, bO), cOne)));
+
+                auto cbAcc = hn::MulAdd(rAvg, km26,
+                             hn::MulAdd(gAvg, km87,
+                             hn::MulAdd(bAvg, cK112, cBias128)));
+                auto crAcc = hn::MulAdd(rAvg, cK112,
+                             hn::MulAdd(gAvg, km102,
+                             hn::MulAdd(bAvg, km10, cBias128)));
+                auto cb16 = hn::Add(hn::ShiftRight<8>(cbAcc), cBias128);
+                auto cr16 = hn::Add(hn::ShiftRight<8>(crAcc), cBias128);
+                auto cb8  = hn::DemoteTo(du8q, cb16);
+                auto cr8  = hn::DemoteTo(du8q, cr16);
+                hn::StoreInterleaved2(cb8, cr8, du8q, chromaLine + i * 2);
+        }
+        for(; i < pairs; i++) {
                 int r = (src[i * 8 + 0] + src[i * 8 + 4] + 1) >> 1;
                 int g = (src[i * 8 + 1] + src[i * 8 + 5] + 1) >> 1;
                 int b = (src[i * 8 + 2] + src[i * 8 + 6] + 1) >> 1;
@@ -310,8 +458,221 @@ void FastPathRGBA8toNV12(const void *const *srcPlanes,
                 chromaLine[i * 2 + 1] = clipU8(cr);
         }
         if(width & 1) {
-                size_t x = width - 1;
-                int r = src[x * 4 + 0], g = src[x * 4 + 1], b = src[x * 4 + 2];
+                size_t x2 = width - 1;
+                int r = src[x2 * 4 + 0], g = src[x2 * 4 + 1], b = src[x2 * 4 + 2];
+                int y, cb, cr;
+                rgba8ToYCbCr709(r, g, b, &y, &cb, &cr);
+                chromaLine[pairs * 2]     = clipU8(cb);
+                chromaLine[pairs * 2 + 1] = clipU8(cr);
+        }
+        return;
+}
+
+// =========================================================================
+// YUV8_420_SemiPlanar (NV12) <-> RGB8_sRGB  (BT.709 fixed-point)
+// Identical to the RGBA8 variants but with 3-byte-per-pixel RGB stride.
+// =========================================================================
+
+void FastPathNV12toRGB8(const void *const *srcPlanes,
+                         const size_t *srcStrides,
+                         void *const *dstPlanes,
+                         const size_t *dstStrides,
+                         size_t width, CSCContext &ctx) {
+        const uint8_t *lumaLine = static_cast<const uint8_t *>(srcPlanes[0]);
+        const uint8_t *chromaLine = static_cast<const uint8_t *>(srcPlanes[1]);
+        uint8_t *dst = static_cast<uint8_t *>(dstPlanes[0]);
+
+        // SIMD decode using reformulated BT.709 coefficients (see
+        // FastPathNV12toRGBA8 for the derivation).  One iteration
+        // produces 2*Nq output pixels from Nq chroma pairs.
+        const hn::Rebind<uint8_t,  hn::ScalableTag<float>>    du8q;
+        const hn::Rebind<uint16_t, hn::ScalableTag<float>>    du16q;
+        const hn::Rebind<int16_t,  hn::ScalableTag<float>>    di16q;
+        const hn::Rebind<uint8_t,  hn::ScalableTag<uint16_t>> du8h;
+        const size_t Nq = hn::Lanes(du8q);
+
+        const auto kC16  = hn::Set(di16q, int16_t(16));
+        const auto kC128 = hn::Set(di16q, int16_t(128));
+        const auto kBias = hn::Set(di16q, int16_t(128));
+        const auto k42   = hn::Set(di16q, int16_t(42));
+        const auto k203  = hn::Set(di16q, int16_t(203));
+        const auto km55  = hn::Set(di16q, int16_t(-55));
+        const auto km136 = hn::Set(di16q, int16_t(-136));
+        const auto k29   = hn::Set(di16q, int16_t(29));
+
+        size_t x = 0;
+        for(; x + 2 * Nq <= width; x += 2 * Nq) {
+                hn::Vec<decltype(du8q)> yE8, yO8, cb8, cr8;
+                hn::LoadInterleaved2(du8q, lumaLine + x,  yE8, yO8);
+                hn::LoadInterleaved2(du8q, chromaLine + x, cb8, cr8);
+
+                auto yE = hn::BitCast(di16q, hn::PromoteTo(du16q, yE8));
+                auto yO = hn::BitCast(di16q, hn::PromoteTo(du16q, yO8));
+                auto cb = hn::BitCast(di16q, hn::PromoteTo(du16q, cb8));
+                auto cr = hn::BitCast(di16q, hn::PromoteTo(du16q, cr8));
+                auto cE = hn::Sub(yE, kC16);
+                auto cO = hn::Sub(yO, kC16);
+                auto d  = hn::Sub(cb, kC128);
+                auto e  = hn::Sub(cr, kC128);
+
+                auto k42e_common = hn::MulAdd(e, k203, kBias);
+                auto rE = hn::Add(hn::Add(cE, e), hn::ShiftRight<8>(hn::MulAdd(cE, k42, k42e_common)));
+                auto rO = hn::Add(hn::Add(cO, e), hn::ShiftRight<8>(hn::MulAdd(cO, k42, k42e_common)));
+
+                auto gde_common = hn::MulAdd(d, km55, hn::MulAdd(e, km136, kBias));
+                auto gE = hn::Add(cE, hn::ShiftRight<8>(hn::MulAdd(cE, k42, gde_common)));
+                auto gO = hn::Add(cO, hn::ShiftRight<8>(hn::MulAdd(cO, k42, gde_common)));
+
+                auto k29d_common = hn::MulAdd(d, k29, kBias);
+                auto twoD = hn::Add(d, d);
+                auto bE = hn::Add(hn::Add(cE, twoD), hn::ShiftRight<8>(hn::MulAdd(cE, k42, k29d_common)));
+                auto bO = hn::Add(hn::Add(cO, twoD), hn::ShiftRight<8>(hn::MulAdd(cO, k42, k29d_common)));
+
+                // See FastPathNV12toRGBA8 for why the Whole variants are
+                // required (per-block InterleaveLower/Upper would swap
+                // lane blocks on AVX-256/512).
+                auto rLo = hn::InterleaveWholeLower(di16q, rE, rO);
+                auto rHi = hn::InterleaveWholeUpper(di16q, rE, rO);
+                auto gLo = hn::InterleaveWholeLower(di16q, gE, gO);
+                auto gHi = hn::InterleaveWholeUpper(di16q, gE, gO);
+                auto bLo = hn::InterleaveWholeLower(di16q, bE, bO);
+                auto bHi = hn::InterleaveWholeUpper(di16q, bE, bO);
+
+                auto r = hn::Combine(du8h, hn::DemoteTo(du8q, rHi), hn::DemoteTo(du8q, rLo));
+                auto g = hn::Combine(du8h, hn::DemoteTo(du8q, gHi), hn::DemoteTo(du8q, gLo));
+                auto b = hn::Combine(du8h, hn::DemoteTo(du8q, bHi), hn::DemoteTo(du8q, bLo));
+
+                hn::StoreInterleaved3(r, g, b, du8h, dst + x * 3);
+        }
+
+        // Scalar tail
+        size_t pairs = width / 2;
+        for(size_t i = x / 2; i < pairs; i++) {
+                int y0 = lumaLine[i * 2];
+                int y1 = lumaLine[i * 2 + 1];
+                int cb = chromaLine[i * 2];
+                int cr = chromaLine[i * 2 + 1];
+                uint8_t tmp[4];
+                yuv709ToRgba8(y0, cb, cr, tmp);
+                dst[i * 6 + 0] = tmp[0];
+                dst[i * 6 + 1] = tmp[1];
+                dst[i * 6 + 2] = tmp[2];
+                yuv709ToRgba8(y1, cb, cr, tmp);
+                dst[i * 6 + 3] = tmp[0];
+                dst[i * 6 + 4] = tmp[1];
+                dst[i * 6 + 5] = tmp[2];
+        }
+        if(width & 1) {
+                int y0 = lumaLine[width - 1];
+                int cb = chromaLine[pairs * 2];
+                int cr = chromaLine[pairs * 2 + 1];
+                uint8_t tmp[4];
+                yuv709ToRgba8(y0, cb, cr, tmp);
+                dst[(width - 1) * 3 + 0] = tmp[0];
+                dst[(width - 1) * 3 + 1] = tmp[1];
+                dst[(width - 1) * 3 + 2] = tmp[2];
+        }
+        return;
+}
+
+void FastPathRGB8toNV12(const void *const *srcPlanes,
+                         const size_t *srcStrides,
+                         void *const *dstPlanes,
+                         const size_t *dstStrides,
+                         size_t width, CSCContext &ctx) {
+        const uint8_t *src = static_cast<const uint8_t *>(srcPlanes[0]);
+        uint8_t *lumaLine = static_cast<uint8_t *>(dstPlanes[0]);
+        uint8_t *chromaLine = static_cast<uint8_t *>(dstPlanes[1]);
+
+        // Luma (SIMD): y = ((47*r + 157*g + 16*b + 128) >> 8) + 16, u16-safe.
+        const hn::Rebind<uint8_t,  hn::ScalableTag<float>>    du8q;
+        const hn::Rebind<uint16_t, hn::ScalableTag<float>>    du16q;
+        const hn::Rebind<int16_t,  hn::ScalableTag<float>>    di16q;
+        const hn::Rebind<uint8_t,  hn::ScalableTag<uint16_t>> du8h;
+        const size_t Nq = hn::Lanes(du8q);
+        const auto c47   = hn::Set(du16q, uint16_t(47));
+        const auto c157  = hn::Set(du16q, uint16_t(157));
+        const auto c16m  = hn::Set(du16q, uint16_t(16));
+        const auto c128  = hn::Set(du16q, uint16_t(128));
+        const auto c16b  = hn::Set(du16q, uint16_t(16));
+
+        size_t x = 0;
+        for(; x + Nq <= width; x += Nq) {
+                hn::Vec<decltype(du8q)> r, g, b;
+                hn::LoadInterleaved3(du8q, src + x * 3, r, g, b);
+                auto r16 = hn::PromoteTo(du16q, r);
+                auto g16 = hn::PromoteTo(du16q, g);
+                auto b16 = hn::PromoteTo(du16q, b);
+                auto acc = hn::MulAdd(r16, c47,
+                           hn::MulAdd(g16, c157,
+                           hn::MulAdd(b16, c16m, c128)));
+                auto y16 = hn::Add(hn::ShiftRight<8>(acc), c16b);
+                auto y8  = hn::DemoteTo(du8q, y16);
+                hn::StoreU(y8, du8q, lumaLine + x);
+        }
+        for(; x < width; x++) {
+                int r = src[x * 3 + 0], g = src[x * 3 + 1], b = src[x * 3 + 2];
+                int y, cb, cr;
+                rgba8ToYCbCr709(r, g, b, &y, &cb, &cr);
+                lumaLine[x] = clipU8(y);
+        }
+
+        // Chroma (SIMD): same scheme as FastPathRGBA8toNV12, but
+        // LoadInterleaved3 for the 3-byte RGB stride.
+        const auto cByteMask = hn::Set(du16q, uint16_t(0x00FF));
+        const auto cOne      = hn::Set(du16q, uint16_t(1));
+        const auto km26    = hn::Set(di16q, int16_t(-26));
+        const auto km87    = hn::Set(di16q, int16_t(-87));
+        const auto cK112   = hn::Set(di16q, int16_t(112));
+        const auto km102   = hn::Set(di16q, int16_t(-102));
+        const auto km10    = hn::Set(di16q, int16_t(-10));
+        const auto cBias128 = hn::Set(di16q, int16_t(128));
+
+        size_t pairs = width / 2;
+        size_t i = 0;
+        for(; i + Nq <= pairs; i += Nq) {
+                hn::Vec<decltype(du8h)> r8, g8, b8;
+                hn::LoadInterleaved3(du8h, src + i * 6, r8, g8, b8);
+                auto rU = hn::BitCast(du16q, r8);
+                auto gU = hn::BitCast(du16q, g8);
+                auto bU = hn::BitCast(du16q, b8);
+                auto rE = hn::And(rU, cByteMask);
+                auto rO = hn::ShiftRight<8>(rU);
+                auto gE = hn::And(gU, cByteMask);
+                auto gO = hn::ShiftRight<8>(gU);
+                auto bE = hn::And(bU, cByteMask);
+                auto bO = hn::ShiftRight<8>(bU);
+                auto rAvg = hn::BitCast(di16q,
+                                hn::ShiftRight<1>(hn::Add(hn::Add(rE, rO), cOne)));
+                auto gAvg = hn::BitCast(di16q,
+                                hn::ShiftRight<1>(hn::Add(hn::Add(gE, gO), cOne)));
+                auto bAvg = hn::BitCast(di16q,
+                                hn::ShiftRight<1>(hn::Add(hn::Add(bE, bO), cOne)));
+
+                auto cbAcc = hn::MulAdd(rAvg, km26,
+                             hn::MulAdd(gAvg, km87,
+                             hn::MulAdd(bAvg, cK112, cBias128)));
+                auto crAcc = hn::MulAdd(rAvg, cK112,
+                             hn::MulAdd(gAvg, km102,
+                             hn::MulAdd(bAvg, km10, cBias128)));
+                auto cb16 = hn::Add(hn::ShiftRight<8>(cbAcc), cBias128);
+                auto cr16 = hn::Add(hn::ShiftRight<8>(crAcc), cBias128);
+                auto cb8  = hn::DemoteTo(du8q, cb16);
+                auto cr8  = hn::DemoteTo(du8q, cr16);
+                hn::StoreInterleaved2(cb8, cr8, du8q, chromaLine + i * 2);
+        }
+        for(; i < pairs; i++) {
+                int r = (src[i * 6 + 0] + src[i * 6 + 3] + 1) >> 1;
+                int g = (src[i * 6 + 1] + src[i * 6 + 4] + 1) >> 1;
+                int b = (src[i * 6 + 2] + src[i * 6 + 5] + 1) >> 1;
+                int y, cb, cr;
+                rgba8ToYCbCr709(r, g, b, &y, &cb, &cr);
+                chromaLine[i * 2]     = clipU8(cb);
+                chromaLine[i * 2 + 1] = clipU8(cr);
+        }
+        if(width & 1) {
+                size_t x2 = width - 1;
+                int r = src[x2 * 3 + 0], g = src[x2 * 3 + 1], b = src[x2 * 3 + 2];
                 int y, cb, cr;
                 rgba8ToYCbCr709(r, g, b, &y, &cb, &cr);
                 chromaLine[pairs * 2]     = clipU8(cb);
@@ -342,6 +703,13 @@ void FastPathUYVY8toRGBA8(const void *const *srcPlanes,
                 yuv709ToRgba8(y0, cb, cr, dst + i * 8);
                 yuv709ToRgba8(y1, cb, cr, dst + i * 8 + 4);
         }
+        if(width & 1) {
+                size_t i = pairs;
+                int cb = src[i * 4 + 0];
+                int y0 = src[i * 4 + 1];
+                int cr = src[i * 4 + 2];
+                yuv709ToRgba8(y0, cb, cr, dst + i * 8);
+        }
         return;
 }
 
@@ -364,6 +732,16 @@ void FastPathRGBA8toUYVY8(const void *const *srcPlanes,
                 dst[i*4+1] = clipU8(y0);
                 dst[i*4+2] = clipU8((cr0 + cr1 + 1) >> 1);
                 dst[i*4+3] = clipU8(y1);
+        }
+        if(width & 1) {
+                size_t i = pairs;
+                int r = src[i*8+0], g = src[i*8+1], b = src[i*8+2];
+                int y, cb, cr;
+                rgba8ToYCbCr709(r, g, b, &y, &cb, &cr);
+                dst[i*4+0] = clipU8(cb);
+                dst[i*4+1] = clipU8(y);
+                dst[i*4+2] = clipU8(cr);
+                dst[i*4+3] = dst[i*4+1]; // duplicate Y for the phantom odd-pair
         }
         return;
 }
@@ -388,6 +766,13 @@ void FastPathYUYV8toUYVY8(const void *const *srcPlanes,
                 dst[i*4+2] = src[i*4+3]; // Cr
                 dst[i*4+3] = src[i*4+2]; // Y1
         }
+        if(width & 1) {
+                size_t i = pairs;
+                dst[i*4+0] = src[i*4+1]; // Cb
+                dst[i*4+1] = src[i*4+0]; // Y0
+                dst[i*4+2] = src[i*4+3]; // Cr
+                dst[i*4+3] = src[i*4+0]; // Y1 absent; duplicate Y0
+        }
 }
 
 void FastPathUYVY8toYUYV8(const void *const *srcPlanes,
@@ -402,6 +787,13 @@ void FastPathUYVY8toYUYV8(const void *const *srcPlanes,
                 dst[i*4+0] = src[i*4+1]; // Y0
                 dst[i*4+1] = src[i*4+0]; // Cb
                 dst[i*4+2] = src[i*4+3]; // Y1
+                dst[i*4+3] = src[i*4+2]; // Cr
+        }
+        if(width & 1) {
+                size_t i = pairs;
+                dst[i*4+0] = src[i*4+1]; // Y0
+                dst[i*4+1] = src[i*4+0]; // Cb
+                dst[i*4+2] = src[i*4+1]; // Y1 absent; duplicate Y0
                 dst[i*4+3] = src[i*4+2]; // Cr
         }
 }
@@ -426,6 +818,12 @@ void FastPathNV21toRGBA8(const void *const *srcPlanes,
                 int cb = chroma[i*2+1];    // NV21: Cb second
                 yuv709ToRgba8(y0, cb, cr, dst + i * 8);
                 yuv709ToRgba8(y1, cb, cr, dst + i * 8 + 4);
+        }
+        if(width & 1) {
+                int y0 = luma[width - 1];
+                int cr = chroma[pairs * 2];
+                int cb = chroma[pairs * 2 + 1];
+                yuv709ToRgba8(y0, cb, cr, dst + (width - 1) * 4);
         }
         return;
 }
@@ -455,6 +853,14 @@ void FastPathRGBA8toNV21(const void *const *srcPlanes,
                 chroma[i*2]   = clipU8(cr); // Cr first
                 chroma[i*2+1] = clipU8(cb); // Cb second
         }
+        if(width & 1) {
+                size_t x = width - 1;
+                int r = src[x*4+0], g = src[x*4+1], b = src[x*4+2];
+                int y, cb, cr;
+                rgba8ToYCbCr709(r, g, b, &y, &cb, &cr);
+                chroma[pairs*2]     = clipU8(cr);
+                chroma[pairs*2 + 1] = clipU8(cb);
+        }
         return;
 }
 
@@ -478,6 +884,12 @@ void FastPathNV16toRGBA8(const void *const *srcPlanes,
                 int cb = chroma[i*2], cr = chroma[i*2+1];
                 yuv709ToRgba8(y0, cb, cr, dst + i * 8);
                 yuv709ToRgba8(y1, cb, cr, dst + i * 8 + 4);
+        }
+        if(width & 1) {
+                int y0 = luma[width - 1];
+                int cb = chroma[pairs * 2];
+                int cr = chroma[pairs * 2 + 1];
+                yuv709ToRgba8(y0, cb, cr, dst + (width - 1) * 4);
         }
         return;
 }
@@ -507,6 +919,14 @@ void FastPathRGBA8toNV16(const void *const *srcPlanes,
                 chroma[i*2]   = clipU8(cb);
                 chroma[i*2+1] = clipU8(cr);
         }
+        if(width & 1) {
+                size_t x = width - 1;
+                int r = src[x*4+0], g = src[x*4+1], b = src[x*4+2];
+                int y, cb, cr;
+                rgba8ToYCbCr709(r, g, b, &y, &cb, &cr);
+                chroma[pairs*2]     = clipU8(cb);
+                chroma[pairs*2 + 1] = clipU8(cr);
+        }
         return;
 }
 
@@ -530,6 +950,11 @@ void FastPathPlanar422toRGBA8(const void *const *srcPlanes,
                 int cb = cbp[i], cr = crp[i];
                 yuv709ToRgba8(y0, cb, cr, dst + i * 8);
                 yuv709ToRgba8(y1, cb, cr, dst + i * 8 + 4);
+        }
+        if(width & 1) {
+                int y0 = yp[width - 1];
+                int cb = cbp[pairs], cr = crp[pairs];
+                yuv709ToRgba8(y0, cb, cr, dst + (width - 1) * 4);
         }
         return;
 }
@@ -559,6 +984,14 @@ void FastPathRGBA8toPlanar422(const void *const *srcPlanes,
                 rgba8ToYCbCr709(r, g, b, &y, &cb, &cr);
                 cbp[i] = clipU8(cb);
                 crp[i] = clipU8(cr);
+        }
+        if(width & 1) {
+                size_t x = width - 1;
+                int r = src[x*4+0], g = src[x*4+1], b = src[x*4+2];
+                int y, cb, cr;
+                rgba8ToYCbCr709(r, g, b, &y, &cb, &cr);
+                cbp[pairs] = clipU8(cb);
+                crp[pairs] = clipU8(cr);
         }
         return;
 }
@@ -649,6 +1082,11 @@ void FastPathYUYV601toRGBA8(const void *const *srcPlanes,
                 yuv601ToRgba8(y0, cb, cr, dst + i*8);
                 yuv601ToRgba8(y1, cb, cr, dst + i*8 + 4);
         }
+        if(width & 1) {
+                size_t i = pairs;
+                int y0 = src[i*4+0], cb = src[i*4+1], cr = src[i*4+3];
+                yuv601ToRgba8(y0, cb, cr, dst + i*8);
+        }
         return;
 }
 
@@ -671,6 +1109,16 @@ void FastPathRGBA8toYUYV601(const void *const *srcPlanes,
                 dst[i*4+2] = clipU8(y1);
                 dst[i*4+3] = clipU8((cr0+cr1+1)>>1);
         }
+        if(width & 1) {
+                size_t i = pairs;
+                int r = src[i*8+0], g = src[i*8+1], b = src[i*8+2];
+                int y, cb, cr;
+                rgba8ToYCbCr601(r, g, b, &y, &cb, &cr);
+                dst[i*4+0] = clipU8(y);
+                dst[i*4+1] = clipU8(cb);
+                dst[i*4+2] = dst[i*4+0];
+                dst[i*4+3] = clipU8(cr);
+        }
         return;
 }
 
@@ -686,6 +1134,11 @@ void FastPathUYVY601toRGBA8(const void *const *srcPlanes,
                 int cb = src[i*4+0], y0 = src[i*4+1], cr = src[i*4+2], y1 = src[i*4+3];
                 yuv601ToRgba8(y0, cb, cr, dst + i*8);
                 yuv601ToRgba8(y1, cb, cr, dst + i*8 + 4);
+        }
+        if(width & 1) {
+                size_t i = pairs;
+                int cb = src[i*4+0], y0 = src[i*4+1], cr = src[i*4+2];
+                yuv601ToRgba8(y0, cb, cr, dst + i*8);
         }
         return;
 }
@@ -709,6 +1162,16 @@ void FastPathRGBA8toUYVY601(const void *const *srcPlanes,
                 dst[i*4+2] = clipU8((cr0+cr1+1)>>1);
                 dst[i*4+3] = clipU8(y1);
         }
+        if(width & 1) {
+                size_t i = pairs;
+                int r = src[i*8+0], g = src[i*8+1], b = src[i*8+2];
+                int y, cb, cr;
+                rgba8ToYCbCr601(r, g, b, &y, &cb, &cr);
+                dst[i*4+0] = clipU8(cb);
+                dst[i*4+1] = clipU8(y);
+                dst[i*4+2] = clipU8(cr);
+                dst[i*4+3] = dst[i*4+1];
+        }
         return;
 }
 
@@ -726,6 +1189,12 @@ void FastPathNV12_601toRGBA8(const void *const *srcPlanes,
                 int cb = chroma[i*2], cr = chroma[i*2+1];
                 yuv601ToRgba8(y0, cb, cr, dst + i*8);
                 yuv601ToRgba8(y1, cb, cr, dst + i*8 + 4);
+        }
+        if(width & 1) {
+                int y0 = luma[width - 1];
+                int cb = chroma[pairs * 2];
+                int cr = chroma[pairs * 2 + 1];
+                yuv601ToRgba8(y0, cb, cr, dst + (width - 1) * 4);
         }
         return;
 }
@@ -750,6 +1219,12 @@ void FastPathRGBA8toNV12_601(const void *const *srcPlanes,
                 chroma[i*2]   = clipU8(((-38*r -  74*g + 112*b + 128) >> 8) + 128);
                 chroma[i*2+1] = clipU8(((112*r -  94*g -  18*b + 128) >> 8) + 128);
         }
+        if(width & 1) {
+                size_t x = width - 1;
+                int r = src[x*4+0], g = src[x*4+1], b = src[x*4+2];
+                chroma[pairs*2]     = clipU8(((-38*r -  74*g + 112*b + 128) >> 8) + 128);
+                chroma[pairs*2 + 1] = clipU8(((112*r -  94*g -  18*b + 128) >> 8) + 128);
+        }
         return;
 }
 
@@ -766,6 +1241,10 @@ void FastPathPlanar601_420toRGBA8(const void *const *srcPlanes,
         for(size_t i = 0; i < pairs; i++) {
                 yuv601ToRgba8(yp[i*2],   cbp[i], crp[i], dst + i*8);
                 yuv601ToRgba8(yp[i*2+1], cbp[i], crp[i], dst + i*8 + 4);
+        }
+        if(width & 1) {
+                yuv601ToRgba8(yp[width - 1], cbp[pairs], crp[pairs],
+                              dst + (width - 1) * 4);
         }
         return;
 }
@@ -790,6 +1269,12 @@ void FastPathRGBA8toPlanar601_420(const void *const *srcPlanes,
                 int b = (src[i*8+2]+src[i*8+6]+1)>>1;
                 cbp[i] = clipU8(((-38*r -  74*g + 112*b + 128) >> 8) + 128);
                 crp[i] = clipU8(((112*r -  94*g -  18*b + 128) >> 8) + 128);
+        }
+        if(width & 1) {
+                size_t x = width - 1;
+                int r = src[x*4+0], g = src[x*4+1], b = src[x*4+2];
+                cbp[pairs] = clipU8(((-38*r -  74*g + 112*b + 128) >> 8) + 128);
+                crp[pairs] = clipU8(((112*r -  94*g -  18*b + 128) >> 8) + 128);
         }
         return;
 }

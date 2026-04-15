@@ -32,6 +32,11 @@ Pipeline::Pipeline(MediaIO *source,
         for(size_t i = 0; i < _chainDone.size(); ++i) _chainDone[i] = false;
 
         // Source (_chain[0]): frameReady → drain source (index 0).
+        // Signals emit from stage worker strands; passing @c this as
+        // the connection context routes each handler through the
+        // Pipeline's own EventLoop via the ObjectBase-aware
+        // Signal::connect overload, which keeps drainChain single-
+        // threaded regardless of which worker emitted the signal.
         _chain[0]->frameReadySignal.connect(
                 [this]() { drainChain(0); }, this);
 

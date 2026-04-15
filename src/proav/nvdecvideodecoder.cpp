@@ -42,6 +42,7 @@
 #include <promeki/buffer.h>
 #include <promeki/cuda.h>
 #include <promeki/logger.h>
+#include <promeki/metadata.h>
 #include <promeki/videocodec.h>
 
 #include <deque>
@@ -182,6 +183,16 @@ class NvdecVideoDecoder::Impl {
                         if(Error err = ensureSession(codec); err.isError()) return err;
                         if(pkt.size() == 0 || !pkt.buffer()) return Error::Ok;
 
+                        // Stash the packet's per-image metadata (things
+                        // like Timecode / MediaTimeStamp / user keys
+                        // that the encoder copied onto the packet) so
+                        // handleDisplay can re-attach them to the
+                        // emitted Image.  The queue is strict FIFO —
+                        // safe because display-order equals decode-order
+                        // for pure I/P streams and we don't enable
+                        // B-frames in the encoder.
+                        _packetMetaQueue.push_back(pkt.metadata());
+
                         // Push the encoded bytes into the parser.  The
                         // parser synchronously invokes our Sequence /
                         // Decode / Display callbacks during this call,
@@ -245,6 +256,13 @@ class NvdecVideoDecoder::Impl {
                 unsigned int     _displayH    = 0;
 
                 std::deque<Image> _outQueue;
+
+                // Per-packet metadata FIFO.  submitPacket pushes one
+                // entry per incoming MediaPacket; handleDisplay pops
+                // one entry per emitted Image.  Together they carry
+                // encoder-side per-image state (Timecode, MediaTimeStamp)
+                // across the codec boundary.
+                std::deque<Metadata> _packetMetaQueue;
 
                 // ---- Callback thunks ----------------------------------
                 static int CUDAAPI onSequence(void *user, CUVIDEOFORMAT *fmt) {
@@ -325,6 +343,7 @@ class NvdecVideoDecoder::Impl {
                                 }
                         }
                         _outQueue.clear();
+                        _packetMetaQueue.clear();
                         if(_ctxRetained) {
                                 cuDevicePrimaryCtxRelease(_device);
                                 _ctxRetained = false;
@@ -483,6 +502,18 @@ class NvdecVideoDecoder::Impl {
 
                         gCuvid.UnmapVideoFrame64(_decoder, devPtr);
                         if(!copyOk) return 0;
+
+                        // Pair this display with the oldest queued
+                        // packet metadata.  The FIFO may be empty if
+                        // the caller flushed or if we hit an unexpected
+                        // reorder — attach whatever's at the head and
+                        // fall back to default-constructed Metadata
+                        // otherwise so the Image still looks reasonable
+                        // downstream.
+                        if(!_packetMetaQueue.empty()) {
+                                img.metadata() = std::move(_packetMetaQueue.front());
+                                _packetMetaQueue.pop_front();
+                        }
 
                         _outQueue.push_back(std::move(img));
                         return 1;

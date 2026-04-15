@@ -28,6 +28,8 @@ HWY_EXPORT(FastPathYUYV8toRGBA8);
 HWY_EXPORT(FastPathRGBA8toYUYV8);
 HWY_EXPORT(FastPathNV12toRGBA8);
 HWY_EXPORT(FastPathRGBA8toNV12);
+HWY_EXPORT(FastPathNV12toRGB8);
+HWY_EXPORT(FastPathRGB8toNV12);
 HWY_EXPORT(FastPathUYVY8toRGBA8);
 HWY_EXPORT(FastPathRGBA8toUYVY8);
 HWY_EXPORT(FastPathYUYV8toUYVY8);
@@ -97,6 +99,8 @@ CSC_DISPATCH(FastPathYUYV8toRGBA8)
 CSC_DISPATCH(FastPathRGBA8toYUYV8)
 CSC_DISPATCH(FastPathNV12toRGBA8)
 CSC_DISPATCH(FastPathRGBA8toNV12)
+CSC_DISPATCH(FastPathNV12toRGB8)
+CSC_DISPATCH(FastPathRGB8toNV12)
 CSC_DISPATCH(FastPathUYVY8toRGBA8)
 CSC_DISPATCH(FastPathRGBA8toUYVY8)
 CSC_DISPATCH(FastPathYUYV8toUYVY8)
@@ -178,6 +182,8 @@ static struct FastPathRegistrar {
                 // NV12 (420 semi-planar, CbCr)
                 reg(PixelDesc::YUV8_420_SemiPlanar_Rec709, PixelDesc::RGBA8_sRGB, dispatch_FastPathNV12toRGBA8);
                 reg(PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_420_SemiPlanar_Rec709, dispatch_FastPathRGBA8toNV12);
+                reg(PixelDesc::YUV8_420_SemiPlanar_Rec709, PixelDesc::RGB8_sRGB,  dispatch_FastPathNV12toRGB8);
+                reg(PixelDesc::RGB8_sRGB,                PixelDesc::YUV8_420_SemiPlanar_Rec709, dispatch_FastPathRGB8toNV12);
 
                 // NV21 (420 semi-planar, CrCb)
                 reg(PixelDesc::YUV8_420_NV21_Rec709,     PixelDesc::RGBA8_sRGB, dispatch_FastPathNV21toRGBA8);

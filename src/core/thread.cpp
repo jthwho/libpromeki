@@ -116,6 +116,7 @@ Thread *Thread::adoptCurrentThread() {
         t->_adopted = true;
         t->_running.setValue(true);
         t->_nativeId.setValue(currentNativeId());
+        t->_stdId.setValue(std::this_thread::get_id());
         _currentThread = t;
         return t;
 }
@@ -400,6 +401,7 @@ Error Thread::setPriority(int prio, SchedulePolicy policy) {
 void Thread::threadEntry() {
         _currentThread = this;
         _nativeId.setValue(currentNativeId());
+        _stdId.setValue(std::this_thread::get_id());
         EventLoop loop;
         _threadLoop = &loop;
         _running.setValue(true);

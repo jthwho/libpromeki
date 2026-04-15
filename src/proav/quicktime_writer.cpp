@@ -9,6 +9,8 @@
 #include "quicktime_atom.h"
 
 #include <promeki/file.h>
+#include <promeki/h264bitstream.h>
+#include <promeki/hevcbitstream.h>
 #include <promeki/iodevice.h>
 #include <promeki/logger.h>
 
@@ -94,6 +96,135 @@ uint16_t packLanguage(const String &lang) {
 uint64_t gcd64(uint64_t a, uint64_t b) {
         while(b != 0) { uint64_t t = b; b = a % b; a = t; }
         return a > 0 ? a : 1;
+}
+
+/**
+ * @brief Emits the @c stsd (sample description) box for one track.
+ *
+ * Shared between the classic-layout @c appendTrak path and the
+ * fragmented-layout @c appendInitTrak path, which previously carried
+ * byte-identical inline copies of this logic. Factoring here gives
+ * codec-specific extension atoms (avcC, hvcC, esds, ...) a single
+ * insertion point inside the visual / audio sample entry.
+ *
+ * The box layout is:
+ * @code
+ *   stsd (full box)
+ *     entry_count = 1
+ *     <Video|Audio|TimecodeTrack|"dat "> sample entry
+ *       ...codec-agnostic fields...
+ *       [codec-specific child boxes]   <-- Phase 3 insertion point
+ * @endcode
+ */
+/**
+ * @brief Choose the visual sample entry FourCC for a track.
+ *
+ * For H.264 and HEVC this is @c avc1 / @c hvc1 — the canonical form
+ * recognized by essentially every player.  Those sample entries
+ * require parameter sets (SPS / PPS for H.264; VPS / SPS / PPS for
+ * HEVC) to live only in the @c avcC / @c hvcC configuration record,
+ * which matches the way this writer emits samples: parameter-set
+ * NALs are stripped from each sample during the Annex-B → AVCC
+ * conversion (see @ref QuickTimeWriter::writeSample) and the
+ * configuration record is extracted from the first keyframe.
+ *
+ * For all other codecs the first entry in the @c PixelDesc
+ * FourCC list is used.  See ISO/IEC 14496-15 §5.3.3.1.1 and
+ * §8.3.3.1.1.
+ */
+FourCC quickTimeVideoSampleEntryFourCC(const PixelDesc &pd) {
+        if(pd.id() == PixelDesc::H264) return FourCC("avc1");
+        if(pd.id() == PixelDesc::HEVC) return FourCC("hvc1");
+        return quickTimeCodecFourCC(pd);
+}
+
+/**
+ * @brief Predicate that returns @c false for H.264 parameter-set NAL
+ *        units (SPS type 7, PPS type 8) so they can be stripped out
+ *        when emitting @c avc1 samples.
+ */
+bool keepNonH264ParameterSetNal(const H264Bitstream::NalUnit &nal) {
+        uint8_t t = nal.header0 & 0x1f;
+        return t != 7 && t != 8;
+}
+
+/**
+ * @brief Predicate that returns @c false for HEVC parameter-set NAL
+ *        units (VPS 32, SPS 33, PPS 34) so they can be stripped out
+ *        when emitting @c hvc1 samples.
+ */
+bool keepNonHevcParameterSetNal(const H264Bitstream::NalUnit &nal) {
+        uint8_t t = static_cast<uint8_t>((nal.header0 >> 1) & 0x3f);
+        return t < 32 || t > 34;
+}
+
+void appendStsdBox(AtomWriter &w, const QuickTimeWriterTrack &t) {
+        auto stsd = w.beginFullBox(kStsd, 0, 0);
+        w.writeU32(1);                    // entry_count
+        if(t.type == QuickTime::Video) {
+                FourCC codec = quickTimeVideoSampleEntryFourCC(t.pixelDesc);
+                auto vse = w.beginBox(codec);
+                w.writeU32(0); w.writeU16(0);     // reserved[6]
+                w.writeU16(1);                    // data_reference_index
+                w.writeU16(0);                    // version
+                w.writeU16(0);                    // revision
+                w.writeFourCC(FourCC("    "));    // vendor
+                w.writeU32(0);                    // temporal quality
+                w.writeU32(0x00000200);           // spatial quality
+                w.writeU16(static_cast<uint16_t>(t.size.width()));
+                w.writeU16(static_cast<uint16_t>(t.size.height()));
+                w.writeFixed16_16(72.0);          // horiz res
+                w.writeFixed16_16(72.0);          // vert res
+                w.writeU32(0);                    // data size
+                w.writeU16(1);                    // frame count
+                w.writePascalString(t.pixelDesc.name(), 32);
+                w.writeU16(t.pixelDesc.hasAlpha() ? 32 : 24); // depth
+                w.writeS16(-1);                   // pre-defined color table id
+                // Codec-specific extension boxes (e.g. avcC / hvcC).
+                // Live as child boxes of the visual sample entry, so
+                // they must be written before vse is closed.
+                if(t.codecConfigBox && t.codecConfigBox->size() > 0 &&
+                   t.codecConfigType.value() != 0) {
+                        auto cfgBox = w.beginBox(t.codecConfigType);
+                        w.writeBytes(t.codecConfigBox->data(),
+                                     t.codecConfigBox->size());
+                        w.endBox(cfgBox);
+                }
+                w.endBox(vse);
+        } else if(t.type == QuickTime::Audio) {
+                FourCC codec = pcmFourCCForDataType(t.audioDesc.dataType());
+                auto ase = w.beginBox(codec);
+                w.writeU32(0); w.writeU16(0);     // reserved[6]
+                w.writeU16(1);                    // data_reference_index
+                w.writeU16(0);                    // version (v0)
+                w.writeU16(0);                    // revision
+                w.writeFourCC(FourCC("    "));    // vendor
+                w.writeU16(static_cast<uint16_t>(t.audioDesc.channels()));
+                w.writeU16(static_cast<uint16_t>(t.audioDesc.bytesPerSample() * 8));
+                w.writeU16(0);                    // pre-defined / compression ID
+                w.writeU16(0);                    // packet size
+                // Sample rate as 16.16 fixed in the high 16 bits + 0 fraction.
+                uint32_t srFixed = static_cast<uint32_t>(t.audioDesc.sampleRate()) << 16;
+                w.writeU32(srFixed);
+                w.endBox(ase);
+        } else if(t.type == QuickTime::TimecodeTrack) {
+                auto tcse = w.beginBox(FourCC("tmcd"));
+                w.writeU32(0); w.writeU16(0);     // reserved[6]
+                w.writeU16(1);                    // data_reference_index
+                w.writeU32(0);                    // reserved
+                w.writeU32(t.tcFlags);
+                w.writeU32(t.timescale);
+                w.writeU32(t.frameRate.rational().denominator());
+                w.writeU8(t.tcFrameCount);
+                w.writeU8(0);                     // reserved
+                w.endBox(tcse);
+        } else {
+                auto datBox = w.beginBox(FourCC("dat "));
+                w.writeU32(0); w.writeU16(0);     // reserved[6]
+                w.writeU16(1);                    // data_reference_index
+                w.endBox(datBox);
+        }
+        w.endBox(stsd);
 }
 
 } // namespace
@@ -302,10 +433,65 @@ Error QuickTimeWriter::writeSample(uint32_t trackId, const QuickTime::Sample &sa
         if(idx == SIZE_MAX) return Error::IdNotFound;
         QuickTimeWriterTrack &t = _writeTracks[idx];
 
+        // H.264 / HEVC tracks: (1) extract the codec configuration
+        // record from the first keyframe and (2) rewrite the Annex-B
+        // access unit to length-prefixed (AVCC) form for storage in
+        // mdat.  Both steps run before @c ensureInitMoovWritten() so
+        // that the fragmented-layout init moov carries the populated
+        // @c codecConfigBox in its stsd entry.
+        Buffer::Ptr convertedPayload;
+        const bool isH264 = (t.type == QuickTime::Video &&
+                             t.pixelDesc.id() == PixelDesc::H264);
+        const bool isHEVC = (t.type == QuickTime::Video &&
+                             t.pixelDesc.id() == PixelDesc::HEVC);
+        if(isH264 || isHEVC) {
+                BufferView srcView(sample.data, 0, sample.data->size());
+                if(!t.codecConfigBox && sample.keyframe) {
+                        Buffer::Ptr cfgPayload;
+                        FourCC      cfgType = isH264 ? FourCC("avcC") : FourCC("hvcC");
+                        Error cfgErr;
+                        if(isH264) {
+                                AvcDecoderConfig cfg;
+                                cfgErr = AvcDecoderConfig::fromAnnexB(srcView, cfg);
+                                if(!cfgErr.isError()) cfgErr = cfg.serialize(cfgPayload);
+                        } else {
+                                HevcDecoderConfig cfg;
+                                cfgErr = HevcDecoderConfig::fromAnnexB(srcView, cfg);
+                                if(!cfgErr.isError()) cfgErr = cfg.serialize(cfgPayload);
+                        }
+                        if(cfgErr.isError()) {
+                                // Without a config record the file will be
+                                // unplayable — fail the write outright rather
+                                // than silently emitting a broken track.
+                                promekiErr("QuickTime: failed to build %s from first keyframe: %s",
+                                           isH264 ? "avcC" : "hvcC", cfgErr.name().cstr());
+                                return cfgErr;
+                        }
+                        t.codecConfigBox  = cfgPayload;
+                        t.codecConfigType = cfgType;
+                }
+                // Parameter-set NALs (SPS / PPS for H.264; VPS / SPS /
+                // PPS for HEVC) must NOT appear in the sample payload
+                // for an @c avc1 / @c hvc1 sample entry — they live
+                // solely in the @c avcC / @c hvcC configuration record
+                // we just built above.  Filter them out as we convert
+                // to AVCC.
+                Error convErr = H264Bitstream::annexBToAvccFiltered(
+                        srcView, 4,
+                        isH264 ? keepNonH264ParameterSetNal : keepNonHevcParameterSetNal,
+                        convertedPayload);
+                if(convErr.isError()) {
+                        promekiErr("QuickTime: Annex-B to AVCC conversion failed: %s",
+                                   convErr.name().cstr());
+                        return convErr;
+                }
+        }
+
         // In fragmented mode, the init moov must be written before we can
         // start producing fragments. Do it lazily the first time a sample
         // is written — now that addTrack* calls have registered all the
-        // tracks we care about.
+        // tracks we care about, and (for H.264/HEVC) the codec config
+        // has been extracted from this same first sample above.
         if(_layout == QuickTime::LayoutFragmented) {
                 Error mErr = ensureInitMoovWritten();
                 if(mErr.isError()) return mErr;
@@ -322,8 +508,15 @@ Error QuickTimeWriter::writeSample(uint32_t trackId, const QuickTime::Sample &sa
                 duration = 1;
         }
         int32_t cts = static_cast<int32_t>(sample.pts - sample.dts);
-        const uint8_t *bytes = static_cast<const uint8_t *>(sample.data->data());
-        int64_t payloadSize = static_cast<int64_t>(sample.data->size());
+        const uint8_t *bytes;
+        int64_t        payloadSize;
+        if(convertedPayload) {
+                bytes       = static_cast<const uint8_t *>(convertedPayload->data());
+                payloadSize = static_cast<int64_t>(convertedPayload->size());
+        } else {
+                bytes       = static_cast<const uint8_t *>(sample.data->data());
+                payloadSize = static_cast<int64_t>(sample.data->size());
+        }
 
         if(_layout == QuickTime::LayoutFragmented) {
                 // Fragmented: append sample bytes to the track's
@@ -844,63 +1037,7 @@ void QuickTimeWriter::appendTrak(AtomWriter &w, const QuickTimeWriterTrack &t,
         // stbl
         auto stbl = w.beginBox(kStbl);
 
-        // stsd
-        auto stsd = w.beginFullBox(kStsd, 0, 0);
-        w.writeU32(1);                    // entry_count
-        if(t.type == QuickTime::Video) {
-                FourCC codec = quickTimeCodecFourCC(t.pixelDesc);
-                auto vse = w.beginBox(codec);
-                w.writeU32(0); w.writeU16(0);     // reserved[6]
-                w.writeU16(1);                    // data_reference_index
-                w.writeU16(0);                    // version
-                w.writeU16(0);                    // revision
-                w.writeFourCC(FourCC("    "));    // vendor
-                w.writeU32(0);                    // temporal quality
-                w.writeU32(0x00000200);           // spatial quality
-                w.writeU16(static_cast<uint16_t>(t.size.width()));
-                w.writeU16(static_cast<uint16_t>(t.size.height()));
-                w.writeFixed16_16(72.0);          // horiz res
-                w.writeFixed16_16(72.0);          // vert res
-                w.writeU32(0);                    // data size
-                w.writeU16(1);                    // frame count
-                w.writePascalString(t.pixelDesc.name(), 32);
-                w.writeU16(t.pixelDesc.hasAlpha() ? 32 : 24); // depth
-                w.writeS16(-1);                   // pre-defined color table id
-                w.endBox(vse);
-        } else if(t.type == QuickTime::Audio) {
-                FourCC codec = pcmFourCCForDataType(t.audioDesc.dataType());
-                auto ase = w.beginBox(codec);
-                w.writeU32(0); w.writeU16(0);     // reserved[6]
-                w.writeU16(1);                    // data_reference_index
-                w.writeU16(0);                    // version (v0)
-                w.writeU16(0);                    // revision
-                w.writeFourCC(FourCC("    "));    // vendor
-                w.writeU16(static_cast<uint16_t>(t.audioDesc.channels()));
-                w.writeU16(static_cast<uint16_t>(t.audioDesc.bytesPerSample() * 8));
-                w.writeU16(0);                    // pre-defined / compression ID
-                w.writeU16(0);                    // packet size
-                // Sample rate as 16.16 fixed in the high 16 bits + 0 fraction.
-                uint32_t srFixed = static_cast<uint32_t>(t.audioDesc.sampleRate()) << 16;
-                w.writeU32(srFixed);
-                w.endBox(ase);
-        } else if(t.type == QuickTime::TimecodeTrack) {
-                auto tcse = w.beginBox(FourCC("tmcd"));
-                w.writeU32(0); w.writeU16(0);     // reserved[6]
-                w.writeU16(1);                    // data_reference_index
-                w.writeU32(0);                    // reserved
-                w.writeU32(t.tcFlags);
-                w.writeU32(t.timescale);
-                w.writeU32(t.frameRate.rational().denominator());
-                w.writeU8(t.tcFrameCount);
-                w.writeU8(0);                     // reserved
-                w.endBox(tcse);
-        } else {
-                auto datBox = w.beginBox(FourCC("dat "));
-                w.writeU32(0); w.writeU16(0);     // reserved[6]
-                w.writeU16(1);                    // data_reference_index
-                w.endBox(datBox);
-        }
-        w.endBox(stsd);
+        appendStsdBox(w, t);
 
         if(t.type == QuickTime::Audio) {
                 // ---- Audio: canonical PCM stbl layout ----
@@ -1236,56 +1373,7 @@ void QuickTimeWriter::appendInitTrak(AtomWriter &w, const QuickTimeWriterTrack &
         // stbl — sample description with real codec info, empty sample tables
         auto stbl = w.beginBox(kStbl);
 
-        auto stsd = w.beginFullBox(kStsd, 0, 0);
-        w.writeU32(1);
-        if(t.type == QuickTime::Video) {
-                FourCC codec = quickTimeCodecFourCC(t.pixelDesc);
-                auto vse = w.beginBox(codec);
-                w.writeU32(0); w.writeU16(0);
-                w.writeU16(1);
-                w.writeU16(0); w.writeU16(0);
-                w.writeFourCC(FourCC("    "));
-                w.writeU32(0); w.writeU32(0x00000200);
-                w.writeU16(static_cast<uint16_t>(t.size.width()));
-                w.writeU16(static_cast<uint16_t>(t.size.height()));
-                w.writeFixed16_16(72.0); w.writeFixed16_16(72.0);
-                w.writeU32(0);
-                w.writeU16(1);
-                w.writePascalString(t.pixelDesc.name(), 32);
-                w.writeU16(t.pixelDesc.hasAlpha() ? 32 : 24);
-                w.writeS16(-1);
-                w.endBox(vse);
-        } else if(t.type == QuickTime::Audio) {
-                FourCC codec = pcmFourCCForDataType(t.audioDesc.dataType());
-                auto ase = w.beginBox(codec);
-                w.writeU32(0); w.writeU16(0);
-                w.writeU16(1);
-                w.writeU16(0); w.writeU16(0);
-                w.writeFourCC(FourCC("    "));
-                w.writeU16(static_cast<uint16_t>(t.audioDesc.channels()));
-                w.writeU16(static_cast<uint16_t>(t.audioDesc.bytesPerSample() * 8));
-                w.writeU16(0); w.writeU16(0);
-                uint32_t srFixed = static_cast<uint32_t>(t.audioDesc.sampleRate()) << 16;
-                w.writeU32(srFixed);
-                w.endBox(ase);
-        } else if(t.type == QuickTime::TimecodeTrack) {
-                auto tcse = w.beginBox(FourCC("tmcd"));
-                w.writeU32(0); w.writeU16(0);
-                w.writeU16(1);
-                w.writeU32(0);
-                w.writeU32(t.tcFlags);
-                w.writeU32(t.timescale);
-                w.writeU32(t.frameRate.rational().denominator());
-                w.writeU8(t.tcFrameCount);
-                w.writeU8(0);
-                w.endBox(tcse);
-        } else {
-                auto datBox = w.beginBox(FourCC("dat "));
-                w.writeU32(0); w.writeU16(0);
-                w.writeU16(1);
-                w.endBox(datBox);
-        }
-        w.endBox(stsd);
+        appendStsdBox(w, t);
 
         // Empty sample tables — all zero entry counts. Required by spec to
         // be present even for fragmented init segments.

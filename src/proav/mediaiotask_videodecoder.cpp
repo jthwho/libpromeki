@@ -132,6 +132,7 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandOpen &cmd) {
         _capacityWarned   = false;
         _closed           = false;
         _outputQueue.clear();
+        _pendingSrcFrames.clear();
 
         cmd.mediaDesc     = outDesc;
         if(!outDesc.audioList().isEmpty()) cmd.audioDesc = outDesc.audioList()[0];
@@ -149,10 +150,11 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandClose &cmd) {
         (void)cmd;
         if(_decoder != nullptr) {
                 _decoder->flush();
-                drainDecoderInto(Frame::Ptr());
+                drainDecoderInto();
                 delete _decoder;
                 _decoder = nullptr;
         }
+        _pendingSrcFrames.clear();
         _codec = VideoCodec();
         _outputPixelDesc = PixelDesc();
         _outputPixelDescSet = false;
@@ -188,9 +190,13 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandWrite &cmd) {
         // Submit every packet in order, draining decoded frames between
         // submissions so a packet carrying multiple NAL units (SPS +
         // PPS + IDR concatenated) doesn't flood the queue ahead of the
-        // frames that come out.
+        // frames that come out.  Push the source Frame onto the
+        // pending FIFO before each submit so drainDecoderInto can pair
+        // each emitted image with the right input even when the DPB
+        // delays a few frames on startup.
         for(const auto &pktPtr : frame.packetList()) {
                 if(!pktPtr || !pktPtr->isValid()) continue;
+                _pendingSrcFrames.pushToBack(cmd.frame);
                 Error err = _decoder->submitPacket(*pktPtr);
                 if(err.isError()) {
                         promekiErr("MediaIOTask_VideoDecoder: submitPacket failed: %s",
@@ -199,7 +205,7 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandWrite &cmd) {
                         return err;
                 }
                 _packetsDecoded++;
-                drainDecoderInto(cmd.frame);
+                drainDecoderInto();
         }
 
         _frameCount++;
@@ -209,17 +215,28 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandWrite &cmd) {
         return Error::Ok;
 }
 
-void MediaIOTask_VideoDecoder::drainDecoderInto(const Frame::Ptr &srcFrame) {
+void MediaIOTask_VideoDecoder::drainDecoderInto() {
         if(_decoder == nullptr) return;
         while(true) {
                 Image img = _decoder->receiveFrame();
                 if(!img.isValid()) break;
 
+                // Pair this image with the oldest queued source Frame
+                // — that's the packet Frame that produced it even when
+                // DPB warmup delays a few frames.  Empty queue is a
+                // best-effort fallback (shouldn't happen for I/P-only
+                // streams but leaves the image intact for any other).
+                Frame::Ptr origin;
+                if(!_pendingSrcFrames.isEmpty()) {
+                        origin = _pendingSrcFrames.front();
+                        _pendingSrcFrames.remove(0);
+                }
+
                 Frame::Ptr outFrame = Frame::Ptr::create();
                 Frame     *out = outFrame.modify();
-                if(srcFrame.isValid()) {
-                        out->metadata() = srcFrame->metadata();
-                        for(const auto &a : srcFrame->audioList()) {
+                if(origin.isValid()) {
+                        out->metadata() = origin->metadata();
+                        for(const auto &a : origin->audioList()) {
                                 out->audioList().pushToBack(a);
                         }
                 }

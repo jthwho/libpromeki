@@ -15,6 +15,7 @@
 #include <promeki/result.h>
 #include <promeki/list.h>
 #include <promeki/buffer.h>
+#include <promeki/fourcc.h>
 #include <promeki/framerate.h>
 #include <promeki/size2d.h>
 #include <promeki/pixeldesc.h>
@@ -145,6 +146,22 @@ class QuickTime {
                                 const Metadata  &metadata() const    { return _metadata; }
                                 /** @brief Returns the elst start offset (in this track's timescale). */
                                 int64_t          editStartOffset() const { return _editStartOffset; }
+                                /**
+                                 * @brief Returns the codec-specific
+                                 *        configuration record payload
+                                 *        (e.g. the bytes inside the
+                                 *        @c avcC / @c hvcC box), or
+                                 *        an empty Buffer::Ptr if the
+                                 *        track has no such record.
+                                 */
+                                const Buffer::Ptr &codecConfig() const { return _codecConfig; }
+                                /**
+                                 * @brief Returns the FourCC type of
+                                 *        the codec configuration
+                                 *        record (@c avcC, @c hvcC,
+                                 *        etc.) or zero when absent.
+                                 */
+                                FourCC            codecConfigType() const { return _codecConfigType; }
 
                                 /** @brief Sets the track kind. */
                                 void setType(TrackType t)                { _type = t; }
@@ -172,6 +189,10 @@ class QuickTime {
                                 Metadata        &metadata()              { return _metadata; }
                                 /** @brief Sets the elst start offset (in this track's timescale). */
                                 void setEditStartOffset(int64_t v)       { _editStartOffset = v; }
+                                /** @brief Sets the codec configuration record payload. */
+                                void setCodecConfig(const Buffer::Ptr &b) { _codecConfig = b; }
+                                /** @brief Sets the FourCC type of the codec configuration record. */
+                                void setCodecConfigType(FourCC t)         { _codecConfigType = t; }
 
                         private:
                                 TrackType _type = InvalidTrack;
@@ -187,6 +208,8 @@ class QuickTime {
                                 AudioDesc _audioDesc;
                                 Metadata  _metadata;
                                 int64_t   _editStartOffset = 0;
+                                Buffer::Ptr _codecConfig;
+                                FourCC      _codecConfigType{'\0','\0','\0','\0'};
                 };
 
                 /** @brief Plain-value list of tracks. */

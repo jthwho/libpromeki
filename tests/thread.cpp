@@ -868,3 +868,201 @@ TEST_CASE("Thread: ObjectBasePtr copy assignment across threads") {
         CHECK(copyValid.load());
         delete obj;
 }
+
+// ============================================================================
+// Signal::connect(Function, ObjectBase*) — Qt-style AutoConnection overload.
+//
+// These tests pin the library contract that pairing a raw callable with an
+// ObjectBase context pointer performs same-thread direct dispatch and
+// cross-thread marshalling through the owner's EventLoop.  The contract
+// existed in ObjectBase::connect(Signal*, Slot*) already; these tests guard
+// the lambda overload that callers actually reach for when connecting
+// signals to functors with a `this` context.
+// ============================================================================
+
+TEST_CASE("Signal::connect(Function, ObjectBase*): same-thread direct dispatch") {
+        EventLoop mainLoop;
+        TestOne owner;
+        CHECK(owner.eventLoop() == &mainLoop);
+
+        // Emit on the owner's own loop — the slot must fire inline on
+        // the emitting thread without a round trip through
+        // postCallable.  We observe that by comparing thread IDs
+        // captured inside the slot against the emitting thread ID.
+        const std::thread::id emitterId = std::this_thread::get_id();
+        std::atomic<std::thread::id> slotId{};
+        std::atomic<int> callCount{0};
+        owner.somethingHappenedSignal.connect(
+                [&slotId, &callCount](const String &) {
+                        slotId.store(std::this_thread::get_id(),
+                                     std::memory_order_relaxed);
+                        callCount.fetch_add(1, std::memory_order_relaxed);
+                },
+                &owner);
+
+        owner.makeSomethingHappen();
+
+        // Direct dispatch: already ran by the time emit() returned.
+        CHECK(callCount.load() == 1);
+        CHECK(slotId.load() == emitterId);
+}
+
+TEST_CASE("Signal::connect(Function, ObjectBase*): cross-thread auto-marshal") {
+        EventLoop mainLoop;
+        Thread worker;
+        worker.start();
+
+        // The owner lives on the worker thread's loop.  Signals emit
+        // from main thread — the overload must route the call through
+        // @c worker.threadEventLoop()->postCallable so the slot runs
+        // on the worker thread even though the signal itself has no
+        // knowledge of threads.
+        TestOne *ownerOnWorker = nullptr;
+        std::atomic<bool> created{false};
+        worker.threadEventLoop()->postCallable([&ownerOnWorker, &created]() {
+                ownerOnWorker = new TestOne();
+                created.store(true, std::memory_order_release);
+        });
+        while(!created.load(std::memory_order_acquire)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+
+        const std::thread::id mainId   = std::this_thread::get_id();
+        const std::thread::id workerId = worker.id();
+        std::atomic<std::thread::id> slotId{};
+        std::atomic<int> callCount{0};
+        String receivedArg;
+        std::atomic<bool> argReady{false};
+
+        // Connect once, from the main thread.  The new overload
+        // captures the owner and uses @c owner->eventLoop() at emit
+        // time for the thread check.
+        ownerOnWorker->somethingHappenedSignal.connect(
+                [&](const String &s) {
+                        slotId.store(std::this_thread::get_id(),
+                                     std::memory_order_relaxed);
+                        receivedArg = s;
+                        callCount.fetch_add(1, std::memory_order_relaxed);
+                        argReady.store(true, std::memory_order_release);
+                },
+                ownerOnWorker);
+
+        // Fire from main thread — this should NOT invoke the slot
+        // inline; it should post onto the worker's loop.
+        CHECK(callCount.load() == 0);
+        ownerOnWorker->makeSomethingHappen();
+
+        // Wait for the marshalled slot to execute on the worker.
+        while(!argReady.load(std::memory_order_acquire)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+
+        CHECK(callCount.load() == 1);
+        CHECK(slotId.load() == workerId);
+        CHECK(slotId.load() != mainId);
+        CHECK(receivedArg == "Something!");
+
+        // Clean up the worker-side object on the worker so its
+        // destructor runs with the right affinity.
+        std::atomic<bool> cleaned{false};
+        worker.threadEventLoop()->postCallable(
+                [ownerOnWorker, &cleaned]() {
+                        delete ownerOnWorker;
+                        cleaned.store(true, std::memory_order_release);
+                });
+        while(!cleaned.load(std::memory_order_acquire)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        worker.quit();
+        worker.wait();
+}
+
+TEST_CASE("Signal::connect(Function, ObjectBase*): serializes concurrent emitters") {
+        // The pipeline-scrambling bug this overload was introduced to
+        // fix: multiple worker threads emitting the same signal race
+        // to invoke the slot.  With an ObjectBase context anchored to
+        // a single EventLoop, all invocations must run serially on
+        // that loop — no interleaving, no missed calls.
+        EventLoop mainLoop;
+        Thread coordinator;
+        coordinator.start();
+
+        TestOne *owner = nullptr;
+        std::atomic<bool> ready{false};
+        coordinator.threadEventLoop()->postCallable([&owner, &ready]() {
+                owner = new TestOne();
+                ready.store(true, std::memory_order_release);
+        });
+        while(!ready.load(std::memory_order_acquire)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+
+        const std::thread::id coordId = coordinator.id();
+        std::atomic<int> nonCoordDispatches{0};
+        std::atomic<int> calls{0};
+        owner->somethingHappenedSignal.connect(
+                [&calls, &nonCoordDispatches, coordId](const String &) {
+                        if(std::this_thread::get_id() != coordId) {
+                                nonCoordDispatches.fetch_add(
+                                        1, std::memory_order_relaxed);
+                        }
+                        calls.fetch_add(1, std::memory_order_relaxed);
+                },
+                owner);
+
+        // Fire from several workers concurrently.  Each emit() posts
+        // to the coordinator's loop; the coordinator drains them one
+        // at a time.  None must be lost and none must run on the
+        // emitting worker's thread.
+        constexpr int kEmittersPerThread = 64;
+        constexpr int kThreads = 4;
+        std::atomic<int> startGate{0};
+        List<std::thread> emitters;
+        for(int t = 0; t < kThreads; ++t) {
+                emitters.pushToBack(std::thread([&]() {
+                        startGate.fetch_add(1, std::memory_order_relaxed);
+                        while(startGate.load(std::memory_order_relaxed) < kThreads) {
+                                std::this_thread::yield();
+                        }
+                        for(int i = 0; i < kEmittersPerThread; ++i) {
+                                owner->makeSomethingHappen();
+                        }
+                }));
+        }
+        for(auto it = emitters.begin(); it != emitters.end(); ++it) {
+                it->join();
+        }
+
+        // Give the coordinator time to drain all posted callables.
+        const int expected = kEmittersPerThread * kThreads;
+        while(calls.load(std::memory_order_relaxed) < expected) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        CHECK(calls.load() == expected);
+        CHECK(nonCoordDispatches.load() == 0);
+
+        std::atomic<bool> cleaned{false};
+        coordinator.threadEventLoop()->postCallable([owner, &cleaned]() {
+                delete owner;
+                cleaned.store(true, std::memory_order_release);
+        });
+        while(!cleaned.load(std::memory_order_acquire)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        coordinator.quit();
+        coordinator.wait();
+}
+
+TEST_CASE("Signal::connect(Function, ObjectBase*): null owner asserts") {
+        // Passing a null ObjectBase context is a programmer error —
+        // there is no EventLoop to anchor dispatch to, so the
+        // overload asserts rather than silently falling back.
+        // Callers that want the raw, same-thread-only behaviour must
+        // call the @c void*-owner overload with @c nullptr explicitly.
+        EventLoop mainLoop;
+        Signal<int> sig;
+        CHECK_THROWS_AS(
+                sig.connect([](int) {}, static_cast<ObjectBase *>(nullptr)),
+                std::runtime_error);
+}
+

@@ -14,6 +14,8 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+class ObjectBase;
+
 /**
  * @brief Type-safe signal/slot mechanism for decoupled event notification.
  * @ingroup events
@@ -88,6 +90,38 @@ template <typename... Args> class Signal {
                         _slots += Info(slot, ptr);
                         return slotID;
                 }
+
+                /**
+                 * @brief Connects a callable with an ObjectBase context
+                 *        (Qt-style cross-thread dispatch).
+                 *
+                 * When the signal is emitted from a thread whose
+                 * @ref EventLoop differs from the owner's
+                 * @ref ObjectBase::eventLoop, the call is marshalled
+                 * onto the owner's EventLoop via @c postCallable and
+                 * invoked asynchronously there — matching Qt's
+                 * @c Qt::AutoConnection semantics.  When the signal
+                 * emits on the owner's own thread the slot is invoked
+                 * directly with zero overhead.
+                 *
+                 * The overload exists as a peer to the untyped
+                 * @c connect(Function, void*) so callers that pass an
+                 * ObjectBase-derived @c this pointer get the correct
+                 * threading behaviour without having to reach for
+                 * @ref ObjectBase::connect; plain @c void* callers keep
+                 * the raw, same-thread-only semantics.
+                 *
+                 * Args are captured by value into a @c std::tuple and
+                 * unpacked after the post, so argument types must be
+                 * copy-constructible.
+                 *
+                 * @param slot  The callable to invoke.
+                 * @param owner ObjectBase context whose EventLoop
+                 *              governs dispatch.  Also used for
+                 *              disconnect-by-object lookup.
+                 * @return The slot connection ID.
+                 */
+                size_t connect(Function slot, ObjectBase *owner);
 
                 /**
                  * @brief Connects this signal to an object member function.

@@ -165,6 +165,8 @@ class SDLVideoWidget : public Widget {
                 uint32_t        _textureColorspace = 0;
                 ScaleMode       _scaleMode = ScaleFit;
                 Image           _currentImage;
+                uint32_t        _frameCount = 0;
+                uint32_t        _framesFastPath = 0;
 
                 void ensureTexture(int w, int h, uint32_t sdlPixFmt,
                                    uint32_t sdlColorspace);

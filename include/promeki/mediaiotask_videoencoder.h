@@ -114,15 +114,29 @@ class MediaIOTask_VideoEncoder : public MediaIOTask {
                 int pendingOutput() const override;
 
                 // Drains the underlying encoder's ready packets into
-                // @p srcFrame-derived output frames, appending each to
-                // @c _outputQueue.  The source frame supplies audio and
-                // metadata that get copied alongside each packet.
-                void drainEncoderInto(const Frame::Ptr &srcFrame);
+                // per-packet output frames, appending each to
+                // @c _outputQueue.  Each drained packet is paired with
+                // the source Frame that produced it via
+                // @c _pendingSrcFrames so audio / metadata travel with
+                // the correct input even when NVENC buffers an earlier
+                // frame and emits it on a later submit.
+                void drainEncoderInto();
 
                 VideoCodec            _codec;
                 VideoEncoder         *_encoder = nullptr;
                 int                   _capacity = 8;
                 List<Frame::Ptr>      _outputQueue;
+
+                // FIFO of submitted source Frames awaiting a matching
+                // packet from the encoder.  One entry is pushed per
+                // successful submitFrame() and popped per emitted
+                // MediaPacket; the pairing is order-preserving because
+                // the encoder runs in 1-in / 1-out sync mode (no
+                // B-frames, no look-ahead).  Needed to preserve the
+                // source frame's metadata + audio across the
+                // NEED_MORE_INPUT case where submit N's packet emerges
+                // during submit N+1.
+                List<Frame::Ptr>      _pendingSrcFrames;
                 int64_t               _frameCount = 0;
                 int64_t               _readCount = 0;
                 int64_t               _framesEncoded = 0;

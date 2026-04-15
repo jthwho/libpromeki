@@ -107,9 +107,12 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandOpen &cmd) {
                 if(prerollSamples > 0) {
                         Audio silence(adesc, prerollSamples);
                         silence.resize(prerollSamples);
-                        std::memset(silence.data<float>(), 0,
-                                    prerollSamples
-                                    * adesc.channels() * sizeof(float));
+                        // The Audio buffer is allocated for the descriptor's
+                        // sample format (e.g. 2 bytes/sample for s16, 4 for
+                        // f32).  silence.zero() fills exactly that buffer —
+                        // hand-rolled memset with sizeof(float) would overrun
+                        // for any non-float descriptor and corrupt the heap.
+                        silence.zero();
                         _audioOutput->pushAudio(silence);
                 }
 

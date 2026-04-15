@@ -9,10 +9,13 @@
 #include <cstring>
 #include <promeki/mediaiotask_quicktime.h>
 #include <promeki/enums.h>
+#include <promeki/h264bitstream.h>
+#include <promeki/hevcbitstream.h>
 #include <promeki/iodevice.h>
 #include <promeki/image.h>
 #include <promeki/frame.h>
 #include <promeki/audio.h>
+#include <promeki/mediapacket.h>
 #include <promeki/metadata.h>
 #include <promeki/timecode.h>
 #include <promeki/logger.h>
@@ -417,6 +420,65 @@ Error MediaIOTask_QuickTime::readVideoFrame(uint64_t frameIndex, Frame::Ptr &out
         }
         frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
 
+        // For H.264 / HEVC tracks, also emit a MediaPacket carrying
+        // the sample re-framed as an Annex-B byte stream so a
+        // downstream @c VideoDecoder stage (e.g. NVDec) can consume
+        // it directly.  Container-stored samples are length-prefixed
+        // (AVCC) and parameter sets (SPS / PPS / VPS) live only in
+        // the @c avcC / @c hvcC configuration record — convert here,
+        // and prepend the parameter sets in front of every keyframe
+        // so the decoder can be initialized from any seek point.
+        const bool isH264 = (vt.pixelDesc().id() == PixelDesc::H264);
+        const bool isHEVC = (vt.pixelDesc().id() == PixelDesc::HEVC);
+        if((isH264 || isHEVC) && vt.codecConfig().isValid()) {
+                Buffer::Ptr annexB;
+                Error cerr = H264Bitstream::avccToAnnexB(
+                        BufferView(s.data, 0, s.data->size()), 4, annexB);
+                if(cerr.isError()) {
+                        promekiWarn("MediaIOTask_QuickTime: AVCC->Annex-B failed for sample %llu: %s",
+                                    static_cast<unsigned long long>(frameIndex),
+                                    cerr.name().cstr());
+                } else {
+                        Buffer::Ptr payload = annexB;
+                        if(s.keyframe) {
+                                // Build the parameter-set Annex-B prefix from
+                                // the configuration record once on demand.
+                                Buffer::Ptr psAnnexB;
+                                BufferView cfgView(vt.codecConfig(), 0,
+                                                   vt.codecConfig()->size());
+                                Error pe;
+                                if(isH264) {
+                                        AvcDecoderConfig cfg;
+                                        pe = AvcDecoderConfig::parse(cfgView, cfg);
+                                        if(!pe.isError()) pe = cfg.toAnnexB(psAnnexB);
+                                } else {
+                                        HevcDecoderConfig cfg;
+                                        pe = HevcDecoderConfig::parse(cfgView, cfg);
+                                        if(!pe.isError()) pe = cfg.toAnnexB(psAnnexB);
+                                }
+                                if(!pe.isError() && psAnnexB && psAnnexB->size() > 0) {
+                                        size_t total = psAnnexB->size() + annexB->size();
+                                        Buffer::Ptr merged = Buffer::Ptr::create(total);
+                                        if(merged) {
+                                                std::memcpy(merged->data(),
+                                                            psAnnexB->data(),
+                                                            psAnnexB->size());
+                                                std::memcpy(static_cast<uint8_t *>(merged->data())
+                                                            + psAnnexB->size(),
+                                                            annexB->data(),
+                                                            annexB->size());
+                                                merged->setSize(total);
+                                                payload = merged;
+                                        }
+                                }
+                        }
+                        MediaPacket pkt(payload, vt.pixelDesc());
+                        if(s.keyframe) pkt.addFlag(MediaPacket::Keyframe);
+                        frame.modify()->packetList().pushToBack(
+                                MediaPacket::Ptr::create(std::move(pkt)));
+                }
+        }
+
         // Frame metadata: timecode (anchor + frame offset), frame number,
         // keyframe flag.
         Metadata &fmeta = frame.modify()->metadata();
@@ -527,17 +589,36 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandRead &cmd) {
 
 Error MediaIOTask_QuickTime::setupWriterFromFrame(const Frame &frame) {
         if(_writerTracksRegistered) return Error::Ok;
-        if(frame.imageList().isEmpty()) {
-                promekiErr("MediaIOTask_QuickTime: cannot infer writer tracks; first frame has no image");
+
+        // Derive the video track's pixel format and size from whichever
+        // essence carries the information.  Image frames are the common
+        // case; packet-only frames need to fall back to the pixel desc on
+        // the packet — but since a MediaPacket alone does not know the
+        // picture's resolution, packet-only track registration is only
+        // possible when pendingMediaDesc was supplied at open time.
+        PixelDesc inferPixelDesc;
+        Size2Du32 inferSize;
+        if(!frame.imageList().isEmpty()) {
+                const Image &img = *frame.imageList()[0];
+                inferPixelDesc = img.pixelDesc();
+                inferSize      = img.size();
+        } else if(!frame.packetList().isEmpty()) {
+                // Size is unavailable from a packet alone.  Caller must
+                // have supplied it via pendingMediaDesc at open().
+                promekiErr("MediaIOTask_QuickTime: cannot infer writer tracks from a "
+                           "packet-only first frame; supply pendingMediaDesc.imageList() at open");
+                return Error::InvalidArgument;
+        } else {
+                promekiErr("MediaIOTask_QuickTime: cannot infer writer tracks; first frame has no image or packet");
                 return Error::InvalidArgument;
         }
-        const Image &img = *frame.imageList()[0];
+
         if(!_frameRate.isValid()) {
                 _frameRate = FrameRate(FrameRate::RationalType(24, 1));
                 promekiWarn("MediaIOTask_QuickTime: no frame rate provided; defaulting to 24/1");
         }
         uint32_t vid = 0;
-        Error err = _qt.addVideoTrack(img.pixelDesc(), img.size(), _frameRate, &vid);
+        Error err = _qt.addVideoTrack(inferPixelDesc, inferSize, _frameRate, &vid);
         if(err.isError()) return err;
         _writerVideoTrackId = vid;
 
@@ -626,31 +707,60 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandWrite &cmd) {
         Error err = setupWriterFromFrame(frame);
         if(err.isError()) { stampWorkEnd(); return err; }
 
-        // Write the first image as a single video sample.
-        if(frame.imageList().isEmpty()) {
-                promekiWarn("MediaIOTask_QuickTime: write with no image; skipping");
-                stampWorkEnd();
-                return Error::InvalidArgument;
-        }
-        const Image &img = *frame.imageList()[0];
-
-        // Pull the encoded bytes from plane(0). For compressed images this is
-        // the raw codec payload; for uncompressed images it's the pixel bytes.
-        Buffer::Ptr plane = img.plane(0);
-        if(!plane.isValid() || plane->size() == 0) {
-                promekiWarn("MediaIOTask_QuickTime: image plane is empty");
-                stampWorkEnd();
-                return Error::InvalidArgument;
-        }
-
+        // Build the video sample.  Compressed frames arrive as a
+        // MediaPacket in @c packetList() (e.g. from
+        // MediaIOTask_VideoEncoder); uncompressed / codec-as-image
+        // frames arrive via @c imageList().  Packet takes precedence
+        // when both are present.
         QuickTime::Sample s;
         s.trackId  = _writerVideoTrackId;
-        s.data     = plane;
-        s.duration = 0; // let the writer derive from track frame rate
+        s.duration = 0;  // let the writer derive from track frame rate by default.
         s.keyframe = true;
-        if(frame.metadata().contains(Metadata::FrameKeyframe)) {
-                s.keyframe = frame.metadata().get(Metadata::FrameKeyframe).get<bool>();
+
+        if(!frame.packetList().isEmpty()) {
+                const MediaPacket &pkt = *frame.packetList()[0];
+                const BufferView &view = pkt.view();
+                if(!view.isValid() || view.size() == 0) {
+                        promekiWarn("MediaIOTask_QuickTime: packet has no payload; skipping");
+                        stampWorkEnd();
+                        return Error::InvalidArgument;
+                }
+                // Adopt the packet's backing buffer when the view covers the
+                // whole buffer — avoids a per-frame copy on the hot path.
+                // Otherwise deep-copy the view bytes into a fresh Buffer so
+                // the writer's sample.data semantics (size == payload size)
+                // stay clean.
+                const Buffer::Ptr &backing = view.buffer();
+                if(backing && view.offset() == 0 && view.size() == backing->size()) {
+                        s.data = backing;
+                } else {
+                        Buffer copy(view.size());
+                        std::memcpy(copy.data(), view.data(), view.size());
+                        copy.setSize(view.size());
+                        s.data = Buffer::Ptr::create(std::move(copy));
+                }
+                s.keyframe = pkt.isKeyframe();
+        } else if(!frame.imageList().isEmpty()) {
+                const Image &img = *frame.imageList()[0];
+                // Pull the encoded bytes from plane(0). For compressed images
+                // this is the raw codec payload; for uncompressed images it's
+                // the pixel bytes.
+                Buffer::Ptr plane = img.plane(0);
+                if(!plane.isValid() || plane->size() == 0) {
+                        promekiWarn("MediaIOTask_QuickTime: image plane is empty");
+                        stampWorkEnd();
+                        return Error::InvalidArgument;
+                }
+                s.data = plane;
+                if(frame.metadata().contains(Metadata::FrameKeyframe)) {
+                        s.keyframe = frame.metadata().get(Metadata::FrameKeyframe).get<bool>();
+                }
+        } else {
+                promekiWarn("MediaIOTask_QuickTime: write with no image or packet; skipping");
+                stampWorkEnd();
+                return Error::InvalidArgument;
         }
+
         err = _qt.writeSample(_writerVideoTrackId, s);
         if(err.isError()) { stampWorkEnd(); return err; }
 

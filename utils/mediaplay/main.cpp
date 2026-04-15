@@ -556,6 +556,6 @@ int main(int argc, char **argv) {
         if(opts.memStats) {
                 MemSpace::logAllStats();
         }
-
+        promekiLogSync();
         return rc;
 }

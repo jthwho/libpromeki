@@ -36,6 +36,19 @@ struct QuickTimeWriterTrack {
         // Video specifics:
         PixelDesc             pixelDesc;
         Size2Du32             size;
+        /**
+         * @brief Codec-specific sample-description extension payload
+         *        (e.g. serialized @c avcC or @c hvcC record).
+         *
+         * Populated lazily from the first keyframe sample for H.264
+         * and HEVC tracks.  Written inside the visual sample entry as
+         * a child box of type @c codecConfigType when the @c stsd is
+         * emitted (classic layout: at @c finalize(); fragmented
+         * layout: at @c ensureInitMoovWritten()).  Empty for codecs
+         * that do not need an out-of-band configuration record.
+         */
+        Buffer::Ptr           codecConfigBox;
+        FourCC                codecConfigType{'\0','\0','\0','\0'};   ///< @c avcC, @c hvcC, ... (zero FourCC when @c codecConfigBox is empty).
         // Audio specifics:
         AudioDesc             audioDesc;
         uint32_t              pcmBytesPerSample = 0;  ///< channels × bytesPerSample, for audio tracks.

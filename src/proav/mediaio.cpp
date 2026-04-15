@@ -735,6 +735,19 @@ void MediaIO::submitReadCommand() {
                         // queued result.  The signal is "a read
                         // finished", not "a frame is available".
                         frameReadySignal.emit();
+                        // A successful read drained the task's output
+                        // FIFO by one slot, which raises writesAccepted
+                        // for stages with an internal output queue
+                        // (Converter, VideoEncoder, VideoDecoder, ...).
+                        // Without this emit, upstreams that bailed with
+                        // writer-full would never be re-kicked: after
+                        // all pending writes complete, frameWanted's
+                        // write-side emit has already fired its last
+                        // time, and only reads release remaining
+                        // capacity.  Fire frameWanted here so the
+                        // upstream pipeline resumes regardless of
+                        // which side of the strand released the slot.
+                        if(cr->result.isOk()) frameWantedSignal.emit();
                 },
                 [this]() {
                         // Cancellation cleanup: release the slot we

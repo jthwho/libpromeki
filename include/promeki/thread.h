@@ -211,6 +211,20 @@ class Thread : public ObjectBase {
                 uint64_t nativeId() const { return _nativeId.value(); }
 
                 /**
+                 * @brief Returns the C++ std::thread::id of this Thread.
+                 *
+                 * Complements @ref nativeId for code that wants to
+                 * compare against @c std::this_thread::get_id()
+                 * without caring about OS-level TID representation.
+                 * Captured at thread start (spawned mode) or at
+                 * adoption time (adopted mode); before either, a
+                 * default-constructed @c std::thread::id is returned.
+                 *
+                 * @return The std::thread::id for this thread.
+                 */
+                std::thread::id id() const { return _stdId.value(); }
+
+                /**
                  * @brief Returns the current scheduling policy of this thread.
                  *
                  * The thread must be running.  Returns SchedulePolicy::Default
@@ -329,6 +343,7 @@ class Thread : public ObjectBase {
                 Atomic<bool>            _running;
                 Atomic<int>             _exitCode;
                 Atomic<uint64_t>        _nativeId;
+                Atomic<std::thread::id> _stdId;
                 String                  _name;
                 EventLoop               *_threadLoop = nullptr;
                 mutable Mutex           _mutex;
