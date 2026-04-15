@@ -75,9 +75,10 @@ TEST_CASE("PixelDesc: JPEG_RGBA8 is compressed") {
         CHECK(pd.hasAlpha());
 }
 
-TEST_CASE("PixelDesc: JPEG_RGB8 codecName is jpeg") {
+TEST_CASE("PixelDesc: JPEG_RGB8 videoCodec resolves to VideoCodec::JPEG") {
         PixelDesc pd(PixelDesc::JPEG_RGB8_sRGB);
-        CHECK(pd.codecName() == "jpeg");
+        CHECK(pd.videoCodec().id() == VideoCodec::JPEG);
+        CHECK(pd.videoCodec().name() == "JPEG");
 }
 
 TEST_CASE("PixelDesc: JPEG_RGBA8 encodeSources and decodeTargets") {
@@ -147,7 +148,7 @@ TEST_CASE("PixelDesc: JPEG YCbCr complement — matrix × range grid") {
                 CAPTURE(pd.name());
                 REQUIRE(pd.isValid());
                 CHECK(pd.isCompressed());
-                CHECK(pd.codecName() == "jpeg");
+                CHECK(pd.videoCodec().id() == VideoCodec::JPEG);
                 const ColorModel::ID expectedModel = c.rec709
                         ? ColorModel::YCbCr_Rec709
                         : ColorModel::YCbCr_Rec601;
@@ -204,7 +205,7 @@ TEST_CASE("PixelDesc: H264 is compressed with avc1 FourCC") {
         PixelDesc pd(PixelDesc::H264);
         CHECK(pd.isValid());
         CHECK(pd.isCompressed());
-        CHECK(pd.codecName() == "h264");
+        CHECK(pd.videoCodec().id() == VideoCodec::H264);
         CHECK(pd.fourccList().size() == 2);
         CHECK(pd.fourccList()[0] == FourCC("avc1"));
         CHECK(pd.fourccList()[1] == FourCC("avc3"));
@@ -214,25 +215,34 @@ TEST_CASE("PixelDesc: HEVC is compressed with hvc1 FourCC") {
         PixelDesc pd(PixelDesc::HEVC);
         CHECK(pd.isValid());
         CHECK(pd.isCompressed());
-        CHECK(pd.codecName() == "hevc");
+        CHECK(pd.videoCodec().id() == VideoCodec::HEVC);
         CHECK(pd.fourccList().size() == 2);
         CHECK(pd.fourccList()[0] == FourCC("hvc1"));
         CHECK(pd.fourccList()[1] == FourCC("hev1"));
 }
 
 TEST_CASE("PixelDesc: ProRes 422 family has correct FourCCs") {
-        struct Entry { PixelDesc::ID id; const char *fourcc; };
+        // The string "prores" was shared across all six PixelDesc
+        // entries before we landed the typed VideoCodec registry;
+        // each variant now has its own VideoCodec ID.  The table
+        // lists the FourCC + the matching VideoCodec ID per variant
+        // and we verify each one resolves through PixelDesc::videoCodec().
+        struct Entry {
+                PixelDesc::ID  pdId;
+                const char    *fourcc;
+                VideoCodec::ID vc;
+        };
         Entry entries[] = {
-                { PixelDesc::ProRes_422_Proxy, "apco" },
-                { PixelDesc::ProRes_422_LT,    "apcs" },
-                { PixelDesc::ProRes_422,       "apcn" },
-                { PixelDesc::ProRes_422_HQ,    "apch" }
+                { PixelDesc::ProRes_422_Proxy, "apco", VideoCodec::ProRes_422_Proxy },
+                { PixelDesc::ProRes_422_LT,    "apcs", VideoCodec::ProRes_422_LT    },
+                { PixelDesc::ProRes_422,       "apcn", VideoCodec::ProRes_422       },
+                { PixelDesc::ProRes_422_HQ,    "apch", VideoCodec::ProRes_422_HQ    }
         };
         for(const auto &e : entries) {
-                PixelDesc pd(e.id);
+                PixelDesc pd(e.pdId);
                 CHECK(pd.isValid());
                 CHECK(pd.isCompressed());
-                CHECK(pd.codecName() == "prores");
+                CHECK(pd.videoCodec().id() == e.vc);
                 CHECK_FALSE(pd.hasAlpha());
                 REQUIRE(pd.fourccList().size() == 1);
                 CHECK(pd.fourccList()[0] == FourCC(e.fourcc[0], e.fourcc[1], e.fourcc[2], e.fourcc[3]));
@@ -244,7 +254,7 @@ TEST_CASE("PixelDesc: ProRes 4444 has alpha and 10-bit") {
         PixelDesc pd(PixelDesc::ProRes_4444);
         CHECK(pd.isValid());
         CHECK(pd.isCompressed());
-        CHECK(pd.codecName() == "prores");
+        CHECK(pd.videoCodec().id() == VideoCodec::ProRes_4444);
         CHECK(pd.hasAlpha());
         CHECK(pd.alphaCompIndex() == 3);
         REQUIRE(pd.fourccList().size() == 1);
@@ -256,7 +266,7 @@ TEST_CASE("PixelDesc: ProRes 4444 XQ has alpha and 12-bit") {
         PixelDesc pd(PixelDesc::ProRes_4444_XQ);
         CHECK(pd.isValid());
         CHECK(pd.isCompressed());
-        CHECK(pd.codecName() == "prores");
+        CHECK(pd.videoCodec().id() == VideoCodec::ProRes_4444_XQ);
         CHECK(pd.hasAlpha());
         CHECK(pd.alphaCompIndex() == 3);
         REQUIRE(pd.fourccList().size() == 1);
@@ -726,7 +736,7 @@ TEST_CASE("PixelDesc: JPEG_XS_YUV8_422_Rec709 is compressed") {
         PixelDesc pd(PixelDesc::JPEG_XS_YUV8_422_Rec709);
         CHECK(pd.isValid());
         CHECK(pd.isCompressed());
-        CHECK(pd.codecName() == "jpegxs");
+        CHECK(pd.videoCodec().id() == VideoCodec::JPEG_XS);
         CHECK(pd.compCount() == 3);
 }
 
@@ -734,7 +744,7 @@ TEST_CASE("PixelDesc: JPEG_XS_YUV10_422_Rec709 is compressed") {
         PixelDesc pd(PixelDesc::JPEG_XS_YUV10_422_Rec709);
         CHECK(pd.isValid());
         CHECK(pd.isCompressed());
-        CHECK(pd.codecName() == "jpegxs");
+        CHECK(pd.videoCodec().id() == VideoCodec::JPEG_XS);
         CHECK(pd.compCount() == 3);
 }
 
@@ -742,35 +752,35 @@ TEST_CASE("PixelDesc: JPEG_XS_YUV12_422_Rec709 is compressed") {
         PixelDesc pd(PixelDesc::JPEG_XS_YUV12_422_Rec709);
         CHECK(pd.isValid());
         CHECK(pd.isCompressed());
-        CHECK(pd.codecName() == "jpegxs");
+        CHECK(pd.videoCodec().id() == VideoCodec::JPEG_XS);
 }
 
 TEST_CASE("PixelDesc: JPEG_XS_YUV8_420_Rec709 is compressed") {
         PixelDesc pd(PixelDesc::JPEG_XS_YUV8_420_Rec709);
         CHECK(pd.isValid());
         CHECK(pd.isCompressed());
-        CHECK(pd.codecName() == "jpegxs");
+        CHECK(pd.videoCodec().id() == VideoCodec::JPEG_XS);
 }
 
 TEST_CASE("PixelDesc: JPEG_XS_YUV10_420_Rec709 is compressed") {
         PixelDesc pd(PixelDesc::JPEG_XS_YUV10_420_Rec709);
         CHECK(pd.isValid());
         CHECK(pd.isCompressed());
-        CHECK(pd.codecName() == "jpegxs");
+        CHECK(pd.videoCodec().id() == VideoCodec::JPEG_XS);
 }
 
 TEST_CASE("PixelDesc: JPEG_XS_YUV12_420_Rec709 is compressed") {
         PixelDesc pd(PixelDesc::JPEG_XS_YUV12_420_Rec709);
         CHECK(pd.isValid());
         CHECK(pd.isCompressed());
-        CHECK(pd.codecName() == "jpegxs");
+        CHECK(pd.videoCodec().id() == VideoCodec::JPEG_XS);
 }
 
 TEST_CASE("PixelDesc: JPEG_XS_RGB8_sRGB is compressed") {
         PixelDesc pd(PixelDesc::JPEG_XS_RGB8_sRGB);
         CHECK(pd.isValid());
         CHECK(pd.isCompressed());
-        CHECK(pd.codecName() == "jpegxs");
+        CHECK(pd.videoCodec().id() == VideoCodec::JPEG_XS);
         CHECK(pd.compCount() == 3);
 }
 

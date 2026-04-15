@@ -60,7 +60,7 @@ static const ExtMap extMap[] = {
         { "pgm",     ImageFile::PNM },
         { "png",     ImageFile::PNG },
         { "jpg",     ImageFile::JPEG },
-        { "jpeg",    ImageFile::JPEG },
+        { "JPEG",    ImageFile::JPEG },
         { "jfif",    ImageFile::JPEG },
         { "jxs",     ImageFile::JpegXS },
         { "uyvy",    ImageFile::RawYUV },

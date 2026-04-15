@@ -10,7 +10,13 @@
 PROMEKI_NAMESPACE_BEGIN
 
 // ============================================================================
-// ImageCodec
+// ImageCodec — minimal base class kept as the implementation
+// scaffolding behind JpegImageCodec / JpegXsImageCodec, which the
+// JpegVideoEncoder / JpegVideoDecoder wrappers delegate to.  The
+// public registry surface (registerCodec / createCodec /
+// registeredCodecs / PROMEKI_REGISTER_IMAGE_CODEC) was retired in
+// task 37 — codec discovery flows through the typed VideoCodec
+// registry now.
 // ============================================================================
 
 ImageCodec::~ImageCodec() = default;
@@ -31,33 +37,92 @@ void ImageCodec::clearError() {
         _lastErrorMessage = String();
 }
 
-Map<String, std::function<ImageCodec *()>> &ImageCodec::codecRegistry() {
-        static Map<String, std::function<ImageCodec *()>> reg;
+// ============================================================================
+// VideoEncoder
+// ============================================================================
+
+VideoEncoder::~VideoEncoder() = default;
+
+void VideoEncoder::configure(const MediaConfig &config) {
+        (void)config;
+}
+
+void VideoEncoder::setError(Error err, const String &msg) {
+        _lastError = err;
+        _lastErrorMessage = msg;
+}
+
+void VideoEncoder::clearError() {
+        _lastError = Error::Ok;
+        _lastErrorMessage = String();
+}
+
+Map<String, std::function<VideoEncoder *()>> &VideoEncoder::encoderRegistry() {
+        static Map<String, std::function<VideoEncoder *()>> reg;
         return reg;
 }
 
-void ImageCodec::registerCodec(const String &name, std::function<ImageCodec *()> factory) {
-        codecRegistry().insert(name, std::move(factory));
+void VideoEncoder::registerEncoder(const String &name,
+                                   std::function<VideoEncoder *()> factory) {
+        encoderRegistry().insert(name, std::move(factory));
 }
 
-ImageCodec *ImageCodec::createCodec(const String &name) {
-        auto &reg = codecRegistry();
+VideoEncoder *VideoEncoder::createEncoder(const String &name) {
+        auto &reg = encoderRegistry();
         if(!reg.contains(name)) return nullptr;
         return reg[name]();
 }
 
-List<String> ImageCodec::registeredCodecs() {
+List<String> VideoEncoder::registeredEncoders() {
         List<String> ret;
-        for(const auto &[name, factory] : codecRegistry()) {
+        for(const auto &[name, factory] : encoderRegistry()) {
                 ret.pushToBack(name);
         }
         return ret;
 }
 
 // ============================================================================
-// AudioCodec
+// VideoDecoder
 // ============================================================================
 
-AudioCodec::~AudioCodec() = default;
+VideoDecoder::~VideoDecoder() = default;
+
+void VideoDecoder::configure(const MediaConfig &config) {
+        (void)config;
+}
+
+void VideoDecoder::setError(Error err, const String &msg) {
+        _lastError = err;
+        _lastErrorMessage = msg;
+}
+
+void VideoDecoder::clearError() {
+        _lastError = Error::Ok;
+        _lastErrorMessage = String();
+}
+
+Map<String, std::function<VideoDecoder *()>> &VideoDecoder::decoderRegistry() {
+        static Map<String, std::function<VideoDecoder *()>> reg;
+        return reg;
+}
+
+void VideoDecoder::registerDecoder(const String &name,
+                                   std::function<VideoDecoder *()> factory) {
+        decoderRegistry().insert(name, std::move(factory));
+}
+
+VideoDecoder *VideoDecoder::createDecoder(const String &name) {
+        auto &reg = decoderRegistry();
+        if(!reg.contains(name)) return nullptr;
+        return reg[name]();
+}
+
+List<String> VideoDecoder::registeredDecoders() {
+        List<String> ret;
+        for(const auto &[name, factory] : decoderRegistry()) {
+                ret.pushToBack(name);
+        }
+        return ret;
+}
 
 PROMEKI_NAMESPACE_END

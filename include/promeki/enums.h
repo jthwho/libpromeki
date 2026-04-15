@@ -939,6 +939,85 @@ inline const InspectorTest InspectorTest::Timestamp    { 4 };
 inline const InspectorTest InspectorTest::AudioSamples { 5 };
 inline const InspectorTest InspectorTest::CaptureStats { 6 };
 
+/**
+ * @brief Well-known Enum type for video-encoder rate-control modes.
+ *
+ * Selects the rate-control strategy a @ref VideoEncoder uses when
+ * producing a bitstream.
+ *
+ * - @c CBR — constant bitrate.  The encoder targets @ref
+ *   MediaConfig::BitrateKbps with as little short-term variation as
+ *   possible.  Use for live streaming, broadcast contribution, and
+ *   any transport where bandwidth must be tightly bounded.
+ * - @c VBR — variable bitrate.  The encoder targets an average
+ *   bitrate but allows short-term variation to preserve quality on
+ *   complex content.  Use for file storage where the average
+ *   matters but instantaneous peaks do not.
+ * - @c CQP — constant quantization parameter.  The encoder ignores
+ *   @c BitrateKbps and instead holds quality constant by using a
+ *   fixed QP; the resulting bitrate varies with content complexity.
+ *   Use for testing / quality analysis where reproducible quality
+ *   matters more than bitrate.
+ */
+class VideoRateControl : public TypedEnum<VideoRateControl> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("VideoRateControl", 1,
+                                { "CBR", 0 },
+                                { "VBR", 1 },
+                                { "CQP", 2 });  // default: VBR
+
+                using TypedEnum<VideoRateControl>::TypedEnum;
+
+                static const VideoRateControl CBR;
+                static const VideoRateControl VBR;
+                static const VideoRateControl CQP;
+};
+
+inline const VideoRateControl VideoRateControl::CBR { 0 };
+inline const VideoRateControl VideoRateControl::VBR { 1 };
+inline const VideoRateControl VideoRateControl::CQP { 2 };
+
+/**
+ * @brief Well-known Enum type for video-encoder speed / quality presets.
+ *
+ * Presets are neutral names for points along the
+ * encode-speed-vs-quality curve.  Each concrete backend maps the
+ * generic preset onto its own native preset enum (NVENC's P1–P7,
+ * x264's @c ultrafast…@c placebo, QSV's target usage, etc.).
+ *
+ * - @c UltraLowLatency — absolute minimum encode latency.  Typically
+ *   disables B-frames, look-ahead, and multi-pass.  Use for live
+ *   conferencing / interactive capture where every frame of latency
+ *   costs.
+ * - @c LowLatency      — low-latency tuning with some coding tools
+ *   enabled.  Suitable for live streaming contribution.
+ * - @c Balanced        — default midpoint.  Reasonable latency and
+ *   reasonable quality at a sensible CPU / GPU cost.
+ * - @c HighQuality     — prioritise quality: multi-pass / look-ahead /
+ *   slower motion search.  Use for file-based encoding where
+ *   latency is unconstrained.
+ */
+class VideoEncoderPreset : public TypedEnum<VideoEncoderPreset> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("VideoEncoderPreset", 2,
+                                { "UltraLowLatency", 0 },
+                                { "LowLatency",      1 },
+                                { "Balanced",        2 },
+                                { "HighQuality",     3 });  // default: Balanced
+
+                using TypedEnum<VideoEncoderPreset>::TypedEnum;
+
+                static const VideoEncoderPreset UltraLowLatency;
+                static const VideoEncoderPreset LowLatency;
+                static const VideoEncoderPreset Balanced;
+                static const VideoEncoderPreset HighQuality;
+};
+
+inline const VideoEncoderPreset VideoEncoderPreset::UltraLowLatency { 0 };
+inline const VideoEncoderPreset VideoEncoderPreset::LowLatency      { 1 };
+inline const VideoEncoderPreset VideoEncoderPreset::Balanced        { 2 };
+inline const VideoEncoderPreset VideoEncoderPreset::HighQuality     { 3 };
+
 /** @} */
 
 PROMEKI_NAMESPACE_END

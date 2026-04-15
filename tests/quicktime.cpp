@@ -120,7 +120,11 @@ TEST_CASE("QuickTime: open ProRes 422 Proxy .mov fixture") {
         CHECK(v.pixelDesc().isValid());
         CHECK(v.pixelDesc().isCompressed());
         CHECK(v.pixelDesc().id() == PixelDesc::ProRes_422_Proxy);
-        CHECK(v.pixelDesc().codecName() == "prores");
+        // ProRes used to share the single string codec name "prores"
+        // across all six variants; with the typed VideoCodec registry
+        // each variant is its own codec ID, so we just verify we got
+        // the matching VideoCodec for the ProRes_422_Proxy PixelDesc.
+        CHECK(v.pixelDesc().videoCodec().id() == VideoCodec::ProRes_422_Proxy);
 
         REQUIRE(v.frameRate().isValid());
         double fps = v.frameRate().rational().toDouble();

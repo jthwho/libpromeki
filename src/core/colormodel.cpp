@@ -905,11 +905,11 @@ static ColorModel::Data makeCIELab() {
 // Construct-on-first-use registry
 // ---------------------------------------------------------------------------
 
-struct DataRegistry {
+struct ColorModelRegistry {
         Map<ColorModel::ID, ColorModel::Data> entries;
         Map<String, ColorModel::ID> nameMap;
 
-        DataRegistry() {
+        ColorModelRegistry() {
                 add(makeInvalid());
                 add(makeSRGB());
                 add(makeLinearSRGB());
@@ -945,8 +945,8 @@ struct DataRegistry {
         }
 };
 
-static DataRegistry &registry() {
-        static DataRegistry reg;
+static ColorModelRegistry &registry() {
+        static ColorModelRegistry reg;
         return reg;
 }
 

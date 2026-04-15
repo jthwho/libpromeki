@@ -15,6 +15,9 @@
 #include <promeki/imagefileio.h>
 #include <promeki/imagefile.h>
 #include <promeki/image.h>
+#include <promeki/codec.h>
+#include <promeki/mediapacket.h>
+#include <promeki/videocodec.h>
 #include <promeki/file.h>
 #include <promeki/buffer.h>
 #include <promeki/pixeldesc.h>
@@ -216,7 +219,7 @@ Error ImageFileIO_JPEG::load(ImageFile &imageFile, const MediaConfig &config) co
 // Three paths:
 //
 //   1. Input is already a compressed JPEG (isCompressed() && codecName()
-//      == "jpeg"): write the payload bytes verbatim.  This is the fast
+//      == "JPEG"): write the payload bytes verbatim.  This is the fast
 //      pass-through that MediaIO uses for zero-loss JPEG copies.
 //
 //   2. Input is uncompressed and JpegImageCodec accepts its PixelDesc
@@ -248,7 +251,7 @@ Error ImageFileIO_JPEG::save(ImageFile &imageFile, const MediaConfig &config) co
         }
 
         // Pass-through: keep the existing JPEG bitstream exactly.
-        if(image.isCompressed() && image.pixelDesc().codecName() == "jpeg") {
+        if(image.isCompressed() && image.pixelDesc().videoCodec().id() == VideoCodec::JPEG) {
                 const void *payload = image.data(0);
                 const size_t payloadSize = image.compressedSize();
                 if(payload == nullptr || payloadSize == 0) {
@@ -284,7 +287,7 @@ Error ImageFileIO_JPEG::save(ImageFile &imageFile, const MediaConfig &config) co
         if(image.isCompressed()) {
                 promekiErr("JPEG save '%s': unsupported compressed input codec '%s'",
                            filename.cstr(),
-                           image.pixelDesc().codecName().cstr());
+                           image.pixelDesc().videoCodec().name().cstr());
                 return Error::NotSupported;
         }
 
@@ -309,16 +312,64 @@ Error ImageFileIO_JPEG::save(ImageFile &imageFile, const MediaConfig &config) co
                         break;
         }
 
-        Image encoded = image.convert(PixelDesc(targetId), image.metadata(), config);
-        if(!encoded.isValid() || !encoded.isCompressed()) {
-                promekiErr("JPEG save '%s': encode of '%s' failed",
-                           filename.cstr(),
-                           image.pixelDesc().name().cstr());
-                return Error::EncodeFailed;
+        // Run the encode through a one-shot JpegVideoEncoder session.
+        // Image::convert no longer dispatches to compression codecs;
+        // each compressor lives behind the VideoEncoder contract so
+        // pipelines can amortise its session state across frames.  For
+        // a single-image file save we just create, configure, push,
+        // pull, destroy.
+        VideoEncoder *enc = VideoCodec(VideoCodec::JPEG).createEncoder();
+        if(enc == nullptr) {
+                promekiErr("JPEG save '%s': no JpegVideoEncoder factory registered",
+                           filename.cstr());
+                return Error::NotSupported;
+        }
+        // Forward the caller's MediaConfig and force the chosen JPEG
+        // sub-target so the encoder lands on the format we picked
+        // above instead of its own default.
+        MediaConfig encCfg = config;
+        encCfg.set(MediaConfig::OutputPixelDesc, PixelDesc(targetId));
+        enc->configure(encCfg);
+
+        // The encoder happily accepts the source image as-is when its
+        // PixelDesc is in supportedInputs(); otherwise we run a CSC to
+        // the codec's preferred encode source (typically the YUV
+        // variant matching the chosen target's chroma subsampling).
+        Image encodeInput = image;
+        const auto &sources = PixelDesc(targetId).encodeSources();
+        bool sourceOk = sources.isEmpty();
+        for(PixelDesc::ID s : sources) {
+                if(image.pixelDesc().id() == s) { sourceOk = true; break; }
+        }
+        if(!sourceOk && !sources.isEmpty()) {
+                encodeInput = image.convert(PixelDesc(sources[0]),
+                                            image.metadata(), config);
+                if(!encodeInput.isValid()) {
+                        delete enc;
+                        promekiErr("JPEG save '%s': prep CSC %s -> %s failed",
+                                   filename.cstr(),
+                                   image.pixelDesc().name().cstr(),
+                                   PixelDesc(sources[0]).name().cstr());
+                        return Error::ConversionFailed;
+                }
         }
 
-        const void *payload = encoded.data(0);
-        const size_t payloadSize = encoded.compressedSize();
+        if(Error e = enc->submitFrame(encodeInput); e.isError()) {
+                String msg = enc->lastErrorMessage();
+                delete enc;
+                promekiErr("JPEG save '%s': encode failed: %s",
+                           filename.cstr(), msg.isEmpty() ? e.name().cstr() : msg.cstr());
+                return e;
+        }
+        MediaPacket::Ptr pkt = enc->receivePacket();
+        delete enc;
+        if(!pkt) {
+                promekiErr("JPEG save '%s': encoder produced no packet",
+                           filename.cstr());
+                return Error::EncodeFailed;
+        }
+        const void *payload = pkt->view().data();
+        const size_t payloadSize = pkt->view().size();
         if(payload == nullptr || payloadSize == 0) {
                 promekiErr("JPEG save '%s': empty encoded payload", filename.cstr());
                 return Error::EncodeFailed;

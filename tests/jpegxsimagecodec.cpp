@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <doctest/doctest.h>
+#include "codectesthelpers.h"
 #include <promeki/jpegxsimagecodec.h>
 #include <promeki/codec.h>
 #include <promeki/mediaconfig.h>
@@ -99,13 +100,14 @@ TEST_CASE("JpegXsImageCodec_Clamping") {
 // Registry
 // ============================================================================
 
-TEST_CASE("JpegXsImageCodec_Registry") {
-        CHECK(ImageCodec::registeredCodecs().contains("jpegxs"));
-        ImageCodec *codec = ImageCodec::createCodec("jpegxs");
-        REQUIRE(codec != nullptr);
-        CHECK(codec->canEncode());
-        CHECK(codec->canDecode());
-        delete codec;
+TEST_CASE("JpegXsImageCodec_DirectConstruction") {
+        // Same shape as the JpegImageCodec test — the legacy public
+        // ImageCodec registry was retired in task 37.  JpegXsImageCodec
+        // remains a concrete class behind JpegXsVideoEncoder /
+        // JpegXsVideoDecoder; we construct it directly here.
+        JpegXsImageCodec codec;
+        CHECK(codec.canEncode());
+        CHECK(codec.canDecode());
 }
 
 // ============================================================================
@@ -236,12 +238,12 @@ TEST_CASE("JpegXsImageCodec_ImageConvertToRgba8") {
         REQUIRE(jxs.isValid());
         REQUIRE(jxs.isCompressed());
 
-        // Now exercise the dispatch path the SDL task uses: ask
-        // Image::convert() to land on RGBA8_sRGB.  This should
-        // decode JPEG XS → YUV10_422_Planar_LE → RGBA8_sRGB
-        // automatically via the codec registry and CSC pipeline.
-        Image rgba = jxs.convert(PixelDesc(PixelDesc::RGBA8_sRGB),
-                                  jxs.metadata());
+        // Now exercise the dispatch path the SDL task uses: decode
+        // through a JpegXsVideoDecoder session and then CSC the
+        // codec's planar YUV output to RGBA8_sRGB.  The helper does
+        // both hops in one call.
+        Image rgba = promeki::tests::decodeCompressedToImage(
+                jxs, PixelDesc(PixelDesc::RGBA8_sRGB));
         REQUIRE(rgba.isValid());
         CHECK_FALSE(rgba.isCompressed());
         CHECK(rgba.pixelDesc().id() == PixelDesc::RGBA8_sRGB);
@@ -274,29 +276,24 @@ TEST_CASE("JpegXsImageCodec_MetadataPreserved") {
 
 TEST_CASE("JpegXsImageCodec_ConfigureFromMediaConfig") {
         SUBCASE("JpegXsBpp flows through configure()") {
-                ImageCodec *lo = ImageCodec::createCodec("jpegxs");
-                ImageCodec *hi = ImageCodec::createCodec("jpegxs");
-                REQUIRE(lo != nullptr);
-                REQUIRE(hi != nullptr);
+                JpegXsImageCodec lo;
+                JpegXsImageCodec hi;
 
                 MediaConfig loCfg;
                 loCfg.set(MediaConfig::JpegXsBpp, 2);
-                lo->configure(loCfg);
+                lo.configure(loCfg);
 
                 MediaConfig hiCfg;
                 hiCfg.set(MediaConfig::JpegXsBpp, 8);
-                hi->configure(hiCfg);
+                hi.configure(hiCfg);
 
                 Image src = makePlanarYUV(256, 192, PixelDesc::YUV8_422_Planar_Rec709, 8, false);
                 REQUIRE(src.isValid());
-                Image encLo = lo->encode(src);
-                Image encHi = hi->encode(src);
+                Image encLo = lo.encode(src);
+                Image encHi = hi.encode(src);
                 REQUIRE(encLo.isValid());
                 REQUIRE(encHi.isValid());
                 CHECK(encHi.compressedSize() > encLo.compressedSize());
-
-                delete lo;
-                delete hi;
         }
 
         SUBCASE("JpegXsDecomposition flows through configure()") {
@@ -399,14 +396,14 @@ TEST_CASE("JpegXsImageCodec_RGB8_ImageConvertRoundTrip") {
                 }
         }
 
-        Image jxs = src.convert(PixelDesc(PixelDesc::JPEG_XS_RGB8_sRGB),
-                                src.metadata());
+        Image jxs = promeki::tests::encodeImageToCompressed(
+                src, PixelDesc(PixelDesc::JPEG_XS_RGB8_sRGB));
         REQUIRE(jxs.isValid());
         CHECK(jxs.isCompressed());
         CHECK(jxs.pixelDesc().id() == PixelDesc::JPEG_XS_RGB8_sRGB);
 
-        Image decoded = jxs.convert(PixelDesc(PixelDesc::RGB8_sRGB),
-                                    jxs.metadata());
+        Image decoded = promeki::tests::decodeCompressedToImage(
+                jxs, PixelDesc(PixelDesc::RGB8_sRGB));
         REQUIRE(decoded.isValid());
         CHECK(!decoded.isCompressed());
         CHECK(decoded.pixelDesc().id() == PixelDesc::RGB8_sRGB);

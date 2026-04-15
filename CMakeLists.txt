@@ -91,6 +91,57 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     endif()
 endif()
 option(PROMEKI_ENABLE_V4L2 "Include V4L2 video capture + ALSA audio capture (Linux only)" ${PROMEKI_ENABLE_V4L2_DEFAULT})
+# CUDA support: device-memory + pinned-host MemSpace backends and the
+# per-process CudaBootstrap.  Required by every GPU-accelerated codec
+# backend that follows (NVENC, NVDEC, etc.).  Default ON when the CUDA
+# toolkit is found via find_package(CUDAToolkit), silently OFF elsewhere.
+# Explicit -DPROMEKI_ENABLE_CUDA=ON/OFF on the command line overrides
+# the probe.
+set(PROMEKI_ENABLE_CUDA_DEFAULT OFF)
+find_package(CUDAToolkit QUIET)
+if(CUDAToolkit_FOUND)
+    set(PROMEKI_ENABLE_CUDA_DEFAULT ON)
+endif()
+option(PROMEKI_ENABLE_CUDA     "Include CUDA support (device / pinned-host memspaces, foundation for NVENC / NVDEC)" ${PROMEKI_ENABLE_CUDA_DEFAULT})
+# NVENC video encoder backend: NVIDIA hardware H.264 / HEVC via the
+# NVIDIA Video Codec SDK.  The SDK is distributed separately from CUDA
+# and the driver — see docs/nvenc.dox for setup instructions.  Default
+# ON when the SDK is located via PROMEKI_NVENC_SDK_DIR (or the
+# NVENC_SDK_DIR environment variable), silently OFF elsewhere.
+# Requires PROMEKI_ENABLE_CUDA.
+set(PROMEKI_NVENC_SDK_DIR "" CACHE PATH
+    "Path to the NVIDIA Video Codec SDK (the directory containing Interface/nvEncodeAPI.h).")
+set(PROMEKI_ENABLE_NVENC_DEFAULT OFF)
+if(PROMEKI_ENABLE_CUDA_DEFAULT OR PROMEKI_ENABLE_CUDA)
+    set(_nvenc_hints "")
+    if(PROMEKI_NVENC_SDK_DIR)
+        list(APPEND _nvenc_hints "${PROMEKI_NVENC_SDK_DIR}/Interface")
+    endif()
+    if(DEFINED ENV{NVENC_SDK_DIR})
+        list(APPEND _nvenc_hints "$ENV{NVENC_SDK_DIR}/Interface")
+    endif()
+    find_path(PROMEKI_NVENC_INCLUDE_DIR nvEncodeAPI.h
+        HINTS ${_nvenc_hints}
+        PATHS /usr/include /usr/local/include
+    )
+    if(PROMEKI_NVENC_INCLUDE_DIR)
+        set(PROMEKI_ENABLE_NVENC_DEFAULT ON)
+        message(STATUS "Found NVENC SDK: ${PROMEKI_NVENC_INCLUDE_DIR}")
+    else()
+        message(STATUS "NVENC SDK not found; set PROMEKI_NVENC_SDK_DIR to enable (see docs/nvenc.dox)")
+    endif()
+endif()
+option(PROMEKI_ENABLE_NVENC    "Include NVIDIA NVENC H.264/HEVC hardware encoder (requires CUDA + Video Codec SDK)" ${PROMEKI_ENABLE_NVENC_DEFAULT})
+# NVDEC hardware decoder — nvcuvid.h / cuviddec.h ship in the same
+# Video Codec SDK directory as nvEncodeAPI.h, so the NVENC probe's
+# include dir doubles as the NVDEC probe.  Keeps the flags separate
+# so users can build either/both.
+set(PROMEKI_ENABLE_NVDEC_DEFAULT OFF)
+if((PROMEKI_ENABLE_CUDA_DEFAULT OR PROMEKI_ENABLE_CUDA) AND PROMEKI_NVENC_INCLUDE_DIR
+   AND EXISTS "${PROMEKI_NVENC_INCLUDE_DIR}/nvcuvid.h")
+    set(PROMEKI_ENABLE_NVDEC_DEFAULT ON)
+endif()
+option(PROMEKI_ENABLE_NVDEC    "Include NVIDIA NVDEC H.264/HEVC hardware decoder (requires CUDA + Video Codec SDK)" ${PROMEKI_ENABLE_NVDEC_DEFAULT})
 
 # Vendored vs system dependency options
 option(PROMEKI_USE_SYSTEM_ZLIB          "Use system zlib instead of vendored zlib-ng"   OFF)
@@ -145,6 +196,38 @@ if(PROMEKI_ENABLE_V4L2)
         message(FATAL_ERROR "PROMEKI_ENABLE_V4L2 requires linux/videodev2.h")
     endif()
     find_package(ALSA REQUIRED)
+endif()
+if(PROMEKI_ENABLE_CUDA)
+    find_package(CUDAToolkit REQUIRED)
+endif()
+if(PROMEKI_ENABLE_NVENC)
+    if(NOT PROMEKI_ENABLE_CUDA)
+        message(FATAL_ERROR "PROMEKI_ENABLE_NVENC requires PROMEKI_ENABLE_CUDA")
+    endif()
+    if(NOT PROMEKI_ENABLE_PROAV)
+        message(FATAL_ERROR "PROMEKI_ENABLE_NVENC requires PROMEKI_ENABLE_PROAV")
+    endif()
+    if(NOT PROMEKI_NVENC_INCLUDE_DIR)
+        message(FATAL_ERROR
+            "PROMEKI_ENABLE_NVENC=ON but nvEncodeAPI.h was not found. "
+            "Set PROMEKI_NVENC_SDK_DIR to the Video Codec SDK directory "
+            "(the one containing Interface/nvEncodeAPI.h).  See docs/nvenc.dox.")
+    endif()
+endif()
+if(PROMEKI_ENABLE_NVDEC)
+    if(NOT PROMEKI_ENABLE_CUDA)
+        message(FATAL_ERROR "PROMEKI_ENABLE_NVDEC requires PROMEKI_ENABLE_CUDA")
+    endif()
+    if(NOT PROMEKI_ENABLE_PROAV)
+        message(FATAL_ERROR "PROMEKI_ENABLE_NVDEC requires PROMEKI_ENABLE_PROAV")
+    endif()
+    if(NOT PROMEKI_NVENC_INCLUDE_DIR
+       OR NOT EXISTS "${PROMEKI_NVENC_INCLUDE_DIR}/nvcuvid.h")
+        message(FATAL_ERROR
+            "PROMEKI_ENABLE_NVDEC=ON but nvcuvid.h was not found. "
+            "Set PROMEKI_NVENC_SDK_DIR to the Video Codec SDK directory "
+            "(the one containing Interface/nvcuvid.h + Interface/cuviddec.h).")
+    endif()
 endif()
 
 # Build info ###################################################################
@@ -591,10 +674,12 @@ set(PROMEKI_HEADERS
     include/promeki/char.h
     include/promeki/ciepoint.h
     include/promeki/ciewavelengthtable.h
+    include/promeki/audiocodec.h
     include/promeki/cmdlineparser.h
     include/promeki/color.h
     include/promeki/colormodel.h
     include/promeki/configoption.h
+    include/promeki/cuda.h
     include/promeki/datetime.h
     include/promeki/dir.h
     include/promeki/duration.h
@@ -679,6 +764,7 @@ set(PROMEKI_HEADERS
     include/promeki/variant.h
     include/promeki/variantdatabase.h
     include/promeki/variantspec.h
+    include/promeki/videocodec.h
     include/promeki/waitcondition.h
     include/promeki/widget.h
     include/promeki/xyzcolor.h
@@ -703,8 +789,11 @@ set(PROMEKI_SOURCES
     src/core/cmdlineparser.cpp
     src/core/color.cpp
     src/core/colormodel.cpp
+    src/core/audiocodec.cpp
     src/core/crashhandler.cpp
     src/core/crc.cpp
+    src/core/cuda.cpp
+    src/core/videocodec.cpp
     src/core/datastream.cpp
     src/core/datetime.cpp
     src/core/dir.cpp
@@ -856,12 +945,19 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/imagefileio.h
         include/promeki/imgseq.h
         include/promeki/jpegimagecodec.h
+        include/promeki/jpegvideocodec.h
         include/promeki/jpegxsimagecodec.h
         include/promeki/ltcdecoder.h
         include/promeki/ltcencoder.h
         include/promeki/mediaio.h
+        include/promeki/mediapacket.h
         include/promeki/mediaiotask.h
+        include/promeki/nvencvideoencoder.h
+        include/promeki/nvdecvideodecoder.h
         include/promeki/mediaiotask_converter.h
+        include/promeki/mediaiotask_videoencoder.h
+        include/promeki/mediaiotask_videodecoder.h
+        include/promeki/mediaiotask_rawbitstream.h
         include/promeki/mediaiotask_imagefile.h
         include/promeki/mediaiotask_quicktime.h
         include/promeki/mediaiotask_rtp.h
@@ -869,7 +965,6 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/paintengine.h
         include/promeki/quicktime.h
         include/promeki/mediadesc.h
-        include/promeki/videodesc.h
         include/promeki/videotestpattern.h
     )
     list(APPEND PROMEKI_SOURCES
@@ -900,11 +995,16 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/imagefileio_sgi.cpp
         src/proav/imagefileio_pnm.cpp
         src/proav/jpegimagecodec.cpp
+        src/proav/jpegvideocodec.cpp
         src/proav/ltcdecoder.cpp
         src/proav/ltcencoder.cpp
         src/proav/mediaio.cpp
+        src/proav/mediapacket.cpp
         src/proav/mediaiotask.cpp
         src/proav/mediaiotask_converter.cpp
+        src/proav/mediaiotask_videoencoder.cpp
+        src/proav/mediaiotask_videodecoder.cpp
+        src/proav/mediaiotask_rawbitstream.cpp
         src/proav/mediaiotask_imagefile.cpp
         src/proav/mediaiotask_inspector.cpp
         src/proav/mediaiotask_quicktime.cpp
@@ -917,7 +1017,6 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/quicktime_reader.cpp
         src/proav/quicktime_writer.cpp
         src/proav/mediadesc.cpp
-        src/proav/videodesc.cpp
         src/proav/videotestpattern.cpp
     )
 
@@ -931,10 +1030,25 @@ if(PROMEKI_ENABLE_PROAV)
         # JPEG XS has no fallback — the entire file is gated, not just
         # the external linkage, because SvtJpegxs.h is only available
         # when the thirdparty library was configured in.
+        list(APPEND PROMEKI_HEADERS
+            include/promeki/jpegxsvideocodec.h
+        )
         list(APPEND PROMEKI_SOURCES
             src/proav/jpegxsimagecodec.cpp
+            src/proav/jpegxsvideocodec.cpp
             src/proav/imagefileio_jpegxs.cpp
         )
+    endif()
+    if(PROMEKI_ENABLE_NVENC)
+        # NVENC backend includes the NVIDIA Video Codec SDK header
+        # directly, so the whole file is gated — stubs are not useful
+        # when nvEncodeAPI.h is missing.
+        list(APPEND PROMEKI_SOURCES src/proav/nvencvideoencoder.cpp)
+    endif()
+    if(PROMEKI_ENABLE_NVDEC)
+        # Same story as NVENC — the backend compiles only when the
+        # Video Codec SDK headers (nvcuvid.h + cuviddec.h) are found.
+        list(APPEND PROMEKI_SOURCES src/proav/nvdecvideodecoder.cpp)
     endif()
     if(PROMEKI_ENABLE_PNG)
         list(APPEND PROMEKI_SOURCES src/proav/imagefileio_png.cpp)
@@ -1126,6 +1240,28 @@ if(PROMEKI_ENABLE_PROAV)
     if(PROMEKI_ENABLE_V4L2)
         target_link_libraries(promeki PRIVATE ALSA::ALSA)
         target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_V4L2)
+    endif()
+    if(PROMEKI_ENABLE_CUDA)
+        # CUDA::cudart is the runtime API (dynamic link).  Every future
+        # CUDA-gated file (nvenc backend, GPU CSC kernels, ...) pulls in
+        # the same target, so we keep it PRIVATE to the promeki library.
+        target_link_libraries(promeki PRIVATE CUDA::cudart)
+        target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_CUDA)
+    endif()
+    if(PROMEKI_ENABLE_NVENC)
+        # NVENC needs the CUDA driver API (for CUcontext) and dlopen
+        # to pull libnvidia-encode.so at runtime.  The NVENC SDK is a
+        # headers-only dependency; there is no link library involved.
+        target_include_directories(promeki PRIVATE ${PROMEKI_NVENC_INCLUDE_DIR})
+        target_link_libraries(promeki PRIVATE CUDA::cuda_driver ${CMAKE_DL_LIBS})
+        target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_NVENC)
+    endif()
+    if(PROMEKI_ENABLE_NVDEC)
+        # Same story: headers come from the Video Codec SDK directory,
+        # libnvcuvid.so.1 is loaded at runtime via dlopen.
+        target_include_directories(promeki PRIVATE ${PROMEKI_NVENC_INCLUDE_DIR})
+        target_link_libraries(promeki PRIVATE CUDA::cuda_driver ${CMAKE_DL_LIBS})
+        target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_NVDEC)
     endif()
     if(PROMEKI_ENABLE_CSC)
         target_link_libraries(promeki PRIVATE ${PROMEKI_HWY_TARGET})
@@ -1390,7 +1526,9 @@ if(PROMEKI_BUILD_TESTS)
         tests/application.cpp
         tests/array.cpp
         tests/atomic.cpp
+        tests/audiocodec.cpp
         tests/audiolevel.cpp
+        tests/typeregistry_isolation.cpp
         tests/benchmarkrunner.cpp
         tests/buffer.cpp
         tests/bufferediodevice.cpp
@@ -1408,6 +1546,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/crashhandler.cpp
         tests/clockdomain.cpp
         tests/crc.cpp
+        tests/cuda.cpp
         tests/datastream.cpp
         tests/datastream_include_chain.cpp
         tests/datetime.cpp
@@ -1560,15 +1699,19 @@ if(PROMEKI_BUILD_TESTS)
             tests/mediadesc.cpp
             tests/mediaio.cpp
             tests/mediaio_identifiers.cpp
+            tests/mediapacket.cpp
             tests/mediaio_stats.cpp
             tests/mediaiotask_converter.cpp
+            tests/mediaiotask_videoencoder.cpp
+            tests/mediaiotask_videodecoder.cpp
             tests/mediaiotask_inspector.cpp
             tests/mediaiotask_quicktime.cpp
             tests/mediaiotask_rtp.cpp
             tests/paintengine.cpp
             tests/pixeldesc.cpp
+            tests/videocodec.cpp
+            tests/videocodec_registry.cpp
             tests/quicktime.cpp
-            tests/videodesc.cpp
             tests/videotestpattern.cpp
         )
         if(PROMEKI_ENABLE_CSC)
@@ -1590,6 +1733,16 @@ if(PROMEKI_BUILD_TESTS)
             list(APPEND UNITTEST_SOURCES
                 tests/jpegxsimagecodec.cpp
                 tests/imagefileio_jpegxs.cpp
+            )
+        endif()
+        if(PROMEKI_ENABLE_NVENC)
+            list(APPEND UNITTEST_SOURCES
+                tests/nvencvideoencoder.cpp
+            )
+        endif()
+        if(PROMEKI_ENABLE_NVDEC)
+            list(APPEND UNITTEST_SOURCES
+                tests/nvdecvideodecoder.cpp
             )
         endif()
         if(PROMEKI_ENABLE_SRC)

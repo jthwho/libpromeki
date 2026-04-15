@@ -832,3 +832,26 @@ TEST_CASE("Variant_SdpSession_ToStringViaGetString") {
 }
 
 #endif // PROMEKI_ENABLE_NETWORK
+
+// ============================================================================
+// VideoCodec / AudioCodec — TypeRegistry types added in task 38.
+// ============================================================================
+
+TEST_CASE("Variant_VideoCodec_RoundTrip") {
+        Variant v(VideoCodec(VideoCodec::H264));
+        CHECK(v.type() == Variant::TypeVideoCodec);
+        CHECK(v.get<VideoCodec>() == VideoCodec(VideoCodec::H264));
+        // Round-trip via String — name() in, lookup() out.
+        CHECK(v.get<String>() == "H264");
+        Variant w(String("HEVC"));
+        CHECK(w.get<VideoCodec>() == VideoCodec(VideoCodec::HEVC));
+}
+
+TEST_CASE("Variant_AudioCodec_RoundTrip") {
+        Variant v(AudioCodec(AudioCodec::Opus));
+        CHECK(v.type() == Variant::TypeAudioCodec);
+        CHECK(v.get<AudioCodec>() == AudioCodec(AudioCodec::Opus));
+        CHECK(v.get<String>() == "Opus");
+        Variant w(String("AAC"));
+        CHECK(w.get<AudioCodec>() == AudioCodec(AudioCodec::AAC));
+}

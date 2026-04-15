@@ -318,6 +318,38 @@ Grammar built on `MediaConfig`: type-aware `Key:Value` parsing against each back
 
 ---
 
+---
+
+## VideoCodec / AudioCodec registry, MediaPacket, and VideoEncoder / VideoDecoder framework (SHIPPED)
+
+**Phase 4g additions (this session):**
+
+**`VideoCodec` registry** — `include/promeki/videocodec.h` + `src/core/videocodec.cpp`.  TypeRegistry-pattern wrapper around an immutable `Data` record (name, description, FourCC list, compressed `PixelDesc` IDs, encoder + decoder factories).  Well-known IDs: `H264`, `HEVC`, `AV1`, `VP9`, `JPEG`, `JPEG_XS`, `ProRes_422_Proxy/LT/422/HQ`, `ProRes_4444/XQ`.  `lookup(name)` resolves by PascalCase string name (e.g. `"H264"`, `"HEVC"`, `"JPEG"`).  `registeredIDs()` enumerates every registered codec.  User-defined codecs can extend the registry via `registerType()` + `registerData()`.  `PROMEKI_REGISTER_VIDEO_ENCODER` / `PROMEKI_REGISTER_VIDEO_DECODER` macros wire factory functions into `VideoCodec::Data` at static-init time.  Tests in `tests/videocodec.cpp` (passthrough in-test codec covering push/pull plumbing, flush/EOS, `MediaConfig` forwarding) and `tests/videocodec_registry.cpp` (well-known ID resolution, lookup, factory wiring for JPEG/JPEG_XS, user-registered codecs).
+
+**`AudioCodec` registry** — `include/promeki/audiocodec.h` + `src/core/audiocodec.cpp`.  Same TypeRegistry pattern.  Well-known IDs: `AAC`, `Opus`, `FLAC`, `MP3`, `PCMI_Float32LE/BE`, `PCMI_S8/U8`, `PCMI_S16LE/BE/U16LE/BE`, `PCMI_S24LE/BE/U24LE/BE`, `PCMI_S32LE/BE/U32LE/BE`.  No encoder/decoder backends yet — the registry and `AudioEncoder` / `AudioDecoder` forward declarations are in place for future backends.  Tests in `tests/audiocodec.cpp`.
+
+**`MediaPacket` data object** — `include/promeki/mediapacket.h` + `src/proav/mediapacket.cpp`.  Shareable data object representing one compressed access unit.  Carries a `BufferView` onto the encoded bytes (supports shared-buffer / multi-NAL-unit slice views), a `PixelDesc` codec identifier, separate PTS + DTS `MediaTimeStamp` values, a `Duration`, a `Flag` bitmask (`Keyframe`, `EndOfStream`, `Discardable`, `Corrupt`, `ParameterSet`), and freeform `Metadata`.  Tests in `tests/mediapacket.cpp`.
+
+**`MediaConfig::VideoCodec` + `MediaConfig::AudioCodec`** — `MediaConfig::CodecName` (String) retired; replaced by typed `MediaConfig::VideoCodec` (`TypeVideoCodec`) and `MediaConfig::AudioCodec` (`TypeAudioCodec`).  Codec string names switched to PascalCase throughout (`H264`, `HEVC`, `JPEG`, `JPEG_XS`, `AAC`, `Opus`, `PCMI_S16LE`, `PCMI_Float32LE`, etc.) to match the TypeRegistry name fields.  Codec config forwarding in `MediaIOTask_VideoEncoder`, `MediaIOTask_VideoDecoder`, and `mediaplay` updated accordingly.
+
+**`JpegVideoEncoder` / `JpegVideoDecoder`** — `include/promeki/jpegvideocodec.h` + `src/proav/jpegvideocodec.cpp`.  Adapts `JpegImageCodec` into the push-frame / pull-packet `VideoEncoder` / `VideoDecoder` contract.  Per-frame JPEG encode/decode via the underlying `JpegImageCodec` instance with output FIFO queuing.  Registered against `VideoCodec::JPEG` via `PROMEKI_REGISTER_VIDEO_ENCODER/DECODER`.  Config keys forwarded: `JpegQuality`, `JpegSubsampling`, `OutputPixelDesc`, `Capacity`.  Coverage via `tests/videocodec_registry.cpp` (factory wired-up test) and `tests/jpegimagecodec.cpp`.
+
+**`JpegXsVideoEncoder` / `JpegXsVideoDecoder`** — `include/promeki/jpegxsvideocodec.h` + `src/proav/jpegxsvideocodec.cpp`.  Same wrapper pattern over `JpegXsImageCodec`.  Registered against `VideoCodec::JPEG_XS`.  Config keys forwarded: `JpegXsBpp`, `JpegXsDecomposition`, `OutputPixelDesc`, `Capacity`.  Coverage via `tests/jpegxsimagecodec.cpp`.
+
+**`MediaIOTask_VideoEncoder`** — `include/promeki/mediaiotask_videoencoder.h` + `src/proav/mediaiotask_videoencoder.cpp`.  Generic `InputAndOutput` MediaIO backend that wraps any registered `VideoEncoder`.  Codec selected at open time from `MediaConfig::VideoCodec`; open fails with `NotSupported` when the codec has no registered encoder factory.  Config forwarded to the encoder via `VideoEncoder::configure()`.  Compressed frames emitted as `MediaPacket`-carrying `Frame` objects.  Tests in `tests/mediaiotask_videoencoder.cpp` (uses in-test Passthrough codec from `tests/videocodec.cpp`).
+
+**`MediaIOTask_VideoDecoder`** — `include/promeki/mediaiotask_videodecoder.h` + `src/proav/mediaiotask_videodecoder.cpp`.  Complementary read-write backend that accepts `MediaPacket` frames from an upstream encoder and decodes them back to uncompressed `Image` frames.  Tests in `tests/mediaiotask_videodecoder.cpp`.
+
+**`MediaIOTask_RawBitstream`** — `include/promeki/mediaiotask_rawbitstream.h` + `src/proav/mediaiotask_rawbitstream.cpp`.  Write-only MediaIO sink that appends each `MediaPacket` payload verbatim to a file (no container, no timestamps).  Registered with extensions `h264`/`h265`/`hevc`/`bit` so `mediaplay -d foo.h264` routes automatically.  Useful for capturing NVENC output as an Annex-B elementary stream for `ffplay`/`mpv` verification.  Config key: `MediaConfig::Filename`.  Stats: `StatsPacketsWritten`, `StatsBytesWritten`.  Test coverage pending (integration via NVENC path).
+
+**CUDA utility** — `include/promeki/cuda.h` + `src/core/cuda.cpp`.  Thin wrapper for CUDA device enumeration and context management, compiled only when `PROMEKI_ENABLE_CUDA` is set.  Tests in `tests/cuda.cpp`.
+
+**`NvencVideoEncoder` / `NvDecVideoDecoder`** — `include/promeki/nvencvideoencoder.h` + `include/promeki/nvdecvideodecoder.h` + matching `.cpp` files.  NVIDIA GPU-accelerated H.264 and HEVC encode/decode via the NVIDIA Video Codec SDK.  Compiled only when `PROMEKI_ENABLE_NVENC` / `PROMEKI_ENABLE_NVDEC` are set.  See `docs/nvenc.dox` for setup instructions.  Tests in `tests/nvencvideoencoder.cpp` and `tests/nvdecvideodecoder.cpp` (device-gated).
+
+**`typeregistry_isolation` test** — `tests/typeregistry_isolation.cpp` pins that independently-compiled TypeRegistry instances (`VideoCodec`, `AudioCodec`, `PixelDesc`, `Enum`) share no accidental global state via their string-keyed lookup tables.
+
+---
+
 ## Known Issues / Open FIXMEs in Existing Backends
 
 All tracked in `fixme.md`. Summary of the ones that belong to this document:

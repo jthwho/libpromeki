@@ -129,12 +129,18 @@ void usage() {
                 "  --sm <K:V>                Set one source stage metadata key\n"
                 "                            (Title, Artist, Copyright, ...).\n"
                 "                            Repeatable.\n"
-                "  -c, --convert             Insert a MediaIOTask_Converter\n"
-                "                            between source and destinations.\n"
-                "  --cc <K:V>                Set one Converter config key.\n"
-                "                            Implies --convert.  Repeatable.\n"
-                "  --cm <K:V>                Set one Converter metadata key.\n"
-                "                            Implies --convert.  Repeatable.\n"
+                "  -c, --convert <NAME>      Insert an intermediate MediaIO\n"
+                "                            stage (backend name, e.g.\n"
+                "                            Converter / VideoEncoder /\n"
+                "                            VideoDecoder).  Repeatable —\n"
+                "                            stages are chained in the\n"
+                "                            order given.\n"
+                "  --cc <K:V>                Set one config key on the\n"
+                "                            most recently declared -c.\n"
+                "                            Repeatable.\n"
+                "  --cm <K:V>                Set one metadata key on the\n"
+                "                            most recently declared -c.\n"
+                "                            Repeatable.\n"
                 "  -d, --dst <NAME|PATH|list>\n"
                 "                            Add a destination stage — a backend\n"
                 "                            name (SDL, QuickTime, ImageFile,\n"
@@ -234,27 +240,47 @@ bool parseOptions(int argc, char **argv, Options &opts) {
                  })},
 
                 {'c', "convert",
-                 "Insert a MediaIOTask_Converter between source and destinations",
-                 CmdLineParser::OptionCallback([&]() {
-                         opts.hasConverter = true;
-                         opts.converter.type = "Converter";
-                         opts.lastScope = Options::ScopeConverter;
+                 "Insert an intermediate MediaIO stage (backend name, e.g. "
+                 "Converter / VideoEncoder / VideoDecoder).  Repeatable — "
+                 "stages are chained in the order given.",
+                 CmdLineParser::OptionStringCallback([&](const String &s) {
+                         if(s == "list") listMediaIOBackendsAndExit();
+                         StageSpec sp;
+                         // Intermediate stages must be registered
+                         // MediaIO backends that support
+                         // InputAndOutput; file paths are not a
+                         // legal stage identifier here.  We still
+                         // go through classifyStageArg so the
+                         // diagnostic is uniform with -s / -d when
+                         // the name is unknown.
+                         classifyStageArg(s, sp);
+                         opts.converters.pushToBack(sp);
+                         opts.lastConverter = opts.converters.size() - 1;
+                         opts.lastScope     = Options::ScopeConverter;
                          return 0;
                  })},
                 {0, "cc",
-                 "Set Converter stage config (Key:Value), repeatable; implies --convert",
+                 "Set config on the most recently declared -c (Key:Value), repeatable",
                  CmdLineParser::OptionStringCallback([&](const String &s) {
-                         opts.hasConverter = true;
-                         opts.converter.type = "Converter";
-                         opts.converter.rawKeyValues.pushToBack(s);
+                         if(opts.converters.isEmpty()) {
+                                 fprintf(stderr,
+                                         "Error: --cc must follow at least one -c/--convert\n");
+                                 return 1;
+                         }
+                         opts.converters[opts.lastConverter]
+                                 .rawKeyValues.pushToBack(s);
                          return 0;
                  })},
                 {0, "cm",
-                 "Set Converter stage metadata (Key:Value), repeatable; implies --convert",
+                 "Set metadata on the most recently declared -c (Key:Value), repeatable",
                  CmdLineParser::OptionStringCallback([&](const String &s) {
-                         opts.hasConverter = true;
-                         opts.converter.type = "Converter";
-                         opts.converter.rawMetaKeyValues.pushToBack(s);
+                         if(opts.converters.isEmpty()) {
+                                 fprintf(stderr,
+                                         "Error: --cm must follow at least one -c/--convert\n");
+                                 return 1;
+                         }
+                         opts.converters[opts.lastConverter]
+                                 .rawMetaKeyValues.pushToBack(s);
                          return 0;
                  })},
 

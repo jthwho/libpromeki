@@ -239,37 +239,59 @@ int main(int argc, char **argv) {
         }
         const Metadata srcMetadata = source->metadata();
 
-        // --- Optional converter stage ---
-        MediaIO *converter = nullptr;
-        MediaDesc effectiveDesc = srcDesc;
-        AudioDesc effectiveAudioDesc = srcAudioDesc;
-        if(opts.hasConverter) {
-                converter = buildConverter(opts.converter);
-                if(converter == nullptr) {
+        // --- Intermediate stage chain ---
+        //
+        // One MediaIO instance per `-c` flag on the command line, in
+        // order.  Each stage inherits the upstream stage's MediaDesc /
+        // AudioDesc / Metadata and is opened in InputAndOutput mode.
+        // If any stage fails to build or open we tear the earlier ones
+        // down before returning.
+        List<MediaIO *> stages;
+        MediaDesc effectiveDesc       = srcDesc;
+        AudioDesc effectiveAudioDesc  = srcAudioDesc;
+        Metadata  effectiveMetadata   = srcMetadata;
+
+        auto closeAndDeleteStages = [&]() {
+                for(auto it = stages.begin(); it != stages.end(); ++it) {
+                        (*it)->close();
+                        delete *it;
+                }
+                stages.clear();
+        };
+
+        for(size_t i = 0; i < opts.converters.size(); ++i) {
+                const StageSpec &spec = opts.converters[i];
+                MediaIO *stage = buildIntermediateStage(spec);
+                if(stage == nullptr) {
+                        closeAndDeleteStages();
                         source->close();
                         delete source;
                         return 1;
                 }
-                converter->setMediaDesc(srcDesc);
-                if(srcAudioDesc.isValid()) converter->setAudioDesc(srcAudioDesc);
-                if(!srcMetadata.isEmpty()) converter->setMetadata(srcMetadata);
+                stage->setMediaDesc(effectiveDesc);
+                if(effectiveAudioDesc.isValid()) stage->setAudioDesc(effectiveAudioDesc);
+                if(!effectiveMetadata.isEmpty()) stage->setMetadata(effectiveMetadata);
                 if(statsEnabled) {
-                        attachStatsReporter(converter, String("converter"),
-                                            statsSlots);
+                        String label = String("stage[") + String::number(static_cast<int64_t>(i))
+                                + "]:" + spec.type;
+                        attachStatsReporter(stage, label, statsSlots);
                 }
-                err = converter->open(MediaIO::InputAndOutput);
+                err = stage->open(MediaIO::InputAndOutput);
                 if(err.isError()) {
-                        fprintf(stderr, "Error: Converter open failed: %s\n",
-                                err.name().cstr());
-                        delete converter;
+                        fprintf(stderr, "Error: stage[%zu] '%s' open failed: %s\n",
+                                i, spec.type.cstr(), err.name().cstr());
+                        delete stage;
+                        closeAndDeleteStages();
                         source->close();
                         delete source;
                         return 1;
                 }
-                effectiveDesc = converter->mediaDesc();
-                effectiveAudioDesc = converter->audioDesc();
-                fprintf(stdout, "Converter: %zu key override(s)\n",
-                        opts.converter.rawKeyValues.size());
+                stages.pushToBack(stage);
+                effectiveDesc      = stage->mediaDesc();
+                effectiveAudioDesc = stage->audioDesc();
+                effectiveMetadata  = stage->metadata();
+                fprintf(stdout, "Stage[%zu] %s: %zu key override(s)\n",
+                        i, spec.type.cstr(), spec.rawKeyValues.size());
                 if(!effectiveDesc.imageList().isEmpty()) {
                         fprintf(stdout, "  Output video: %s\n",
                                 effectiveDesc.imageList()[0].toString().cstr());
@@ -293,10 +315,7 @@ int main(int argc, char **argv) {
                                 delete it->io;
                         }
                 }
-                if(converter != nullptr) {
-                        converter->close();
-                        delete converter;
-                }
+                closeAndDeleteStages();
                 source->close();
                 delete source;
                 delete audioOutput;
@@ -439,7 +458,7 @@ int main(int argc, char **argv) {
         }
 
         // --- Signal-driven pipeline ---
-        Pipeline pipeline(source, converter, sinks, opts.frameCount);
+        Pipeline pipeline(source, stages, sinks, opts.frameCount);
         pipeline.start();
 
         SDLApplication *sdlApp = SDLApplication::instance();
@@ -495,7 +514,9 @@ int main(int argc, char **argv) {
         }
         source->cancelPending();
         if(!pipeline.finishedCleanly()) {
-                if(converter != nullptr) converter->cancelPending();
+                for(auto it = stages.begin(); it != stages.end(); ++it) {
+                        (*it)->cancelPending();
+                }
                 for(auto it = pipeline.sinks().begin();
                          it != pipeline.sinks().end(); ++it) {
                         it->io->cancelPending();
@@ -506,7 +527,9 @@ int main(int argc, char **argv) {
                  it != pipeline.sinks().end(); ++it) {
                 it->io->close();
         }
-        if(converter != nullptr) converter->close();
+        for(auto it = stages.begin(); it != stages.end(); ++it) {
+                (*it)->close();
+        }
         source->close();
 
         for(auto it = pipeline.sinks().begin();
@@ -514,7 +537,10 @@ int main(int argc, char **argv) {
                 delete it->io;
         }
         pipeline.sinks().clear();
-        delete converter;
+        for(auto it = stages.begin(); it != stages.end(); ++it) {
+                delete *it;
+        }
+        stages.clear();
         delete source;
         delete audioOutput;
         delete window;

@@ -597,6 +597,152 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                 .setDescription("JPEG XS horizontal decomposition depth 0-5."));
 
                 // ============================================================
+                // Video codec rate control (H.264 / HEVC / shared)
+                // ============================================================
+                //
+                // These keys are generic across any @ref VideoEncoder
+                // backend (NVENC, x264, QSV, VA-API, AMF, …).  Each backend
+                // honours the subset it natively supports; keys it does
+                // not understand are ignored by @c configure().  The
+                // bitrate is expressed in kilobits-per-second so callers
+                // can say @c cfg.set(MediaConfig::BitrateKbps, 10000)
+                // without thinking about byte-vs-bit conversions.
+
+                /// @brief int — target / average bitrate in kbit/s.
+                /// Honoured by @c VideoRateControl::CBR and
+                /// @c VideoRateControl::VBR.  Ignored by
+                /// @c VideoRateControl::CQP.  Codec default: 5000.
+                PROMEKI_DECLARE_ID(BitrateKbps,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(5000))
+                                .setMin(int32_t(1))
+                                .setDescription("Target / average bitrate in kbit/s."));
+
+                /// @brief int — maximum (peak) bitrate in kbit/s.  Only
+                /// meaningful for @c VideoRateControl::VBR; CBR ignores
+                /// it, CQP ignores it.  Codec default: 0 (no cap).
+                PROMEKI_DECLARE_ID(MaxBitrateKbps,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("Peak bitrate in kbit/s (VBR only; 0 = uncapped)."));
+
+                /// @brief Enum @ref VideoRateControl — rate-control mode.
+                /// Codec default: VBR.
+                PROMEKI_DECLARE_ID(VideoRcMode,
+                        VariantSpec().setType(Variant::TypeEnum)
+                                .setDefault(promeki::VideoRateControl::VBR)
+                                .setEnumType(promeki::VideoRateControl::Type)
+                                .setDescription("Video rate-control mode (CBR / VBR / CQP)."));
+
+                /// @brief int — GOP length in frames (distance between
+                /// keyframes).  0 = codec default.  Negative values are
+                /// rejected.  Codec default: 60.
+                PROMEKI_DECLARE_ID(GopLength,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(60))
+                                .setMin(int32_t(0))
+                                .setDescription("GOP length in frames (0 = codec default)."));
+
+                /// @brief int — maximum frames between IDR keyframes.  For
+                /// many codecs this is the same as @ref GopLength, but a
+                /// closed-GOP encoder may allow open GOPs where I-frames
+                /// are more frequent than IDRs.  0 = same as @c GopLength.
+                PROMEKI_DECLARE_ID(IdrInterval,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("Maximum frames between IDR keyframes "
+                                                "(0 = same as GopLength)."));
+
+                /// @brief int — number of B-frames between reference frames.
+                /// 0 = disable B-frames (lowest latency).  Codec default: 0.
+                PROMEKI_DECLARE_ID(BFrames,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("Number of B-frames between references "
+                                                "(0 = no B-frames)."));
+
+                /// @brief int — number of look-ahead frames for rate
+                /// control.  0 = disable look-ahead (lowest latency).
+                /// Codec default: 0.
+                PROMEKI_DECLARE_ID(LookaheadFrames,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("Rate-control look-ahead depth in frames "
+                                                "(0 = disabled)."));
+
+                /// @brief Enum @ref VideoEncoderPreset — speed/quality preset.
+                /// Each concrete backend maps this onto its own native
+                /// preset.  Codec default: Balanced.
+                PROMEKI_DECLARE_ID(VideoPreset,
+                        VariantSpec().setType(Variant::TypeEnum)
+                                .setDefault(promeki::VideoEncoderPreset::Balanced)
+                                .setEnumType(promeki::VideoEncoderPreset::Type)
+                                .setDescription("Video encoder speed/quality preset."));
+
+                /// @brief String — codec-specific profile name
+                /// (e.g. @c "baseline", @c "main", @c "high" for H.264;
+                /// @c "main", @c "main10" for HEVC).  Empty string = codec
+                /// default.  Profiles are string-typed because the valid
+                /// set is codec-dependent.
+                PROMEKI_DECLARE_ID(VideoProfile,
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Codec-specific profile name "
+                                                "(empty = codec default)."));
+
+                /// @brief String — codec-specific level name
+                /// (e.g. @c "4.0", @c "4.1", @c "5.1").  Empty string =
+                /// codec default (auto-selected from resolution /
+                /// bitrate).
+                PROMEKI_DECLARE_ID(VideoLevel,
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Codec-specific level name "
+                                                "(empty = codec default / auto)."));
+
+                /// @brief int — constant quantization parameter used when
+                /// @ref VideoRcMode is @c CQP.  Lower values = higher
+                /// quality and higher bitrate.  Typical range 18..40 for
+                /// H.264 / HEVC.  Codec default: 23.
+                PROMEKI_DECLARE_ID(VideoQp,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(23))
+                                .setRange(int32_t(0), int32_t(51))
+                                .setDescription("Constant QP for CQP rate-control mode."));
+
+                /// @brief @ref VideoCodec — typed codec identity used by
+                /// the generic video encoder / decoder @ref MediaIOTask
+                /// backends to look up the concrete @ref VideoEncoder /
+                /// @ref VideoDecoder factory.  Authored on the CLI as
+                /// the codec's registered name (e.g. @c "H264",
+                /// @c "HEVC", @c "JPEG") and resolved through
+                /// @ref promeki::VideoCodec::lookup.  Distinct from
+                /// @ref Type, which selects the @ref MediaIO backend
+                /// itself (e.g. @c "VideoEncoder" vs @c "Converter").
+                PROMEKI_DECLARE_ID(VideoCodec,
+                        VariantSpec().setType(Variant::TypeVideoCodec)
+                                .setDefault(promeki::VideoCodec())
+                                .setDescription("Video codec for the VideoEncoder / "
+                                                "VideoDecoder backends "
+                                                "(e.g. \"H264\", \"HEVC\", \"JPEG\")."));
+
+                /// @brief @ref AudioCodec — typed codec identity used by
+                /// audio encoder / decoder backends to look up the
+                /// concrete encoder / decoder factory (currently
+                /// metadata-only — registered audio backends will land
+                /// alongside this key).
+                PROMEKI_DECLARE_ID(AudioCodec,
+                        VariantSpec().setType(Variant::TypeAudioCodec)
+                                .setDefault(promeki::AudioCodec())
+                                .setDescription("Audio codec for the audio encoder / "
+                                                "decoder backends "
+                                                "(e.g. \"AAC\", \"Opus\", \"FLAC\")."));
+
+                // ============================================================
                 // CSC pipeline
                 // ============================================================
 

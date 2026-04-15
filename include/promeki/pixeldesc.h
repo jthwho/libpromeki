@@ -13,6 +13,7 @@
 #include <promeki/fourcc.h>
 #include <promeki/colormodel.h>
 #include <promeki/pixelformat.h>
+#include <promeki/videocodec.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -423,7 +424,7 @@ class PixelDesc {
                         bool            hasAlpha = false;                 ///< Whether this description includes alpha.
                         int             alphaCompIndex = -1;              ///< Component index for alpha (-1 = none).
                         bool            compressed = false;               ///< Whether this is a compressed format.
-                        String          codecName;                        ///< Codec name for ImageCodec lookup (e.g. "jpeg").
+                        VideoCodec      videoCodec;                       ///< Codec identity for compressed formats (e.g. @c VideoCodec::H264).
                         List<ID>        encodeSources;                    ///< Uncompressed PixelDescs the codec can encode from.
                         List<ID>        decodeTargets;                    ///< Uncompressed PixelDescs the codec can decode to.
                         FourCCList      fourccList;                       ///< Associated FourCC codes.
@@ -501,8 +502,14 @@ class PixelDesc {
                 /** @brief Returns true if this is a compressed format. */
                 bool isCompressed() const { return d->compressed; }
 
-                /** @brief Returns the codec name for compressed formats. */
-                const String &codecName() const { return d->codecName; }
+                /**
+                 * @brief Returns the codec identity for compressed formats.
+                 *
+                 * For uncompressed formats this returns an invalid
+                 * @ref VideoCodec (whose @c id() is @c VideoCodec::Invalid).
+                 * Use @ref isCompressed() to gate before checking the codec.
+                 */
+                const VideoCodec &videoCodec() const { return d->videoCodec; }
 
                 /**
                  * @brief Returns the uncompressed PixelDescs the codec can encode from.

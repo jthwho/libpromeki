@@ -11,8 +11,10 @@
 #include <cstdlib>
 
 #include <promeki/mediaiotask_imagefile.h>
+#include <promeki/audiocodec.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/size2d.h>
+#include <promeki/videocodec.h>
 #include <promeki/textstream.h>
 #include <promeki/variantspec.h>
 
@@ -132,6 +134,36 @@ void listPixelFormatsAndExit(const String &keyLabel) {
         std::exit(0);
 }
 
+void listVideoCodecsAndExit(const String &keyLabel) {
+        fprintf(stdout, "%s (VideoCodec):\n", keyLabel.cstr());
+        VideoCodec::IDList ids = VideoCodec::registeredIDs();
+        for(size_t i = 0; i < ids.size(); i++) {
+                VideoCodec vc(ids[i]);
+                String caps;
+                if(vc.canEncode()) caps += "E";
+                if(vc.canDecode()) caps += "D";
+                if(caps.isEmpty()) caps = "-";
+                fprintf(stdout, "  %-16s [%-2s] %s\n",
+                        vc.name().cstr(), caps.cstr(), vc.description().cstr());
+        }
+        std::exit(0);
+}
+
+void listAudioCodecsAndExit(const String &keyLabel) {
+        fprintf(stdout, "%s (AudioCodec):\n", keyLabel.cstr());
+        AudioCodec::IDList ids = AudioCodec::registeredIDs();
+        for(size_t i = 0; i < ids.size(); i++) {
+                AudioCodec ac(ids[i]);
+                String caps;
+                if(ac.canEncode()) caps += "E";
+                if(ac.canDecode()) caps += "D";
+                if(caps.isEmpty()) caps = "-";
+                fprintf(stdout, "  %-16s [%-2s] %s\n",
+                        ac.name().cstr(), caps.cstr(), ac.description().cstr());
+        }
+        std::exit(0);
+}
+
 bool splitKeyValue(const String &arg, String &key, String &val) {
         size_t colon = arg.find(':');
         if(colon == String::npos) return false;
@@ -183,9 +215,15 @@ Error applyStageConfig(StageSpec &stage, const String &stageLabel) {
                         if(spec && spec->acceptsType(Variant::TypePixelDesc)) {
                                 listPixelFormatsAndExit(label);
                         }
+                        if(spec && spec->acceptsType(Variant::TypeVideoCodec)) {
+                                listVideoCodecsAndExit(label);
+                        }
+                        if(spec && spec->acceptsType(Variant::TypeAudioCodec)) {
+                                listAudioCodecsAndExit(label);
+                        }
                         fprintf(stderr,
                                 "Error: %s: 'list' is only supported for Enum, "
-                                "EnumList, and PixelDesc keys\n",
+                                "EnumList, PixelDesc, VideoCodec, and AudioCodec keys\n",
                                 label.cstr());
                         return Error::NotSupported;
                 }
@@ -355,22 +393,28 @@ MediaIO *buildSource(const StageSpec &spec) {
         return io;
 }
 
-MediaIO *buildConverter(const StageSpec &spec) {
-        MediaIO::Config cfg = MediaIO::defaultConfig("Converter");
-        cfg.set(MediaConfig::Type, String("Converter"));
+MediaIO *buildIntermediateStage(const StageSpec &spec) {
+        const String &typeName = spec.type;
+        if(typeName.isEmpty()) {
+                fprintf(stderr, "Error: intermediate stage has no backend name\n");
+                return nullptr;
+        }
+        MediaIO::Config cfg = MediaIO::defaultConfig(typeName);
+        cfg.set(MediaConfig::Type, typeName);
         StageSpec applyStage;
-        applyStage.type             = "Converter";
+        applyStage.type             = typeName;
         applyStage.rawKeyValues     = spec.rawKeyValues;
         applyStage.rawMetaKeyValues = spec.rawMetaKeyValues;
         applyStage.config           = cfg;
-        Error ae = applyStageConfig(applyStage, String("--cc"));
+        Error ae = applyStageConfig(applyStage, String("--cc[") + typeName + "]");
         if(ae.isError()) return nullptr;
         MediaIO *io = MediaIO::create(applyStage.config);
         if(io == nullptr) {
-                fprintf(stderr, "Error: failed to create Converter stage\n");
+                fprintf(stderr, "Error: failed to create '%s' stage\n",
+                        typeName.cstr());
                 return nullptr;
         }
-        Error me = applyStageMetadata(applyStage, String("--cm"));
+        Error me = applyStageMetadata(applyStage, String("--cm[") + typeName + "]");
         if(me.isError()) {
                 delete io;
                 return nullptr;

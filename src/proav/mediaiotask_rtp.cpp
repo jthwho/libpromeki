@@ -280,17 +280,19 @@ void MediaIOTask_Rtp::resetAll() {
 }
 
 static bool isJpegPixelDesc(const PixelDesc &pd) {
-        // Any PixelDesc whose codec is "jpeg" is a valid RtpPayloadJpeg
+        // Any PixelDesc whose codec is "JPEG" is a valid RtpPayloadJpeg
         // input — the codec registry is the single source of truth
         // for what's in the JPEG family, and it's cheaper than
         // enumerating every (subsampling × matrix × range) variant
         // by hand.  Non-compressed formats and non-JPEG compressed
         // formats (H.264, HEVC, ProRes, ...) all fall through.
-        return pd.isValid() && pd.isCompressed() && pd.codecName() == "jpeg";
+        return pd.isValid() && pd.isCompressed()
+                && pd.videoCodec().id() == VideoCodec::JPEG;
 }
 
 static bool isJpegXsPixelDesc(const PixelDesc &pd) {
-        return pd.isValid() && pd.isCompressed() && pd.codecName() == "jpegxs";
+        return pd.isValid() && pd.isCompressed()
+                && pd.videoCodec().id() == VideoCodec::JPEG_XS;
 }
 
 Error MediaIOTask_Rtp::openStream(Stream &s, bool enableMulticastLoopback) {

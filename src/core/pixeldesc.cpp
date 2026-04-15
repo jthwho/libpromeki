@@ -125,10 +125,10 @@ static PixelDesc::Data makeJPEG_RGBA8() {
         d.hasAlpha                  = true;
         d.alphaCompIndex            = 3;
         d.compressed                = true;
-        d.codecName                 = "jpeg";
+        d.videoCodec = VideoCodec(VideoCodec::JPEG);
         d.encodeSources             = { PixelDesc::RGBA8_sRGB };
         d.decodeTargets             = { PixelDesc::RGBA8_sRGB };
-        d.fourccList                = { "jpeg", "mjpa", "mjpb", "mjpg", "AVRn", "AVDJ", "ADJV" };
+        d.fourccList                = { "JPEG", "mjpa", "mjpb", "mjpg", "AVRn", "AVDJ", "ADJV" };
         d.compSemantics[0]          = { "Red",   "R", 0, 255 };
         d.compSemantics[1]          = { "Green", "G", 0, 255 };
         d.compSemantics[2]          = { "Blue",  "B", 0, 255 };
@@ -144,7 +144,7 @@ static PixelDesc::Data makeJPEG_RGB8() {
         d.pixelFormat               = PixelFormat(PixelFormat::I_3x8);
         d.colorModel                = ColorModel(ColorModel::sRGB);
         d.compressed                = true;
-        d.codecName                 = "jpeg";
+        d.videoCodec = VideoCodec(VideoCodec::JPEG);
         // Only formats from the natural RGB family belong here — see
         // JpegImageCodec::encode(), which tags the output based on the
         // input component order.  A different family (e.g. RGBA or YUV)
@@ -152,7 +152,7 @@ static PixelDesc::Data makeJPEG_RGB8() {
         // contradict this PixelDesc's identity.
         d.encodeSources             = { PixelDesc::RGB8_sRGB };
         d.decodeTargets             = { PixelDesc::RGB8_sRGB };
-        d.fourccList                = { "jpeg", "mjpa", "mjpb", "mjpg", "AVRn", "AVDJ", "ADJV" };
+        d.fourccList                = { "JPEG", "mjpa", "mjpb", "mjpg", "AVRn", "AVDJ", "ADJV" };
         d.compSemantics[0]          = { "Red",   "R", 0, 255 };
         d.compSemantics[1]          = { "Green", "G", 0, 255 };
         d.compSemantics[2]          = { "Blue",  "B", 0, 255 };
@@ -165,7 +165,7 @@ static PixelDesc::Data makeJPEG_RGB8() {
 //
 // Builds one entry from the full complement of JPEG YCbCr variants
 // (matrix × range × subsampling).  Every variant has the same
-// general shape — a compressed PixelDesc with the "jpeg" codec, a
+// general shape — a compressed PixelDesc with the "JPEG" codec, a
 // matching colour model, and encodeSources / decodeTargets lists
 // drawn from the uncompressed YCbCr family that matches its own
 // (matrix, range) pair — so a single helper keeps the eight
@@ -198,12 +198,12 @@ static PixelDesc::Data makeJPEG_YUV(const JpegYuvEntry &e) {
         d.pixelFormat   = PixelFormat(e.pixelFormat);
         d.colorModel    = ColorModel(e.colorModel);
         d.compressed    = true;
-        d.codecName     = "jpeg";
+        d.videoCodec = VideoCodec(VideoCodec::JPEG);
         d.encodeSources = e.encodeSources;
         d.decodeTargets = e.decodeTargets;
         d.fourccList    = e.is420
-                ? List<FourCC>{ "jpeg", "mjpg" }
-                : List<FourCC>{ "jpeg", "mjpa", "mjpb", "mjpg", "AVRn", "AVDJ", "ADJV" };
+                ? List<FourCC>{ "JPEG", "mjpg" }
+                : List<FourCC>{ "JPEG", "mjpa", "mjpb", "mjpg", "AVRn", "AVDJ", "ADJV" };
 
         if(e.limited) {
                 d.compSemantics[0] = { "Luma",        "Y",  16, 235 };
@@ -383,7 +383,7 @@ static PixelDesc::Data makeJPEG_XS_YUV(const JpegXsYuvEntry &e) {
         d.pixelFormat   = PixelFormat(e.pixelFormat);
         d.colorModel    = ColorModel(ColorModel::YCbCr_Rec709);
         d.compressed    = true;
-        d.codecName     = "jpegxs";
+        d.videoCodec = VideoCodec(VideoCodec::JPEG_XS);
         d.encodeSources = e.encodeSources;
         d.decodeTargets = e.decodeTargets;
         // JPEG XS ISOBMFF sample entry is "jxsm" (ISO/IEC 21122-3).
@@ -478,7 +478,7 @@ static PixelDesc::Data makeJPEG_XS_RGB8_sRGB() {
         d.pixelFormat   = PixelFormat(PixelFormat::I_3x8);
         d.colorModel    = ColorModel(ColorModel::sRGB);
         d.compressed    = true;
-        d.codecName     = "jpegxs";
+        d.videoCodec = VideoCodec(VideoCodec::JPEG_XS);
         d.encodeSources = { PixelDesc::RGB8_Planar_sRGB };
         d.decodeTargets = { PixelDesc::RGB8_Planar_sRGB };
         d.fourccList    = { "jxsm" };
@@ -1647,7 +1647,7 @@ static PixelDesc::Data makeH264() {
         d.pixelFormat      = PixelFormat(PixelFormat::P_420_3x8);
         d.colorModel       = ColorModel(ColorModel::YCbCr_Rec709);
         d.compressed       = true;
-        d.codecName        = "h264";
+        d.videoCodec = VideoCodec(VideoCodec::H264);
         d.fourccList       = { "avc1", "avc3" };
         d.compSemantics[0] = ycbcrSem8[0];
         d.compSemantics[1] = ycbcrSem8[1];
@@ -1663,7 +1663,7 @@ static PixelDesc::Data makeHEVC() {
         d.pixelFormat      = PixelFormat(PixelFormat::P_420_3x10_LE);
         d.colorModel       = ColorModel(ColorModel::YCbCr_Rec709);
         d.compressed       = true;
-        d.codecName        = "hevc";
+        d.videoCodec = VideoCodec(VideoCodec::HEVC);
         d.fourccList       = { "hvc1", "hev1" };
         d.compSemantics[0] = ycbcrSem10[0];
         d.compSemantics[1] = ycbcrSem10[1];
@@ -1672,7 +1672,7 @@ static PixelDesc::Data makeHEVC() {
 }
 
 static PixelDesc::Data makeProRes422Desc(PixelDesc::ID id, const char *name, const char *desc,
-                                         FourCC fourcc) {
+                                         FourCC fourcc, VideoCodec::ID codec) {
         PixelDesc::Data d;
         d.id               = id;
         d.name             = name;
@@ -1681,7 +1681,7 @@ static PixelDesc::Data makeProRes422Desc(PixelDesc::ID id, const char *name, con
         d.pixelFormat      = PixelFormat(PixelFormat::P_422_3x10_LE);
         d.colorModel       = ColorModel(ColorModel::YCbCr_Rec709);
         d.compressed       = true;
-        d.codecName        = "prores";
+        d.videoCodec       = VideoCodec(codec);
         d.fourccList       = { fourcc };
         d.compSemantics[0] = ycbcrSem10[0];
         d.compSemantics[1] = ycbcrSem10[1];
@@ -1691,22 +1691,26 @@ static PixelDesc::Data makeProRes422Desc(PixelDesc::ID id, const char *name, con
 
 static PixelDesc::Data makeProRes_422_Proxy() {
         return makeProRes422Desc(PixelDesc::ProRes_422_Proxy,
-                                 "ProRes_422_Proxy", "Apple ProRes 422 Proxy", FourCC("apco"));
+                                 "ProRes_422_Proxy", "Apple ProRes 422 Proxy",
+                                 FourCC("apco"), VideoCodec::ProRes_422_Proxy);
 }
 
 static PixelDesc::Data makeProRes_422_LT() {
         return makeProRes422Desc(PixelDesc::ProRes_422_LT,
-                                 "ProRes_422_LT", "Apple ProRes 422 LT", FourCC("apcs"));
+                                 "ProRes_422_LT", "Apple ProRes 422 LT",
+                                 FourCC("apcs"), VideoCodec::ProRes_422_LT);
 }
 
 static PixelDesc::Data makeProRes_422() {
         return makeProRes422Desc(PixelDesc::ProRes_422,
-                                 "ProRes_422", "Apple ProRes 422", FourCC("apcn"));
+                                 "ProRes_422", "Apple ProRes 422",
+                                 FourCC("apcn"), VideoCodec::ProRes_422);
 }
 
 static PixelDesc::Data makeProRes_422_HQ() {
         return makeProRes422Desc(PixelDesc::ProRes_422_HQ,
-                                 "ProRes_422_HQ", "Apple ProRes 422 HQ", FourCC("apch"));
+                                 "ProRes_422_HQ", "Apple ProRes 422 HQ",
+                                 FourCC("apch"), VideoCodec::ProRes_422_HQ);
 }
 
 static PixelDesc::Data makeProRes_4444() {
@@ -1720,7 +1724,7 @@ static PixelDesc::Data makeProRes_4444() {
         d.compressed       = true;
         d.hasAlpha         = true;
         d.alphaCompIndex   = 3;
-        d.codecName        = "prores";
+        d.videoCodec       = VideoCodec(VideoCodec::ProRes_4444);
         d.fourccList       = { "ap4h" };
         d.compSemantics[0] = ycbcrSem10[0];
         d.compSemantics[1] = ycbcrSem10[1];
@@ -1740,7 +1744,7 @@ static PixelDesc::Data makeProRes_4444_XQ() {
         d.compressed       = true;
         d.hasAlpha         = true;
         d.alphaCompIndex   = 3;
-        d.codecName        = "prores";
+        d.videoCodec       = VideoCodec(VideoCodec::ProRes_4444_XQ);
         d.fourccList       = { "ap4x" };
         d.compSemantics[0] = ycbcrSem12[0];
         d.compSemantics[1] = ycbcrSem12[1];

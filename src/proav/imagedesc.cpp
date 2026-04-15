@@ -194,7 +194,7 @@ SdpMediaDescription ImageDesc::toSdp(uint8_t payloadType) const {
         int w = static_cast<int>(width());
         int h = static_cast<int>(height());
 
-        if(pd.isCompressed() && pd.codecName() == "jpeg") {
+        if(pd.isCompressed() && pd.videoCodec().id() == VideoCodec::JPEG) {
                 // RFC 2435 MJPEG.  Geometry is in-band (packet
                 // header), so the rtpmap is just JPEG/90000.  We
                 // emit colorimetry and RANGE as fmtp extensions
@@ -218,7 +218,7 @@ SdpMediaDescription ImageDesc::toSdp(uint8_t payloadType) const {
                         md.setAttribute("fmtp", String::number(pt) +
                                         String(" ") + fmtp);
                 }
-        } else if(pd.isCompressed() && pd.codecName() == "jpegxs") {
+        } else if(pd.isCompressed() && pd.videoCodec().id() == VideoCodec::JPEG_XS) {
                 // RFC 9134 JPEG XS.
                 md.addPayloadType(payloadType);
                 String ptStr = String::number(payloadType);

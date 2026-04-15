@@ -136,8 +136,6 @@ class MediaIOTask_Converter : public MediaIOTask {
                 bool                            _outputPixelDescSet = false;
                 AudioDesc::DataType             _outputAudioDataType = AudioDesc::Invalid;
                 bool                            _outputAudioDataTypeSet = false;
-                int                             _jpegQuality = 85;
-                Enum                            _jpegSubsamplingEnum;
                 int                             _capacity = 4;
 
                 // Runtime state

@@ -15,6 +15,9 @@
 #include <promeki/buffer.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/jpegxsimagecodec.h>
+#include <promeki/codec.h>
+#include <promeki/mediapacket.h>
+#include <promeki/videocodec.h>
 #include <promeki/metadata.h>
 
 #include <SvtJpegxs.h>
@@ -228,7 +231,7 @@ Error ImageFileIO_JpegXS::save(ImageFile &imageFile, const MediaConfig &config) 
         }
 
         // Pass-through: keep the existing JPEG XS bitstream exactly.
-        if(image.isCompressed() && image.pixelDesc().codecName() == "jpegxs") {
+        if(image.isCompressed() && image.pixelDesc().videoCodec().id() == VideoCodec::JPEG_XS) {
                 const void *payload = image.data(0);
                 const size_t payloadSize = image.compressedSize();
                 if(payload == nullptr || payloadSize == 0) {
@@ -265,7 +268,7 @@ Error ImageFileIO_JpegXS::save(ImageFile &imageFile, const MediaConfig &config) 
         if(image.isCompressed()) {
                 promekiErr("JPEG XS save '%s': unsupported compressed input codec '%s'",
                            filename.cstr(),
-                           image.pixelDesc().codecName().cstr());
+                           image.pixelDesc().videoCodec().name().cstr());
                 return Error::NotSupported;
         }
 
@@ -320,16 +323,54 @@ Error ImageFileIO_JpegXS::save(ImageFile &imageFile, const MediaConfig &config) 
                         break;
         }
 
-        Image encoded = image.convert(PixelDesc(targetId), image.metadata(), config);
-        if(!encoded.isValid() || !encoded.isCompressed()) {
-                promekiErr("JPEG XS save '%s': encode of '%s' failed",
-                           filename.cstr(),
-                           image.pixelDesc().name().cstr());
-                return Error::EncodeFailed;
+        // Same JpegVideoEncoder bridging used by ImageFileIO_JPEG —
+        // one-shot session, configure with the chosen sub-target,
+        // submit, pull the packet, write its bytes.
+        VideoEncoder *enc = VideoCodec(VideoCodec::JPEG_XS).createEncoder();
+        if(enc == nullptr) {
+                promekiErr("JPEG XS save '%s': no JpegXsVideoEncoder factory registered",
+                           filename.cstr());
+                return Error::NotSupported;
+        }
+        MediaConfig encCfg = config;
+        encCfg.set(MediaConfig::OutputPixelDesc, PixelDesc(targetId));
+        enc->configure(encCfg);
+
+        Image encodeInput = image;
+        const auto &sources = PixelDesc(targetId).encodeSources();
+        bool sourceOk = sources.isEmpty();
+        for(PixelDesc::ID s : sources) {
+                if(image.pixelDesc().id() == s) { sourceOk = true; break; }
+        }
+        if(!sourceOk && !sources.isEmpty()) {
+                encodeInput = image.convert(PixelDesc(sources[0]),
+                                            image.metadata(), config);
+                if(!encodeInput.isValid()) {
+                        delete enc;
+                        promekiErr("JPEG XS save '%s': prep CSC %s -> %s failed",
+                                   filename.cstr(),
+                                   image.pixelDesc().name().cstr(),
+                                   PixelDesc(sources[0]).name().cstr());
+                        return Error::ConversionFailed;
+                }
         }
 
-        const void *payload = encoded.data(0);
-        const size_t payloadSize = encoded.compressedSize();
+        if(Error e = enc->submitFrame(encodeInput); e.isError()) {
+                String msg = enc->lastErrorMessage();
+                delete enc;
+                promekiErr("JPEG XS save '%s': encode failed: %s",
+                           filename.cstr(), msg.isEmpty() ? e.name().cstr() : msg.cstr());
+                return e;
+        }
+        MediaPacket::Ptr pkt = enc->receivePacket();
+        delete enc;
+        if(!pkt) {
+                promekiErr("JPEG XS save '%s': encoder produced no packet",
+                           filename.cstr());
+                return Error::EncodeFailed;
+        }
+        const void *payload = pkt->view().data();
+        const size_t payloadSize = pkt->view().size();
         if(payload == nullptr || payloadSize == 0) {
                 promekiErr("JPEG XS save '%s': empty encoded payload", filename.cstr());
                 return Error::EncodeFailed;

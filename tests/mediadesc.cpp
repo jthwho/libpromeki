@@ -75,6 +75,69 @@ TEST_CASE("MediaDesc_fromSdp_empty_session_returns_empty_desc") {
         CHECK(md.audioList().isEmpty());
 }
 
+TEST_CASE("MediaDesc_Default") {
+        MediaDesc vd;
+        CHECK(!vd.isValid());
+}
+
+TEST_CASE("MediaDesc_SetFrameRate") {
+        MediaDesc vd;
+        vd.setFrameRate(FrameRate(FrameRate::FPS_2997));
+        CHECK(vd.frameRate().isValid());
+        CHECK(vd.frameRate().numerator() == 30000);
+        CHECK(vd.frameRate().denominator() == 1001);
+}
+
+TEST_CASE("MediaDesc_ValidWithImage") {
+        MediaDesc vd;
+        vd.setFrameRate(FrameRate(FrameRate::FPS_24));
+        CHECK(!vd.isValid());
+
+        vd.imageList().pushToBack(ImageDesc(1920, 1080, PixelDesc::RGBA8_sRGB));
+        CHECK(vd.isValid());
+        CHECK(vd.imageList().size() == 1);
+}
+
+TEST_CASE("MediaDesc_ValidWithAudio") {
+        MediaDesc vd;
+        vd.setFrameRate(FrameRate(FrameRate::FPS_25));
+        vd.audioList().pushToBack(AudioDesc(48000.0f, 2));
+        CHECK(vd.isValid());
+        CHECK(vd.audioList().size() == 1);
+}
+
+TEST_CASE("MediaDesc_CopyIsIndependent") {
+        MediaDesc v1;
+        v1.setFrameRate(FrameRate(FrameRate::FPS_24));
+        v1.imageList().pushToBack(ImageDesc(1920, 1080, PixelDesc::RGBA8_sRGB));
+
+        MediaDesc v2 = v1;
+
+        v2.setFrameRate(FrameRate(FrameRate::FPS_30));
+        CHECK(v1.frameRate().numerator() == 24);
+        CHECK(v2.frameRate().numerator() == 30);
+}
+
+TEST_CASE("MediaDesc_Metadata") {
+        MediaDesc vd;
+        CHECK(vd.metadata().isEmpty());
+        vd.metadata().set(Metadata::Title, String("Test Video"));
+        CHECK(!vd.metadata().isEmpty());
+}
+
+TEST_CASE("MediaDesc_MultipleStreams") {
+        MediaDesc vd;
+        vd.setFrameRate(FrameRate(FrameRate::FPS_2398));
+        vd.imageList().pushToBack(ImageDesc(1920, 1080, PixelDesc::RGBA8_sRGB));
+        vd.imageList().pushToBack(ImageDesc(3840, 2160, PixelDesc::RGB8_sRGB));
+        vd.audioList().pushToBack(AudioDesc(48000.0f, 2));
+        vd.audioList().pushToBack(AudioDesc(48000.0f, 8));
+
+        CHECK(vd.isValid());
+        CHECK(vd.imageList().size() == 2);
+        CHECK(vd.audioList().size() == 2);
+}
+
 TEST_CASE("MediaDesc_fromSdp_multiple_video_tracks") {
         SdpSession sdp;
         // Two video tracks at different resolutions — both

@@ -9,6 +9,7 @@
 #include <thread>
 #include <vector>
 #include <doctest/doctest.h>
+#include "codectesthelpers.h"
 #include <promeki/config.h>
 #include <promeki/mediaio.h>
 #include <promeki/mediaiotask_rtp.h>
@@ -1401,13 +1402,16 @@ TEST_CASE("MediaIOTask_Rtp_Reader_Mjpeg_Loopback") {
         const size_t W = 16;
         const size_t H = 16;
 
-        // Build a compressed JPEG source frame via Image::convert.
+        // Build a compressed JPEG source frame through a one-shot
+        // JpegVideoEncoder session — Image::convert is CSC-only after
+        // task 36; the encoder side lives behind the VideoEncoder
+        // contract now.
         Image rgb(W, H, PixelDesc(PixelDesc::RGB8_sRGB));
         rgb.fill(static_cast<char>(0x80));
         MediaConfig jpegCfg;
         jpegCfg.set(MediaConfig::JpegQuality, 85);
-        Image jpeg = rgb.convert(PixelDesc(PixelDesc::JPEG_YUV8_422_Rec601_Full),
-                                  Metadata(), jpegCfg);
+        Image jpeg = promeki::tests::encodeImageToCompressed(
+                rgb, PixelDesc(PixelDesc::JPEG_YUV8_422_Rec601_Full), jpegCfg);
         REQUIRE(jpeg.isValid());
         REQUIRE(jpeg.isCompressed());
 
@@ -1457,11 +1461,11 @@ TEST_CASE("MediaIOTask_Rtp_Reader_Mjpeg_Loopback") {
         CHECK(rxImg.width()  == W);
         CHECK(rxImg.height() == H);
 
-        // Decode the reassembled JFIF via Image::convert — this is
-        // the real test that the rebuilt headers are accepted by
-        // libjpeg-turbo.
-        Image decoded = rxImg.convert(PixelDesc(PixelDesc::RGB8_sRGB),
-                                       Metadata(), MediaConfig());
+        // Decode the reassembled JFIF via a JpegVideoDecoder
+        // session — this is the real test that the rebuilt headers
+        // are accepted by libjpeg-turbo.
+        Image decoded = promeki::tests::decodeCompressedToImage(
+                rxImg, PixelDesc(PixelDesc::RGB8_sRGB));
         CHECK(decoded.isValid());
         CHECK_FALSE(decoded.isCompressed());
         if(decoded.isValid()) {

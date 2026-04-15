@@ -187,12 +187,18 @@ TEST_CASE("JpegImageCodec_DecodeToRGBA8") {
 // Registry
 // ============================================================================
 
-TEST_CASE("JpegImageCodec_Registry") {
-        CHECK(ImageCodec::registeredCodecs().contains("jpeg"));
-        ImageCodec *codec = ImageCodec::createCodec("jpeg");
-        REQUIRE(codec != nullptr);
-        CHECK(codec->canEncode()); CHECK(codec->canDecode());
-        delete codec;
+TEST_CASE("JpegImageCodec_DirectConstruction") {
+        // The legacy ImageCodec public registry was retired in task
+        // 37.  JpegImageCodec is still a concrete class — used
+        // internally as the implementation backing the
+        // JpegVideoEncoder / JpegVideoDecoder wrappers — so we just
+        // construct it directly here.  Codec discovery for new
+        // callers happens through VideoCodec::JPEG.createEncoder /
+        // createDecoder; that path is covered separately in
+        // tests/videocodec_registry.cpp.
+        JpegImageCodec codec;
+        CHECK(codec.canEncode());
+        CHECK(codec.canDecode());
 }
 
 // ============================================================================
@@ -208,57 +214,47 @@ TEST_CASE("JpegImageCodec_ConfigureFromMediaConfig") {
         Image img = createTestImage(320, 240);
 
         SUBCASE("JpegQuality flows through configure()") {
-                // Pull the codec out of the registry exactly the way
-                // Image::convert does, hand it a MediaConfig with two
-                // different quality values, and verify the encoded
-                // output sizes track the setting.
-                ImageCodec *lo = ImageCodec::createCodec("jpeg");
-                ImageCodec *hi = ImageCodec::createCodec("jpeg");
-                REQUIRE(lo != nullptr);
-                REQUIRE(hi != nullptr);
+                // Construct two codecs directly (no public registry
+                // any more — that was retired in task 37).  Hand each
+                // a different quality and verify output sizes track.
+                JpegImageCodec lo;
+                JpegImageCodec hi;
 
                 MediaConfig loCfg;
                 loCfg.set(MediaConfig::JpegQuality, 10);
-                lo->configure(loCfg);
+                lo.configure(loCfg);
 
                 MediaConfig hiCfg;
                 hiCfg.set(MediaConfig::JpegQuality, 95);
-                hi->configure(hiCfg);
+                hi.configure(hiCfg);
 
-                Image encLo = lo->encode(img);
-                Image encHi = hi->encode(img);
+                Image encLo = lo.encode(img);
+                Image encHi = hi.encode(img);
                 REQUIRE(encLo.isValid());
                 REQUIRE(encHi.isValid());
                 CHECK(encHi.compressedSize() > encLo.compressedSize());
-
-                delete lo;
-                delete hi;
         }
 
         SUBCASE("JpegSubsampling Enum flows through configure()") {
                 // YUV444 keeps full chroma resolution and produces a
                 // larger file than YUV420 for a chroma-rich gradient.
-                ImageCodec *c444 = ImageCodec::createCodec("jpeg");
-                ImageCodec *c420 = ImageCodec::createCodec("jpeg");
-                REQUIRE(c444 != nullptr);
-                REQUIRE(c420 != nullptr);
+                JpegImageCodec c444;
+                JpegImageCodec c420;
 
                 MediaConfig cfg444;
                 cfg444.set(MediaConfig::JpegSubsampling, ChromaSubsampling::YUV444);
-                c444->configure(cfg444);
+                c444.configure(cfg444);
 
                 MediaConfig cfg420;
                 cfg420.set(MediaConfig::JpegSubsampling, ChromaSubsampling::YUV420);
-                c420->configure(cfg420);
+                c420.configure(cfg420);
 
-                Image enc444 = c444->encode(img);
-                Image enc420 = c420->encode(img);
+                Image enc444 = c444.encode(img);
+                Image enc420 = c420.encode(img);
                 REQUIRE(enc444.isValid());
                 REQUIRE(enc420.isValid());
                 CHECK(enc444.compressedSize() > enc420.compressedSize());
 
-                delete c444;
-                delete c420;
         }
 
         SUBCASE("Empty MediaConfig leaves codec defaults intact") {

@@ -38,8 +38,6 @@ MediaIO::FormatDesc MediaIOTask_Converter::formatDesc() {
                                 specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
                         };
                         s(MediaConfig::OutputPixelDesc, PixelDesc());
-                        s(MediaConfig::JpegQuality, int32_t(85));
-                        s(MediaConfig::JpegSubsampling, ChromaSubsampling::YUV422);
                         s(MediaConfig::OutputAudioDataType, AudioDataType::Invalid);
                         s(MediaConfig::Capacity, int32_t(4));
                         return specs;
@@ -60,26 +58,6 @@ Error MediaIOTask_Converter::executeCmd(MediaIOCommandOpen &cmd) {
         // -- Video output pixel description --
         _outputPixelDesc = cfg.getAs<PixelDesc>(MediaConfig::OutputPixelDesc, PixelDesc());
         _outputPixelDescSet = _outputPixelDesc.isValid();
-
-        // -- JPEG encode parameters --
-        //
-        // Validated here but applied via the MediaConfig that we hand to
-        // Image::convert() on every frame.  Keeping them as plain fields
-        // (rather than a cached JpegImageCodec member) means
-        // Image::convert() stays the single dispatch point for every
-        // encode/decode decision in the library, and the JPEG codec only
-        // exists for the lifetime of one encode call.
-        _jpegQuality = cfg.getAs<int>(MediaConfig::JpegQuality, 85);
-        if(_jpegQuality < 1) _jpegQuality = 1;
-        if(_jpegQuality > 100) _jpegQuality = 100;
-
-        Error subErr;
-        _jpegSubsamplingEnum = cfg.get(MediaConfig::JpegSubsampling).asEnum(
-                                        ChromaSubsampling::Type, &subErr);
-        if(subErr.isError() || !_jpegSubsamplingEnum.hasListedValue()) {
-                promekiErr("MediaIOTask_Converter: unknown JPEG subsampling");
-                return Error::InvalidArgument;
-        }
 
         // -- Audio output data type --
         // AudioDataType Enum integer values mirror AudioDesc::DataType,
@@ -147,7 +125,6 @@ Error MediaIOTask_Converter::executeCmd(MediaIOCommandClose &cmd) {
         _outputPixelDescSet = false;
         _outputAudioDataType = AudioDesc::Invalid;
         _outputAudioDataTypeSet = false;
-        _jpegSubsamplingEnum = Enum();
         _frameCount = 0;
         _readCount = 0;
         _framesConverted = 0;
@@ -173,21 +150,25 @@ Error MediaIOTask_Converter::convertImage(const Image &input, Image &output) {
                 return Error::Ok;
         }
 
-        // Build a MediaConfig so Image::convert() can honour the JPEG
-        // quality / subsampling knobs we parsed in executeCmd().
-        // Because MediaConfig is the same type the backend was
-        // configured with, this is a pure key re-tagging — no
-        // translation or temporary objects.  Image::convert()
-        // transparently dispatches to JpegImageCodec for compressed ↔
-        // uncompressed conversions and to CSCPipeline for uncompressed
-        // ↔ uncompressed, so a single call covers every path this
-        // backend supported in its earlier incarnation.
-        MediaConfig convertConfig;
-        convertConfig.set(MediaConfig::JpegQuality, _jpegQuality);
-        if(_jpegSubsamplingEnum.hasListedValue()) {
-                convertConfig.set(MediaConfig::JpegSubsampling, _jpegSubsamplingEnum);
+        // The Converter backend is now strictly CSC; compression /
+        // decompression flow through MediaIOTask_VideoEncoder /
+        // MediaIOTask_VideoDecoder stages, which can amortise codec
+        // state across frames.  Reject a compressed source or target
+        // here with a clear error rather than silently failing
+        // downstream — the right fix is to insert the appropriate
+        // codec stage in the pipeline.
+        if(input.pixelDesc().isCompressed() || _outputPixelDesc.isCompressed()) {
+                promekiErr("MediaIOTask_Converter: %s -> %s is a compression hop; "
+                           "use MediaIOTask_VideoEncoder / MediaIOTask_VideoDecoder",
+                           input.pixelDesc().name().cstr(),
+                           _outputPixelDesc.name().cstr());
+                return Error::NotSupported;
         }
 
+        // Image::convert() runs the CSC pipeline (and only the CSC
+        // pipeline now); MediaConfig still flows through so any
+        // future per-CSC tunables get a transparent ride.
+        MediaConfig convertConfig;
         Image converted = input.convert(_outputPixelDesc, input.metadata(),
                                         convertConfig);
         if(!converted.isValid()) {

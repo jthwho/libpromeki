@@ -22,30 +22,30 @@ namespace mediaplay {
 /**
  * @brief All options collected from the command line.
  *
- * Stages are stored in their own fields rather than merged into a
- * generic list so main() can quickly answer "is there a source?"
- * and "is there a converter?" without walking the list.  Multiple
- * sinks are explicitly supported (fan-out).
+ * `source` is the single pipeline source (`-s`); `sinks` is the
+ * fan-out list of pipeline sinks (`-d`); `converters` is the list
+ * of intermediate stages (`-c NAME`), in pipeline order.  The
+ * `-c` flag is repeatable so a pipeline can chain, e.g.,
+ * @c "-c Converter -c VideoEncoder -c VideoDecoder".  Each
+ * subsequent @c --cc / @c --cm attaches to the most recent @c -c.
  */
 struct Options {
-        // Stages.  `source` holds the single pipeline source (`-s`),
-        // `sinks` holds the fan-out list of pipeline sinks (`-d`),
-        // and `converter` is the optional intermediate stage (`-c`).
         StageSpec                       source;
-        bool                            hasConverter = false;
-        StageSpec                       converter;
+        promeki::List<StageSpec>        converters;   ///< Intermediate stages, in order.
         promeki::List<StageSpec>        sinks;
 
-        // State used while parsing --sc / --dc / --cc — the parser
-        // needs to know which stage a stray `--*c` or `--*m` attaches
-        // to.
+        // State used while parsing --sc / --dc / --cc / --cm — the
+        // parser needs to know which stage a stray `--*c` or `--*m`
+        // attaches to.  `lastConverter` / `lastSink` index into
+        // `converters` / `sinks` respectively.
         enum StageScope {
                 ScopeSource = 0,
                 ScopeConverter,
                 ScopeSink
         };
-        StageScope                      lastScope = ScopeSource;
-        size_t                          lastSink  = 0;
+        StageScope                      lastScope      = ScopeSource;
+        size_t                          lastConverter  = 0;
+        size_t                          lastSink       = 0;
 
         // Framework-level (non-stage) flags
         //

@@ -126,6 +126,15 @@ String buildFeatureString() {
 #if PROMEKI_ENABLE_V4L2
         features += "V4L2";
 #endif
+#if PROMEKI_ENABLE_CUDA
+        features += "CUDA";
+#endif
+#if PROMEKI_ENABLE_NVENC
+        features += "NVENC";
+#endif
+#if PROMEKI_ENABLE_NVDEC
+        features += "NVDEC";
+#endif
         return String::sprintf("Features: %s",
                 features.isEmpty() ? "(none)" : features.join(" ").cstr());
 }

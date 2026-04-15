@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <doctest/doctest.h>
+#include "codectesthelpers.h"
 #include <promeki/imagefileio.h>
 #include <promeki/imagefile.h>
 #include <promeki/image.h>
@@ -96,15 +97,15 @@ TEST_CASE("ImageFileIO JPEG: RGB8 round-trip") {
         Image loaded = lf.image();
         REQUIRE(loaded.isValid());
         CHECK(loaded.isCompressed());
-        CHECK(loaded.pixelDesc().codecName() == "jpeg");
+        CHECK(loaded.pixelDesc().videoCodec().id() == VideoCodec::JPEG);
         CHECK(loaded.width() == 64);
         CHECK(loaded.height() == 48);
 
-        // Decode through Image::convert() (Image::convert now dispatches
-        // to JpegImageCodec::decode() automatically) and compare against
-        // the original gradient.
-        Image decoded = loaded.convert(PixelDesc(PixelDesc::RGB8_sRGB),
-                                       loaded.metadata());
+        // Decode through a one-shot JpegVideoDecoder session
+        // (Image::convert is CSC-only after task 36) and compare
+        // against the original gradient.
+        Image decoded = promeki::tests::decodeCompressedToImage(
+                loaded, PixelDesc(PixelDesc::RGB8_sRGB));
         REQUIRE(decoded.isValid());
         REQUIRE(!decoded.isCompressed());
         CHECK(decoded.width() == 64);
@@ -177,54 +178,54 @@ TEST_CASE("ImageFileIO JPEG: pass-through preserves bytes") {
 // ============================================================================
 //
 // This is the scenario the JPEG backend unblocks: a source that produces
-// uncompressed frames can target a JPEG PixelDesc directly because
-// Image::convert() now understands the codec path.
+// uncompressed frames are encoded through a one-shot JpegVideoEncoder
+// session and decoded back through a JpegVideoDecoder session — the
+// helpers in codectesthelpers.h hide the boilerplate.
 
-TEST_CASE("Image::convert: RGB8 -> JPEG round-trip via convert()") {
+TEST_CASE("VideoCodec JPEG: RGB8 -> JPEG round-trip via VideoEncoder/VideoDecoder") {
         Image src = makeGradientRGB8(80, 60);
 
-        Image jpeg = src.convert(PixelDesc(PixelDesc::JPEG_YUV8_422_Rec709),
-                                 src.metadata());
+        Image jpeg = promeki::tests::encodeImageToCompressed(
+                src, PixelDesc(PixelDesc::JPEG_YUV8_422_Rec709));
         REQUIRE(jpeg.isValid());
         REQUIRE(jpeg.isCompressed());
-        CHECK(jpeg.pixelDesc().id() == PixelDesc::JPEG_YUV8_422_Rec709);
+        CHECK(jpeg.pixelDesc().videoCodec().id() == VideoCodec::JPEG);
         CHECK(jpeg.compressedSize() > 0);
 
-        Image decoded = jpeg.convert(PixelDesc(PixelDesc::RGB8_sRGB),
-                                     jpeg.metadata());
+        Image decoded = promeki::tests::decodeCompressedToImage(
+                jpeg, PixelDesc(PixelDesc::RGB8_sRGB));
         REQUIRE(decoded.isValid());
         REQUIRE(!decoded.isCompressed());
         CHECK(decoded.width() == src.width());
         CHECK(decoded.height() == src.height());
 
         // A horizontal red gradient run through RGB → YUV 4:2:2
-        // (averages chroma over pairs of samples) → JPEG quantization →
-        // YUV → RGB will pick up ~10 LSB of chroma smear before the
-        // codec quantization even counts, so the MAD sits around 13
-        // and any bound below 20 would be noisy.
+        // (averages chroma over pairs of samples) → JPEG quantization
+        // → YUV → RGB picks up ~10 LSB of chroma smear before the
+        // codec quantization even counts; bound below 20 stays noise-free.
         const double mad = rgb8MeanAbsDiff(src, decoded);
         CHECK(mad < 20.0);
 }
 
-TEST_CASE("Image::convert: honours MediaConfig::JpegQuality") {
+TEST_CASE("VideoCodec JPEG: honours MediaConfig::JpegQuality") {
         Image src = makeGradientRGB8(128, 96);
 
         MediaConfig low;
         low.set(MediaConfig::JpegQuality, 10);
-        Image lowQ = src.convert(PixelDesc(PixelDesc::JPEG_RGB8_sRGB),
-                                 src.metadata(), low);
+        Image lowQ = promeki::tests::encodeImageToCompressed(
+                src, PixelDesc(PixelDesc::JPEG_RGB8_sRGB), low);
         REQUIRE(lowQ.isValid());
         REQUIRE(lowQ.isCompressed());
 
         MediaConfig high;
         high.set(MediaConfig::JpegQuality, 95);
-        Image highQ = src.convert(PixelDesc(PixelDesc::JPEG_RGB8_sRGB),
-                                  src.metadata(), high);
+        Image highQ = promeki::tests::encodeImageToCompressed(
+                src, PixelDesc(PixelDesc::JPEG_RGB8_sRGB), high);
         REQUIRE(highQ.isValid());
         REQUIRE(highQ.isCompressed());
 
-        // Quality 95 should produce a visibly larger file than quality 10
-        // for a non-trivial gradient.
+        // Quality 95 should produce a visibly larger file than quality
+        // 10 for a non-trivial gradient.
         CHECK(highQ.compressedSize() > lowQ.compressedSize());
 }
 

@@ -21,7 +21,10 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-PROMEKI_REGISTER_IMAGE_CODEC(JpegXsImageCodec, "jpegxs")
+// Note: the legacy PROMEKI_REGISTER_IMAGE_CODEC string-keyed registry
+// was retired in task 37 — JPEG XS codec discovery flows through
+// JpegXsVideoEncoder / JpegXsVideoDecoder + the typed
+// VideoCodec::JPEG_XS factory hooks instead.
 
 // ---------------------------------------------------------------------------
 // Pixel format classification
@@ -111,7 +114,7 @@ static PixelDesc::ID defaultDecodeTarget(PixelDesc::ID id) {
 // ---------------------------------------------------------------------------
 
 JpegXsImageCodec::~JpegXsImageCodec() = default;
-String JpegXsImageCodec::name() const { return "jpegxs"; }
+String JpegXsImageCodec::name() const { return "JPEG_XS"; }
 String JpegXsImageCodec::description() const { return "JPEG XS image codec (SVT-JPEG-XS)"; }
 bool JpegXsImageCodec::canEncode() const { return true; }
 bool JpegXsImageCodec::canDecode() const { return true; }

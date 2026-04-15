@@ -20,7 +20,10 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-PROMEKI_REGISTER_IMAGE_CODEC(JpegImageCodec, "jpeg")
+// Note: the legacy PROMEKI_REGISTER_IMAGE_CODEC string-keyed registry
+// was retired in task 37 — JPEG codec discovery flows through
+// JpegVideoEncoder / JpegVideoDecoder + the typed VideoCodec::JPEG
+// factory hooks instead.
 
 struct JpegErrorMgr {
         jpeg_error_mgr  pub;
@@ -199,7 +202,7 @@ static void interleaveNV12(uint8_t *dst, const uint8_t *cb, const uint8_t *cr, s
 // ---------------------------------------------------------------------------
 
 JpegImageCodec::~JpegImageCodec() = default;
-String JpegImageCodec::name() const { return "jpeg"; }
+String JpegImageCodec::name() const { return "JPEG"; }
 String JpegImageCodec::description() const { return "JPEG image codec (libjpeg-turbo)"; }
 bool JpegImageCodec::canEncode() const { return true; }
 bool JpegImageCodec::canDecode() const { return true; }

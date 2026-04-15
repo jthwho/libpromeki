@@ -120,6 +120,19 @@ const char *sdlDescription();
 /** @brief Prints every registered PixelDesc and exits. */
 [[noreturn]] void listPixelFormatsAndExit(const promeki::String &keyLabel);
 
+/**
+ * @brief Prints every registered VideoCodec and exits.
+ *
+ * Used by `--cc VideoCodec:list` (and similar) to enumerate every
+ * codec the @ref VideoCodec registry knows about, with E/D capability
+ * flags showing whether the codec has encoder / decoder factories
+ * registered in this build.
+ */
+[[noreturn]] void listVideoCodecsAndExit(const promeki::String &keyLabel);
+
+/** @brief Prints every registered AudioCodec and exits. */
+[[noreturn]] void listAudioCodecsAndExit(const promeki::String &keyLabel);
+
 // --------------------------------------------------------------------------
 // Value parser helpers
 // --------------------------------------------------------------------------
@@ -173,10 +186,14 @@ promeki::Error classifyStageArg(const promeki::String &arg, StageSpec &stage);
 promeki::MediaIO *buildSource(const StageSpec &spec);
 
 /**
- * @brief Instantiates the optional Converter MediaIO from a spec
- *        collected via `-c / --convert` plus `--cc` overrides.
+ * @brief Instantiates an intermediate pipeline stage (any
+ *        registered MediaIO backend that supports InputAndOutput).
+ *
+ * Reads the backend name from @c spec.type (set by the @c -c
+ * command-line flag) and applies the stage's @c --cc / @c --cm
+ * overrides on top of that backend's default config.
  */
-promeki::MediaIO *buildConverter(const StageSpec &spec);
+promeki::MediaIO *buildIntermediateStage(const StageSpec &spec);
 
 /**
  * @brief Instantiates a single output-side MediaIO from a StageSpec.

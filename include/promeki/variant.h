@@ -25,10 +25,12 @@
 #include <promeki/stringlist.h>
 #include <promeki/color.h>
 #include <promeki/list.h>
+#include <promeki/audiocodec.h>
 #include <promeki/colormodel.h>
 #include <promeki/memspace.h>
 #include <promeki/pixelformat.h>
 #include <promeki/pixeldesc.h>
+#include <promeki/videocodec.h>
 #include <promeki/enum.h>
 #include <promeki/enumlist.h>
 #if PROMEKI_ENABLE_NETWORK
@@ -83,6 +85,8 @@ PROMEKI_NAMESPACE_BEGIN
  * | TypeMemSpace  | `MemSpace`          |
  * | TypePixelFormat | `PixelFormat`     |
  * | TypePixelDesc | `PixelDesc`         |
+ * | TypeVideoCodec | `VideoCodec`       |
+ * | TypeAudioCodec | `AudioCodec`       |
  * | TypeEnum      | `Enum`              |
  * | TypeEnumList  | `EnumList`          |
  *
@@ -134,6 +138,8 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeMemSpace, MemSpace)       \
         X(TypePixelFormat, PixelFormat) \
         X(TypePixelDesc, PixelDesc)     \
+        X(TypeVideoCodec, VideoCodec)   \
+        X(TypeAudioCodec, AudioCodec)   \
         X(TypeEnum, Enum)               \
         X(TypeEnumList, EnumList)       \
         PROMEKI_VARIANT_TYPES_NETWORK
@@ -147,10 +153,12 @@ namespace detail {
 
         /** @brief True for TypeRegistry wrapper types that have an integer ID. */
         template <typename T> struct is_type_registry : std::false_type {};
+        template <> struct is_type_registry<AudioCodec>   : std::true_type {};
         template <> struct is_type_registry<ColorModel>   : std::true_type {};
         template <> struct is_type_registry<MemSpace>     : std::true_type {};
         template <> struct is_type_registry<PixelFormat>  : std::true_type {};
         template <> struct is_type_registry<PixelDesc>    : std::true_type {};
+        template <> struct is_type_registry<VideoCodec>   : std::true_type {};
         template <typename T> inline constexpr bool is_type_registry_v = is_type_registry<T>::value;
 }
 
@@ -381,6 +389,14 @@ template <typename... Types> class VariantImpl {
                                         if constexpr (std::is_same_v<From, String>) return PixelDesc::lookup(arg);
                                         if constexpr (std::is_integral<From>::value) return PixelDesc(static_cast<PixelDesc::ID>(arg));
 
+                                } else if constexpr (std::is_same_v<To, VideoCodec>) {
+                                        if constexpr (std::is_same_v<From, String>) return VideoCodec::lookup(arg);
+                                        if constexpr (std::is_integral<From>::value) return VideoCodec(static_cast<VideoCodec::ID>(arg));
+
+                                } else if constexpr (std::is_same_v<To, AudioCodec>) {
+                                        if constexpr (std::is_same_v<From, String>) return AudioCodec::lookup(arg);
+                                        if constexpr (std::is_integral<From>::value) return AudioCodec(static_cast<AudioCodec::ID>(arg));
+
                                 } else if constexpr (std::is_same_v<To, Enum>) {
                                         // Only String->Enum is supported; integer->Enum is intentionally
                                         // disallowed because an Enum needs its type context, which a bare
@@ -542,6 +558,8 @@ template <typename... Types> class VariantImpl {
                                 case TypeMemSpace:
                                 case TypePixelFormat:
                                 case TypePixelDesc:
+                                case TypeVideoCodec:
+                                case TypeAudioCodec:
                                 case TypeEnum:
                                 case TypeEnumList:
 #if PROMEKI_ENABLE_NETWORK

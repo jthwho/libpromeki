@@ -17,47 +17,52 @@ using namespace promeki;
 namespace mediaplay {
 
 Pipeline::Pipeline(MediaIO *source,
-                   MediaIO *converter,
+                   List<MediaIO *> stages,
                    List<Sink> sinks,
                    int64_t frameCountLimit,
                    ObjectBase *parent)
         : ObjectBase(parent),
-          _source(source),
-          _converter(converter),
           _sinks(std::move(sinks)),
           _frameCountLimit(frameCountLimit),
           _mainLoop(EventLoop::current())
 {
-        ObjectBase::connect(&_source->frameReadySignal, &onSourceFrameReadySlot);
-        if(_converter != nullptr) {
-                ObjectBase::connect(&_converter->frameReadySignal,
-                                    &onConverterFrameReadySlot);
-                // A completed converter write means its output queue
-                // now has a frame — kick drainConverter to pop it.
-                _converter->frameWantedSignal.connect(
-                        [this]() { reportConverterFrameWanted(); },
-                        this);
-                _converter->writeErrorSignal.connect(
-                        [this](Error err) { reportWriteError(err); },
-                        this);
+        _chain.pushToBack(source);
+        for(MediaIO *s : stages) _chain.pushToBack(s);
+        _chainDone.resize(_chain.size());
+        for(size_t i = 0; i < _chainDone.size(); ++i) _chainDone[i] = false;
+
+        // Source (_chain[0]): frameReady → drain source (index 0).
+        _chain[0]->frameReadySignal.connect(
+                [this]() { drainChain(0); }, this);
+
+        // Intermediate stages (_chain[1..N]): frameReady drains THIS
+        // stage; frameWanted re-opens the drain on the upstream
+        // stage so we feed it more data; writeError aborts.
+        for(size_t i = 1; i < _chain.size(); ++i) {
+                MediaIO *io = _chain[i];
+                io->frameReadySignal.connect(
+                        [this, i]() { drainChain(i); }, this);
+                io->frameWantedSignal.connect(
+                        [this, i]() { reportFrameWanted(i - 1); }, this);
+                io->writeErrorSignal.connect(
+                        [this](Error err) { reportWriteError(err); }, this);
         }
 
+        // Sinks: a completed sink write frees back-pressure on the
+        // final chain element, so re-drain chain[N-1] when any sink
+        // reports frameWanted.
+        const size_t lastIdx = _chain.size() - 1;
         for(size_t i = 0; i < _sinks.size(); ++i) {
                 MediaIO *sinkIO = _sinks[i].io;
                 sinkIO->writeErrorSignal.connect(
-                        [this](Error err) { reportWriteError(err); },
-                        this);
-                // A completed sink write frees a slot — restart the
-                // side that feeds it.
+                        [this](Error err) { reportWriteError(err); }, this);
                 sinkIO->frameWantedSignal.connect(
-                        [this]() { reportSinkFrameWanted(); },
-                        this);
+                        [this, lastIdx]() { reportFrameWanted(lastIdx); }, this);
         }
 }
 
 void Pipeline::start() {
-        drainSource();
-        if(_converter != nullptr) drainConverter();
+        for(size_t i = 0; i < _chain.size(); ++i) drainChain(i);
 }
 
 void Pipeline::reportWriteError(Error err) {
@@ -70,33 +75,16 @@ void Pipeline::reportWriteError(Error err) {
         }
 }
 
-void Pipeline::reportSinkFrameWanted() {
+void Pipeline::reportFrameWanted(size_t stageIdx) {
         if(_mainLoop != nullptr) {
-                _mainLoop->postCallable([this]() {
-                        onSinkFrameWantedPosted();
+                _mainLoop->postCallable([this, stageIdx]() {
+                        onFrameWantedPosted(stageIdx);
                 });
         }
 }
 
-void Pipeline::reportConverterFrameWanted() {
-        if(_mainLoop != nullptr) {
-                _mainLoop->postCallable([this]() {
-                        onConverterFrameWantedPosted();
-                });
-        }
-}
-
-void Pipeline::onSinkFrameWantedPosted() {
-        // A sink finished a write — back-pressure eased.  Restart
-        // whichever side feeds the sinks.
-        if(_converter != nullptr) drainConverter();
-        else                      drainSource();
-}
-
-void Pipeline::onConverterFrameWantedPosted() {
-        // A converter write completed — its output queue now has a
-        // frame.  Kick drainConverter to read it.
-        drainConverter();
+void Pipeline::onFrameWantedPosted(size_t stageIdx) {
+        if(stageIdx < _chain.size()) drainChain(stageIdx);
 }
 
 bool Pipeline::fanOutToSinks(const Frame::Ptr &frame) {
@@ -107,7 +95,6 @@ bool Pipeline::fanOutToSinks(const Frame::Ptr &frame) {
         return true;
 }
 
-// Returns true if every sink can accept at least one more frame.
 bool Pipeline::sinksCanAccept() const {
         for(size_t i = 0; i < _sinks.size(); ++i) {
                 if(_sinks[i].io->writesAccepted() <= 0) return false;
@@ -115,8 +102,22 @@ bool Pipeline::sinksCanAccept() const {
         return true;
 }
 
-void Pipeline::drainSource() {
-        if(_finished || _sourceAtEnd) return;
+bool Pipeline::chainTailEmpty(size_t idx) const {
+        if(idx >= _chain.size()) return true;
+        MediaIO *io = _chain[idx];
+        // writesAccepted() == writeDepth() means every write-pipeline
+        // slot is free, which — for our midstream tasks — is the
+        // signal that their internal output FIFO is empty too.
+        return io->writesAccepted() >= io->writeDepth();
+}
+
+void Pipeline::drainChain(size_t idx) {
+        if(_finished) return;
+        if(idx >= _chain.size()) return;
+        MediaIO *reader = _chain[idx];
+        const bool isLast = (idx + 1 == _chain.size());
+        MediaIO *writer = isLast ? nullptr : _chain[idx + 1];
+
         while(true) {
                 if(_frameCountLimit > 0 &&
                    _framesPumped >=
@@ -125,94 +126,77 @@ void Pipeline::drainSource() {
                         return;
                 }
 
-                // Back-pressure gate: ask the next downstream stage
-                // whether it can accept another frame.
-                if(_converter != nullptr) {
-                        if(_converter->writesAccepted() <= 0) return;
-                } else {
+                // Back-pressure gate: ask the downstream stage (or
+                // every sink if we're at the tail) whether it can
+                // accept another frame.  When the answer is no we
+                // yield; the corresponding frameWantedSignal handler
+                // will reopen this drain once a slot frees up.
+                if(isLast) {
                         if(!sinksCanAccept()) return;
+                } else {
+                        if(writer->writesAccepted() <= 0) return;
                 }
 
                 Frame::Ptr frame;
-                Error err = _source->readFrame(frame, false);
-                if(err == Error::TryAgain) return;
-                if(err == Error::EndOfFile) {
-                        fprintf(stdout, "Source reached EOF.\n");
-                        if(_converter != nullptr &&
-                           _converter->writesAccepted() < _converter->writeDepth()) {
-                                // Frames are still in the converter
-                                // pipeline — let drainConverter flush
-                                // them to the sinks before finishing.
-                                _sourceAtEnd = true;
-                        } else {
-                                finish(0);
-                        }
-                        return;
-                }
-                if(err.isError()) {
-                        if(err != Error::Cancelled) {
-                                fprintf(stderr,
-                                        "Source read error: %s\n",
-                                        err.name().cstr());
-                        }
-                        finish(1);
-                        return;
-                }
-
-                if(_converter != nullptr) {
-                        _converter->writeFrame(frame, false);
-                } else {
-                        fanOutToSinks(frame);
-                }
-        }
-}
-
-void Pipeline::drainConverter() {
-        if(_finished || _converter == nullptr) return;
-        while(true) {
-                if(_frameCountLimit > 0 &&
-                   _framesPumped >=
-                       static_cast<uint64_t>(_frameCountLimit)) {
-                        finish(0);
-                        return;
-                }
-
-                // Sink back-pressure gate.
-                if(!sinksCanAccept()) return;
-
-                Frame::Ptr converted;
-                Error err = _converter->readFrame(converted, false);
+                Error err = reader->readFrame(frame, false);
                 if(err == Error::TryAgain) {
-                        // Output FIFO is empty.  If the source has
-                        // finished and nothing remains in the
-                        // converter pipeline, the run is complete.
-                        if(_sourceAtEnd &&
-                           _converter->writesAccepted() >= _converter->writeDepth()) {
-                                finish(0);
+                        // This reader has nothing right now.  If the
+                        // upstream is finished and the reader has
+                        // itself drained, mark this stage done and
+                        // see whether the whole chain is now empty.
+                        const bool upstreamDone = (idx == 0)
+                                ? false
+                                : _chainDone[idx - 1];
+                        if(upstreamDone && chainTailEmpty(idx)) {
+                                _chainDone[idx] = true;
+                                // Source / earliest stage is done;
+                                // kick the next stage in case it was
+                                // waiting on us.
+                                if(!isLast) drainChain(idx + 1);
+                                else if(_chainDone[_chain.size() - 1]) {
+                                        finish(0);
+                                }
                         }
                         return;
                 }
                 if(err == Error::EndOfFile) {
-                        finish(0);
+                        if(idx == 0) {
+                                fprintf(stdout, "Source reached EOF.\n");
+                        }
+                        _chainDone[idx] = true;
+                        // If there are downstream stages still holding
+                        // frames, let them finish draining; otherwise
+                        // finish now.
+                        if(isLast) {
+                                finish(0);
+                        } else {
+                                // Kick downstream so it sees the done
+                                // flag on its next TryAgain.
+                                drainChain(idx + 1);
+                        }
                         return;
                 }
                 if(err.isError()) {
                         if(err != Error::Cancelled) {
                                 fprintf(stderr,
-                                        "Converter read error: %s\n",
-                                        err.name().cstr());
+                                        "Pipeline read error at stage %zu: %s\n",
+                                        idx, err.name().cstr());
                         }
                         finish(1);
                         return;
                 }
 
-                fanOutToSinks(converted);
-
-                // A frame left the converter — its pending-write
-                // slot has already been released by the strand, so
-                // writesAccepted() has increased.  Let drainSource
-                // push more work in.
-                drainSource();
+                if(isLast) {
+                        fanOutToSinks(frame);
+                } else {
+                        writer->writeFrame(frame, false);
+                        // The frame now lives in the next stage's
+                        // write queue.  Kick that stage so any output
+                        // it produces synchronously (1-in / 1-out
+                        // codecs, converter, etc.) is picked up
+                        // without waiting for a signal round-trip.
+                        drainChain(idx + 1);
+                }
         }
 }
 
@@ -222,10 +206,6 @@ void Pipeline::finish(int rc) {
         _cleanFinish = (rc == 0);
         Application::quit(rc);
 }
-
-void Pipeline::onSourceFrameReady() { drainSource(); }
-
-void Pipeline::onConverterFrameReady() { drainConverter(); }
 
 void Pipeline::onWriteErrorPosted() {
         Error err = _writeError;

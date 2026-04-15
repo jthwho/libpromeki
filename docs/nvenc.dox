@@ -1,0 +1,191 @@
+/**
+ * @page nvenc NVIDIA NVENC setup
+ *
+ * @brief How to install CUDA, the NVIDIA Video Codec SDK, and the
+ * NVENC runtime so libpromeki's @ref NvencVideoEncoder builds and
+ * runs on your machine.
+ *
+ * NVENC is a hardware video encoder built into every NVIDIA GPU from
+ * Kepler onward.  libpromeki wraps it behind the generic @ref
+ * VideoEncoder interface, so application code never calls NVENC
+ * directly — it just asks for an encoder named @c "h264" or @c "hevc"
+ * and receives an @ref NvencVideoEncoder when the backend is
+ * enabled at build time.  Getting to that point needs three distinct
+ * pieces of NVIDIA software:
+ *
+ *   1. The **NVIDIA display driver** (provides @c libnvidia-encode.so
+ *      at runtime — this is the actual user-mode NVENC library).
+ *   2. The **CUDA toolkit** (provides CUDA runtime + driver API
+ *      headers that libpromeki's @ref cuda and @ref
+ *      NvencVideoEncoder build against).
+ *   3. The **NVIDIA Video Codec SDK** (provides @c nvEncodeAPI.h —
+ *      the NVENC API header, which is distributed separately from
+ *      CUDA and the driver).
+ *
+ * The sections below walk through each piece on a Debian / Ubuntu
+ * system.  The same packages exist under slightly different names on
+ * Fedora / Arch / openSUSE; the structure of the install is the
+ * same.
+ *
+ * @section nvenc_driver 1. Driver and NVENC runtime
+ *
+ * If you already run an NVIDIA GPU with the proprietary driver, the
+ * driver itself is installed.  The NVENC runtime is a separate
+ * package that must match the driver version — install it with:
+ *
+ * @code
+ * # Replace 580 with your driver's major version.  Check with:
+ * #   nvidia-smi | head -5
+ * sudo apt install libnvidia-encode-580
+ * @endcode
+ *
+ * This drops @c libnvidia-encode.so.1 into
+ * @c /usr/lib/x86_64-linux-gnu/.  libpromeki loads it at runtime via
+ * @c dlopen; there is nothing to link against at build time.
+ *
+ * Verify by running:
+ *
+ * @code
+ * ldconfig -p | grep libnvidia-encode
+ * @endcode
+ *
+ * If nothing is printed, either the package is not installed or its
+ * path is missing from @c ld.so.conf.d/.  Run @c sudo ldconfig to
+ * refresh the cache.
+ *
+ * @section nvenc_cuda 2. CUDA toolkit
+ *
+ * libpromeki needs the CUDA runtime (@c libcudart, @c cuda_runtime.h)
+ * and the CUDA driver API header (@c cuda.h).  On Ubuntu:
+ *
+ * @code
+ * sudo apt install nvidia-cuda-toolkit nvidia-cuda-dev
+ * @endcode
+ *
+ * This installs @c nvcc at @c /usr/bin/nvcc and the CUDA headers at
+ * @c /usr/include/cuda_runtime.h / @c /usr/include/cuda.h.
+ *
+ * libpromeki's CMake configuration calls @c find_package(CUDAToolkit)
+ * to locate these files automatically.  When the call succeeds the
+ * build defaults @ref PROMEKI_ENABLE_CUDA to @c ON; otherwise it
+ * defaults to @c OFF.  Explicit
+ * @c -DPROMEKI_ENABLE_CUDA=ON|OFF overrides the probe.
+ *
+ * If @c find_package fails even though the toolkit is installed, pass
+ * @c CUDAToolkit_ROOT to CMake:
+ *
+ * @code
+ * cmake -B build -S . -DCUDAToolkit_ROOT=/usr/local/cuda
+ * @endcode
+ *
+ * @section nvenc_sdk 3. NVIDIA Video Codec SDK
+ *
+ * The SDK is a free download from NVIDIA but requires a developer
+ * account:
+ *
+ * - https://developer.nvidia.com/nvidia-video-codec-sdk/download
+ *
+ * Download the Linux zip (Windows zip works on Windows, same
+ * contents), and extract it anywhere you like.  The result looks
+ * like:
+ *
+ * @code
+ * Video_Codec_SDK_13.0.37/
+ *   Interface/
+ *     nvEncodeAPI.h     ← the NVENC API header libpromeki needs
+ *     nvcuvid.h         ← (NVDEC, not used yet)
+ *     cuviddec.h
+ *   Lib/linux/stubs/x86_64/
+ *     libnvidia-encode.so ← link stub (we do not use this; runtime
+ *                           library is loaded via dlopen)
+ *   Samples/            ← reference applications, useful for
+ *                         cross-checking behaviour
+ *   Read_Me.pdf
+ * @endcode
+ *
+ * Point libpromeki at the SDK at configure time:
+ *
+ * @code
+ * cmake -B build -S . \
+ *     -DPROMEKI_NVENC_SDK_DIR=/home/you/src/Video_Codec_SDK_13.0.37
+ * @endcode
+ *
+ * Or export it as an environment variable once:
+ *
+ * @code
+ * export NVENC_SDK_DIR=/home/you/src/Video_Codec_SDK_13.0.37
+ * cmake -B build -S .
+ * @endcode
+ *
+ * The CMake probe looks for @c Interface/nvEncodeAPI.h below that
+ * directory.  If it finds the header,
+ * @ref PROMEKI_ENABLE_NVENC defaults to @c ON; otherwise it defaults
+ * to @c OFF and the backend is not built.
+ *
+ * Supported SDK versions: 12.0 and newer.  Older SDKs use a different
+ * preset / tuning-info model that libpromeki does not map to.
+ *
+ * @section nvenc_verify Verification
+ *
+ * A clean configure with everything set up correctly prints lines
+ * like these during @c cmake:
+ *
+ * @code
+ * -- Found CUDAToolkit: /usr/include (found version "12.4.131")
+ * -- Found NVENC SDK: /home/you/src/Video_Codec_SDK_13.0.37/Interface
+ * @endcode
+ *
+ * After building, check the compiled-in features via the build-info
+ * string emitted by any libpromeki executable at startup:
+ *
+ * @code
+ * Features: NETWORK PROAV ... CUDA NVENC
+ * @endcode
+ *
+ * Finally, run the NVENC unit tests:
+ *
+ * @code
+ * ./build/bin/unittest-promeki -tc='Nvenc*'
+ * @endcode
+ *
+ * These tests auto-skip when no GPU is present, but on a machine
+ * with a working driver + SDK + runtime they encode a handful of
+ * synthetic frames through both H.264 and HEVC and verify the
+ * resulting bitstream.
+ *
+ * @section nvenc_troubleshoot Troubleshooting
+ *
+ * @subsection nvenc_trouble_runtime libnvidia-encode not found at runtime
+ *
+ * The build succeeds but @c NvencVideoEncoder::createEncoder returns
+ * an encoder whose first @c submitFrame call reports
+ * @c Error::LibraryFailure.  Check:
+ *
+ * - Is @c libnvidia-encode-NNN installed?  (@c apt list --installed |
+ *   grep nvidia-encode)
+ * - Does its major version match the driver?  (@c nvidia-smi reports
+ *   the driver version; the package suffix must match.)
+ * - Is @c libnvidia-encode.so.1 on the loader path?
+ *   (@c ldconfig -p | grep libnvidia-encode)
+ *
+ * @subsection nvenc_trouble_sdk CMake cannot find the SDK
+ *
+ * If @c cmake prints
+ * @code
+ * -- NVENC SDK not found; set PROMEKI_NVENC_SDK_DIR
+ * @endcode
+ * pass the SDK directory via @c -DPROMEKI_NVENC_SDK_DIR=...  The
+ * directory must contain @c Interface/nvEncodeAPI.h; the SDK zip
+ * expands to that layout automatically.
+ *
+ * @subsection nvenc_trouble_driver_mismatch Driver / toolkit version skew
+ *
+ * NVENC is forward-compatible: an SDK built against API version N
+ * runs on drivers supporting N or newer.  If you installed the
+ * toolkit from apt but the Video Codec SDK is a newer major release
+ * than your driver supports, NVENC initialisation will fail with
+ * @c NV_ENC_ERR_INVALID_VERSION.  Either upgrade the driver or use
+ * an older SDK release whose minimum driver version your driver
+ * satisfies (see the SDK's @c Read_Me.pdf for the compatibility
+ * matrix).
+ */

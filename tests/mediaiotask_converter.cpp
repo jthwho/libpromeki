@@ -90,20 +90,19 @@ TEST_CASE("MediaIOTask_Converter_DefaultConfig") {
         MediaIO::Config cfg = MediaIO::defaultConfig("Converter");
         CHECK_FALSE(cfg.isEmpty());
         CHECK(cfg.getAs<String>(MediaConfig::Type) == "Converter");
-        CHECK(cfg.getAs<int>(MediaConfig::JpegQuality) == 85);
 
-        // JPEG subsampling now uses the ChromaSubsampling Enum.
-        Enum sub = cfg.get(MediaConfig::JpegSubsampling)
-                      .asEnum(ChromaSubsampling::Type);
-        CHECK(sub == ChromaSubsampling::YUV422);
-
-        // Audio data type now uses the AudioDataType Enum, Invalid =
+        // Audio data type uses the AudioDataType Enum; Invalid =
         // pass-through by default.
         Enum adt = cfg.get(MediaConfig::OutputAudioDataType)
                       .asEnum(AudioDataType::Type);
         CHECK(adt == AudioDataType::Invalid);
 
         CHECK(cfg.getAs<int>(MediaConfig::Capacity) == 4);
+
+        // JpegQuality / JpegSubsampling are no longer in the
+        // converter's spec map — they belong on the
+        // MediaIOTask_VideoEncoder stage, which owns the codec
+        // session lifetime.
 }
 
 // ============================================================================
@@ -223,77 +222,37 @@ TEST_CASE("MediaIOTask_Converter_OutputMediaDesc") {
 }
 
 // ============================================================================
-// JPEG encode / decode
+// Compression rejection
 // ============================================================================
+//
+// MediaIOTask_Converter is now strictly CSC + audio-sample-format work.
+// Compression flows through MediaIOTask_VideoEncoder /
+// MediaIOTask_VideoDecoder stages instead, which can amortise codec
+// state across frames.  This test pins the new contract: asking the
+// converter to land on a compressed PixelDesc must fail at writeFrame
+// time with a clear error rather than silently doing something
+// surprising.
 
-TEST_CASE("MediaIOTask_Converter_JpegEncodeDecode") {
-        const size_t W = 64;
-        const size_t H = 48;
+TEST_CASE("MediaIOTask_Converter_RejectsCompressedTarget") {
+        MediaIO::Config cfg =
+                converterConfig(PixelDesc(PixelDesc::JPEG_RGB8_sRGB));
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
 
-        // Encode: RGB8 -> JPEG_RGB8_sRGB
-        {
-                MediaIO::Config cfg =
-                        converterConfig(PixelDesc(PixelDesc::JPEG_RGB8_sRGB));
-                MediaIO *io = MediaIO::create(cfg);
-                REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        Frame::Ptr in = makeRgbFrame(64, 48, PixelDesc::RGB8_sRGB, 0x80);
+        // The write submits to the strand; the failure surfaces on
+        // either the write itself or the subsequent read (depending
+        // on whether the converter pre-validates).  Either way the
+        // output queue must stay empty.
+        io->writeFrame(in);
+        Frame::Ptr out;
+        Error rerr = io->readFrame(out, false);
+        CHECK(rerr == Error::TryAgain);
+        CHECK_FALSE(out.isValid());
 
-                Frame::Ptr in = makeRgbFrame(W, H, PixelDesc::RGB8_sRGB, 0x80);
-                CHECK(io->writeFrame(in).isOk());
-
-                Frame::Ptr out;
-                CHECK(io->readFrame(out).isOk());
-                REQUIRE(out.isValid());
-                REQUIRE(out->imageList().size() == 1);
-                const Image &compressed = *out->imageList()[0];
-                CHECK(compressed.isCompressed());
-                CHECK(compressed.compressedSize() > 0);
-
-                io->close();
-                delete io;
-        }
-
-        // Decode: JPEG_RGB8_sRGB -> RGB8
-        {
-                // Start by producing a JPEG via the encoder path again
-                Frame::Ptr jpegFrame;
-                {
-                        MediaIO::Config enc =
-                                converterConfig(PixelDesc(PixelDesc::JPEG_RGB8_sRGB));
-                        MediaIO *io = MediaIO::create(enc);
-                        REQUIRE(io != nullptr);
-                        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
-                        Frame::Ptr in = makeRgbFrame(W, H, PixelDesc::RGB8_sRGB, 0x80);
-                        REQUIRE(io->writeFrame(in).isOk());
-                        REQUIRE(io->readFrame(jpegFrame).isOk());
-                        io->close();
-                        delete io;
-                }
-                REQUIRE(jpegFrame.isValid());
-                REQUIRE(jpegFrame->imageList().size() == 1);
-                CHECK(jpegFrame->imageList()[0]->isCompressed());
-
-                MediaIO::Config dec =
-                        converterConfig(PixelDesc(PixelDesc::RGB8_sRGB));
-                MediaIO *io = MediaIO::create(dec);
-                REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
-
-                CHECK(io->writeFrame(jpegFrame).isOk());
-
-                Frame::Ptr out;
-                CHECK(io->readFrame(out).isOk());
-                REQUIRE(out.isValid());
-                REQUIRE(out->imageList().size() == 1);
-                const Image &decoded = *out->imageList()[0];
-                CHECK_FALSE(decoded.isCompressed());
-                CHECK(decoded.pixelDesc() == PixelDesc(PixelDesc::RGB8_sRGB));
-                CHECK(decoded.width() == W);
-                CHECK(decoded.height() == H);
-
-                io->close();
-                delete io;
-        }
+        io->close();
+        delete io;
 }
 
 // ============================================================================
@@ -338,16 +297,10 @@ TEST_CASE("MediaIOTask_Converter_UnknownAudioDataTypeRejected") {
         delete io;
 }
 
-TEST_CASE("MediaIOTask_Converter_UnknownJpegSubsamplingRejected") {
-        // Same idea: an unknown ChromaSubsampling name should fail
-        // when asEnum() cannot find a match.
-        MediaIO::Config cfg = MediaIO::defaultConfig("Converter");
-        cfg.set(MediaConfig::JpegSubsampling, String("YUV777"));
-        MediaIO *io = MediaIO::create(cfg);
-        REQUIRE(io != nullptr);
-        CHECK(io->open(MediaIO::InputAndOutput).isError());
-        delete io;
-}
+// MediaIOTask_Converter no longer recognises JpegSubsampling — JPEG
+// configuration belongs on the MediaIOTask_VideoEncoder stage.  The
+// previous "unknown subsampling rejected" test went away with the
+// removal of the JpegSubsampling key from the converter's spec map.
 
 // ============================================================================
 // Back-pressure: write while queue is full returns TryAgain

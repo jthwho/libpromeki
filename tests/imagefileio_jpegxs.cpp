@@ -11,6 +11,7 @@
 #include <cstring>
 #include <vector>
 #include <doctest/doctest.h>
+#include "codectesthelpers.h"
 #include <promeki/imagefileio.h>
 #include <promeki/imagefile.h>
 #include <promeki/image.h>
@@ -179,13 +180,11 @@ TEST_CASE("ImageFileIO JpegXS: YUV8 422 round-trip") {
         Image loaded = lf.image();
         REQUIRE(loaded.isValid());
         CHECK(loaded.isCompressed());
-        CHECK(loaded.pixelDesc().codecName() == "jpegxs");
+        CHECK(loaded.pixelDesc().videoCodec().id() == VideoCodec::JPEG_XS);
         CHECK(loaded.width() == 320);
         CHECK(loaded.height() == 240);
 
-        Image decoded = loaded.convert(
-                PixelDesc(PixelDesc::YUV8_422_Planar_Rec709),
-                loaded.metadata());
+        Image decoded = promeki::tests::decodeCompressedToImage(loaded, PixelDesc(PixelDesc::YUV8_422_Planar_Rec709));
         REQUIRE(decoded.isValid());
         REQUIRE(!decoded.isCompressed());
         CHECK(decoded.width() == 320);
@@ -219,9 +218,7 @@ TEST_CASE("ImageFileIO JpegXS: YUV8 420 round-trip") {
         CHECK(loaded.isCompressed());
         CHECK(loaded.pixelDesc().id() == PixelDesc::JPEG_XS_YUV8_420_Rec709);
 
-        Image decoded = loaded.convert(
-                PixelDesc(PixelDesc::YUV8_420_Planar_Rec709),
-                loaded.metadata());
+        Image decoded = promeki::tests::decodeCompressedToImage(loaded, PixelDesc(PixelDesc::YUV8_420_Planar_Rec709));
         REQUIRE(decoded.isValid());
         CHECK(!decoded.isCompressed());
         CHECK(decoded.width() == 320);
@@ -253,9 +250,7 @@ TEST_CASE("ImageFileIO JpegXS: YUV10 422 round-trip") {
         CHECK(loaded.isCompressed());
         CHECK(loaded.pixelDesc().id() == PixelDesc::JPEG_XS_YUV10_422_Rec709);
 
-        Image decoded = loaded.convert(
-                PixelDesc(PixelDesc::YUV10_422_Planar_LE_Rec709),
-                loaded.metadata());
+        Image decoded = promeki::tests::decodeCompressedToImage(loaded, PixelDesc(PixelDesc::YUV10_422_Planar_LE_Rec709));
         REQUIRE(decoded.isValid());
         CHECK(!decoded.isCompressed());
         CHECK(decoded.width() == 320);
@@ -286,9 +281,7 @@ TEST_CASE("ImageFileIO JpegXS: YUV12 422 round-trip") {
         CHECK(loaded.isCompressed());
         CHECK(loaded.pixelDesc().id() == PixelDesc::JPEG_XS_YUV12_422_Rec709);
 
-        Image decoded = loaded.convert(
-                PixelDesc(PixelDesc::YUV12_422_Planar_LE_Rec709),
-                loaded.metadata());
+        Image decoded = promeki::tests::decodeCompressedToImage(loaded, PixelDesc(PixelDesc::YUV12_422_Planar_LE_Rec709));
         REQUIRE(decoded.isValid());
         CHECK(!decoded.isCompressed());
         CHECK(decoded.width() == 320);
@@ -318,9 +311,7 @@ TEST_CASE("ImageFileIO JpegXS: YUV10 420 round-trip") {
         REQUIRE(loaded.isValid());
         CHECK(loaded.pixelDesc().id() == PixelDesc::JPEG_XS_YUV10_420_Rec709);
 
-        Image decoded = loaded.convert(
-                PixelDesc(PixelDesc::YUV10_420_Planar_LE_Rec709),
-                loaded.metadata());
+        Image decoded = promeki::tests::decodeCompressedToImage(loaded, PixelDesc(PixelDesc::YUV10_420_Planar_LE_Rec709));
         REQUIRE(decoded.isValid());
         CHECK(!decoded.isCompressed());
 
@@ -348,9 +339,7 @@ TEST_CASE("ImageFileIO JpegXS: YUV12 420 round-trip") {
         REQUIRE(loaded.isValid());
         CHECK(loaded.pixelDesc().id() == PixelDesc::JPEG_XS_YUV12_420_Rec709);
 
-        Image decoded = loaded.convert(
-                PixelDesc(PixelDesc::YUV12_420_Planar_LE_Rec709),
-                loaded.metadata());
+        Image decoded = promeki::tests::decodeCompressedToImage(loaded, PixelDesc(PixelDesc::YUV12_420_Planar_LE_Rec709));
         REQUIRE(decoded.isValid());
         CHECK(!decoded.isCompressed());
 
@@ -415,7 +404,7 @@ TEST_CASE("ImageFileIO JpegXS: loaded image has correct properties") {
         CHECK(loaded.isCompressed());
         CHECK(loaded.width() == 160);
         CHECK(loaded.height() == 120);
-        CHECK(loaded.pixelDesc().codecName() == "jpegxs");
+        CHECK(loaded.pixelDesc().videoCodec().id() == VideoCodec::JPEG_XS);
         CHECK(loaded.pixelDesc().id() == PixelDesc::JPEG_XS_YUV8_422_Rec709);
         CHECK(loaded.compressedSize() > 0);
         CHECK(loaded.data(0) != nullptr);
@@ -537,8 +526,7 @@ TEST_CASE("ImageFileIO JpegXS: load then convert to RGBA8") {
         REQUIRE(loaded.isCompressed());
 
         // Two-hop path: JPEG XS → YUV8_422_Planar → RGBA8_sRGB
-        Image rgba = loaded.convert(PixelDesc(PixelDesc::RGBA8_sRGB),
-                                    loaded.metadata());
+        Image rgba = promeki::tests::decodeCompressedToImage(loaded, PixelDesc(PixelDesc::RGBA8_sRGB));
         REQUIRE(rgba.isValid());
         CHECK(!rgba.isCompressed());
         CHECK(rgba.pixelDesc().id() == PixelDesc::RGBA8_sRGB);
@@ -677,9 +665,7 @@ TEST_CASE("ImageFileIO JpegXS: 1920x1080 round-trip") {
         CHECK(loaded.height() == 1080);
 
         // Decode and spot-check dimensions.
-        Image decoded = loaded.convert(
-                PixelDesc(PixelDesc::YUV8_422_Planar_Rec709),
-                loaded.metadata());
+        Image decoded = promeki::tests::decodeCompressedToImage(loaded, PixelDesc(PixelDesc::YUV8_422_Planar_Rec709));
         REQUIRE(decoded.isValid());
         CHECK(decoded.width() == 1920);
         CHECK(decoded.height() == 1080);
@@ -834,11 +820,11 @@ TEST_CASE("ImageFileIO JpegXS: save rejects non-JPEG-XS compressed input") {
         }
 
         // Encode to JPEG (not JPEG XS).
-        Image jpeg = src.convert(PixelDesc(PixelDesc::JPEG_YUV8_422_Rec709),
-                                 src.metadata());
+        Image jpeg = promeki::tests::encodeImageToCompressed(
+                src, PixelDesc(PixelDesc::JPEG_YUV8_422_Rec709));
         if(!jpeg.isValid()) return;  // skip if JPEG codec not available
         REQUIRE(jpeg.isCompressed());
-        REQUIRE(jpeg.pixelDesc().codecName() == "jpeg");
+        REQUIRE(jpeg.pixelDesc().videoCodec().id() == VideoCodec::JPEG);
 
         ImageFile sf(ImageFile::JpegXS);
         sf.setFilename("/tmp/promeki_jpegxs_wrong_codec.jxs");
@@ -917,8 +903,7 @@ TEST_CASE("ImageFileIO JpegXS: RGB8 round-trip") {
 
         // Decode through Image::convert chain:
         // JPEG_XS_RGB8 → RGB8_Planar (codec) → RGB8 (CSC fast path)
-        Image decoded = loaded.convert(PixelDesc(PixelDesc::RGB8_sRGB),
-                                       loaded.metadata());
+        Image decoded = promeki::tests::decodeCompressedToImage(loaded, PixelDesc(PixelDesc::RGB8_sRGB));
         REQUIRE(decoded.isValid());
         CHECK(!decoded.isCompressed());
         CHECK(decoded.pixelDesc().id() == PixelDesc::RGB8_sRGB);

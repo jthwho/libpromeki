@@ -13,17 +13,29 @@
 #include <promeki/benchmark.h>
 #include <promeki/image.h>
 #include <promeki/audio.h>
+#include <promeki/mediapacket.h>
 #include <promeki/metadata.h>
 #include <promeki/list.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief A media frame containing images, audio, and metadata.
+ * @brief A media frame containing images, audio, compressed packets, and metadata.
  * @ingroup proav
  *
- * Aggregates one or more image planes, one or more audio tracks, and
- * a metadata container into a single unit that represents a frame of
+ * Aggregates one or more uncompressed image planes, one or more
+ * audio tracks, one or more @ref MediaPacket "compressed packets",
+ * and a metadata container into a single unit that represents a
+ * frame of media content.
+ *
+ * The @ref packetList companion to @ref imageList / @ref audioList
+ * holds encoded bitstream access units — the output of a @ref
+ * VideoEncoder, the input to a @ref VideoDecoder, or the on-disk
+ * samples read from a muxed container.  A single Frame may carry
+ * uncompressed essence (images / audio) and compressed packets
+ * simultaneously — for example, while a pipeline is mid-encode the
+ * encoder task's output can be spliced back onto the same Frame
+ * that carried the source image for that PTS.
  *
  * @par Example
  * @code
@@ -31,8 +43,10 @@ PROMEKI_NAMESPACE_BEGIN
  * Frame::Ptr frame = Frame::Ptr::create(mdesc);
  * frame->setTimecode(Timecode(Timecode::NDF24, 1, 0, 0, 0));
  * Image img = frame->image(0);
+ *
+ * // After encoding, attach a compressed packet alongside the image:
+ * frame.modify()->packetList().pushToBack(encoded);
  * @endcode
- * media content.
  */
 class Frame {
         PROMEKI_SHARED_FINAL(Frame)
@@ -72,6 +86,25 @@ class Frame {
                 Audio::PtrList &audioList() { return _audioList; }
 
                 /**
+                 * @brief Returns a const reference to the list of compressed packets.
+                 *
+                 * Each entry is a @ref MediaPacket carrying one encoded
+                 * access unit (typically one coded video frame or one
+                 * encoded audio frame).  Empty by default — backends
+                 * that only deal in uncompressed essence never touch
+                 * this list.
+                 *
+                 * @return The packet pointer list.
+                 */
+                const MediaPacket::PtrList &packetList() const { return _packetList; }
+
+                /**
+                 * @brief Returns a mutable reference to the list of compressed packets.
+                 * @return The packet pointer list.
+                 */
+                MediaPacket::PtrList &packetList() { return _packetList; }
+
+                /**
                  * @brief Returns a const reference to the frame metadata.
                  * @return The metadata container.
                  */
@@ -102,10 +135,11 @@ class Frame {
                 void setBenchmark(Benchmark::Ptr bm) { _benchmark = std::move(bm); return; }
 
         private:
-                Image::PtrList  _imageList;
-                Audio::PtrList  _audioList;
-                Metadata        _metadata;
-                Benchmark::Ptr  _benchmark;
+                Image::PtrList         _imageList;
+                Audio::PtrList         _audioList;
+                MediaPacket::PtrList   _packetList;
+                Metadata               _metadata;
+                Benchmark::Ptr         _benchmark;
 };
 
 PROMEKI_NAMESPACE_END

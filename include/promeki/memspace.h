@@ -49,6 +49,8 @@ class MemSpace {
                 enum ID {
                         System       = 0,    ///< System (CPU) memory.
                         SystemSecure = 1,    ///< System memory with secure zeroing on free and page locking.
+                        CudaDevice   = 2,    ///< CUDA device memory (GPU VRAM).  Not host-accessible.  Registered by CudaBootstrap when PROMEKI_ENABLE_CUDA is on.
+                        CudaHost     = 3,    ///< CUDA pinned host memory (page-locked).  Host-accessible; enables async DMA with CudaDevice.  Registered by CudaBootstrap.
                         Default      = System, ///< Alias for System memory.
                         UserDefined  = 1024  ///< First ID available for user-registered types.
                 };

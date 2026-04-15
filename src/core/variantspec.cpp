@@ -12,9 +12,11 @@
 #include <promeki/datetime.h>
 #include <promeki/enumlist.h>
 #include <promeki/framerate.h>
+#include <promeki/audiocodec.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/pixelformat.h>
 #include <promeki/rational.h>
+#include <promeki/videocodec.h>
 #include <promeki/size2d.h>
 #include <promeki/stringlist.h>
 #include <promeki/timecode.h>
@@ -82,6 +84,8 @@ String singleTypeName(Variant::Type t, Enum::Type enumType) {
                 case Variant::TypeMemSpace:     return "MemSpace";
                 case Variant::TypePixelFormat:  return "PixelFormat";
                 case Variant::TypePixelDesc:    return "PixelDesc";
+                case Variant::TypeVideoCodec:   return "VideoCodec";
+                case Variant::TypeAudioCodec:   return "AudioCodec";
                 case Variant::TypeEnum: {
                         if(enumType.isValid()) return String("Enum ") + enumType.name();
                         return "Enum";
@@ -176,6 +180,16 @@ Variant parseAsType(Variant::Type type, Enum::Type enumType,
                         ColorModel cm = ColorModel::lookup(str);
                         if(!cm.isValid()) break;
                         return Variant(cm);
+                }
+                case Variant::TypeVideoCodec: {
+                        VideoCodec vc = VideoCodec::lookup(str);
+                        if(!vc.isValid()) break;
+                        return Variant(vc);
+                }
+                case Variant::TypeAudioCodec: {
+                        AudioCodec ac = AudioCodec::lookup(str);
+                        if(!ac.isValid()) break;
+                        return Variant(ac);
                 }
                 case Variant::TypeEnum: {
                         if(!enumType.isValid()) break;
