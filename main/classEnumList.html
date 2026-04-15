@@ -200,12 +200,12 @@ Static Public Member Functions</h2></td></tr>
 <div class="line">                                       <span class="stringliteral">&quot;Tone,Silence&quot;</span>, &amp;<a class="code hl_class" href="classList.html">err</a>);</div>
 <div class="ttc" id="aclassEnumList_html"><div class="ttname"><a href="classEnumList.html">EnumList</a></div><div class="ttdoc">Ordered, duplicate-preserving list of Enum values sharing one type.</div><div class="ttdef"><b>Definition</b> enumlist.h:59</div></div>
 <div class="ttc" id="aclassEnumList_html_a65760899c90b3e1b0effe216a36bc1f6"><div class="ttname"><a href="classEnumList.html#a65760899c90b3e1b0effe216a36bc1f6">EnumList::fromString</a></div><div class="ttdeci">static EnumList fromString(Enum::Type type, const String &amp;text, Error *err=nullptr)</div><div class="ttdoc">Parses a comma-separated value name list into an EnumList.</div></div>
-<div class="ttc" id="aclassEnum_1_1Type_html"><div class="ttname"><a href="classEnum_1_1Type.html">Enum::Type</a></div><div class="ttdoc">Lightweight handle identifying a registered enum kind.</div><div class="ttdef"><b>Definition</b> enum.h:130</div></div>
+<div class="ttc" id="aclassEnum_1_1Type_html"><div class="ttname"><a href="classEnum_1_1Type.html">Enum::Type</a></div><div class="ttdoc">Lightweight handle identifying a registered enum kind.</div><div class="ttdef"><b>Definition</b> enum.h:213</div></div>
 <div class="ttc" id="aclassError_html"><div class="ttname"><a href="classError.html">Error</a></div><div class="ttdoc">Lightweight error code wrapper for the promeki library.</div><div class="ttdef"><b>Definition</b> error.h:39</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:57</div></div>
 </div><!-- fragment --><dl class="section note"><dt>Note</dt><dd><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> value names used by libpromeki are expected to be C-identifier safe (A-Z, a-z, 0-9, underscore; not starting with a digit) so comma-splitting on a string representation never has to worry about quoting.</dd></dl>
-<p><code><a class="el" href="classEnumList.html" title="Ordered, duplicate-preserving list of Enum values sharing one type.">EnumList</a></code> is <a class="el" href="variant_8h.html#aff586bc7a7e639d2d12af743ee54ebb1">Variant</a> compatible — it can be stored in a <a class="el" href="variant_8h.html#aff586bc7a7e639d2d12af743ee54ebb1">Variant</a>, looked up in a <a class="el" href="classVariantDatabase.html">VariantDatabase</a>, and used as a <a class="el" href="classVariantSpec.html">VariantSpec</a> value type. </p>
+<p><code><a class="el" href="classEnumList.html" title="Ordered, duplicate-preserving list of Enum values sharing one type.">EnumList</a></code> is <a class="el" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a> compatible — it can be stored in a <a class="el" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a>, looked up in a <a class="el" href="classVariantDatabase.html">VariantDatabase</a>, and used as a <a class="el" href="classVariantSpec.html">VariantSpec</a> value type. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a4e68080aafb0a03a55a62f73e1c06997" name="a4e68080aafb0a03a55a62f73e1c06997"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4e68080aafb0a03a55a62f73e1c06997">&#9670;&#160;</a></span>EnumList()</h2>
@@ -533,7 +533,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classEnumList.html">EnumList</a></li>
-    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
   </ul>
 </div>
 </body>

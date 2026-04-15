@@ -474,8 +474,47 @@ $(document).ready(function(){initNavTree('objectbase_8h_source.html',''); initRe
 <div class="line"><a id="l00503" name="l00503"></a><span class="lineno">  503</span>        );</div>
 <div class="line"><a id="l00504" name="l00504"></a><span class="lineno">  504</span>}</div>
 <div class="line"><a id="l00505" name="l00505"></a><span class="lineno">  505</span> </div>
-<div class="line"><a id="l00506" name="l00506"></a><span class="lineno">  506</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
-<div class="line"><a id="l00507" name="l00507"></a><span class="lineno">  507</span> </div>
+<div class="line"><a id="l00506" name="l00506"></a><span class="lineno">  506</span><span class="comment">// Context-aware Signal::connect overload.  Defined here because it</span></div>
+<div class="line"><a id="l00507" name="l00507"></a><span class="lineno">  507</span><span class="comment">// needs ObjectBase and EventLoop to be complete — signal.h forward</span></div>
+<div class="line"><a id="l00508" name="l00508"></a><span class="lineno">  508</span><span class="comment">// declares ObjectBase and only stores the declaration.  The wrapping</span></div>
+<div class="line"><a id="l00509" name="l00509"></a><span class="lineno">  509</span><span class="comment">// bridge lambda captures @p owner and uses its @c eventLoop() at</span></div>
+<div class="line"><a id="l00510" name="l00510"></a><span class="lineno">  510</span><span class="comment">// emit time, matching Qt&#39;s @c Qt::AutoConnection: direct invocation</span></div>
+<div class="line"><a id="l00511" name="l00511"></a><span class="lineno">  511</span><span class="comment">// on the owner&#39;s own thread, @c postCallable marshalling otherwise.</span></div>
+<div class="line"><a id="l00512" name="l00512"></a><span class="lineno">  512</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span>... <a class="code hl_class" href="classList.html">Args</a>&gt;</div>
+<div class="foldopen" id="foldopen00513" data-start="{" data-end="}">
+<div class="line"><a id="l00513" name="l00513"></a><span class="lineno"><a class="line" href="classSignal.html#ab8e1173424b75b99850669cbbca813a5">  513</a></span><span class="keywordtype">size_t</span> <a class="code hl_function" href="classSignal.html#a1ce83cacbd695f1901fe7e7fd4b6eeb0">Signal&lt;Args...&gt;::connect</a>(<a class="code hl_typedef" href="classSignal.html#a8143f1274fc06b009bf4c8d2db85d424">Function</a> <a class="code hl_class" href="classList.html">slot</a>, <a class="code hl_class" href="classObjectBase.html">ObjectBase</a> *owner) {</div>
+<div class="line"><a id="l00514" name="l00514"></a><span class="lineno">  514</span>        <span class="comment">// Passing a null @ref ObjectBase context is a programmer error</span></div>
+<div class="line"><a id="l00515" name="l00515"></a><span class="lineno">  515</span>        <span class="comment">// — the whole point of this overload is to anchor dispatch to</span></div>
+<div class="line"><a id="l00516" name="l00516"></a><span class="lineno">  516</span>        <span class="comment">// the owner&#39;s EventLoop, and there is no loop to anchor to</span></div>
+<div class="line"><a id="l00517" name="l00517"></a><span class="lineno">  517</span>        <span class="comment">// when @p owner is null.  Callers that explicitly want the</span></div>
+<div class="line"><a id="l00518" name="l00518"></a><span class="lineno">  518</span>        <span class="comment">// raw, same-thread-only behaviour should use the @c void*</span></div>
+<div class="line"><a id="l00519" name="l00519"></a><span class="lineno">  519</span>        <span class="comment">// overload with @c nullptr instead.</span></div>
+<div class="line"><a id="l00520" name="l00520"></a><span class="lineno">  520</span>        PROMEKI_ASSERT(owner != <span class="keyword">nullptr</span>);</div>
+<div class="line"><a id="l00521" name="l00521"></a><span class="lineno">  521</span>        <span class="keywordflow">return</span> connect(</div>
+<div class="line"><a id="l00522" name="l00522"></a><span class="lineno">  522</span>                [<a class="code hl_class" href="classList.html">slot</a> = std::move(<a class="code hl_class" href="classList.html">slot</a>), owner](<a class="code hl_class" href="classList.html">Args</a>... <a class="code hl_class" href="classList.html">args</a>) {</div>
+<div class="line"><a id="l00523" name="l00523"></a><span class="lineno">  523</span>                        EventLoop *ownerLoop   = owner-&gt;eventLoop();</div>
+<div class="line"><a id="l00524" name="l00524"></a><span class="lineno">  524</span>                        EventLoop *currentLoop = EventLoop::current();</div>
+<div class="line"><a id="l00525" name="l00525"></a><span class="lineno">  525</span>                        if(ownerLoop == nullptr || ownerLoop == currentLoop) {</div>
+<div class="line"><a id="l00526" name="l00526"></a><span class="lineno">  526</span>                                slot(args...);</div>
+<div class="line"><a id="l00527" name="l00527"></a><span class="lineno">  527</span>                                return;</div>
+<div class="line"><a id="l00528" name="l00528"></a><span class="lineno">  528</span>                        }</div>
+<div class="line"><a id="l00529" name="l00529"></a><span class="lineno">  529</span>                        <span class="comment">// Copy args into a tuple, hop to the owner&#39;s</span></div>
+<div class="line"><a id="l00530" name="l00530"></a><span class="lineno">  530</span>                        <span class="comment">// EventLoop, then unpack and invoke.  Requires</span></div>
+<div class="line"><a id="l00531" name="l00531"></a><span class="lineno">  531</span>                        <span class="comment">// every Args type to be copy-constructible,</span></div>
+<div class="line"><a id="l00532" name="l00532"></a><span class="lineno">  532</span>                        <span class="comment">// which is the same restriction the Slot-based</span></div>
+<div class="line"><a id="l00533" name="l00533"></a><span class="lineno">  533</span>                        <span class="comment">// ObjectBase::connect path already carries via</span></div>
+<div class="line"><a id="l00534" name="l00534"></a><span class="lineno">  534</span>                        <span class="comment">// VariantList packing.</span></div>
+<div class="line"><a id="l00535" name="l00535"></a><span class="lineno">  535</span>                        <a class="code hl_class" href="classList.html">ownerLoop</a>-&gt;postCallable(</div>
+<div class="line"><a id="l00536" name="l00536"></a><span class="lineno">  536</span>                                [<a class="code hl_class" href="classList.html">slot</a>, <a class="code hl_class" href="classList.html">tup</a> = std::make_tuple(std::move(<a class="code hl_class" href="classList.html">args</a>)...)]() {</div>
+<div class="line"><a id="l00537" name="l00537"></a><span class="lineno">  537</span>                                        std::apply(slot, tup);</div>
+<div class="line"><a id="l00538" name="l00538"></a><span class="lineno">  538</span>                                });</div>
+<div class="line"><a id="l00539" name="l00539"></a><span class="lineno">  539</span>                },</div>
+<div class="line"><a id="l00540" name="l00540"></a><span class="lineno">  540</span>                <span class="keyword">static_cast&lt;</span><span class="keywordtype">void</span> *<span class="keyword">&gt;</span>(owner));</div>
+<div class="line"><a id="l00541" name="l00541"></a><span class="lineno">  541</span>}</div>
+</div>
+<div class="line"><a id="l00542" name="l00542"></a><span class="lineno">  542</span> </div>
+<div class="line"><a id="l00543" name="l00543"></a><span class="lineno">  543</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
+<div class="line"><a id="l00544" name="l00544"></a><span class="lineno">  544</span> </div>
 <div class="ttc" id="aclassEventLoop_html"><div class="ttname"><a href="classEventLoop.html">EventLoop</a></div><div class="ttdoc">Per-thread event loop providing event dispatch, timers, and posted callables.</div><div class="ttdef"><b>Definition</b> eventloop.h:59</div></div>
 <div class="ttc" id="aclassEvent_html"><div class="ttname"><a href="classEvent.html">Event</a></div><div class="ttdoc">Base class for the event system.</div><div class="ttdef"><b>Definition</b> event.h:29</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List&lt; ObjectBase * &gt;</a></div></div>
@@ -523,7 +562,9 @@ $(document).ready(function(){initNavTree('objectbase_8h_source.html',''); initRe
 <div class="ttc" id="aclassObjectBase_html_ac12565258ee428cb8691cb6584e1d54e"><div class="ttname"><a href="classObjectBase.html#ac12565258ee428cb8691cb6584e1d54e">ObjectBase::signalSender</a></div><div class="ttdeci">ObjectBase * signalSender()</div><div class="ttdoc">Returns the ObjectBase that emitted the signal currently being handled.</div><div class="ttdef"><b>Definition</b> objectbase.h:345</div></div>
 <div class="ttc" id="aclassObjectBase_html_ad1f655ffb3998bc290c2407bcb895586"><div class="ttname"><a href="classObjectBase.html#ad1f655ffb3998bc290c2407bcb895586">ObjectBase::ObjectBase</a></div><div class="ttdeci">ObjectBase(ObjectBase *p=nullptr)</div><div class="ttdoc">Default ObjectBase constructor.</div></div>
 <div class="ttc" id="aclassObjectBase_html_ad8a11dd19f4510f3ce38c779fc7911a8"><div class="ttname"><a href="classObjectBase.html#ad8a11dd19f4510f3ce38c779fc7911a8">ObjectBase::parent</a></div><div class="ttdeci">ObjectBase * parent() const</div><div class="ttdoc">Returns the parent object, if one. nullptr if none.</div><div class="ttdef"><b>Definition</b> objectbase.h:256</div></div>
-<div class="ttc" id="aclassSignal_html_a8ba07de6dddd079761143dc9095127ac"><div class="ttname"><a href="classSignal.html#a8ba07de6dddd079761143dc9095127ac">Signal::emit</a></div><div class="ttdeci">void emit(Args... args) const</div><div class="ttdoc">Emits this signal.</div><div class="ttdef"><b>Definition</b> signal.h:170</div></div>
+<div class="ttc" id="aclassSignal_html_a1ce83cacbd695f1901fe7e7fd4b6eeb0"><div class="ttname"><a href="classSignal.html#a1ce83cacbd695f1901fe7e7fd4b6eeb0">Signal::connect</a></div><div class="ttdeci">size_t connect(Function slot, void *ptr=nullptr)</div><div class="ttdoc">Connects this signal to a callable (lambda or function).</div><div class="ttdef"><b>Definition</b> signal.h:88</div></div>
+<div class="ttc" id="aclassSignal_html_a8143f1274fc06b009bf4c8d2db85d424"><div class="ttname"><a href="classSignal.html#a8143f1274fc06b009bf4c8d2db85d424">Signal::Function</a></div><div class="ttdeci">std::function&lt; void(Args...)&gt; Function</div><div class="ttdoc">Callable type that slots must conform to.</div><div class="ttdef"><b>Definition</b> signal.h:32</div></div>
+<div class="ttc" id="aclassSignal_html_a8ba07de6dddd079761143dc9095127ac"><div class="ttname"><a href="classSignal.html#a8ba07de6dddd079761143dc9095127ac">Signal::emit</a></div><div class="ttdeci">void emit(Args... args) const</div><div class="ttdoc">Emits this signal.</div><div class="ttdef"><b>Definition</b> signal.h:204</div></div>
 <div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:57</div></div>
 <div class="ttc" id="aclassTimerEvent_html"><div class="ttname"><a href="classTimerEvent.html">TimerEvent</a></div><div class="ttdoc">Event delivered when a timer fires.</div><div class="ttdef"><b>Definition</b> timerevent.h:22</div></div>
 <div class="ttc" id="aeventloop_8h_html"><div class="ttname"><a href="eventloop_8h.html">eventloop.h</a></div></div>
@@ -545,7 +586,7 @@ $(document).ready(function(){initNavTree('objectbase_8h_source.html',''); initRe
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="objectbase_8h.html">objectbase.h</a></li>
-    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
   </ul>
 </div>
 </body>

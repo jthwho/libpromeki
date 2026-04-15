@@ -117,8 +117,14 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferView.html">BufferView</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lightweight view into a region of a shared <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>.  <a href="classBufferView.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMediaConfigTag.html">MediaConfigTag</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Phantom tag for the shared media config <a class="el" href="classStringRegistry.html">StringRegistry</a>.  <a href="structMediaConfigTag.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classH264Bitstream.html">H264Bitstream</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Low-level <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a> / HEVC NAL-unit framing helpers.  <a href="classH264Bitstream.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structAvcDecoderConfig.html">AvcDecoderConfig</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">AVCDecoderConfigurationRecord — the payload of an <code>avcC</code> box inside an <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a> MP4 / <a class="el" href="classQuickTime.html" title="QuickTime / ISO-BMFF container reader and writer.">QuickTime</a> sample description.  <a href="structAvcDecoderConfig.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structHevcDecoderConfig.html">HevcDecoderConfig</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">HEVCDecoderConfigurationRecord — the payload of an <code>hvcC</code> box inside an <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.265</a> / HEVC MP4 / <a class="el" href="classQuickTime.html" title="QuickTime / ISO-BMFF container reader and writer.">QuickTime</a> sample description.  <a href="structHevcDecoderConfig.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html">MediaConfig</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generic name/value configuration container for the media subsystem.  <a href="classMediaConfig.html#details">More...</a><br /></td></tr>
@@ -126,7 +132,7 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:ga5a21e9aead5071f63ae79fb219adc486" id="r_ga5a21e9aead5071f63ae79fb219adc486"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__media.html#ga5a21e9aead5071f63ae79fb219adc486">MediaConfigID</a> = <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">MediaConfig::ID</a></td></tr>
+<tr class="memitem:ga5a21e9aead5071f63ae79fb219adc486" id="r_ga5a21e9aead5071f63ae79fb219adc486"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__media.html#ga5a21e9aead5071f63ae79fb219adc486">MediaConfigID</a> = <a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">MediaConfig::ID</a></td></tr>
 <tr class="memdesc:ga5a21e9aead5071f63ae79fb219adc486"><td class="mdescLeft">&#160;</td><td class="mdescRight">Strongly-typed key into a <a class="el" href="classMediaConfig.html">MediaConfig</a>.  <br /></td></tr>
 <tr class="separator:ga5a21e9aead5071f63ae79fb219adc486"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -141,7 +147,7 @@ Typedefs</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="group__media.html#ga5a21e9aead5071f63ae79fb219adc486">MediaConfigID</a> =  <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">MediaConfig::ID</a></td>
+          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="group__media.html#ga5a21e9aead5071f63ae79fb219adc486">MediaConfigID</a> =  <a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">MediaConfig::ID</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -157,7 +163,7 @@ Typedefs</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
   </ul>
 </div>
 </body>

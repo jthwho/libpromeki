@@ -1,11 +1,17 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classStringData.html" title="Pure virtual interface for String storage backends." alt="" coords="5,80,96,105"/>
-<area shape="rect" id="Node000001" href="$classStringLatin1Data.html" title="Latin1 string storage. One byte = one character." alt="" coords="171,5,302,31"/>
-<area shape="poly" id="edge142_Node000000_Node000001" title=" " alt="" coords="82,70,143,40,177,28,179,33,145,44,85,75"/>
-<area shape="rect" id="Node000002" href="$classStringLiteralData.html" title="Immutable string storage wrapping a string literal pointer." alt="" coords="171,55,303,80"/>
-<area shape="poly" id="edge143_Node000000_Node000002" title=" " alt="" coords="110,82,170,74,171,79,110,87"/>
-<area shape="rect" id="Node000003" href="$classStringUnicodeData.html" title="Unicode string storage. Decoded codepoints in a List&lt;Char&gt;." alt="" coords="165,104,309,129"/>
-<area shape="poly" id="edge144_Node000000_Node000003" title=" " alt="" coords="110,98,165,105,164,110,109,103"/>
-<area shape="rect" id="Node000004" href="$classStringUnicodeLiteralData.html" title="Immutable Unicode string storage wrapping compile&#45;time decoded data." alt="" coords="144,153,329,179"/>
-<area shape="poly" id="edge145_Node000000_Node000004" title=" " alt="" coords="86,110,145,138,183,151,181,156,143,143,84,114"/>
+<area shape="rect" id="Node000000" title=" " alt="" coords="5,220,117,245"/>
+<area shape="rect" id="Node000001" href="$structIsSharedObject_3_01T_00_01std_1_1void__t_3_01decltype_07_6T_1_1__promeki__refct_08_4_01_4.html" title=" " alt="" coords="165,5,347,60"/>
+<area shape="poly" id="edge144_Node000000_Node000001" title=" " alt="" coords="71,206,106,140,132,103,164,71,182,58,185,62,167,75,137,107,111,143,76,208"/>
+<area shape="rect" id="Node000002" href="$structdetail_1_1is__type__registry_3_01AudioCodec_01_4.html" title=" " alt="" coords="171,85,341,125"/>
+<area shape="poly" id="edge145_Node000000_Node000002" title=" " alt="" coords="80,208,117,171,164,134,188,122,190,127,167,139,121,175,84,211"/>
+<area shape="rect" id="Node000003" href="$structdetail_1_1is__type__registry_3_01ColorModel_01_4.html" title=" " alt="" coords="171,149,341,189"/>
+<area shape="poly" id="edge146_Node000000_Node000003" title=" " alt="" coords="113,213,194,186,195,191,115,218"/>
+<area shape="rect" id="Node000004" href="$structdetail_1_1is__type__registry_3_01MemSpace_01_4.html" title=" " alt="" coords="171,213,341,253"/>
+<area shape="poly" id="edge147_Node000000_Node000004" title=" " alt="" coords="131,230,171,230,171,235,131,235"/>
+<area shape="rect" id="Node000005" href="$structdetail_1_1is__type__registry_3_01PixelDesc_01_4.html" title=" " alt="" coords="171,277,341,317"/>
+<area shape="poly" id="edge148_Node000000_Node000005" title=" " alt="" coords="115,247,195,274,194,279,113,252"/>
+<area shape="rect" id="Node000006" href="$structdetail_1_1is__type__registry_3_01PixelFormat_01_4.html" title=" " alt="" coords="171,341,341,381"/>
+<area shape="poly" id="edge149_Node000000_Node000006" title=" " alt="" coords="84,254,121,291,167,326,190,338,188,343,164,331,117,295,80,258"/>
+<area shape="rect" id="Node000007" href="$structdetail_1_1is__type__registry_3_01VideoCodec_01_4.html" title=" " alt="" coords="171,405,341,445"/>
+<area shape="poly" id="edge150_Node000000_Node000007" title=" " alt="" coords="75,257,110,324,136,359,167,391,185,402,183,407,164,395,132,363,105,326,70,259"/>
 </map>

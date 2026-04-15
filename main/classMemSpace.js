@@ -6,6 +6,8 @@ var classMemSpace =
     [ "ID", "classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6ed", [
       [ "System", "classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6eda1f66732061fbde88c5ea8d221dec722c", null ],
       [ "SystemSecure", "classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6edad7f94fb530f27adf051618eef6c1a6da", null ],
+      [ "CudaDevice", "classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6edae02cbf1cdcf21f0e3333440f28226d16", null ],
+      [ "CudaHost", "classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6eda5e57eb8409be7632f7bb3ac024cfb7c8", null ],
       [ "Default", "classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6eda8347c9d1337bdc522fc56575c262cafe", null ],
       [ "UserDefined", "classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6edae54fd854f6098fac7803f28dc201c94e", null ]
     ] ],

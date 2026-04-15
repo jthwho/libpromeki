@@ -38,6 +38,7 @@ var group__events =
       [ "Function", "classSignal.html#a8143f1274fc06b009bf4c8d2db85d424", null ],
       [ "RemoveConstAndRef", "classSignal.html#a4f4798f3ef8ca6b9e0c74831e2057250", null ],
       [ "Signal", "classSignal.html#a1af71922fb73f84917cf7ffefa7b598e", null ],
+      [ "connect", "classSignal.html#ab8e1173424b75b99850669cbbca813a5", null ],
       [ "connect", "classSignal.html#a1ce83cacbd695f1901fe7e7fd4b6eeb0", null ],
       [ "connect", "classSignal.html#ac2924de75d7ddab6f3de2e41a39c9c07", null ],
       [ "disconnect", "classSignal.html#a2c13005203c336b8f505e1f7ed36363b", null ],

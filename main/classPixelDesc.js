@@ -169,7 +169,6 @@ var classPixelDesc =
     ] ],
     [ "PixelDesc", "classPixelDesc.html#a1a604806861a4bf14aac3805667679e0", null ],
     [ "alphaCompIndex", "classPixelDesc.html#abda6c3294533e9f8a03bcfe8fd45c286", null ],
-    [ "codecName", "classPixelDesc.html#a7782986e9c786a09a95f040d38792908", null ],
     [ "colorModel", "classPixelDesc.html#a47d965b250b01cc56726f22f0fb2e895", null ],
     [ "compCount", "classPixelDesc.html#a453f319ba241d49d5df62cf5c08cf73c", null ],
     [ "compSemantic", "classPixelDesc.html#a877014534441713cc19d97bd12332555", null ],
@@ -190,5 +189,6 @@ var classPixelDesc =
     [ "operator==", "classPixelDesc.html#a28939256e2536fabb950eb1036e3ff9b", null ],
     [ "pixelFormat", "classPixelDesc.html#a624006e84c35a32b3ff03be1b26f968a", null ],
     [ "planeCount", "classPixelDesc.html#af26c3799357776e7cdeb91dcef3504bc", null ],
-    [ "planeSize", "classPixelDesc.html#a97754071a3b2973e307d9411191569f9", null ]
+    [ "planeSize", "classPixelDesc.html#a97754071a3b2973e307d9411191569f9", null ],
+    [ "videoCodec", "classPixelDesc.html#a4b1c5d6c7f378a9777bbba2700b41ea9", null ]
 ];

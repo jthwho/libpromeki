@@ -20,12 +20,14 @@ var searchData=
   ['ipv4address_17',['Ipv4Address',['../classIpv4Address.html',1,'']]],
   ['ipv6address_18',['Ipv6Address',['../classIpv6Address.html',1,'']]],
   ['is_5ftype_5fregistry_19',['is_type_registry',['../structdetail_1_1is__type__registry.html',1,'detail']]],
-  ['is_5ftype_5fregistry_3c_20colormodel_20_3e_20',['is_type_registry&lt; ColorModel &gt;',['../structdetail_1_1is__type__registry_3_01ColorModel_01_4.html',1,'detail']]],
-  ['is_5ftype_5fregistry_3c_20memspace_20_3e_21',['is_type_registry&lt; MemSpace &gt;',['../structdetail_1_1is__type__registry_3_01MemSpace_01_4.html',1,'detail']]],
-  ['is_5ftype_5fregistry_3c_20pixeldesc_20_3e_22',['is_type_registry&lt; PixelDesc &gt;',['../structdetail_1_1is__type__registry_3_01PixelDesc_01_4.html',1,'detail']]],
-  ['is_5ftype_5fregistry_3c_20pixelformat_20_3e_23',['is_type_registry&lt; PixelFormat &gt;',['../structdetail_1_1is__type__registry_3_01PixelFormat_01_4.html',1,'detail']]],
-  ['issharedobject_24',['IsSharedObject',['../structIsSharedObject.html',1,'']]],
-  ['issharedobject_3c_20t_2c_20std_3a_3avoid_5ft_3c_20decltype_28_26t_3a_3a_5fpromeki_5frefct_29_3e_20_3e_25',['IsSharedObject&lt; T, std::void_t&lt; decltype(&amp;T::_promeki_refct)&gt; &gt;',['../structIsSharedObject_3_01T_00_01std_1_1void__t_3_01decltype_07_6T_1_1__promeki__refct_08_4_01_4.html',1,'']]],
-  ['item_26',['item',['../structImageDataEncoder_1_1Item.html',1,'ImageDataEncoder::Item'],['../classStringRegistry_1_1Item.html',1,'StringRegistry&lt; Tag &gt;::Item']]],
-  ['iterator_27',['Iterator',['../classBenchmarkState_1_1Iterator.html',1,'BenchmarkState']]]
+  ['is_5ftype_5fregistry_3c_20audiocodec_20_3e_20',['is_type_registry&lt; AudioCodec &gt;',['../structdetail_1_1is__type__registry_3_01AudioCodec_01_4.html',1,'detail']]],
+  ['is_5ftype_5fregistry_3c_20colormodel_20_3e_21',['is_type_registry&lt; ColorModel &gt;',['../structdetail_1_1is__type__registry_3_01ColorModel_01_4.html',1,'detail']]],
+  ['is_5ftype_5fregistry_3c_20memspace_20_3e_22',['is_type_registry&lt; MemSpace &gt;',['../structdetail_1_1is__type__registry_3_01MemSpace_01_4.html',1,'detail']]],
+  ['is_5ftype_5fregistry_3c_20pixeldesc_20_3e_23',['is_type_registry&lt; PixelDesc &gt;',['../structdetail_1_1is__type__registry_3_01PixelDesc_01_4.html',1,'detail']]],
+  ['is_5ftype_5fregistry_3c_20pixelformat_20_3e_24',['is_type_registry&lt; PixelFormat &gt;',['../structdetail_1_1is__type__registry_3_01PixelFormat_01_4.html',1,'detail']]],
+  ['is_5ftype_5fregistry_3c_20videocodec_20_3e_25',['is_type_registry&lt; VideoCodec &gt;',['../structdetail_1_1is__type__registry_3_01VideoCodec_01_4.html',1,'detail']]],
+  ['issharedobject_26',['IsSharedObject',['../structIsSharedObject.html',1,'']]],
+  ['issharedobject_3c_20t_2c_20std_3a_3avoid_5ft_3c_20decltype_28_26t_3a_3a_5fpromeki_5frefct_29_3e_20_3e_27',['IsSharedObject&lt; T, std::void_t&lt; decltype(&amp;T::_promeki_refct)&gt; &gt;',['../structIsSharedObject_3_01T_00_01std_1_1void__t_3_01decltype_07_6T_1_1__promeki__refct_08_4_01_4.html',1,'']]],
+  ['item_28',['item',['../structImageDataEncoder_1_1Item.html',1,'ImageDataEncoder::Item'],['../classStringRegistry_1_1Item.html',1,'StringRegistry&lt; Name &gt;::Item']]],
+  ['iterator_29',['Iterator',['../classBenchmarkState_1_1Iterator.html',1,'BenchmarkState']]]
 ];

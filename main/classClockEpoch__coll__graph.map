@@ -1,10 +1,8 @@
 <map id="ClockEpoch" name="ClockEpoch">
-<area shape="rect" id="Node000001" title="Well&#45;known Enum type for clock domain epoch behaviour." alt="" coords="145,177,242,203"/>
-<area shape="poly" id="edge4_Node000001_Node000001" title=" " alt="" coords="257,179,265,183,269,190,260,199,243,203,242,197,258,195,263,190,261,187,255,184"/>
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for clock domain epoch behaviour." alt="" coords="58,164,155,189"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="170,167,178,170,182,177,174,185,156,188,155,182,171,180,177,176,175,175,168,172"/>
 <area shape="rect" id="Node000002" href="$classTypedEnum.html" title=" " alt="" coords="5,80,208,105"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="129,114,185,175,181,179,125,118"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="109,119,109,164,104,164,104,119"/>
 <area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="77,5,136,31"/>
 <area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="109,45,109,80,104,80,104,45"/>
-<area shape="rect" id="Node000004" href="$classEnum_1_1Type.html" title="Lightweight handle identifying a registered enum kind." alt="" coords="233,80,330,105"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="263,118,206,179,202,175,259,114"/>
 </map>

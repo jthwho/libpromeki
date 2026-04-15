@@ -2,6 +2,8 @@ var classQuickTime_1_1Track =
 [
     [ "Track", "classQuickTime_1_1Track.html#ab298be43fbe1ac7a94ae49343caed6e1", null ],
     [ "audioDesc", "classQuickTime_1_1Track.html#ab27018b0c60a084c1162c97dbee241e8", null ],
+    [ "codecConfig", "classQuickTime_1_1Track.html#a77db112fc47c41e2e6aa78300e13f09a", null ],
+    [ "codecConfigType", "classQuickTime_1_1Track.html#a7c34baaee13f083029e0c3125a611a3c", null ],
     [ "duration", "classQuickTime_1_1Track.html#a5cb85e6a2a1694375577cda422d0e5fd", null ],
     [ "editStartOffset", "classQuickTime_1_1Track.html#a6adcd3d8cff0ae89ba8a764ad248e404", null ],
     [ "frameRate", "classQuickTime_1_1Track.html#a41223e93b92db382650cc299d3d0bbee", null ],
@@ -14,6 +16,8 @@ var classQuickTime_1_1Track =
     [ "pixelDesc", "classQuickTime_1_1Track.html#accd968947f81001341efed5a3ddc2774", null ],
     [ "sampleCount", "classQuickTime_1_1Track.html#a02598b0f42dfb74f536314971799c11c", null ],
     [ "setAudioDesc", "classQuickTime_1_1Track.html#a765614bc8f1ff3f7103dafec544ba607", null ],
+    [ "setCodecConfig", "classQuickTime_1_1Track.html#a2f0d19fc392ebff71f65f69b0683a01d", null ],
+    [ "setCodecConfigType", "classQuickTime_1_1Track.html#a48e617f58b616599bd95a1b474ef093b", null ],
     [ "setDuration", "classQuickTime_1_1Track.html#af2792e69d80ef614007162ff1ff208c7", null ],
     [ "setEditStartOffset", "classQuickTime_1_1Track.html#afa71f6880b5129d15739152b7ad1f280", null ],
     [ "setFrameRate", "classQuickTime_1_1Track.html#afee9f5e48c7fd6a85691f7ab5b9e2207", null ],

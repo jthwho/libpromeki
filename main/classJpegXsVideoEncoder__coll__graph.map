@@ -1,0 +1,9 @@
+<map id="JpegXsVideoEncoder" name="JpegXsVideoEncoder">
+<area shape="rect" id="Node000001" title="JPEG XS VideoEncoder built on JpegXsImageCodec." alt="" coords="5,168,160,193"/>
+<area shape="rect" id="Node000002" href="$classVideoEncoder.html" title="Abstract base class for stateful video encoders." alt="" coords="27,93,138,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="85,133,85,168,80,168,80,133"/>
+<area shape="rect" id="Node000003" href="$classError.html" title="Lightweight error code wrapper for the promeki library." alt="" coords="8,5,61,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="34,44,38,68,48,81,62,91,58,95,45,85,34,70,28,45"/>
+<area shape="rect" id="Node000004" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="102,5,162,31"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="121,44,92,94,87,91,116,41"/>
+</map>

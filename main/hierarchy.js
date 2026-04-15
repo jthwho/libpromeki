@@ -21,6 +21,7 @@ var hierarchy =
     [ "Atomic< bool >", "classAtomic.html", null ],
     [ "Atomic< int >", "classAtomic.html", null ],
     [ "Atomic< int64_t >", "classAtomic.html", null ],
+    [ "Atomic< std::thread::id >", "classAtomic.html", null ],
     [ "Atomic< uint64_t >", "classAtomic.html", null ],
     [ "Audio", "classAudio.html", null ],
     [ "AudioBuffer", "classAudioBuffer.html", null ],
@@ -31,6 +32,7 @@ var hierarchy =
     [ "AudioLevel", "classAudioLevel.html", null ],
     [ "AudioResampler", "classAudioResampler.html", null ],
     [ "AudioTestPattern", "classAudioTestPattern.html", null ],
+    [ "AvcDecoderConfig", "structAvcDecoderConfig.html", null ],
     [ "ImageDataDecoder::Band", "structImageDataDecoder_1_1Band.html", null ],
     [ "Benchmark", "classBenchmark.html", null ],
     [ "BenchmarkCase", "classBenchmarkCase.html", null ],
@@ -67,28 +69,33 @@ var hierarchy =
     [ "PixelDesc::CompSemantic", "structPixelDesc_1_1CompSemantic.html", null ],
     [ "AudioBlock::Config", "classAudioBlock_1_1Config.html", null ],
     [ "AudioGen::Config", "structAudioGen_1_1Config.html", null ],
-    [ "ConfigTag", "structConfigTag.html", null ],
     [ "FileFormatFactory< Product >::Context", "structFileFormatFactory_1_1Context.html", null ],
     [ "CrashHandler", "classCrashHandler.html", null ],
     [ "CRC< T >", "classCRC.html", null ],
     [ "CSCContext", "classCSCContext.html", null ],
     [ "CSCPipeline", "classCSCPipeline.html", null ],
     [ "CSCRegistry", "classCSCRegistry.html", null ],
+    [ "CudaBootstrap", "classCudaBootstrap.html", null ],
+    [ "CudaDevice", "classCudaDevice.html", null ],
+    [ "AudioCodec::Data", "structAudioCodec_1_1Data.html", null ],
     [ "ColorModel::Data", "structColorModel_1_1Data.html", null ],
     [ "PixelDesc::Data", "structPixelDesc_1_1Data.html", null ],
     [ "PixelFormat::Data", "structPixelFormat_1_1Data.html", null ],
+    [ "VideoCodec::Data", "structVideoCodec_1_1Data.html", null ],
     [ "PacketTransport::Datagram", "structPacketTransport_1_1Datagram.html", null ],
     [ "UdpSocket::Datagram", "structUdpSocket_1_1Datagram.html", null ],
     [ "DataStream", "classDataStream.html", null ],
     [ "DateTime", "classDateTime.html", null ],
     [ "ImageDataDecoder::DecodedItem", "structImageDataDecoder_1_1DecodedItem.html", null ],
     [ "LtcDecoder::DecodedTimecode", "structLtcDecoder_1_1DecodedTimecode.html", null ],
+    [ "Enum::Definition", "structEnum_1_1Definition.html", null ],
     [ "Deque< T >", "classDeque.html", null ],
     [ "Dir", "classDir.html", null ],
     [ "Duration", "classDuration.html", null ],
     [ "ElapsedTimer", "classElapsedTimer.html", null ],
     [ "EncodedDesc", "classEncodedDesc.html", null ],
     [ "Benchmark::Entry", "structBenchmark_1_1Entry.html", null ],
+    [ "Enum::Entry", "structEnum_1_1Entry.html", null ],
     [ "Enum", "classEnum.html", [
       [ "TypedEnum< AudioDataType >", "classTypedEnum.html", [
         [ "AudioDataType", "classAudioDataType.html", null ]
@@ -150,8 +157,14 @@ var hierarchy =
       [ "TypedEnum< V4l2PowerLineMode >", "classTypedEnum.html", [
         [ "V4l2PowerLineMode", "classV4l2PowerLineMode.html", null ]
       ] ],
+      [ "TypedEnum< VideoEncoderPreset >", "classTypedEnum.html", [
+        [ "VideoEncoderPreset", "classVideoEncoderPreset.html", null ]
+      ] ],
       [ "TypedEnum< VideoPattern >", "classTypedEnum.html", [
         [ "VideoPattern", "classVideoPattern.html", null ]
+      ] ],
+      [ "TypedEnum< VideoRateControl >", "classTypedEnum.html", [
+        [ "VideoRateControl", "classVideoRateControl.html", null ]
       ] ],
       [ "TypedEnum< Derived >", "classTypedEnum.html", null ]
     ] ],
@@ -196,8 +209,10 @@ var hierarchy =
     [ "Future< T >", "classFuture.html", null ],
     [ "Future< void >", "classFuture_3_01void_01_4.html", null ],
     [ "MulticastReceiver::GroupEntry", "structMulticastReceiver_1_1GroupEntry.html", null ],
+    [ "H264Bitstream", "classH264Bitstream.html", null ],
     [ "HashMap< K, V >", "classHashMap.html", null ],
     [ "HashSet< T >", "classHashSet.html", null ],
+    [ "HevcDecoderConfig", "structHevcDecoderConfig.html", null ],
     [ "Histogram", "classHistogram.html", null ],
     [ "Image", "classImage.html", null ],
     [ "ImageCodec", "classImageCodec.html", [
@@ -220,11 +235,10 @@ var hierarchy =
     [ "Ipv4Address", "classIpv4Address.html", null ],
     [ "Ipv6Address", "classIpv6Address.html", null ],
     [ "ImageDataEncoder::Item", "structImageDataEncoder_1_1Item.html", null ],
-    [ "StringRegistry< Tag >::Item", "classStringRegistry_1_1Item.html", null ],
+    [ "StringRegistry< Name >::Item", "classStringRegistry_1_1Item.html", null ],
     [ "BenchmarkState::Iterator", "classBenchmarkState_1_1Iterator.html", null ],
     [ "JsonArray", "classJsonArray.html", null ],
     [ "JsonObject", "classJsonObject.html", null ],
-    [ "LibraryOptionsTag", "structLibraryOptionsTag.html", null ],
     [ "Line< T, N >", "classLine.html", null ],
     [ "List< T >", "classList.html", null ],
     [ "List< Attribute >", "classList.html", null ],
@@ -255,6 +269,7 @@ var hierarchy =
     [ "List< QueuedFrame >", "classList.html", null ],
     [ "List< QueueEntry >", "classList.html", null ],
     [ "List< SharedPtr >", "classList.html", null ],
+    [ "List< SharedPtr< Buffer > >", "classList.html", null ],
     [ "List< SharedPtr< Frame > >", "classList.html", null ],
     [ "List< SignalMeta * >", "classList.html", null ],
     [ "List< SlotItem >", "classList.html", null ],
@@ -290,16 +305,14 @@ var hierarchy =
     [ "Map< String, double >", "classMap.html", null ],
     [ "Map< String, Params >", "classMap.html", null ],
     [ "Map< String, String >", "classMap.html", null ],
-    [ "Map< String, uint32_t >", "classMap.html", null ],
     [ "Map< uint32_t, CachedGlyph >", "classMap.html", null ],
     [ "Map< uint32_t, SDLWindow * >", "classMap.html", null ],
-    [ "Map< uint32_t, VariantImpl >", "classMap.html", null ],
-    [ "Map< uint32_t, VariantSpec >", "classMap.html", null ],
     [ "Map< uint64_t, String >", "classMap.html", null ],
+    [ "Map< uint64_t, VariantImpl >", "classMap.html", null ],
+    [ "Map< uint64_t, VariantSpec >", "classMap.html", null ],
     [ "Map< uintptr_t, Block >", "classMap.html", null ],
     [ "Matrix< T, W, H >", "classMatrix.html", null ],
     [ "Matrix3x3", "classMatrix3x3.html", null ],
-    [ "MediaConfigTag", "structMediaConfigTag.html", null ],
     [ "MediaDesc", "classMediaDesc.html", null ],
     [ "MediaIOCommand", "classMediaIOCommand.html", [
       [ "MediaIOCommandClose", "classMediaIOCommandClose.html", null ],
@@ -310,24 +323,25 @@ var hierarchy =
       [ "MediaIOCommandStats", "classMediaIOCommandStats.html", null ],
       [ "MediaIOCommandWrite", "classMediaIOCommandWrite.html", null ]
     ] ],
-    [ "MediaIOParamsTag", "structMediaIOParamsTag.html", null ],
-    [ "MediaIOStatsTag", "structMediaIOStatsTag.html", null ],
     [ "MediaIOTask", "classMediaIOTask.html", [
       [ "MediaIOTask_AudioFile", "classMediaIOTask__AudioFile.html", null ],
       [ "MediaIOTask_Converter", "classMediaIOTask__Converter.html", null ],
       [ "MediaIOTask_ImageFile", "classMediaIOTask__ImageFile.html", null ],
       [ "MediaIOTask_Inspector", "classMediaIOTask__Inspector.html", null ],
       [ "MediaIOTask_QuickTime", "classMediaIOTask__QuickTime.html", null ],
+      [ "MediaIOTask_RawBitstream", "classMediaIOTask__RawBitstream.html", null ],
       [ "MediaIOTask_Rtp", "classMediaIOTask__Rtp.html", null ],
       [ "MediaIOTask_TPG", "classMediaIOTask__TPG.html", null ],
+      [ "MediaIOTask_VideoDecoder", "classMediaIOTask__VideoDecoder.html", null ],
+      [ "MediaIOTask_VideoEncoder", "classMediaIOTask__VideoEncoder.html", null ],
       [ "SDLPlayerOldTask", "classSDLPlayerOldTask.html", null ],
       [ "SDLPlayerTask", "classSDLPlayerTask.html", null ]
     ] ],
+    [ "MediaPacket", "classMediaPacket.html", null ],
     [ "MediaTimeStamp", "classMediaTimeStamp.html", null ],
     [ "MemAllocation", "structMemAllocation.html", null ],
     [ "MemPool", "classMemPool.html", null ],
     [ "MemSpace", "classMemSpace.html", null ],
-    [ "MetadataTag", "structMetadataTag.html", null ],
     [ "ObjectBase::MetaInfo", "classObjectBase_1_1MetaInfo.html", null ],
     [ "MidiNote", "classMidiNote.html", null ],
     [ "MidiNoteNames", "classMidiNoteNames.html", null ],
@@ -335,6 +349,7 @@ var hierarchy =
     [ "MusicalNote", "classMusicalNote.html", null ],
     [ "MusicalScale", "classMusicalScale.html", null ],
     [ "Mutex", "classMutex.html", null ],
+    [ "H264Bitstream::NalUnit", "structH264Bitstream_1_1NalUnit.html", null ],
     [ "NetworkAddress", "classNetworkAddress.html", null ],
     [ "NoteSequenceParser", "classNoteSequenceParser.html", null ],
     [ "NumName", "classNumName.html", null ],
@@ -497,8 +512,8 @@ var hierarchy =
       [ "StringUnicodeData", "classStringUnicodeData.html", null ],
       [ "StringUnicodeLiteralData", "classStringUnicodeLiteralData.html", null ]
     ] ],
-    [ "StringRegistry< Tag >", "classStringRegistry.html", null ],
-    [ "StringRegistry< Benchmark >", "classStringRegistry.html", null ],
+    [ "StringRegistry< Name >", "classStringRegistry.html", null ],
+    [ "StringRegistry<\"Benchmark\">", "classStringRegistry.html", null ],
     [ "StructDatabase< KeyType, StructType >", "classStructDatabase.html", null ],
     [ "System", "classSystem.html", null ],
     [ "Terminal", "classTerminal.html", null ],
@@ -515,10 +530,12 @@ var hierarchy =
     [ "QuickTime::Track", "classQuickTime_1_1Track.html", null ],
     [ "std::true_type", null, [
       [ "IsSharedObject< T, std::void_t< decltype(&T::_promeki_refct)> >", "structIsSharedObject_3_01T_00_01std_1_1void__t_3_01decltype_07_6T_1_1__promeki__refct_08_4_01_4.html", null ],
+      [ "detail::is_type_registry< AudioCodec >", "structdetail_1_1is__type__registry_3_01AudioCodec_01_4.html", null ],
       [ "detail::is_type_registry< ColorModel >", "structdetail_1_1is__type__registry_3_01ColorModel_01_4.html", null ],
       [ "detail::is_type_registry< MemSpace >", "structdetail_1_1is__type__registry_3_01MemSpace_01_4.html", null ],
       [ "detail::is_type_registry< PixelDesc >", "structdetail_1_1is__type__registry_3_01PixelDesc_01_4.html", null ],
-      [ "detail::is_type_registry< PixelFormat >", "structdetail_1_1is__type__registry_3_01PixelFormat_01_4.html", null ]
+      [ "detail::is_type_registry< PixelFormat >", "structdetail_1_1is__type__registry_3_01PixelFormat_01_4.html", null ],
+      [ "detail::is_type_registry< VideoCodec >", "structdetail_1_1is__type__registry_3_01VideoCodec_01_4.html", null ]
     ] ],
     [ "TuiCell", "structTuiCell.html", null ],
     [ "TuiInputParser", "classTuiInputParser.html", null ],
@@ -530,25 +547,34 @@ var hierarchy =
     [ "Enum::Type", "classEnum_1_1Type.html", null ],
     [ "UMID", "classUMID.html", null ],
     [ "UUID", "classUUID.html", null ],
-    [ "VariantDatabase< Tag >", "classVariantDatabase.html", null ],
-    [ "VariantDatabase< ConfigTag >", "classVariantDatabase.html", null ],
-    [ "VariantDatabase< LibraryOptionsTag >", "classVariantDatabase.html", [
+    [ "VariantDatabase< Name >", "classVariantDatabase.html", null ],
+    [ "VariantDatabase<\"Config\">", "classVariantDatabase.html", null ],
+    [ "VariantDatabase<\"LibraryOptions\">", "classVariantDatabase.html", [
       [ "LibraryOptions", "classLibraryOptions.html", null ]
     ] ],
-    [ "VariantDatabase< MediaConfigTag >", "classVariantDatabase.html", [
+    [ "VariantDatabase<\"MediaConfig\">", "classVariantDatabase.html", [
       [ "MediaConfig", "classMediaConfig.html", null ]
     ] ],
-    [ "VariantDatabase< MediaIOParamsTag >", "classVariantDatabase.html", null ],
-    [ "VariantDatabase< MediaIOStatsTag >", "classVariantDatabase.html", [
+    [ "VariantDatabase<\"MediaIOParams\">", "classVariantDatabase.html", null ],
+    [ "VariantDatabase<\"MediaIOStats\">", "classVariantDatabase.html", [
       [ "MediaIOStats", "classMediaIOStats.html", null ]
     ] ],
-    [ "VariantDatabase< MetadataTag >", "classVariantDatabase.html", [
+    [ "VariantDatabase<\"Metadata\">", "classVariantDatabase.html", [
       [ "Metadata", "classMetadata.html", null ]
     ] ],
     [ "detail::VariantEnd", "structdetail_1_1VariantEnd.html", null ],
     [ "VariantImpl< Types >", "classVariantImpl.html", null ],
-    [ "VariantImpl< std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, Size2Du32, UUID, UMID, Timecode, Rational< int >, FrameRate, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, Enum, EnumList, detail::VariantEnd >", "classVariantImpl.html", null ],
+    [ "VariantImpl< std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, Size2Du32, UUID, UMID, Timecode, Rational< int >, FrameRate, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, VideoCodec, AudioCodec, Enum, EnumList, detail::VariantEnd >", "classVariantImpl.html", null ],
     [ "VariantSpec", "classVariantSpec.html", null ],
+    [ "VideoCodec", "classVideoCodec.html", null ],
+    [ "VideoDecoder", "classVideoDecoder.html", [
+      [ "JpegVideoDecoder", "classJpegVideoDecoder.html", null ],
+      [ "JpegXsVideoDecoder", "classJpegXsVideoDecoder.html", null ]
+    ] ],
+    [ "VideoEncoder", "classVideoEncoder.html", [
+      [ "JpegVideoEncoder", "classJpegVideoEncoder.html", null ],
+      [ "JpegXsVideoEncoder", "classJpegXsVideoEncoder.html", null ]
+    ] ],
     [ "VideoTestPattern", "classVideoTestPattern.html", null ],
     [ "WaitCondition", "classWaitCondition.html", null ],
     [ "ReadWriteLock::WriteLocker", "classReadWriteLock_1_1WriteLocker.html", null ],

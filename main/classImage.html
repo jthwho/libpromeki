@@ -224,7 +224,7 @@ Static Public Member Functions</h2></td></tr>
 <div class="ttc" id="aclassImage_html"><div class="ttname"><a href="classImage.html">Image</a></div><div class="ttdoc">Raster image with pixel description, planes, and metadata.</div><div class="ttdef"><b>Definition</b> image.h:48</div></div>
 <div class="ttc" id="aclassImage_html_ad8c8a9a259f95054f6622bcf992d40c5"><div class="ttname"><a href="classImage.html#ad8c8a9a259f95054f6622bcf992d40c5">Image::fromCompressedData</a></div><div class="ttdeci">static Image fromCompressedData(const void *data, size_t size, size_t width, size_t height, const PixelDesc &amp;pd, const Metadata &amp;metadata=Metadata())</div><div class="ttdoc">Creates a compressed image from pre-encoded data.</div></div>
 <div class="ttc" id="aclassImage_html_ae43a93b1c8ae60153e670caf42fd9fe8"><div class="ttname"><a href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">Image::List</a></div><div class="ttdeci">promeki::List&lt; Image &gt; List</div><div class="ttdoc">List of Image values.</div><div class="ttdef"><b>Definition</b> image.h:55</div></div>
-<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafa08aa1ad3b58839bccc68085bacee382e"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa08aa1ad3b58839bccc68085bacee382e">PixelDesc::JPEG_RGB8_sRGB</a></div><div class="ttdeci">@ JPEG_RGB8_sRGB</div><div class="ttdoc">JPEG-compressed 8-bit RGB, sRGB, full range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:152</div></div>
+<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafa08aa1ad3b58839bccc68085bacee382e"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa08aa1ad3b58839bccc68085bacee382e">PixelDesc::JPEG_RGB8_sRGB</a></div><div class="ttdeci">@ JPEG_RGB8_sRGB</div><div class="ttdoc">JPEG-compressed 8-bit RGB, sRGB, full range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:153</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a96b8f9e7236e49a70f8e487be611e9b4" name="a96b8f9e7236e49a70f8e487be611e9b4"></a>
@@ -440,8 +440,8 @@ Static Public Member Functions</h2></td></tr>
 <p>Converts this image to a different pixel description. </p>
 <p>Handles every combination of compressed and uncompressed pixel descriptions:</p>
 <ul>
-<li><b>Uncompressed → uncompressed:</b> Creates a <a class="el" href="classCSCPipeline.html">CSCPipeline</a> for this image's pixel description and the target, then executes the conversion. For common broadcast pairs (e.g. RGBA8 ↔ YUV8 <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a>), a registered fast-path kernel is used automatically. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> <a class="el" href="classMediaConfig.html#accb05151064a3e15f1b9622a36545477">MediaConfig::CscPath</a> to <code>"scalar"</code> in <code>config</code> to force the generic float pipeline (useful for debugging or reference comparison against <a class="el" href="classColor.html#ad8f542b6d565d809aa114fea6af0654e">Color::convert</a>).</li>
-<li><b>Uncompressed → compressed:</b> If the source format is not one of the target codec's <a class="el" href="classPixelDesc.html#ad9b2c872e0241c248a33a7119f5a2981">PixelDesc::encodeSources</a>, a CSC is run first to land on one that is. The codec (currently only JPEG) then encodes the intermediate. JPEG quality and chroma subsampling can be overridden via <a class="el" href="classMediaConfig.html#a214ed57abc7e330e459128e8466f8951">MediaConfig::JpegQuality</a> and <a class="el" href="classMediaConfig.html#a177b37d7554c3a401879d78b244a4440">MediaConfig::JpegSubsampling</a> in <code>config</code>.</li>
+<li><b>Uncompressed → uncompressed:</b> Creates a <a class="el" href="classCSCPipeline.html">CSCPipeline</a> for this image's pixel description and the target, then executes the conversion. For common broadcast pairs (e.g. RGBA8 ↔ YUV8 <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a>), a registered fast-path kernel is used automatically. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> MediaConfig::CscPath to <code>"scalar"</code> in <code>config</code> to force the generic float pipeline (useful for debugging or reference comparison against <a class="el" href="classColor.html#ad8f542b6d565d809aa114fea6af0654e">Color::convert</a>).</li>
+<li><b>Uncompressed → compressed:</b> If the source format is not one of the target codec's <a class="el" href="classPixelDesc.html#ad9b2c872e0241c248a33a7119f5a2981">PixelDesc::encodeSources</a>, a CSC is run first to land on one that is. The codec (currently only JPEG) then encodes the intermediate. JPEG quality and chroma subsampling can be overridden via MediaConfig::JpegQuality and MediaConfig::JpegSubsampling in <code>config</code>.</li>
 <li><b>Compressed → uncompressed:</b> The codec is asked to decode directly to the target format. If the codec does not support that target natively, it decodes to one of its preferred <a class="el" href="classPixelDesc.html#a3534ffb1059033951087d2c6487aadd7">PixelDesc::decodeTargets</a> and a CSC finishes the job.</li>
 <li><b>Compressed → compressed:</b> Decodes to an uncompressed intermediate shared by both sides (or RGBA8_sRGB when there is no overlap) and re-encodes.</li>
 </ul>
@@ -449,7 +449,7 @@ Static Public Member Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">pd</td><td>The target pixel description. </td></tr>
     <tr><td class="paramname">metadata</td><td><a class="el" href="classMetadata.html" title="Key-value metadata container using typed Variant values.">Metadata</a> to attach to the converted image. </td></tr>
-    <tr><td class="paramname">config</td><td>Optional configuration hints (<a class="el" href="classMediaConfig.html#accb05151064a3e15f1b9622a36545477">MediaConfig::CscPath</a>, <a class="el" href="classMediaConfig.html#a214ed57abc7e330e459128e8466f8951">MediaConfig::JpegQuality</a>, <a class="el" href="classMediaConfig.html#a177b37d7554c3a401879d78b244a4440">MediaConfig::JpegSubsampling</a>). </td></tr>
+    <tr><td class="paramname">config</td><td>Optional configuration hints (MediaConfig::CscPath, MediaConfig::JpegQuality, MediaConfig::JpegSubsampling). </td></tr>
   </table>
   </dd>
 </dl>
@@ -1087,7 +1087,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classImage.html">Image</a></li>
-    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
   </ul>
 </div>
 </body>

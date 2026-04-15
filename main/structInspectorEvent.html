@@ -243,7 +243,7 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>Instantaneous A/V sync offset in audio samples between the picture timecode anchor and the audio LTC sync anchor. This is the <em>current</em> misalignment between the two sources on this specific frame, not a delta against a previous frame.</p>
 <p>Sign convention: positive = video leads audio (the picture's TC anchor lands at an earlier wall-clock audio sample than the LTC's TC anchor). Negative = audio leads video.</p>
-<dl class="section note"><dt>Note</dt><dd>A small constant offset (a few samples — typically 1-3 at common sample rates) is normal when the LTC is produced by libvtc's encoder and decoded by libvtc's decoder. The encoder's raised-cosine transition ramp and the decoder's hysteresis threshold combine to give the decoder a fixed edge-detection latency relative to the encoder's bit boundary. The value is <em>constant</em> across frames, so any movement does represent real drift — the inspector flags such movement as a discontinuity (see <a class="el" href="classMediaConfig.html#a43de6cf6fa985ebd28d77ad0daa484bf">MediaConfig::InspectorSyncOffsetToleranceSamples</a>). </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>A small constant offset (a few samples — typically 1-3 at common sample rates) is normal when the LTC is produced by libvtc's encoder and decoded by libvtc's decoder. The encoder's raised-cosine transition ramp and the decoder's hysteresis threshold combine to give the decoder a fixed edge-detection latency relative to the encoder's bit boundary. The value is <em>constant</em> across frames, so any movement does represent real drift — the inspector flags such movement as a discontinuity (see MediaConfig::InspectorSyncOffsetToleranceSamples). </dd></dl>
 
 </div>
 </div>
@@ -348,7 +348,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> number recovered from the first 64-bit data band (low 32 bits of the <code></code>(streamID &lt;&lt; 32) | frameNumber word). </p>
+<p><a class="el" href="classFrame.html" title="A media frame containing images, audio, compressed packets, and metadata.">Frame</a> number recovered from the first 64-bit data band (low 32 bits of the <code></code>(streamID &lt;&lt; 32) | frameNumber word). </p>
 
 </div>
 </div>
@@ -437,7 +437,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structInspectorEvent.html">InspectorEvent</a></li>
-    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
   </ul>
 </div>
 </body>

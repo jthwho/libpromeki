@@ -29,6 +29,8 @@ var classVariantImpl =
       [ "TypeMemSpace", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beadb96303e23ff4b5384a2d3ba92a7fc95", null ],
       [ "TypePixelFormat", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beae39a5463a67d70abd2a146b27cad765d", null ],
       [ "TypePixelDesc", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beaaf564e8299d384638847a668232a7006", null ],
+      [ "TypeVideoCodec", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beaa6958fbf0d25c61f20a0b75e24cd2a74", null ],
+      [ "TypeAudioCodec", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beaae84250f4a8d9045e14c7b4eb1732829", null ],
       [ "TypeEnum", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea2dc3aac74c412cdc14d408e9592d704c", null ],
       [ "TypeEnumList", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea34b1ec2f84f9074aa6a1f9aac48c23d7", null ]
     ] ],

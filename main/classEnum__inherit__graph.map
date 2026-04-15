@@ -1,49 +1,53 @@
 <map id="Enum" name="Enum">
-<area shape="rect" id="Node000001" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="5,524,64,549"/>
+<area shape="rect" id="Node000001" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="5,573,64,599"/>
 <area shape="rect" id="Node000002" href="$classTypedEnum.html" title=" " alt="" coords="133,5,358,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="34,510,37,407,47,267,57,195,70,130,88,77,110,40,130,25,134,30,114,44,92,79,75,131,62,196,53,267,42,408,39,510"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="33,560,35,448,44,292,53,213,67,140,85,81,97,58,110,40,131,25,134,29,114,44,102,61,90,83,72,141,59,213,49,292,40,448,38,560"/>
 <area shape="rect" id="Node000004" href="$classTypedEnum.html" title=" " alt="" coords="140,55,351,80"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="34,510,39,416,51,290,60,227,73,169,89,122,110,89,138,71,141,76,114,93,94,124,78,171,66,228,56,291,44,417,39,510"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="34,560,37,457,47,316,57,244,70,179,88,126,110,89,138,71,141,75,114,93,92,128,75,181,62,245,53,316,42,457,39,560"/>
 <area shape="rect" id="Node000006" href="$classTypedEnum.html" title=" " alt="" coords="128,104,363,129"/>
-<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="35,510,41,426,54,315,76,209,91,167,110,139,126,127,129,131,114,142,96,170,81,210,59,316,46,427,40,511"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="34,559,39,466,51,340,60,276,73,218,89,171,110,139,126,126,130,131,114,142,94,173,78,220,66,277,56,340,44,466,39,560"/>
 <area shape="rect" id="Node000008" href="$classTypedEnum.html" title=" " alt="" coords="141,153,350,179"/>
-<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="35,510,43,435,57,339,79,248,93,212,110,188,139,170,142,175,114,192,98,215,84,249,63,340,48,436,41,510"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="35,560,41,476,54,364,76,258,91,216,110,188,139,170,142,174,114,192,96,219,81,259,59,365,46,476,40,560"/>
 <area shape="rect" id="Node000010" href="$classTypedEnum.html" title=" " alt="" coords="131,203,359,228"/>
-<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="36,510,46,445,61,364,82,287,95,258,110,237,129,224,132,229,114,241,100,260,87,289,66,365,51,446,42,511"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="35,559,43,484,57,388,79,297,93,262,110,237,130,224,133,228,114,241,98,264,84,299,63,389,48,485,41,560"/>
 <area shape="rect" id="Node000012" href="$classTypedEnum.html" title=" " alt="" coords="114,252,377,277"/>
-<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="33,509,36,461,47,401,70,339,88,311,110,287,126,275,130,280,114,291,92,314,75,341,52,402,42,462,38,510"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="36,559,46,495,61,413,82,337,95,307,110,287,126,275,129,280,114,291,100,310,87,338,66,414,51,495,42,560"/>
 <area shape="rect" id="Node000014" href="$classTypedEnum.html" title=" " alt="" coords="144,301,347,327"/>
-<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="35,510,42,471,55,423,77,376,92,355,110,336,143,318,145,323,114,340,96,358,81,379,60,425,47,472,41,511"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="33,559,36,510,47,450,70,388,88,360,110,336,142,318,145,322,114,340,92,364,75,391,52,452,42,511,38,559"/>
 <area shape="rect" id="Node000016" href="$classTypedEnum.html" title=" " alt="" coords="156,351,335,376"/>
-<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="39,510,48,480,63,446,83,413,110,385,132,373,155,365,157,370,134,378,114,389,87,416,67,449,53,482,44,511"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="35,559,42,520,55,473,77,425,92,404,110,385,131,372,155,364,157,369,134,377,114,389,96,407,81,428,60,475,47,521,41,560"/>
 <area shape="rect" id="Node000018" href="$classTypedEnum.html" title=" " alt="" coords="140,400,351,425"/>
-<area shape="poly" id="edge17_Node000001_Node000018" title=" " alt="" coords="46,510,72,470,90,451,111,434,139,421,141,426,113,439,93,455,76,474,50,513"/>
+<area shape="poly" id="edge17_Node000001_Node000018" title=" " alt="" coords="39,559,48,530,63,496,83,462,110,435,139,420,141,424,114,439,87,466,67,498,53,531,44,561"/>
 <area shape="rect" id="Node000020" href="$classTypedEnum.html" title=" " alt="" coords="125,449,365,475"/>
-<area shape="poly" id="edge19_Node000001_Node000020" title=" " alt="" coords="60,513,84,497,111,484,147,472,149,477,113,488,87,502,63,518"/>
+<area shape="poly" id="edge19_Node000001_Node000020" title=" " alt="" coords="46,559,72,520,90,500,111,484,134,472,137,477,113,488,93,504,76,523,50,562"/>
 <area shape="rect" id="Node000022" href="$classTypedEnum.html" title=" " alt="" coords="139,499,352,524"/>
-<area shape="poly" id="edge21_Node000001_Node000022" title=" " alt="" coords="77,529,140,521,140,527,78,534"/>
+<area shape="poly" id="edge21_Node000001_Node000022" title=" " alt="" coords="60,563,84,547,111,533,147,521,149,527,113,538,87,551,63,567"/>
 <area shape="rect" id="Node000024" href="$classTypedEnum.html" title=" " alt="" coords="135,548,355,573"/>
-<area shape="poly" id="edge23_Node000001_Node000024" title=" " alt="" coords="78,539,135,545,135,551,77,544"/>
+<area shape="poly" id="edge23_Node000001_Node000024" title=" " alt="" coords="77,578,140,571,140,576,78,584"/>
 <area shape="rect" id="Node000026" href="$classTypedEnum.html" title=" " alt="" coords="125,597,365,623"/>
-<area shape="poly" id="edge25_Node000001_Node000026" title=" " alt="" coords="65,555,113,582,154,595,153,600,111,587,62,560"/>
+<area shape="poly" id="edge25_Node000001_Node000026" title=" " alt="" coords="78,588,135,595,134,600,77,593"/>
 <area shape="rect" id="Node000028" href="$classTypedEnum.html" title=" " alt="" coords="117,647,374,672"/>
-<area shape="poly" id="edge27_Node000001_Node000028" title=" " alt="" coords="51,560,76,598,94,617,113,632,140,644,138,649,111,636,90,620,72,601,46,563"/>
+<area shape="poly" id="edge27_Node000001_Node000028" title=" " alt="" coords="65,605,113,632,154,644,153,649,111,636,62,609"/>
 <area shape="rect" id="Node000030" href="$classTypedEnum.html" title=" " alt="" coords="125,696,366,721"/>
-<area shape="poly" id="edge29_Node000001_Node000030" title=" " alt="" coords="45,562,54,591,68,623,88,655,114,681,135,694,133,698,110,685,83,658,63,626,49,593,40,564"/>
+<area shape="poly" id="edge29_Node000001_Node000030" title=" " alt="" coords="51,609,76,647,94,666,113,681,140,694,138,698,111,686,90,670,72,651,46,612"/>
 <area shape="rect" id="Node000032" href="$classTypedEnum.html" title=" " alt="" coords="132,745,359,771"/>
-<area shape="poly" id="edge31_Node000001_Node000032" title=" " alt="" coords="41,563,47,601,60,647,82,693,96,713,114,731,133,743,130,747,110,735,92,716,77,695,55,649,42,602,36,564"/>
+<area shape="poly" id="edge31_Node000001_Node000032" title=" " alt="" coords="45,611,54,640,68,673,88,704,114,731,135,743,133,747,110,735,83,708,63,675,49,642,40,613"/>
 <area shape="rect" id="Node000034" href="$classTypedEnum.html" title=" " alt="" coords="148,795,343,820"/>
-<area shape="poly" id="edge33_Node000001_Node000034" title=" " alt="" coords="39,563,42,611,53,670,76,730,92,757,114,780,130,791,149,799,147,804,127,796,110,784,88,760,71,732,48,671,37,611,33,564"/>
+<area shape="poly" id="edge33_Node000001_Node000034" title=" " alt="" coords="41,612,47,651,60,696,82,742,96,762,114,780,130,791,149,798,147,803,128,795,110,784,92,766,77,745,55,698,42,652,36,613"/>
 <area shape="rect" id="Node000036" href="$classTypedEnum.html" title=" " alt="" coords="112,844,379,869"/>
-<area shape="poly" id="edge35_Node000001_Node000036" title=" " alt="" coords="42,563,51,627,67,707,88,782,100,811,114,829,131,842,128,846,110,833,96,813,83,784,61,708,46,628,37,563"/>
+<area shape="poly" id="edge35_Node000001_Node000036" title=" " alt="" coords="39,613,42,660,53,719,76,779,92,806,114,829,132,842,129,846,110,833,88,809,71,781,48,720,37,661,33,613"/>
 <area shape="rect" id="Node000038" href="$classTypedEnum.html" title=" " alt="" coords="119,893,371,919"/>
-<area shape="poly" id="edge37_Node000001_Node000038" title=" " alt="" coords="41,563,49,637,63,732,85,822,98,856,114,879,130,891,127,895,110,883,94,858,80,823,58,733,43,637,35,563"/>
+<area shape="poly" id="edge37_Node000001_Node000038" title=" " alt="" coords="42,612,51,676,67,756,88,831,100,860,114,879,131,891,128,895,110,883,96,863,83,833,61,758,46,677,37,613"/>
 <area shape="rect" id="Node000040" href="$classTypedEnum.html" title=" " alt="" coords="141,943,349,983"/>
-<area shape="poly" id="edge39_Node000001_Node000040" title=" " alt="" coords="40,563,47,647,60,756,82,861,97,901,114,928,142,948,139,952,110,932,92,903,77,862,55,757,42,647,35,564"/>
-<area shape="rect" id="Node000042" href="$classTypedEnum.html" title=" " alt="" coords="140,1008,351,1033"/>
-<area shape="poly" id="edge41_Node000001_Node000042" title=" " alt="" coords="39,563,44,659,55,789,65,854,78,913,94,961,114,993,141,1011,138,1016,110,997,89,964,72,915,60,855,50,789,38,660,34,563"/>
-<area shape="rect" id="Node000044" href="$classTypedEnum.html" title="CRTP base pinning an Enum value to a compile&#45;time type." alt="" coords="156,1057,335,1083"/>
-<area shape="poly" id="edge43_Node000001_Node000044" title=" " alt="" coords="39,563,41,669,52,814,61,887,74,954,92,1008,114,1044,133,1058,157,1067,155,1072,131,1063,110,1048,87,1010,69,955,56,888,46,814,36,669,33,563"/>
+<area shape="poly" id="edge39_Node000001_Node000040" title=" " alt="" coords="41,612,49,686,64,781,85,870,99,905,114,928,143,948,140,952,110,932,94,907,80,872,58,782,44,686,36,613"/>
+<area shape="rect" id="Node000042" href="$classTypedEnum.html" title=" " alt="" coords="117,1008,374,1033"/>
+<area shape="poly" id="edge41_Node000001_Node000042" title=" " alt="" coords="40,612,46,699,58,814,68,871,81,923,96,965,114,994,130,1006,127,1010,110,997,91,968,75,925,63,872,53,814,40,699,34,613"/>
+<area shape="rect" id="Node000044" href="$classTypedEnum.html" title=" " alt="" coords="140,1057,351,1083"/>
+<area shape="poly" id="edge43_Node000001_Node000044" title=" " alt="" coords="39,613,44,709,55,838,65,903,78,963,94,1011,114,1043,141,1061,138,1065,110,1047,89,1013,72,964,60,904,50,839,38,709,34,613"/>
+<area shape="rect" id="Node000046" href="$classTypedEnum.html" title=" " alt="" coords="125,1107,366,1132"/>
+<area shape="poly" id="edge45_Node000001_Node000046" title=" " alt="" coords="39,612,41,718,52,863,61,936,74,1003,92,1057,114,1094,128,1104,124,1109,110,1097,87,1060,69,1004,56,937,46,863,36,718,33,613"/>
+<area shape="rect" id="Node000048" href="$classTypedEnum.html" title="CRTP base pinning an Enum value to a compile&#45;time type." alt="" coords="156,1156,335,1181"/>
+<area shape="poly" id="edge47_Node000001_Node000048" title=" " alt="" coords="38,612,40,727,48,887,58,968,71,1042,90,1103,101,1126,114,1143,133,1157,157,1166,155,1171,131,1162,110,1147,97,1128,85,1105,66,1044,52,969,43,887,34,727,33,612"/>
 <area shape="rect" id="Node000003" href="$classAudioDataType.html" title="Well&#45;known Enum type for audio sample formats." alt="" coords="448,5,568,31"/>
 <area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="372,15,448,15,448,21,372,21"/>
 <area shape="rect" id="Node000005" href="$classAudioPattern.html" title="Well&#45;known Enum type for audio test pattern generator modes." alt="" coords="455,55,561,80"/>
@@ -84,6 +88,10 @@
 <area shape="poly" id="edge38_Node000038_Node000039" title=" " alt="" coords="385,903,434,903,434,909,385,909"/>
 <area shape="rect" id="Node000041" href="$classV4l2PowerLineMode.html" title="Well&#45;known Enum type for V4L2 power line frequency filter." alt="" coords="431,951,585,976"/>
 <area shape="poly" id="edge40_Node000040_Node000041" title=" " alt="" coords="363,961,430,961,430,966,363,966"/>
-<area shape="rect" id="Node000043" href="$classVideoPattern.html" title="Well&#45;known Enum type for video test pattern generator modes." alt="" coords="455,1008,561,1033"/>
-<area shape="poly" id="edge42_Node000042_Node000043" title=" " alt="" coords="364,1018,455,1018,455,1023,364,1023"/>
+<area shape="rect" id="Node000043" href="$classVideoEncoderPreset.html" title="Well&#45;known Enum type for video&#45;encoder speed / quality presets." alt="" coords="432,1008,584,1033"/>
+<area shape="poly" id="edge42_Node000042_Node000043" title=" " alt="" coords="387,1018,432,1018,432,1023,387,1023"/>
+<area shape="rect" id="Node000045" href="$classVideoPattern.html" title="Well&#45;known Enum type for video test pattern generator modes." alt="" coords="455,1057,561,1083"/>
+<area shape="poly" id="edge44_Node000044_Node000045" title=" " alt="" coords="364,1067,455,1067,455,1073,364,1073"/>
+<area shape="rect" id="Node000047" href="$classVideoRateControl.html" title="Well&#45;known Enum type for video&#45;encoder rate&#45;control modes." alt="" coords="440,1107,576,1132"/>
+<area shape="poly" id="edge46_Node000046_Node000047" title=" " alt="" coords="380,1117,440,1117,440,1122,380,1122"/>
 </map>

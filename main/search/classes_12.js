@@ -51,7 +51,7 @@ var searchData=
   ['stringlist_48',['StringList',['../classStringList.html',1,'']]],
   ['stringliteraldata_49',['StringLiteralData',['../classStringLiteralData.html',1,'']]],
   ['stringregistry_50',['StringRegistry',['../classStringRegistry.html',1,'']]],
-  ['stringregistry_3c_20benchmark_20_3e_51',['StringRegistry&lt; Benchmark &gt;',['../classStringRegistry.html',1,'']]],
+  ['stringregistry_3c_22benchmark_22_3e_51',['StringRegistry&lt;&quot;Benchmark&quot;&gt;',['../classStringRegistry.html',1,'']]],
   ['stringunicodedata_52',['StringUnicodeData',['../classStringUnicodeData.html',1,'']]],
   ['stringunicodeliteraldata_53',['StringUnicodeLiteralData',['../classStringUnicodeLiteralData.html',1,'']]],
   ['structdatabase_54',['StructDatabase',['../classStructDatabase.html',1,'']]],

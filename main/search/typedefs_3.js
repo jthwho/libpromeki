@@ -6,7 +6,8 @@ var searchData=
   ['datagramlist_3',['datagramlist',['../classPacketTransport.html#a39856eb1e9a67c8d3c516c2115f24bfe',1,'PacketTransport::DatagramList'],['../classUdpSocket.html#aa3e71cccd2d27986479f9b6a15ba24fb',1,'UdpSocket::DatagramList']]],
   ['datatype_4',['datatype',['../classArray.html#afab2776234c0983e8246d52a7eaae847',1,'Array::DataType'],['../classCIEPoint.html#afa9d8171d7caaca334d410af64b6f26d',1,'CIEPoint::DataType'],['../classMatrix.html#aabba345044e14bce1a17874a52c04894',1,'Matrix::DataType'],['../classXYZColor.html#a6bf6a45135bb8ff9e6d052f8d71976b1',1,'XYZColor::DataType']]],
   ['decodedlist_5',['decodedlist',['../classImageDataDecoder.html#a26a82f73daef8830773090ddccb728df',1,'ImageDataDecoder::DecodedList'],['../classLtcDecoder.html#a801ff1d622064a6b3634eb20ed92aeb9',1,'LtcDecoder::DecodedList']]],
-  ['defaultmetadatafunc_6',['DefaultMetadataFunc',['../structMediaIO_1_1FormatDesc.html#a056449f66cbbb6f4276f6c2ce9598f2e',1,'MediaIO::FormatDesc']]],
-  ['digittype_7',['DigitType',['../classTimecode.html#acb246914c6e0334c2a524e303a971f64',1,'Timecode']]],
-  ['duration_8',['Duration',['../classTimeStamp.html#a29b9640414d3f08097d9d5e5c89334ab',1,'TimeStamp']]]
+  ['decoderfactory_6',['decoderfactory',['../classAudioCodec.html#a674c7a86c56cd4239c023868e472b85f',1,'AudioCodec::DecoderFactory'],['../classVideoCodec.html#a4ea3cd4bb3c561497bd7f446606ed12a',1,'VideoCodec::DecoderFactory']]],
+  ['defaultmetadatafunc_7',['DefaultMetadataFunc',['../structMediaIO_1_1FormatDesc.html#a056449f66cbbb6f4276f6c2ce9598f2e',1,'MediaIO::FormatDesc']]],
+  ['digittype_8',['DigitType',['../classTimecode.html#acb246914c6e0334c2a524e303a971f64',1,'Timecode']]],
+  ['duration_9',['Duration',['../classTimeStamp.html#a29b9640414d3f08097d9d5e5c89334ab',1,'TimeStamp']]]
 ];

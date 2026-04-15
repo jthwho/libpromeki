@@ -1,6 +1,37 @@
 var classAudioCodec =
 [
-    [ "~AudioCodec", "classAudioCodec.html#a701f81be99a32e0ffff83f7248d03171", null ],
-    [ "description", "classAudioCodec.html#ab079fc867669e3759b31f25f2515f781", null ],
-    [ "name", "classAudioCodec.html#ab24d592a01c9137e55475e8d53d4baff", null ]
+    [ "Data", "structAudioCodec_1_1Data.html", "structAudioCodec_1_1Data" ],
+    [ "DecoderFactory", "classAudioCodec.html#a674c7a86c56cd4239c023868e472b85f", null ],
+    [ "EncoderFactory", "classAudioCodec.html#a2c549850fe21bbe714c6f2a4b2e3b704", null ],
+    [ "IDList", "classAudioCodec.html#abb45a7193a7a8c23a6605c6e21e8fbed", null ],
+    [ "ID", "classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41", [
+      [ "Invalid", "classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41a036fc5111eebc77a1a3819c74a0a1e97", null ],
+      [ "PCMI_S16LE", "classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41a00c32697064e90af215e19b040a818fe", null ],
+      [ "PCMI_S16BE", "classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41a874c7bfe4bede7758eeb56337d5f8f9b", null ],
+      [ "PCMI_S24LE", "classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41ada318808a3fd3433a4b1d8bdbcdd5bd3", null ],
+      [ "PCMI_S24BE", "classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41aca398692589053ae5b7063f8b7b5442e", null ],
+      [ "PCMI_S32LE", "classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41ac93387d7e458f142b60a1c97c7e026a0", null ],
+      [ "PCMI_S32BE", "classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41af09d7465ff7da847d9556cad37a2595e", null ],
+      [ "PCMI_Float32LE", "classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41af550494999c6dba4efdc11d63866dea1", null ],
+      [ "PCMI_Float32BE", "classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41a3bf49d6cec90d3151a9838f8dbbd1311", null ],
+      [ "AAC", "classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41a89b2b0a9e84461381680a2315c8b52dd", null ],
+      [ "Opus", "classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41a1de07ac699b15ce3eaf7dad12431e378", null ],
+      [ "FLAC", "classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41ac09740ed78a26f213a58b58f5b3e056c", null ],
+      [ "MP3", "classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41a759803440e224ceb1a3c66b406112b80", null ],
+      [ "AC3", "classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41ad01ee215479f69a926106d27eb41b417", null ],
+      [ "UserDefined", "classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41a2f3d3b66884d8bed9566f9e89d773525", null ]
+    ] ],
+    [ "AudioCodec", "classAudioCodec.html#abd4f5ab603df1d19728f3958d2d2eef1", null ],
+    [ "canDecode", "classAudioCodec.html#abebf38c173ccfd6f3a41c49deb4a88b6", null ],
+    [ "canEncode", "classAudioCodec.html#a4f713870f79e0aee702ae4b892db60c8", null ],
+    [ "createDecoder", "classAudioCodec.html#a8aaa89455b00b8c3e2bc77b5c749891a", null ],
+    [ "createEncoder", "classAudioCodec.html#a129f24ca61081be13da5ada55546c550", null ],
+    [ "data", "classAudioCodec.html#af9c705f50ae3a3d4eb927b345cd3cabc", null ],
+    [ "description", "classAudioCodec.html#a436b355877b4f7cd6aa7742d3ec66de2", null ],
+    [ "fourccList", "classAudioCodec.html#aab24d10acfe7cd56347514ad349a3a65", null ],
+    [ "id", "classAudioCodec.html#ae3d7d2f70d1531619c088e433464fda6", null ],
+    [ "isValid", "classAudioCodec.html#aac7cf5798c3f9571cc5fda99c3c8a034", null ],
+    [ "name", "classAudioCodec.html#a5237981a382e0f50a09a7536f4821aae", null ],
+    [ "operator!=", "classAudioCodec.html#ab2bff5d86e59d0dca72fd8213e9fc57d", null ],
+    [ "operator==", "classAudioCodec.html#a1ef140d76fa94199bd72afcaf106be4f", null ]
 ];

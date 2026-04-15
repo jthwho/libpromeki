@@ -21,6 +21,8 @@ var group__wellknownenums =
     [ "ClockEpoch", "classClockEpoch.html", null ],
     [ "EUI64Format", "classEUI64Format.html", null ],
     [ "InspectorTest", "classInspectorTest.html", null ],
+    [ "VideoRateControl", "classVideoRateControl.html", null ],
+    [ "VideoEncoderPreset", "classVideoEncoderPreset.html", null ],
     [ "ByteCountStyle::Binary", "group__wellknownenums.html#ga9d2d3b34e2e3e410560df0546f7dc983", null ],
     [ "ByteCountStyle::Metric", "group__wellknownenums.html#ga6d3dd14d60f115203c9061ab83edb892", null ]
 ];

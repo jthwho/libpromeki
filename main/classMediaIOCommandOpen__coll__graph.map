@@ -1,25 +1,25 @@
 <map id="MediaIOCommandOpen" name="MediaIOCommandOpen">
-<area shape="rect" id="Node000001" title="Command to open a media resource." alt="" coords="699,223,876,248"/>
-<area shape="rect" id="Node000002" href="$classMediaIOCommand.html" title="Base class for MediaIO commands." alt="" coords="383,55,525,80"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="540,66,608,76,643,87,676,102,712,130,743,163,781,221,777,224,738,166,709,133,673,107,641,92,607,82,539,71"/>
-<area shape="rect" id="Node000003" href="$classRefCount.html" title="An atomic reference count object." alt="" coords="77,5,160,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="174,21,359,45,397,52,396,57,358,50,174,26"/>
-<area shape="rect" id="Node000004" href="$classPromise.html" title=" " alt="" coords="51,55,187,80"/>
-<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="200,65,382,65,382,70,200,70"/>
-<area shape="rect" id="Node000005" href="$classMediaConfig.html" title="Generic name/value configuration container for the media subsystem." alt="" coords="403,108,505,133"/>
-<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="519,119,595,127,636,136,676,149,706,165,734,184,775,221,772,225,731,188,703,169,674,154,635,141,595,132,519,124"/>
-<area shape="rect" id="Node000006" href="$classVariantDatabase.html" title=" " alt="" coords="5,105,232,145"/>
-<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="245,120,402,119,402,124,246,126"/>
-<area shape="rect" id="Node000007" href="$classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata." alt="" coords="407,163,501,188"/>
-<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="515,178,592,188,675,202,746,220,744,225,674,207,591,193,515,184"/>
-<area shape="rect" id="Node000008" href="$classMetadata.html" title="Key&#45;value metadata container using typed Variant values." alt="" coords="412,223,496,248"/>
-<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="510,233,698,233,698,238,510,238"/>
-<area shape="rect" id="Node000009" href="$classVariantDatabase.html" title=" " alt="" coords="15,215,222,255"/>
-<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="236,233,412,233,412,238,236,238"/>
-<area shape="rect" id="Node000010" href="$classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count." alt="" coords="409,283,499,308"/>
-<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="513,289,590,281,674,267,750,246,752,251,675,273,591,286,513,294"/>
-<area shape="rect" id="Node000011" href="$classList.html" title=" " alt="" coords="408,343,500,368"/>
-<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="514,352,592,343,634,333,674,320,703,304,731,284,772,246,776,250,734,288,706,308,676,324,635,339,592,348,514,357"/>
-<area shape="rect" id="Node000012" href="$classFrameRate.html" title="Represents a video frame rate as a rational number." alt="" coords="407,392,501,417"/>
-<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="514,404,593,396,635,385,673,368,709,340,739,307,777,247,782,250,743,310,713,344,676,372,636,390,594,401,515,409"/>
+<area shape="rect" id="Node000001" title="Command to open a media resource." alt="" coords="717,219,895,244"/>
+<area shape="rect" id="Node000002" href="$classMediaIOCommand.html" title="Base class for MediaIO commands." alt="" coords="401,55,544,80"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="558,64,627,73,662,84,695,98,731,125,761,158,800,217,796,220,757,162,727,129,692,103,660,89,626,79,557,69"/>
+<area shape="rect" id="Node000003" href="$classRefCount.html" title="An atomic reference count object." alt="" coords="87,5,169,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="183,20,378,45,416,52,415,57,377,50,183,26"/>
+<area shape="rect" id="Node000004" href="$classPromise.html" title=" " alt="" coords="60,55,196,80"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="210,65,401,65,401,70,210,70"/>
+<area shape="rect" id="Node000005" href="$classMediaConfig.html" title="Generic name/value configuration container for the media subsystem." alt="" coords="421,104,524,129"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="538,115,614,123,655,132,694,145,725,161,753,180,794,217,791,221,749,184,722,165,692,150,654,137,613,128,537,120"/>
+<area shape="rect" id="Node000006" href="$classVariantDatabase.html" title=" " alt="" coords="5,104,251,129"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="264,114,421,114,421,119,264,119"/>
+<area shape="rect" id="Node000007" href="$classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata." alt="" coords="425,159,520,184"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="534,174,611,184,694,198,764,216,763,221,693,203,610,189,534,180"/>
+<area shape="rect" id="Node000008" href="$classMetadata.html" title="Key&#45;value metadata container using typed Variant values." alt="" coords="431,219,515,244"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="529,229,717,229,717,234,529,234"/>
+<area shape="rect" id="Node000009" href="$classVariantDatabase.html" title=" " alt="" coords="15,219,241,244"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="255,229,431,229,431,234,255,234"/>
+<area shape="rect" id="Node000010" href="$classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count." alt="" coords="427,279,518,304"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="532,285,609,277,693,263,769,242,770,247,694,269,609,282,532,290"/>
+<area shape="rect" id="Node000011" href="$classList.html" title=" " alt="" coords="427,339,519,364"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="532,348,610,339,652,329,692,316,722,300,749,280,791,242,794,246,753,284,725,304,694,320,654,335,611,344,533,353"/>
+<area shape="rect" id="Node000012" href="$classFrameRate.html" title="Represents a video frame rate as a rational number." alt="" coords="426,388,519,413"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="533,400,612,392,653,381,692,364,728,336,758,303,796,243,800,246,762,306,731,340,695,368,655,386,613,397,534,405"/>
 </map>

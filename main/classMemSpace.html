@@ -125,10 +125,15 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a2b727b5807b3aed1ae585d1603a0d6ed" id="r_a2b727b5807b3aed1ae585d1603a0d6ed"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6ed">ID</a> { <a class="el" href="classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6eda1f66732061fbde88c5ea8d221dec722c">System</a> = 0
+<tr class="memitem:a2b727b5807b3aed1ae585d1603a0d6ed" id="r_a2b727b5807b3aed1ae585d1603a0d6ed"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6ed">ID</a> { <br />
+&#160;&#160;<a class="el" href="classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6eda1f66732061fbde88c5ea8d221dec722c">System</a> = 0
 , <a class="el" href="classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6edad7f94fb530f27adf051618eef6c1a6da">SystemSecure</a> = 1
-, <a class="el" href="classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6eda8347c9d1337bdc522fc56575c262cafe">Default</a> = System
+, <a class="el" href="classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6edae02cbf1cdcf21f0e3333440f28226d16">CudaDevice</a> = 2
+, <a class="el" href="classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6eda5e57eb8409be7632f7bb3ac024cfb7c8">CudaHost</a> = 3
+, <br />
+&#160;&#160;<a class="el" href="classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6eda8347c9d1337bdc522fc56575c262cafe">Default</a> = System
 , <a class="el" href="classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6edae54fd854f6098fac7803f28dc201c94e">UserDefined</a> = 1024
+<br />
  }</td></tr>
 <tr class="memdesc:a2b727b5807b3aed1ae585d1603a0d6ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Identifies a memory space.  <a href="classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6ed">More...</a><br /></td></tr>
 <tr class="separator:a2b727b5807b3aed1ae585d1603a0d6ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -235,6 +240,10 @@ Static Public Member Functions</h2></td></tr>
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a2b727b5807b3aed1ae585d1603a0d6eda1f66732061fbde88c5ea8d221dec722c" name="a2b727b5807b3aed1ae585d1603a0d6eda1f66732061fbde88c5ea8d221dec722c"></a>System&#160;</td><td class="fielddoc"><p><a class="el" href="classSystem.html" title="Provides system-level utility functions.">System</a> (CPU) memory. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a2b727b5807b3aed1ae585d1603a0d6edad7f94fb530f27adf051618eef6c1a6da" name="a2b727b5807b3aed1ae585d1603a0d6edad7f94fb530f27adf051618eef6c1a6da"></a>SystemSecure&#160;</td><td class="fielddoc"><p><a class="el" href="classSystem.html" title="Provides system-level utility functions.">System</a> memory with secure zeroing on free and page locking. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a2b727b5807b3aed1ae585d1603a0d6edae02cbf1cdcf21f0e3333440f28226d16" name="a2b727b5807b3aed1ae585d1603a0d6edae02cbf1cdcf21f0e3333440f28226d16"></a>CudaDevice&#160;</td><td class="fielddoc"><p>CUDA device memory (GPU VRAM). Not host-accessible. Registered by <a class="el" href="classCudaBootstrap.html" title="Process-wide CUDA bootstrap.">CudaBootstrap</a> when PROMEKI_ENABLE_CUDA is on. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a2b727b5807b3aed1ae585d1603a0d6eda5e57eb8409be7632f7bb3ac024cfb7c8" name="a2b727b5807b3aed1ae585d1603a0d6eda5e57eb8409be7632f7bb3ac024cfb7c8"></a>CudaHost&#160;</td><td class="fielddoc"><p>CUDA pinned host memory (page-locked). Host-accessible; enables async DMA with <a class="el" href="classCudaDevice.html" title="Lightweight wrapper around a CUDA device ordinal.">CudaDevice</a>. Registered by <a class="el" href="classCudaBootstrap.html" title="Process-wide CUDA bootstrap.">CudaBootstrap</a>. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a2b727b5807b3aed1ae585d1603a0d6eda8347c9d1337bdc522fc56575c262cafe" name="a2b727b5807b3aed1ae585d1603a0d6eda8347c9d1337bdc522fc56575c262cafe"></a>Default&#160;</td><td class="fielddoc"><p>Alias for <a class="el" href="classSystem.html" title="Provides system-level utility functions.">System</a> memory. </p>
 </td></tr>
@@ -711,8 +720,8 @@ Static Public Member Functions</h2></td></tr>
 <div class="ttc" id="aclassMemSpace_html_a2b727b5807b3aed1ae585d1603a0d6ed"><div class="ttname"><a href="classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6ed">MemSpace::ID</a></div><div class="ttdeci">ID</div><div class="ttdoc">Identifies a memory space.</div><div class="ttdef"><b>Definition</b> memspace.h:49</div></div>
 <div class="ttc" id="aclassMemSpace_html_a6a7ed2a8545c7a588f399b0dc107d14a"><div class="ttname"><a href="classMemSpace.html#a6a7ed2a8545c7a588f399b0dc107d14a">MemSpace::registerData</a></div><div class="ttdeci">static void registerData(Ops &amp;&amp;ops)</div><div class="ttdoc">Registers an Ops record in the registry.</div></div>
 <div class="ttc" id="aclassMemSpace_html_af27c77f0ed51f425f058e367e4ed1712"><div class="ttname"><a href="classMemSpace.html#af27c77f0ed51f425f058e367e4ed1712">MemSpace::registerType</a></div><div class="ttdeci">static ID registerType()</div><div class="ttdoc">Allocates and returns a unique ID for a user-defined memory space.</div></div>
-<div class="ttc" id="astructMemAllocation_html"><div class="ttname"><a href="structMemAllocation.html">MemAllocation</a></div><div class="ttdoc">Describes a memory allocation from a MemSpace.</div><div class="ttdef"><b>Definition</b> memspace.h:371</div></div>
-<div class="ttc" id="astructMemSpace_1_1Ops_html"><div class="ttname"><a href="structMemSpace_1_1Ops.html">MemSpace::Ops</a></div><div class="ttdoc">Function table for memory space operations.</div><div class="ttdef"><b>Definition</b> memspace.h:150</div></div>
+<div class="ttc" id="astructMemAllocation_html"><div class="ttname"><a href="structMemAllocation.html">MemAllocation</a></div><div class="ttdoc">Describes a memory allocation from a MemSpace.</div><div class="ttdef"><b>Definition</b> memspace.h:373</div></div>
+<div class="ttc" id="astructMemSpace_1_1Ops_html"><div class="ttname"><a href="structMemSpace_1_1Ops.html">MemSpace::Ops</a></div><div class="ttdoc">Function table for memory space operations.</div><div class="ttdef"><b>Definition</b> memspace.h:152</div></div>
 </div><!-- fragment --><dl class="section return"><dt>Returns</dt><dd>A unique ID value. </dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classMemSpace.html#a6a7ed2a8545c7a588f399b0dc107d14a" title="Registers an Ops record in the registry.">registerData()</a> </dd></dl>
 
@@ -840,7 +849,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMemSpace.html">MemSpace</a></li>
-    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
   </ul>
 </div>
 </body>

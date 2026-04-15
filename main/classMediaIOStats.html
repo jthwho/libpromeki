@@ -102,7 +102,6 @@ $(document).ready(function(){initNavTree('classMediaIOStats.html',''); initResiz
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="classMediaIOStats-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">MediaIOStats Class Reference<div class="ingroups"><a class="el" href="group__proav.html">ProAV Media</a></div></div></div>
 </div><!--header-->
@@ -117,9 +116,9 @@ Inheritance diagram for MediaIOStats:</div>
 <div class="dyncontent">
 <div class="center"><img src="classMediaIOStats__inherit__graph.png" border="0" usemap="#aMediaIOStats_inherit__map" alt="Inheritance graph"/></div>
 <map name="aMediaIOStats_inherit__map" id="aMediaIOStats_inherit__map">
-<area shape="rect" title="Statistics container for MediaIO backends." alt="" coords="67,93,176,119"/>
-<area shape="rect" href="classVariantDatabase.html" title=" " alt="" coords="5,5,237,45"/>
-<area shape="poly" title=" " alt="" coords="124,59,124,93,119,93,119,59"/>
+<area shape="rect" title="Statistics container for MediaIO backends." alt="" coords="76,79,185,104"/>
+<area shape="rect" href="classVariantDatabase.html" title=" " alt="" coords="5,5,256,31"/>
+<area shape="poly" title=" " alt="" coords="133,44,133,79,128,79,128,44"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <div class="dynheader">
@@ -127,175 +126,185 @@ Collaboration diagram for MediaIOStats:</div>
 <div class="dyncontent">
 <div class="center"><img src="classMediaIOStats__coll__graph.png" border="0" usemap="#aMediaIOStats_coll__map" alt="Collaboration graph"/></div>
 <map name="aMediaIOStats_coll__map" id="aMediaIOStats_coll__map">
-<area shape="rect" title="Statistics container for MediaIO backends." alt="" coords="67,93,176,119"/>
-<area shape="rect" href="classVariantDatabase.html" title=" " alt="" coords="5,5,237,45"/>
-<area shape="poly" title=" " alt="" coords="124,59,124,93,119,93,119,59"/>
+<area shape="rect" title="Statistics container for MediaIO backends." alt="" coords="76,79,185,104"/>
+<area shape="rect" href="classVariantDatabase.html" title=" " alt="" coords="5,5,256,31"/>
+<area shape="poly" title=" " alt="" coords="133,44,133,79,128,79,128,44"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a60c983d53b4de28f946149d4d28b89db" id="r_a60c983d53b4de28f946149d4d28b89db"><td class="memItemLeft" align="right" valign="top"><a id="a60c983d53b4de28f946149d4d28b89db" name="a60c983d53b4de28f946149d4d28b89db"></a>
-<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Base</b> = <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&lt; <a class="el" href="structMediaIOStatsTag.html">MediaIOStatsTag</a> &gt;</td></tr>
-<tr class="separator:a60c983d53b4de28f946149d4d28b89db"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_types_classVariantDatabase"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classVariantDatabase')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classVariantDatabase.html">VariantDatabase&lt; MediaIOStatsTag &gt;</a></td></tr>
-<tr class="memitem:a08cce9737a8bae134efe77f5b3392f9b inherit pub_types_classVariantDatabase" id="r_a08cce9737a8bae134efe77f5b3392f9b"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ID</b> = <a class="el" href="classList.html">typename</a> <a class="el" href="classStringRegistry.html">StringRegistry</a>&lt; <a class="el" href="structMediaIOStatsTag.html">MediaIOStatsTag</a> &gt;::Item</td></tr>
-<tr class="memdesc:a08cce9737a8bae134efe77f5b3392f9b inherit pub_types_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lightweight handle identifying an entry by name. <br /></td></tr>
-<tr class="separator:a08cce9737a8bae134efe77f5b3392f9b inherit pub_types_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a76e6097358e353e2dc6de5aa86a63505 inherit pub_types_classVariantDatabase" id="r_a76e6097358e353e2dc6de5aa86a63505"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>SpecMap</b> = <a class="el" href="classMap.html">Map</a>&lt; <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a> &gt;</td></tr>
-<tr class="memdesc:a76e6097358e353e2dc6de5aa86a63505 inherit pub_types_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMap.html" title="Ordered associative container wrapping std::map.">Map</a> of ID to <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a> for batch spec operations. <br /></td></tr>
-<tr class="separator:a76e6097358e353e2dc6de5aa86a63505 inherit pub_types_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0f09b12ff758dc0c6bec98923dfbebd2" id="r_a0f09b12ff758dc0c6bec98923dfbebd2"><td class="memItemLeft" align="right" valign="top"><a id="a0f09b12ff758dc0c6bec98923dfbebd2" name="a0f09b12ff758dc0c6bec98923dfbebd2"></a>
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Base</b> = <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&lt;&quot;MediaIOStats&quot;&gt;</td></tr>
+<tr class="separator:a0f09b12ff758dc0c6bec98923dfbebd2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_types_classVariantDatabase"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classVariantDatabase')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classVariantDatabase.html">VariantDatabase&lt;&quot;MediaIOStats&quot;&gt;</a></td></tr>
+<tr class="memitem:acc1cc83a86ed35a952fe287115b501d9 inherit pub_types_classVariantDatabase" id="r_acc1cc83a86ed35a952fe287115b501d9"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ID</b> = <a class="el" href="classList.html">typename</a> <a class="el" href="classStringRegistry.html">StringRegistry</a>&lt; <a class="el" href="classList.html">Name</a> &gt;::Item</td></tr>
+<tr class="memdesc:acc1cc83a86ed35a952fe287115b501d9 inherit pub_types_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lightweight handle identifying an entry by name. <br /></td></tr>
+<tr class="separator:acc1cc83a86ed35a952fe287115b501d9 inherit pub_types_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab4f16069dd41722fb0b8d3b8fc1009f5 inherit pub_types_classVariantDatabase" id="r_ab4f16069dd41722fb0b8d3b8fc1009f5"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>SpecMap</b> = <a class="el" href="classMap.html">Map</a>&lt; <a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a> &gt;</td></tr>
+<tr class="memdesc:ab4f16069dd41722fb0b8d3b8fc1009f5 inherit pub_types_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMap.html" title="Ordered associative container wrapping std::map.">Map</a> of ID to <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a> for batch spec operations. <br /></td></tr>
+<tr class="separator:ab4f16069dd41722fb0b8d3b8fc1009f5 inherit pub_types_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:acdcdadacefcfb855f3c24396b42be072" id="r_acdcdadacefcfb855f3c24396b42be072"><td class="memItemLeft" align="right" valign="top"><a id="acdcdadacefcfb855f3c24396b42be072" name="acdcdadacefcfb855f3c24396b42be072"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">FramesDropped</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS64).setDefault(<a class="el" href="classList.html">int64_t</a>(0)) .setMin(<a class="el" href="classList.html">int64_t</a>(0)).setDescription(&quot;Total frames <a class="el" href="classList.html">dropped</a> <a class="el" href="classList.html">since</a> open.&quot;))</td></tr>
+<tr class="memdesc:acdcdadacefcfb855f3c24396b42be072"><td class="mdescLeft">&#160;</td><td class="mdescRight">int64_t — total frames dropped since open. <br /></td></tr>
+<tr class="separator:acdcdadacefcfb855f3c24396b42be072"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a936f2b0f4156354426713c6171ba846f" id="r_a936f2b0f4156354426713c6171ba846f"><td class="memItemLeft" align="right" valign="top"><a id="a936f2b0f4156354426713c6171ba846f" name="a936f2b0f4156354426713c6171ba846f"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">FramesRepeated</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS64).setDefault(<a class="el" href="classList.html">int64_t</a>(0)) .setMin(<a class="el" href="classList.html">int64_t</a>(0)).setDescription(&quot;Total frames <a class="el" href="classList.html">repeated</a> <a class="el" href="classList.html">due</a> to <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">underrun.&quot;</a>))</td></tr>
+<tr class="memdesc:a936f2b0f4156354426713c6171ba846f"><td class="mdescLeft">&#160;</td><td class="mdescRight">int64_t — total frames repeated due to underrun. <br /></td></tr>
+<tr class="separator:a936f2b0f4156354426713c6171ba846f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5bbd879073a8381a88f95416346eadc3" id="r_a5bbd879073a8381a88f95416346eadc3"><td class="memItemLeft" align="right" valign="top"><a id="a5bbd879073a8381a88f95416346eadc3" name="a5bbd879073a8381a88f95416346eadc3"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">FramesLate</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS64).setDefault(<a class="el" href="classList.html">int64_t</a>(0)) .setMin(<a class="el" href="classList.html">int64_t</a>(0)).setDescription(&quot;Total frames <a class="el" href="classList.html">that</a> <a class="el" href="classList.html">arrived</a> <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">late.&quot;</a>))</td></tr>
+<tr class="memdesc:a5bbd879073a8381a88f95416346eadc3"><td class="mdescLeft">&#160;</td><td class="mdescRight">int64_t — total frames that arrived late. <br /></td></tr>
+<tr class="separator:a5bbd879073a8381a88f95416346eadc3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3b2c406d34763c91a0e6c20bc76fc03b" id="r_a3b2c406d34763c91a0e6c20bc76fc03b"><td class="memItemLeft" align="right" valign="top"><a id="a3b2c406d34763c91a0e6c20bc76fc03b" name="a3b2c406d34763c91a0e6c20bc76fc03b"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">QueueDepth</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS64).setDefault(<a class="el" href="classList.html">int64_t</a>(0)) .setMin(<a class="el" href="classList.html">int64_t</a>(0)).setDescription(&quot;Current <a class="el" href="classList.html">depth</a> <a class="el" href="classList.html">of</a> <a class="el" href="classList.html">internal</a> buffer.&quot;))</td></tr>
+<tr class="memdesc:a3b2c406d34763c91a0e6c20bc76fc03b"><td class="mdescLeft">&#160;</td><td class="mdescRight">int64_t — current depth of internal buffer. <br /></td></tr>
+<tr class="separator:a3b2c406d34763c91a0e6c20bc76fc03b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6cb028a5bbffcc4b3c56d716893970d1" id="r_a6cb028a5bbffcc4b3c56d716893970d1"><td class="memItemLeft" align="right" valign="top"><a id="a6cb028a5bbffcc4b3c56d716893970d1" name="a6cb028a5bbffcc4b3c56d716893970d1"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">QueueCapacity</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS64).setDefault(<a class="el" href="classList.html">int64_t</a>(0)) .setMin(<a class="el" href="classList.html">int64_t</a>(0)).setDescription(&quot;Capacity <a class="el" href="classList.html">of</a> <a class="el" href="classList.html">internal</a> buffer.&quot;))</td></tr>
+<tr class="memdesc:a6cb028a5bbffcc4b3c56d716893970d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">int64_t — capacity of internal buffer. <br /></td></tr>
+<tr class="separator:a6cb028a5bbffcc4b3c56d716893970d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a49e88c4c6d1ba17d40ba1d398071ba52" id="r_a49e88c4c6d1ba17d40ba1d398071ba52"><td class="memItemLeft" align="right" valign="top"><a id="a49e88c4c6d1ba17d40ba1d398071ba52" name="a49e88c4c6d1ba17d40ba1d398071ba52"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">BytesPerSecond</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeDouble).setDefault(0.0) .setMin(0.0).setDescription(&quot;Current data <a class="el" href="classList.html">rate</a> <a class="el" href="classList.html">in</a> bytes <a class="el" href="classList.html">per</a> second.&quot;))</td></tr>
+<tr class="memdesc:a49e88c4c6d1ba17d40ba1d398071ba52"><td class="mdescLeft">&#160;</td><td class="mdescRight">double — current data rate. <br /></td></tr>
+<tr class="separator:a49e88c4c6d1ba17d40ba1d398071ba52"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad2ce9384c2595dcb287f88d3b7e2fd26" id="r_ad2ce9384c2595dcb287f88d3b7e2fd26"><td class="memItemLeft" align="right" valign="top"><a id="ad2ce9384c2595dcb287f88d3b7e2fd26" name="ad2ce9384c2595dcb287f88d3b7e2fd26"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">FramesPerSecond</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeDouble).setDefault(0.0) .setMin(0.0).setDescription(&quot;Current frame <a class="el" href="classList.html">rate</a> <a class="el" href="classList.html">in</a> frames <a class="el" href="classList.html">per</a> second.&quot;))</td></tr>
+<tr class="memdesc:ad2ce9384c2595dcb287f88d3b7e2fd26"><td class="mdescLeft">&#160;</td><td class="mdescRight">double — current frame rate (frames per second). <br /></td></tr>
+<tr class="separator:ad2ce9384c2595dcb287f88d3b7e2fd26"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6c32496e7dafc83e29824f5dec58d58c" id="r_a6c32496e7dafc83e29824f5dec58d58c"><td class="memItemLeft" align="right" valign="top"><a id="a6c32496e7dafc83e29824f5dec58d58c" name="a6c32496e7dafc83e29824f5dec58d58c"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">AverageLatencyMs</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeDouble).setDefault(0.0) .setMin(0.0).setDescription(&quot;Average end-to-end <a class="el" href="classList.html">latency</a> <a class="el" href="classList.html">in</a> ms.&quot;))</td></tr>
+<tr class="memdesc:a6c32496e7dafc83e29824f5dec58d58c"><td class="mdescLeft">&#160;</td><td class="mdescRight">double — average end-to-end latency. <br /></td></tr>
+<tr class="separator:a6c32496e7dafc83e29824f5dec58d58c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5f7ecd1e1f1fb3cb5a70a09fa3203568" id="r_a5f7ecd1e1f1fb3cb5a70a09fa3203568"><td class="memItemLeft" align="right" valign="top"><a id="a5f7ecd1e1f1fb3cb5a70a09fa3203568" name="a5f7ecd1e1f1fb3cb5a70a09fa3203568"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">PeakLatencyMs</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeDouble).setDefault(0.0) .setMin(0.0).setDescription(&quot;Peak <a class="el" href="classList.html">observed</a> <a class="el" href="classList.html">latency</a> <a class="el" href="classList.html">in</a> ms.&quot;))</td></tr>
+<tr class="memdesc:a5f7ecd1e1f1fb3cb5a70a09fa3203568"><td class="mdescLeft">&#160;</td><td class="mdescRight">double — peak observed latency. <br /></td></tr>
+<tr class="separator:a5f7ecd1e1f1fb3cb5a70a09fa3203568"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a43d6a46bdf42b44942a8a9666670e4ee" id="r_a43d6a46bdf42b44942a8a9666670e4ee"><td class="memItemLeft" align="right" valign="top"><a id="a43d6a46bdf42b44942a8a9666670e4ee" name="a43d6a46bdf42b44942a8a9666670e4ee"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">AverageProcessingMs</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeDouble).setDefault(0.0) .setMin(0.0).setDescription(&quot;Average <a class="el" href="classList.html">per</a>-frame <a class="el" href="classList.html">processing</a> time <a class="el" href="classList.html">in</a> ms.&quot;))</td></tr>
+<tr class="memdesc:a43d6a46bdf42b44942a8a9666670e4ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">double — average per-frame processing time. <br /></td></tr>
+<tr class="separator:a43d6a46bdf42b44942a8a9666670e4ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f06fea20c360d315e8144de1d11db5d" id="r_a6f06fea20c360d315e8144de1d11db5d"><td class="memItemLeft" align="right" valign="top"><a id="a6f06fea20c360d315e8144de1d11db5d" name="a6f06fea20c360d315e8144de1d11db5d"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">PeakProcessingMs</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeDouble).setDefault(0.0) .setMin(0.0).setDescription(&quot;Peak <a class="el" href="classList.html">per</a>-frame <a class="el" href="classList.html">processing</a> time <a class="el" href="classList.html">in</a> ms.&quot;))</td></tr>
+<tr class="memdesc:a6f06fea20c360d315e8144de1d11db5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">double — peak per-frame processing time. <br /></td></tr>
+<tr class="separator:a6f06fea20c360d315e8144de1d11db5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1c78dfe1dd3a3fdb3e76be6fad24c9c1" id="r_a1c78dfe1dd3a3fdb3e76be6fad24c9c1"><td class="memItemLeft" align="right" valign="top"><a id="a1c78dfe1dd3a3fdb3e76be6fad24c9c1" name="a1c78dfe1dd3a3fdb3e76be6fad24c9c1"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">LastErrorMessage</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString).setDefault(<a class="el" href="classString.html">String</a>()) .setDescription(&quot;Most <a class="el" href="classList.html">recent</a> <a class="el" href="result_8h.html#ac336da514fe7594aba63bf46596d47ed">error</a> description.&quot;))</td></tr>
+<tr class="memdesc:a1c78dfe1dd3a3fdb3e76be6fad24c9c1"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> — most recent error description. <br /></td></tr>
+<tr class="separator:a1c78dfe1dd3a3fdb3e76be6fad24c9c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2eee3875dfbcb65a52ac379cfa0c5d18" id="r_a2eee3875dfbcb65a52ac379cfa0c5d18"><td class="memItemLeft" align="right" valign="top"><a id="a2eee3875dfbcb65a52ac379cfa0c5d18" name="a2eee3875dfbcb65a52ac379cfa0c5d18"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">PendingOperations</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS64).setDefault(<a class="el" href="classList.html">int64_t</a>(0)) .setMin(<a class="el" href="classList.html">int64_t</a>(0)).setDescription(&quot;Commands <a class="el" href="classList.html">queued</a> <a class="el" href="classList.html">on</a> <a class="el" href="classList.html">the</a> <a class="el" href="classList.html">strand</a> <a class="el" href="classList.html">but</a> <a class="el" href="classList.html">not</a> <a class="el" href="classList.html">yet</a> <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">running.&quot;</a>))</td></tr>
+<tr class="memdesc:a2eee3875dfbcb65a52ac379cfa0c5d18"><td class="mdescLeft">&#160;</td><td class="mdescRight">int64_t — number of commands queued on the strand but not yet running. Populated by the <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> base class from <a class="el" href="classStrand.html#af81ff4892a0aa5df02b81524125fec67" title="Returns the number of tasks waiting to run.">Strand::pendingCount()</a>; gives telemetry callers visibility into backlog depth without every backend having to track it. <br /></td></tr>
+<tr class="separator:a2eee3875dfbcb65a52ac379cfa0c5d18"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a44d58106c2af72a440e2941f8d07e71e" id="r_a44d58106c2af72a440e2941f8d07e71e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOStats.html#a44d58106c2af72a440e2941f8d07e71e">toString</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a44d58106c2af72a440e2941f8d07e71e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Renders the standard telemetry keys as a compact log line.  <br /></td></tr>
 <tr class="separator:a44d58106c2af72a440e2941f8d07e71e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_classVariantDatabase"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classVariantDatabase')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classVariantDatabase.html">VariantDatabase&lt; MediaIOStatsTag &gt;</a></td></tr>
-<tr class="memitem:a0c4d5feedfdea38ab75909d0cfa59b19 inherit pub_methods_classVariantDatabase" id="r_a0c4d5feedfdea38ab75909d0cfa59b19"><td class="memItemLeft" align="right" valign="top">
+<tr class="inherit_header pub_methods_classVariantDatabase"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classVariantDatabase')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classVariantDatabase.html">VariantDatabase&lt;&quot;MediaIOStats&quot;&gt;</a></td></tr>
+<tr class="memitem:a2112b5a8e5f62a239ff49362c825f69f inherit pub_methods_classVariantDatabase" id="r_a2112b5a8e5f62a239ff49362c825f69f"><td class="memItemLeft" align="right" valign="top">
 &#160;</td><td class="memItemRight" valign="bottom"><b>VariantDatabase</b> ()=<a class="el" href="classList.html">default</a></td></tr>
-<tr class="memdesc:a0c4d5feedfdea38ab75909d0cfa59b19 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an empty database with Warn validation. <br /></td></tr>
-<tr class="separator:a0c4d5feedfdea38ab75909d0cfa59b19 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac3e3820c886e257bdd72a38507461bb2 inherit pub_methods_classVariantDatabase" id="r_ac3e3820c886e257bdd72a38507461bb2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ac3e3820c886e257bdd72a38507461bb2">setValidation</a> (<a class="el" href="group__util.html#ga3e19f7ded49aac87704161e5d5b458db">SpecValidation</a> mode)</td></tr>
-<tr class="memdesc:ac3e3820c886e257bdd72a38507461bb2 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the validation mode for this database instance.  <br /></td></tr>
-<tr class="separator:ac3e3820c886e257bdd72a38507461bb2 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ada585323d1db22e24541527411cb4ce4 inherit pub_methods_classVariantDatabase" id="r_ada585323d1db22e24541527411cb4ce4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__util.html#ga3e19f7ded49aac87704161e5d5b458db">SpecValidation</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ada585323d1db22e24541527411cb4ce4">validation</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:ada585323d1db22e24541527411cb4ce4 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current validation mode.  <br /></td></tr>
-<tr class="separator:ada585323d1db22e24541527411cb4ce4 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5170ad7c04260f90b69bfa2aff2fdc2a inherit pub_methods_classVariantDatabase" id="r_a5170ad7c04260f90b69bfa2aff2fdc2a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a5170ad7c04260f90b69bfa2aff2fdc2a">set</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#aff586bc7a7e639d2d12af743ee54ebb1">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
-<tr class="memdesc:a5170ad7c04260f90b69bfa2aff2fdc2a inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value for the given ID.  <br /></td></tr>
-<tr class="separator:a5170ad7c04260f90b69bfa2aff2fdc2a inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8451aca5a2a870fd1df8dc3de13055bc inherit pub_methods_classVariantDatabase" id="r_a8451aca5a2a870fd1df8dc3de13055bc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a8451aca5a2a870fd1df8dc3de13055bc">set</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="variant_8h.html#aff586bc7a7e639d2d12af743ee54ebb1">Variant</a> &amp;&amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
-<tr class="memdesc:a8451aca5a2a870fd1df8dc3de13055bc inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value for the given ID (move overload).  <br /></td></tr>
-<tr class="separator:a8451aca5a2a870fd1df8dc3de13055bc inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a54e9118a807e4dff06a6f9f12c2f1aaa inherit pub_methods_classVariantDatabase" id="r_a54e9118a807e4dff06a6f9f12c2f1aaa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a54e9118a807e4dff06a6f9f12c2f1aaa">setIfMissing</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#aff586bc7a7e639d2d12af743ee54ebb1">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
-<tr class="memdesc:a54e9118a807e4dff06a6f9f12c2f1aaa inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value only if no entry exists for <code>id</code>.  <br /></td></tr>
-<tr class="separator:a54e9118a807e4dff06a6f9f12c2f1aaa inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a18c3f904128a5335145787436352f8dc inherit pub_methods_classVariantDatabase" id="r_a18c3f904128a5335145787436352f8dc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a18c3f904128a5335145787436352f8dc">setIfMissing</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="variant_8h.html#aff586bc7a7e639d2d12af743ee54ebb1">Variant</a> &amp;&amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
-<tr class="memdesc:a18c3f904128a5335145787436352f8dc inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move overload of <a class="el" href="classVariantDatabase.html#a54e9118a807e4dff06a6f9f12c2f1aaa">setIfMissing</a>.  <br /></td></tr>
-<tr class="separator:a18c3f904128a5335145787436352f8dc inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adee72b5568d54f44185e3598b2ed7bf5 inherit pub_methods_classVariantDatabase" id="r_adee72b5568d54f44185e3598b2ed7bf5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="variant_8h.html#aff586bc7a7e639d2d12af743ee54ebb1">Variant</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#adee72b5568d54f44185e3598b2ed7bf5">get</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#aff586bc7a7e639d2d12af743ee54ebb1">Variant</a> &amp;defaultValue=<a class="el" href="variant_8h.html#aff586bc7a7e639d2d12af743ee54ebb1">Variant</a>()) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:adee72b5568d54f44185e3598b2ed7bf5 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the value for the given ID.  <br /></td></tr>
-<tr class="separator:adee72b5568d54f44185e3598b2ed7bf5 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a595109f7f0d3d6e20590bb6766cff058 inherit pub_methods_classVariantDatabase" id="r_a595109f7f0d3d6e20590bb6766cff058"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">T</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a595109f7f0d3d6e20590bb6766cff058">getAs</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">T</a> &amp;defaultValue=<a class="el" href="classList.html">T</a>{}, <a class="el" href="classError.html">Error</a> *<a class="el" href="classList.html">err</a>=<a class="el" href="classList.html">nullptr</a>) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a595109f7f0d3d6e20590bb6766cff058 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the stored value converted to the requested type.  <br /></td></tr>
-<tr class="separator:a595109f7f0d3d6e20590bb6766cff058 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a524252cc19d0a1aefef82f20bc9c53eb inherit pub_methods_classVariantDatabase" id="r_a524252cc19d0a1aefef82f20bc9c53eb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a524252cc19d0a1aefef82f20bc9c53eb">contains</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a524252cc19d0a1aefef82f20bc9c53eb inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the database contains a value for the given ID.  <br /></td></tr>
-<tr class="separator:a524252cc19d0a1aefef82f20bc9c53eb inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a32d6ad251d26ffab267241da18c60722 inherit pub_methods_classVariantDatabase" id="r_a32d6ad251d26ffab267241da18c60722"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a32d6ad251d26ffab267241da18c60722">remove</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id)</td></tr>
-<tr class="memdesc:a32d6ad251d26ffab267241da18c60722 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes the value for the given ID.  <br /></td></tr>
-<tr class="separator:a32d6ad251d26ffab267241da18c60722 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a754a53ccdcff2331726bf470da32f5bc inherit pub_methods_classVariantDatabase" id="r_a754a53ccdcff2331726bf470da32f5bc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a754a53ccdcff2331726bf470da32f5bc">size</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a754a53ccdcff2331726bf470da32f5bc inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of entries in the database.  <br /></td></tr>
-<tr class="separator:a754a53ccdcff2331726bf470da32f5bc inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a887ee6dc4607ffd167ed86150b5ce000 inherit pub_methods_classVariantDatabase" id="r_a887ee6dc4607ffd167ed86150b5ce000"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a887ee6dc4607ffd167ed86150b5ce000">isEmpty</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a887ee6dc4607ffd167ed86150b5ce000 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the database has no entries.  <br /></td></tr>
-<tr class="separator:a887ee6dc4607ffd167ed86150b5ce000 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af4ffb4cbbab027a6bd317f9c64738923 inherit pub_methods_classVariantDatabase" id="r_af4ffb4cbbab027a6bd317f9c64738923"><td class="memItemLeft" align="right" valign="top">
+<tr class="memdesc:a2112b5a8e5f62a239ff49362c825f69f inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an empty database with Warn validation. <br /></td></tr>
+<tr class="separator:a2112b5a8e5f62a239ff49362c825f69f inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad2a390afff37f3a64ed81743395983d6 inherit pub_methods_classVariantDatabase" id="r_ad2a390afff37f3a64ed81743395983d6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ad2a390afff37f3a64ed81743395983d6">setValidation</a> (<a class="el" href="group__util.html#ga3e19f7ded49aac87704161e5d5b458db">SpecValidation</a> mode)</td></tr>
+<tr class="memdesc:ad2a390afff37f3a64ed81743395983d6 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the validation mode for this database instance.  <br /></td></tr>
+<tr class="separator:ad2a390afff37f3a64ed81743395983d6 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad16d3eb68ca2db5d1072f4573e01fca7 inherit pub_methods_classVariantDatabase" id="r_ad16d3eb68ca2db5d1072f4573e01fca7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__util.html#ga3e19f7ded49aac87704161e5d5b458db">SpecValidation</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ad16d3eb68ca2db5d1072f4573e01fca7">validation</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ad16d3eb68ca2db5d1072f4573e01fca7 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current validation mode.  <br /></td></tr>
+<tr class="separator:ad16d3eb68ca2db5d1072f4573e01fca7 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acc09774a54c4b14168cc55fc14c4ad19 inherit pub_methods_classVariantDatabase" id="r_acc09774a54c4b14168cc55fc14c4ad19"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#acc09774a54c4b14168cc55fc14c4ad19">set</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
+<tr class="memdesc:acc09774a54c4b14168cc55fc14c4ad19 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value for the given ID.  <br /></td></tr>
+<tr class="separator:acc09774a54c4b14168cc55fc14c4ad19 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a647e822cbd60b836b8cbe98179d8978a inherit pub_methods_classVariantDatabase" id="r_a647e822cbd60b836b8cbe98179d8978a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a647e822cbd60b836b8cbe98179d8978a">set</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id, <a class="el" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a> &amp;&amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
+<tr class="memdesc:a647e822cbd60b836b8cbe98179d8978a inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value for the given ID (move overload).  <br /></td></tr>
+<tr class="separator:a647e822cbd60b836b8cbe98179d8978a inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae0b2922a7c5bd993e1d60929b132dcc0 inherit pub_methods_classVariantDatabase" id="r_ae0b2922a7c5bd993e1d60929b132dcc0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ae0b2922a7c5bd993e1d60929b132dcc0">setIfMissing</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
+<tr class="memdesc:ae0b2922a7c5bd993e1d60929b132dcc0 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value only if no entry exists for <code>id</code>.  <br /></td></tr>
+<tr class="separator:ae0b2922a7c5bd993e1d60929b132dcc0 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9cb32301758b91d9b137e2c7c95676d4 inherit pub_methods_classVariantDatabase" id="r_a9cb32301758b91d9b137e2c7c95676d4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a9cb32301758b91d9b137e2c7c95676d4">setIfMissing</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id, <a class="el" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a> &amp;&amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
+<tr class="memdesc:a9cb32301758b91d9b137e2c7c95676d4 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move overload of <a class="el" href="classVariantDatabase.html#ae0b2922a7c5bd993e1d60929b132dcc0">setIfMissing</a>.  <br /></td></tr>
+<tr class="separator:a9cb32301758b91d9b137e2c7c95676d4 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a11a698992de8d4d830d83a78f6a6ece7 inherit pub_methods_classVariantDatabase" id="r_a11a698992de8d4d830d83a78f6a6ece7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a11a698992de8d4d830d83a78f6a6ece7">get</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a> &amp;defaultValue=<a class="el" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a>()) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a11a698992de8d4d830d83a78f6a6ece7 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the value for the given ID.  <br /></td></tr>
+<tr class="separator:a11a698992de8d4d830d83a78f6a6ece7 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aba34c18fb083556f801a692fce34d76b inherit pub_methods_classVariantDatabase" id="r_aba34c18fb083556f801a692fce34d76b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">T</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#aba34c18fb083556f801a692fce34d76b">getAs</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">T</a> &amp;defaultValue=<a class="el" href="classList.html">T</a>{}, <a class="el" href="classError.html">Error</a> *<a class="el" href="classList.html">err</a>=<a class="el" href="classList.html">nullptr</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aba34c18fb083556f801a692fce34d76b inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the stored value converted to the requested type.  <br /></td></tr>
+<tr class="separator:aba34c18fb083556f801a692fce34d76b inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c6b3167abbee37ce415575d6b578c19 inherit pub_methods_classVariantDatabase" id="r_a0c6b3167abbee37ce415575d6b578c19"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a0c6b3167abbee37ce415575d6b578c19">contains</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a0c6b3167abbee37ce415575d6b578c19 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the database contains a value for the given ID.  <br /></td></tr>
+<tr class="separator:a0c6b3167abbee37ce415575d6b578c19 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5d9991fb8d7f7e2ad9ea4d5c93dbf1be inherit pub_methods_classVariantDatabase" id="r_a5d9991fb8d7f7e2ad9ea4d5c93dbf1be"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a5d9991fb8d7f7e2ad9ea4d5c93dbf1be">remove</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id)</td></tr>
+<tr class="memdesc:a5d9991fb8d7f7e2ad9ea4d5c93dbf1be inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes the value for the given ID.  <br /></td></tr>
+<tr class="separator:a5d9991fb8d7f7e2ad9ea4d5c93dbf1be inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98b1246dd573e95b4b067ced5d84834b inherit pub_methods_classVariantDatabase" id="r_a98b1246dd573e95b4b067ced5d84834b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a98b1246dd573e95b4b067ced5d84834b">size</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a98b1246dd573e95b4b067ced5d84834b inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of entries in the database.  <br /></td></tr>
+<tr class="separator:a98b1246dd573e95b4b067ced5d84834b inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a05e287d4633df681885d14a090b12f8d inherit pub_methods_classVariantDatabase" id="r_a05e287d4633df681885d14a090b12f8d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a05e287d4633df681885d14a090b12f8d">isEmpty</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a05e287d4633df681885d14a090b12f8d inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the database has no entries.  <br /></td></tr>
+<tr class="separator:a05e287d4633df681885d14a090b12f8d inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aedfa84874e4be1dcac78b445daac801a inherit pub_methods_classVariantDatabase" id="r_aedfa84874e4be1dcac78b445daac801a"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>clear</b> ()</td></tr>
-<tr class="memdesc:af4ffb4cbbab027a6bd317f9c64738923 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes all entries from the database. <br /></td></tr>
-<tr class="separator:af4ffb4cbbab027a6bd317f9c64738923 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a88d1c30958d08ed8ef36619a42b7f2c7 inherit pub_methods_classVariantDatabase" id="r_a88d1c30958d08ed8ef36619a42b7f2c7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">List</a>&lt; <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a88d1c30958d08ed8ef36619a42b7f2c7">ids</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a88d1c30958d08ed8ef36619a42b7f2c7 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a list of all IDs that have values in this database.  <br /></td></tr>
-<tr class="separator:a88d1c30958d08ed8ef36619a42b7f2c7 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab07f34aabfe277dc8a5b06af8a33b80e inherit pub_methods_classVariantDatabase" id="r_ab07f34aabfe277dc8a5b06af8a33b80e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classStringList.html">StringList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ab07f34aabfe277dc8a5b06af8a33b80e">unknownKeys</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a76e6097358e353e2dc6de5aa86a63505">SpecMap</a> &amp;<a class="el" href="classList.html">extraSpecs</a>=<a class="el" href="classVariantDatabase.html#a76e6097358e353e2dc6de5aa86a63505">SpecMap</a>()) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:ab07f34aabfe277dc8a5b06af8a33b80e inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the names of entries in the database that have no <a class="el" href="classVariantSpec.html">VariantSpec</a> registered anywhere.  <br /></td></tr>
-<tr class="separator:ab07f34aabfe277dc8a5b06af8a33b80e inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a16c5c80ea6fe79deb9ebf8b2e16e780e inherit pub_methods_classVariantDatabase" id="r_a16c5c80ea6fe79deb9ebf8b2e16e780e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a16c5c80ea6fe79deb9ebf8b2e16e780e">forEach</a> (<a class="el" href="classList.html">Func</a> &amp;&amp;func) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a16c5c80ea6fe79deb9ebf8b2e16e780e inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Iterates over all entries in the database.  <br /></td></tr>
-<tr class="separator:a16c5c80ea6fe79deb9ebf8b2e16e780e inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5c4dcefa1ea85714992cc2468c5823ce inherit pub_methods_classVariantDatabase" id="r_a5c4dcefa1ea85714992cc2468c5823ce"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a5c4dcefa1ea85714992cc2468c5823ce">merge</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a> &amp;<a class="el" href="classList.html">other</a>)</td></tr>
-<tr class="memdesc:a5c4dcefa1ea85714992cc2468c5823ce inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Merges entries from another database into this one.  <br /></td></tr>
-<tr class="separator:a5c4dcefa1ea85714992cc2468c5823ce inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acd0b063b7ee8bc7a85abac00855d76b2 inherit pub_methods_classVariantDatabase" id="r_acd0b063b7ee8bc7a85abac00855d76b2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classVariantDatabase.html">VariantDatabase</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#acd0b063b7ee8bc7a85abac00855d76b2">extract</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">List</a>&lt; <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> &gt; &amp;<a class="el" href="classList.html">idList</a>) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:acd0b063b7ee8bc7a85abac00855d76b2 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a new database containing only the specified IDs.  <br /></td></tr>
-<tr class="separator:acd0b063b7ee8bc7a85abac00855d76b2 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad91d4b7a1ae1ec7b2452b06bfc76ffe6 inherit pub_methods_classVariantDatabase" id="r_ad91d4b7a1ae1ec7b2452b06bfc76ffe6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ad91d4b7a1ae1ec7b2452b06bfc76ffe6">operator==</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:ad91d4b7a1ae1ec7b2452b06bfc76ffe6 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if both databases contain the same entries.  <br /></td></tr>
-<tr class="separator:ad91d4b7a1ae1ec7b2452b06bfc76ffe6 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9adc50f97ebef026db5f800a7b583375 inherit pub_methods_classVariantDatabase" id="r_a9adc50f97ebef026db5f800a7b583375"><td class="memItemLeft" align="right" valign="top">
+<tr class="memdesc:aedfa84874e4be1dcac78b445daac801a inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes all entries from the database. <br /></td></tr>
+<tr class="separator:aedfa84874e4be1dcac78b445daac801a inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c75dbcf9eb7bb706f0103e08f115df8 inherit pub_methods_classVariantDatabase" id="r_a2c75dbcf9eb7bb706f0103e08f115df8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">List</a>&lt; <a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a2c75dbcf9eb7bb706f0103e08f115df8">ids</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a2c75dbcf9eb7bb706f0103e08f115df8 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a list of all IDs that have values in this database.  <br /></td></tr>
+<tr class="separator:a2c75dbcf9eb7bb706f0103e08f115df8 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a03550a04712f59054d56a81ec84880d2 inherit pub_methods_classVariantDatabase" id="r_a03550a04712f59054d56a81ec84880d2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classStringList.html">StringList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a03550a04712f59054d56a81ec84880d2">unknownKeys</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#ab4f16069dd41722fb0b8d3b8fc1009f5">SpecMap</a> &amp;<a class="el" href="classList.html">extraSpecs</a>=<a class="el" href="classVariantDatabase.html#ab4f16069dd41722fb0b8d3b8fc1009f5">SpecMap</a>()) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a03550a04712f59054d56a81ec84880d2 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the names of entries in the database that have no <a class="el" href="classVariantSpec.html">VariantSpec</a> registered anywhere.  <br /></td></tr>
+<tr class="separator:a03550a04712f59054d56a81ec84880d2 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a40ca1f527e5284c9ad57b41b1eccf295 inherit pub_methods_classVariantDatabase" id="r_a40ca1f527e5284c9ad57b41b1eccf295"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a40ca1f527e5284c9ad57b41b1eccf295">forEach</a> (<a class="el" href="classList.html">Func</a> &amp;&amp;func) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a40ca1f527e5284c9ad57b41b1eccf295 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Iterates over all entries in the database.  <br /></td></tr>
+<tr class="separator:a40ca1f527e5284c9ad57b41b1eccf295 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a925a35b41f393d3d5f284a2ea36f096f inherit pub_methods_classVariantDatabase" id="r_a925a35b41f393d3d5f284a2ea36f096f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a925a35b41f393d3d5f284a2ea36f096f">merge</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a> &amp;<a class="el" href="classList.html">other</a>)</td></tr>
+<tr class="memdesc:a925a35b41f393d3d5f284a2ea36f096f inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Merges entries from another database into this one.  <br /></td></tr>
+<tr class="separator:a925a35b41f393d3d5f284a2ea36f096f inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adff097139ade0d44434eeaaba801d89f inherit pub_methods_classVariantDatabase" id="r_adff097139ade0d44434eeaaba801d89f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classVariantDatabase.html">VariantDatabase</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#adff097139ade0d44434eeaaba801d89f">extract</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">List</a>&lt; <a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> &gt; &amp;<a class="el" href="classList.html">idList</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:adff097139ade0d44434eeaaba801d89f inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a new database containing only the specified IDs.  <br /></td></tr>
+<tr class="separator:adff097139ade0d44434eeaaba801d89f inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:add605638da65f7137b4ce9e768887f18 inherit pub_methods_classVariantDatabase" id="r_add605638da65f7137b4ce9e768887f18"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#add605638da65f7137b4ce9e768887f18">operator==</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:add605638da65f7137b4ce9e768887f18 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if both databases contain the same entries.  <br /></td></tr>
+<tr class="separator:add605638da65f7137b4ce9e768887f18 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa17fda14e75a5be07063df14f83f34c3 inherit pub_methods_classVariantDatabase" id="r_aa17fda14e75a5be07063df14f83f34c3"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator!=</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a9adc50f97ebef026db5f800a7b583375 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the databases differ. <br /></td></tr>
-<tr class="separator:a9adc50f97ebef026db5f800a7b583375 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a21f88197acfc8698bf01a095ad6c1498 inherit pub_methods_classVariantDatabase" id="r_a21f88197acfc8698bf01a095ad6c1498"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classJsonObject.html">JsonObject</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a21f88197acfc8698bf01a095ad6c1498">toJson</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a21f88197acfc8698bf01a095ad6c1498 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Serializes the database to a <a class="el" href="classJsonObject.html" title="JSON object container wrapping nlohmann::json.">JsonObject</a>.  <br /></td></tr>
-<tr class="separator:a21f88197acfc8698bf01a095ad6c1498 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0b35835fce4daa2a5f70179c9e287043 inherit pub_methods_classVariantDatabase" id="r_a0b35835fce4daa2a5f70179c9e287043"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a0b35835fce4daa2a5f70179c9e287043">writeTo</a> (<a class="el" href="classDataStream.html">DataStream</a> &amp;stream) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a0b35835fce4daa2a5f70179c9e287043 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes the database to a <a class="el" href="classDataStream.html" title="Binary stream for structured, portable serialization.">DataStream</a>.  <br /></td></tr>
-<tr class="separator:a0b35835fce4daa2a5f70179c9e287043 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:addc64ebe789a1513cf0d6621ace73f0f inherit pub_methods_classVariantDatabase" id="r_addc64ebe789a1513cf0d6621ace73f0f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#addc64ebe789a1513cf0d6621ace73f0f">writeTo</a> (<a class="el" href="classTextStream.html">TextStream</a> &amp;stream) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:addc64ebe789a1513cf0d6621ace73f0f inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes the database to a <a class="el" href="classTextStream.html" title="Formatted text I/O with encoding awareness.">TextStream</a>.  <br /></td></tr>
-<tr class="separator:addc64ebe789a1513cf0d6621ace73f0f inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a31258932ed076d71a8071e88f1237d77 inherit pub_methods_classVariantDatabase" id="r_a31258932ed076d71a8071e88f1237d77"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a31258932ed076d71a8071e88f1237d77">readFrom</a> (<a class="el" href="classDataStream.html">DataStream</a> &amp;stream)</td></tr>
-<tr class="memdesc:a31258932ed076d71a8071e88f1237d77 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads the database from a <a class="el" href="classDataStream.html" title="Binary stream for structured, portable serialization.">DataStream</a>.  <br /></td></tr>
-<tr class="separator:a31258932ed076d71a8071e88f1237d77 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
-Static Public Attributes</h2></td></tr>
-<tr class="memitem:a3341de20471c901304cf989485ead6a8" id="r_a3341de20471c901304cf989485ead6a8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOStats.html#a3341de20471c901304cf989485ead6a8">FramesDropped</a></td></tr>
-<tr class="memdesc:a3341de20471c901304cf989485ead6a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">int64_t — total frames dropped since open.  <br /></td></tr>
-<tr class="separator:a3341de20471c901304cf989485ead6a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a15fc376d042a115f9c8a17e307fdd64f" id="r_a15fc376d042a115f9c8a17e307fdd64f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOStats.html#a15fc376d042a115f9c8a17e307fdd64f">FramesRepeated</a></td></tr>
-<tr class="memdesc:a15fc376d042a115f9c8a17e307fdd64f"><td class="mdescLeft">&#160;</td><td class="mdescRight">int64_t — total frames repeated due to underrun.  <br /></td></tr>
-<tr class="separator:a15fc376d042a115f9c8a17e307fdd64f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a76437c690c9de43b5d6d8172f8d4a1ec" id="r_a76437c690c9de43b5d6d8172f8d4a1ec"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOStats.html#a76437c690c9de43b5d6d8172f8d4a1ec">FramesLate</a></td></tr>
-<tr class="memdesc:a76437c690c9de43b5d6d8172f8d4a1ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">int64_t — total frames that arrived late.  <br /></td></tr>
-<tr class="separator:a76437c690c9de43b5d6d8172f8d4a1ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a55a52f4428b37120017d7aafa3bec8a7" id="r_a55a52f4428b37120017d7aafa3bec8a7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOStats.html#a55a52f4428b37120017d7aafa3bec8a7">QueueDepth</a></td></tr>
-<tr class="memdesc:a55a52f4428b37120017d7aafa3bec8a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">int64_t — current depth of internal buffer.  <br /></td></tr>
-<tr class="separator:a55a52f4428b37120017d7aafa3bec8a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5b075cf96d76502ff35de4e9f758d9f5" id="r_a5b075cf96d76502ff35de4e9f758d9f5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOStats.html#a5b075cf96d76502ff35de4e9f758d9f5">QueueCapacity</a></td></tr>
-<tr class="memdesc:a5b075cf96d76502ff35de4e9f758d9f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">int64_t — capacity of internal buffer.  <br /></td></tr>
-<tr class="separator:a5b075cf96d76502ff35de4e9f758d9f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a70c91fd6b0ccab2d9b7534d210a36a9a" id="r_a70c91fd6b0ccab2d9b7534d210a36a9a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOStats.html#a70c91fd6b0ccab2d9b7534d210a36a9a">BytesPerSecond</a></td></tr>
-<tr class="memdesc:a70c91fd6b0ccab2d9b7534d210a36a9a"><td class="mdescLeft">&#160;</td><td class="mdescRight">double — current data rate.  <br /></td></tr>
-<tr class="separator:a70c91fd6b0ccab2d9b7534d210a36a9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0415ff34c266c709938c648042c4e983" id="r_a0415ff34c266c709938c648042c4e983"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOStats.html#a0415ff34c266c709938c648042c4e983">FramesPerSecond</a></td></tr>
-<tr class="memdesc:a0415ff34c266c709938c648042c4e983"><td class="mdescLeft">&#160;</td><td class="mdescRight">double — current frame rate (frames per second).  <br /></td></tr>
-<tr class="separator:a0415ff34c266c709938c648042c4e983"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1d1dcc32f0838834b06a0417c4717db6" id="r_a1d1dcc32f0838834b06a0417c4717db6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOStats.html#a1d1dcc32f0838834b06a0417c4717db6">AverageLatencyMs</a></td></tr>
-<tr class="memdesc:a1d1dcc32f0838834b06a0417c4717db6"><td class="mdescLeft">&#160;</td><td class="mdescRight">double — average end-to-end latency.  <br /></td></tr>
-<tr class="separator:a1d1dcc32f0838834b06a0417c4717db6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a647e1c236f59a7894c427bee003d8a59" id="r_a647e1c236f59a7894c427bee003d8a59"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOStats.html#a647e1c236f59a7894c427bee003d8a59">PeakLatencyMs</a></td></tr>
-<tr class="memdesc:a647e1c236f59a7894c427bee003d8a59"><td class="mdescLeft">&#160;</td><td class="mdescRight">double — peak observed latency.  <br /></td></tr>
-<tr class="separator:a647e1c236f59a7894c427bee003d8a59"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acc1c154702aba8a8cf969b0d621668e2" id="r_acc1c154702aba8a8cf969b0d621668e2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOStats.html#acc1c154702aba8a8cf969b0d621668e2">AverageProcessingMs</a></td></tr>
-<tr class="memdesc:acc1c154702aba8a8cf969b0d621668e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">double — average per-frame processing time.  <br /></td></tr>
-<tr class="separator:acc1c154702aba8a8cf969b0d621668e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a53ec918b7460f5060a7c9a318f88ec69" id="r_a53ec918b7460f5060a7c9a318f88ec69"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOStats.html#a53ec918b7460f5060a7c9a318f88ec69">PeakProcessingMs</a></td></tr>
-<tr class="memdesc:a53ec918b7460f5060a7c9a318f88ec69"><td class="mdescLeft">&#160;</td><td class="mdescRight">double — peak per-frame processing time.  <br /></td></tr>
-<tr class="separator:a53ec918b7460f5060a7c9a318f88ec69"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2ef4c2a1f18725b551cfbbb4948f152e" id="r_a2ef4c2a1f18725b551cfbbb4948f152e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOStats.html#a2ef4c2a1f18725b551cfbbb4948f152e">LastErrorMessage</a></td></tr>
-<tr class="memdesc:a2ef4c2a1f18725b551cfbbb4948f152e"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> — most recent error description.  <br /></td></tr>
-<tr class="separator:a2ef4c2a1f18725b551cfbbb4948f152e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a45df23c4523872b21a6182be941418a2" id="r_a45df23c4523872b21a6182be941418a2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOStats.html#a45df23c4523872b21a6182be941418a2">PendingOperations</a></td></tr>
-<tr class="memdesc:a45df23c4523872b21a6182be941418a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">int64_t — number of commands queued on the strand but not yet running. Populated by the <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> base class from <a class="el" href="classStrand.html#af81ff4892a0aa5df02b81524125fec67" title="Returns the number of tasks waiting to run.">Strand::pendingCount()</a>; gives telemetry callers visibility into backlog depth without every backend having to track it.  <br /></td></tr>
-<tr class="separator:a45df23c4523872b21a6182be941418a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memdesc:aa17fda14e75a5be07063df14f83f34c3 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the databases differ. <br /></td></tr>
+<tr class="separator:aa17fda14e75a5be07063df14f83f34c3 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab7e52a245253bf7dd06b117645aac782 inherit pub_methods_classVariantDatabase" id="r_ab7e52a245253bf7dd06b117645aac782"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classJsonObject.html">JsonObject</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ab7e52a245253bf7dd06b117645aac782">toJson</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ab7e52a245253bf7dd06b117645aac782 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Serializes the database to a <a class="el" href="classJsonObject.html" title="JSON object container wrapping nlohmann::json.">JsonObject</a>.  <br /></td></tr>
+<tr class="separator:ab7e52a245253bf7dd06b117645aac782 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ad56182795672a62720c7141a2d7e91 inherit pub_methods_classVariantDatabase" id="r_a1ad56182795672a62720c7141a2d7e91"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a1ad56182795672a62720c7141a2d7e91">writeTo</a> (<a class="el" href="classDataStream.html">DataStream</a> &amp;stream) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a1ad56182795672a62720c7141a2d7e91 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes the database to a <a class="el" href="classDataStream.html" title="Binary stream for structured, portable serialization.">DataStream</a>.  <br /></td></tr>
+<tr class="separator:a1ad56182795672a62720c7141a2d7e91 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e92bbafcc701007f9ce40ed322662df inherit pub_methods_classVariantDatabase" id="r_a2e92bbafcc701007f9ce40ed322662df"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a2e92bbafcc701007f9ce40ed322662df">writeTo</a> (<a class="el" href="classTextStream.html">TextStream</a> &amp;stream) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a2e92bbafcc701007f9ce40ed322662df inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes the database to a <a class="el" href="classTextStream.html" title="Formatted text I/O with encoding awareness.">TextStream</a>.  <br /></td></tr>
+<tr class="separator:a2e92bbafcc701007f9ce40ed322662df inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad887c4dca1d0b6e266dbb56f6f25f73d inherit pub_methods_classVariantDatabase" id="r_ad887c4dca1d0b6e266dbb56f6f25f73d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ad887c4dca1d0b6e266dbb56f6f25f73d">readFrom</a> (<a class="el" href="classDataStream.html">DataStream</a> &amp;stream)</td></tr>
+<tr class="memdesc:ad887c4dca1d0b6e266dbb56f6f25f73d inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads the database from a <a class="el" href="classDataStream.html" title="Binary stream for structured, portable serialization.">DataStream</a>.  <br /></td></tr>
+<tr class="separator:ad887c4dca1d0b6e266dbb56f6f25f73d inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
-<tr class="inherit_header pub_static_methods_classVariantDatabase"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classVariantDatabase')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classVariantDatabase.html">VariantDatabase&lt; MediaIOStatsTag &gt;</a></td></tr>
-<tr class="memitem:aa81c6cfc6ceee506ea6c50b918644aa7 inherit pub_static_methods_classVariantDatabase" id="r_aa81c6cfc6ceee506ea6c50b918644aa7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;name, <a class="el" href="classList.html">const</a> <a class="el" href="classVariantSpec.html">VariantSpec</a> &amp;<a class="el" href="classVariantDatabase.html#abe019941e5ee644f48f1590e2a025c71">spec</a>)</td></tr>
-<tr class="memdesc:aa81c6cfc6ceee506ea6c50b918644aa7 inherit pub_static_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declares an ID and registers its <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a>.  <br /></td></tr>
-<tr class="separator:aa81c6cfc6ceee506ea6c50b918644aa7 inherit pub_static_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abe019941e5ee644f48f1590e2a025c71 inherit pub_static_methods_classVariantDatabase" id="r_abe019941e5ee644f48f1590e2a025c71"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantSpec.html">VariantSpec</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#abe019941e5ee644f48f1590e2a025c71">spec</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id)</td></tr>
-<tr class="memdesc:abe019941e5ee644f48f1590e2a025c71 inherit pub_static_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a> for the given ID, or nullptr if none.  <br /></td></tr>
-<tr class="separator:abe019941e5ee644f48f1590e2a025c71 inherit pub_static_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a84df1f7e946887f83852ed42d1f9b299 inherit pub_static_methods_classVariantDatabase" id="r_a84df1f7e946887f83852ed42d1f9b299"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classMap.html">Map</a>&lt; <a class="el" href="classList.html">uint32_t</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a84df1f7e946887f83852ed42d1f9b299">registeredSpecs</a> ()</td></tr>
-<tr class="memdesc:a84df1f7e946887f83852ed42d1f9b299 inherit pub_static_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a copy of the entire spec registry.  <br /></td></tr>
-<tr class="separator:a84df1f7e946887f83852ed42d1f9b299 inherit pub_static_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a84c46ba9dc80cd52c6cdc468a0e7403a inherit pub_static_methods_classVariantDatabase" id="r_a84c46ba9dc80cd52c6cdc468a0e7403a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a84c46ba9dc80cd52c6cdc468a0e7403a">fromSpecs</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a76e6097358e353e2dc6de5aa86a63505">SpecMap</a> &amp;<a class="el" href="classList.html">specs</a>)</td></tr>
-<tr class="memdesc:a84c46ba9dc80cd52c6cdc468a0e7403a inherit pub_static_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Builds a <a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a> from a SpecMap's default values.  <br /></td></tr>
-<tr class="separator:a84c46ba9dc80cd52c6cdc468a0e7403a inherit pub_static_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a30775e56c0c74826a6009ffc6a5a5061 inherit pub_static_methods_classVariantDatabase" id="r_a30775e56c0c74826a6009ffc6a5a5061"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a30775e56c0c74826a6009ffc6a5a5061">writeSpecMapHelp</a> (<a class="el" href="classTextStream.html">TextStream</a> &amp;stream, <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a76e6097358e353e2dc6de5aa86a63505">SpecMap</a> &amp;<a class="el" href="classList.html">specs</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classStringList.html">StringList</a> &amp;<a class="el" href="classList.html">skipKeys</a>=<a class="el" href="classStringList.html">StringList</a>())</td></tr>
-<tr class="memdesc:a30775e56c0c74826a6009ffc6a5a5061 inherit pub_static_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes formatted help text for every spec in a SpecMap.  <br /></td></tr>
-<tr class="separator:a30775e56c0c74826a6009ffc6a5a5061 inherit pub_static_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae06c400a4039edd713e22fc9e2bc14aa inherit pub_static_methods_classVariantDatabase" id="r_ae06c400a4039edd713e22fc9e2bc14aa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ae06c400a4039edd713e22fc9e2bc14aa">fromJson</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classJsonObject.html">JsonObject</a> &amp;<a class="el" href="classList.html">json</a>)</td></tr>
-<tr class="memdesc:ae06c400a4039edd713e22fc9e2bc14aa inherit pub_static_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a <a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a> from a <a class="el" href="classJsonObject.html" title="JSON object container wrapping nlohmann::json.">JsonObject</a>.  <br /></td></tr>
-<tr class="separator:ae06c400a4039edd713e22fc9e2bc14aa inherit pub_static_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_static_methods_classVariantDatabase"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classVariantDatabase')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classVariantDatabase.html">VariantDatabase&lt;&quot;MediaIOStats&quot;&gt;</a></td></tr>
+<tr class="memitem:a8841b93220fa1b53cbc2a89aa1990a71 inherit pub_static_methods_classVariantDatabase" id="r_a8841b93220fa1b53cbc2a89aa1990a71"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a8841b93220fa1b53cbc2a89aa1990a71">declareID</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;name, <a class="el" href="classList.html">const</a> <a class="el" href="classVariantSpec.html">VariantSpec</a> &amp;<a class="el" href="classVariantDatabase.html#a36bb90a1f330786356fe58b22a4a321d">spec</a>)</td></tr>
+<tr class="memdesc:a8841b93220fa1b53cbc2a89aa1990a71 inherit pub_static_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declares an ID and registers its <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a>.  <br /></td></tr>
+<tr class="separator:a8841b93220fa1b53cbc2a89aa1990a71 inherit pub_static_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a36bb90a1f330786356fe58b22a4a321d inherit pub_static_methods_classVariantDatabase" id="r_a36bb90a1f330786356fe58b22a4a321d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantSpec.html">VariantSpec</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a36bb90a1f330786356fe58b22a4a321d">spec</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id)</td></tr>
+<tr class="memdesc:a36bb90a1f330786356fe58b22a4a321d inherit pub_static_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a> for the given ID, or nullptr if none.  <br /></td></tr>
+<tr class="separator:a36bb90a1f330786356fe58b22a4a321d inherit pub_static_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a49997a5c19f9cf2d4715b8e048d196c6 inherit pub_static_methods_classVariantDatabase" id="r_a49997a5c19f9cf2d4715b8e048d196c6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classMap.html">Map</a>&lt; <a class="el" href="classList.html">uint64_t</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a49997a5c19f9cf2d4715b8e048d196c6">registeredSpecs</a> ()</td></tr>
+<tr class="memdesc:a49997a5c19f9cf2d4715b8e048d196c6 inherit pub_static_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a copy of the entire spec registry.  <br /></td></tr>
+<tr class="separator:a49997a5c19f9cf2d4715b8e048d196c6 inherit pub_static_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc53483760c3169fec0179876982f777 inherit pub_static_methods_classVariantDatabase" id="r_afc53483760c3169fec0179876982f777"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#afc53483760c3169fec0179876982f777">fromSpecs</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#ab4f16069dd41722fb0b8d3b8fc1009f5">SpecMap</a> &amp;<a class="el" href="classList.html">specs</a>)</td></tr>
+<tr class="memdesc:afc53483760c3169fec0179876982f777 inherit pub_static_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Builds a <a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a> from a SpecMap's default values.  <br /></td></tr>
+<tr class="separator:afc53483760c3169fec0179876982f777 inherit pub_static_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a94683e8abc6e90a70b2b8770828c6894 inherit pub_static_methods_classVariantDatabase" id="r_a94683e8abc6e90a70b2b8770828c6894"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a94683e8abc6e90a70b2b8770828c6894">writeSpecMapHelp</a> (<a class="el" href="classTextStream.html">TextStream</a> &amp;stream, <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#ab4f16069dd41722fb0b8d3b8fc1009f5">SpecMap</a> &amp;<a class="el" href="classList.html">specs</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classStringList.html">StringList</a> &amp;<a class="el" href="classList.html">skipKeys</a>=<a class="el" href="classStringList.html">StringList</a>())</td></tr>
+<tr class="memdesc:a94683e8abc6e90a70b2b8770828c6894 inherit pub_static_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes formatted help text for every spec in a SpecMap.  <br /></td></tr>
+<tr class="separator:a94683e8abc6e90a70b2b8770828c6894 inherit pub_static_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a668f107115c4238b49ad324722a2462e inherit pub_static_methods_classVariantDatabase" id="r_a668f107115c4238b49ad324722a2462e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a668f107115c4238b49ad324722a2462e">fromJson</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classJsonObject.html">JsonObject</a> &amp;<a class="el" href="classList.html">json</a>)</td></tr>
+<tr class="memdesc:a668f107115c4238b49ad324722a2462e inherit pub_static_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a <a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a> from a <a class="el" href="classJsonObject.html" title="JSON object container wrapping nlohmann::json.">JsonObject</a>.  <br /></td></tr>
+<tr class="separator:a668f107115c4238b49ad324722a2462e inherit pub_static_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Statistics container for <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> backends. </p>
@@ -320,367 +329,8 @@ Additional Inherited Members</h2></td></tr>
 <p>Renders the standard telemetry keys as a compact log line. </p>
 <p>Formats whichever standard keys are present into a single space-separated line suitable for dumping to a terminal or logger. Keys are emitted in a fixed order so periodic telemetry output stays scannable:</p>
 <p>BytesPerSecond FramesPerSecond FramesDropped FramesRepeated FramesLate AverageLatencyMs/PeakLatencyMs AverageProcessingMs/PeakProcessingMs QueueDepth/QueueCapacity PendingOperations LastErrorMessage</p>
-<p>Counters that are still zero (<code>FramesRepeated</code>, <code>FramesLate</code>) and the empty <code>LastErrorMessage</code> are elided to keep the line quiet under normal operation. Backend-specific keys are <em>not</em> included — callers that want a full dump should iterate via <a class="el" href="classVariantDatabase.html#a16c5c80ea6fe79deb9ebf8b2e16e780e">forEach</a>.</p>
+<p>Counters that are still zero (<code>FramesRepeated</code>, <code>FramesLate</code>) and the empty <code>LastErrorMessage</code> are elided to keep the line quiet under normal operation. Backend-specific keys are <em>not</em> included — callers that want a full dump should iterate via <a class="el" href="classVariantDatabase.html#a40ca1f527e5284c9ad57b41b1eccf295">forEach</a>.</p>
 <dl class="section return"><dt>Returns</dt><dd>A single-line summary, or an empty <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> if the container holds no standard keys. </dd></dl>
-
-</div>
-</div>
-<h2 class="groupheader">Member Data Documentation</h2>
-<a id="a1d1dcc32f0838834b06a0417c4717db6" name="a1d1dcc32f0838834b06a0417c4717db6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1d1dcc32f0838834b06a0417c4717db6">&#9670;&#160;</a></span>AverageLatencyMs</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaIOStats::AverageLatencyMs</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;AverageLatencyMs&quot;</span>,</div>
-<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeDouble).setDefault(0.0)</div>
-<div class="line">                                .setMin(0.0).setDescription(<span class="stringliteral">&quot;Average end-to-end latency in ms.&quot;</span>))</div>
-<div class="ttc" id="aclassVariantDatabase_html_aa81c6cfc6ceee506ea6c50b918644aa7"><div class="ttname"><a href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">VariantDatabase&lt; MediaIOStatsTag &gt;::declareID</a></div><div class="ttdeci">static ID declareID(const String &amp;name, const VariantSpec &amp;spec)</div><div class="ttdoc">Declares an ID and registers its VariantSpec.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:113</div></div>
-<div class="ttc" id="aclassVariantSpec_html"><div class="ttname"><a href="classVariantSpec.html">VariantSpec</a></div><div class="ttdoc">Describes the constraints and default value for a VariantDatabase ID.</div><div class="ttdef"><b>Definition</b> variantspec.h:62</div></div>
-</div><!-- fragment -->
-<p>double — average end-to-end latency. </p>
-
-</div>
-</div>
-<a id="acc1c154702aba8a8cf969b0d621668e2" name="acc1c154702aba8a8cf969b0d621668e2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acc1c154702aba8a8cf969b0d621668e2">&#9670;&#160;</a></span>AverageProcessingMs</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaIOStats::AverageProcessingMs</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;AverageProcessingMs&quot;</span>,</div>
-<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeDouble).setDefault(0.0)</div>
-<div class="line">                                .setMin(0.0).setDescription(</div>
-<div class="line">                                        <span class="stringliteral">&quot;Average per-frame processing time in ms.&quot;</span>))</div>
-</div><!-- fragment -->
-<p>double — average per-frame processing time. </p>
-
-</div>
-</div>
-<a id="a70c91fd6b0ccab2d9b7534d210a36a9a" name="a70c91fd6b0ccab2d9b7534d210a36a9a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a70c91fd6b0ccab2d9b7534d210a36a9a">&#9670;&#160;</a></span>BytesPerSecond</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaIOStats::BytesPerSecond</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;BytesPerSecond&quot;</span>,</div>
-<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeDouble).setDefault(0.0)</div>
-<div class="line">                                .setMin(0.0).setDescription(<span class="stringliteral">&quot;Current data rate in bytes per second.&quot;</span>))</div>
-</div><!-- fragment -->
-<p>double — current data rate. </p>
-
-</div>
-</div>
-<a id="a3341de20471c901304cf989485ead6a8" name="a3341de20471c901304cf989485ead6a8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3341de20471c901304cf989485ead6a8">&#9670;&#160;</a></span>FramesDropped</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaIOStats::FramesDropped</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FramesDropped&quot;</span>,</div>
-<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS64).setDefault(<a class="code hl_class" href="classList.html">int64_t</a>(0))</div>
-<div class="line">                                .setMin(<a class="code hl_class" href="classList.html">int64_t</a>(0)).setDescription(<span class="stringliteral">&quot;Total frames dropped since open.&quot;</span>))</div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-</div><!-- fragment -->
-<p>int64_t — total frames dropped since open. </p>
-
-</div>
-</div>
-<a id="a76437c690c9de43b5d6d8172f8d4a1ec" name="a76437c690c9de43b5d6d8172f8d4a1ec"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a76437c690c9de43b5d6d8172f8d4a1ec">&#9670;&#160;</a></span>FramesLate</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaIOStats::FramesLate</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FramesLate&quot;</span>,</div>
-<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS64).setDefault(<a class="code hl_class" href="classList.html">int64_t</a>(0))</div>
-<div class="line">                                .setMin(<a class="code hl_class" href="classList.html">int64_t</a>(0)).setDescription(<span class="stringliteral">&quot;Total frames that arrived late.&quot;</span>))</div>
-</div><!-- fragment -->
-<p>int64_t — total frames that arrived late. </p>
-
-</div>
-</div>
-<a id="a0415ff34c266c709938c648042c4e983" name="a0415ff34c266c709938c648042c4e983"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0415ff34c266c709938c648042c4e983">&#9670;&#160;</a></span>FramesPerSecond</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaIOStats::FramesPerSecond</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FramesPerSecond&quot;</span>,</div>
-<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeDouble).setDefault(0.0)</div>
-<div class="line">                                .setMin(0.0).setDescription(<span class="stringliteral">&quot;Current frame rate in frames per second.&quot;</span>))</div>
-</div><!-- fragment -->
-<p>double — current frame rate (frames per second). </p>
-
-</div>
-</div>
-<a id="a15fc376d042a115f9c8a17e307fdd64f" name="a15fc376d042a115f9c8a17e307fdd64f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a15fc376d042a115f9c8a17e307fdd64f">&#9670;&#160;</a></span>FramesRepeated</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaIOStats::FramesRepeated</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FramesRepeated&quot;</span>,</div>
-<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS64).setDefault(<a class="code hl_class" href="classList.html">int64_t</a>(0))</div>
-<div class="line">                                .setMin(<a class="code hl_class" href="classList.html">int64_t</a>(0)).setDescription(<span class="stringliteral">&quot;Total frames repeated due to underrun.&quot;</span>))</div>
-</div><!-- fragment -->
-<p>int64_t — total frames repeated due to underrun. </p>
-
-</div>
-</div>
-<a id="a2ef4c2a1f18725b551cfbbb4948f152e" name="a2ef4c2a1f18725b551cfbbb4948f152e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2ef4c2a1f18725b551cfbbb4948f152e">&#9670;&#160;</a></span>LastErrorMessage</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaIOStats::LastErrorMessage</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;LastErrorMessage&quot;</span>,</div>
-<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString).setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
-<div class="line">                                .setDescription(<span class="stringliteral">&quot;Most recent error description.&quot;</span>))</div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:57</div></div>
-</div><!-- fragment -->
-<p><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> — most recent error description. </p>
-
-</div>
-</div>
-<a id="a647e1c236f59a7894c427bee003d8a59" name="a647e1c236f59a7894c427bee003d8a59"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a647e1c236f59a7894c427bee003d8a59">&#9670;&#160;</a></span>PeakLatencyMs</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaIOStats::PeakLatencyMs</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;PeakLatencyMs&quot;</span>,</div>
-<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeDouble).setDefault(0.0)</div>
-<div class="line">                                .setMin(0.0).setDescription(<span class="stringliteral">&quot;Peak observed latency in ms.&quot;</span>))</div>
-</div><!-- fragment -->
-<p>double — peak observed latency. </p>
-
-</div>
-</div>
-<a id="a53ec918b7460f5060a7c9a318f88ec69" name="a53ec918b7460f5060a7c9a318f88ec69"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a53ec918b7460f5060a7c9a318f88ec69">&#9670;&#160;</a></span>PeakProcessingMs</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaIOStats::PeakProcessingMs</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;PeakProcessingMs&quot;</span>,</div>
-<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeDouble).setDefault(0.0)</div>
-<div class="line">                                .setMin(0.0).setDescription(</div>
-<div class="line">                                        <span class="stringliteral">&quot;Peak per-frame processing time in ms.&quot;</span>))</div>
-</div><!-- fragment -->
-<p>double — peak per-frame processing time. </p>
-
-</div>
-</div>
-<a id="a45df23c4523872b21a6182be941418a2" name="a45df23c4523872b21a6182be941418a2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a45df23c4523872b21a6182be941418a2">&#9670;&#160;</a></span>PendingOperations</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaIOStats::PendingOperations</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;PendingOperations&quot;</span>,</div>
-<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS64).setDefault(<a class="code hl_class" href="classList.html">int64_t</a>(0))</div>
-<div class="line">                                .setMin(<a class="code hl_class" href="classList.html">int64_t</a>(0)).setDescription(</div>
-<div class="line">                                        <span class="stringliteral">&quot;Commands queued on the strand but not yet running.&quot;</span>))</div>
-</div><!-- fragment -->
-<p>int64_t — number of commands queued on the strand but not yet running. Populated by the <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> base class from <a class="el" href="classStrand.html#af81ff4892a0aa5df02b81524125fec67" title="Returns the number of tasks waiting to run.">Strand::pendingCount()</a>; gives telemetry callers visibility into backlog depth without every backend having to track it. </p>
-
-</div>
-</div>
-<a id="a5b075cf96d76502ff35de4e9f758d9f5" name="a5b075cf96d76502ff35de4e9f758d9f5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5b075cf96d76502ff35de4e9f758d9f5">&#9670;&#160;</a></span>QueueCapacity</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaIOStats::QueueCapacity</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;QueueCapacity&quot;</span>,</div>
-<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS64).setDefault(<a class="code hl_class" href="classList.html">int64_t</a>(0))</div>
-<div class="line">                                .setMin(<a class="code hl_class" href="classList.html">int64_t</a>(0)).setDescription(<span class="stringliteral">&quot;Capacity of internal buffer.&quot;</span>))</div>
-</div><!-- fragment -->
-<p>int64_t — capacity of internal buffer. </p>
-
-</div>
-</div>
-<a id="a55a52f4428b37120017d7aafa3bec8a7" name="a55a52f4428b37120017d7aafa3bec8a7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a55a52f4428b37120017d7aafa3bec8a7">&#9670;&#160;</a></span>QueueDepth</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaIOStats::QueueDepth</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;QueueDepth&quot;</span>,</div>
-<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS64).setDefault(<a class="code hl_class" href="classList.html">int64_t</a>(0))</div>
-<div class="line">                                .setMin(<a class="code hl_class" href="classList.html">int64_t</a>(0)).setDescription(<span class="stringliteral">&quot;Current depth of internal buffer.&quot;</span>))</div>
-</div><!-- fragment -->
-<p>int64_t — current depth of internal buffer. </p>
 
 </div>
 </div>
@@ -694,7 +344,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIOStats.html">MediaIOStats</a></li>
-    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
   </ul>
 </div>
 </body>

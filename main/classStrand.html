@@ -298,7 +298,7 @@ Public Member Functions</h2></td></tr>
 <p>Returns the number of tasks waiting to run. </p>
 <p>Counts only tasks that have been submitted but not yet popped for execution. The currently-running task (if any) is <em>not</em> included — "pending" means "not yet
 started".</p>
-<p>This is an instantaneous snapshot; by the time the caller acts on the value, tasks may have started or new tasks may have been submitted. Useful for telemetry (e.g. surfacing backlog depth through <a class="el" href="classMediaIOStats.html#a45df23c4523872b21a6182be941418a2" title="int64_t — number of commands queued on the strand but not yet running. Populated by the MediaIO base ...">MediaIOStats::PendingOperations</a>) but not for making correctness decisions.</p>
+<p>This is an instantaneous snapshot; by the time the caller acts on the value, tasks may have started or new tasks may have been submitted. Useful for telemetry (e.g. surfacing backlog depth through MediaIOStats::PendingOperations) but not for making correctness decisions.</p>
 <dl class="section return"><dt>Returns</dt><dd>The current pending-queue size. </dd></dl>
 
 </div>
@@ -425,7 +425,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classStrand.html">Strand</a></li>
-    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -1,10 +1,8 @@
 <map id="AudioDataType" name="AudioDataType">
-<area shape="rect" id="Node000001" title="Well&#45;known Enum type for audio sample formats." alt="" coords="197,236,317,261"/>
-<area shape="poly" id="edge4_Node000001_Node000001" title=" " alt="" coords="287,228,307,225,325,227,338,235,343,249,336,264,319,272,297,271,274,264,276,259,298,266,318,266,333,260,338,249,334,238,323,232,307,230,288,234"/>
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for audio sample formats." alt="" coords="58,223,178,248"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="151,216,170,213,187,215,200,223,205,235,198,250,181,257,160,257,138,251,139,246,161,251,180,251,194,246,199,235,196,226,185,220,170,219,151,221"/>
 <area shape="rect" id="Node000002" href="$classTypedEnum.html" title=" " alt="" coords="5,80,231,105"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="139,114,248,234,244,237,135,117"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="121,119,121,222,115,222,115,119"/>
 <area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="89,5,147,31"/>
 <area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="121,45,121,80,115,80,115,45"/>
-<area shape="rect" id="Node000004" href="$classEnum_1_1Type.html" title="Lightweight handle identifying a registered enum kind." alt="" coords="255,80,352,105"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="298,119,263,236,258,235,293,118"/>
 </map>

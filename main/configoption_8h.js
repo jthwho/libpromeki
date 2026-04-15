@@ -1,5 +1,4 @@
 var configoption_8h =
 [
-    [ "ConfigTag", "structConfigTag.html", null ],
-    [ "Config", "group__util.html#gaf8b66ff752a54a8c6048a661432bd094", null ]
+    [ "Config", "group__util.html#ga4765b11a8b3f13a12ee3a8df67d270bb", null ]
 ];

@@ -188,6 +188,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a0a675b2acd7904e9c224b5fafabe12b9" id="r_a0a675b2acd7904e9c224b5fafabe12b9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">uint64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classThread.html#a0a675b2acd7904e9c224b5fafabe12b9">nativeId</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a0a675b2acd7904e9c224b5fafabe12b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the OS-native thread ID.  <br /></td></tr>
 <tr class="separator:a0a675b2acd7904e9c224b5fafabe12b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a54da994eb5adca8e8962826f24a87ae9" id="r_a54da994eb5adca8e8962826f24a87ae9"><td class="memItemLeft" align="right" valign="top">std::thread::id&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classThread.html#a54da994eb5adca8e8962826f24a87ae9">id</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a54da994eb5adca8e8962826f24a87ae9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the C++ std::thread::id of this <a class="el" href="classThread.html" title="Wrapper around std::thread with a built-in EventLoop.">Thread</a>.  <br /></td></tr>
+<tr class="separator:a54da994eb5adca8e8962826f24a87ae9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab5b7da9799d703f1e917fc55b6ba3e0b" id="r_ab5b7da9799d703f1e917fc55b6ba3e0b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__events.html#ga5f6319f9bba46b51ebc61f9c0e4a896d">SchedulePolicy</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classThread.html#ab5b7da9799d703f1e917fc55b6ba3e0b">schedulePolicy</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ab5b7da9799d703f1e917fc55b6ba3e0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current scheduling policy of this thread.  <br /></td></tr>
 <tr class="separator:ab5b7da9799d703f1e917fc55b6ba3e0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -486,6 +489,35 @@ Additional Inherited Members</h2></td></tr>
 <p>Returns the exit code from the thread's event loop. </p>
 <p>Only meaningful after the thread has finished.</p>
 <dl class="section return"><dt>Returns</dt><dd>The exit code, or 0 if not yet available. </dd></dl>
+
+</div>
+</div>
+<a id="a54da994eb5adca8e8962826f24a87ae9" name="a54da994eb5adca8e8962826f24a87ae9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a54da994eb5adca8e8962826f24a87ae9">&#9670;&#160;</a></span>id()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::thread::id Thread::id </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the C++ std::thread::id of this <a class="el" href="classThread.html" title="Wrapper around std::thread with a built-in EventLoop.">Thread</a>. </p>
+<p>Complements <a class="el" href="classThread.html#a0a675b2acd7904e9c224b5fafabe12b9">nativeId</a> for code that wants to compare against <code>std::this_thread::get_id()</code> without caring about OS-level TID representation. Captured at thread start (spawned mode) or at adoption time (adopted mode); before either, a default-constructed <code>std::thread::id</code> is returned.</p>
+<dl class="section return"><dt>Returns</dt><dd>The std::thread::id for this thread. </dd></dl>
 
 </div>
 </div>
@@ -1091,7 +1123,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classThread.html">Thread</a></li>
-    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
   </ul>
 </div>
 </body>

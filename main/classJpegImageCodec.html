@@ -156,7 +156,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a211a0c76ba09540893b5fb6e934f738d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. <br /></td></tr>
 <tr class="separator:a211a0c76ba09540893b5fb6e934f738d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aec6098f4be5a91990c742324d803e005" id="r_aec6098f4be5a91990c742324d803e005"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegImageCodec.html#aec6098f4be5a91990c742324d803e005">name</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:aec6098f4be5a91990c742324d803e005"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the codec name (e.g. "jpeg", "png").  <br /></td></tr>
+<tr class="memdesc:aec6098f4be5a91990c742324d803e005"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the codec name (e.g. "JPEG", "png").  <br /></td></tr>
 <tr class="separator:aec6098f4be5a91990c742324d803e005"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a80655d69a66712069d062a81c42d50ee" id="r_a80655d69a66712069d062a81c42d50ee"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegImageCodec.html#a80655d69a66712069d062a81c42d50ee">description</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
 <tr class="memdesc:a80655d69a66712069d062a81c42d50ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a human-readable description.  <br /></td></tr>
@@ -204,16 +204,6 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>quality</b> () <a clas
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
-<tr class="inherit_header pub_static_methods_classImageCodec"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classImageCodec')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classImageCodec.html">ImageCodec</a></td></tr>
-<tr class="memitem:a5b3edfbe76ccdabdf1e6729f6d422933 inherit pub_static_methods_classImageCodec" id="r_a5b3edfbe76ccdabdf1e6729f6d422933"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageCodec.html#a5b3edfbe76ccdabdf1e6729f6d422933">registerCodec</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classImageCodec.html#ac00500a5b16b1cff30011c80a1a0faaf">name</a>, std::function&lt; <a class="el" href="classImageCodec.html">ImageCodec</a> *()&gt; <a class="el" href="classList.html">factory</a>)</td></tr>
-<tr class="memdesc:a5b3edfbe76ccdabdf1e6729f6d422933 inherit pub_static_methods_classImageCodec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers an image codec factory.  <br /></td></tr>
-<tr class="separator:a5b3edfbe76ccdabdf1e6729f6d422933 inherit pub_static_methods_classImageCodec"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a30ecbecef0c3eed950cf0986937e67d8 inherit pub_static_methods_classImageCodec" id="r_a30ecbecef0c3eed950cf0986937e67d8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classImageCodec.html">ImageCodec</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageCodec.html#a30ecbecef0c3eed950cf0986937e67d8">createCodec</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classImageCodec.html#ac00500a5b16b1cff30011c80a1a0faaf">name</a>)</td></tr>
-<tr class="memdesc:a30ecbecef0c3eed950cf0986937e67d8 inherit pub_static_methods_classImageCodec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a codec instance by name.  <br /></td></tr>
-<tr class="separator:a30ecbecef0c3eed950cf0986937e67d8 inherit pub_static_methods_classImageCodec"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a81472b84c741acefd73a42d81d0ff78d inherit pub_static_methods_classImageCodec" id="r_a81472b84c741acefd73a42d81d0ff78d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">List</a>&lt; <a class="el" href="classString.html">String</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageCodec.html#a81472b84c741acefd73a42d81d0ff78d">registeredCodecs</a> ()</td></tr>
-<tr class="memdesc:a81472b84c741acefd73a42d81d0ff78d inherit pub_static_methods_classImageCodec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of all registered codec names.  <br /></td></tr>
-<tr class="separator:a81472b84c741acefd73a42d81d0ff78d inherit pub_static_methods_classImageCodec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classImageCodec"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classImageCodec')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classImageCodec.html">ImageCodec</a></td></tr>
 <tr class="memitem:ab73d7917708d66015c3690934e640350 inherit pro_methods_classImageCodec" id="r_ab73d7917708d66015c3690934e640350"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageCodec.html#ab73d7917708d66015c3690934e640350">setError</a> (<a class="el" href="classError.html">Error</a> <a class="el" href="classList.html">err</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;msg=<a class="el" href="classString.html">String</a>())</td></tr>
 <tr class="memdesc:ab73d7917708d66015c3690934e640350 inherit pro_methods_classImageCodec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the last error state.  <br /></td></tr>
@@ -360,8 +350,8 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Reads JPEG-specific knobs from <code>config</code>. </p>
 <p>Honored keys:</p><ul>
-<li><a class="el" href="classMediaConfig.html#a214ed57abc7e330e459128e8466f8951">MediaConfig::JpegQuality</a> (int) — sets <a class="el" href="classJpegImageCodec.html#adc69cbc9900cecaf5b32159553aae9e4">setQuality</a>.</li>
-<li><a class="el" href="classMediaConfig.html#a177b37d7554c3a401879d78b244a4440">MediaConfig::JpegSubsampling</a> (<a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> <a class="el" href="classChromaSubsampling.html">ChromaSubsampling</a> or its string / integer form) — sets <a class="el" href="classJpegImageCodec.html#a7373f927ebb70cac5e7397aa8f4d4f59">setSubsampling</a>.</li>
+<li>MediaConfig::JpegQuality (int) — sets <a class="el" href="classJpegImageCodec.html#adc69cbc9900cecaf5b32159553aae9e4">setQuality</a>.</li>
+<li>MediaConfig::JpegSubsampling (<a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> <a class="el" href="classChromaSubsampling.html">ChromaSubsampling</a> or its string / integer form) — sets <a class="el" href="classJpegImageCodec.html#a7373f927ebb70cac5e7397aa8f4d4f59">setSubsampling</a>.</li>
 </ul>
 <p>Missing or malformed keys leave the corresponding setting at its current value (the codec default after construction). </p>
 
@@ -418,10 +408,10 @@ Additional Inherited Members</h2></td></tr>
 <div class="line"><a class="code hl_class" href="classImage.html">Image</a> <a class="code hl_class" href="classList.html">i420</a> = codec.<a class="code hl_function" href="classJpegImageCodec.html#a9ab06fa21ab7d6e1b18294ccf0b5de6e">decode</a>(<a class="code hl_class" href="classList.html">jpegImage</a>, <a class="code hl_enumvalue" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafaa2e5303de461e7dd2e42889058b9d85e">PixelDesc::YUV8_420_Planar_Rec709</a>);</div>
 <div class="line"><a class="code hl_class" href="classImage.html">Image</a> <a class="code hl_class" href="classList.html">nv12</a> = codec.<a class="code hl_function" href="classJpegImageCodec.html#a9ab06fa21ab7d6e1b18294ccf0b5de6e">decode</a>(<a class="code hl_class" href="classList.html">jpegImage</a>, <a class="code hl_enumvalue" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa3de13eebd5e5aa132febaf9af05971cf">PixelDesc::YUV8_420_SemiPlanar_Rec709</a>);</div>
 <div class="ttc" id="aclassJpegImageCodec_html_a9ab06fa21ab7d6e1b18294ccf0b5de6e"><div class="ttname"><a href="classJpegImageCodec.html#a9ab06fa21ab7d6e1b18294ccf0b5de6e">JpegImageCodec::decode</a></div><div class="ttdeci">Image decode(const Image &amp;input, int outputFormat=0) override</div><div class="ttdoc">Decodes a JPEG image to an uncompressed format.</div></div>
-<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafa3de13eebd5e5aa132febaf9af05971cf"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa3de13eebd5e5aa132febaf9af05971cf">PixelDesc::YUV8_420_SemiPlanar_Rec709</a></div><div class="ttdeci">@ YUV8_420_SemiPlanar_Rec709</div><div class="ttdoc">8-bit YCbCr 4:2:0 NV12, Rec.709, limited range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:181</div></div>
-<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafa4eb281b7da4a176269cf8331ff2f6706"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa4eb281b7da4a176269cf8331ff2f6706">PixelDesc::RGB8_sRGB</a></div><div class="ttdeci">@ RGB8_sRGB</div><div class="ttdoc">8-bit RGB, sRGB, full range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:141</div></div>
-<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafa4ec24c4345de40500dfff6ebdd3cc08b"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa4ec24c4345de40500dfff6ebdd3cc08b">PixelDesc::YUV8_422_UYVY_Rec709</a></div><div class="ttdeci">@ YUV8_422_UYVY_Rec709</div><div class="ttdoc">8-bit YCbCr 4:2:2 UYVY, Rec.709, limited range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:157</div></div>
-<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafaa2e5303de461e7dd2e42889058b9d85e"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafaa2e5303de461e7dd2e42889058b9d85e">PixelDesc::YUV8_420_Planar_Rec709</a></div><div class="ttdeci">@ YUV8_420_Planar_Rec709</div><div class="ttdoc">8-bit YCbCr 4:2:0 planar, Rec.709, limited range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:174</div></div>
+<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafa3de13eebd5e5aa132febaf9af05971cf"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa3de13eebd5e5aa132febaf9af05971cf">PixelDesc::YUV8_420_SemiPlanar_Rec709</a></div><div class="ttdeci">@ YUV8_420_SemiPlanar_Rec709</div><div class="ttdoc">8-bit YCbCr 4:2:0 NV12, Rec.709, limited range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:182</div></div>
+<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafa4eb281b7da4a176269cf8331ff2f6706"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa4eb281b7da4a176269cf8331ff2f6706">PixelDesc::RGB8_sRGB</a></div><div class="ttdeci">@ RGB8_sRGB</div><div class="ttdoc">8-bit RGB, sRGB, full range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:142</div></div>
+<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafa4ec24c4345de40500dfff6ebdd3cc08b"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa4ec24c4345de40500dfff6ebdd3cc08b">PixelDesc::YUV8_422_UYVY_Rec709</a></div><div class="ttdeci">@ YUV8_422_UYVY_Rec709</div><div class="ttdoc">8-bit YCbCr 4:2:2 UYVY, Rec.709, limited range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:158</div></div>
+<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafaa2e5303de461e7dd2e42889058b9d85e"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafaa2e5303de461e7dd2e42889058b9d85e">PixelDesc::YUV8_420_Planar_Rec709</a></div><div class="ttdeci">@ YUV8_420_Planar_Rec709</div><div class="ttdoc">8-bit YCbCr 4:2:0 planar, Rec.709, limited range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:175</div></div>
 </div><!-- fragment --> </dd></dl>
 
 <p>Implements <a class="el" href="classImageCodec.html#a8384f2817c9a187975b8f574d513fdb4">ImageCodec</a>.</p>
@@ -494,7 +484,7 @@ Additional Inherited Members</h2></td></tr>
 <div class="line"><span class="keywordflow">if</span>(!<a class="code hl_class" href="classList.html">jpeg</a>.isValid()) {</div>
 <div class="line">        promekiErr(<span class="stringliteral">&quot;%s&quot;</span>, codec.<a class="code hl_function" href="classImageCodec.html#a16142e51c7c8fbd603dd5600d10799cd">lastErrorMessage</a>().cstr());</div>
 <div class="line">}</div>
-<div class="ttc" id="aclassImageCodec_html_a16142e51c7c8fbd603dd5600d10799cd"><div class="ttname"><a href="classImageCodec.html#a16142e51c7c8fbd603dd5600d10799cd">ImageCodec::lastErrorMessage</a></div><div class="ttdeci">const String &amp; lastErrorMessage() const</div><div class="ttdoc">Returns a human-readable string for the last error.</div><div class="ttdef"><b>Definition</b> codec.h:130</div></div>
+<div class="ttc" id="aclassImageCodec_html_a16142e51c7c8fbd603dd5600d10799cd"><div class="ttname"><a href="classImageCodec.html#a16142e51c7c8fbd603dd5600d10799cd">ImageCodec::lastErrorMessage</a></div><div class="ttdeci">const String &amp; lastErrorMessage() const</div><div class="ttdoc">Returns a human-readable string for the last error.</div><div class="ttdef"><b>Definition</b> codec.h:131</div></div>
 </div><!-- fragment --> </dd></dl>
 
 <p>Implements <a class="el" href="classImageCodec.html#aa8995e54de4c61e30cb6749afd138508">ImageCodec</a>.</p>
@@ -524,7 +514,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Returns the codec name (e.g. "jpeg", "png"). </p>
+<p>Returns the codec name (e.g. "JPEG", "png"). </p>
 
 <p>Implements <a class="el" href="classImageCodec.html#ac00500a5b16b1cff30011c80a1a0faaf">ImageCodec</a>.</p>
 
@@ -609,7 +599,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classJpegImageCodec.html">JpegImageCodec</a></li>
-    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -12,5 +12,7 @@ var classFrame =
     [ "imageList", "classFrame.html#a8360d8a81a700a1b90cf6da71cd524e4", null ],
     [ "metadata", "classFrame.html#a4ff149c36694dcda0da237da9d454d39", null ],
     [ "metadata", "classFrame.html#a3029bf6f68d261411f9510536c1994d2", null ],
+    [ "packetList", "classFrame.html#a071d7554c962bdee76144b6d686586c8", null ],
+    [ "packetList", "classFrame.html#a592ca6dbd3c595389c9870c983737a2a", null ],
     [ "setBenchmark", "classFrame.html#a6e5e34cd3fc8dca4b282c125b7bb1035", null ]
 ];

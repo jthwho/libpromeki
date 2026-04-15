@@ -1,0 +1,37 @@
+var classVideoCodec =
+[
+    [ "Data", "structVideoCodec_1_1Data.html", "structVideoCodec_1_1Data" ],
+    [ "DecoderFactory", "classVideoCodec.html#a4ea3cd4bb3c561497bd7f446606ed12a", null ],
+    [ "EncoderFactory", "classVideoCodec.html#a9784efc47e55a62866ce7605107fdc52", null ],
+    [ "IDList", "classVideoCodec.html#a4592805075cb09835e61af5106205b71", null ],
+    [ "ID", "classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dc", [
+      [ "Invalid", "classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca87e5acce5d36534159db13a2c635e101", null ],
+      [ "H264", "classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca48919d6ed222bf6aed61e664ac1e3350", null ],
+      [ "HEVC", "classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca309b5ca153afdcc40cc5bbff97a94d4e", null ],
+      [ "AV1", "classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca91955204655b23e1beb760657db8cd04", null ],
+      [ "VP9", "classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dcaf058ec198a80032f66ff7ca7e21e0cc7", null ],
+      [ "JPEG", "classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dcafabdbb7faf996c7b3dd1dbdf0cd8bfc6", null ],
+      [ "JPEG_XS", "classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dcac00b50b22e81463557287ef36dc782da", null ],
+      [ "ProRes_422_Proxy", "classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca906879248d6a704d11ffb4ac63cf0960", null ],
+      [ "ProRes_422_LT", "classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca63ea623937c370d5ae7150333fe55c3d", null ],
+      [ "ProRes_422", "classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca1cc69a3f06a83b13f57395c2015599c2", null ],
+      [ "ProRes_422_HQ", "classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca577f6d7160204a0537ae73bf71dd49eb", null ],
+      [ "ProRes_4444", "classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca3e8479ed0be4b466371eb8e88d5eb67a", null ],
+      [ "ProRes_4444_XQ", "classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca4b1138df53d0e0591c453fadcae9b5b0", null ],
+      [ "UserDefined", "classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca5fff2612f236512fb16a7b2395f4a6d6", null ]
+    ] ],
+    [ "VideoCodec", "classVideoCodec.html#a4786b245d957788dec65332337a40f7c", null ],
+    [ "canDecode", "classVideoCodec.html#a5e1441f143e81ceab7b1e0076e1f8bda", null ],
+    [ "canEncode", "classVideoCodec.html#ad23ab65be10033eac314bc83c720ea48", null ],
+    [ "compressedPixelDescs", "classVideoCodec.html#ade010cc2b86711df7f74aa216342991a", null ],
+    [ "createDecoder", "classVideoCodec.html#ad9515fca6ee6958ce5078249c3592bf2", null ],
+    [ "createEncoder", "classVideoCodec.html#a2277de00627b09dababfa87743ce81d6", null ],
+    [ "data", "classVideoCodec.html#a7a7e8243e92c5f3781e1a2231427e243", null ],
+    [ "description", "classVideoCodec.html#a9116cd7b4055b648f14cef43d31ba1c3", null ],
+    [ "fourccList", "classVideoCodec.html#ade6c014445b3fb804e8dc8429b7c76d6", null ],
+    [ "id", "classVideoCodec.html#a970be6fa47cc0934f92c20493ac96b37", null ],
+    [ "isValid", "classVideoCodec.html#a14acda48f4792085f9668b7b53183b89", null ],
+    [ "name", "classVideoCodec.html#a597f740cf04497f4bc1df65508a11d79", null ],
+    [ "operator!=", "classVideoCodec.html#a5432d11dbef4867725eab449ea3736b0", null ],
+    [ "operator==", "classVideoCodec.html#ae5ec2be9928da8f33e9c5a4bfda9c015", null ]
+];

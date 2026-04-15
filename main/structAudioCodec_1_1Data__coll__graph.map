@@ -1,0 +1,7 @@
+<map id="AudioCodec::Data" name="AudioCodec::Data">
+<area shape="rect" id="Node000001" title="Immutable descriptor for an audio codec." alt="" coords="23,108,162,133"/>
+<area shape="rect" id="Node000002" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,5,65,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="51,42,88,107,84,109,47,44"/>
+<area shape="rect" id="Node000003" href="$classList.html" title=" " alt="" coords="89,5,211,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="140,44,116,85,102,109,98,106,112,83,135,42"/>
+</map>

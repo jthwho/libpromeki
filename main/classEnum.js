@@ -1,5 +1,7 @@
 var classEnum =
 [
+    [ "Definition", "structEnum_1_1Definition.html", "structEnum_1_1Definition" ],
+    [ "Entry", "structEnum_1_1Entry.html", null ],
     [ "Type", "classEnum_1_1Type.html", "classEnum_1_1Type" ],
     [ "TypeList", "classEnum.html#a6cda5cfdb4a8d314a8f81384d3f8829c", null ],
     [ "Value", "classEnum.html#a7918c238808b01d74aa64aff480f6695", null ],

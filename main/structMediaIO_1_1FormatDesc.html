@@ -132,7 +132,7 @@ Public Types</h2></td></tr>
 <a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>CreateFunc</b> = std::function&lt; <a class="el" href="classMediaIOTask.html">MediaIOTask</a> *()&gt;</td></tr>
 <tr class="memdesc:a040ef25827914e55c2e8209c77033a33"><td class="mdescLeft">&#160;</td><td class="mdescRight">Factory function that creates a new task instance. <br /></td></tr>
 <tr class="separator:a040ef25827914e55c2e8209c77033a33"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4333a05199c3d78390643fd1f08d2b77" id="r_a4333a05199c3d78390643fd1f08d2b77"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMediaIO_1_1FormatDesc.html#a4333a05199c3d78390643fd1f08d2b77">ConfigSpecFunc</a> = std::function&lt; <a class="el" href="classVariantDatabase.html#a76e6097358e353e2dc6de5aa86a63505">Config::SpecMap</a>()&gt;</td></tr>
+<tr class="memitem:a4333a05199c3d78390643fd1f08d2b77" id="r_a4333a05199c3d78390643fd1f08d2b77"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMediaIO_1_1FormatDesc.html#a4333a05199c3d78390643fd1f08d2b77">ConfigSpecFunc</a> = std::function&lt; <a class="el" href="classVariantDatabase.html#ab4f16069dd41722fb0b8d3b8fc1009f5">Config::SpecMap</a>()&gt;</td></tr>
 <tr class="memdesc:a4333a05199c3d78390643fd1f08d2b77"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the config specs for this backend.  <br /></td></tr>
 <tr class="separator:a4333a05199c3d78390643fd1f08d2b77"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a056449f66cbbb6f4276f6c2ce9598f2e" id="r_a056449f66cbbb6f4276f6c2ce9598f2e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMediaIO_1_1FormatDesc.html#a056449f66cbbb6f4276f6c2ce9598f2e">DefaultMetadataFunc</a> = std::function&lt; <a class="el" href="classMetadata.html">Metadata</a>()&gt;</td></tr>
@@ -247,13 +247,13 @@ Public Attributes</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="structMediaIO_1_1FormatDesc.html#a4333a05199c3d78390643fd1f08d2b77">MediaIO::FormatDesc::ConfigSpecFunc</a> =  std::function&lt;<a class="el" href="classVariantDatabase.html#a76e6097358e353e2dc6de5aa86a63505">Config::SpecMap</a> ()&gt;</td>
+          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="structMediaIO_1_1FormatDesc.html#a4333a05199c3d78390643fd1f08d2b77">MediaIO::FormatDesc::ConfigSpecFunc</a> =  std::function&lt;<a class="el" href="classVariantDatabase.html#ab4f16069dd41722fb0b8d3b8fc1009f5">Config::SpecMap</a> ()&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 <p>Returns the config specs for this backend. </p>
-<p>The returned map lists every <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">MediaConfig::ID</a> the backend understands, each paired with a <a class="el" href="classVariantSpec.html">VariantSpec</a> that carries the backend-specific default value, accepted types, ranges, and description. Backends can narrow or widen the global spec for each ID.</p>
+<p>The returned map lists every <a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">MediaConfig::ID</a> the backend understands, each paired with a <a class="el" href="classVariantSpec.html">VariantSpec</a> that carries the backend-specific default value, accepted types, ranges, and description. Backends can narrow or widen the global spec for each ID.</p>
 <p><a class="el" href="classMediaIO.html#a0cb498ce63da62e06f5f463c0b046d74">MediaIO::defaultConfig</a> builds a <a class="el" href="classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade">Config</a> from the specs' default values. <a class="el" href="classMediaIO.html#a19ced79f69ff203cadf8039a60001caa">MediaIO::configSpecs</a> returns the raw map for introspection. </p>
 
 </div>
@@ -271,7 +271,7 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Returns the metadata schema this backend honors. </p>
-<p>The returned <a class="el" href="classMetadata.html">Metadata</a> lists every <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">Metadata::ID</a> the backend understands, pre-populated with empty / default values. It is the metadata counterpart to <a class="el" href="structMediaIO_1_1FormatDesc.html#a4333a05199c3d78390643fd1f08d2b77">ConfigSpecFunc</a> — callers that want to know which metadata keys are honored (for <code>--help</code> dumps, GUI editors, etc.) can walk the returned container without having to hard-code a per-backend list. Backends that do not consume any container-level metadata may leave this callable null — <a class="el" href="classMediaIO.html#a2bf93a4db4de6830764ee938a80b54ac">MediaIO::defaultMetadata</a> then returns an empty <a class="el" href="classMetadata.html">Metadata</a>. </p>
+<p>The returned <a class="el" href="classMetadata.html">Metadata</a> lists every <a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">Metadata::ID</a> the backend understands, pre-populated with empty / default values. It is the metadata counterpart to <a class="el" href="structMediaIO_1_1FormatDesc.html#a4333a05199c3d78390643fd1f08d2b77">ConfigSpecFunc</a> — callers that want to know which metadata keys are honored (for <code>--help</code> dumps, GUI editors, etc.) can walk the returned container without having to hard-code a per-backend list. Backends that do not consume any container-level metadata may leave this callable null — <a class="el" href="classMediaIO.html#a2bf93a4db4de6830764ee938a80b54ac">MediaIO::defaultMetadata</a> then returns an empty <a class="el" href="classMetadata.html">Metadata</a>. </p>
 
 </div>
 </div>
@@ -288,7 +288,7 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Optional callback that lists available device instances. </p>
-<p>Returns the locator strings (suitable for use as <code><a class="el" href="classMediaConfig.html#a35d1c7334bd471517976c367d29c6f0c" title="String — path or URL to the media resource.">MediaConfig::Filename</a></code>) for each available instance of this backend. File-based backends generally leave this null; device backends provide an implementation that scans the system. </p>
+<p>Returns the locator strings (suitable for use as <code>MediaConfig::Filename</code>) for each available instance of this backend. File-based backends generally leave this null; device backends provide an implementation that scans the system. </p>
 
 </div>
 </div>
@@ -351,7 +351,7 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Optional device capability query. </p>
-<p>Returns every supported configuration as a <a class="el" href="classMediaDesc.html">MediaDesc</a> (format + resolution + frame rate). Backends that represent hardware devices implement this to let callers discover what the device offers without opening it. The <code>config</code> carries at least the device locator (e.g. <a class="el" href="classMediaConfig.html#a3c254e3b8b8e45f335fb781f6f93f92c">MediaConfig::V4l2DevicePath</a>).</p>
+<p>Returns every supported configuration as a <a class="el" href="classMediaDesc.html">MediaDesc</a> (format + resolution + frame rate). Backends that represent hardware devices implement this to let callers discover what the device offers without opening it. The <code>config</code> carries at least the device locator (e.g. MediaConfig::V4l2DevicePath).</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">config</td><td>Backend config with the device locator. </td></tr>
@@ -372,7 +372,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIO.html">MediaIO</a></li><li class="navelem"><a class="el" href="structMediaIO_1_1FormatDesc.html">FormatDesc</a></li>
-    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
   </ul>
 </div>
 </body>

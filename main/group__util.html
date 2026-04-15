@@ -118,13 +118,16 @@ Collaboration diagram for Utilities:</div>
 <div class="dyncontent">
 <div class="center"><img src="group__util.png" border="0" usemap="#agroup____util" alt=""/></div>
 <map name="agroup____util" id="agroup____util">
-<area shape="rect" title="General&#45;purpose utilities, error handling, and diagnostics." alt="" coords="5,5,79,31"/>
-<area shape="rect" href="group__wellknownenums.html" title=" " alt="" coords="127,5,273,31"/>
+<area shape="rect" href="group__cuda.html" title=" " alt="" coords="143,5,257,31"/>
+<area shape="rect" title="General&#45;purpose utilities, error handling, and diagnostics." alt="" coords="5,31,79,56"/>
+<area shape="rect" href="group__wellknownenums.html" title=" " alt="" coords="127,55,273,80"/>
 </map>
 </div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="groups" name="groups"></a>
 Modules</h2></td></tr>
+<tr class="memitem:group__cuda" id="r_group__cuda"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__cuda.html">CUDA support</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:group__wellknownenums" id="r_group__wellknownenums"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__wellknownenums.html">Well-known Enums</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -190,9 +193,6 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classKeyEvent.html">KeyEvent</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classEvent.html" title="Base class for the event system.">Event</a> delivered when a key is pressed or released.  <a href="classKeyEvent.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structLibraryOptionsTag.html">LibraryOptionsTag</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Phantom tag for the library-wide options <a class="el" href="classVariantDatabase.html">VariantDatabase</a>.  <a href="structLibraryOptionsTag.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLibraryOptions.html">LibraryOptions</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Library-wide option database populated from environment variables.  <a href="classLibraryOptions.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -232,7 +232,7 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classStatsAccumulator.html">StatsAccumulator</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Online running-statistics accumulator for a stream of double samples.  <a href="classStatsAccumulator.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classStringRegistry.html">StringRegistry&lt; Tag &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classStringRegistry.html">StringRegistry&lt; Name &gt;</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Thread-safe append-only registry that maps unique strings to integer IDs.  <a href="classStringRegistry.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classStructDatabase.html">StructDatabase&lt; KeyType, StructType &gt;</a></td></tr>
@@ -250,7 +250,7 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUUID.html">UUID</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Universally Unique Identifier (<a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a>).  <a href="classUUID.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html">VariantDatabase&lt; Tag &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html">VariantDatabase&lt; Name &gt;</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A collection of named Variant values keyed by string-registered IDs.  <a href="classVariantDatabase.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantSpec.html">VariantSpec</a></td></tr>
@@ -259,21 +259,27 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:ga70723073a3da0b313289ae73f693b7a2" id="r_ga70723073a3da0b313289ae73f693b7a2"><td class="memItemLeft" align="right" valign="top">#<a class="el" href="classList.html">define</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga70723073a3da0b313289ae73f693b7a2">PROMEKI_REGISTER_BENCHMARK</a>(<a class="el" href="classList.html">Suite</a>,  Name,  Description,  <a class="el" href="classList.html">Fn</a>)</td></tr>
+<tr class="memitem:ga70723073a3da0b313289ae73f693b7a2" id="r_ga70723073a3da0b313289ae73f693b7a2"><td class="memItemLeft" align="right" valign="top">#<a class="el" href="classList.html">define</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga70723073a3da0b313289ae73f693b7a2">PROMEKI_REGISTER_BENCHMARK</a>(<a class="el" href="classList.html">Suite</a>,  <a class="el" href="classList.html">Name</a>,  <a class="el" href="classList.html">Description</a>,  <a class="el" href="classList.html">Fn</a>)</td></tr>
 <tr class="memdesc:ga70723073a3da0b313289ae73f693b7a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers a benchmark case at static initialization time.  <br /></td></tr>
 <tr class="separator:ga70723073a3da0b313289ae73f693b7a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad8f5b041efeaee084ccff55a8e187e33" id="r_gad8f5b041efeaee084ccff55a8e187e33"><td class="memItemLeft" align="right" valign="top">#<a class="el" href="classList.html">define</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gad8f5b041efeaee084ccff55a8e187e33">PROMEKI_REGISTER_ENUM_TYPE</a>(<a class="el" href="classList.html">TypeName</a>,  <a class="el" href="group__events.html#gga5f6319f9bba46b51ebc61f9c0e4a896da7a1920d61156abc05a60135aefe8bc67">Default</a>, ...)</td></tr>
+<tr class="memdesc:gad8f5b041efeaee084ccff55a8e187e33"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declares an <a class="el" href="classEnum.html">Enum</a> type with a table placed in rodata.  <br /></td></tr>
+<tr class="separator:gad8f5b041efeaee084ccff55a8e187e33"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga171ec9034fbfc2c134195af18ea762e7" id="r_ga171ec9034fbfc2c134195af18ea762e7"><td class="memItemLeft" align="right" valign="top">#<a class="el" href="classList.html">define</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga171ec9034fbfc2c134195af18ea762e7">PROMEKI_SHARED</a>(<a class="el" href="classList.html">BASE</a>)</td></tr>
 <tr class="memdesc:ga171ec9034fbfc2c134195af18ea762e7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Macro to simplify making a base object into a native shared object.  <br /></td></tr>
 <tr class="separator:ga171ec9034fbfc2c134195af18ea762e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gadd038fa9fc95b7e756cc1f175a180eb2" id="r_gadd038fa9fc95b7e756cc1f175a180eb2"><td class="memItemLeft" align="right" valign="top">#<a class="el" href="classList.html">define</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gadd038fa9fc95b7e756cc1f175a180eb2">PROMEKI_VARIANT_TYPES_NETWORK</a></td></tr>
 <tr class="memdesc:gadd038fa9fc95b7e756cc1f175a180eb2"><td class="mdescLeft">&#160;</td><td class="mdescRight">X-macro that defines all supported Variant types.  <br /></td></tr>
 <tr class="separator:gadd038fa9fc95b7e756cc1f175a180eb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga155b8e018cd70514a008a09951cf033e" id="r_ga155b8e018cd70514a008a09951cf033e"><td class="memItemLeft" align="right" valign="top">#<a class="el" href="classList.html">define</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga155b8e018cd70514a008a09951cf033e">PROMEKI_DECLARE_ID</a>(<a class="el" href="classList.html">Name</a>, ...)</td></tr>
+<tr class="memdesc:ga155b8e018cd70514a008a09951cf033e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declares a well-known <a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a> key as a compile-time constant.  <br /></td></tr>
+<tr class="separator:ga155b8e018cd70514a008a09951cf033e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:gaf8b66ff752a54a8c6048a661432bd094" id="r_gaf8b66ff752a54a8c6048a661432bd094"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gaf8b66ff752a54a8c6048a661432bd094">Config</a> = <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&lt; <a class="el" href="structConfigTag.html">ConfigTag</a> &gt;</td></tr>
-<tr class="memdesc:gaf8b66ff752a54a8c6048a661432bd094"><td class="mdescLeft">&#160;</td><td class="mdescRight">Configuration database mapping named options to Variant values.  <br /></td></tr>
-<tr class="separator:gaf8b66ff752a54a8c6048a661432bd094"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga4765b11a8b3f13a12ee3a8df67d270bb" id="r_ga4765b11a8b3f13a12ee3a8df67d270bb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga4765b11a8b3f13a12ee3a8df67d270bb">Config</a> = <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&lt;&quot;Config&quot;&gt;</td></tr>
+<tr class="memdesc:ga4765b11a8b3f13a12ee3a8df67d270bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Configuration database mapping named options to Variant values.  <br /></td></tr>
+<tr class="separator:ga4765b11a8b3f13a12ee3a8df67d270bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga72213850e8f39e4956d4ce23dd5238f7" id="r_ga72213850e8f39e4956d4ce23dd5238f7"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">T</a> &gt; </td></tr>
 <tr class="memitem:ga72213850e8f39e4956d4ce23dd5238f7"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a> = <a class="el" href="classPair.html">Pair</a>&lt; <a class="el" href="classList.html">T</a>, <a class="el" href="classError.html">Error</a> &gt;</td></tr>
 <tr class="memdesc:ga72213850e8f39e4956d4ce23dd5238f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience alias for fallible return types.  <br /></td></tr>
@@ -285,7 +291,7 @@ Enumerations</h2></td></tr>
 , <a class="el" href="group__util.html#gga3e19f7ded49aac87704161e5d5b458dba56525ae64d370c0b448ac0d60710ef17">SpecValidation::Warn</a>
 , <a class="el" href="group__util.html#gga3e19f7ded49aac87704161e5d5b458dba2e979835dd62324f5bfe217449ba4974">SpecValidation::Strict</a>
  }</td></tr>
-<tr class="memdesc:ga3e19f7ded49aac87704161e5d5b458db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Validation mode for <a class="el" href="classVariantDatabase.html#a5170ad7c04260f90b69bfa2aff2fdc2a" title="Sets the value for the given ID.">VariantDatabase::set()</a>.  <a href="group__util.html#ga3e19f7ded49aac87704161e5d5b458db">More...</a><br /></td></tr>
+<tr class="memdesc:ga3e19f7ded49aac87704161e5d5b458db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Validation mode for <a class="el" href="classVariantDatabase.html#acc09774a54c4b14168cc55fc14c4ad19" title="Sets the value for the given ID.">VariantDatabase::set()</a>.  <a href="group__util.html#ga3e19f7ded49aac87704161e5d5b458db">More...</a><br /></td></tr>
 <tr class="separator:ga3e19f7ded49aac87704161e5d5b458db"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
@@ -306,6 +312,63 @@ Functions</h2></td></tr>
 <p>Variant type, <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> reporting, <a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a> generation, <a class="el" href="classFourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a> codes, <a class="el" href="classMetadata.html" title="Key-value metadata container using typed Variant values.">Metadata</a> key-value store, environment access, command-line parsing, logging, memory pools, platform detection, terminal I/O, and more.</p>
 <p>See <a class="el" href="debugging.html">Debugging and Diagnostics</a> for build types, per-module debug logging, and crash handling. </p>
 <h2 class="groupheader">Macro Definition Documentation</h2>
+<a id="ga155b8e018cd70514a008a09951cf033e" name="ga155b8e018cd70514a008a09951cf033e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga155b8e018cd70514a008a09951cf033e">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#<a class="el" href="classList.html">define</a> PROMEKI_DECLARE_ID</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><a class="el" href="classList.html">Name</a>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>...</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Value:</b><div class="fragment"><div class="line">        <span class="keyword">static</span> <span class="keyword">constexpr</span> ID <a class="code hl_class" href="classList.html">Name</a> = ID::literal(#<a class="code hl_class" href="classList.html">Name</a>);                          \</div>
+<div class="line">        [[<a class="code hl_class" href="classList.html">maybe_unused</a>]] <span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">const</span> <a class="code hl_class" href="classList.html">ID                                 \</a></div>
+<div class="line"><a class="code hl_class" href="classList.html">                PROMEKI_CONCAT</a>(<a class="code hl_class" href="classList.html">_promeki_spec_reg_</a>, <a class="code hl_class" href="classList.html">Name</a>) =                      <a class="code hl_class" href="classList.html">\</a></div>
+<div class="line"><a class="code hl_class" href="classList.html">                        declareID</a>(#<a class="code hl_class" href="classList.html">Name</a>, <a class="code hl_class" href="classList.html">__VA_ARGS__</a>)</div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+</div><!-- fragment -->
+<p>Declares a well-known <a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a> key as a compile-time constant. </p>
+<p>Expands, inside a class derived from <a class="el" href="classVariantDatabase.html">VariantDatabase</a>, to two declarations that together give the key both a <code>constexpr</code> ID and a registered <a class="el" href="classVariantSpec.html">VariantSpec</a> :</p>
+<ol type="1">
+<li><code>static constexpr ID &lt;Name&gt;</code> initialized from the pure FNV-1a hash of <code>"&lt;Name&gt;"</code> via <a class="el" href="classStringRegistry_1_1Item.html#aedbe8effeb41da28938956404517bd52">StringRegistry::Item::literal</a> — usable in <code>switch</code> labels, <code>static_assert</code>, template parameters, and other constant expression contexts.</li>
+<li>A sibling <code>static inline const ID</code> whose initializer calls <a class="el" href="classVariantDatabase.html#a8841b93220fa1b53cbc2a89aa1990a71">VariantDatabase::declareID</a> with the same name to register the spec (and the name, for reverse lookup) at static-init time. The strict-hash path guarantees the two IDs agree; a hash collision with another well-known key will abort the process before <code>main()</code> runs.</li>
+</ol>
+<p>The name appears once in the macro call, so there is no risk of the literal hash and the registered name drifting apart.</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><span class="keyword">class </span><a class="code hl_class" href="classMetadata.html">Metadata</a> : <span class="keyword">public</span> <a class="code hl_class" href="classVariantDatabase.html">VariantDatabase</a>&lt;&quot;Metadata&quot;&gt; {</div>
+<div class="line">    <span class="keyword">public</span>:</div>
+<div class="line">        <a class="code hl_define" href="group__util.html#ga155b8e018cd70514a008a09951cf033e">PROMEKI_DECLARE_ID</a>(<a class="code hl_class" href="classList.html">Title</a>,</div>
+<div class="line">            <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                         .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                         .setDescription(<span class="stringliteral">&quot;Title of the media.&quot;</span>));</div>
+<div class="line"> </div>
+<div class="line">        <span class="comment">// Title.id() is now a constant expression:</span></div>
+<div class="line">        <span class="keyword">static_assert</span>(<a class="code hl_class" href="classList.html">Title</a>.id() == ID::literal(<span class="stringliteral">&quot;Title&quot;</span>).id());</div>
+<div class="line">};</div>
+<div class="ttc" id="aclassMetadata_html"><div class="ttname"><a href="classMetadata.html">Metadata</a></div><div class="ttdoc">Key-value metadata container using typed Variant values.</div><div class="ttdef"><b>Definition</b> metadata.h:45</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:57</div></div>
+<div class="ttc" id="aclassVariantDatabase_html"><div class="ttname"><a href="classVariantDatabase.html">VariantDatabase</a></div><div class="ttdoc">A collection of named Variant values keyed by string-registered IDs.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:94</div></div>
+<div class="ttc" id="aclassVariantSpec_html"><div class="ttname"><a href="classVariantSpec.html">VariantSpec</a></div><div class="ttdoc">Describes the constraints and default value for a VariantDatabase ID.</div><div class="ttdef"><b>Definition</b> variantspec.h:62</div></div>
+<div class="ttc" id="agroup__util_html_ga155b8e018cd70514a008a09951cf033e"><div class="ttname"><a href="group__util.html#ga155b8e018cd70514a008a09951cf033e">PROMEKI_DECLARE_ID</a></div><div class="ttdeci">#define PROMEKI_DECLARE_ID(Name,...)</div><div class="ttdoc">Declares a well-known VariantDatabase key as a compile-time constant.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:799</div></div>
+</div><!-- fragment --> </dd></dl>
+
+</div>
+</div>
 <a id="ga70723073a3da0b313289ae73f693b7a2" name="ga70723073a3da0b313289ae73f693b7a2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ga70723073a3da0b313289ae73f693b7a2">&#9670;&#160;</a></span>PROMEKI_REGISTER_BENCHMARK</h2>
 
@@ -322,13 +385,13 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname">Name, </td>
+          <td class="paramname"><a class="el" href="classList.html">Name</a>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname">Description, </td>
+          <td class="paramname"><a class="el" href="classList.html">Description</a>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -345,8 +408,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 <b>Value:</b><div class="fragment"><div class="line">        [[<a class="code hl_class" href="classList.html">maybe_unused</a>]] <span class="keyword">static</span> <span class="keywordtype">int</span> PROMEKI_CONCAT(<a class="code hl_class" href="classList.html">__promeki_benchmark_</a>, PROMEKI_UNIQUE_ID) = \</div>
 <div class="line">                promeki::BenchmarkRunner::registerCase(                                   \</div>
-<div class="line">                        promeki::BenchmarkCase((<a class="code hl_class" href="classList.html">Suite</a>), (Name), (Description), (<a class="code hl_class" href="classList.html">Fn</a>)));</div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="line">                        promeki::BenchmarkCase((<a class="code hl_class" href="classList.html">Suite</a>), (<a class="code hl_class" href="classList.html">Name</a>), (<a class="code hl_class" href="classList.html">Description</a>), (<a class="code hl_class" href="classList.html">Fn</a>)));</div>
 </div><!-- fragment -->
 <p>Registers a benchmark case at static initialization time. </p>
 <p>Usage: </p><div class="fragment"><div class="line"><span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code hl_class" href="classList.html">bench_myCase</a>(<a class="code hl_class" href="classBenchmarkState.html">BenchmarkState</a> &amp;state) {</div>
@@ -366,6 +428,104 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="gad8f5b041efeaee084ccff55a8e187e33" name="gad8f5b041efeaee084ccff55a8e187e33"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gad8f5b041efeaee084ccff55a8e187e33">&#9670;&#160;</a></span>PROMEKI_REGISTER_ENUM_TYPE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#<a class="el" href="classList.html">define</a> PROMEKI_REGISTER_ENUM_TYPE</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><a class="el" href="classList.html">TypeName</a>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><a class="el" href="group__events.html#gga5f6319f9bba46b51ebc61f9c0e4a896da7a1920d61156abc05a60135aefe8bc67">Default</a>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>...</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Value:</b><div class="fragment"><div class="line">        <span class="keyword">static</span> constexpr ::promeki::Enum::Entry <a class="code hl_class" href="classList.html">_promeki_enum_entries_</a>[] = {    \</div>
+<div class="line">                <a class="code hl_class" href="classList.html">__VA_ARGS__</a>                                                     \</div>
+<div class="line">        };                                                                      <a class="code hl_class" href="classList.html">\</a></div>
+<div class="line"><a class="code hl_class" href="classList.html">        static_assert</a>(<span class="keyword">sizeof</span>(<a class="code hl_class" href="classList.html">_promeki_enum_entries_</a>) /                          \</div>
+<div class="line">                              <span class="keyword">sizeof</span>(<a class="code hl_class" href="classList.html">_promeki_enum_entries_</a>[0]) &gt; 0,            \</div>
+<div class="line">                <span class="stringliteral">&quot;Enum type &#39;&quot;</span> <a class="code hl_class" href="classList.html">TypeName</a> <span class="stringliteral">&quot;&#39; has no entries&quot;</span>);                     <a class="code hl_class" href="classList.html">\</a></div>
+<div class="line"><a class="code hl_class" href="classList.html">        static_assert</a>(::promeki::detail::enumEntriesUnique(                     \</div>
+<div class="line">                <a class="code hl_class" href="classList.html">_promeki_enum_entries_</a>,                                         \</div>
+<div class="line">                <span class="keyword">sizeof</span>(<a class="code hl_class" href="classList.html">_promeki_enum_entries_</a>) /                                \</div>
+<div class="line">                        <span class="keyword">sizeof</span>(<a class="code hl_class" href="classList.html">_promeki_enum_entries_</a>[0])),                     \</div>
+<div class="line">                <span class="stringliteral">&quot;Enum type &#39;&quot;</span> <a class="code hl_class" href="classList.html">TypeName</a> <span class="stringliteral">&quot;&#39; has duplicate name or value&quot;</span>);       <a class="code hl_class" href="classList.html">\</a></div>
+<div class="line"><a class="code hl_class" href="classList.html">        static_assert</a>(::promeki::detail::enumHasDefault(                        \</div>
+<div class="line">                <a class="code hl_class" href="classList.html">_promeki_enum_entries_</a>,                                         \</div>
+<div class="line">                <span class="keyword">sizeof</span>(<a class="code hl_class" href="classList.html">_promeki_enum_entries_</a>) /                                \</div>
+<div class="line">                        <span class="keyword">sizeof</span>(<a class="code hl_class" href="classList.html">_promeki_enum_entries_</a>[0]),                      \</div>
+<div class="line">                (<a class="code hl_enumvalue" href="group__events.html#gga5f6319f9bba46b51ebc61f9c0e4a896da7a1920d61156abc05a60135aefe8bc67">Default</a>)),                                                     \</div>
+<div class="line">                <span class="stringliteral">&quot;Enum type &#39;&quot;</span> <a class="code hl_class" href="classList.html">TypeName</a> <span class="stringliteral">&quot;&#39; default value not in entry table&quot;</span>); \</div>
+<div class="line">        <span class="keyword">static</span> inline ::promeki::Enum::Definition <a class="code hl_class" href="classList.html">_promeki_enum_def_</a>{           \</div>
+<div class="line">                .name         = <a class="code hl_class" href="classList.html">TypeName</a>,                                       \</div>
+<div class="line">                .entries      = <a class="code hl_class" href="classList.html">_promeki_enum_entries_</a>,                         \</div>
+<div class="line">                .entryCount   = <span class="keyword">sizeof</span>(<a class="code hl_class" href="classList.html">_promeki_enum_entries_</a>) /                \</div>
+<div class="line">                                <span class="keyword">sizeof</span>(<a class="code hl_class" href="classList.html">_promeki_enum_entries_</a>[0]),              \</div>
+<div class="line">                .defaultValue = (<a class="code hl_enumvalue" href="group__events.html#gga5f6319f9bba46b51ebc61f9c0e4a896da7a1920d61156abc05a60135aefe8bc67">Default</a>),                                      \</div>
+<div class="line">                .typeIndex    = 0                                               \</div>
+<div class="line">        };                                                                      \</div>
+<div class="line">        <span class="keyword">static</span> <span class="keyword">inline</span> const ::promeki::Enum::Type Type =                        \</div>
+<div class="line">                ::promeki::Enum::registerDefinition(&amp;<a class="code hl_class" href="classList.html">_promeki_enum_def_</a>)</div>
+<div class="ttc" id="agroup__events_html_gga5f6319f9bba46b51ebc61f9c0e4a896da7a1920d61156abc05a60135aefe8bc67"><div class="ttname"><a href="group__events.html#gga5f6319f9bba46b51ebc61f9c0e4a896da7a1920d61156abc05a60135aefe8bc67">SchedulePolicy::Default</a></div><div class="ttdeci">@ Default</div><div class="ttdoc">Normal time-sharing (SCHED_OTHER on POSIX).</div></div>
+</div><!-- fragment -->
+<p>Declares an <a class="el" href="classEnum.html">Enum</a> type with a table placed in rodata. </p>
+<p>Expands inside a class body (typically one deriving from <a class="el" href="classTypedEnum.html">TypedEnum</a>) to three declarations that together give the type a zero-heap, compile-time-validated registration:</p>
+<ol type="1">
+<li><code>static constexpr <a class="el" href="structEnum_1_1Entry.html" title="One (name, integer) entry in an enum&#39;s value table.">Enum::Entry</a> _promeki_enum_entries_[]</code> — the (name, value) table, placed in rodata.</li>
+<li><code>static inline <a class="el" href="structEnum_1_1Definition.html" title="Immutable per-type record stored in the global registry.">Enum::Definition</a> _promeki_enum_def_</code> — a single Definition struct pointing at the table. The registry stamps its <code>typeIndex</code> at static-init time; nothing else is ever written.</li>
+<li><code>static inline const <a class="el" href="classEnum_1_1Type.html" title="Lightweight handle identifying a registered enum kind.">Enum::Type</a> Type</code> — the handle consumed by <a class="el" href="classTypedEnum.html">TypedEnum</a>'s constructors and by user code.</li>
+</ol>
+<p>Three <code>static_assert</code>s verify at compile time that:</p>
+<ul>
+<li>the entry table is non-empty,</li>
+<li>no two entries share a name or an integer value,</li>
+<li>the default value is present in the table.</li>
+</ul>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">TypeName</td><td><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> literal — the human-readable type name. </td></tr>
+    <tr><td class="paramname">Default</td><td>Integer default value, which must appear in the table. </td></tr>
+    <tr><td class="paramname">...</td><td>Brace-initialized <code><a class="el" href="structEnum_1_1Entry.html" title="One (name, integer) entry in an enum&#39;s value table.">Enum::Entry</a></code> rows — <code>{ "Name", integer }</code> comma-separated.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><span class="keyword">class </span><a class="code hl_class" href="classVideoPattern.html">VideoPattern</a> : <span class="keyword">public</span> <a class="code hl_class" href="classTypedEnum.html">TypedEnum</a>&lt;VideoPattern&gt; {</div>
+<div class="line">    <span class="keyword">public</span>:</div>
+<div class="line">        <a class="code hl_define" href="group__util.html#gad8f5b041efeaee084ccff55a8e187e33">PROMEKI_REGISTER_ENUM_TYPE</a>(<span class="stringliteral">&quot;VideoPattern&quot;</span>, 0,</div>
+<div class="line">                { <span class="stringliteral">&quot;ColorBars&quot;</span>,   0 },</div>
+<div class="line">                { <span class="stringliteral">&quot;ColorBars75&quot;</span>, 1 },</div>
+<div class="line">                { <span class="stringliteral">&quot;Ramp&quot;</span>,        2 });</div>
+<div class="line">        <span class="keyword">using </span><a class="code hl_class" href="classTypedEnum.html">TypedEnum</a>&lt;<a class="code hl_class" href="classVideoPattern.html">VideoPattern</a>&gt;<a class="code hl_function" href="classTypedEnum.html#a4456f276a370afa987e063f2705a6894">::TypedEnum</a>;</div>
+<div class="line">        <span class="keyword">static</span> <span class="keyword">const</span> <a class="code hl_class" href="classVideoPattern.html">VideoPattern</a> ColorBars;</div>
+<div class="line">};</div>
+<div class="ttc" id="aclassTypedEnum_html"><div class="ttname"><a href="classTypedEnum.html">TypedEnum</a></div><div class="ttdoc">CRTP base pinning an Enum value to a compile-time type.</div><div class="ttdef"><b>Definition</b> enum.h:535</div></div>
+<div class="ttc" id="aclassTypedEnum_html_a4456f276a370afa987e063f2705a6894"><div class="ttname"><a href="classTypedEnum.html#a4456f276a370afa987e063f2705a6894">TypedEnum&lt; VideoPattern &gt;::TypedEnum</a></div><div class="ttdeci">TypedEnum()</div><div class="ttdoc">Default-constructs with the registered default value.</div><div class="ttdef"><b>Definition</b> enum.h:544</div></div>
+<div class="ttc" id="aclassVideoPattern_html"><div class="ttname"><a href="classVideoPattern.html">VideoPattern</a></div><div class="ttdoc">Well-known Enum type for video test pattern generator modes.</div><div class="ttdef"><b>Definition</b> enums.h:65</div></div>
+<div class="ttc" id="agroup__util_html_gad8f5b041efeaee084ccff55a8e187e33"><div class="ttname"><a href="group__util.html#gad8f5b041efeaee084ccff55a8e187e33">PROMEKI_REGISTER_ENUM_TYPE</a></div><div class="ttdeci">#define PROMEKI_REGISTER_ENUM_TYPE(TypeName, Default,...)</div><div class="ttdoc">Declares an Enum type with a table placed in rodata.</div><div class="ttdef"><b>Definition</b> enum.h:641</div></div>
+</div><!-- fragment --> </dd></dl>
 
 </div>
 </div>
@@ -484,6 +644,10 @@ Functions</h2></td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">TypePixelDesc   </td><td class="markdownTableBodyNone"><code><a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a></code>    </td></tr>
 <tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">TypeVideoCodec   </td><td class="markdownTableBodyNone"><code><a class="el" href="classVideoCodec.html" title="First-class identifier for a video / still-image codec family.">VideoCodec</a></code>    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">TypeAudioCodec   </td><td class="markdownTableBodyNone"><code><a class="el" href="classAudioCodec.html" title="First-class identifier for an audio codec family.">AudioCodec</a></code>    </td></tr>
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">TypeEnum   </td><td class="markdownTableBodyNone"><code><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a></code>    </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">TypeEnumList   </td><td class="markdownTableBodyNone"><code><a class="el" href="classEnumList.html" title="Ordered, duplicate-preserving list of Enum values sharing one type.">EnumList</a></code>   </td></tr>
@@ -505,31 +669,30 @@ Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Typedef Documentation</h2>
-<a id="gaf8b66ff752a54a8c6048a661432bd094" name="gaf8b66ff752a54a8c6048a661432bd094"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#gaf8b66ff752a54a8c6048a661432bd094">&#9670;&#160;</a></span>Config</h2>
+<a id="ga4765b11a8b3f13a12ee3a8df67d270bb" name="ga4765b11a8b3f13a12ee3a8df67d270bb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga4765b11a8b3f13a12ee3a8df67d270bb">&#9670;&#160;</a></span>Config</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="group__util.html#gaf8b66ff752a54a8c6048a661432bd094">Config</a> =  <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&lt;<a class="el" href="structConfigTag.html">ConfigTag</a>&gt;</td>
+          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="group__util.html#ga4765b11a8b3f13a12ee3a8df67d270bb">Config</a> =  <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&lt;&quot;Config&quot;&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 <p>Configuration database mapping named options to Variant values. </p>
-<p>Config is a <a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a> instantiation with its own ID namespace. Use <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b" title="Lightweight handle identifying an entry by name.">Config::ID</a> to create or look up configuration option identifiers.</p>
+<p>Config is a <a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a> instantiation with its own ID namespace. Use <a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9" title="Lightweight handle identifying an entry by name.">Config::ID</a> to create or look up configuration option identifiers.</p>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classVariantDatabase.html">Config</a> <a class="code hl_class" href="classList.html">cfg</a>;</div>
-<div class="line"><a class="code hl_typedef" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">Config::ID</a> width(<span class="stringliteral">&quot;video.width&quot;</span>);</div>
-<div class="line"><a class="code hl_typedef" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">Config::ID</a> height(<span class="stringliteral">&quot;video.height&quot;</span>);</div>
+<div class="line"><a class="code hl_typedef" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">Config::ID</a> width(<span class="stringliteral">&quot;video.width&quot;</span>);</div>
+<div class="line"><a class="code hl_typedef" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">Config::ID</a> height(<span class="stringliteral">&quot;video.height&quot;</span>);</div>
 <div class="line"> </div>
 <div class="line"><a class="code hl_class" href="classList.html">cfg</a>.<a class="code hl_function" href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">set</a>(width, 1920);</div>
 <div class="line"><a class="code hl_class" href="classList.html">cfg</a>.<a class="code hl_function" href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">set</a>(height, 1080);</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">w</a> = <a class="code hl_class" href="classList.html">cfg</a>.get(width).get&lt;<a class="code hl_class" href="classList.html">int32_t</a>&gt;(); <span class="comment">// 1920</span></div>
 <div class="ttc" id="aclassList_html_ab5f4f4c756727be7a037ea66660a2fec"><div class="ttname"><a href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">List::set</a></div><div class="ttdeci">bool set(size_t index, const T &amp;val)</div><div class="ttdoc">Sets an item in the list by index.</div><div class="ttdef"><b>Definition</b> list.h:541</div></div>
-<div class="ttc" id="aclassVariantDatabase_html"><div class="ttname"><a href="classVariantDatabase.html">VariantDatabase&lt; ConfigTag &gt;</a></div></div>
-<div class="ttc" id="aclassVariantDatabase_html_a08cce9737a8bae134efe77f5b3392f9b"><div class="ttname"><a href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">VariantDatabase&lt; ConfigTag &gt;::ID</a></div><div class="ttdeci">typename StringRegistry&lt; ConfigTag &gt;::Item ID</div><div class="ttdoc">Lightweight handle identifying an entry by name.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:85</div></div>
+<div class="ttc" id="aclassVariantDatabase_html_acc1cc83a86ed35a952fe287115b501d9"><div class="ttname"><a href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">VariantDatabase&lt;&quot;Config&quot;&gt;::ID</a></div><div class="ttdeci">typename StringRegistry&lt; Name &gt;::Item ID</div><div class="ttdoc">Lightweight handle identifying an entry by name.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:97</div></div>
 </div><!-- fragment --> </dd></dl>
 
 </div>
@@ -580,8 +743,8 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 </table>
 </div><div class="memdoc">
 
-<p>Validation mode for <a class="el" href="classVariantDatabase.html#a5170ad7c04260f90b69bfa2aff2fdc2a" title="Sets the value for the given ID.">VariantDatabase::set()</a>. </p>
-<p>Controls whether values are checked against the registered <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a> when stored via <a class="el" href="classVariantDatabase.html#a5170ad7c04260f90b69bfa2aff2fdc2a">VariantDatabase::set</a>. </p>
+<p>Validation mode for <a class="el" href="classVariantDatabase.html#acc09774a54c4b14168cc55fc14c4ad19" title="Sets the value for the given ID.">VariantDatabase::set()</a>. </p>
+<p>Controls whether values are checked against the registered <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a> when stored via <a class="el" href="classVariantDatabase.html#acc09774a54c4b14168cc55fc14c4ad19">VariantDatabase::set</a>. </p>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="gga3e19f7ded49aac87704161e5d5b458dba6adf97f83acf6453d4a6a4b1070f3754" name="gga3e19f7ded49aac87704161e5d5b458dba6adf97f83acf6453d4a6a4b1070f3754"></a>None&#160;</td><td class="fielddoc"><p>No validation — values are stored unconditionally. </p>
 </td></tr>
@@ -733,7 +896,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
   </ul>
 </div>
 </body>

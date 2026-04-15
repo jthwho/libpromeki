@@ -1,5 +1,5 @@
 <map id="ClockDomain" name="ClockDomain">
-<area shape="rect" id="Node000001" title="Named identity for a clock source." alt="" coords="26,123,135,148"/>
-<area shape="rect" id="Node000002" href="$classStringRegistry_1_1Item.html" title="Lightweight handle identifying a registered string." alt="" coords="5,5,156,45"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="83,59,83,122,78,122,78,59"/>
+<area shape="rect" id="Node000001" title="Named identity for a clock source." alt="" coords="35,123,144,148"/>
+<area shape="rect" id="Node000002" href="$classStringRegistry_1_1Item.html" title="Lightweight handle identifying a registered string." alt="" coords="5,5,173,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="92,59,92,122,87,122,87,59"/>
 </map>

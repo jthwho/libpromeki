@@ -173,6 +173,14 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>editStartOffset</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a6adcd3d8cff0ae89ba8a764ad248e404"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the elst start offset (in this track's timescale). <br /></td></tr>
 <tr class="separator:a6adcd3d8cff0ae89ba8a764ad248e404"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a77db112fc47c41e2e6aa78300e13f09a" id="r_a77db112fc47c41e2e6aa78300e13f09a"><td class="memItemLeft" align="right" valign="top"><a id="a77db112fc47c41e2e6aa78300e13f09a" name="a77db112fc47c41e2e6aa78300e13f09a"></a>
+<a class="el" href="classList.html">const</a> <a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3">Buffer::Ptr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>codecConfig</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a77db112fc47c41e2e6aa78300e13f09a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the codec-specific configuration record payload (e.g. the bytes inside the <code>avcC</code> / <code>hvcC</code> box), or an empty <a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3" title="Shared pointer type for Buffer.">Buffer::Ptr</a> if the track has no such record. <br /></td></tr>
+<tr class="separator:a77db112fc47c41e2e6aa78300e13f09a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7c34baaee13f083029e0c3125a611a3c" id="r_a7c34baaee13f083029e0c3125a611a3c"><td class="memItemLeft" align="right" valign="top"><a id="a7c34baaee13f083029e0c3125a611a3c" name="a7c34baaee13f083029e0c3125a611a3c"></a>
+<a class="el" href="classFourCC.html">FourCC</a>&#160;</td><td class="memItemRight" valign="bottom"><b>codecConfigType</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a7c34baaee13f083029e0c3125a611a3c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classFourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a> type of the codec configuration record (<code>avcC</code>, <code>hvcC</code>, etc.) or zero when absent. <br /></td></tr>
+<tr class="separator:a7c34baaee13f083029e0c3125a611a3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7924cb0d912d5fb4d6941657f00d3c95" id="r_a7924cb0d912d5fb4d6941657f00d3c95"><td class="memItemLeft" align="right" valign="top"><a id="a7924cb0d912d5fb4d6941657f00d3c95" name="a7924cb0d912d5fb4d6941657f00d3c95"></a>
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setType</b> (<a class="el" href="classQuickTime.html#aa9b093af60dec88b7d0a88da118d12cc">TrackType</a> <a class="el" href="classList.html">t</a>)</td></tr>
 <tr class="memdesc:a7924cb0d912d5fb4d6941657f00d3c95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the track kind. <br /></td></tr>
@@ -225,6 +233,14 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setEditStartOffset</b> (<a class="el" href="classList.html">int64_t</a> v)</td></tr>
 <tr class="memdesc:afa71f6880b5129d15739152b7ad1f280"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the elst start offset (in this track's timescale). <br /></td></tr>
 <tr class="separator:afa71f6880b5129d15739152b7ad1f280"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2f0d19fc392ebff71f65f69b0683a01d" id="r_a2f0d19fc392ebff71f65f69b0683a01d"><td class="memItemLeft" align="right" valign="top"><a id="a2f0d19fc392ebff71f65f69b0683a01d" name="a2f0d19fc392ebff71f65f69b0683a01d"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setCodecConfig</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3">Buffer::Ptr</a> &amp;b)</td></tr>
+<tr class="memdesc:a2f0d19fc392ebff71f65f69b0683a01d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the codec configuration record payload. <br /></td></tr>
+<tr class="separator:a2f0d19fc392ebff71f65f69b0683a01d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a48e617f58b616599bd95a1b474ef093b" id="r_a48e617f58b616599bd95a1b474ef093b"><td class="memItemLeft" align="right" valign="top"><a id="a48e617f58b616599bd95a1b474ef093b" name="a48e617f58b616599bd95a1b474ef093b"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setCodecConfigType</b> (<a class="el" href="classFourCC.html">FourCC</a> <a class="el" href="classList.html">t</a>)</td></tr>
+<tr class="memdesc:a48e617f58b616599bd95a1b474ef093b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the <a class="el" href="classFourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a> type of the codec configuration record. <br /></td></tr>
+<tr class="separator:a48e617f58b616599bd95a1b474ef093b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Descriptor for a single media track in the container. </p>
@@ -239,7 +255,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classQuickTime.html">QuickTime</a></li><li class="navelem"><a class="el" href="classQuickTime_1_1Track.html">Track</a></li>
-    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
   </ul>
 </div>
 </body>

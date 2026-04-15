@@ -1,10 +1,8 @@
 <map id="MetadataRtpFormat" name="MetadataRtpFormat">
-<area shape="rect" id="Node000001" title="Well&#45;known Enum type for the metadata&#45;stream wire format over RTP." alt="" coords="209,170,361,195"/>
-<area shape="poly" id="edge4_Node000001_Node000001" title=" " alt="" coords="376,174,387,183,379,190,361,193,361,188,377,185,382,183,373,179"/>
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for the metadata&#45;stream wire format over RTP." alt="" coords="58,157,210,182"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="225,162,237,169,228,176,211,179,210,173,226,171,231,169,223,167"/>
 <area shape="rect" id="Node000002" href="$classTypedEnum.html" title=" " alt="" coords="5,80,263,105"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="167,110,266,168,264,172,164,115"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="137,119,137,156,131,156,131,119"/>
 <area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="105,5,163,31"/>
 <area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="137,45,137,80,131,80,131,45"/>
-<area shape="rect" id="Node000004" href="$classEnum_1_1Type.html" title="Lightweight handle identifying a registered enum kind." alt="" coords="287,80,384,105"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="324,118,294,171,289,168,320,116"/>
 </map>

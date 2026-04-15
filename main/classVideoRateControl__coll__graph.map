@@ -1,0 +1,8 @@
+<map id="VideoRateControl" name="VideoRateControl">
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for video&#45;encoder rate&#45;control modes." alt="" coords="58,164,194,189"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="209,168,221,177,212,185,195,187,194,182,210,180,215,177,206,173"/>
+<area shape="rect" id="Node000002" href="$classTypedEnum.html" title=" " alt="" coords="5,80,247,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="129,119,129,164,123,164,123,119"/>
+<area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="97,5,155,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="129,45,129,80,123,80,123,45"/>
+</map>

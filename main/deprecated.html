@@ -106,9 +106,7 @@ $(document).ready(function(){initNavTree('deprecated.html',''); initResizable();
 <dt>Member <a class="el" href="sdlplayerold_8h.html#a621b43de54be23f637b44122ecfa048f">createSDLPlayerOld</a>  (<a class="el" href="classSDLVideoWidget.html" title="Widget that displays a promeki Image via SDL texture rendering.">SDLVideoWidget</a> *video, <a class="el" href="classSDLAudioOutput.html" title="Manages an SDL3 audio output device for playback.">SDLAudioOutput</a> *audio, bool useAudioClock=true, <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> *parent=nullptr)</dt>
 <dd><a class="anchor" id="_deprecated000002"></a>Use <a class="el" href="sdlplayer_8h.html#a208abb06e90244b09338754815786635">createSDLPlayer</a> instead — see <a class="el" href="classSDLPlayerOldTask.html">SDLPlayerOldTask</a>. </dd>
 <dt>Class <a class="el" href="classSDLPlayerOldTask.html">SDLPlayerOldTask</a>  </dt>
-<dd><a class="anchor" id="_deprecated000001"></a>Use <a class="el" href="classSDLPlayerTask.html">SDLPlayerTask</a> / <a class="el" href="sdlplayer_8h.html#a208abb06e90244b09338754815786635">createSDLPlayer</a> instead. <a class="el" href="classSDLPlayerOldTask.html" title="MediaIOTask writer that plays frames through SDL (legacy path).">SDLPlayerOldTask</a> is the original FramePacer-based implementation, retained only so the new FrameSync-based sink can be validated side-by-side. It will be removed once <a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a> is proven in the field; see <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">devplan/proav_framesync.md</a></code> Phase 4. New code must not depend on it. </dd>
-<dt><a class="el" href="classFile.html" title="File I/O device with buffered reading.">File</a> <a class="el" href="videodesc_8h.html">videodesc.h</a>  </dt>
-<dd><a class="anchor" id="_deprecated000003"></a>Use <a class="el" href="mediadesc_8h.html">mediadesc.h</a> and <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> instead. </dd>
+<dd><a class="anchor" id="_deprecated000001"></a>Use <a class="el" href="classSDLPlayerTask.html">SDLPlayerTask</a> / <a class="el" href="sdlplayer_8h.html#a208abb06e90244b09338754815786635">createSDLPlayer</a> instead. <a class="el" href="classSDLPlayerOldTask.html" title="MediaIOTask writer that plays frames through SDL (legacy path).">SDLPlayerOldTask</a> is the original FramePacer-based implementation, retained only so the new FrameSync-based sink can be validated side-by-side. It will be removed once <a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a> is proven in the field; see <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">devplan/proav_framesync.md</a></code> Phase 4. New code must not depend on it.</dd>
 </dl>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
@@ -117,7 +115,7 @@ $(document).ready(function(){initNavTree('deprecated.html',''); initResizable();
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
   </ul>
 </div>
 </body>

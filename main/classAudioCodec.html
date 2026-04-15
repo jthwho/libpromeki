@@ -100,36 +100,373 @@ $(document).ready(function(){initNavTree('classAudioCodec.html',''); initResizab
 
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classAudioCodec-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">AudioCodec Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span><div class="ingroups"><a class="el" href="group__proav.html">ProAV Media</a></div></div></div>
+  <div class="headertitle"><div class="title">AudioCodec Class Reference<div class="ingroups"><a class="el" href="group__proav.html">ProAV Media</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Stub base class for audio codecs (future expansion).  
+<p>First-class identifier for an audio codec family.  
  <a href="classAudioCodec.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="codec_8h_source.html">codec.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="audiocodec_8h_source.html">audiocodec.h</a>&gt;</code></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structAudioCodec_1_1Data.html">Data</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Immutable descriptor for an audio codec.  <a href="structAudioCodec_1_1Data.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:ac82ceb6ead32bbe1d3c6f4ef6edd2c41" id="r_ac82ceb6ead32bbe1d3c6f4ef6edd2c41"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41">ID</a> { <br />
+&#160;&#160;<a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41a036fc5111eebc77a1a3819c74a0a1e97">Invalid</a> = 0
+, <a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41a00c32697064e90af215e19b040a818fe">PCMI_S16LE</a> = 1
+, <a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41a874c7bfe4bede7758eeb56337d5f8f9b">PCMI_S16BE</a> = 2
+, <a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41ada318808a3fd3433a4b1d8bdbcdd5bd3">PCMI_S24LE</a> = 3
+, <br />
+&#160;&#160;<a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41aca398692589053ae5b7063f8b7b5442e">PCMI_S24BE</a> = 4
+, <a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41ac93387d7e458f142b60a1c97c7e026a0">PCMI_S32LE</a> = 5
+, <a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41af09d7465ff7da847d9556cad37a2595e">PCMI_S32BE</a> = 6
+, <a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41af550494999c6dba4efdc11d63866dea1">PCMI_Float32LE</a> = 7
+, <br />
+&#160;&#160;<a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41a3bf49d6cec90d3151a9838f8dbbd1311">PCMI_Float32BE</a> = 8
+, <a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41a89b2b0a9e84461381680a2315c8b52dd">AAC</a> = 9
+, <a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41a1de07ac699b15ce3eaf7dad12431e378">Opus</a> = 10
+, <a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41ac09740ed78a26f213a58b58f5b3e056c">FLAC</a> = 11
+, <br />
+&#160;&#160;<a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41a759803440e224ceb1a3c66b406112b80">MP3</a> = 12
+, <a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41ad01ee215479f69a926106d27eb41b417">AC3</a> = 13
+, <a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41a2f3d3b66884d8bed9566f9e89d773525">UserDefined</a> = 1024
+<br />
+ }</td></tr>
+<tr class="memdesc:ac82ceb6ead32bbe1d3c6f4ef6edd2c41"><td class="mdescLeft">&#160;</td><td class="mdescRight">Identifies an audio codec family.  <a href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41">More...</a><br /></td></tr>
+<tr class="separator:ac82ceb6ead32bbe1d3c6f4ef6edd2c41"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abb45a7193a7a8c23a6605c6e21e8fbed" id="r_abb45a7193a7a8c23a6605c6e21e8fbed"><td class="memItemLeft" align="right" valign="top"><a id="abb45a7193a7a8c23a6605c6e21e8fbed" name="abb45a7193a7a8c23a6605c6e21e8fbed"></a>
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>IDList</b> = <a class="el" href="classList.html">List</a>&lt; <a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41">ID</a> &gt;</td></tr>
+<tr class="memdesc:abb45a7193a7a8c23a6605c6e21e8fbed"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of <a class="el" href="classAudioCodec.html" title="First-class identifier for an audio codec family.">AudioCodec</a> IDs. <br /></td></tr>
+<tr class="separator:abb45a7193a7a8c23a6605c6e21e8fbed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c549850fe21bbe714c6f2a4b2e3b704" id="r_a2c549850fe21bbe714c6f2a4b2e3b704"><td class="memItemLeft" align="right" valign="top"><a id="a2c549850fe21bbe714c6f2a4b2e3b704" name="a2c549850fe21bbe714c6f2a4b2e3b704"></a>
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>EncoderFactory</b> = std::function&lt; <a class="el" href="classList.html">AudioEncoder</a> *()&gt;</td></tr>
+<tr class="memdesc:a2c549850fe21bbe714c6f2a4b2e3b704"><td class="mdescLeft">&#160;</td><td class="mdescRight">Factory for a new AudioEncoder session (may be null). <br /></td></tr>
+<tr class="separator:a2c549850fe21bbe714c6f2a4b2e3b704"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a674c7a86c56cd4239c023868e472b85f" id="r_a674c7a86c56cd4239c023868e472b85f"><td class="memItemLeft" align="right" valign="top"><a id="a674c7a86c56cd4239c023868e472b85f" name="a674c7a86c56cd4239c023868e472b85f"></a>
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>DecoderFactory</b> = std::function&lt; <a class="el" href="classList.html">AudioDecoder</a> *()&gt;</td></tr>
+<tr class="memdesc:a674c7a86c56cd4239c023868e472b85f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Factory for a new AudioDecoder session (may be null). <br /></td></tr>
+<tr class="separator:a674c7a86c56cd4239c023868e472b85f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a701f81be99a32e0ffff83f7248d03171" id="r_a701f81be99a32e0ffff83f7248d03171"><td class="memItemLeft" align="right" valign="top"><a id="a701f81be99a32e0ffff83f7248d03171" name="a701f81be99a32e0ffff83f7248d03171"></a>
-<a class="el" href="classList.html">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><b>~AudioCodec</b> ()</td></tr>
-<tr class="memdesc:a701f81be99a32e0ffff83f7248d03171"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual destructor. <br /></td></tr>
-<tr class="separator:a701f81be99a32e0ffff83f7248d03171"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab24d592a01c9137e55475e8d53d4baff" id="r_ab24d592a01c9137e55475e8d53d4baff"><td class="memItemLeft" align="right" valign="top"><a id="ab24d592a01c9137e55475e8d53d4baff" name="ab24d592a01c9137e55475e8d53d4baff"></a>
-<a class="el" href="classList.html">virtual</a> <a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><b>name</b> () <a class="el" href="classList.html">const</a> =0</td></tr>
-<tr class="memdesc:ab24d592a01c9137e55475e8d53d4baff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the codec name. <br /></td></tr>
-<tr class="separator:ab24d592a01c9137e55475e8d53d4baff"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab079fc867669e3759b31f25f2515f781" id="r_ab079fc867669e3759b31f25f2515f781"><td class="memItemLeft" align="right" valign="top"><a id="ab079fc867669e3759b31f25f2515f781" name="ab079fc867669e3759b31f25f2515f781"></a>
-<a class="el" href="classList.html">virtual</a> <a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><b>description</b> () <a class="el" href="classList.html">const</a> =0</td></tr>
-<tr class="memdesc:ab079fc867669e3759b31f25f2515f781"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a human-readable description. <br /></td></tr>
-<tr class="separator:ab079fc867669e3759b31f25f2515f781"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd4f5ab603df1d19728f3958d2d2eef1" id="r_abd4f5ab603df1d19728f3958d2d2eef1"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioCodec.html#abd4f5ab603df1d19728f3958d2d2eef1">AudioCodec</a> (<a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41">ID</a> <a class="el" href="classAudioCodec.html#ae3d7d2f70d1531619c088e433464fda6">id</a>=<a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41a036fc5111eebc77a1a3819c74a0a1e97">Invalid</a>)</td></tr>
+<tr class="memdesc:abd4f5ab603df1d19728f3958d2d2eef1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an <a class="el" href="classAudioCodec.html" title="First-class identifier for an audio codec family.">AudioCodec</a> from an ID.  <br /></td></tr>
+<tr class="separator:abd4f5ab603df1d19728f3958d2d2eef1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aac7cf5798c3f9571cc5fda99c3c8a034" id="r_aac7cf5798c3f9571cc5fda99c3c8a034"><td class="memItemLeft" align="right" valign="top"><a id="aac7cf5798c3f9571cc5fda99c3c8a034" name="aac7cf5798c3f9571cc5fda99c3c8a034"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isValid</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aac7cf5798c3f9571cc5fda99c3c8a034"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when this wrapper references a registered codec. <br /></td></tr>
+<tr class="separator:aac7cf5798c3f9571cc5fda99c3c8a034"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae3d7d2f70d1531619c088e433464fda6" id="r_ae3d7d2f70d1531619c088e433464fda6"><td class="memItemLeft" align="right" valign="top"><a id="ae3d7d2f70d1531619c088e433464fda6" name="ae3d7d2f70d1531619c088e433464fda6"></a>
+<a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>id</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ae3d7d2f70d1531619c088e433464fda6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the unique ID. <br /></td></tr>
+<tr class="separator:ae3d7d2f70d1531619c088e433464fda6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5237981a382e0f50a09a7536f4821aae" id="r_a5237981a382e0f50a09a7536f4821aae"><td class="memItemLeft" align="right" valign="top"><a id="a5237981a382e0f50a09a7536f4821aae" name="a5237981a382e0f50a09a7536f4821aae"></a>
+<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>name</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a5237981a382e0f50a09a7536f4821aae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the codec's short registered name. <br /></td></tr>
+<tr class="separator:a5237981a382e0f50a09a7536f4821aae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a436b355877b4f7cd6aa7742d3ec66de2" id="r_a436b355877b4f7cd6aa7742d3ec66de2"><td class="memItemLeft" align="right" valign="top"><a id="a436b355877b4f7cd6aa7742d3ec66de2" name="a436b355877b4f7cd6aa7742d3ec66de2"></a>
+<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>description</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a436b355877b4f7cd6aa7742d3ec66de2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the codec's human-readable description. <br /></td></tr>
+<tr class="separator:a436b355877b4f7cd6aa7742d3ec66de2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aab24d10acfe7cd56347514ad349a3a65" id="r_aab24d10acfe7cd56347514ad349a3a65"><td class="memItemLeft" align="right" valign="top"><a id="aab24d10acfe7cd56347514ad349a3a65" name="aab24d10acfe7cd56347514ad349a3a65"></a>
+<a class="el" href="classList.html">const</a> <a class="el" href="fourcc_8h.html#a7273afc33a6e1d395b0fdd32265996f0">FourCCList</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>fourccList</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aab24d10acfe7cd56347514ad349a3a65"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of FourCCs associated with this codec. <br /></td></tr>
+<tr class="separator:aab24d10acfe7cd56347514ad349a3a65"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f713870f79e0aee702ae4b892db60c8" id="r_a4f713870f79e0aee702ae4b892db60c8"><td class="memItemLeft" align="right" valign="top"><a id="a4f713870f79e0aee702ae4b892db60c8" name="a4f713870f79e0aee702ae4b892db60c8"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>canEncode</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a4f713870f79e0aee702ae4b892db60c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when this codec has a registered encoder factory. <br /></td></tr>
+<tr class="separator:a4f713870f79e0aee702ae4b892db60c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abebf38c173ccfd6f3a41c49deb4a88b6" id="r_abebf38c173ccfd6f3a41c49deb4a88b6"><td class="memItemLeft" align="right" valign="top"><a id="abebf38c173ccfd6f3a41c49deb4a88b6" name="abebf38c173ccfd6f3a41c49deb4a88b6"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>canDecode</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:abebf38c173ccfd6f3a41c49deb4a88b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when this codec has a registered decoder factory. <br /></td></tr>
+<tr class="separator:abebf38c173ccfd6f3a41c49deb4a88b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a129f24ca61081be13da5ada55546c550" id="r_a129f24ca61081be13da5ada55546c550"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">AudioEncoder</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioCodec.html#a129f24ca61081be13da5ada55546c550">createEncoder</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a129f24ca61081be13da5ada55546c550"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a new AudioEncoder session for this codec.  <br /></td></tr>
+<tr class="separator:a129f24ca61081be13da5ada55546c550"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8aaa89455b00b8c3e2bc77b5c749891a" id="r_a8aaa89455b00b8c3e2bc77b5c749891a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">AudioDecoder</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioCodec.html#a8aaa89455b00b8c3e2bc77b5c749891a">createDecoder</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a8aaa89455b00b8c3e2bc77b5c749891a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a new AudioDecoder session for this codec.  <br /></td></tr>
+<tr class="separator:a8aaa89455b00b8c3e2bc77b5c749891a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ef140d76fa94199bd72afcaf106be4f" id="r_a1ef140d76fa94199bd72afcaf106be4f"><td class="memItemLeft" align="right" valign="top"><a id="a1ef140d76fa94199bd72afcaf106be4f" name="a1ef140d76fa94199bd72afcaf106be4f"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator==</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classAudioCodec.html">AudioCodec</a> &amp;<a class="el" href="classList.html">o</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a1ef140d76fa94199bd72afcaf106be4f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Equality compares the underlying <a class="el" href="structAudioCodec_1_1Data.html" title="Immutable descriptor for an audio codec.">Data</a> pointer. <br /></td></tr>
+<tr class="separator:a1ef140d76fa94199bd72afcaf106be4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab2bff5d86e59d0dca72fd8213e9fc57d" id="r_ab2bff5d86e59d0dca72fd8213e9fc57d"><td class="memItemLeft" align="right" valign="top"><a id="ab2bff5d86e59d0dca72fd8213e9fc57d" name="ab2bff5d86e59d0dca72fd8213e9fc57d"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator!=</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classAudioCodec.html">AudioCodec</a> &amp;<a class="el" href="classList.html">o</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ab2bff5d86e59d0dca72fd8213e9fc57d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inequality. <br /></td></tr>
+<tr class="separator:ab2bff5d86e59d0dca72fd8213e9fc57d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af9c705f50ae3a3d4eb927b345cd3cabc" id="r_af9c705f50ae3a3d4eb927b345cd3cabc"><td class="memItemLeft" align="right" valign="top"><a id="af9c705f50ae3a3d4eb927b345cd3cabc" name="af9c705f50ae3a3d4eb927b345cd3cabc"></a>
+<a class="el" href="classList.html">const</a> <a class="el" href="structAudioCodec_1_1Data.html">Data</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>data</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:af9c705f50ae3a3d4eb927b345cd3cabc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the underlying <a class="el" href="structAudioCodec_1_1Data.html" title="Immutable descriptor for an audio codec.">Data</a> pointer. <br /></td></tr>
+<tr class="separator:af9c705f50ae3a3d4eb927b345cd3cabc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:ad330e30e026b4784b5563055353bac22" id="r_ad330e30e026b4784b5563055353bac22"><td class="memItemLeft" align="right" valign="top"><a id="ad330e30e026b4784b5563055353bac22" name="ad330e30e026b4784b5563055353bac22"></a>
+<a class="el" href="classList.html">static</a> <a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>registerType</b> ()</td></tr>
+<tr class="memdesc:ad330e30e026b4784b5563055353bac22"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocates and returns a unique ID for a user-defined codec. <br /></td></tr>
+<tr class="separator:ad330e30e026b4784b5563055353bac22"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2211be8d9f8655b3d77b04231e1b3b72" id="r_a2211be8d9f8655b3d77b04231e1b3b72"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioCodec.html#a2211be8d9f8655b3d77b04231e1b3b72">registerData</a> (<a class="el" href="structAudioCodec_1_1Data.html">Data</a> &amp;&amp;<a class="el" href="classAudioCodec.html#af9c705f50ae3a3d4eb927b345cd3cabc">data</a>)</td></tr>
+<tr class="memdesc:a2211be8d9f8655b3d77b04231e1b3b72"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers a <a class="el" href="structAudioCodec_1_1Data.html" title="Immutable descriptor for an audio codec.">Data</a> record in the registry.  <br /></td></tr>
+<tr class="separator:a2211be8d9f8655b3d77b04231e1b3b72"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a09bcd2520d8be6fed58d88157e233465" id="r_a09bcd2520d8be6fed58d88157e233465"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classAudioCodec.html#abb45a7193a7a8c23a6605c6e21e8fbed">IDList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioCodec.html#a09bcd2520d8be6fed58d88157e233465">registeredIDs</a> ()</td></tr>
+<tr class="memdesc:a09bcd2520d8be6fed58d88157e233465"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of every registered codec's ID.  <br /></td></tr>
+<tr class="separator:a09bcd2520d8be6fed58d88157e233465"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acf903aa9c9c89aca2694255f2e012efc" id="r_acf903aa9c9c89aca2694255f2e012efc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classAudioCodec.html">AudioCodec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioCodec.html#acf903aa9c9c89aca2694255f2e012efc">lookup</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classAudioCodec.html#a5237981a382e0f50a09a7536f4821aae">name</a>)</td></tr>
+<tr class="memdesc:acf903aa9c9c89aca2694255f2e012efc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Looks up a codec by its registered name.  <br /></td></tr>
+<tr class="separator:acf903aa9c9c89aca2694255f2e012efc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Stub base class for audio codecs (future expansion). </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/<a class="el" href="codec_8h_source.html">codec.h</a></li>
+<div class="textblock"><p>First-class identifier for an audio codec family. </p>
+<p>Symmetric counterpart to <a class="el" href="classVideoCodec.html">VideoCodec</a> — same TypeRegistry pattern, same split between <a class="el" href="structAudioCodec_1_1Data.html" title="Immutable descriptor for an audio codec.">Data</a> record (metadata + factory pointers) and inline wrapper (resolved pointer to an immutable entry). See <a class="el" href="classVideoCodec.html">VideoCodec</a> for the narrative; the data flowing through an audio codec is just samples rather than frames.</p>
+<p>Well-known IDs cover the codec families libpromeki's pipelines will realistically see: PCM variants (no real "codec" but convenient for identifying sample formats uniformly), AAC, Opus, FLAC, MP3, AC-3. The <code>PCM_</code> variants are intentionally granular so a pipeline can say "this track is PCM 24-bit LE little-endian" without losing that information when it passes through the codec registry.</p>
+<p>Factory pointers can be null on codecs we recognise but don't yet implement — the registry still carries their metadata (FourCCs, descriptions) so CLI listings and introspection keep working. </p>
+</div><h2 class="groupheader">Member Enumeration Documentation</h2>
+<a id="ac82ceb6ead32bbe1d3c6f4ef6edd2c41" name="ac82ceb6ead32bbe1d3c6f4ef6edd2c41"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac82ceb6ead32bbe1d3c6f4ef6edd2c41">&#9670;&#160;</a></span>ID</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">enum</a> <a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41">AudioCodec::ID</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Identifies an audio codec family. </p>
+<p>Well-known codecs have named enumerators. User-defined codecs obtain IDs from <a class="el" href="classAudioCodec.html#ad330e30e026b4784b5563055353bac22">registerType</a>, starting at <code>UserDefined</code>. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ac82ceb6ead32bbe1d3c6f4ef6edd2c41a036fc5111eebc77a1a3819c74a0a1e97" name="ac82ceb6ead32bbe1d3c6f4ef6edd2c41a036fc5111eebc77a1a3819c74a0a1e97"></a>Invalid&#160;</td><td class="fielddoc"><p>Invalid or uninitialised. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac82ceb6ead32bbe1d3c6f4ef6edd2c41a00c32697064e90af215e19b040a818fe" name="ac82ceb6ead32bbe1d3c6f4ef6edd2c41a00c32697064e90af215e19b040a818fe"></a>PCMI_S16LE&#160;</td><td class="fielddoc"><p>Interleaved PCM signed 16-bit little-endian. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac82ceb6ead32bbe1d3c6f4ef6edd2c41a874c7bfe4bede7758eeb56337d5f8f9b" name="ac82ceb6ead32bbe1d3c6f4ef6edd2c41a874c7bfe4bede7758eeb56337d5f8f9b"></a>PCMI_S16BE&#160;</td><td class="fielddoc"><p>Interleaved PCM signed 16-bit big-endian. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac82ceb6ead32bbe1d3c6f4ef6edd2c41ada318808a3fd3433a4b1d8bdbcdd5bd3" name="ac82ceb6ead32bbe1d3c6f4ef6edd2c41ada318808a3fd3433a4b1d8bdbcdd5bd3"></a>PCMI_S24LE&#160;</td><td class="fielddoc"><p>Interleaved PCM signed 24-bit little-endian. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac82ceb6ead32bbe1d3c6f4ef6edd2c41aca398692589053ae5b7063f8b7b5442e" name="ac82ceb6ead32bbe1d3c6f4ef6edd2c41aca398692589053ae5b7063f8b7b5442e"></a>PCMI_S24BE&#160;</td><td class="fielddoc"><p>Interleaved PCM signed 24-bit big-endian. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac82ceb6ead32bbe1d3c6f4ef6edd2c41ac93387d7e458f142b60a1c97c7e026a0" name="ac82ceb6ead32bbe1d3c6f4ef6edd2c41ac93387d7e458f142b60a1c97c7e026a0"></a>PCMI_S32LE&#160;</td><td class="fielddoc"><p>Interleaved PCM signed 32-bit little-endian. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac82ceb6ead32bbe1d3c6f4ef6edd2c41af09d7465ff7da847d9556cad37a2595e" name="ac82ceb6ead32bbe1d3c6f4ef6edd2c41af09d7465ff7da847d9556cad37a2595e"></a>PCMI_S32BE&#160;</td><td class="fielddoc"><p>Interleaved PCM signed 32-bit big-endian. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac82ceb6ead32bbe1d3c6f4ef6edd2c41af550494999c6dba4efdc11d63866dea1" name="ac82ceb6ead32bbe1d3c6f4ef6edd2c41af550494999c6dba4efdc11d63866dea1"></a>PCMI_Float32LE&#160;</td><td class="fielddoc"><p>Interleaved PCM 32-bit IEEE 754 float little-endian. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac82ceb6ead32bbe1d3c6f4ef6edd2c41a3bf49d6cec90d3151a9838f8dbbd1311" name="ac82ceb6ead32bbe1d3c6f4ef6edd2c41a3bf49d6cec90d3151a9838f8dbbd1311"></a>PCMI_Float32BE&#160;</td><td class="fielddoc"><p>Interleaved PCM 32-bit IEEE 754 float big-endian. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac82ceb6ead32bbe1d3c6f4ef6edd2c41a89b2b0a9e84461381680a2315c8b52dd" name="ac82ceb6ead32bbe1d3c6f4ef6edd2c41a89b2b0a9e84461381680a2315c8b52dd"></a>AAC&#160;</td><td class="fielddoc"><p>Advanced <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> Coding (ISO/IEC 14496-3). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac82ceb6ead32bbe1d3c6f4ef6edd2c41a1de07ac699b15ce3eaf7dad12431e378" name="ac82ceb6ead32bbe1d3c6f4ef6edd2c41a1de07ac699b15ce3eaf7dad12431e378"></a>Opus&#160;</td><td class="fielddoc"><p>Opus (RFC 6716). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac82ceb6ead32bbe1d3c6f4ef6edd2c41ac09740ed78a26f213a58b58f5b3e056c" name="ac82ceb6ead32bbe1d3c6f4ef6edd2c41ac09740ed78a26f213a58b58f5b3e056c"></a>FLAC&#160;</td><td class="fielddoc"><p>Free Lossless <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> Codec. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac82ceb6ead32bbe1d3c6f4ef6edd2c41a759803440e224ceb1a3c66b406112b80" name="ac82ceb6ead32bbe1d3c6f4ef6edd2c41a759803440e224ceb1a3c66b406112b80"></a>MP3&#160;</td><td class="fielddoc"><p>MPEG-1 <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> Layer III. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac82ceb6ead32bbe1d3c6f4ef6edd2c41ad01ee215479f69a926106d27eb41b417" name="ac82ceb6ead32bbe1d3c6f4ef6edd2c41ad01ee215479f69a926106d27eb41b417"></a>AC3&#160;</td><td class="fielddoc"><p>Dolby Digital (AC-3). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac82ceb6ead32bbe1d3c6f4ef6edd2c41a2f3d3b66884d8bed9566f9e89d773525" name="ac82ceb6ead32bbe1d3c6f4ef6edd2c41a2f3d3b66884d8bed9566f9e89d773525"></a>UserDefined&#160;</td><td class="fielddoc"><p>First ID available for user-registered codecs. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="abd4f5ab603df1d19728f3958d2d2eef1" name="abd4f5ab603df1d19728f3958d2d2eef1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abd4f5ab603df1d19728f3958d2d2eef1">&#9670;&#160;</a></span>AudioCodec()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">AudioCodec::AudioCodec </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41">ID</a>&#160;</td>
+          <td class="paramname"><em>id</em> = <code><a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41a036fc5111eebc77a1a3819c74a0a1e97">Invalid</a></code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Constructs an <a class="el" href="classAudioCodec.html" title="First-class identifier for an audio codec family.">AudioCodec</a> from an ID. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">id</td><td>The codec ID (default: <a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41a036fc5111eebc77a1a3819c74a0a1e97">Invalid</a>). </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="a8aaa89455b00b8c3e2bc77b5c749891a" name="a8aaa89455b00b8c3e2bc77b5c749891a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8aaa89455b00b8c3e2bc77b5c749891a">&#9670;&#160;</a></span>createDecoder()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">AudioDecoder</a> * AudioCodec::createDecoder </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Creates a new AudioDecoder session for this codec. </p>
+<dl class="section return"><dt>Returns</dt><dd>A freshly-allocated decoder (caller owns), or nullptr when decode is not supported by this codec. </dd></dl>
+
+</div>
+</div>
+<a id="a129f24ca61081be13da5ada55546c550" name="a129f24ca61081be13da5ada55546c550"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a129f24ca61081be13da5ada55546c550">&#9670;&#160;</a></span>createEncoder()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">AudioEncoder</a> * AudioCodec::createEncoder </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Creates a new AudioEncoder session for this codec. </p>
+<dl class="section return"><dt>Returns</dt><dd>A freshly-allocated encoder (caller owns), or nullptr when encode is not supported by this codec. </dd></dl>
+
+</div>
+</div>
+<a id="acf903aa9c9c89aca2694255f2e012efc" name="acf903aa9c9c89aca2694255f2e012efc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acf903aa9c9c89aca2694255f2e012efc">&#9670;&#160;</a></span>lookup()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classAudioCodec.html">AudioCodec</a> AudioCodec::lookup </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Looks up a codec by its registered name. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>The name to search for (e.g. <code>"AAC"</code>). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The matching codec, or an invalid codec if not found. </dd></dl>
+
+</div>
+</div>
+<a id="a2211be8d9f8655b3d77b04231e1b3b72" name="a2211be8d9f8655b3d77b04231e1b3b72"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2211be8d9f8655b3d77b04231e1b3b72">&#9670;&#160;</a></span>registerData()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a> AudioCodec::registerData </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structAudioCodec_1_1Data.html">Data</a> &amp;&amp;&#160;</td>
+          <td class="paramname"><em>data</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Registers a <a class="el" href="structAudioCodec_1_1Data.html" title="Immutable descriptor for an audio codec.">Data</a> record in the registry. </p>
+<p>After this call, constructing an <a class="el" href="classAudioCodec.html">AudioCodec</a> from <code>data.id</code> resolves to the registered data. </p>
+
+</div>
+</div>
+<a id="a09bcd2520d8be6fed58d88157e233465" name="a09bcd2520d8be6fed58d88157e233465"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a09bcd2520d8be6fed58d88157e233465">&#9670;&#160;</a></span>registeredIDs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classAudioCodec.html#abb45a7193a7a8c23a6605c6e21e8fbed">IDList</a> AudioCodec::registeredIDs </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the list of every registered codec's ID. </p>
+<dl class="section return"><dt>Returns</dt><dd>IDs of every registered codec, excluding <a class="el" href="classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41a036fc5111eebc77a1a3819c74a0a1e97">Invalid</a>. </dd></dl>
+
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li>include/promeki/<a class="el" href="audiocodec_8h_source.html">audiocodec.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -138,7 +475,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudioCodec.html">AudioCodec</a></li>
-    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
   </ul>
 </div>
 </body>

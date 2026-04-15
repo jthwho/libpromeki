@@ -1,11 +1,9 @@
 var mediaio_8h =
 [
-    [ "MediaIOStatsTag", "structMediaIOStatsTag.html", null ],
-    [ "MediaIOParamsTag", "structMediaIOParamsTag.html", null ],
     [ "MediaIO::FormatDesc", "structMediaIO_1_1FormatDesc.html", "structMediaIO_1_1FormatDesc" ],
     [ "PROMEKI_MEDIAIO_COMMAND", "group__proav.html#gad90fff14e48cb9847b2be7d40be4a1a5", null ],
     [ "PROMEKI_REGISTER_MEDIAIO", "group__proav.html#ga10f5578b94caf8706a28ed5b9e7b087f", null ],
-    [ "MediaIOParams", "mediaio_8h.html#a06b0689531fca228f2204307ec306ca6", null ],
+    [ "MediaIOParams", "mediaio_8h.html#adb2ac600812613e02f032ee1ef59f5e6", null ],
     [ "MediaIOParamsID", "mediaio_8h.html#a218d9d799191abce354a7120ce37ebbe", null ],
     [ "MediaIOMode", "mediaio_8h.html#ad6d9e160ca5b681f44b2927606f9e601", [
       [ "MediaIO_NotOpen", "mediaio_8h.html#ad6d9e160ca5b681f44b2927606f9e601a4c65c5fecc5d0585553f71716523e1f1", null ],

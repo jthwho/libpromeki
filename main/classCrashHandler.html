@@ -140,7 +140,7 @@ Static Public Member Functions</h2></td></tr>
 </ul>
 <p>The stack-trace stage is not strictly async-signal-safe (it uses <code>backtrace_symbols</code> and <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">abi::__cxa_demangle</a></code>, both of which allocate), but it runs after all critical header and thread information has already been written via signal-safe primitives. A failure during demangling costs us a prettier trace — nothing more.</p>
 <p>After the stack trace, a best-effort <code>promekiLogSync()</code> flushes any buffered logger output.</p>
-<p>Controlled by <a class="el" href="classLibraryOptions.html#aff78d3b870329785790fed0df21a64f0">LibraryOptions::CrashHandler</a> (default <code>true</code>) and wired into <a class="el" href="classApplication.html">Application</a> automatically.</p>
+<p>Controlled by LibraryOptions::CrashHandler (default <code>true</code>) and wired into <a class="el" href="classApplication.html">Application</a> automatically.</p>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><span class="comment">// Automatic via Application (default):</span></div>
 <div class="line"><a class="code hl_class" href="classApplication.html">Application</a> <a class="code hl_class" href="classList.html">app</a>(<a class="code hl_class" href="classList.html">argc</a>, <a class="code hl_class" href="classList.html">argv</a>);</div>
 <div class="line"><span class="comment">// crash handlers are now active</span></div>
@@ -180,11 +180,11 @@ Static Public Member Functions</h2></td></tr>
 
 <p>Installs crash signal handlers. </p>
 <p>Registers handlers for SIGSEGV, SIGABRT, SIGBUS, SIGFPE, and SIGILL. Pre-builds the crash log file path from the current <a class="el" href="classApplication.html#aad7d913b64368ef2b0081527e2c21074">Application::appName</a> and process ID.</p>
-<p>If <a class="el" href="classLibraryOptions.html#ab5dda65c802eaba30d484482b509ddc6">LibraryOptions::CoreDumps</a> is true, also raises RLIMIT_CORE to the hard limit.</p>
+<p>If LibraryOptions::CoreDumps is true, also raises RLIMIT_CORE to the hard limit.</p>
 <p>Snapshots the following process state into static buffers so the signal handler can write a report without touching any non-signal-safe APIs:</p><ul>
 <li>Command line (<a class="el" href="classApplication.html#a17733992cd454c2f86d49442879cad52">Application::arguments</a>)</li>
 <li>Hostname, working directory, uname info</li>
-<li>Environment (if <a class="el" href="classLibraryOptions.html#a9db25db1e38c5c1c3a7b736179fa1a62">LibraryOptions::CaptureEnvironment</a>)</li>
+<li>Environment (if LibraryOptions::CaptureEnvironment)</li>
 <li><a class="el" href="classLibraryOptions.html">LibraryOptions</a> values</li>
 <li>The set of registered <a class="el" href="classMemSpace.html">MemSpace</a> entries (metadata only — counter values are read live at crash time via atomic loads)</li>
 </ul>
@@ -301,7 +301,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classCrashHandler.html">CrashHandler</a></li>
-    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
   </ul>
 </div>
 </body>

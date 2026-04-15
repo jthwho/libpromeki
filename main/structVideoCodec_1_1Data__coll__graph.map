@@ -1,0 +1,9 @@
+<map id="VideoCodec::Data" name="VideoCodec::Data">
+<area shape="rect" id="Node000001" title="Immutable descriptor for a video codec." alt="" coords="81,108,219,133"/>
+<area shape="rect" id="Node000002" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,5,65,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="60,38,109,82,137,106,134,110,106,86,56,42"/>
+<area shape="rect" id="Node000003" href="$classList.html" title=" " alt="" coords="89,5,211,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="153,45,153,108,147,108,147,45"/>
+<area shape="rect" id="Node000004" href="$classList.html" title=" " alt="" coords="235,5,327,31"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="266,44,248,65,225,86,182,110,179,106,222,82,244,62,262,40"/>
+</map>

@@ -129,8 +129,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a12cb1e92a2cb18f2c734cfa3cb33b215" id="r_a12cb1e92a2cb18f2c734cfa3cb33b215"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">uint32_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEnum_1_1Type.html#a12cb1e92a2cb18f2c734cfa3cb33b215">id</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a12cb1e92a2cb18f2c734cfa3cb33b215"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a stable monotonic integer identifier.  <br /></td></tr>
 <tr class="separator:a12cb1e92a2cb18f2c734cfa3cb33b215"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a678745c3279f8a3da51259e89d5264a2" id="r_a678745c3279f8a3da51259e89d5264a2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classList.html">Definition</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEnum_1_1Type.html#a678745c3279f8a3da51259e89d5264a2">definition</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a678745c3279f8a3da51259e89d5264a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the underlying Definition pointer.  <br /></td></tr>
+<tr class="memitem:a678745c3279f8a3da51259e89d5264a2" id="r_a678745c3279f8a3da51259e89d5264a2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="structEnum_1_1Definition.html">Definition</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEnum_1_1Type.html#a678745c3279f8a3da51259e89d5264a2">definition</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a678745c3279f8a3da51259e89d5264a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the underlying <a class="el" href="structEnum_1_1Definition.html" title="Immutable per-type record stored in the global registry.">Definition</a> pointer.  <br /></td></tr>
 <tr class="separator:a678745c3279f8a3da51259e89d5264a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a4b14a43cbcc8993500810eb2855b48" id="r_a9a4b14a43cbcc8993500810eb2855b48"><td class="memItemLeft" align="right" valign="top"><a id="a9a4b14a43cbcc8993500810eb2855b48" name="a9a4b14a43cbcc8993500810eb2855b48"></a>
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator==</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classEnum_1_1Type.html">Type</a> &amp;<a class="el" href="classList.html">o</a>) <a class="el" href="classList.html">const</a></td></tr>
@@ -152,7 +152,7 @@ Friends</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Lightweight handle identifying a registered enum kind. </p>
-<p>A <a class="el" href="classEnum_1_1Type.html" title="Lightweight handle identifying a registered enum kind.">Type</a> wraps a pointer to the per-type Definition. It is cheap to copy, compares by identity, and is valid only for types returned from <a class="el" href="classEnum.html#aee589f1f0e9bceb1bd1ca13ac005dd74" title="Registers a new enum type with its complete value table.">registerType()</a> or <a class="el" href="classEnum.html#a6b6c5de006f014a5eb97a0ff8c1c043c" title="Looks up an enum type by name without registering anything.">findType()</a>. </p>
+<p>A <a class="el" href="classEnum_1_1Type.html" title="Lightweight handle identifying a registered enum kind.">Type</a> wraps a pointer to the per-type <a class="el" href="structEnum_1_1Definition.html" title="Immutable per-type record stored in the global registry.">Definition</a>. It is cheap to copy, compares by identity, and is valid only for types returned from <a class="el" href="classEnum.html#aee589f1f0e9bceb1bd1ca13ac005dd74" title="Registers a new enum type with a runtime-computed value table.">registerType()</a> or <a class="el" href="classEnum.html#a6b6c5de006f014a5eb97a0ff8c1c043c" title="Looks up an enum type by name without registering anything.">findType()</a>. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a678745c3279f8a3da51259e89d5264a2" name="a678745c3279f8a3da51259e89d5264a2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a678745c3279f8a3da51259e89d5264a2">&#9670;&#160;</a></span>definition()</h2>
@@ -164,7 +164,7 @@ Friends</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classList.html">Definition</a> * Enum::Type::definition </td>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="structEnum_1_1Definition.html">Definition</a> * Enum::Type::definition </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -177,9 +177,9 @@ Friends</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Returns the underlying Definition pointer. </p>
+<p>Returns the underlying <a class="el" href="structEnum_1_1Definition.html" title="Immutable per-type record stored in the global registry.">Definition</a> pointer. </p>
 <p>Intended for advanced users; ordinary code should go through the static <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> accessors.</p>
-<dl class="section return"><dt>Returns</dt><dd>The Definition, or nullptr if the <a class="el" href="classEnum_1_1Type.html" title="Lightweight handle identifying a registered enum kind.">Type</a> is invalid. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="structEnum_1_1Definition.html" title="Immutable per-type record stored in the global registry.">Definition</a>, or nullptr if the <a class="el" href="classEnum_1_1Type.html" title="Lightweight handle identifying a registered enum kind.">Type</a> is invalid. </dd></dl>
 
 </div>
 </div>
@@ -214,7 +214,7 @@ Friends</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classEnum.html">Enum</a></li><li class="navelem"><a class="el" href="classEnum_1_1Type.html">Type</a></li>
-    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
   </ul>
 </div>
 </body>

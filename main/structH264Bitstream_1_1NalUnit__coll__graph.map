@@ -1,0 +1,5 @@
+<map id="H264Bitstream::NalUnit" name="H264Bitstream::NalUnit">
+<area shape="rect" id="Node000001" title="Zero&#45;copy view onto one NAL unit within a larger buffer." alt="" coords="5,93,183,119"/>
+<area shape="rect" id="Node000002" href="$classBufferView.html" title="Lightweight view into a region of a shared Buffer." alt="" coords="47,5,141,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="97,45,97,93,91,93,91,45"/>
+</map>

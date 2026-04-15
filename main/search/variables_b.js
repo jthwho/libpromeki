@@ -1,13 +1,23 @@
 var searchData=
 [
-  ['kdefaultwindowms_0',['kDefaultWindowMs',['../classRateTracker.html#a22528279f36cb668f420ed5c32aec0dd',1,'RateTracker']]],
-  ['keyframe_1',['keyframe',['../structQuickTime_1_1Sample.html#a28ea595f261a33b6e9db9ae6862ea640',1,'QuickTime::Sample']]],
-  ['keypress_2',['KeyPress',['../classKeyEvent.html#a219478053d87c3c1c2c71d00fac6120f',1,'KeyEvent']]],
-  ['keyrelease_3',['KeyRelease',['../classKeyEvent.html#a4dc5e9b314879c2ef2ae39efa527ac71',1,'KeyEvent']]],
-  ['kind_4',['kind',['../structInspectorDiscontinuity.html#a1935c3a4d2c999342e0e40ba2ffbe49d',1,'InspectorDiscontinuity']]],
-  ['kpcmmarkerframesamples_5',['kPcmMarkerFrameSamples',['../classAudioTestPattern.html#aaefe7b4dd1eab47567ef2f1981c40d18',1,'AudioTestPattern']]],
-  ['kpcmmarkerpayloadbits_6',['kPcmMarkerPayloadBits',['../classAudioTestPattern.html#ab867ba1721d171d1ffdbb93a62f8f523',1,'AudioTestPattern']]],
-  ['kpcmmarkerpreamblesamples_7',['kPcmMarkerPreambleSamples',['../classAudioTestPattern.html#a361a11c2f8ed7d60fd3b07010aca8f61',1,'AudioTestPattern']]],
-  ['kpcmmarkerstartsamples_8',['kPcmMarkerStartSamples',['../classAudioTestPattern.html#ad915545729338f9c1e28b0f3d7142f88',1,'AudioTestPattern']]],
-  ['ksrcprobefrequencyhz_9',['kSrcProbeFrequencyHz',['../classAudioTestPattern.html#a852e1beb7487d36c42c3eef52c4bc97d',1,'AudioTestPattern']]]
+  ['label_0',['label',['../classBenchmarkResult.html#abf0d4ae5a1f2fe4eac50bc3475ee371a',1,'BenchmarkResult']]],
+  ['largestfreeblock_1',['largestFreeBlock',['../structMemPool_1_1Stats.html#a96e57f370b0638f1f00d0bd1dd340596',1,'MemPool::Stats']]],
+  ['lastevent_2',['lastEvent',['../structInspectorSnapshot.html#a0c7f2dda7770d65e06415339996b10d3',1,'InspectorSnapshot']]],
+  ['lengthsizeminusone_3',['lengthsizeminusone',['../structAvcDecoderConfig.html#ae11c321b20e0cf38f518ab2acc1d26d1',1,'AvcDecoderConfig::lengthSizeMinusOne'],['../structHevcDecoderConfig.html#afa10c401d52b67ff953bdf28042bc344',1,'HevcDecoderConfig::lengthSizeMinusOne']]],
+  ['level_4',['level',['../structAudioGen_1_1Config.html#a0f0b9fbb10fb92d510dff79e67e3f415',1,'AudioGen::Config']]],
+  ['lightgray_5',['LightGray',['../classColor.html#a8e6ed0c830f4daa479929b66ed172ffc',1,'Color']]],
+  ['linear_6',['linear',['../structColorModel_1_1Data.html#a3b5b11db2f6b3d484d9d653c87705eff',1,'ColorModel::Data']]],
+  ['linearcounterpart_7',['linearCounterpart',['../structColorModel_1_1Data.html#aed117695ed66001d121342f906e6da81',1,'ColorModel::Data']]],
+  ['lineargain_8',['linearGain',['../structAudioGen_1_1Config.html#a1c4fb64b867087dad499e3064ebe1889',1,'AudioGen::Config']]],
+  ['linecount_9',['linecount',['../structImageDataDecoder_1_1Band.html#a9afc8b83b1b1193947121f7d26427392',1,'ImageDataDecoder::Band::lineCount'],['../structImageDataEncoder_1_1Item.html#a3ecc2f29bd0721804d0fc63df94c4137',1,'ImageDataEncoder::Item::lineCount']]],
+  ['linestridefunc_10',['lineStrideFunc',['../structPixelFormat_1_1Data.html#af41bc2f98070946b026a8f4d96d16336',1,'PixelFormat::Data']]],
+  ['livebytes_11',['livebytes',['../structMemSpace_1_1Stats_1_1Snapshot.html#af911d3c4d4fdddfabd01eae959705efd',1,'MemSpace::Stats::Snapshot::liveBytes'],['../structMemSpace_1_1Stats.html#a93a5203206f9f3e6ac66533e7ed0c002',1,'MemSpace::Stats::liveBytes']]],
+  ['livecount_12',['livecount',['../structMemSpace_1_1Stats_1_1Snapshot.html#a95316141200198eb961407fa9c4fc124',1,'MemSpace::Stats::Snapshot::liveCount'],['../structMemSpace_1_1Stats.html#a017f32f236faa64ae0266c457805c433',1,'MemSpace::Stats::liveCount']]],
+  ['longname_13',['longName',['../classCmdLineParser_1_1Option.html#ab59a65731a2a1fec3b67d0e4b1258bc9',1,'CmdLineParser::Option']]],
+  ['ltcdecoded_14',['ltcDecoded',['../structInspectorEvent.html#a9fa69f188068a68855a6b0ba94a4cf0c',1,'InspectorEvent']]],
+  ['ltcdecoderenabled_15',['ltcDecoderEnabled',['../structInspectorEvent.html#aa5a89de684fe2569204fc6971c8224eb',1,'InspectorEvent']]],
+  ['ltcsamplestart_16',['ltcSampleStart',['../structInspectorEvent.html#ab071023156ef6e16374ac59a360c987b',1,'InspectorEvent']]],
+  ['ltctimecode_17',['ltcTimecode',['../structInspectorEvent.html#a3d9310b693eede6b1bd21fdbb16c9ae7',1,'InspectorEvent']]],
+  ['lut_18',['lut',['../structCSCPipeline_1_1Stage.html#ab3ea73f064bd2c89ae0977cc4e41cb49',1,'CSCPipeline::Stage']]],
+  ['lutsize_19',['lutSize',['../structCSCPipeline_1_1Stage.html#a45ff7632f23c7f5ab39b2fe7e36f3c74',1,'CSCPipeline::Stage']]]
 ];

@@ -59,5 +59,7 @@ var searchData=
   ['typedenum_3c_20timecodepackformat_20_3e_56',['TypedEnum&lt; TimecodePackFormat &gt;',['../classTypedEnum.html',1,'']]],
   ['typedenum_3c_20v4l2exposuremode_20_3e_57',['TypedEnum&lt; V4l2ExposureMode &gt;',['../classTypedEnum.html',1,'']]],
   ['typedenum_3c_20v4l2powerlinemode_20_3e_58',['TypedEnum&lt; V4l2PowerLineMode &gt;',['../classTypedEnum.html',1,'']]],
-  ['typedenum_3c_20videopattern_20_3e_59',['TypedEnum&lt; VideoPattern &gt;',['../classTypedEnum.html',1,'']]]
+  ['typedenum_3c_20videoencoderpreset_20_3e_59',['TypedEnum&lt; VideoEncoderPreset &gt;',['../classTypedEnum.html',1,'']]],
+  ['typedenum_3c_20videopattern_20_3e_60',['TypedEnum&lt; VideoPattern &gt;',['../classTypedEnum.html',1,'']]],
+  ['typedenum_3c_20videoratecontrol_20_3e_61',['TypedEnum&lt; VideoRateControl &gt;',['../classTypedEnum.html',1,'']]]
 ];
