@@ -954,6 +954,10 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/ltcdecoder.h
         include/promeki/ltcencoder.h
         include/promeki/mediaio.h
+        include/promeki/mediapipeline.h
+        include/promeki/mediapipelineconfig.h
+        include/promeki/mediapipelinestats.h
+        include/promeki/pipelinestats.h
         include/promeki/mediapacket.h
         include/promeki/mediaiotask.h
         include/promeki/nvencvideoencoder.h
@@ -1003,6 +1007,10 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/ltcdecoder.cpp
         src/proav/ltcencoder.cpp
         src/proav/mediaio.cpp
+        src/proav/mediapipeline.cpp
+        src/proav/mediapipelineconfig.cpp
+        src/proav/mediapipelinestats.cpp
+        src/proav/pipelinestats.cpp
         src/proav/mediapacket.cpp
         src/proav/mediaiotask.cpp
         src/proav/mediaiotask_converter.cpp
@@ -1707,6 +1715,9 @@ if(PROMEKI_BUILD_TESTS)
             tests/mediaio_identifiers.cpp
             tests/mediapacket.cpp
             tests/mediaio_stats.cpp
+            tests/mediapipelineconfig.cpp
+            tests/mediapipelinestats.cpp
+            tests/mediapipeline.cpp
             tests/mediaiotask_converter.cpp
             tests/mediaiotask_videoencoder.cpp
             tests/mediaiotask_videodecoder.cpp

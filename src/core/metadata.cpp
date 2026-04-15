@@ -57,7 +57,11 @@ Metadata Metadata::fromJson(const JsonObject &json, Error *err) {
                         good = false;
                         return;
                 }
-                ret.set(ID(key), val);
+                // Delegate to the base's spec-aware coercion so string-
+                // serialized rich types (Timecode, UMID, DateTime, ...)
+                // come back as their proper Variant kind instead of a raw
+                // TypeString that fails spec validation.
+                ret.setFromJson(ID(key), val);
         });
         if(err) *err = good ? Error::Ok : Error::Invalid;
         return ret;

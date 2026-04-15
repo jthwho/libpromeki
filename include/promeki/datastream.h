@@ -234,7 +234,11 @@ class DataStream {
                         TypeEnumList    = 0x37, ///< @brief EnumList (type name + tagged uint32 count + N tagged int32 values)
                         TypeMediaTimeStamp = 0x38, ///< @brief MediaTimeStamp (length-prefixed string round-trip)
                         TypeMacAddress     = 0x39, ///< @brief MacAddress (length-prefixed string round-trip)
-                        TypeEUI64          = 0x3A  ///< @brief EUI64 (length-prefixed string round-trip)
+                        TypeEUI64          = 0x3A, ///< @brief EUI64 (length-prefixed string round-trip)
+                        TypeMediaPipelineStage  = 0x3B, ///< @brief MediaPipelineConfig::Stage
+                        TypeMediaPipelineRoute  = 0x3C, ///< @brief MediaPipelineConfig::Route
+                        TypeMediaPipelineConfig = 0x3D, ///< @brief MediaPipelineConfig (metadata + stages + routes)
+                        TypeMediaPipelineStats  = 0x3E  ///< @brief MediaPipelineStats (per-stage + aggregate)
                 };
 
                 /** @brief Current wire format version. */

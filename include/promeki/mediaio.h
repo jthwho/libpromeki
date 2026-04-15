@@ -1306,12 +1306,33 @@ class MediaIO : public ObjectBase {
                 /**
                  * @brief Writes a frame to the media resource.
                  *
-                 * Submits a CmdWrite, then either blocks for the result or
-                 * returns Error::TryAgain.
+                 * Submits a @c CmdWrite to the strand.  The contract
+                 * differs between the two modes:
+                 *
+                 * - **Blocking (@p block = true)**: always enqueues the
+                 *   command and blocks until the strand completes it.
+                 *   Returns the backend's completion result
+                 *   (@ref Error::Ok or a backend-specific error).  Does
+                 *   not bound the queue — callers that want bounded
+                 *   growth should gate on @ref writesAccepted themselves.
+                 *
+                 * - **Non-blocking (@p block = false)**: checks
+                 *   @ref writesAccepted up front.  When capacity is
+                 *   available the command is enqueued and the call
+                 *   returns @ref Error::Ok immediately; the asynchronous
+                 *   completion result is delivered via
+                 *   @ref writeErrorSignal on failure (successful
+                 *   completions are silent).  When no capacity is
+                 *   available the command is @em not enqueued and the
+                 *   call returns @ref Error::TryAgain — the caller is
+                 *   expected to retry after a @ref frameWantedSignal.
                  *
                  * @param frame The Frame to write.
                  * @param block If true (default), blocks until the write completes.
-                 * @return Error::Ok, Error::TryAgain, or an error.
+                 * @return @ref Error::Ok on successful submit (or completion
+                 *         in blocking mode), @ref Error::TryAgain when
+                 *         non-blocking and the write queue is full, or
+                 *         a backend-specific error.
                  */
                 Error writeFrame(const Frame::Ptr &frame, bool block = true);
 

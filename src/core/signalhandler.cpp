@@ -28,7 +28,7 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-PROMEKI_DEBUG("SignalHandler");
+PROMEKI_DEBUG(SignalHandler);
 
 namespace {
 

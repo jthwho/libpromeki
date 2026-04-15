@@ -185,6 +185,24 @@ void usage() {
                 "                            statistics for every registered\n"
                 "                            memory space on shutdown.\n"
                 "\n"
+                "Pipeline preset I/O:\n"
+                "  --save-pipeline <PATH>    Build the pipeline from the other flags,\n"
+                "                            write it to PATH as a JSON preset, and\n"
+                "                            exit without opening stages.  Pair with\n"
+                "                            --pipeline <PATH> to re-run the same\n"
+                "                            pipeline later.\n"
+                "  --pipeline <PATH>         Load the pipeline from PATH (previously\n"
+                "                            written by --save-pipeline) instead of\n"
+                "                            building it from -s / -c / -d.  Other\n"
+                "                            non-stage flags (--duration, --stats,\n"
+                "                            --frame-count) still apply.\n"
+                "  --write-stats <PATH>      Append a JSON-lines snapshot of the\n"
+                "                            pipeline's stats to PATH once per\n"
+                "                            --stats-interval, plus a final\n"
+                "                            aggregate snapshot at shutdown.\n"
+                "                            Implicitly turns on the stats\n"
+                "                            collector (default 1s interval).\n"
+                "\n"
                 "Misc:\n"
                 "  -h, --help                Show this help text and the schema.\n");
         printBackendConfigHelp();
@@ -369,6 +387,34 @@ bool parseOptions(int argc, char **argv, Options &opts) {
                  "Query and print the source device's supported formats, then exit",
                  CmdLineParser::OptionCallback([&]() {
                          opts.probe = true;
+                         return 0;
+                 })},
+
+                // ---- Pipeline preset I/O ----
+                {0, "save-pipeline",
+                 "Build the pipeline from -s/-c/-d, write to PATH as JSON, and exit",
+                 CmdLineParser::OptionStringCallback([&](const String &s) {
+                         opts.savePipelinePath = s;
+                         return 0;
+                 })},
+                {0, "pipeline",
+                 "Load the pipeline from a saved JSON preset instead of -s/-c/-d",
+                 CmdLineParser::OptionStringCallback([&](const String &s) {
+                         opts.loadPipelinePath = s;
+                         return 0;
+                 })},
+
+                {0, "write-stats",
+                 "Write per-interval and final stats snapshots to PATH as JSON lines",
+                 CmdLineParser::OptionStringCallback([&](const String &s) {
+                         opts.writeStatsPath = s;
+                         // Turn on the stats collector when the user
+                         // wants a file but didn't explicitly set an
+                         // interval — a silent file is the wrong
+                         // default.
+                         if(opts.statsInterval <= 0.0) {
+                                 opts.statsInterval = 1.0;
+                         }
                          return 0;
                  })},
         });

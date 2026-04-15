@@ -65,6 +65,30 @@ struct Options {
         bool                            memStats    = false;    ///< Dump MemSpace::Stats for every registered memory space on shutdown.
         double                          statsInterval = 0.0;    ///< Seconds between live-telemetry prints (0 = off).
         bool                            probe       = false;    ///< Query and print device capabilities, then exit.
+
+        /**
+         * @brief When set, build the pipeline config from the CLI
+         *        options, write it to this JSON path, and exit.  The
+         *        pipeline itself is not opened or started.
+         */
+        promeki::String                 savePipelinePath;
+
+        /**
+         * @brief When set, load the pipeline config from this JSON
+         *        path instead of building it from -s / -c / -d.  Any
+         *        other stage-shaping flags on the CLI are ignored; the
+         *        non-stage flags (@c --duration, @c --frame-count,
+         *        @c --stats, ...) still apply.
+         */
+        promeki::String                 loadPipelinePath;
+
+        /**
+         * @brief When set, writes per-interval stats snapshots to
+         *        this path as JSON-lines, plus a final aggregate
+         *        snapshot at shutdown.  Setting this flag implicitly
+         *        enables the stats collector (default interval: 1s).
+         */
+        promeki::String                 writeStatsPath;
 };
 
 /**

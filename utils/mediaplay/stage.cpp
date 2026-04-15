@@ -502,4 +502,51 @@ MediaIO *buildFileSink(const StageSpec &spec,
         return io;
 }
 
+// --------------------------------------------------------------------------
+// CLI → MediaPipelineConfig::Stage resolver
+// --------------------------------------------------------------------------
+
+Error resolveStagePlan(const StageSpec &rawSpec,
+                       MediaIO::Mode mode,
+                       const String &stageName,
+                       const String &scopeLabel,
+                       MediaPipelineConfig::Stage &out) {
+        StageSpec working = rawSpec;
+
+        // Seed the config with the backend default so CLI overrides
+        // land on top of a fully-populated spec set.  For file paths
+        // we don't know the target backend until open() time; for
+        // SDL we use the local pseudo-backend schema; otherwise we
+        // ask the registry.
+        if(working.type == kStageFile) {
+                // No backend defaults available — applyStageConfig
+                // falls back to the global MediaConfig registry for
+                // spec lookup.
+        } else if(working.type == kStageSdl) {
+                working.config = sdlDefaultConfig();
+        } else {
+                MediaIO::Config cfg = MediaIO::defaultConfig(working.type);
+                cfg.set(MediaConfig::Type, working.type);
+                working.config = cfg;
+        }
+
+        Error ae = applyStageConfig(working, scopeLabel);
+        if(ae.isError()) return ae;
+        Error me = applyStageMetadata(working, scopeLabel);
+        if(me.isError()) return me;
+
+        // Fill the library-facing stage spec.  File stages carry
+        // @c type="" so MediaPipeline resolves the real backend via
+        // createForFileRead / createForFileWrite.  SDL stages keep
+        // @c type="SDL" so the caller can spot them during
+        // injectStage().
+        out.name = stageName;
+        out.type = (working.type == kStageFile) ? String() : working.type;
+        out.path = working.path;
+        out.mode = mode;
+        out.config = working.config;
+        out.metadata = working.metadata;
+        return Error::Ok;
+}
+
 } // namespace mediaplay

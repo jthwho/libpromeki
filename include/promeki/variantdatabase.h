@@ -266,10 +266,64 @@ class VariantDatabase {
                 VariantDatabase() = default;
 
                 /**
+                 * @brief Sets @p id to @p value, coercing JSON-serialized
+                 *        strings back to the spec's native type.
+                 *
+                 * Used by every "build from JSON" path (the base
+                 * @ref fromJson plus subclass overrides such as
+                 * @ref Metadata::fromJson) to restore the right
+                 * @ref Variant type for keys whose native form is
+                 * richer than a plain JSON primitive — @c Size2D,
+                 * @c PixelDesc, @c Enum, @c Color, @c FrameRate, etc.
+                 * @ref JsonObject::setFromVariant serializes those as
+                 * their string form on the way out; this routine
+                 * asks the registered @ref VariantSpec to re-parse
+                 * that string with @ref VariantSpec::parseString on
+                 * the way back.
+                 *
+                 * The coercion runs only when:
+                 *  - @p value is @ref Variant::TypeString, and
+                 *  - a spec is registered for @p id, and
+                 *  - the spec does @em not accept @c TypeString
+                 *    natively (so JSON strings that are legitimately
+                 *    strings stay strings), and
+                 *  - @ref VariantSpec::parseString succeeds.
+                 *
+                 * Any failure falls back to @ref set with the raw
+                 * value so the regular validation path still warns.
+                 *
+                 * @param id    The entry identifier.
+                 * @param value The JSON-decoded value to store.
+                 * @return The result of the underlying @ref set call.
+                 */
+                bool setFromJson(ID id, const Variant &value) {
+                        if(value.type() == Variant::TypeString) {
+                                const VariantSpec *sp = spec(id);
+                                if(sp != nullptr
+                                   && !sp->acceptsType(Variant::TypeString)) {
+                                        Error pe;
+                                        Variant parsed = sp->parseString(
+                                                value.get<String>(), &pe);
+                                        if(pe.isOk()) {
+                                                return set(id, std::move(parsed));
+                                        }
+                                }
+                        }
+                        return set(id, value);
+                }
+
+                /**
                  * @brief Creates a VariantDatabase from a JsonObject.
                  *
-                 * Each key in the JSON object becomes an ID (registered if new)
-                 * and its value is converted to a Variant via Variant::fromJson().
+                 * Each key in the JSON object becomes an ID (registered
+                 * if new) and its value is routed through
+                 * @ref setFromJson so the stored @ref Variant carries
+                 * the spec-native type rather than whichever JSON
+                 * primitive was used on the wire.  Subclasses that need
+                 * different lifecycle semantics (e.g. a validity flag
+                 * out-parameter) should delegate the per-entry work to
+                 * @ref setFromJson rather than reimplementing the
+                 * coercion rules.
                  *
                  * @param json The JsonObject to deserialize from.
                  * @return A VariantDatabase populated with the JSON contents.
@@ -277,7 +331,7 @@ class VariantDatabase {
                 static VariantDatabase fromJson(const JsonObject &json) {
                         VariantDatabase db;
                         json.forEach([&db](const String &key, const Variant &val) {
-                                db.set(ID(key), val);
+                                db.setFromJson(ID(key), val);
                         });
                         return db;
                 }

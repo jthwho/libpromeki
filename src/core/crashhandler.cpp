@@ -54,7 +54,7 @@ struct promeki_dirent64 {
 
 PROMEKI_NAMESPACE_BEGIN
 
-PROMEKI_DEBUG("CrashHandler");
+PROMEKI_DEBUG(CrashHandler);
 
 #if defined(PROMEKI_PLATFORM_POSIX)
 

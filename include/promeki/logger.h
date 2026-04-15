@@ -179,11 +179,14 @@ class Logger {
                 /** @brief Constructs a Logger and starts the worker thread. */
                 Logger();
 
-                /** @brief Destructor. Signals the worker thread to terminate and waits for it to finish. */
-                ~Logger() {
-                        _queue.emplace(CmdTerminate{});
-                        _thread.join();
-                }
+                /**
+                 * @brief Destructor.
+                 *
+                 * Drains any messages already enqueued, blocks further
+                 * enqueues from the public API, signals the worker to
+                 * terminate, and joins it.
+                 */
+                ~Logger();
 
                 /**
                  * @brief Returns the current minimum log level.
@@ -224,6 +227,7 @@ class Logger {
                  * @param filename Path to the log file. The file is opened by the worker thread.
                  */
                 void setLogFile(const String &filename) {
+                        if(_terminating.value()) return;
                         _queue.emplace(CmdSetFile{filename});
                 }
 
@@ -272,6 +276,7 @@ class Logger {
                                 Mutex::Locker lock(_formatterMutex);
                                 _fileFormatter = formatter ? formatter : defaultFileFormatter();
                         }
+                        if(_terminating.value()) return;
                         _queue.emplace(CmdSetFormatter{std::move(formatter), false});
                 }
 
@@ -285,6 +290,7 @@ class Logger {
                                 Mutex::Locker lock(_formatterMutex);
                                 _consoleFormatter = formatter ? formatter : defaultConsoleFormatter();
                         }
+                        if(_terminating.value()) return;
                         _queue.emplace(CmdSetFormatter{std::move(formatter), true});
                 }
 
@@ -296,6 +302,7 @@ class Logger {
                  *         timeout elapsed first.
                  */
                 Error sync(unsigned int timeoutMs = 0) {
+                        if(_terminating.value()) return Error::Ok;
                         auto p = std::make_shared<Promise<void>>();
                         Future<void> f = p->future();
                         _queue.emplace(CmdSync{std::move(p)});
@@ -333,6 +340,7 @@ class Logger {
                 std::thread             _thread;
                 Atomic<int>             _level;
                 Atomic<bool>            _consoleLogging;
+                Atomic<bool>            _terminating{false};
                 Queue<Command>          _queue;
                 mutable Mutex           _formatterMutex;
                 LogFormatter            _fileFormatter;

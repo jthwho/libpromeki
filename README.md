@@ -117,6 +117,22 @@ built around `MediaIO` (registry/factory) and `MediaIOTask` backends:
 - **Converter** — pixel format and color space conversion
 - Custom backends are registered with `PROMEKI_REGISTER_MEDIAIO()`
 
+**Pipeline orchestration:**
+
+High-level classes that wire a DAG of `MediaIO` stages from a
+declarative configuration:
+
+- `MediaPipelineConfig` — shareable description of stages + routes +
+  metadata; validates the DAG, round-trips through JSON and `DataStream`,
+  and saves/loads as JSON preset files
+- `MediaPipeline` — instantiates the stages, drives signal-based
+  frame flow on the caller's `EventLoop`, handles fan-out and
+  back-pressure, exposes a `build / open / start / stop / close`
+  lifecycle
+- `MediaPipelineStats` — per-stage `MediaIOStats` map plus a pipeline-
+  layer `PipelineStats` bucket (frames produced, write retries, errors,
+  back-pressure, uptime); round-trips through JSON and `DataStream`
+
 ### Networking
 
 BSD-socket abstractions and real-time media transport protocols.

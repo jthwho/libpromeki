@@ -10,6 +10,7 @@
 #include <doctest/doctest.h>
 #include <promeki/dir.h>
 #include <promeki/file.h>
+#include <promeki/libraryoptions.h>
 #include <promeki/numnameseq.h>
 
 using namespace promeki;
@@ -37,6 +38,27 @@ TEST_CASE("Dir: temp directory") {
         Dir t = Dir::temp();
         CHECK_FALSE(t.path().isEmpty());
         CHECK(t.exists());
+}
+
+TEST_CASE("Dir: temp respects LibraryOptions::TempDir override") {
+        // Save and restore so the singleton state doesn't leak into
+        // other tests.
+        const String saved = LibraryOptions::instance().getAs<String>(
+                LibraryOptions::TempDir);
+
+        LibraryOptions::instance().set(LibraryOptions::TempDir,
+                String("/var/lib/promeki-test-override"));
+        CHECK(Dir::temp().path().toString() == "/var/lib/promeki-test-override");
+
+        // Empty value falls back to the OS default — the system temp
+        // path is platform-dependent, but it must be non-empty and
+        // exist for the build environment to be sane.
+        LibraryOptions::instance().set(LibraryOptions::TempDir, String());
+        Dir def = Dir::temp();
+        CHECK_FALSE(def.path().isEmpty());
+        CHECK(def.exists());
+
+        LibraryOptions::instance().set(LibraryOptions::TempDir, saved);
 }
 
 TEST_CASE("Dir: mkdir and remove") {

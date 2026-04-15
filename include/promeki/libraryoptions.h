@@ -74,6 +74,45 @@ class LibraryOptions : public VariantDatabase<"LibraryOptions"> {
                                 .setDescription("Include environment variables in crash reports."));
 
                 // ============================================================
+                // Filesystem
+                // ============================================================
+
+                /// @brief String — override for the path returned by
+                /// @ref Dir::temp (empty = use the OS default, which
+                /// is @c std::filesystem::temp_directory_path — typically
+                /// @c /tmp on Linux, @c %TEMP% on Windows).
+                ///
+                /// Set this option to pin every @ref Dir::temp call —
+                /// and every consumer downstream of it (crash logs,
+                /// scratch JSON, ad-hoc test output, etc.) — to a
+                /// dedicated directory.  The common use case is moving
+                /// temp traffic off a tmpfs-backed @c /tmp onto a
+                /// disk-backed mount so large scratch files don't
+                /// consume RAM.  Set via code:
+                ///
+                /// @code
+                /// LibraryOptions::instance().set(
+                ///     LibraryOptions::TempDir,
+                ///     String("/mnt/data/tmp/promeki"));
+                /// @endcode
+                ///
+                /// ...or via the environment:
+                ///
+                /// @code
+                /// export PROMEKI_OPT_TempDir=/mnt/data/tmp/promeki
+                /// @endcode
+                ///
+                /// The override is returned verbatim — the directory
+                /// is not auto-created.  Callers that require the
+                /// directory to exist should @ref Dir::mkpath the
+                /// result themselves.
+                PROMEKI_DECLARE_ID(TempDir,
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription(
+                                        "Override for Dir::temp() (empty = OS default)."));
+
+                // ============================================================
                 // Termination signal handling
                 // ============================================================
 

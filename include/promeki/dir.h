@@ -155,8 +155,27 @@ class Dir {
                 static Dir home();
 
                 /**
-                 * @brief Returns a Dir for the system temp directory.
-                 * @return A Dir wrapping the temp directory.
+                 * @brief Returns a Dir for the library's temp directory.
+                 *
+                 * Resolves the path in this order:
+                 *  1. @ref LibraryOptions::TempDir — when the option is
+                 *     non-empty (set programmatically or via the
+                 *     @c PROMEKI_OPT_TempDir environment variable), its
+                 *     value is returned verbatim.  The directory is @em
+                 *     not auto-created; callers that need it to exist
+                 *     should invoke @ref mkpath on the returned @ref Dir.
+                 *  2. @c std::filesystem::temp_directory_path — the
+                 *     platform default (@c /tmp on Linux / macOS,
+                 *     @c %TEMP% on Windows, and anything @c TMPDIR
+                 *     points at when set).
+                 *
+                 * Use @ref LibraryOptions::TempDir to redirect every
+                 * consumer of @ref temp (crash logs, scratch JSON,
+                 * ad-hoc test output, ...) to a dedicated location —
+                 * most commonly a disk-backed mount to keep large
+                 * scratch files off tmpfs.
+                 *
+                 * @return A Dir wrapping the effective temp directory.
                  */
                 static Dir temp();
 

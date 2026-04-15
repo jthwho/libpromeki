@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <fnmatch.h>
 #include <promeki/dir.h>
+#include <promeki/libraryoptions.h>
 #include <promeki/stringlist.h>
 #include <promeki/resource.h>
 
@@ -170,6 +171,16 @@ Dir Dir::home() {
 }
 
 Dir Dir::temp() {
+        // Honor the library-wide override first so callers (and the
+        // PROMEKI_OPT_TempDir env var that feeds it) can pin temp
+        // traffic to a specific directory — typically a disk-backed
+        // mount instead of a tmpfs /tmp.  An empty value falls
+        // through to the platform default.
+        const String override = LibraryOptions::instance()
+                .getAs<String>(LibraryOptions::TempDir, String());
+        if(!override.isEmpty()) {
+                return Dir(FilePath(override));
+        }
         std::error_code ec;
         return Dir(FilePath(std::filesystem::temp_directory_path(ec)));
 }

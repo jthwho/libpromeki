@@ -16,6 +16,7 @@
 #include <promeki/list.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaio.h>
+#include <promeki/mediapipelineconfig.h>
 #include <promeki/metadata.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
@@ -207,5 +208,39 @@ promeki::MediaIO *buildFileSink(const StageSpec &spec,
                                 const promeki::AudioDesc &srcAudioDesc,
                                 const promeki::Metadata &srcMetadata,
                                 promeki::String &labelOut);
+
+// --------------------------------------------------------------------------
+// CLI → MediaPipelineConfig::Stage resolver
+// --------------------------------------------------------------------------
+
+/**
+ * @brief Resolves a CLI-parsed @ref StageSpec into a
+ *        @ref promeki::MediaPipelineConfig::Stage.
+ *
+ * Looks up the backend's default config and spec map (or the SDL
+ * pseudo-backend's schema for @c SDL stages), applies every
+ * @c --sc/@c --cc/@c --dc override via @ref applyStageConfig, applies
+ * every @c --sm/@c --cm/@c --dm override via @ref applyStageMetadata,
+ * and fills @p out with the resolved (@c type, @c path, @c mode,
+ * @c config, @c metadata) tuple suitable for
+ * @c MediaPipelineConfig::addStage.  File-path stages are emitted with
+ * an empty @c type so the pipeline resolves the real backend via
+ * @ref MediaIO::createForFileRead / @ref MediaIO::createForFileWrite
+ * at @c build() time.
+ *
+ * @param rawSpec     CLI-parsed stage spec (type / path / rawKeyValues).
+ * @param mode        Desired open mode (@ref MediaIO::Output /
+ *                    @c Input / @c InputAndOutput).
+ * @param stageName   Unique stage name for route targeting and errors.
+ * @param scopeLabel  Label for @ref applyStageConfig diagnostics
+ *                    (e.g. @c "--sc[TPG]").
+ * @param out         Output — populated on success.
+ * @return @c Error::Ok on success, or the first parsing error.
+ */
+promeki::Error resolveStagePlan(const StageSpec &rawSpec,
+                                promeki::MediaIO::Mode mode,
+                                const promeki::String &stageName,
+                                const promeki::String &scopeLabel,
+                                promeki::MediaPipelineConfig::Stage &out);
 
 } // namespace mediaplay

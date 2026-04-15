@@ -9,6 +9,7 @@
 #include <promeki/variantdatabase.h>
 #include <promeki/bufferiodevice.h>
 #include <promeki/buffer.h>
+#include <promeki/size2d.h>
 
 using namespace promeki;
 
@@ -429,6 +430,65 @@ TEST_CASE("VariantDatabase: toJson string roundtrip") {
         JsonObject parsed = JsonObject::parse(jsonStr);
         DB db2 = DB::fromJson(parsed);
         CHECK(db2.get(DB::ID("jstr.key")).get<String>() == "value");
+}
+
+// ----------------------------------------------------------------------------
+// setFromJson / fromJson spec-driven coercion
+// ----------------------------------------------------------------------------
+
+TEST_CASE("VariantDatabase: setFromJson coerces JSON strings via registered spec") {
+        // Declare a typed key whose native form is Size2D.  toJson()
+        // emits the Size2D as a String for wire purposes; fromJson()
+        // must route the round-trip through the spec so the stored
+        // Variant ends up as TypeSize2D, not TypeString.
+        using DB = VariantDatabase<"SpecCoerceTag">;
+        const DB::ID sizeId = DB::declareID("size",
+                VariantSpec().setType(Variant::TypeSize2D)
+                        .setDefault(Size2Du32())
+                        .setDescription("Image size."));
+
+        DB db;
+        CHECK(db.set(sizeId, Size2Du32(1920, 1080)));
+
+        JsonObject json = db.toJson();
+        // Round-trip via an explicit serialization so we're testing the
+        // realistic "write-then-read" path.
+        String text = json.toString();
+        JsonObject reparsed = JsonObject::parse(text);
+
+        DB db2 = DB::fromJson(reparsed);
+        CHECK(db2.get(sizeId).type() == Variant::TypeSize2D);
+        CHECK(db2.get(sizeId).get<Size2Du32>() == Size2Du32(1920, 1080));
+}
+
+TEST_CASE("VariantDatabase: setFromJson leaves legitimate strings alone") {
+        // When the spec says TypeString, a string in JSON is a string
+        // in memory — no reparsing should kick in.
+        using DB = VariantDatabase<"SpecStringPassthruTag">;
+        const DB::ID nameId = DB::declareID("name",
+                VariantSpec().setType(Variant::TypeString)
+                        .setDefault(String())
+                        .setDescription("Any string."));
+
+        DB db;
+        db.set(nameId, String("hello world"));
+        DB db2 = DB::fromJson(db.toJson());
+
+        CHECK(db2.get(nameId).type() == Variant::TypeString);
+        CHECK(db2.get(nameId).get<String>() == "hello world");
+}
+
+TEST_CASE("VariantDatabase: setFromJson falls back to raw value when no spec") {
+        // Ad-hoc keys (no declareID) have no spec — the raw JSON-decoded
+        // Variant should land in the database untouched.
+        using DB = VariantDatabase<"SpecAdhocTag">;
+
+        DB db;
+        db.setFromJson(DB::ID("ad.int"), Variant(int64_t(7)));
+        db.setFromJson(DB::ID("ad.str"), Variant(String("raw")));
+
+        CHECK(db.get(DB::ID("ad.int")).get<int64_t>() == 7);
+        CHECK(db.get(DB::ID("ad.str")).get<String>() == "raw");
 }
 
 // ============================================================================

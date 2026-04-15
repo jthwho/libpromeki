@@ -33,22 +33,76 @@ static DebugDatabase &debugDatabase() {
         return ret;
 }
 
+static StringList &debugEnvList() {
+        static StringList list;
+        return list;
+}
+
+static bool &debugEnvListMode() {
+        static bool mode = false;
+        return mode;
+}
+
+static void printEnvDebugReport() {
+        DebugDatabase &db = debugDatabase();
+        if(debugEnvListMode()) {
+                promekiInfo("PROMEKI_DEBUG=list, available debug items:");
+                for(const auto &[name, items] : db) {
+                        for(const auto &item : items) {
+                                promekiInfo("  %s (%s:%d)",
+                                        name.cstr(), item.file.cstr(), item.line);
+                        }
+                }
+                return;
+        }
+        const StringList &list = debugEnvList();
+        if(list.isEmpty()) return;
+#ifndef PROMEKI_DEBUG_ENABLE
+        promekiWarn("PROMEKI_DEBUG is set but promekiDebug() messages are "
+                    "compiled out. Rebuild with "
+                    "-DCMAKE_BUILD_TYPE=DevRelease or Debug.");
+#endif
+        for(const auto &name : list) {
+                if(!db.contains(name)) {
+                        promekiWarn("PROMEKI_DEBUG item '%s' is not registered "
+                                    "in the debug database", name.cstr());
+                }
+        }
+}
+
+namespace {
+        // Static destructor runs at program exit, by which time every
+        // PROMEKI_DEBUG() macro has registered, so the report sees
+        // the complete database.  Construction order (in
+        // ensureEnvDebugReporter) forces the Logger to be built
+        // first, guaranteeing LIFO destruction tears the reporter
+        // down while the Logger is still alive.
+        struct EnvDebugReporter {
+                ~EnvDebugReporter() { printEnvDebugReport(); }
+        };
+}
+
+static void ensureEnvDebugReporter() {
+        (void)Logger::defaultLogger();
+        static EnvDebugReporter instance;
+        (void)instance;
+}
+
 static bool checkForEnvDebugEnable(const String &name) {
         static bool done = false;
-        static StringList list;
+        StringList &list = debugEnvList();
         if(!done) {
                 done = true;
                 String enval = Env::get("PROMEKI_DEBUG");
                 if(enval.isEmpty()) return false;
-                list = enval.split(",");
-                if(!list.isEmpty()) {
-                        promekiInfo("Env PROMEKI_DEBUG: %s", list.join(", ").cstr());
-#ifndef PROMEKI_DEBUG_ENABLE
-                        promekiWarn("PROMEKI_DEBUG is set but promekiDebug() messages are "
-                                    "compiled out. Rebuild with "
-                                    "-DCMAKE_BUILD_TYPE=DevRelease or Debug.");
-#endif
+                StringList parsed = enval.split(",");
+                if(parsed.size() == 1 && parsed.front() == "list") {
+                        debugEnvListMode() = true;
+                } else {
+                        list = std::move(parsed);
                 }
+                ensureEnvDebugReporter();
+                promekiInfo("PROMEKI_DEBUG=%s", enval.cstr());
         }
         return list.contains(name);
 }
@@ -80,14 +134,18 @@ Logger::Logger() : _level(Info), _consoleLogging(true),
 }
 
 void Logger::setThreadName(const String &name) {
-        defaultLogger()._queue.emplace(CmdSetThreadName{cachedThreadId(), name});
+        Logger &log = defaultLogger();
+        if(log._terminating.value()) return;
+        log._queue.emplace(CmdSetThreadName{cachedThreadId(), name});
 }
 
 void Logger::log(LogLevel loglevel, const char *file, int line, const String &msg) {
+        if(_terminating.value()) return;
         _queue.emplace(LogEntry{DateTime::now(), loglevel, file, line, cachedThreadId(), msg});
 }
 
 void Logger::log(LogLevel loglevel, const char *file, int line, const StringList &lines) {
+        if(_terminating.value()) return;
         uint64_t id = cachedThreadId();
         DateTime ts = DateTime::now();
         List<Command> cmdlist;
@@ -95,6 +153,16 @@ void Logger::log(LogLevel loglevel, const char *file, int line, const StringList
                 cmdlist.pushToBack(LogEntry{ts, loglevel, file, line, id, item});
         }
         _queue.push(std::move(cmdlist));
+}
+
+Logger::~Logger() {
+        // Drain any commands already enqueued, then close the gate
+        // so subsequent public log()/setX() calls become no-ops, then
+        // tell the worker to exit and join it.
+        sync();
+        _terminating.setValue(true);
+        _queue.emplace(CmdTerminate{});
+        _thread.join();
 }
 
 Logger &Logger::defaultLogger() {

@@ -1069,6 +1069,18 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
         // Input (sink) or InputAndOutput mode.
         if(_mode != Input && _mode != InputAndOutput) return Error::NotSupported;
 
+        // Non-blocking capacity gate.  Per the documented contract,
+        // non-blocking writeFrame only queues when @ref writesAccepted
+        // reports capacity; when the queue is full we refuse up-front
+        // with @c TryAgain so the caller can retry after a
+        // @c frameWanted signal instead of letting the queue grow
+        // unbounded behind its back.  Blocking writes deliberately
+        // skip this gate — the caller is already pacing itself by
+        // waiting on the future.
+        if(!block && writesAccepted() <= 0) {
+                return Error::TryAgain;
+        }
+
         auto *cmdWrite = new MediaIOCommandWrite();
         cmdWrite->frame = frame;
         MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdWrite);
@@ -1196,7 +1208,9 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
                         _pendingWriteCount.fetchAndSub(1);
                 });
 
-        if(!block) return Error::TryAgain;
+        // Non-blocking submit: the command is now in the strand's hands
+        // and any failure arrives asynchronously on @c writeErrorSignal.
+        if(!block) return Error::Ok;
 
         auto r = future.result();
         if(r.second().isError()) return r.second();
