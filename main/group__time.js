@@ -85,6 +85,7 @@ var group__time =
       [ "operator>", "classDuration.html#a67090580803b30491729219c4389496e", null ],
       [ "operator>=", "classDuration.html#afbff1bf552696e939a761cf91952fcf9", null ],
       [ "seconds", "classDuration.html#a74278e86c7c69f5c108d1b2abc8fd9d1", null ],
+      [ "toScaledString", "classDuration.html#a5db423997a6a859127fb63de0760a71e", null ],
       [ "toSecondsDouble", "classDuration.html#a699d181d13ddfb8df73a0a4e44dcb7ce", null ],
       [ "toString", "classDuration.html#a5ca89c434fd4ff90e2446daa2765ee27", null ]
     ] ],

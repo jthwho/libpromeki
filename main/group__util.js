@@ -790,6 +790,7 @@ var group__util =
       [ "raw", "classUMID.html#a3cfc97220e1fee94601da74b8b4bcc63", null ],
       [ "toString", "classUMID.html#aa0dc639699dcc577b78802e935d1aeee", null ]
     ] ],
+    [ "Units", "classUnits.html", null ],
     [ "UUID", "classUUID.html", [
       [ "DataFormat", "classUUID.html#aaf83be55f4a3f88451a7e84ed139879c", null ],
       [ "UUID", "classUUID.html#a56b6dfa8d38418093502ad169a814dfb", null ],

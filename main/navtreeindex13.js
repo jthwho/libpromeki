@@ -1,5 +1,6 @@
 var NAVTREEINDEX13 =
 {
+"classMediaPipelineStats.html#a6340efe00cebae65c128f1a896742a8d":[18,15,3,10],
 "classMediaPipelineStats.html#a8b180835ec15161ca200022ca61c0034":[18,15,3,15],
 "classMediaPipelineStats.html#ab7b6d5725d691aef7a06bea65fa00990":[18,15,3,3],
 "classMediaPipelineStats.html#ad94c01d1e9fcafec10e10a77a16b63e4":[18,15,3,0],
@@ -248,6 +249,5 @@ var NAVTREEINDEX13 =
 "classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a725ea1a6ddf170854ce77be1860499a9":[18,17,0,0,22],
 "classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a72ea095c8e7f1ca4156feea6b0f15146":[18,17,0,0,21],
 "classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a73466c619d448d5cb0cef7fb84a905e2":[18,17,0,0,92],
-"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a73a003d993f7c414124f0b8fbe988f18":[18,17,0,0,118],
-"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a7526789c8a9f153edbd274682b6a6057":[18,17,0,0,38]
+"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a73a003d993f7c414124f0b8fbe988f18":[18,17,0,0,118]
 };

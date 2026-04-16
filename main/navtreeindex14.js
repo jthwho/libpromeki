@@ -1,5 +1,6 @@
 var NAVTREEINDEX14 =
 {
+"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a7526789c8a9f153edbd274682b6a6057":[18,17,0,0,38],
 "classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a7683d259f9cb0b44d7e64ee6049d9c34":[18,17,0,0,188],
 "classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a790ba267d1c84ce52ab9ee3e37685ef2":[18,17,0,0,67],
 "classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a7b4dd0e593525f59f5518312c28ca873":[18,17,0,0,55],
@@ -248,6 +249,5 @@ var NAVTREEINDEX14 =
 "classMusicalScale.html#a673100faf95d5f9b9edd9e9af62d855f":[18,17,3,7],
 "classMusicalScale.html#a6c50dbd7d029211cc97f87f3af01fb08":[18,17,3,5],
 "classMusicalScale.html#a85784f051a121579e2ef8b24220cff0d":[18,17,3,1],
-"classMusicalScale.html#a85784f051a121579e2ef8b24220cff0da102ac4983d25b3a668defb9c32b9dd0b":[18,17,3,1,5],
-"classMusicalScale.html#a85784f051a121579e2ef8b24220cff0da4ba528ca390718e142010dfc36d3a918":[18,17,3,1,6]
+"classMusicalScale.html#a85784f051a121579e2ef8b24220cff0da102ac4983d25b3a668defb9c32b9dd0b":[18,17,3,1,5]
 };

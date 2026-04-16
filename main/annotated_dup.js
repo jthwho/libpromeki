@@ -12,6 +12,7 @@ var annotated_dup =
     ] ],
     [ "std", null, [
       [ "formatter< promeki::Char >", "structstd_1_1formatter_3_01promeki_1_1Char_01_4.html", null ],
+      [ "formatter< promeki::Duration >", "structstd_1_1formatter_3_01promeki_1_1Duration_01_4.html", null ],
       [ "formatter< promeki::EUI64 >", "structstd_1_1formatter_3_01promeki_1_1EUI64_01_4.html", null ],
       [ "formatter< promeki::Point< T, NumValues > >", "structstd_1_1formatter_3_01promeki_1_1Point_3_01T_00_01NumValues_01_4_01_4.html", null ],
       [ "formatter< promeki::Rational< T > >", "structstd_1_1formatter_3_01promeki_1_1Rational_3_01T_01_4_01_4.html", null ],
@@ -318,6 +319,7 @@ var annotated_dup =
     [ "UdpSocket", "classUdpSocket.html", "classUdpSocket" ],
     [ "UdpSocketTransport", "classUdpSocketTransport.html", "classUdpSocketTransport" ],
     [ "UMID", "classUMID.html", "classUMID" ],
+    [ "Units", "classUnits.html", null ],
     [ "UUID", "classUUID.html", "classUUID" ],
     [ "V4l2ExposureMode", "classV4l2ExposureMode.html", null ],
     [ "V4l2PowerLineMode", "classV4l2PowerLineMode.html", null ],

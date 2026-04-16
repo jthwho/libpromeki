@@ -129,7 +129,7 @@ class ObfuscatedString&lt; N, Seed &gt;</div><p>Compile-time string obfuscation.
 <p>Strings wrapped with the PROMEKI_OBFUSCATE macro are encoded at compile time so the plaintext never appears in the binary. Each call site gets a unique key derived from the file name, line number, and build timestamp.</p>
 <p>The encoding applies four operations per byte (XOR, modular add, bit-rotate, XOR) with 64-bit cipher-block-chaining so each output byte depends on the full history of all previous bytes. The per-byte key stream is derived from a splitmix64 finalizer, and the 64-bit CBC state is advanced with a multiply-xorshift step after each byte.</p>
 <p>Usage: </p><div class="fragment"><div class="line"><a class="code hl_class" href="classString.html">String</a> <a class="code hl_function" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a> = <a class="code hl_define" href="obfuscatedstring_8h.html#acb89f83426760c47908ee175221bb79d">PROMEKI_OBFUSCATE</a>(<span class="stringliteral">&quot;my_secret&quot;</span>);</div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:57</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:56</div></div>
 <div class="ttc" id="aobfuscatedstring_8h_html_acb89f83426760c47908ee175221bb79d"><div class="ttname"><a href="obfuscatedstring_8h.html#acb89f83426760c47908ee175221bb79d">PROMEKI_OBFUSCATE</a></div><div class="ttdeci">#define PROMEKI_OBFUSCATE(str)</div><div class="ttdoc">Obfuscates a string literal at compile time.</div><div class="ttdef"><b>Definition</b> obfuscatedstring.h:163</div></div>
 <div class="ttc" id="aresult_8h_html_a3cb138b5e2739be6ec1340a22bbac91f"><div class="ttname"><a href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a></div><div class="ttdeci">const T &amp; value(const Result&lt; T &gt; &amp;r)</div><div class="ttdoc">Returns the value from a Result.</div><div class="ttdef"><b>Definition</b> result.h:56</div></div>
 </div><!-- fragment --><dl class="tparams"><dt>Template Parameters</dt><dd>
@@ -248,7 +248,7 @@ template&lt;<a class="el" href="classList.html">size_t</a> N, <a class="el" href
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classObfuscatedString.html">ObfuscatedString</a></li>
-    <li class="footer">Generated on 2026-04-16 04:42:40 from commit 9177fbf (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-16 05:30:02 from commit 7eadf34 (1.0.0).</li>
   </ul>
 </div>
 </body>

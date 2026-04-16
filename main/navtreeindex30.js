@@ -1,5 +1,7 @@
 var NAVTREEINDEX30 =
 {
+"structHevcDecoderConfig.html#aa92192fb15c5ebd92f477f56b479b1b8":[18,7,4,0],
+"structHevcDecoderConfig.html#ad5058c411ecc540e892f1685b9d3e14c":[18,7,4,18],
 "structHevcDecoderConfig.html#ad6d7dd61216428d94fd49adf6330ab8b":[18,7,4,7],
 "structHevcDecoderConfig.html#ad74c17b06133dfdd920edf04aaadd153":[18,7,4,12],
 "structHevcDecoderConfig.html#ae2bf304ba6eb42b86c53eaf9922b1835":[18,7,4,5],
@@ -247,7 +249,5 @@ var NAVTREEINDEX30 =
 "structPixelFormat_1_1Data.html#af94f78a88c59bdf01af9d06ba9a5f323":[18,13,58,1,1],
 "structPixelFormat_1_1Data.html#afc146466565af3f2956477628c887fde":[18,13,58,1,3],
 "structPixelFormat_1_1PlaneDesc.html":[18,13,58,2],
-"structPixelFormat_1_1PlaneDesc.html#a046e78b3502daa8654486434ccab3f0a":[18,13,58,2,3],
-"structPixelFormat_1_1PlaneDesc.html#a11a8635a9ba6e3265899d2392d170a79":[18,13,58,2,0],
-"structPixelFormat_1_1PlaneDesc.html#a728bb0fb9515c28f2bf333b070b98c77":[18,13,58,2,2]
+"structPixelFormat_1_1PlaneDesc.html#a046e78b3502daa8654486434ccab3f0a":[18,13,58,2,3]
 };

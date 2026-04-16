@@ -1,5 +1,6 @@
 var NAVTREEINDEX15 =
 {
+"classMusicalScale.html#a85784f051a121579e2ef8b24220cff0da4ba528ca390718e142010dfc36d3a918":[18,17,3,1,6],
 "classMusicalScale.html#a85784f051a121579e2ef8b24220cff0da947405abe2a6479d5837830d866694ce":[18,17,3,1,4],
 "classMusicalScale.html#a85784f051a121579e2ef8b24220cff0dab5c3bfc579b4d6f5df36f187008e4abb":[18,17,3,1,1],
 "classMusicalScale.html#a85784f051a121579e2ef8b24220cff0dac6334805b6e456898dff8e78e01a9557":[18,17,3,1,3],
@@ -248,6 +249,5 @@ var NAVTREEINDEX15 =
 "classPixelDesc.html#aa2fe37e5605e13afc4c7c497cad99a6e":[18,13,57,17],
 "classPixelDesc.html#aa628975b6554691887fc482b8ffcfa33":[18,13,57,12],
 "classPixelDesc.html#abda6c3294533e9f8a03bcfe8fd45c286":[18,13,57,5],
-"classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faaf":[18,13,57,3],
-"classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa068e30a54096435564da2568abb9e468":[18,13,57,3,118]
+"classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faaf":[18,13,57,3]
 };

@@ -1,5 +1,6 @@
 var NAVTREEINDEX18 =
 {
+"classRandom.html#a27047f40dbed4b99d8ccb5b041fb7155":[18,10,32,4],
 "classRandom.html#a5143e03545a6636c19f5ddb237ea67f1":[18,10,32,3],
 "classRandom.html#a6a9dfc13b6af6788018738bb132656c7":[18,10,32,6],
 "classRandom.html#a95fc7c64406684d9bd25cc959a1e4427":[18,10,32,7],
@@ -248,6 +249,5 @@ var NAVTREEINDEX18 =
 "classSDLApplication.html#aa968ab11621182bbdbd51e234c70ee18":[20,0,222,3],
 "classSDLApplication.html#aee9cd3e1ed6b61bfd7b3f0e1a90e5c60":[20,0,222,4],
 "classSDLAudioClock.html":[20,0,223],
-"classSDLAudioClock.html#a1307c261548e419b2605c7c6cfb99696":[20,0,223,7],
-"classSDLAudioClock.html#a2e7923f2903f39625c6bc3fa705935c6":[20,0,223,5]
+"classSDLAudioClock.html#a1307c261548e419b2605c7c6cfb99696":[20,0,223,7]
 };

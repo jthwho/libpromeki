@@ -199,6 +199,7 @@ var hierarchy =
       [ "std::formatter< promeki::String >", "structstd_1_1formatter_3_01promeki_1_1String_01_4.html", null ],
       [ "std::formatter< promeki::VariantImpl< Types... > >", "structstd_1_1formatter_3_01promeki_1_1VariantImpl_3_01Types_8_8_8_01_4_01_4.html", null ]
     ] ],
+    [ "std::formatter< promeki::Duration >", "structstd_1_1formatter_3_01promeki_1_1Duration_01_4.html", null ],
     [ "std::formatter< promeki::EUI64 >", "structstd_1_1formatter_3_01promeki_1_1EUI64_01_4.html", null ],
     [ "std::formatter< promeki::Timecode >", "structstd_1_1formatter_3_01promeki_1_1Timecode_01_4.html", null ],
     [ "std::formatter< promeki::VideoFormat >", "structstd_1_1formatter_3_01promeki_1_1VideoFormat_01_4.html", null ],
@@ -554,6 +555,7 @@ var hierarchy =
     [ "TuiStyleState", "classTuiStyleState.html", null ],
     [ "Enum::Type", "classEnum_1_1Type.html", null ],
     [ "UMID", "classUMID.html", null ],
+    [ "Units", "classUnits.html", null ],
     [ "UUID", "classUUID.html", null ],
     [ "VariantDatabase< Name >", "classVariantDatabase.html", null ],
     [ "VariantDatabase<\"Config\">", "classVariantDatabase.html", null ],

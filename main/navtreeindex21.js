@@ -1,5 +1,6 @@
 var NAVTREEINDEX21 =
 {
+"classStringLatin1Data.html#ac362c2f709570dc78ed81f1bceda166e":[20,0,250,20],
 "classStringLatin1Data.html#ac3ab1280bb056d27bf6109f2cf80149c":[20,0,250,19],
 "classStringLatin1Data.html#acce94d9d1fad57127eaa4346e44edae7":[20,0,250,1],
 "classStringLatin1Data.html#ad370af54d5582c8087e990d2ae5724d6":[20,0,250,15],
@@ -248,6 +249,5 @@ var NAVTREEINDEX21 =
 "classTextStream.html#adbc8c1584a21c36d572003274bb74ef0":[18,3,3,6],
 "classTextStream.html#ae32efc15f8e997061e0bed32a8f95fe7":[18,3,3,27],
 "classTextStream.html#ae68e9b43c391a47b6bd6158094f497d1":[18,3,3,35],
-"classTextStream.html#ae957dc1deec158e812b4bad4c72ac4b6":[18,3,3,32],
-"classTextStream.html#aee6bd443063febf69ecaffd4e6c8eab0":[18,3,3,2]
+"classTextStream.html#ae957dc1deec158e812b4bad4c72ac4b6":[18,3,3,32]
 };

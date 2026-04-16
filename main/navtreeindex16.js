@@ -1,5 +1,6 @@
 var NAVTREEINDEX16 =
 {
+"classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa068e30a54096435564da2568abb9e468":[18,13,57,3,118],
 "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa08aa1ad3b58839bccc68085bacee382e":[18,13,57,3,7],
 "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa091ef4a8520c5a201a871cfaeead8a66":[18,13,57,3,152],
 "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa0a645ff9efe20ea92a3c03099ebefc59":[18,13,57,3,57],
@@ -248,6 +249,5 @@ var NAVTREEINDEX16 =
 "classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4dedac1eafa4448bdd8a9374318ca1bf774b8":[18,13,58,6,66],
 "classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4dedac43d2a714bbe82ee5bc8522cc85c5378":[18,13,58,6,39],
 "classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4dedac769a931521157e10558665d1deb0e38":[18,13,58,6,15],
-"classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4dedac9d43f210a72ab993885265e8ef3a746":[18,13,58,6,56],
-"classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4dedacb421bd760fe76506942149ca614ac8f":[18,13,58,6,38]
+"classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4dedac9d43f210a72ab993885265e8ef3a746":[18,13,58,6,56]
 };

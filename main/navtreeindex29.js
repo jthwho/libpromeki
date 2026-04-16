@@ -1,5 +1,7 @@
 var NAVTREEINDEX29 =
 {
+"sdlapplication_8h.html":[21,0,0,0,0,0],
+"sdlapplication_8h_source.html":[21,0,0,0,0,0],
 "sdlaudioclock_8h.html":[21,0,0,0,0,1],
 "sdlaudioclock_8h_source.html":[21,0,0,0,0,1],
 "sdlaudiooutput_8h.html":[21,0,0,0,0,2],
@@ -247,7 +249,5 @@ var NAVTREEINDEX29 =
 "structHevcDecoderConfig.html#a79def2f5750046e5150b4b3f4993fb54":[18,7,4,4],
 "structHevcDecoderConfig.html#a7dfcd6a7575052774ac92a42be8cf89f":[18,7,4,6],
 "structHevcDecoderConfig.html#a8caf54e1ed5dde76396bc32953381432":[18,7,4,13],
-"structHevcDecoderConfig.html#a967c27cdb25d304330180f1cb756abaf":[18,7,4,21],
-"structHevcDecoderConfig.html#aa92192fb15c5ebd92f477f56b479b1b8":[18,7,4,0],
-"structHevcDecoderConfig.html#ad5058c411ecc540e892f1685b9d3e14c":[18,7,4,18]
+"structHevcDecoderConfig.html#a967c27cdb25d304330180f1cb756abaf":[18,7,4,21]
 };

@@ -1,5 +1,6 @@
 var NAVTREEINDEX19 =
 {
+"classSDLAudioClock.html#a2e7923f2903f39625c6bc3fa705935c6":[20,0,223,5],
 "classSDLAudioClock.html#a33d0f84b815edeeb0bd2b47eff601f90":[20,0,223,9],
 "classSDLAudioClock.html#a45e035ac7721c0cf201005ade146a0e5":[20,0,223,6],
 "classSDLAudioClock.html#a77a0c9db33c46c3fe4832d17e9b72f8e":[20,0,223,4],
@@ -248,6 +249,5 @@ var NAVTREEINDEX19 =
 "classSpan.html#a8757a743bad99d6705df6d98a8191f20":[18,0,9,27],
 "classSpan.html#a8e3452e0c9ac85c48a7720852004992f":[18,0,9,28],
 "classSpan.html#a9b1fda4750439aeeccdec477ebe19b13":[18,0,9,15],
-"classSpan.html#aa1b6a16159b4f282ee5f05b99b4d14a5":[18,0,9,39],
-"classSpan.html#aa5ea13c3045253f7d93711ce950f9184":[18,0,9,13]
+"classSpan.html#aa1b6a16159b4f282ee5f05b99b4d14a5":[18,0,9,39]
 };

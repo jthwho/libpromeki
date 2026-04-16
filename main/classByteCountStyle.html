@@ -261,13 +261,13 @@ Additional Inherited Members</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Well-known <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> type for human-readable byte-count formatting. </p>
-<p>Selects the unit family used by <a class="el" href="classString.html#a0dec855c1f50eac6ffe149fce7f86679">String::fromByteCount</a> when formatting an allocation size or similar byte-valued quantity:</p>
+<p>Selects the unit family used by <a class="el" href="classUnits.html#a568db889e52dded7a49c0337f087eaa2">Units::fromByteCount</a> when formatting an allocation size or similar byte-valued quantity:</p>
 <ul>
 <li><code>Metric</code> — powers of 1000 with SI suffixes: <code>B</code>, <code>KB</code>, <code>MB</code>, <code>GB</code>, <code>TB</code>, <code>PB</code>, <code>EB</code>.</li>
 <li><code>Binary</code> — powers of 1024 with IEC suffixes: <code>B</code>, <code>KiB</code>, <code>MiB</code>, <code>GiB</code>, <code>TiB</code>, <code>PiB</code>, <code>EiB</code>.</li>
 </ul>
 <p>Inherits from <a class="el" href="classTypedEnum.html">TypedEnum</a> so function signatures can take <code>const <a class="el" href="classByteCountStyle.html" title="Well-known Enum type for human-readable byte-count formatting.">ByteCountStyle</a> &amp;</code> and get compile-time type checking — other enum kinds (e.g. <code><a class="el" href="classVideoPattern.html" title="Well-known Enum type for video test pattern generator modes.">VideoPattern</a></code>) will fail to compile when passed in the same slot. Runtime compatibility with <a class="el" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a> and any API that takes a plain <a class="el" href="classEnum.html">Enum</a> is preserved via implicit derived-to-base slicing.</p>
-<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classString.html">String</a> s = <a class="code hl_function" href="classString.html#a0dec855c1f50eac6ffe149fce7f86679">String::fromByteCount</a>(1048576, 3, <a class="code hl_variable" href="group__wellknownenums.html#ga9d2d3b34e2e3e410560df0546f7dc983">ByteCountStyle::Binary</a>);</div>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classString.html">String</a> s = <a class="code hl_function" href="classUnits.html#a568db889e52dded7a49c0337f087eaa2">Units::fromByteCount</a>(1048576, 3, <a class="code hl_variable" href="group__wellknownenums.html#ga9d2d3b34e2e3e410560df0546f7dc983">ByteCountStyle::Binary</a>);</div>
 <div class="line"><span class="comment">// → &quot;1 MiB&quot;</span></div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Round-trip through Variant still works:</span></div>
@@ -277,8 +277,8 @@ Additional Inherited Members</h2></td></tr>
 <div class="ttc" id="aclassByteCountStyle_html"><div class="ttname"><a href="classByteCountStyle.html">ByteCountStyle</a></div><div class="ttdoc">Well-known Enum type for human-readable byte-count formatting.</div><div class="ttdef"><b>Definition</b> enums.h:508</div></div>
 <div class="ttc" id="aclassEnum_html"><div class="ttname"><a href="classEnum.html">Enum</a></div><div class="ttdoc">Runtime-typed enumeration value carrying a registered type and integer.</div><div class="ttdef"><b>Definition</b> enum.h:107</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:57</div></div>
-<div class="ttc" id="aclassString_html_a0dec855c1f50eac6ffe149fce7f86679"><div class="ttname"><a href="classString.html#a0dec855c1f50eac6ffe149fce7f86679">String::fromByteCount</a></div><div class="ttdeci">static String fromByteCount(uint64_t bytes, int maxDecimals=3)</div><div class="ttdoc">Formats a byte count as a human-readable string (metric default).</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:56</div></div>
+<div class="ttc" id="aclassUnits_html_a568db889e52dded7a49c0337f087eaa2"><div class="ttname"><a href="classUnits.html#a568db889e52dded7a49c0337f087eaa2">Units::fromByteCount</a></div><div class="ttdeci">static String fromByteCount(uint64_t bytes, int maxDecimals=3)</div><div class="ttdoc">Formats a byte count with metric (1000-based) units.</div></div>
 <div class="ttc" id="aclassVariantImpl_html"><div class="ttname"><a href="classVariantImpl.html">VariantImpl&lt; std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, Size2Du32, UUID, UMID, Timecode, Rational&lt; int &gt;, FrameRate, VideoFormat, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, VideoCodec, AudioCodec, Enum, EnumList, detail::VariantEnd &gt;</a></div></div>
 <div class="ttc" id="aclassVariantImpl_html_a95ca32106dbaee20a12d1a3a8c9e48fe"><div class="ttname"><a href="classVariantImpl.html#a95ca32106dbaee20a12d1a3a8c9e48fe">VariantImpl::get</a></div><div class="ttdeci">To get(Error *err=nullptr) const</div><div class="ttdoc">Converts the stored value to the requested type To.</div><div class="ttdef"><b>Definition</b> variant.h:289</div></div>
 <div class="ttc" id="agroup__wellknownenums_html_ga9d2d3b34e2e3e410560df0546f7dc983"><div class="ttname"><a href="group__wellknownenums.html#ga9d2d3b34e2e3e410560df0546f7dc983">ByteCountStyle::Binary</a></div><div class="ttdeci">static const ByteCountStyle Binary</div><div class="ttdoc">Powers of 1024 (KiB, MiB, ...).</div><div class="ttdef"><b>Definition</b> enums.h:521</div></div>
@@ -293,7 +293,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classByteCountStyle.html">ByteCountStyle</a></li>
-    <li class="footer">Generated on 2026-04-16 04:42:40 from commit 9177fbf (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-16 05:30:02 from commit 7eadf34 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -146,8 +146,11 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:aaf08fc0c2906460ac581440f9b91f74e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the duration is negative.  <br /></td></tr>
 <tr class="separator:aaf08fc0c2906460ac581440f9b91f74e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5ca89c434fd4ff90e2446daa2765ee27" id="r_a5ca89c434fd4ff90e2446daa2765ee27"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDuration.html#a5ca89c434fd4ff90e2446daa2765ee27">toString</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a5ca89c434fd4ff90e2446daa2765ee27"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a human-readable representation (e.g. "1h 23m 45s").  <br /></td></tr>
+<tr class="memdesc:a5ca89c434fd4ff90e2446daa2765ee27"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a human-readable HMS representation (e.g. "1h 23m 45.123s").  <br /></td></tr>
 <tr class="separator:a5ca89c434fd4ff90e2446daa2765ee27"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5db423997a6a859127fb63de0760a71e" id="r_a5db423997a6a859127fb63de0760a71e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDuration.html#a5db423997a6a859127fb63de0760a71e">toScaledString</a> (int <a class="el" href="classList.html">precision</a>=2) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a5db423997a6a859127fb63de0760a71e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns an auto-scaled representation (e.g. "1.5 ms").  <br /></td></tr>
+<tr class="separator:a5db423997a6a859127fb63de0760a71e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4cbe43c367448e489480d155d1737762" id="r_a4cbe43c367448e489480d155d1737762"><td class="memItemLeft" align="right" valign="top"><a id="a4cbe43c367448e489480d155d1737762" name="a4cbe43c367448e489480d155d1737762"></a>
 <a class="el" href="classDuration.html">Duration</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator+</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classDuration.html">Duration</a> &amp;<a class="el" href="classList.html">o</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a4cbe43c367448e489480d155d1737762"><td class="mdescLeft">&#160;</td><td class="mdescRight">Addition operator. <br /></td></tr>
@@ -648,6 +651,34 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a5db423997a6a859127fb63de0760a71e" name="a5db423997a6a859127fb63de0760a71e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5db423997a6a859127fb63de0760a71e">&#9670;&#160;</a></span>toScaledString()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classString.html">String</a> Duration::toScaledString </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>precision</em> = <code>2</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns an auto-scaled representation (e.g. "1.5 ms"). </p>
+<p>Delegates to <a class="el" href="classUnits.html#a70871fbaf757d32e3f1ffff7452c4563">Units::fromDurationNs</a>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">precision</td><td>Number of significant decimal digits. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Formatted string. </dd></dl>
+
+</div>
+</div>
 <a id="a699d181d13ddfb8df73a0a4e44dcb7ce" name="a699d181d13ddfb8df73a0a4e44dcb7ce"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a699d181d13ddfb8df73a0a4e44dcb7ce">&#9670;&#160;</a></span>toSecondsDouble()</h2>
 
@@ -691,7 +722,7 @@ Static Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Returns a human-readable representation (e.g. "1h 23m 45s"). </p>
+<p>Returns a human-readable HMS representation (e.g. "1h 23m 45.123s"). </p>
 <dl class="section return"><dt>Returns</dt><dd>Formatted string. </dd></dl>
 
 </div>
@@ -706,7 +737,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classDuration.html">Duration</a></li>
-    <li class="footer">Generated on 2026-04-16 04:42:40 from commit 9177fbf (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-16 05:30:02 from commit 7eadf34 (1.0.0).</li>
   </ul>
 </div>
 </body>

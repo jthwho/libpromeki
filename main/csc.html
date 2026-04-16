@@ -178,7 +178,7 @@ Configuration</h1>
 <div class="ttc" id="aclassList_html_ab5f4f4c756727be7a037ea66660a2fec"><div class="ttname"><a href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">List::set</a></div><div class="ttdeci">bool set(size_t index, const T &amp;val)</div><div class="ttdoc">Sets an item in the list by index.</div><div class="ttdef"><b>Definition</b> list.h:541</div></div>
 <div class="ttc" id="aclassMediaConfig_html"><div class="ttname"><a href="classMediaConfig.html">MediaConfig</a></div><div class="ttdoc">Generic name/value configuration container for the media subsystem.</div><div class="ttdef"><b>Definition</b> mediaconfig.h:54</div></div>
 <div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafa88e27d485713c3085560fa0589da842f"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa88e27d485713c3085560fa0589da842f">PixelDesc::YUV8_422_Rec709</a></div><div class="ttdeci">@ YUV8_422_Rec709</div><div class="ttdoc">8-bit YCbCr 4:2:2, Rec.709, limited range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:148</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:57</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:56</div></div>
 </div><!-- fragment --><h1><a class="anchor" id="csc_threading"></a>
 Thread Safety</h1>
 <p><a class="el" href="classCSCPipeline.html" title="Pre-compiled color space conversion pipeline.">CSCPipeline</a> is immutable after construction and safe to execute concurrently from multiple threads. Each thread must provide its own <a class="el" href="classCSCContext.html" title="Per-invocation scratch space for CSC pipeline execution.">CSCContext</a> for scratch storage. <a class="el" href="classImage.html#aaeb74cf6bc00468468d74fa278209f9d" title="Converts this image to a different pixel description.">Image::convert()</a> creates a temporary context internally, so no manual context management is needed for the high-level API.</p>
@@ -230,7 +230,7 @@ Test Strategy</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-16 04:42:40 from commit 9177fbf (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-16 05:30:02 from commit 7eadf34 (1.0.0).</li>
   </ul>
 </div>
 </body>
