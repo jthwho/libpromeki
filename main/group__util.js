@@ -269,7 +269,8 @@ var group__util =
         [ "CorruptData", "classError.html#ab5980e13b879db253df802b0950d1708ac27bcb6eb0536b89f16339118db69110", null ],
         [ "DeviceError", "classError.html#ab5980e13b879db253df802b0950d1708af55d0efc5264924861e4aab9d83d9cac", null ],
         [ "DeviceNotFound", "classError.html#ab5980e13b879db253df802b0950d1708abfafed1687967630c6ead7ae486c06d3", null ],
-        [ "FormatMismatch", "classError.html#ab5980e13b879db253df802b0950d1708a7e5b3da50016db37eaa13051d0ae32bf", null ]
+        [ "FormatMismatch", "classError.html#ab5980e13b879db253df802b0950d1708a7e5b3da50016db37eaa13051d0ae32bf", null ],
+        [ "FontUnavailable", "classError.html#ab5980e13b879db253df802b0950d1708a860bb07c791353ea49a5c70a3cbd4ebc", null ]
       ] ],
       [ "Error", "classError.html#a83eaa8db2a6c22d6aff5758eea236a6e", null ],
       [ "~Error", "classError.html#a1a45d42a3a035d510333cdfeb36a0e93", null ],
@@ -388,6 +389,7 @@ var group__util =
       [ "PROMEKI_DECLARE_ID", "classLibraryOptions.html#a1628fb7a566b5a63b710e73c98c3aa87", null ],
       [ "PROMEKI_DECLARE_ID", "classLibraryOptions.html#a93c6ca7217a061b59ee4f582ee88095c", null ],
       [ "PROMEKI_DECLARE_ID", "classLibraryOptions.html#a759f62e86e83e392d2d389b41fd3a127", null ],
+      [ "PROMEKI_DECLARE_ID", "classLibraryOptions.html#a50d75d62f1ff9a5a705f1aa7528384d2", null ],
       [ "PROMEKI_DECLARE_ID", "classLibraryOptions.html#add6cb4934665b46ec1e73f03bbc319bd", null ]
     ] ],
     [ "Logger", "classLogger.html", [
@@ -822,6 +824,8 @@ var group__util =
       [ "contains", "classVariantDatabase.html#a0c6b3167abbee37ce415575d6b578c19", null ],
       [ "extract", "classVariantDatabase.html#adff097139ade0d44434eeaaba801d89f", null ],
       [ "forEach", "classVariantDatabase.html#a40ca1f527e5284c9ad57b41b1eccf295", null ],
+      [ "format", "classVariantDatabase.html#a07294735e6b4ee22e4ca1ede2920b845", null ],
+      [ "format", "classVariantDatabase.html#a1ae59b714a37363415836eaffe83194d", null ],
       [ "get", "classVariantDatabase.html#a11a698992de8d4d830d83a78f6a6ece7", null ],
       [ "getAs", "classVariantDatabase.html#aba34c18fb083556f801a692fce34d76b", null ],
       [ "ids", "classVariantDatabase.html#a2c75dbcf9eb7bb706f0103e08f115df8", null ],
@@ -833,6 +837,7 @@ var group__util =
       [ "remove", "classVariantDatabase.html#a5d9991fb8d7f7e2ad9ea4d5c93dbf1be", null ],
       [ "set", "classVariantDatabase.html#acc09774a54c4b14168cc55fc14c4ad19", null ],
       [ "set", "classVariantDatabase.html#a647e822cbd60b836b8cbe98179d8978a", null ],
+      [ "setFromJson", "classVariantDatabase.html#ae80394c786acc36b21e26cbd23f370c4", null ],
       [ "setIfMissing", "classVariantDatabase.html#ae0b2922a7c5bd993e1d60929b132dcc0", null ],
       [ "setIfMissing", "classVariantDatabase.html#a9cb32301758b91d9b137e2c7c95676d4", null ],
       [ "setValidation", "classVariantDatabase.html#ad2a390afff37f3a64ed81743395983d6", null ],

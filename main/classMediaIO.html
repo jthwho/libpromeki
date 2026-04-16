@@ -1873,7 +1873,7 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Marks this <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> as a sink for benchmark submission. </p>
 <p>Sinks submit each frame's <a class="el" href="classBenchmark.html" title="Ordered collection of named timestamps for pipeline performance measurement.">Benchmark</a> to their attached reporter after the <code>taskEnd</code> stamp. Non-sink stages still stamp — so a pipeline's terminal stage sees all the accumulated timestamps from upstream — but do not submit, avoiding double counting.</p>
-<p>Defaults to true so a standalone <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> "just works" when a reporter is attached. MediaPipeline sets it to false on all non-terminal stages during build().</p>
+<p>Defaults to true so a standalone <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> "just works" when a reporter is attached. <a class="el" href="classMediaPipeline.html" title="Data-driven builder and runtime for a DAG of MediaIO stages.">MediaPipeline</a> sets it to false on all non-terminal stages during build().</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">isSink</td><td>True if this stage should submit. </td></tr>
@@ -2282,7 +2282,11 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Writes a frame to the media resource. </p>
-<p>Submits a CmdWrite, then either blocks for the result or returns <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708aa5758bc6cc59cd5dcedfb62d4cbbc76b" title="Resource temporarily unavailable (EAGAIN).">Error::TryAgain</a>.</p>
+<p>Submits a <code>CmdWrite</code> to the strand. The contract differs between the two modes:</p>
+<ul>
+<li><b>Blocking (<code>block</code> = true)</b>: always enqueues the command and blocks until the strand completes it. Returns the backend's completion result (<a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34">Error::Ok</a> or a backend-specific error). Does not bound the queue — callers that want bounded growth should gate on <a class="el" href="classMediaIO.html#a7ce9a1fdad6095256ca5c22e1bb787f8">writesAccepted</a> themselves.</li>
+<li><b>Non-blocking (<code>block</code> = false)</b>: checks <a class="el" href="classMediaIO.html#a7ce9a1fdad6095256ca5c22e1bb787f8">writesAccepted</a> up front. When capacity is available the command is enqueued and the call returns <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34">Error::Ok</a> immediately; the asynchronous completion result is delivered via writeErrorSignal on failure (successful completions are silent). When no capacity is available the command is <em>not</em> enqueued and the call returns <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708aa5758bc6cc59cd5dcedfb62d4cbbc76b">Error::TryAgain</a> — the caller is expected to retry after a frameWantedSignal.</li>
+</ul>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">frame</td><td>The <a class="el" href="classFrame.html" title="A media frame containing images, audio, compressed packets, and metadata.">Frame</a> to write. </td></tr>
@@ -2290,7 +2294,7 @@ Additional Inherited Members</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a>, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708aa5758bc6cc59cd5dcedfb62d4cbbc76b" title="Resource temporarily unavailable (EAGAIN).">Error::TryAgain</a>, or an error. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34">Error::Ok</a> on successful submit (or completion in blocking mode), <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708aa5758bc6cc59cd5dcedfb62d4cbbc76b">Error::TryAgain</a> when non-blocking and the write queue is full, or a backend-specific error. </dd></dl>
 
 </div>
 </div>
@@ -2376,7 +2380,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIO.html">MediaIO</a></li>
-    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-16 04:42:40 from commit 9177fbf (1.0.0).</li>
   </ul>
 </div>
 </body>

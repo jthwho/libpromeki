@@ -7,5 +7,6 @@ var classLibraryOptions =
     [ "PROMEKI_DECLARE_ID", "classLibraryOptions.html#a1628fb7a566b5a63b710e73c98c3aa87", null ],
     [ "PROMEKI_DECLARE_ID", "classLibraryOptions.html#a93c6ca7217a061b59ee4f582ee88095c", null ],
     [ "PROMEKI_DECLARE_ID", "classLibraryOptions.html#a759f62e86e83e392d2d389b41fd3a127", null ],
+    [ "PROMEKI_DECLARE_ID", "classLibraryOptions.html#a50d75d62f1ff9a5a705f1aa7528384d2", null ],
     [ "PROMEKI_DECLARE_ID", "classLibraryOptions.html#add6cb4934665b46ec1e73f03bbc319bd", null ]
 ];

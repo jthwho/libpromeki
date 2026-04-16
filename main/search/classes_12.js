@@ -37,7 +37,7 @@ var searchData=
   ['span_34',['Span',['../classSpan.html',1,'']]],
   ['srcquality_35',['SrcQuality',['../classSrcQuality.html',1,'']]],
   ['stack_36',['Stack',['../classStack.html',1,'']]],
-  ['stage_37',['Stage',['../structCSCPipeline_1_1Stage.html',1,'CSCPipeline']]],
+  ['stage_37',['stage',['../structCSCPipeline_1_1Stage.html',1,'CSCPipeline::Stage'],['../structMediaPipelineConfig_1_1Stage.html',1,'MediaPipelineConfig::Stage']]],
   ['stats_38',['stats',['../structMemPool_1_1Stats.html',1,'MemPool::Stats'],['../structMemSpace_1_1Stats.html',1,'MemSpace::Stats'],['../structSDLAudioClock_1_1Stats.html',1,'SDLAudioClock::Stats']]],
   ['statsaccumulator_39',['StatsAccumulator',['../classStatsAccumulator.html',1,'']]],
   ['stepstats_40',['StepStats',['../structBenchmarkReporter_1_1StepStats.html',1,'BenchmarkReporter']]],
@@ -50,11 +50,12 @@ var searchData=
   ['stringlatin1data_47',['StringLatin1Data',['../classStringLatin1Data.html',1,'']]],
   ['stringlist_48',['StringList',['../classStringList.html',1,'']]],
   ['stringliteraldata_49',['StringLiteralData',['../classStringLiteralData.html',1,'']]],
-  ['stringregistry_50',['StringRegistry',['../classStringRegistry.html',1,'']]],
-  ['stringregistry_3c_22benchmark_22_3e_51',['StringRegistry&lt;&quot;Benchmark&quot;&gt;',['../classStringRegistry.html',1,'']]],
-  ['stringunicodedata_52',['StringUnicodeData',['../classStringUnicodeData.html',1,'']]],
-  ['stringunicodeliteraldata_53',['StringUnicodeLiteralData',['../classStringUnicodeLiteralData.html',1,'']]],
-  ['structdatabase_54',['StructDatabase',['../classStructDatabase.html',1,'']]],
-  ['syntheticclock_55',['SyntheticClock',['../classSyntheticClock.html',1,'']]],
-  ['system_56',['System',['../classSystem.html',1,'']]]
+  ['stringoptions_50',['StringOptions',['../structVideoFormat_1_1StringOptions.html',1,'VideoFormat']]],
+  ['stringregistry_51',['StringRegistry',['../classStringRegistry.html',1,'']]],
+  ['stringregistry_3c_22benchmark_22_3e_52',['StringRegistry&lt;&quot;Benchmark&quot;&gt;',['../classStringRegistry.html',1,'']]],
+  ['stringunicodedata_53',['StringUnicodeData',['../classStringUnicodeData.html',1,'']]],
+  ['stringunicodeliteraldata_54',['StringUnicodeLiteralData',['../classStringUnicodeLiteralData.html',1,'']]],
+  ['structdatabase_55',['StructDatabase',['../classStructDatabase.html',1,'']]],
+  ['syntheticclock_56',['SyntheticClock',['../classSyntheticClock.html',1,'']]],
+  ['system_57',['System',['../classSystem.html',1,'']]]
 ];

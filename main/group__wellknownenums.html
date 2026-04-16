@@ -153,8 +153,8 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimecodePackFormat.html">TimecodePackFormat</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Selects the on-the-wire BCD time-address layout used by <a class="el" href="classTimecode.html#a0b6f9be97a95839c1677c5ce8f2f129b">Timecode::toBcd64</a> and <a class="el" href="classTimecode.html#a3b66b507b1249e7b9704ede346672d51">Timecode::fromBcd64</a>.  <a href="classTimecodePackFormat.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classInterlaceMode.html">InterlaceMode</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Well-known <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> type for progressive / interlaced video scan mode.  <a href="classInterlaceMode.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoScanMode.html">VideoScanMode</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Well-known <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> type for progressive / interlaced video scan mode.  <a href="classVideoScanMode.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIODirection.html">MediaIODirection</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Well-known <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> type for <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> open direction.  <a href="classMediaIODirection.html#details">More...</a><br /></td></tr>
@@ -392,21 +392,24 @@ Variables</h2></td></tr>
 <tr class="memitem:gafcee4eef03b6097fd036377c9fc121d5" id="r_gafcee4eef03b6097fd036377c9fc121d5"><td class="memItemLeft" align="right" valign="top"><a id="gafcee4eef03b6097fd036377c9fc121d5" name="gafcee4eef03b6097fd036377c9fc121d5"></a>
 <a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classTimecodePackFormat.html">TimecodePackFormat</a>&#160;</td><td class="memItemRight" valign="bottom"><b>TimecodePackFormat::Ltc</b> { 1 }</td></tr>
 <tr class="separator:gafcee4eef03b6097fd036377c9fc121d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga882dde2f5889bbebac007373338f1d3f" id="r_ga882dde2f5889bbebac007373338f1d3f"><td class="memItemLeft" align="right" valign="top"><a id="ga882dde2f5889bbebac007373338f1d3f" name="ga882dde2f5889bbebac007373338f1d3f"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classInterlaceMode.html">InterlaceMode</a>&#160;</td><td class="memItemRight" valign="bottom"><b>InterlaceMode::Unknown</b> { 0 }</td></tr>
-<tr class="separator:ga882dde2f5889bbebac007373338f1d3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga114af6dfc431810f999043a4437106ed" id="r_ga114af6dfc431810f999043a4437106ed"><td class="memItemLeft" align="right" valign="top"><a id="ga114af6dfc431810f999043a4437106ed" name="ga114af6dfc431810f999043a4437106ed"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classInterlaceMode.html">InterlaceMode</a>&#160;</td><td class="memItemRight" valign="bottom"><b>InterlaceMode::Progressive</b> { 1 }</td></tr>
-<tr class="separator:ga114af6dfc431810f999043a4437106ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gacbed94f785b3d12e7bcc030eb8639894" id="r_gacbed94f785b3d12e7bcc030eb8639894"><td class="memItemLeft" align="right" valign="top"><a id="gacbed94f785b3d12e7bcc030eb8639894" name="gacbed94f785b3d12e7bcc030eb8639894"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classInterlaceMode.html">InterlaceMode</a>&#160;</td><td class="memItemRight" valign="bottom"><b>InterlaceMode::Interlaced</b> { 2 }</td></tr>
-<tr class="separator:gacbed94f785b3d12e7bcc030eb8639894"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga2badd3d58b382d81c54d1837ca78b07e" id="r_ga2badd3d58b382d81c54d1837ca78b07e"><td class="memItemLeft" align="right" valign="top"><a id="ga2badd3d58b382d81c54d1837ca78b07e" name="ga2badd3d58b382d81c54d1837ca78b07e"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classInterlaceMode.html">InterlaceMode</a>&#160;</td><td class="memItemRight" valign="bottom"><b>InterlaceMode::InterlacedEvenFirst</b> { 3 }</td></tr>
-<tr class="separator:ga2badd3d58b382d81c54d1837ca78b07e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga0a19f26b423d91f340cc693a566879e3" id="r_ga0a19f26b423d91f340cc693a566879e3"><td class="memItemLeft" align="right" valign="top"><a id="ga0a19f26b423d91f340cc693a566879e3" name="ga0a19f26b423d91f340cc693a566879e3"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classInterlaceMode.html">InterlaceMode</a>&#160;</td><td class="memItemRight" valign="bottom"><b>InterlaceMode::InterlacedOddFirst</b> { 4 }</td></tr>
-<tr class="separator:ga0a19f26b423d91f340cc693a566879e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga74b752ce5e6b14c07f419aac32da155e" id="r_ga74b752ce5e6b14c07f419aac32da155e"><td class="memItemLeft" align="right" valign="top"><a id="ga74b752ce5e6b14c07f419aac32da155e" name="ga74b752ce5e6b14c07f419aac32da155e"></a>
+<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVideoScanMode.html">VideoScanMode</a>&#160;</td><td class="memItemRight" valign="bottom"><b>VideoScanMode::Unknown</b> { 0 }</td></tr>
+<tr class="separator:ga74b752ce5e6b14c07f419aac32da155e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga591a6aa053fe1103a058691cbfc881cf" id="r_ga591a6aa053fe1103a058691cbfc881cf"><td class="memItemLeft" align="right" valign="top"><a id="ga591a6aa053fe1103a058691cbfc881cf" name="ga591a6aa053fe1103a058691cbfc881cf"></a>
+<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVideoScanMode.html">VideoScanMode</a>&#160;</td><td class="memItemRight" valign="bottom"><b>VideoScanMode::Progressive</b> { 1 }</td></tr>
+<tr class="separator:ga591a6aa053fe1103a058691cbfc881cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga20b34e02291f7f04d14e4c8e2cbb2a61" id="r_ga20b34e02291f7f04d14e4c8e2cbb2a61"><td class="memItemLeft" align="right" valign="top"><a id="ga20b34e02291f7f04d14e4c8e2cbb2a61" name="ga20b34e02291f7f04d14e4c8e2cbb2a61"></a>
+<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVideoScanMode.html">VideoScanMode</a>&#160;</td><td class="memItemRight" valign="bottom"><b>VideoScanMode::Interlaced</b> { 2 }</td></tr>
+<tr class="separator:ga20b34e02291f7f04d14e4c8e2cbb2a61"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac5ec71a3ceb2c175fef8d3a3c10b514c" id="r_gac5ec71a3ceb2c175fef8d3a3c10b514c"><td class="memItemLeft" align="right" valign="top"><a id="gac5ec71a3ceb2c175fef8d3a3c10b514c" name="gac5ec71a3ceb2c175fef8d3a3c10b514c"></a>
+<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVideoScanMode.html">VideoScanMode</a>&#160;</td><td class="memItemRight" valign="bottom"><b>VideoScanMode::InterlacedEvenFirst</b> { 3 }</td></tr>
+<tr class="separator:gac5ec71a3ceb2c175fef8d3a3c10b514c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac1003a32600c9acfe61756b41fac851d" id="r_gac1003a32600c9acfe61756b41fac851d"><td class="memItemLeft" align="right" valign="top"><a id="gac1003a32600c9acfe61756b41fac851d" name="gac1003a32600c9acfe61756b41fac851d"></a>
+<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVideoScanMode.html">VideoScanMode</a>&#160;</td><td class="memItemRight" valign="bottom"><b>VideoScanMode::InterlacedOddFirst</b> { 4 }</td></tr>
+<tr class="separator:gac1003a32600c9acfe61756b41fac851d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga5897e12aa5dcb09da426aaa745101261" id="r_ga5897e12aa5dcb09da426aaa745101261"><td class="memItemLeft" align="right" valign="top"><a id="ga5897e12aa5dcb09da426aaa745101261" name="ga5897e12aa5dcb09da426aaa745101261"></a>
+<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVideoScanMode.html">VideoScanMode</a>&#160;</td><td class="memItemRight" valign="bottom"><b>VideoScanMode::PsF</b> { 5 }</td></tr>
+<tr class="separator:ga5897e12aa5dcb09da426aaa745101261"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga38657f26768120266424eddb623aea27" id="r_ga38657f26768120266424eddb623aea27"><td class="memItemLeft" align="right" valign="top"><a id="ga38657f26768120266424eddb623aea27" name="ga38657f26768120266424eddb623aea27"></a>
 <a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classMediaIODirection.html">MediaIODirection</a>&#160;</td><td class="memItemRight" valign="bottom"><b>MediaIODirection::Output</b> { 0 }</td></tr>
 <tr class="separator:ga38657f26768120266424eddb623aea27"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -530,7 +533,7 @@ Variables</h2></td></tr>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassList_html_ab5f4f4c756727be7a037ea66660a2fec"><div class="ttname"><a href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">List::set</a></div><div class="ttdeci">bool set(size_t index, const T &amp;val)</div><div class="ttdoc">Sets an item in the list by index.</div><div class="ttdef"><b>Definition</b> list.h:541</div></div>
 </div><!-- fragment --></li>
-<li>Functions that want compile-time type checking take the concrete class (e.g. <code>"const VideoPattern &amp;"</code>) instead of a bare <code>"const Enum &amp;"</code>; runtime compatibility with <a class="el" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a> and any Enum-based API is preserved via public inheritance.</li>
+<li>Functions that want compile-time type checking take the concrete class (e.g. <code>"const VideoPattern &amp;"</code>) instead of a bare <code>"const Enum &amp;"</code>; runtime compatibility with <a class="el" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a> and any Enum-based API is preserved via public inheritance.</li>
 </ul>
 <p>The integer values are stable and match the corresponding C++ <code>enum</code> inside the subsystem that originally defined them (e.g. <a class="el" href="classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61" title="Video test pattern type.">VideoTestPattern::Pattern</a>), so code that still holds the C++ <code>enum</code> internally can convert in either direction via a plain <code>static_cast</code> on <code><a class="el" href="classEnum.html#a64baa605793d6a57d99ab2800768f38f" title="Returns the integer value of this enum.">Enum::value()</a></code>.</p>
 <p>The registered string names use the same CamelCase spelling as the C++ constants on the wrapper struct (e.g. <code>"ColorBars"</code>, <code>"BottomCenter"</code>, <code>"LTC"</code>) rather than the legacy all-lowercase config strings. Call sites that previously wrote <code>"colorbars"</code> / <code>"bottomcenter"</code> / <code>"tone"</code> / <code>"422"</code> need to be updated to the CamelCase form or, better, to use the typed constants directly. </p>
@@ -540,7 +543,7 @@ Variables</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-16 04:42:40 from commit 9177fbf (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -222,8 +222,8 @@ Additional Inherited Members</h2></td></tr>
 <div class="line"><a class="code hl_class" href="classList.html">tx</a>.sendPacket(msg, <span class="keyword">sizeof</span>(msg), <a class="code hl_function" href="classSocketAddress.html#aa7030384889de3c7666df35d411f4bd7">SocketAddress::localhost</a>(0));</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">char</span> <a class="code hl_class" href="classList.html">buf</a>[64];</div>
-<div class="line"><a class="code hl_class" href="classSocketAddress.html">SocketAddress</a> <a class="code hl_class" href="classList.html">from</a>;</div>
-<div class="line"><a class="code hl_class" href="classList.html">ssize_t</a> <a class="code hl_class" href="classList.html">n</a> = <a class="code hl_class" href="classList.html">rx</a>.receivePacket(<a class="code hl_class" href="classList.html">buf</a>, <span class="keyword">sizeof</span>(<a class="code hl_class" href="classList.html">buf</a>), &amp;<a class="code hl_class" href="classList.html">from</a>);</div>
+<div class="line"><a class="code hl_class" href="classSocketAddress.html">SocketAddress</a> from;</div>
+<div class="line"><a class="code hl_class" href="classList.html">ssize_t</a> <a class="code hl_class" href="classList.html">n</a> = <a class="code hl_class" href="classList.html">rx</a>.receivePacket(<a class="code hl_class" href="classList.html">buf</a>, <span class="keyword">sizeof</span>(<a class="code hl_class" href="classList.html">buf</a>), &amp;from);</div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassLoopbackTransport_html"><div class="ttname"><a href="classLoopbackTransport.html">LoopbackTransport</a></div><div class="ttdoc">In-process PacketTransport implementation for tests.</div><div class="ttdef"><b>Definition</b> loopbacktransport.h:51</div></div>
 <div class="ttc" id="aclassLoopbackTransport_html_a855111ab52e7ced799209b9c9888cc3b"><div class="ttname"><a href="classLoopbackTransport.html#a855111ab52e7ced799209b9c9888cc3b">LoopbackTransport::pair</a></div><div class="ttdeci">static void pair(LoopbackTransport *a, LoopbackTransport *b)</div><div class="ttdoc">Links two transports as a bidirectional pair.</div></div>
@@ -599,7 +599,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classLoopbackTransport.html">LoopbackTransport</a></li>
-    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-16 04:42:40 from commit 9177fbf (1.0.0).</li>
   </ul>
 </div>
 </body>

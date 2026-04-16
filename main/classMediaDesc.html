@@ -156,6 +156,9 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classMediaDesc.html#a7e3febf87663de34d7f6cdbae7a88037">ImageDescList</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>imageList</b> ()</td></tr>
 <tr class="memdesc:a2d1773e143f93f9a3b924502e5a30cc7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reference to the list of image descriptions. <br /></td></tr>
 <tr class="separator:a2d1773e143f93f9a3b924502e5a30cc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aebb9dc5d73a52d2457156cbab4bed26a" id="r_aebb9dc5d73a52d2457156cbab4bed26a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classVideoFormat.html">VideoFormat</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaDesc.html#aebb9dc5d73a52d2457156cbab4bed26a">videoFormat</a> (<a class="el" href="classList.html">size_t</a> index) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aebb9dc5d73a52d2457156cbab4bed26a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classVideoFormat.html" title="Combined video raster, frame rate, and scan mode.">VideoFormat</a> for the image at <code>index</code>.  <br /></td></tr>
+<tr class="separator:aebb9dc5d73a52d2457156cbab4bed26a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab8f10591736a2ef503303514a3842b9d" id="r_ab8f10591736a2ef503303514a3842b9d"><td class="memItemLeft" align="right" valign="top"><a id="ab8f10591736a2ef503303514a3842b9d" name="ab8f10591736a2ef503303514a3842b9d"></a>
 <a class="el" href="classList.html">const</a> <a class="el" href="classMediaDesc.html#a6677f0e90db02359c494322c3dbd57e6">AudioDescList</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>audioList</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ab8f10591736a2ef503303514a3842b9d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const reference to the list of audio descriptions. <br /></td></tr>
@@ -283,6 +286,41 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="aebb9dc5d73a52d2457156cbab4bed26a" name="aebb9dc5d73a52d2457156cbab4bed26a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aebb9dc5d73a52d2457156cbab4bed26a">&#9670;&#160;</a></span>videoFormat()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classVideoFormat.html">VideoFormat</a> MediaDesc::videoFormat </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">size_t</a>&#160;</td>
+          <td class="paramname"><em>index</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the <a class="el" href="classVideoFormat.html" title="Combined video raster, frame rate, and scan mode.">VideoFormat</a> for the image at <code>index</code>. </p>
+<p>Composes the MediaDesc-wide <a class="el" href="classMediaDesc.html#a1e97279a95a210a57927c4a44d4d83f7">frameRate</a> with the per-image raster (<a class="el" href="classImageDesc.html#a991e9888c52686ece1125c2c4a5a56cd">ImageDesc::size</a>) and scan mode (<a class="el" href="classImageDesc.html#adf46599e9450e411d295e7d41983ad27">ImageDesc::videoScanMode</a>). Returns a default (invalid) <a class="el" href="classVideoFormat.html">VideoFormat</a> when <code>index</code> is out of range.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">index</td><td>Zero-based image layer index. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="mediadesc_8h_source.html">mediadesc.h</a></li>
 </ul>
@@ -293,7 +331,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaDesc.html">MediaDesc</a></li>
-    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-16 04:42:40 from commit 9177fbf (1.0.0).</li>
   </ul>
 </div>
 </body>

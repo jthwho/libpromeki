@@ -11,5 +11,7 @@ var searchData=
   ['promeki_5fregister_5fvideo_5fencoder_8',['PROMEKI_REGISTER_VIDEO_ENCODER',['../codec_8h.html#a185d9bdc5edb5a8566c4557682cd572c',1,'codec.h']]],
   ['promeki_5fshared_5fderived_9',['PROMEKI_SHARED_DERIVED',['../sharedptr_8h.html#a60b00ce3287916679cab881cc182d143',1,'sharedptr.h']]],
   ['promeki_5fshared_5ffinal_10',['PROMEKI_SHARED_FINAL',['../sharedptr_8h.html#a19c77a1148cf694c53a7d0d6608c0cd9',1,'sharedptr.h']]],
-  ['promeki_5fstring_11',['PROMEKI_STRING',['../string_8h.html#a0f81b971444a32cdfed1ba175958d2da',1,'string.h']]]
+  ['promeki_5fstring_11',['PROMEKI_STRING',['../string_8h.html#a0f81b971444a32cdfed1ba175958d2da',1,'string.h']]],
+  ['promeki_5fwell_5fknown_5frasters_12',['PROMEKI_WELL_KNOWN_RASTERS',['../videoformat_8h.html#ac430021c7e59e3a26ae47863ee0520cc',1,'videoformat.h']]],
+  ['promeki_5fwell_5fknown_5fvideo_5fformats_13',['PROMEKI_WELL_KNOWN_VIDEO_FORMATS',['../videoformat_8h.html#aca325afe75ceadbdcae0118a6ec1d6cb',1,'videoformat.h']]]
 ];

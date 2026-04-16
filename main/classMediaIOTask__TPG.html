@@ -204,7 +204,7 @@ Additional Inherited Members</h2></td></tr>
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Key   </th><th class="markdownTableHeadNone">Type   </th><th class="markdownTableHeadNone">Default   </th><th class="markdownTableHeadNone">Description    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">MediaConfig::FrameRate   </td><td class="markdownTableBodyNone"><a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">29.97</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classFrame.html" title="A media frame containing images, audio, compressed packets, and metadata.">Frame</a> rate (required).   </td></tr>
+<td class="markdownTableBodyNone">MediaConfig::VideoFormat   </td><td class="markdownTableBodyNone"><a class="el" href="classVideoFormat.html" title="Combined video raster, frame rate, and scan mode.">VideoFormat</a>   </td><td class="markdownTableBodyNone">Smpte1080p29_97   </td><td class="markdownTableBodyNone">Video format (raster + frame rate + scan mode). Required.   </td></tr>
 </table>
 </dd></dl>
 <dl class="section user"><dt>Config keys — Video</dt><dd><table class="markdownTable">
@@ -215,12 +215,10 @@ Additional Inherited Members</h2></td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">MediaConfig::VideoPattern   </td><td class="markdownTableBodyNone"><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> <a class="el" href="classVideoPattern.html">VideoPattern</a>   </td><td class="markdownTableBodyNone">ColorBars   </td><td class="markdownTableBodyNone">Pattern selector.    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">MediaConfig::VideoSize   </td><td class="markdownTableBodyNone">Size2Du32   </td><td class="markdownTableBodyNone">1920x1080   </td><td class="markdownTableBodyNone"><a class="el" href="classFrame.html" title="A media frame containing images, audio, compressed packets, and metadata.">Frame</a> size.    </td></tr>
-<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">MediaConfig::VideoPixelFormat   </td><td class="markdownTableBodyNone"><a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a>   </td><td class="markdownTableBodyNone">RGB8_sRGB   </td><td class="markdownTableBodyNone">Pixel description.    </td></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">MediaConfig::VideoSolidColor   </td><td class="markdownTableBodyNone"><a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a>   </td><td class="markdownTableBodyNone">Black   </td><td class="markdownTableBodyNone">Fill color for SolidColor pattern.    </td></tr>
 <tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">MediaConfig::VideoSolidColor   </td><td class="markdownTableBodyNone"><a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a>   </td><td class="markdownTableBodyNone">Black   </td><td class="markdownTableBodyNone">Fill color for SolidColor pattern.    </td></tr>
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">MediaConfig::VideoMotion   </td><td class="markdownTableBodyNone">double   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a>   </td><td class="markdownTableBodyNone">Motion speed.   </td></tr>
 </table>
 </dd></dl>
@@ -234,7 +232,7 @@ Additional Inherited Members</h2></td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">MediaConfig::VideoBurnFontSize   </td><td class="markdownTableBodyNone">int   </td><td class="markdownTableBodyNone">0   </td><td class="markdownTableBodyNone"><a class="el" href="classFont.html" title="Abstract base class for font rendering.">Font</a> size in pixels. 0 = auto-scale from image height (36px at 1080p).    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">MediaConfig::VideoBurnText   </td><td class="markdownTableBodyNone"><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>   </td><td class="markdownTableBodyNone">""   </td><td class="markdownTableBodyNone">Static custom burn text (shown below timecode).    </td></tr>
+<td class="markdownTableBodyNone">MediaConfig::VideoBurnText   </td><td class="markdownTableBodyNone"><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>   </td><td class="markdownTableBodyNone">"{Timecode:smpte}"   </td><td class="markdownTableBodyNone"><a class="el" href="classFrame.html#aa537bccb563e0500ba1117ad0eac19d1">Frame::makeString</a> template for the burn text. Resolved per-frame against the assembled <a class="el" href="classFrame.html">Frame</a> after all per-frame metadata has been added. Empty string disables the burn for the call. Use <code>'\n</code> ' inside the template to span multiple lines.    </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">MediaConfig::VideoBurnPosition   </td><td class="markdownTableBodyNone"><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> <a class="el" href="classBurnPosition.html">BurnPosition</a>   </td><td class="markdownTableBodyNone">BottomCenter   </td><td class="markdownTableBodyNone">Position preset.    </td></tr>
 <tr class="markdownTableRowEven">
@@ -245,7 +243,7 @@ Additional Inherited Members</h2></td></tr>
 <td class="markdownTableBodyNone">MediaConfig::VideoBurnDrawBg   </td><td class="markdownTableBodyNone">bool   </td><td class="markdownTableBodyNone">true   </td><td class="markdownTableBodyNone">Draw padded background rectangle behind the burn text.   </td></tr>
 </table>
 </dd></dl>
-<p>The burn-in runs on top of the cached static background when the pattern is non-moving, so turning burn on is effectively free on the render side beyond one plane copy plus the text draw. When the timecode generator is also enabled (MediaConfig::TimecodeEnabled), the current timecode is drawn on the top line of the burn block.</p>
+<p>The burn-in runs on top of the cached static background when the pattern is non-moving, so turning burn on is effectively free on the render side beyond one plane copy plus the text draw. The text itself comes from MediaConfig::VideoBurnText, which is treated as a <a class="el" href="classFrame.html#aa537bccb563e0500ba1117ad0eac19d1">Frame::makeString</a> template — it is resolved against the assembled <a class="el" href="classFrame.html">Frame</a> after all per-frame metadata (timecode, etc.) has been written, so any registered metadata key may be referenced via <code>{Key</code>[:spec]}.</p>
 <dl class="section user"><dt>Config keys — Audio</dt><dd><table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Key   </th><th class="markdownTableHeadNone">Type   </th><th class="markdownTableHeadNone">Default   </th><th class="markdownTableHeadNone">Description    </th></tr>
@@ -339,7 +337,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIOTask__TPG.html">MediaIOTask_TPG</a></li>
-    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-16 04:42:40 from commit 9177fbf (1.0.0).</li>
   </ul>
 </div>
 </body>

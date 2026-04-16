@@ -167,7 +167,7 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memdesc:afc34b6ac59c0b41dbe7239e73beb7761"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a <a class="el" href="classDir.html" title="Provides directory operations using std::filesystem.">Dir</a> for the user's home directory.  <br /></td></tr>
 <tr class="separator:afc34b6ac59c0b41dbe7239e73beb7761"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa86a5841e3682c108faecc277d40b4d5" id="r_aa86a5841e3682c108faecc277d40b4d5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classDir.html">Dir</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDir.html#aa86a5841e3682c108faecc277d40b4d5">temp</a> ()</td></tr>
-<tr class="memdesc:aa86a5841e3682c108faecc277d40b4d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a <a class="el" href="classDir.html" title="Provides directory operations using std::filesystem.">Dir</a> for the system temp directory.  <br /></td></tr>
+<tr class="memdesc:aa86a5841e3682c108faecc277d40b4d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a <a class="el" href="classDir.html" title="Provides directory operations using std::filesystem.">Dir</a> for the library's temp directory.  <br /></td></tr>
 <tr class="separator:aa86a5841e3682c108faecc277d40b4d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a597f1bcf366f89cc2c1b1a14d3d74f9e" id="r_a597f1bcf366f89cc2c1b1a14d3d74f9e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDir.html#a597f1bcf366f89cc2c1b1a14d3d74f9e">setCurrent</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classFilePath.html">FilePath</a> &amp;<a class="el" href="classDir.html#a504887ed69c9a02ce20676fefe76c4a4">path</a>)</td></tr>
 <tr class="memdesc:a597f1bcf366f89cc2c1b1a14d3d74f9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the current working directory.  <br /></td></tr>
@@ -623,8 +623,13 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Returns a <a class="el" href="classDir.html" title="Provides directory operations using std::filesystem.">Dir</a> for the system temp directory. </p>
-<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classDir.html" title="Provides directory operations using std::filesystem.">Dir</a> wrapping the temp directory. </dd></dl>
+<p>Returns a <a class="el" href="classDir.html" title="Provides directory operations using std::filesystem.">Dir</a> for the library's temp directory. </p>
+<p>Resolves the path in this order:</p><ol type="1">
+<li>LibraryOptions::TempDir — when the option is non-empty (set programmatically or via the <code>PROMEKI_OPT_TempDir</code> environment variable), its value is returned verbatim. The directory is <em>not</em> auto-created; callers that need it to exist should invoke <a class="el" href="classDir.html#a7699463ee6296caf632cce0fff36e7f4">mkpath</a> on the returned <a class="el" href="classDir.html">Dir</a>.</li>
+<li><code>std::filesystem::temp_directory_path</code> — the platform default (<code>/tmp</code> on Linux / macOS, <code>TEMP%</code> on Windows, and anything <code>TMPDIR</code> points at when set).</li>
+</ol>
+<p>Use LibraryOptions::TempDir to redirect every consumer of <a class="el" href="classDir.html#aa86a5841e3682c108faecc277d40b4d5">temp</a> (crash logs, scratch JSON, ad-hoc test output, ...) to a dedicated location — most commonly a disk-backed mount to keep large scratch files off tmpfs.</p>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classDir.html" title="Provides directory operations using std::filesystem.">Dir</a> wrapping the effective temp directory. </dd></dl>
 
 </div>
 </div>
@@ -638,7 +643,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classDir.html">Dir</a></li>
-    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-16 04:42:40 from commit 9177fbf (1.0.0).</li>
   </ul>
 </div>
 </body>

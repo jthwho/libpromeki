@@ -19,11 +19,14 @@ var classImage =
     [ "isExclusive", "classImage.html#a7e0432eb699f012ce6a1e498392ee83f", null ],
     [ "isValid", "classImage.html#ac78aa7b47e7a8b279d2e95ac309ab375", null ],
     [ "lineStride", "classImage.html#abf9283ed3c232c709afcd5dd22bd60f1", null ],
+    [ "makeString", "classImage.html#a4a3f114fb1273a404797e57004b9be2d", null ],
+    [ "makeString", "classImage.html#aaef7d633bb0a0147c6524c9399d32a2a", null ],
     [ "metadata", "classImage.html#ad1808461031b4813284ca41f38ae7e38", null ],
     [ "metadata", "classImage.html#a41648e00f1e62388c26b526afb817409", null ],
     [ "pixelDesc", "classImage.html#a510ed5bb09ccb7896dfecf2c066e7f6c", null ],
     [ "plane", "classImage.html#a45f3cb17cda1d4247bff5cbaf7c84105", null ],
     [ "planes", "classImage.html#adc70674604363e20832ad93fd71f37cd", null ],
+    [ "resolveTemplateKey", "classImage.html#a2a4c83156dda4c457ba287d3ebc6c058", null ],
     [ "size", "classImage.html#a82a4a6f6f0e6d370bb1a81e4c55ce20f", null ],
     [ "width", "classImage.html#aa3c6a86a6e5f35499ae781710154cb33", null ]
 ];

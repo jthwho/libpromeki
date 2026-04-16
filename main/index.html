@@ -179,6 +179,13 @@ Professional Audio / Video</h2>
 <li><b>Converter</b> — pixel format and color space conversion</li>
 <li>Custom backends are registered with <code><a class="el" href="group__proav.html#ga10f5578b94caf8706a28ed5b9e7b087f" title="Macro to register a MediaIO backend at static initialization time.">PROMEKI_REGISTER_MEDIAIO()</a></code></li>
 </ul>
+<p><b>Pipeline orchestration:</b></p>
+<p>High-level classes that wire a DAG of <code><a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a></code> stages from a declarative configuration:</p>
+<ul>
+<li><code><a class="el" href="classMediaPipelineConfig.html" title="Declarative description of a complete media pipeline.">MediaPipelineConfig</a></code> — shareable description of stages + routes + metadata; validates the DAG, round-trips through JSON and <code><a class="el" href="classDataStream.html" title="Binary stream for structured, portable serialization.">DataStream</a></code>, and saves/loads as JSON preset files</li>
+<li><code><a class="el" href="classMediaPipeline.html" title="Data-driven builder and runtime for a DAG of MediaIO stages.">MediaPipeline</a></code> — instantiates the stages, drives signal-based frame flow on the caller's <code><a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a></code>, handles fan-out and back-pressure, exposes a <code>build / open / start / stop / close</code> lifecycle</li>
+<li><code><a class="el" href="classMediaPipelineStats.html" title="Aggregated statistics for a running MediaPipeline.">MediaPipelineStats</a></code> — per-stage <code><a class="el" href="classMediaIOStats.html" title="Statistics container for MediaIO backends.">MediaIOStats</a></code> map plus a pipeline- layer <code><a class="el" href="classPipelineStats.html" title="Telemetry that describes the pipeline layer itself.">PipelineStats</a></code> bucket (frames produced, write retries, errors, back-pressure, uptime); round-trips through JSON and <code><a class="el" href="classDataStream.html" title="Binary stream for structured, portable serialization.">DataStream</a></code></li>
+</ul>
 <h2><a class="anchor" id="autotoc_md9"></a>
 Networking</h2>
 <p>BSD-socket abstractions and real-time media transport protocols.</p>
@@ -409,7 +416,7 @@ License</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-16 04:42:40 from commit 9177fbf (1.0.0).</li>
   </ul>
 </div>
 </body>

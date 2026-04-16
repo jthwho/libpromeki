@@ -12,7 +12,7 @@ var group__wellknownenums =
     [ "ByteCountStyle", "classByteCountStyle.html", null ],
     [ "ImgSeqPathMode", "classImgSeqPathMode.html", null ],
     [ "TimecodePackFormat", "classTimecodePackFormat.html", null ],
-    [ "InterlaceMode", "classInterlaceMode.html", null ],
+    [ "VideoScanMode", "classVideoScanMode.html", null ],
     [ "MediaIODirection", "classMediaIODirection.html", null ],
     [ "AudioSourceHint", "classAudioSourceHint.html", null ],
     [ "V4l2PowerLineMode", "classV4l2PowerLineMode.html", null ],

@@ -33,13 +33,14 @@ var searchData=
   ['statstxvideosenddurationus_30',['StatsTxVideoSendDurationUs',['../classMediaIOTask__Rtp.html#ae7858915fa006704e3c1e3b2439a1d8a',1,'MediaIOTask_Rtp']]],
   ['stddev_31',['stddev',['../structBenchmarkReporter_1_1StepStats.html#adf63bfe72ddb6d5fc886d53a29a148ae',1,'BenchmarkReporter::StepStats']]],
   ['stddevnsperiter_32',['stddevNsPerIter',['../classBenchmarkResult.html#ad2ee669691c5d02809a31cabadf019cc',1,'BenchmarkResult']]],
-  ['style_33',['style',['../structTuiCell.html#a6e99f081e0f8db7c86143e96a4cce5b1',1,'TuiCell']]],
-  ['subbucketsperoctave_34',['SubBucketsPerOctave',['../classHistogram.html#aeae18f280b70316c2ed0a1b08f4736e0',1,'Histogram']]],
-  ['succeeded_35',['succeeded',['../classBenchmarkResult.html#a3b260212da4082321f58fac76c4716fe',1,'BenchmarkResult']]],
-  ['suite_36',['suite',['../classBenchmarkResult.html#a9c7fc5c2c4cb085699c2fd1487e9a2e6',1,'BenchmarkResult']]],
-  ['syncbits_37',['syncbits',['../classImageDataDecoder.html#a51c9dea649d96ed1a848d9f9da9c0930',1,'ImageDataDecoder::SyncBits'],['../classImageDataEncoder.html#a86d5bdbf13f9d9e8fee9e6ffe88200ef',1,'ImageDataEncoder::SyncBits']]],
-  ['syncnibble_38',['syncnibble',['../classImageDataDecoder.html#af02722838a6b06545a44e9d25d66302e',1,'ImageDataDecoder::SyncNibble'],['../classImageDataEncoder.html#a243b28ecd3f34cb711c02b5c35e34fe7',1,'ImageDataEncoder::SyncNibble']]],
-  ['syncstartcol_39',['syncStartCol',['../structImageDataDecoder_1_1DecodedItem.html#a4840ceb422bf1cad0405caa45032cd1e',1,'ImageDataDecoder::DecodedItem']]],
-  ['synthetic_40',['Synthetic',['../classClockDomain.html#a18a1d731076ac8aeb59446af52600f08',1,'ClockDomain']]],
-  ['systemmonotonic_41',['SystemMonotonic',['../classClockDomain.html#a96decb3f982b51a87f9ea1ad895b65a7',1,'ClockDomain']]]
+  ['strictinterlacedfieldrate_33',['strictInterlacedFieldRate',['../structVideoFormat_1_1ParseOptions.html#a55ee5f72b45e3b8d0ad3f07c4725ebaa',1,'VideoFormat::ParseOptions']]],
+  ['style_34',['style',['../structTuiCell.html#a6e99f081e0f8db7c86143e96a4cce5b1',1,'TuiCell']]],
+  ['subbucketsperoctave_35',['SubBucketsPerOctave',['../classHistogram.html#aeae18f280b70316c2ed0a1b08f4736e0',1,'Histogram']]],
+  ['succeeded_36',['succeeded',['../classBenchmarkResult.html#a3b260212da4082321f58fac76c4716fe',1,'BenchmarkResult']]],
+  ['suite_37',['suite',['../classBenchmarkResult.html#a9c7fc5c2c4cb085699c2fd1487e9a2e6',1,'BenchmarkResult']]],
+  ['syncbits_38',['syncbits',['../classImageDataDecoder.html#a51c9dea649d96ed1a848d9f9da9c0930',1,'ImageDataDecoder::SyncBits'],['../classImageDataEncoder.html#a86d5bdbf13f9d9e8fee9e6ffe88200ef',1,'ImageDataEncoder::SyncBits']]],
+  ['syncnibble_39',['syncnibble',['../classImageDataDecoder.html#af02722838a6b06545a44e9d25d66302e',1,'ImageDataDecoder::SyncNibble'],['../classImageDataEncoder.html#a243b28ecd3f34cb711c02b5c35e34fe7',1,'ImageDataEncoder::SyncNibble']]],
+  ['syncstartcol_40',['syncStartCol',['../structImageDataDecoder_1_1DecodedItem.html#a4840ceb422bf1cad0405caa45032cd1e',1,'ImageDataDecoder::DecodedItem']]],
+  ['synthetic_41',['Synthetic',['../classClockDomain.html#a18a1d731076ac8aeb59446af52600f08',1,'ClockDomain']]],
+  ['systemmonotonic_42',['SystemMonotonic',['../classClockDomain.html#a96decb3f982b51a87f9ea1ad895b65a7',1,'ClockDomain']]]
 ];

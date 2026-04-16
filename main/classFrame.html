@@ -157,6 +157,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a4ff149c36694dcda0da237da9d454d39" id="r_a4ff149c36694dcda0da237da9d454d39"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html#a4ff149c36694dcda0da237da9d454d39">metadata</a> ()</td></tr>
 <tr class="memdesc:a4ff149c36694dcda0da237da9d454d39"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reference to the frame metadata.  <br /></td></tr>
 <tr class="separator:a4ff149c36694dcda0da237da9d454d39"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5cd4e91eefa51727a9e709143888fe31" id="r_a5cd4e91eefa51727a9e709143888fe31"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classVideoFormat.html">VideoFormat</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html#a5cd4e91eefa51727a9e709143888fe31">videoFormat</a> (<a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">size_t</a> index) <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a></td></tr>
+<tr class="memdesc:a5cd4e91eefa51727a9e709143888fe31"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classVideoFormat.html" title="Combined video raster, frame rate, and scan mode.">VideoFormat</a> for the image at <code>index</code>.  <br /></td></tr>
+<tr class="separator:a5cd4e91eefa51727a9e709143888fe31"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afb948d42ec82b719221b60a1ce25926f" id="r_afb948d42ec82b719221b60a1ce25926f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaDesc.html">MediaDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html#afb948d42ec82b719221b60a1ce25926f">mediaDesc</a> () <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a></td></tr>
+<tr class="memdesc:afb948d42ec82b719221b60a1ce25926f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assembles a <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> describing this <a class="el" href="classFrame.html" title="A media frame containing images, audio, compressed packets, and metadata.">Frame</a>.  <br /></td></tr>
+<tr class="separator:afb948d42ec82b719221b60a1ce25926f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6a74d626f104011cc6315eb56f75411e" id="r_a6a74d626f104011cc6315eb56f75411e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a> <a class="el" href="classBenchmark.html#a966e10511c08b157ba12506b43d203fe">Benchmark::Ptr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html#a6a74d626f104011cc6315eb56f75411e">benchmark</a> () <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a></td></tr>
 <tr class="memdesc:a6a74d626f104011cc6315eb56f75411e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const reference to the frame benchmark.  <br /></td></tr>
 <tr class="separator:a6a74d626f104011cc6315eb56f75411e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -166,6 +172,17 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a6e5e34cd3fc8dca4b282c125b7bb1035" id="r_a6e5e34cd3fc8dca4b282c125b7bb1035"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html#a6e5e34cd3fc8dca4b282c125b7bb1035">setBenchmark</a> (<a class="el" href="classBenchmark.html#a966e10511c08b157ba12506b43d203fe">Benchmark::Ptr</a> <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">bm</a>)</td></tr>
 <tr class="memdesc:a6e5e34cd3fc8dca4b282c125b7bb1035"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the frame benchmark.  <br /></td></tr>
 <tr class="separator:a6e5e34cd3fc8dca4b282c125b7bb1035"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd2b409a1df6e780aea5eb9fcf83a7cd" id="r_abd2b409a1df6e780aea5eb9fcf83a7cd"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="classString.html">String</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html#abd2b409a1df6e780aea5eb9fcf83a7cd">resolveTemplateKey</a> (<a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a> <a class="el" href="classString.html">String</a> &amp;key, <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a> <a class="el" href="classString.html">String</a> &amp;spec) <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a></td></tr>
+<tr class="memdesc:abd2b409a1df6e780aea5eb9fcf83a7cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resolves a single template key against this frame's structure.  <br /></td></tr>
+<tr class="separator:abd2b409a1df6e780aea5eb9fcf83a7cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa537bccb563e0500ba1117ad0eac19d1" id="r_aa537bccb563e0500ba1117ad0eac19d1"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">typename</a> <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">Resolver</a> &gt; </td></tr>
+<tr class="memitem:aa537bccb563e0500ba1117ad0eac19d1"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classFrame.html#aa537bccb563e0500ba1117ad0eac19d1">makeString</a> (<a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">tmpl</a>, <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">Resolver</a> &amp;&amp;<a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">resolver</a>, <a class="el" href="classError.html">Error</a> *<a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">err</a>=<a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">nullptr</a>) <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a></td></tr>
+<tr class="memdesc:aa537bccb563e0500ba1117ad0eac19d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Substitutes <code>{Key</code>[:spec]} placeholders against this frame.  <br /></td></tr>
+<tr class="separator:aa537bccb563e0500ba1117ad0eac19d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e1d873d5e8d99f87d89f4ccaeedee98" id="r_a5e1d873d5e8d99f87d89f4ccaeedee98"><td class="memItemLeft" align="right" valign="top"><a id="a5e1d873d5e8d99f87d89f4ccaeedee98" name="a5e1d873d5e8d99f87d89f4ccaeedee98"></a>
+<a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><b>makeString</b> (<a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">tmpl</a>, <a class="el" href="classError.html">Error</a> *<a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">err</a>=<a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">nullptr</a>) <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a></td></tr>
+<tr class="memdesc:a5e1d873d5e8d99f87d89f4ccaeedee98"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience overload of <a class="el" href="classFrame.html#aa537bccb563e0500ba1117ad0eac19d1">makeString</a> with no fallback resolver. <br /></td></tr>
+<tr class="separator:a5e1d873d5e8d99f87d89f4ccaeedee98"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A media frame containing images, audio, compressed packets, and metadata. </p>
@@ -178,10 +195,10 @@ Public Member Functions</h2></td></tr>
 <div class="line"> </div>
 <div class="line"><span class="comment">// After encoding, attach a compressed packet alongside the image:</span></div>
 <div class="line">frame.modify()-&gt;<a class="code hl_function" href="classFrame.html#a592ca6dbd3c595389c9870c983737a2a">packetList</a>().pushToBack(<a class="code hl_typedef" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">encoded</a>);</div>
-<div class="ttc" id="aclassFrame_html_a3e035fa4cfd9d5b51231280d05ad4808"><div class="ttname"><a href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">Frame::List</a></div><div class="ttdeci">promeki::List&lt; Frame &gt; List</div><div class="ttdoc">Plain value list of Frame objects.</div><div class="ttdef"><b>Definition</b> frame.h:57</div></div>
-<div class="ttc" id="aclassFrame_html_a592ca6dbd3c595389c9870c983737a2a"><div class="ttname"><a href="classFrame.html#a592ca6dbd3c595389c9870c983737a2a">Frame::packetList</a></div><div class="ttdeci">const MediaPacket::PtrList &amp; packetList() const</div><div class="ttdoc">Returns a const reference to the list of compressed packets.</div><div class="ttdef"><b>Definition</b> frame.h:99</div></div>
-<div class="ttc" id="aclassImage_html"><div class="ttname"><a href="classImage.html">Image</a></div><div class="ttdoc">Raster image with pixel description, planes, and metadata.</div><div class="ttdef"><b>Definition</b> image.h:48</div></div>
-<div class="ttc" id="aclassMediaDesc_html"><div class="ttname"><a href="classMediaDesc.html">MediaDesc</a></div><div class="ttdoc">Describes a media format including frame rate, image layers, audio channels, and metadata.</div><div class="ttdef"><b>Definition</b> mediadesc.h:32</div></div>
+<div class="ttc" id="aclassFrame_html_a3e035fa4cfd9d5b51231280d05ad4808"><div class="ttname"><a href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">Frame::List</a></div><div class="ttdeci">promeki::List&lt; Frame &gt; List</div><div class="ttdoc">Plain value list of Frame objects.</div><div class="ttdef"><b>Definition</b> frame.h:62</div></div>
+<div class="ttc" id="aclassFrame_html_a592ca6dbd3c595389c9870c983737a2a"><div class="ttname"><a href="classFrame.html#a592ca6dbd3c595389c9870c983737a2a">Frame::packetList</a></div><div class="ttdeci">const MediaPacket::PtrList &amp; packetList() const</div><div class="ttdoc">Returns a const reference to the list of compressed packets.</div><div class="ttdef"><b>Definition</b> frame.h:104</div></div>
+<div class="ttc" id="aclassImage_html"><div class="ttname"><a href="classImage.html">Image</a></div><div class="ttdoc">Raster image with pixel description, planes, and metadata.</div><div class="ttdef"><b>Definition</b> image.h:50</div></div>
+<div class="ttc" id="aclassMediaDesc_html"><div class="ttname"><a href="classMediaDesc.html">MediaDesc</a></div><div class="ttdoc">Describes a media format including frame rate, image layers, audio channels, and metadata.</div><div class="ttdef"><b>Definition</b> mediadesc.h:33</div></div>
 <div class="ttc" id="aclassSharedPtr_html"><div class="ttname"><a href="classSharedPtr.html">SharedPtr&lt; Frame &gt;</a></div></div>
 <div class="ttc" id="aclassTimecode_html"><div class="ttname"><a href="classTimecode.html">Timecode</a></div><div class="ttdoc">Class for holding and manipulating timecode.</div><div class="ttdef"><b>Definition</b> timecode.h:47</div></div>
 <div class="ttc" id="aclassTimecode_html_a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207"><div class="ttname"><a href="classTimecode.html#a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207">Timecode::NDF24</a></div><div class="ttdeci">@ NDF24</div><div class="ttdoc">24 fps non-drop-frame (maps to VTC_FORMAT_24)</div><div class="ttdef"><b>Definition</b> timecode.h:55</div></div>
@@ -355,6 +372,112 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="aa537bccb563e0500ba1117ad0eac19d1" name="aa537bccb563e0500ba1117ad0eac19d1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa537bccb563e0500ba1117ad0eac19d1">&#9670;&#160;</a></span>makeString()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">typename</a> <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">Resolver</a> &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classString.html">String</a> Frame::makeString </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>tmpl</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">Resolver</a> &amp;&amp;&#160;</td>
+          <td class="paramname"><em>resolver</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classError.html">Error</a> *&#160;</td>
+          <td class="paramname"><em>err</em> = <code><a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">nullptr</a></code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Substitutes <code>{Key</code>[:spec]} placeholders against this frame. </p>
+<p>Built on top of <a class="el" href="classVariantDatabase.html#a1ae59b714a37363415836eaffe83194d">Metadata::format</a> with a custom resolver that adds three layers of introspection on top of the bare metadata lookup:</p>
+<ol type="1">
+<li>Frame-level pseudo keys (prefixed with <code>"@"</code> so they cannot collide with metadata keys):<ul>
+<li><code>@ImageCount</code>, <code>@AudioCount</code>, <code>@PacketCount</code> — list sizes (uint64).</li>
+<li><code>@HasBenchmark</code> — bool.</li>
+<li><code>@<a class="el" href="classVideoFormat.html" title="Combined video raster, frame rate, and scan mode.">VideoFormat</a></code> / <code>@<a class="el" href="classVideoFormat.html" title="Combined video raster, frame rate, and scan mode.">VideoFormat</a></code>[N] — <a class="el" href="classVideoFormat.html">VideoFormat</a> for image <code>N</code> (default 0). Combines the frame's <code>Metadata::FrameRate</code> with the image's raster and scan mode and honours <a class="el" href="classVideoFormat.html">VideoFormat</a> format specs (e.g. <code></code>:smpte). Out-of-range <code>N</code> falls through to the user resolver / unknown-key path.</li>
+</ul>
+</li>
+<li>Subscripted descent into images and audio — any placeholder of the form <code>"Image[N].&lt;sub&gt;"</code> or <code>"Audio[N].&lt;sub&gt;"</code> is dispatched to the corresponding <a class="el" href="classImage.html#a2a4c83156dda4c457ba287d3ebc6c058">Image::resolveTemplateKey</a> or <a class="el" href="classAudio.html#a9b07d569e5cbda89c25f2f44adf27038">Audio::resolveTemplateKey</a>, so the full vocabulary of those classes (their pseudo keys and their own metadata) is available with no extra plumbing.</li>
+<li>The user-supplied <code>resolver</code> is consulted last for anything else.</li>
+</ol>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classSharedPtr.html">Frame::Ptr</a> frame = Frame::Ptr::create();</div>
+<div class="line">frame.modify()-&gt;<a class="code hl_function" href="classFrame.html#a8360d8a81a700a1b90cf6da71cd524e4">imageList</a>().pushToBack(Image::Ptr::create(1920, 1080,</div>
+<div class="line">    <a class="code hl_enumvalue" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00">PixelDesc::RGBA8_sRGB</a>));</div>
+<div class="line">frame.modify()-&gt;<a class="code hl_function" href="classFrame.html#a3029bf6f68d261411f9510536c1994d2">metadata</a>().<a class="code hl_function" href="classVariantDatabase.html#acc09774a54c4b14168cc55fc14c4ad19">set</a>(Metadata::Timecode,</div>
+<div class="line">    <a class="code hl_class" href="classTimecode.html">Timecode</a>(<a class="code hl_enumvalue" href="classTimecode.html#a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207">Timecode::NDF24</a>, 1, 0, 0, 0));</div>
+<div class="line"><a class="code hl_class" href="classString.html">String</a> s = frame-&gt;makeString(</div>
+<div class="line">    <span class="stringliteral">&quot;[{Timecode:smpte}] {@ImageCount}img {Image[0].@Size}&quot;</span>);</div>
+<div class="line"><span class="comment">// &quot;[01:00:00:00] 1img 1920x1080&quot;</span></div>
+<div class="ttc" id="aclassFrame_html_a3029bf6f68d261411f9510536c1994d2"><div class="ttname"><a href="classFrame.html#a3029bf6f68d261411f9510536c1994d2">Frame::metadata</a></div><div class="ttdeci">const Metadata &amp; metadata() const</div><div class="ttdoc">Returns a const reference to the frame metadata.</div><div class="ttdef"><b>Definition</b> frame.h:116</div></div>
+<div class="ttc" id="aclassFrame_html_a8360d8a81a700a1b90cf6da71cd524e4"><div class="ttname"><a href="classFrame.html#a8360d8a81a700a1b90cf6da71cd524e4">Frame::imageList</a></div><div class="ttdeci">const Image::PtrList &amp; imageList() const</div><div class="ttdoc">Returns a const reference to the list of image planes.</div><div class="ttdef"><b>Definition</b> frame.h:73</div></div>
+<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00">PixelDesc::RGBA8_sRGB</a></div><div class="ttdeci">@ RGBA8_sRGB</div><div class="ttdoc">8-bit RGBA, sRGB, full range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:141</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:57</div></div>
+<div class="ttc" id="aclassVariantDatabase_html_acc09774a54c4b14168cc55fc14c4ad19"><div class="ttname"><a href="classVariantDatabase.html#acc09774a54c4b14168cc55fc14c4ad19">VariantDatabase::set</a></div><div class="ttdeci">bool set(ID id, const Variant &amp;value)</div><div class="ttdoc">Sets the value for the given ID.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:379</div></div>
+</div><!-- fragment --></dd></dl>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">Resolver</td><td>Callable returning <code>std::optional&lt;String&gt;</code>. Pass <code>nullptr</code> to disable the user fallback. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">tmpl</td><td>Template string with <code>{Key</code>[:spec]} placeholders. </td></tr>
+    <tr><td class="paramname">resolver</td><td>Optional fallback resolver consulted for any key that is not a frame-level pseudo, an <code><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a></code>[N] / <code><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a></code>[N] subscript, or a key present in <a class="el" href="classFrame.html#a3029bf6f68d261411f9510536c1994d2">metadata</a>. </td></tr>
+    <tr><td class="paramname">err</td><td>Optional error output. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="afb948d42ec82b719221b60a1ce25926f" name="afb948d42ec82b719221b60a1ce25926f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afb948d42ec82b719221b60a1ce25926f">&#9670;&#160;</a></span>mediaDesc()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classMediaDesc.html">MediaDesc</a> Frame::mediaDesc </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Assembles a <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> describing this <a class="el" href="classFrame.html" title="A media frame containing images, audio, compressed packets, and metadata.">Frame</a>. </p>
+<p>Returns a <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> populated from the frame's own state: the frame rate is taken from <code>Metadata::FrameRate</code> (if set), the image list is built from the <a class="el" href="classImage.html#ac89cd3932f4a60d133232ef5fcb24bdb">Image::desc</a> of each <a class="el" href="classImage.html">Image</a> in <a class="el" href="classFrame.html#a8360d8a81a700a1b90cf6da71cd524e4">imageList</a>, the audio list is built from the <a class="el" href="classAudio.html#af4c906c113ec44e511a595637482367c">Audio::desc</a> of each <a class="el" href="classAudio.html">Audio</a> in <a class="el" href="classFrame.html#acd463c7e5ee785d13334c3e079cb23a3">audioList</a>, and the frame's metadata is copied across.</p>
+<p>The returned <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> is only <a class="el" href="classMediaDesc.html#af8301531765c6da2170962437b61b1fb">valid</a> if both a frame rate is present in metadata and the frame carries at least one image or audio entry. </p>
+
+</div>
+</div>
 <a id="a4ff149c36694dcda0da237da9d454d39" name="a4ff149c36694dcda0da237da9d454d39"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4ff149c36694dcda0da237da9d454d39">&#9670;&#160;</a></span>metadata() <span class="overload">[1/2]</span></h2>
 
@@ -468,6 +591,50 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="abd2b409a1df6e780aea5eb9fcf83a7cd" name="abd2b409a1df6e780aea5eb9fcf83a7cd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abd2b409a1df6e780aea5eb9fcf83a7cd">&#9670;&#160;</a></span>resolveTemplateKey()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt; <a class="el" href="classString.html">String</a> &gt; Frame::resolveTemplateKey </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>spec</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Resolves a single template key against this frame's structure. </p>
+<p>Used by <a class="el" href="classFrame.html#aa537bccb563e0500ba1117ad0eac19d1">makeString</a>. Returns a value when the key names something this frame can describe and <code>std::nullopt</code> otherwise. The recognised forms mirror <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">makeString:</a></p>
+<ul>
+<li><code>"@&lt;Pseudo&gt;"</code> — frame-level introspection (see <a class="el" href="classFrame.html#aa537bccb563e0500ba1117ad0eac19d1">makeString</a> for the list).</li>
+<li><code>"Image[N].&lt;sub&gt;"</code> — delegates to <a class="el" href="classImage.html#a2a4c83156dda4c457ba287d3ebc6c058">Image::resolveTemplateKey</a> on the image at index <code>N</code>. When <code>N</code> is out of range or the image is null, returns <code>std::nullopt</code>.</li>
+<li><code>"Audio[N].&lt;sub&gt;"</code> — delegates to <a class="el" href="classAudio.html#a9b07d569e5cbda89c25f2f44adf27038">Audio::resolveTemplateKey</a> on the audio at index <code>N</code>.</li>
+<li>Any registered metadata key — looked up in the frame's <a class="el" href="classFrame.html#a3029bf6f68d261411f9510536c1994d2">metadata</a> and rendered with <a class="el" href="classVariantImpl.html#a3ce54173fc794613121a0a995e3e3ee7">Variant::format</a>.</li>
+</ul>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">key</td><td>The placeholder key (no braces, no colon). </td></tr>
+    <tr><td class="paramname">spec</td><td>The format spec (may be empty). </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a6e5e34cd3fc8dca4b282c125b7bb1035" name="a6e5e34cd3fc8dca4b282c125b7bb1035"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6e5e34cd3fc8dca4b282c125b7bb1035">&#9670;&#160;</a></span>setBenchmark()</h2>
 
@@ -502,6 +669,41 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a5cd4e91eefa51727a9e709143888fe31" name="a5cd4e91eefa51727a9e709143888fe31"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5cd4e91eefa51727a9e709143888fe31">&#9670;&#160;</a></span>videoFormat()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classVideoFormat.html">VideoFormat</a> Frame::videoFormat </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">size_t</a>&#160;</td>
+          <td class="paramname"><em>index</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the <a class="el" href="classVideoFormat.html" title="Combined video raster, frame rate, and scan mode.">VideoFormat</a> for the image at <code>index</code>. </p>
+<p>Composes the image's raster and scan mode with the frame rate carried in <a class="el" href="classFrame.html#a3029bf6f68d261411f9510536c1994d2">metadata</a> under <code>Metadata::FrameRate</code>. Returns a default (invalid) <a class="el" href="classVideoFormat.html">VideoFormat</a> when <code>index</code> is out of range or when the frame rate metadata is missing or not convertible to a <a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">index</td><td>Zero-based image layer index. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="frame_8h_source.html">frame.h</a></li>
 </ul>
@@ -512,7 +714,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classFrame.html">Frame</a></li>
-    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-16 04:42:40 from commit 9177fbf (1.0.0).</li>
   </ul>
 </div>
 </body>

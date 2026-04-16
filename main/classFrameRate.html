@@ -119,21 +119,21 @@ Public Types</h2></td></tr>
 &#160;&#160;<a class="el" href="classFrameRate.html#a0b03c0fe2f653ec8479d240690191b9ca678c03071e4d9a0c5df04d175257d202">FPS_NotWellKnown</a> = 0
 , <b>FPS_Invalid</b>
 , <b>FPS_120</b>
-, <b>FPS_11988</b>
+, <b>FPS_119_88</b>
 , <br />
 &#160;&#160;<b>FPS_100</b>
 , <b>FPS_60</b>
-, <b>FPS_5994</b>
+, <b>FPS_59_94</b>
 , <b>FPS_50</b>
 , <br />
 &#160;&#160;<b>FPS_48</b>
-, <b>FPS_4795</b>
+, <b>FPS_47_95</b>
 , <b>FPS_30</b>
-, <b>FPS_2997</b>
+, <b>FPS_29_97</b>
 , <br />
 &#160;&#160;<b>FPS_25</b>
 , <b>FPS_24</b>
-, <b>FPS_2398</b>
+, <b>FPS_23_98</b>
 <br />
  }</td></tr>
 <tr class="memdesc:a0b03c0fe2f653ec8479d240690191b9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enumeration of well-known industry-standard frame rates.  <a href="classFrameRate.html#a0b03c0fe2f653ec8479d240690191b9c">More...</a><br /></td></tr>
@@ -381,7 +381,7 @@ Static Public Member Functions</h2></td></tr>
 
 <p>Returns the period of one frame as a <a class="el" href="classDuration.html" title="Time duration with nanosecond precision.">Duration</a>. </p>
 <p>Computed from the exact rational form as <code>denominator</code> / <code>numerator</code> seconds, rounded to the nearest nanosecond. Returns a zero <a class="el" href="classDuration.html" title="Time duration with nanosecond precision.">Duration</a> if the frame rate is invalid.</p>
-<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classFrameRate.html">FrameRate</a> fps(FrameRate::FPS_2997);     <span class="comment">// 30000/1001</span></div>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classFrameRate.html">FrameRate</a> fps(FrameRate::FPS_29_97);     <span class="comment">// 30000/1001</span></div>
 <div class="line"><a class="code hl_class" href="classDuration.html">Duration</a>  d = fps.frameDuration();      <span class="comment">// ~33_366_666 ns</span></div>
 <div class="ttc" id="aclassDuration_html"><div class="ttname"><a href="classDuration.html">Duration</a></div><div class="ttdoc">Time duration with nanosecond precision.</div><div class="ttdef"><b>Definition</b> duration.h:27</div></div>
 <div class="ttc" id="aclassFrameRate_html"><div class="ttname"><a href="classFrameRate.html">FrameRate</a></div><div class="ttdoc">Represents a video frame rate as a rational number.</div><div class="ttdef"><b>Definition</b> framerate.h:101</div></div>
@@ -654,7 +654,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classFrameRate.html">FrameRate</a></li>
-    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-16 04:42:40 from commit 9177fbf (1.0.0).</li>
   </ul>
 </div>
 </body>

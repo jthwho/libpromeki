@@ -7,13 +7,14 @@ var searchData=
   ['palette_2eh_4',['palette.h',['../palette_8h.html',1,'']]],
   ['periodiccallback_2eh_5',['periodiccallback.h',['../periodiccallback_8h.html',1,'']]],
   ['pidcontroller_2eh_6',['pidcontroller.h',['../pidcontroller_8h.html',1,'']]],
-  ['pixeldesc_2eh_7',['pixeldesc.h',['../pixeldesc_8h.html',1,'']]],
-  ['pixelformat_2eh_8',['pixelformat.h',['../pixelformat_8h.html',1,'']]],
-  ['platform_2eh_9',['platform.h',['../platform_8h.html',1,'']]],
-  ['point_2eh_10',['point.h',['../point_8h.html',1,'']]],
-  ['priorityqueue_2eh_11',['priorityqueue.h',['../priorityqueue_8h.html',1,'']]],
-  ['prioritysocket_2eh_12',['prioritysocket.h',['../prioritysocket_8h.html',1,'']]],
-  ['process_2eh_13',['process.h',['../process_8h.html',1,'']]],
-  ['progressbar_2eh_14',['progressbar.h',['../progressbar_8h.html',1,'']]],
-  ['promise_2eh_15',['promise.h',['../promise_8h.html',1,'']]]
+  ['pipelinestats_2eh_7',['pipelinestats.h',['../pipelinestats_8h.html',1,'']]],
+  ['pixeldesc_2eh_8',['pixeldesc.h',['../pixeldesc_8h.html',1,'']]],
+  ['pixelformat_2eh_9',['pixelformat.h',['../pixelformat_8h.html',1,'']]],
+  ['platform_2eh_10',['platform.h',['../platform_8h.html',1,'']]],
+  ['point_2eh_11',['point.h',['../point_8h.html',1,'']]],
+  ['priorityqueue_2eh_12',['priorityqueue.h',['../priorityqueue_8h.html',1,'']]],
+  ['prioritysocket_2eh_13',['prioritysocket.h',['../prioritysocket_8h.html',1,'']]],
+  ['process_2eh_14',['process.h',['../process_8h.html',1,'']]],
+  ['progressbar_2eh_15',['progressbar.h',['../progressbar_8h.html',1,'']]],
+  ['promise_2eh_16',['promise.h',['../promise_8h.html',1,'']]]
 ];

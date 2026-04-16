@@ -175,7 +175,7 @@ Public Member Functions</h2></td></tr>
 <p>Produces a sequence of timecode values with controllable direction and jam capability. Automatically derives the correct <a class="el" href="classTimecode_1_1Mode.html" title="Describes the timecode mode (frame rate and drop-frame status).">Timecode::Mode</a> from the configured frame rate and drop-frame setting.</p>
 <p>This is a simple value class — cheap to copy, no shared state.</p>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classTimecodeGenerator.html">TimecodeGenerator</a> <a class="code hl_class" href="classList.html">gen</a>;</div>
-<div class="line"><a class="code hl_class" href="classList.html">gen</a>.setFrameRate(<a class="code hl_class" href="classFrameRate.html">FrameRate</a>(FrameRate::FPS_2997));</div>
+<div class="line"><a class="code hl_class" href="classList.html">gen</a>.setFrameRate(<a class="code hl_class" href="classFrameRate.html">FrameRate</a>(FrameRate::FPS_29_97));</div>
 <div class="line"><a class="code hl_class" href="classList.html">gen</a>.setTimecode(<a class="code hl_class" href="classTimecode.html">Timecode</a>(<a class="code hl_enumvalue" href="classTimecode.html#a5f71607fe05c9b37edcf0415f01bc623ac1c83207a69e1e4b00911635fbfdae55">Timecode::NDF30</a>, 1, 0, 0, 0));</div>
 <div class="line"><span class="keywordflow">for</span>(<span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">i</a> = 0; <a class="code hl_class" href="classList.html">i</a> &lt; 100; <a class="code hl_class" href="classList.html">i</a>++) {</div>
 <div class="line">    <a class="code hl_class" href="classTimecode.html">Timecode</a> <a class="code hl_class" href="classList.html">tc</a> = <a class="code hl_class" href="classList.html">gen</a>.advance();</div>
@@ -611,7 +611,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classTimecodeGenerator.html">TimecodeGenerator</a></li>
-    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-16 04:42:40 from commit 9177fbf (1.0.0).</li>
   </ul>
 </div>
 </body>

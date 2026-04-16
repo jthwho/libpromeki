@@ -256,7 +256,7 @@ Additional Inherited Members</h2></td></tr>
 <div class="ttc" id="aclassMediaIO_html_a0cb498ce63da62e06f5f463c0b046d74"><div class="ttname"><a href="classMediaIO.html#a0cb498ce63da62e06f5f463c0b046d74">MediaIO::defaultConfig</a></div><div class="ttdeci">static Config defaultConfig(const String &amp;typeName)</div><div class="ttdoc">Returns the default configuration for the named backend.</div></div>
 <div class="ttc" id="aclassMediaIO_html_a3f8b370536ea3e89c4598bb475fedc87"><div class="ttname"><a href="classMediaIO.html#a3f8b370536ea3e89c4598bb475fedc87">MediaIO::Input</a></div><div class="ttdeci">static constexpr Mode Input</div><div class="ttdoc">Backend accepts frames (sink).</div><div class="ttdef"><b>Definition</b> mediaio.h:492</div></div>
 <div class="ttc" id="aclassMediaIO_html_a6a601a20bd14d709a28e09e6165254d3"><div class="ttname"><a href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3">MediaIO::open</a></div><div class="ttdeci">Error open(Mode mode)</div><div class="ttdoc">Opens the media resource.</div></div>
-<div class="ttc" id="aclassMediaIO_html_aa7fa76347a8b9344c335fcda93658db3"><div class="ttname"><a href="classMediaIO.html#aa7fa76347a8b9344c335fcda93658db3">MediaIO::setConfig</a></div><div class="ttdeci">void setConfig(const Config &amp;config)</div><div class="ttdoc">Sets the configuration.</div><div class="ttdef"><b>Definition</b> mediaio.h:1347</div></div>
+<div class="ttc" id="aclassMediaIO_html_aa7fa76347a8b9344c335fcda93658db3"><div class="ttname"><a href="classMediaIO.html#aa7fa76347a8b9344c335fcda93658db3">MediaIO::setConfig</a></div><div class="ttdeci">void setConfig(const Config &amp;config)</div><div class="ttdoc">Sets the configuration.</div><div class="ttdef"><b>Definition</b> mediaio.h:1368</div></div>
 <div class="ttc" id="aclassMediaIO_html_adf861eac41671d654408efeada979bcd"><div class="ttname"><a href="classMediaIO.html#adf861eac41671d654408efeada979bcd">MediaIO::adoptTask</a></div><div class="ttdeci">Error adoptTask(MediaIOTask *task)</div><div class="ttdoc">Injects an externally constructed backend task.</div></div>
 <div class="ttc" id="astructInspectorEvent_html"><div class="ttname"><a href="structInspectorEvent.html">InspectorEvent</a></div><div class="ttdoc">Per-frame measurement record produced by MediaIOTask_Inspector.</div><div class="ttdef"><b>Definition</b> mediaiotask_inspector.h:91</div></div>
 </div><!-- fragment --><p>Callers that don't need the callback can use the standard factory path: <code><a class="el" href="classMediaIO.html#a594b8b55ae788efe104c871248d73808" title="Creates a MediaIO instance from a configuration.">MediaIO::create</a></code>("Inspector", ...) and poll <code><a class="el" href="classMediaIOTask__Inspector.html#a722864caa5ed43527b4fee9b93e03843" title="Returns a thread-safe snapshot of the accumulator.">snapshot()</a></code> via the typed task pointer (or just rely on the periodic log).</p>
@@ -347,7 +347,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIOTask__Inspector.html">MediaIOTask_Inspector</a></li>
-    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-16 04:42:40 from commit 9177fbf (1.0.0).</li>
   </ul>
 </div>
 </body>

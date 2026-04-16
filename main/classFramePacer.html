@@ -212,7 +212,7 @@ Public Member Functions</h2></td></tr>
 <p>By default the pacer uses the system's monotonic wall clock (steady_clock). Call <a class="el" href="classFramePacer.html#ace64c3e09c9db9e3bb785a89bfe863c5">setClock()</a> to supply a custom <a class="el" href="classClock.html">Clock</a> for PTP, audio, or other time sources. The clock is not owned — the caller must keep it alive for the lifetime of the pacer.</p>
 <dl class="section user"><dt>Phase alignment (ST 2110)</dt><dd></dd></dl>
 <p>For broadcast applications where frame boundaries must align to a network epoch, call <code><a class="el" href="classFramePacer.html#a091f5c0265ec7b0c14f66685169bdce4" title="Resets the pacer with an explicit origin.">reset(originNs)</a></code> with the desired origin in the clock's time domain. For example, an ST 2110 sender would compute the PTP time at which frame 0 of the stream begins and pass that as the origin:</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classFramePacer.html">FramePacer</a> <a class="code hl_class" href="classList.html">pacer</a>(<a class="code hl_class" href="classFrameRate.html">FrameRate</a>(FrameRate::FPS_2997));</div>
+<div class="fragment"><div class="line"><a class="code hl_class" href="classFramePacer.html">FramePacer</a> <a class="code hl_class" href="classList.html">pacer</a>(<a class="code hl_class" href="classFrameRate.html">FrameRate</a>(FrameRate::FPS_29_97));</div>
 <div class="line"><a class="code hl_class" href="classList.html">pacer</a>.setClock(&amp;<a class="code hl_class" href="classList.html">ptpClock</a>);</div>
 <div class="line"><a class="code hl_class" href="classList.html">pacer</a>.reset(<a class="code hl_class" href="classList.html">streamPhaseNs</a>);   <span class="comment">// PTP time of frame 0</span></div>
 <div class="line"><span class="keywordflow">while</span>(<a class="code hl_class" href="classList.html">running</a>) {</div>
@@ -233,7 +233,7 @@ Public Member Functions</h2></td></tr>
 <p>The pacer always advances by exactly one frame per <code><a class="el" href="classFramePacer.html#a421cf42767c2e195f4243964d0b94f1f" title="Paces one frame and returns the result.">pace()</a></code> call. If the caller drops frames, it tells the pacer via <a class="el" href="classFramePacer.html#ac9958292caf31486e130656f364fe6f1">advance()</a>, which jumps the frame counter forward. If the caller doesn't drop, the pacer's error compensation handles it naturally: when the accumulated error exceeds the remaining time, <code><a class="el" href="classFramePacer.html#a421cf42767c2e195f4243964d0b94f1f" title="Paces one frame and returns the result.">pace()</a></code> returns immediately (zero sleep) so the pipeline runs as fast as it can until the error drains below a frame period. The timeline stays anchored — deadlines are always computed from the origin — so the caller catches up as quickly as its processing allows.</p>
 <dl class="section user"><dt>Error compensation</dt><dd></dd></dl>
 <p>After each sleep the pacer measures the actual wake-up time and accumulates the signed error (positive = late, negative = early). On the next pace, it biases the sleep target by the accumulated error so that small oversleeps are corrected on the following frame.</p>
-<dl class="section user"><dt>Typical wall-clock usage</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classFramePacer.html">FramePacer</a> <a class="code hl_class" href="classList.html">pacer</a>(<a class="code hl_class" href="classFrameRate.html">FrameRate</a>(FrameRate::FPS_2997));</div>
+<dl class="section user"><dt>Typical wall-clock usage</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classFramePacer.html">FramePacer</a> <a class="code hl_class" href="classList.html">pacer</a>(<a class="code hl_class" href="classFrameRate.html">FrameRate</a>(FrameRate::FPS_29_97));</div>
 <div class="line"><a class="code hl_class" href="classList.html">pacer</a>.reset();</div>
 <div class="line"><span class="keywordflow">while</span>(<a class="code hl_class" href="classList.html">running</a>) {</div>
 <div class="line">    <span class="keyword">auto</span> r = <a class="code hl_class" href="classList.html">pacer</a>.pace();</div>
@@ -705,7 +705,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classFramePacer.html">FramePacer</a></li>
-    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-16 04:42:40 from commit 9177fbf (1.0.0).</li>
   </ul>
 </div>
 </body>

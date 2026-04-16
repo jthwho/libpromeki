@@ -10,5 +10,6 @@ var searchData=
   ['sizelist_7',['SizeList',['../classRtpPacket.html#a7309614010f7c3315032b63ea15b1d2f',1,'RtpPacket']]],
   ['slotvariantfunc_8',['SlotVariantFunc',['../classObjectBase.html#aa5b71229762e66678aa59aaa21ecd7af',1,'ObjectBase']]],
   ['specmap_9',['SpecMap',['../classVariantDatabase.html#ab4f16069dd41722fb0b8d3b8fc1009f5',1,'VariantDatabase']]],
-  ['status_10',['Status',['../classFileInfo.html#a96655a8e63c3237c295ba3e7b7ffb684',1,'FileInfo']]]
+  ['stagelist_10',['StageList',['../classMediaPipelineConfig.html#acc55c57345b26490ac0e92c942d8a9eb',1,'MediaPipelineConfig']]],
+  ['status_11',['Status',['../classFileInfo.html#a96655a8e63c3237c295ba3e7b7ffb684',1,'FileInfo']]]
 ];

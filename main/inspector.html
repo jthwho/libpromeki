@@ -365,7 +365,7 @@ Adopt-task path (per-frame callback)</h2>
 <div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#adec397e0125f2e156de27c9ac5cb1f3d">close</a>();</div>
 <div class="line"><span class="keyword">delete</span> io;                           <span class="comment">// also deletes insp</span></div>
 <div class="ttc" id="aclassMediaIOTask__Inspector_html"><div class="ttname"><a href="classMediaIOTask__Inspector.html">MediaIOTask_Inspector</a></div><div class="ttdoc">MediaIO sink backend that decodes and validates a media stream.</div><div class="ttdef"><b>Definition</b> mediaiotask_inspector.h:368</div></div>
-<div class="ttc" id="aclassMediaIO_html_aa7fa76347a8b9344c335fcda93658db3"><div class="ttname"><a href="classMediaIO.html#aa7fa76347a8b9344c335fcda93658db3">MediaIO::setConfig</a></div><div class="ttdeci">void setConfig(const Config &amp;config)</div><div class="ttdoc">Sets the configuration.</div><div class="ttdef"><b>Definition</b> mediaio.h:1347</div></div>
+<div class="ttc" id="aclassMediaIO_html_aa7fa76347a8b9344c335fcda93658db3"><div class="ttname"><a href="classMediaIO.html#aa7fa76347a8b9344c335fcda93658db3">MediaIO::setConfig</a></div><div class="ttdeci">void setConfig(const Config &amp;config)</div><div class="ttdoc">Sets the configuration.</div><div class="ttdef"><b>Definition</b> mediaio.h:1368</div></div>
 <div class="ttc" id="aclassMediaIO_html_adf861eac41671d654408efeada979bcd"><div class="ttname"><a href="classMediaIO.html#adf861eac41671d654408efeada979bcd">MediaIO::adoptTask</a></div><div class="ttdeci">Error adoptTask(MediaIOTask *task)</div><div class="ttdoc">Injects an externally constructed backend task.</div></div>
 <div class="ttc" id="astructInspectorEvent_html"><div class="ttname"><a href="structInspectorEvent.html">InspectorEvent</a></div><div class="ttdoc">Per-frame measurement record produced by MediaIOTask_Inspector.</div><div class="ttdef"><b>Definition</b> mediaiotask_inspector.h:91</div></div>
 </div><!-- fragment --><p>The callback <b>must</b> be installed before <code>open()</code> — calling <code>setEventCallback</code> on a running inspector is a data race. This is why the factory path can't expose the callback: by the time <code>create()</code> returns, the task is already owned and inaccessible to user code.</p>
@@ -447,7 +447,7 @@ See also</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-16 04:42:40 from commit 9177fbf (1.0.0).</li>
   </ul>
 </div>
 </body>

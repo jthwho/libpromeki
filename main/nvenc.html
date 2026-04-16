@@ -128,7 +128,7 @@ $(document).ready(function(){initNavTree('nvenc.html',''); initResizable(); });
 </div><!-- fragment --><p>This installs <code>nvcc</code> at <code>/usr/bin/nvcc</code> and the CUDA headers at <code>/usr/include/cuda_runtime</code>.h / <code>/usr/include/cuda</code>.h.</p>
 <p>libpromeki's CMake configuration calls <code>find_package(CUDAToolkit)</code> to locate these files automatically. When the call succeeds the build defaults PROMEKI_ENABLE_CUDA to <code>ON</code>; otherwise it defaults to <code>OFF</code>. Explicit <code>-DPROMEKI_ENABLE_CUDA=ON|OFF</code> overrides the probe.</p>
 <p>If <code>find_package</code> fails even though the toolkit is installed, pass <code>CUDAToolkit_ROOT</code> to CMake:</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">cmake</a> -<a class="code hl_class" href="classList.html">B</a> <a class="code hl_class" href="classList.html">build</a> -<a class="code hl_class" href="classList.html">S</a> . -<a class="code hl_class" href="classList.html">DCUDAToolkit_ROOT</a>=/<a class="code hl_class" href="classList.html">usr</a>/<a class="code hl_class" href="classList.html">local</a>/cuda</div>
+<div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">cmake</a> -<a class="code hl_class" href="classList.html">B</a> build -<a class="code hl_class" href="classList.html">S</a> . -<a class="code hl_class" href="classList.html">DCUDAToolkit_ROOT</a>=/<a class="code hl_class" href="classList.html">usr</a>/<a class="code hl_class" href="classList.html">local</a>/cuda</div>
 </div><!-- fragment --><h1><a class="anchor" id="nvenc_sdk"></a>
 3. NVIDIA Video Codec SDK</h1>
 <p>The SDK is a free download from NVIDIA but requires a developer account:</p>
@@ -148,11 +148,11 @@ $(document).ready(function(){initNavTree('nvenc.html',''); initResizable(); });
 <div class="line">                        <a class="code hl_class" href="classList.html">cross</a>-<a class="code hl_class" href="classList.html">checking</a> <a class="code hl_class" href="classList.html">behaviour</a></div>
 <div class="line">  <a class="code hl_class" href="classList.html">Read_Me</a>.pdf</div>
 </div><!-- fragment --><p><a class="el" href="classPoint.html" title="N-dimensional point with arithmetic, interpolation, and serialization.">Point</a> libpromeki at the SDK at configure time:</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">cmake</a> -<a class="code hl_class" href="classList.html">B</a> <a class="code hl_class" href="classList.html">build</a> -<a class="code hl_class" href="classList.html">S</a> . \</div>
+<div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">cmake</a> -<a class="code hl_class" href="classList.html">B</a> build -<a class="code hl_class" href="classList.html">S</a> . \</div>
 <div class="line">    -<a class="code hl_class" href="classList.html">DPROMEKI_NVENC_SDK_DIR</a>=/home/<a class="code hl_class" href="classList.html">you</a>/<a class="code hl_class" href="classList.html">src</a>/<a class="code hl_class" href="classList.html">Video_Codec_SDK_13</a>.0.37</div>
 </div><!-- fragment --><p>Or export it as an environment variable once:</p>
 <div class="fragment"><div class="line"><span class="keyword">export</span> <a class="code hl_class" href="classList.html">NVENC_SDK_DIR</a>=/home/<a class="code hl_class" href="classList.html">you</a>/<a class="code hl_class" href="classList.html">src</a>/<a class="code hl_class" href="classList.html">Video_Codec_SDK_13</a>.0.37</div>
-<div class="line"><a class="code hl_class" href="classList.html">cmake</a> -<a class="code hl_class" href="classList.html">B</a> <a class="code hl_class" href="classList.html">build</a> -<a class="code hl_class" href="classList.html">S</a> .</div>
+<div class="line"><a class="code hl_class" href="classList.html">cmake</a> -<a class="code hl_class" href="classList.html">B</a> build -<a class="code hl_class" href="classList.html">S</a> .</div>
 </div><!-- fragment --><p>The CMake probe looks for <code>Interface/nvEncodeAPI.h</code> below that directory. If it finds the header, PROMEKI_ENABLE_NVENC defaults to <code>ON</code>; otherwise it defaults to <code>OFF</code> and the backend is not built.</p>
 <p>Supported SDK versions: <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">12.0</a> and newer. Older SDKs use a different preset / tuning-info model that libpromeki does not map to.</p>
 <h1><a class="anchor" id="nvenc_verify"></a>
@@ -163,7 +163,7 @@ Verification</h1>
 </div><!-- fragment --><p>After building, check the compiled-in features via the build-info string emitted by any libpromeki executable at startup:</p>
 <div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">Features</a>: <a class="code hl_class" href="classList.html">NETWORK</a> <a class="code hl_class" href="classList.html">PROAV</a> ... <a class="code hl_class" href="classList.html">CUDA</a> <a class="code hl_class" href="classList.html">NVENC</a></div>
 </div><!-- fragment --><p>Finally, run the NVENC unit tests:</p>
-<div class="fragment"><div class="line">./<a class="code hl_class" href="classList.html">build</a>/<a class="code hl_function" href="textstream_8h.html#ad48f2f3c236854fa3ab5d35934aaeec2">bin</a>/<a class="code hl_class" href="classList.html">unittest</a>-promeki -<a class="code hl_class" href="classList.html">tc</a>=<span class="stringliteral">&#39;Nvenc*&#39;</span></div>
+<div class="fragment"><div class="line">./build/<a class="code hl_function" href="textstream_8h.html#ad48f2f3c236854fa3ab5d35934aaeec2">bin</a>/<a class="code hl_class" href="classList.html">unittest</a>-promeki -<a class="code hl_class" href="classList.html">tc</a>=<span class="stringliteral">&#39;Nvenc*&#39;</span></div>
 <div class="ttc" id="atextstream_8h_html_ad48f2f3c236854fa3ab5d35934aaeec2"><div class="ttname"><a href="textstream_8h.html#ad48f2f3c236854fa3ab5d35934aaeec2">bin</a></div><div class="ttdeci">TextStream &amp; bin(TextStream &amp;s)</div><div class="ttdoc">Sets integer base to 2 (binary).</div><div class="ttdef"><b>Definition</b> textstream.h:427</div></div>
 </div><!-- fragment --><p>These tests auto-skip when no GPU is present, but on a machine with a working driver + SDK + runtime they encode a handful of synthetic frames through both <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a> and HEVC and verify the resulting bitstream.</p>
 <h1><a class="anchor" id="nvenc_troubleshoot"></a>
@@ -190,7 +190,7 @@ Driver / toolkit version skew</h2>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-16 04:42:40 from commit 9177fbf (1.0.0).</li>
   </ul>
 </div>
 </body>

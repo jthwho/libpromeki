@@ -130,9 +130,6 @@ var hierarchy =
       [ "TypedEnum< InspectorTest >", "classTypedEnum.html", [
         [ "InspectorTest", "classInspectorTest.html", null ]
       ] ],
-      [ "TypedEnum< InterlaceMode >", "classTypedEnum.html", [
-        [ "InterlaceMode", "classInterlaceMode.html", null ]
-      ] ],
       [ "TypedEnum< MediaIODirection >", "classTypedEnum.html", [
         [ "MediaIODirection", "classMediaIODirection.html", null ]
       ] ],
@@ -165,6 +162,9 @@ var hierarchy =
       ] ],
       [ "TypedEnum< VideoRateControl >", "classTypedEnum.html", [
         [ "VideoRateControl", "classVideoRateControl.html", null ]
+      ] ],
+      [ "TypedEnum< VideoScanMode >", "classTypedEnum.html", [
+        [ "VideoScanMode", "classVideoScanMode.html", null ]
       ] ],
       [ "TypedEnum< Derived >", "classTypedEnum.html", null ]
     ] ],
@@ -201,6 +201,7 @@ var hierarchy =
     ] ],
     [ "std::formatter< promeki::EUI64 >", "structstd_1_1formatter_3_01promeki_1_1EUI64_01_4.html", null ],
     [ "std::formatter< promeki::Timecode >", "structstd_1_1formatter_3_01promeki_1_1Timecode_01_4.html", null ],
+    [ "std::formatter< promeki::VideoFormat >", "structstd_1_1formatter_3_01promeki_1_1VideoFormat_01_4.html", null ],
     [ "FourCC", "classFourCC.html", null ],
     [ "Frame", "classFrame.html", null ],
     [ "FramePacer", "classFramePacer.html", null ],
@@ -338,6 +339,8 @@ var hierarchy =
       [ "SDLPlayerTask", "classSDLPlayerTask.html", null ]
     ] ],
     [ "MediaPacket", "classMediaPacket.html", null ],
+    [ "MediaPipelineConfig", "classMediaPipelineConfig.html", null ],
+    [ "MediaPipelineStats", "classMediaPipelineStats.html", null ],
     [ "MediaTimeStamp", "classMediaTimeStamp.html", null ],
     [ "MemAllocation", "structMemAllocation.html", null ],
     [ "MemPool", "classMemPool.html", null ],
@@ -381,6 +384,7 @@ var hierarchy =
         [ "GridLayout", "classGridLayout.html", null ]
       ] ],
       [ "MediaIO", "classMediaIO.html", null ],
+      [ "MediaPipeline", "classMediaPipeline.html", null ],
       [ "MulticastManager", "classMulticastManager.html", null ],
       [ "Process", "classProcess.html", null ],
       [ "RtpSession", "classRtpSession.html", null ],
@@ -422,6 +426,7 @@ var hierarchy =
     [ "Pair< A, B >", "classPair.html", null ],
     [ "CRC< T >::Params", "structCRC_1_1Params.html", null ],
     [ "TuiInputParser::ParsedEvent", "structTuiInputParser_1_1ParsedEvent.html", null ],
+    [ "VideoFormat::ParseOptions", "structVideoFormat_1_1ParseOptions.html", null ],
     [ "PeriodicCallback", "classPeriodicCallback.html", null ],
     [ "PIDController< ValueType, TimeType >", "classPIDController.html", null ],
     [ "PaintEngine::Pixel", "structPaintEngine_1_1Pixel.html", null ],
@@ -458,6 +463,7 @@ var hierarchy =
     [ "Signal< Args >::removeConstAndRef< T >", "structSignal_1_1removeConstAndRef.html", null ],
     [ "Slot< Args >::removeConstAndRef< T >", "structSlot_1_1removeConstAndRef.html", null ],
     [ "Resource", "classResource.html", null ],
+    [ "MediaPipelineConfig::Route", "structMediaPipelineConfig_1_1Route.html", null ],
     [ "SdpMediaDescription::RtpMap", "structSdpMediaDescription_1_1RtpMap.html", null ],
     [ "RtpPayload", "classRtpPayload.html", [
       [ "RtpPayloadJpeg", "classRtpPayloadJpeg.html", null ],
@@ -498,6 +504,7 @@ var hierarchy =
     [ "Span< T >", "classSpan.html", null ],
     [ "Stack< T >", "classStack.html", null ],
     [ "CSCPipeline::Stage", "structCSCPipeline_1_1Stage.html", null ],
+    [ "MediaPipelineConfig::Stage", "structMediaPipelineConfig_1_1Stage.html", null ],
     [ "MemPool::Stats", "structMemPool_1_1Stats.html", null ],
     [ "MemSpace::Stats", "structMemSpace_1_1Stats.html", null ],
     [ "SDLAudioClock::Stats", "structSDLAudioClock_1_1Stats.html", null ],
@@ -512,6 +519,7 @@ var hierarchy =
       [ "StringUnicodeData", "classStringUnicodeData.html", null ],
       [ "StringUnicodeLiteralData", "classStringUnicodeLiteralData.html", null ]
     ] ],
+    [ "VideoFormat::StringOptions", "structVideoFormat_1_1StringOptions.html", null ],
     [ "StringRegistry< Name >", "classStringRegistry.html", null ],
     [ "StringRegistry<\"Benchmark\">", "classStringRegistry.html", null ],
     [ "StructDatabase< KeyType, StructType >", "classStructDatabase.html", null ],
@@ -562,9 +570,12 @@ var hierarchy =
     [ "VariantDatabase<\"Metadata\">", "classVariantDatabase.html", [
       [ "Metadata", "classMetadata.html", null ]
     ] ],
+    [ "VariantDatabase<\"PipelineStats\">", "classVariantDatabase.html", [
+      [ "PipelineStats", "classPipelineStats.html", null ]
+    ] ],
     [ "detail::VariantEnd", "structdetail_1_1VariantEnd.html", null ],
     [ "VariantImpl< Types >", "classVariantImpl.html", null ],
-    [ "VariantImpl< std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, Size2Du32, UUID, UMID, Timecode, Rational< int >, FrameRate, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, VideoCodec, AudioCodec, Enum, EnumList, detail::VariantEnd >", "classVariantImpl.html", null ],
+    [ "VariantImpl< std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, Size2Du32, UUID, UMID, Timecode, Rational< int >, FrameRate, VideoFormat, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, VideoCodec, AudioCodec, Enum, EnumList, detail::VariantEnd >", "classVariantImpl.html", null ],
     [ "VariantSpec", "classVariantSpec.html", null ],
     [ "VideoCodec", "classVideoCodec.html", null ],
     [ "VideoDecoder", "classVideoDecoder.html", [
@@ -575,6 +586,7 @@ var hierarchy =
       [ "JpegVideoEncoder", "classJpegVideoEncoder.html", null ],
       [ "JpegXsVideoEncoder", "classJpegXsVideoEncoder.html", null ]
     ] ],
+    [ "VideoFormat", "classVideoFormat.html", null ],
     [ "VideoTestPattern", "classVideoTestPattern.html", null ],
     [ "WaitCondition", "classWaitCondition.html", null ],
     [ "ReadWriteLock::WriteLocker", "classReadWriteLock_1_1WriteLocker.html", null ],

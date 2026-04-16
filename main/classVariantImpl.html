@@ -143,18 +143,20 @@ Public Types</h2></td></tr>
 , <br />
 &#160;&#160;<b>TypeRational</b>
 , <b>TypeFrameRate</b>
+, <b>TypeVideoFormat</b>
 , <b>TypeStringList</b>
-, <b>TypeColor</b>
 , <br />
-&#160;&#160;<b>TypeColorModel</b>
+&#160;&#160;<b>TypeColor</b>
+, <b>TypeColorModel</b>
 , <b>TypeMemSpace</b>
 , <b>TypePixelFormat</b>
-, <b>TypePixelDesc</b>
 , <br />
-&#160;&#160;<b>TypeVideoCodec</b>
+&#160;&#160;<b>TypePixelDesc</b>
+, <b>TypeVideoCodec</b>
 , <b>TypeAudioCodec</b>
 , <b>TypeEnum</b>
-, <b>TypeEnumList</b>
+, <br />
+&#160;&#160;<b>TypeEnumList</b>
 <br />
  }</td></tr>
 <tr class="memdesc:ab2d523ea5ddb45e27665551747d0c1be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enumerates every type the variant can hold.  <a href="classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1be">More...</a><br /></td></tr>
@@ -193,6 +195,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aae602ac42c83cbb3b1b7b4d5d2cbf95e" id="r_aae602ac42c83cbb3b1b7b4d5d2cbf95e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classVariantImpl.html">VariantImpl</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantImpl.html#aae602ac42c83cbb3b1b7b4d5d2cbf95e">toStandardType</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:aae602ac42c83cbb3b1b7b4d5d2cbf95e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts complex types to their <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> representation, leaving simple types unchanged.  <br /></td></tr>
 <tr class="separator:aae602ac42c83cbb3b1b7b4d5d2cbf95e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ce54173fc794613121a0a995e3e3ee7" id="r_a3ce54173fc794613121a0a995e3e3ee7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantImpl.html#a3ce54173fc794613121a0a995e3e3ee7">format</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;spec, <a class="el" href="classError.html">Error</a> *<a class="el" href="classList.html">err</a>=<a class="el" href="classList.html">nullptr</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a3ce54173fc794613121a0a995e3e3ee7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Formats the stored value using a type-specific format spec.  <br /></td></tr>
+<tr class="separator:a3ce54173fc794613121a0a995e3e3ee7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a285ac7c13304d0164695813596f65a78" id="r_a285ac7c13304d0164695813596f65a78"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classEnum.html">Enum</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantImpl.html#a285ac7c13304d0164695813596f65a78">asEnum</a> (<a class="el" href="classEnum_1_1Type.html">Enum::Type</a> enumType, <a class="el" href="classError.html">Error</a> *<a class="el" href="classList.html">err</a>=<a class="el" href="classList.html">nullptr</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a285ac7c13304d0164695813596f65a78"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resolves the stored value to an <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> of the given type.  <br /></td></tr>
 <tr class="separator:a285ac7c13304d0164695813596f65a78"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -224,12 +229,12 @@ class VariantImpl&lt; Types &gt;</div><p>Type-safe tagged union that can hold an
 <div class="line"><a class="code hl_enumeration" href="classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1be">Variant::Type</a> <a class="code hl_class" href="classList.html">t</a> = v.<a class="code hl_function" href="classVariantImpl.html#a8aec564fe7f0aaca05ebc0e97698bbcc">type</a>();  <span class="comment">// Variant::TypeString</span></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:57</div></div>
-<div class="ttc" id="aclassVariantImpl_html"><div class="ttname"><a href="classVariantImpl.html">VariantImpl&lt; std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, Size2Du32, UUID, UMID, Timecode, Rational&lt; int &gt;, FrameRate, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, VideoCodec, AudioCodec, Enum, EnumList, detail::VariantEnd &gt;</a></div></div>
-<div class="ttc" id="aclassVariantImpl_html_a0ae83cd9c68c1fbe6381a52a0a3b4b8f"><div class="ttname"><a href="classVariantImpl.html#a0ae83cd9c68c1fbe6381a52a0a3b4b8f">VariantImpl::set</a></div><div class="ttdeci">void set(const T &amp;value)</div><div class="ttdoc">Replaces the currently held value with value.</div><div class="ttdef"><b>Definition</b> variant.h:265</div></div>
-<div class="ttc" id="aclassVariantImpl_html_a8aec564fe7f0aaca05ebc0e97698bbcc"><div class="ttname"><a href="classVariantImpl.html#a8aec564fe7f0aaca05ebc0e97698bbcc">VariantImpl::type</a></div><div class="ttdeci">Type type() const</div><div class="ttdoc">Returns the Type enumerator for the currently held value.</div><div class="ttdef"><b>Definition</b> variant.h:524</div></div>
-<div class="ttc" id="aclassVariantImpl_html_a95ca32106dbaee20a12d1a3a8c9e48fe"><div class="ttname"><a href="classVariantImpl.html#a95ca32106dbaee20a12d1a3a8c9e48fe">VariantImpl::get</a></div><div class="ttdeci">To get(Error *err=nullptr) const</div><div class="ttdoc">Converts the stored value to the requested type To.</div><div class="ttdef"><b>Definition</b> variant.h:283</div></div>
-<div class="ttc" id="aclassVariantImpl_html_ab2d523ea5ddb45e27665551747d0c1be"><div class="ttname"><a href="classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1be">VariantImpl&lt; std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, Size2Du32, UUID, UMID, Timecode, Rational&lt; int &gt;, FrameRate, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, VideoCodec, AudioCodec, Enum, EnumList, detail::VariantEnd &gt;::Type</a></div><div class="ttdeci">Type</div><div class="ttdoc">Enumerates every type the variant can hold.</div><div class="ttdef"><b>Definition</b> variant.h:193</div></div>
-<div class="ttc" id="aclassVariantImpl_html_abf0f8c223588e7de807f53af87ea111b"><div class="ttname"><a href="classVariantImpl.html#abf0f8c223588e7de807f53af87ea111b">VariantImpl::isValid</a></div><div class="ttdeci">bool isValid() const</div><div class="ttdoc">Returns true if the variant holds a value other than std::monostate.</div><div class="ttdef"><b>Definition</b> variant.h:256</div></div>
+<div class="ttc" id="aclassVariantImpl_html"><div class="ttname"><a href="classVariantImpl.html">VariantImpl&lt; std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, Size2Du32, UUID, UMID, Timecode, Rational&lt; int &gt;, FrameRate, VideoFormat, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, VideoCodec, AudioCodec, Enum, EnumList, detail::VariantEnd &gt;</a></div></div>
+<div class="ttc" id="aclassVariantImpl_html_a0ae83cd9c68c1fbe6381a52a0a3b4b8f"><div class="ttname"><a href="classVariantImpl.html#a0ae83cd9c68c1fbe6381a52a0a3b4b8f">VariantImpl::set</a></div><div class="ttdeci">void set(const T &amp;value)</div><div class="ttdoc">Replaces the currently held value with value.</div><div class="ttdef"><b>Definition</b> variant.h:271</div></div>
+<div class="ttc" id="aclassVariantImpl_html_a8aec564fe7f0aaca05ebc0e97698bbcc"><div class="ttname"><a href="classVariantImpl.html#a8aec564fe7f0aaca05ebc0e97698bbcc">VariantImpl::type</a></div><div class="ttdeci">Type type() const</div><div class="ttdoc">Returns the Type enumerator for the currently held value.</div><div class="ttdef"><b>Definition</b> variant.h:541</div></div>
+<div class="ttc" id="aclassVariantImpl_html_a95ca32106dbaee20a12d1a3a8c9e48fe"><div class="ttname"><a href="classVariantImpl.html#a95ca32106dbaee20a12d1a3a8c9e48fe">VariantImpl::get</a></div><div class="ttdeci">To get(Error *err=nullptr) const</div><div class="ttdoc">Converts the stored value to the requested type To.</div><div class="ttdef"><b>Definition</b> variant.h:289</div></div>
+<div class="ttc" id="aclassVariantImpl_html_ab2d523ea5ddb45e27665551747d0c1be"><div class="ttname"><a href="classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1be">VariantImpl&lt; std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, Size2Du32, UUID, UMID, Timecode, Rational&lt; int &gt;, FrameRate, VideoFormat, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, VideoCodec, AudioCodec, Enum, EnumList, detail::VariantEnd &gt;::Type</a></div><div class="ttdeci">Type</div><div class="ttdoc">Enumerates every type the variant can hold.</div><div class="ttdef"><b>Definition</b> variant.h:199</div></div>
+<div class="ttc" id="aclassVariantImpl_html_abf0f8c223588e7de807f53af87ea111b"><div class="ttname"><a href="classVariantImpl.html#abf0f8c223588e7de807f53af87ea111b">VariantImpl::isValid</a></div><div class="ttdeci">bool isValid() const</div><div class="ttdoc">Returns true if the variant holds a value other than std::monostate.</div><div class="ttdef"><b>Definition</b> variant.h:262</div></div>
 </div><!-- fragment --> the <code>Variant</code> type alias which is instantiated with the concrete type list.</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
@@ -359,7 +364,7 @@ template&lt;typename... Types&gt; </div>
 <div class="ttc" id="aclassEnum_1_1Type_html"><div class="ttname"><a href="classEnum_1_1Type.html">Enum::Type</a></div><div class="ttdoc">Lightweight handle identifying a registered enum kind.</div><div class="ttdef"><b>Definition</b> enum.h:213</div></div>
 <div class="ttc" id="aclassEnum_html"><div class="ttname"><a href="classEnum.html">Enum</a></div><div class="ttdoc">Runtime-typed enumeration value carrying a registered type and integer.</div><div class="ttdef"><b>Definition</b> enum.h:107</div></div>
 <div class="ttc" id="aclassError_html"><div class="ttname"><a href="classError.html">Error</a></div><div class="ttdoc">Lightweight error code wrapper for the promeki library.</div><div class="ttdef"><b>Definition</b> error.h:39</div></div>
-<div class="ttc" id="aclassVariantImpl_html_a285ac7c13304d0164695813596f65a78"><div class="ttname"><a href="classVariantImpl.html#a285ac7c13304d0164695813596f65a78">VariantImpl::asEnum</a></div><div class="ttdeci">Enum asEnum(Enum::Type enumType, Error *err=nullptr) const</div><div class="ttdoc">Resolves the stored value to an Enum of the given type.</div><div class="ttdef"><b>Definition</b> variant.h:627</div></div>
+<div class="ttc" id="aclassVariantImpl_html_a285ac7c13304d0164695813596f65a78"><div class="ttname"><a href="classVariantImpl.html#a285ac7c13304d0164695813596f65a78">VariantImpl::asEnum</a></div><div class="ttdeci">Enum asEnum(Enum::Type enumType, Error *err=nullptr) const</div><div class="ttdoc">Resolves the stored value to an Enum of the given type.</div><div class="ttdef"><b>Definition</b> variant.h:706</div></div>
 </div><!-- fragment --></dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -369,6 +374,57 @@ template&lt;typename... Types&gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The converted <a class="el" href="classEnum.html">Enum</a>, or a default-constructed (invalid) <a class="el" href="classEnum.html">Enum</a> on failure. </dd></dl>
+
+</div>
+</div>
+<a id="a3ce54173fc794613121a0a995e3e3ee7" name="a3ce54173fc794613121a0a995e3e3ee7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3ce54173fc794613121a0a995e3e3ee7">&#9670;&#160;</a></span>format()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename... Types&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classString.html">String</a> <a class="el" href="classVariantImpl.html">VariantImpl</a>&lt; <a class="el" href="classList.html">Types</a> &gt;::format </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>spec</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classError.html">Error</a> *&#160;</td>
+          <td class="paramname"><em>err</em> = <code><a class="el" href="classList.html">nullptr</a></code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Formats the stored value using a type-specific format spec. </p>
+<p>Builds the format string <code>"{:&lt;spec&gt;}"</code> and routes it to <code>std::vformat</code> with the held value, so the type's own <code>std::formatter</code> specialization is invoked. This means rich types use their native style keywords (<a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> accepts <code>"smpte"</code> / <code>"smpte-fps"</code> / <code>"field"</code>, <a class="el" href="classVideoFormat.html" title="Combined video raster, frame rate, and scan mode.">VideoFormat</a> accepts <code>"smpte"</code> / <code>"named"</code>, etc.) and primitives use the standard <code>std::format</code> spec grammar (<code>"x"</code>, <code>".2f"</code>, <code>"05d"</code>, ...).</p>
+<p>An empty <code>spec</code> is short-circuited to <a class="el" href="classVariantImpl.html#a95ca32106dbaee20a12d1a3a8c9e48fe">get&lt;String&gt;()</a>, which reproduces the existing default toString() behavior for every supported type. Variant alternatives that have no <code>std::formatter</code> specialization fall back to formatting the spec against the value's <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> form, so width / fill / alignment still work for them.</p>
+<p>If <code>spec</code> is malformed (caught as <code>std::format_error</code>), the default <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> form is returned and <code>err</code> is set to <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85" title="Invalid value or argument (EINVAL).">Error::Invalid</a></code>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">spec</td><td>Type-specific format spec, without the surrounding <code>{}</code> or leading <code>'</code>:'. </td></tr>
+    <tr><td class="paramname">err</td><td>Optional error output, set to <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a></code> on success or <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85" title="Invalid value or argument (EINVAL).">Error::Invalid</a></code> if the spec could not be applied. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The formatted <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>. </dd></dl>
 
 </div>
 </div>
@@ -498,16 +554,16 @@ template&lt;typename... Types&gt; </div>
 <li><b>Cross-type convertible</b> — attempts to convert one operand to the other's type via <a class="el" href="classVariantImpl.html#a95ca32106dbaee20a12d1a3a8c9e48fe" title="Converts the stored value to the requested type To.">get&lt;T&gt;()</a>. Both directions are tried; if either conversion succeeds and the converted values compare equal, returns true.</li>
 </ol>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><span class="comment">// Same type — direct comparison</span></div>
-<div class="line"><a class="code hl_typedef" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a>(<a class="code hl_class" href="classList.html">int32_t</a>(42)) == <a class="code hl_typedef" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a>(<a class="code hl_class" href="classList.html">int32_t</a>(42));  <span class="comment">// true</span></div>
+<div class="line"><a class="code hl_typedef" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a>(<a class="code hl_class" href="classList.html">int32_t</a>(42)) == <a class="code hl_typedef" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a>(<a class="code hl_class" href="classList.html">int32_t</a>(42));  <span class="comment">// true</span></div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Cross-type numeric promotion</span></div>
-<div class="line"><a class="code hl_typedef" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a>(<a class="code hl_class" href="classList.html">int32_t</a>(42)) == <a class="code hl_typedef" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a>(<a class="code hl_class" href="classList.html">uint32_t</a>(42)); <span class="comment">// true</span></div>
-<div class="line"><a class="code hl_typedef" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a>(<a class="code hl_class" href="classList.html">int32_t</a>(3))  == <a class="code hl_typedef" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a>(3.0);          <span class="comment">// true</span></div>
-<div class="line"><a class="code hl_typedef" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a>(<a class="code hl_class" href="classList.html">int32_t</a>(-1)) == <a class="code hl_typedef" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a>(<a class="code hl_class" href="classList.html">uint32_t</a>(0));  <span class="comment">// false (negative guard)</span></div>
+<div class="line"><a class="code hl_typedef" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a>(<a class="code hl_class" href="classList.html">int32_t</a>(42)) == <a class="code hl_typedef" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a>(<a class="code hl_class" href="classList.html">uint32_t</a>(42)); <span class="comment">// true</span></div>
+<div class="line"><a class="code hl_typedef" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a>(<a class="code hl_class" href="classList.html">int32_t</a>(3))  == <a class="code hl_typedef" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a>(3.0);          <span class="comment">// true</span></div>
+<div class="line"><a class="code hl_typedef" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a>(<a class="code hl_class" href="classList.html">int32_t</a>(-1)) == <a class="code hl_typedef" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a>(<a class="code hl_class" href="classList.html">uint32_t</a>(0));  <span class="comment">// false (negative guard)</span></div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Cross-type convertible</span></div>
-<div class="line"><a class="code hl_typedef" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a>(<a class="code hl_class" href="classList.html">int32_t</a>(42)) == <a class="code hl_typedef" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a>(<a class="code hl_class" href="classString.html">String</a>(<span class="stringliteral">&quot;42&quot;</span>)); <span class="comment">// true</span></div>
-<div class="ttc" id="avariant_8h_html_ac5632bc2666bce9313dc2e6e4146303e"><div class="ttname"><a href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a></div><div class="ttdeci">VariantImpl&lt; std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, Size2Du32, UUID, UMID, Timecode, Rational&lt; int &gt;, FrameRate, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, VideoCodec, AudioCodec, Enum, EnumList, detail::VariantEnd &gt; Variant</div><div class="ttdoc">Concrete variant type instantiated with every type from PROMEKI_VARIANT_TYPES.</div><div class="ttdef"><b>Definition</b> variant.h:768</div></div>
+<div class="line"><a class="code hl_typedef" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a>(<a class="code hl_class" href="classList.html">int32_t</a>(42)) == <a class="code hl_typedef" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a>(<a class="code hl_class" href="classString.html">String</a>(<span class="stringliteral">&quot;42&quot;</span>)); <span class="comment">// true</span></div>
+<div class="ttc" id="avariant_8h_html_ae077aa859e1a402ba1914723d0108abf"><div class="ttname"><a href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a></div><div class="ttdeci">VariantImpl&lt; std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, Size2Du32, UUID, UMID, Timecode, Rational&lt; int &gt;, FrameRate, VideoFormat, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, VideoCodec, AudioCodec, Enum, EnumList, detail::VariantEnd &gt; Variant</div><div class="ttdoc">Concrete variant type instantiated with every type from PROMEKI_VARIANT_TYPES.</div><div class="ttdef"><b>Definition</b> variant.h:847</div></div>
 </div><!-- fragment --> </dd></dl>
 
 </div>
@@ -634,7 +690,7 @@ template&lt;typename... Types&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classVariantImpl.html">VariantImpl</a></li>
-    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-16 04:42:40 from commit 9177fbf (1.0.0).</li>
   </ul>
 </div>
 </body>

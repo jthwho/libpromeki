@@ -186,6 +186,12 @@ Public Types</h2></td></tr>
 , <br />
 &#160;&#160;<a class="el" href="classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a1b352e21ec57c40a9cbe914bbc32160f">TypeMacAddress</a> = 0x39
 , <a class="el" href="classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a1a497d2a110f61d5df72d8374f63bd99">TypeEUI64</a> = 0x3A
+, <a class="el" href="classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a4be55dcdf4c1a9310e48ce6d1996f1a9">TypeMediaPipelineStage</a> = 0x3B
+, <a class="el" href="classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369ae57e0dc7cbfde8ed7588c65f9991306f">TypeMediaPipelineRoute</a> = 0x3C
+, <br />
+&#160;&#160;<a class="el" href="classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a5bb736c5d923aa7cea07951f6a2d850f">TypeMediaPipelineConfig</a> = 0x3D
+, <a class="el" href="classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a703c02e6228ffb16ad816d6ff444c2f2">TypeMediaPipelineStats</a> = 0x3E
+, <a class="el" href="classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369aa61bbac5c7aa3eadfc68378b986b3337">TypeVideoFormat</a> = 0x3F
 <br />
  }</td></tr>
 <tr class="memdesc:a781a61c06aaf1ba83ae8f3ab5aadd369"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type identifiers written before each value.  <a href="classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369">More...</a><br /></td></tr>
@@ -285,7 +291,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:ad565e8f00bb9581216bb20d02763e50a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes a shared <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> as length-prefixed raw bytes. <br /></td></tr>
 <tr class="separator:ad565e8f00bb9581216bb20d02763e50a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8f845c04a28667184431f08337437682" id="r_a8f845c04a28667184431f08337437682"><td class="memItemLeft" align="right" valign="top"><a id="a8f845c04a28667184431f08337437682" name="a8f845c04a28667184431f08337437682"></a>
-<a class="el" href="classDataStream.html">DataStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator&lt;&lt;</b> (<a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
+<a class="el" href="classDataStream.html">DataStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator&lt;&lt;</b> (<a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
 <tr class="memdesc:a8f845c04a28667184431f08337437682"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes a Variant using the same tag as the value's direct form. <br /></td></tr>
 <tr class="separator:a8f845c04a28667184431f08337437682"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7bed2f4a6a56fee21a9ec9f7fa775bba" id="r_a7bed2f4a6a56fee21a9ec9f7fa775bba"><td class="memItemLeft" align="right" valign="top"><a id="a7bed2f4a6a56fee21a9ec9f7fa775bba" name="a7bed2f4a6a56fee21a9ec9f7fa775bba"></a>
@@ -308,6 +314,10 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classDataStream.html">DataStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator&lt;&lt;</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classFrameRate.html">FrameRate</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
 <tr class="memdesc:a07e8c110e5960131c12fee5ebcce783d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes a <a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> as two uint32 values. <br /></td></tr>
 <tr class="separator:a07e8c110e5960131c12fee5ebcce783d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9beffbb97b305188a82ada5d34aff6e8" id="r_a9beffbb97b305188a82ada5d34aff6e8"><td class="memItemLeft" align="right" valign="top"><a id="a9beffbb97b305188a82ada5d34aff6e8" name="a9beffbb97b305188a82ada5d34aff6e8"></a>
+<a class="el" href="classDataStream.html">DataStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator&lt;&lt;</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classVideoFormat.html">VideoFormat</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
+<tr class="memdesc:a9beffbb97b305188a82ada5d34aff6e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes a <a class="el" href="classVideoFormat.html" title="Combined video raster, frame rate, and scan mode.">VideoFormat</a> as its canonical string representation. <br /></td></tr>
+<tr class="separator:a9beffbb97b305188a82ada5d34aff6e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5e94cde84d194b960c22e970f7e25fba" id="r_a5e94cde84d194b960c22e970f7e25fba"><td class="memItemLeft" align="right" valign="top"><a id="a5e94cde84d194b960c22e970f7e25fba" name="a5e94cde84d194b960c22e970f7e25fba"></a>
 <a class="el" href="classDataStream.html">DataStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator&lt;&lt;</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classTimecode.html">Timecode</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
 <tr class="memdesc:a5e94cde84d194b960c22e970f7e25fba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes a <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> as its canonical string representation. <br /></td></tr>
@@ -413,7 +423,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a31641830ec42ada81c72cba90d71068e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads a shared <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>, allocating a new <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> and wrapping it. <br /></td></tr>
 <tr class="separator:a31641830ec42ada81c72cba90d71068e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0479f8f66f588d85dd71a620789ffe53" id="r_a0479f8f66f588d85dd71a620789ffe53"><td class="memItemLeft" align="right" valign="top"><a id="a0479f8f66f588d85dd71a620789ffe53" name="a0479f8f66f588d85dd71a620789ffe53"></a>
-<a class="el" href="classDataStream.html">DataStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator&gt;&gt;</b> (<a class="el" href="variant_8h.html#ac5632bc2666bce9313dc2e6e4146303e">Variant</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
+<a class="el" href="classDataStream.html">DataStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator&gt;&gt;</b> (<a class="el" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
 <tr class="memdesc:a0479f8f66f588d85dd71a620789ffe53"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads any value into a Variant, dispatching on the tag. <br /></td></tr>
 <tr class="separator:a0479f8f66f588d85dd71a620789ffe53"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abda6f3a7778e1b4bbd4ecc0734bccf8f" id="r_abda6f3a7778e1b4bbd4ecc0734bccf8f"><td class="memItemLeft" align="right" valign="top"><a id="abda6f3a7778e1b4bbd4ecc0734bccf8f" name="abda6f3a7778e1b4bbd4ecc0734bccf8f"></a>
@@ -436,6 +446,10 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classDataStream.html">DataStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator&gt;&gt;</b> (<a class="el" href="classFrameRate.html">FrameRate</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
 <tr class="memdesc:a633cf5953697fcf53d50238067a81163"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads a <a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> from two tagged uint32 values. <br /></td></tr>
 <tr class="separator:a633cf5953697fcf53d50238067a81163"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab3617b3cabc67c1e2892f57e90c8d392" id="r_ab3617b3cabc67c1e2892f57e90c8d392"><td class="memItemLeft" align="right" valign="top"><a id="ab3617b3cabc67c1e2892f57e90c8d392" name="ab3617b3cabc67c1e2892f57e90c8d392"></a>
+<a class="el" href="classDataStream.html">DataStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator&gt;&gt;</b> (<a class="el" href="classVideoFormat.html">VideoFormat</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
+<tr class="memdesc:ab3617b3cabc67c1e2892f57e90c8d392"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads a <a class="el" href="classVideoFormat.html" title="Combined video raster, frame rate, and scan mode.">VideoFormat</a> from its canonical string representation. <br /></td></tr>
+<tr class="separator:ab3617b3cabc67c1e2892f57e90c8d392"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a18850e8a5282e1e71d21369605e5e726" id="r_a18850e8a5282e1e71d21369605e5e726"><td class="memItemLeft" align="right" valign="top"><a id="a18850e8a5282e1e71d21369605e5e726" name="a18850e8a5282e1e71d21369605e5e726"></a>
 <a class="el" href="classDataStream.html">DataStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator&gt;&gt;</b> (<a class="el" href="classTimecode.html">Timecode</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
 <tr class="memdesc:a18850e8a5282e1e71d21369605e5e726"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads a <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> from its canonical string representation. <br /></td></tr>
@@ -592,7 +606,7 @@ Static Public Attributes</h2></td></tr>
 <div class="ttc" id="aclassDataStream_html_a7cd591107dc7c74d3bb2cfd08e9ab566a89870ada920b5aa16ccab3f94d22c59b"><div class="ttname"><a href="classDataStream.html#a7cd591107dc7c74d3bb2cfd08e9ab566a89870ada920b5aa16ccab3f94d22c59b">DataStream::ReadCorruptData</a></div><div class="ttdeci">@ ReadCorruptData</div><div class="ttdoc">Data format is invalid.</div><div class="ttdef"><b>Definition</b> datastream.h:165</div></div>
 <div class="ttc" id="aclassDataStream_html_a7cd591107dc7c74d3bb2cfd08e9ab566ac9af5710b2a7175d657465fc810d27fc"><div class="ttname"><a href="classDataStream.html#a7cd591107dc7c74d3bb2cfd08e9ab566ac9af5710b2a7175d657465fc810d27fc">DataStream::Ok</a></div><div class="ttdeci">@ Ok</div><div class="ttdoc">No error.</div><div class="ttdef"><b>Definition</b> datastream.h:163</div></div>
 <div class="ttc" id="aclassDataStream_html_a99bb593e3268f92b804ede61a4df4506"><div class="ttname"><a href="classDataStream.html#a99bb593e3268f92b804ede61a4df4506">DataStream::operator&lt;&lt;</a></div><div class="ttdeci">DataStream &amp; operator&lt;&lt;(int8_t val)</div><div class="ttdoc">Writes an int8_t.</div></div>
-<div class="ttc" id="aclassDataStream_html_a9b919505d38e854c0298b578713123e9"><div class="ttname"><a href="classDataStream.html#a9b919505d38e854c0298b578713123e9">DataStream::status</a></div><div class="ttdeci">Status status() const</div><div class="ttdoc">Returns the current stream status.</div><div class="ttdef"><b>Definition</b> datastream.h:331</div></div>
+<div class="ttc" id="aclassDataStream_html_a9b919505d38e854c0298b578713123e9"><div class="ttname"><a href="classDataStream.html#a9b919505d38e854c0298b578713123e9">DataStream::status</a></div><div class="ttdeci">Status status() const</div><div class="ttdoc">Returns the current stream status.</div><div class="ttdef"><b>Definition</b> datastream.h:336</div></div>
 <div class="ttc" id="aclassDataStream_html_adff852980686f41c6d484f4a5bf815be"><div class="ttname"><a href="classDataStream.html#adff852980686f41c6d484f4a5bf815be">DataStream::operator&gt;&gt;</a></div><div class="ttdeci">DataStream &amp; operator&gt;&gt;(int8_t &amp;val)</div><div class="ttdoc">Reads an int8_t.</div></div>
 <div class="ttc" id="aclassDataStream_html_afa4820a0bdf01d134e1cdee830ab403c"><div class="ttname"><a href="classDataStream.html#afa4820a0bdf01d134e1cdee830ab403c">DataStream::setError</a></div><div class="ttdeci">void setError(Status s, String ctx)</div><div class="ttdoc">Sets the status and a context message in one call.</div></div>
 <div class="ttc" id="aclassDataStream_html_afb6e90a850cc07ad5a5e7087af7c29ee"><div class="ttname"><a href="classDataStream.html#afb6e90a850cc07ad5a5e7087af7c29ee">DataStream::writeTag</a></div><div class="ttdeci">void writeTag(TypeId id)</div><div class="ttdoc">Writes a type tag byte to the stream.</div></div>
@@ -621,7 +635,7 @@ Static Public Attributes</h2></td></tr>
 <div class="ttc" id="aclassBufferIODevice_html"><div class="ttname"><a href="classBufferIODevice.html">BufferIODevice</a></div><div class="ttdoc">IODevice backed by an in-memory Buffer.</div><div class="ttdef"><b>Definition</b> bufferiodevice.h:37</div></div>
 <div class="ttc" id="aclassDataStream_html_a2282333de868dc074e126b68f0593916"><div class="ttname"><a href="classDataStream.html#a2282333de868dc074e126b68f0593916">DataStream::createReader</a></div><div class="ttdeci">static DataStream createReader(IODevice *device)</div><div class="ttdoc">Constructs a DataStream for reading from an IODevice.</div></div>
 <div class="ttc" id="aclassDataStream_html_a4021e55a000c919024f07f05222cc7fc"><div class="ttname"><a href="classDataStream.html#a4021e55a000c919024f07f05222cc7fc">DataStream::createWriter</a></div><div class="ttdeci">static DataStream createWriter(IODevice *device, ByteOrder order=BigEndian)</div><div class="ttdoc">Constructs a DataStream for writing on an IODevice.</div></div>
-<div class="ttc" id="aclassDataStream_html_af9d8d520ff1b70eaf3ca80a2b5a9be73"><div class="ttname"><a href="classDataStream.html#af9d8d520ff1b70eaf3ca80a2b5a9be73">DataStream::device</a></div><div class="ttdeci">IODevice * device() const</div><div class="ttdoc">Returns the underlying IODevice.</div><div class="ttdef"><b>Definition</b> datastream.h:371</div></div>
+<div class="ttc" id="aclassDataStream_html_af9d8d520ff1b70eaf3ca80a2b5a9be73"><div class="ttname"><a href="classDataStream.html#af9d8d520ff1b70eaf3ca80a2b5a9be73">DataStream::device</a></div><div class="ttdeci">IODevice * device() const</div><div class="ttdoc">Returns the underlying IODevice.</div><div class="ttdef"><b>Definition</b> datastream.h:376</div></div>
 <div class="ttc" id="aclassIODevice_html_a0c0fa852f94c8815d55c481c68f7abcb"><div class="ttname"><a href="classIODevice.html#a0c0fa852f94c8815d55c481c68f7abcb">IODevice::seek</a></div><div class="ttdeci">virtual Error seek(int64_t pos)</div><div class="ttdoc">Seeks to the given byte offset from the beginning.</div></div>
 <div class="ttc" id="aclassIODevice_html_a7767856d8e9bbd32d105063abf3d4546"><div class="ttname"><a href="classIODevice.html#a7767856d8e9bbd32d105063abf3d4546">IODevice::open</a></div><div class="ttdeci">virtual Error open(OpenMode mode)=0</div><div class="ttdoc">Opens the device with the specified mode.</div></div>
 <div class="ttc" id="aclassIODevice_html_ac12c287cd37708c10d6618d667a3147aa5e2c1690c5235439fb591119ec7f8dbe"><div class="ttname"><a href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa5e2c1690c5235439fb591119ec7f8dbe">IODevice::WriteOnly</a></div><div class="ttdeci">@ WriteOnly</div><div class="ttdoc">Open for writing only.</div><div class="ttdef"><b>Definition</b> iodevice.h:36</div></div>
@@ -783,6 +797,16 @@ Static Public Attributes</h2></td></tr>
 <tr><td class="fieldname"><a id="a781a61c06aaf1ba83ae8f3ab5aadd369a1b352e21ec57c40a9cbe914bbc32160f" name="a781a61c06aaf1ba83ae8f3ab5aadd369a1b352e21ec57c40a9cbe914bbc32160f"></a>TypeMacAddress&#160;</td><td class="fielddoc"><p><a class="el" href="classMacAddress.html" title="IEEE 802 MAC (Ethernet hardware) address.">MacAddress</a> (length-prefixed string round-trip) </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a781a61c06aaf1ba83ae8f3ab5aadd369a1a497d2a110f61d5df72d8374f63bd99" name="a781a61c06aaf1ba83ae8f3ab5aadd369a1a497d2a110f61d5df72d8374f63bd99"></a>TypeEUI64&#160;</td><td class="fielddoc"><p><a class="el" href="classEUI64.html" title="IEEE EUI-64 extended unique identifier.">EUI64</a> (length-prefixed string round-trip) </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a781a61c06aaf1ba83ae8f3ab5aadd369a4be55dcdf4c1a9310e48ce6d1996f1a9" name="a781a61c06aaf1ba83ae8f3ab5aadd369a4be55dcdf4c1a9310e48ce6d1996f1a9"></a>TypeMediaPipelineStage&#160;</td><td class="fielddoc"><p><a class="el" href="structMediaPipelineConfig_1_1Stage.html" title="Declarative description of one MediaIO stage.">MediaPipelineConfig::Stage</a>. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a781a61c06aaf1ba83ae8f3ab5aadd369ae57e0dc7cbfde8ed7588c65f9991306f" name="a781a61c06aaf1ba83ae8f3ab5aadd369ae57e0dc7cbfde8ed7588c65f9991306f"></a>TypeMediaPipelineRoute&#160;</td><td class="fielddoc"><p><a class="el" href="structMediaPipelineConfig_1_1Route.html" title="One directed frame-flow edge between two stages.">MediaPipelineConfig::Route</a>. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a781a61c06aaf1ba83ae8f3ab5aadd369a5bb736c5d923aa7cea07951f6a2d850f" name="a781a61c06aaf1ba83ae8f3ab5aadd369a5bb736c5d923aa7cea07951f6a2d850f"></a>TypeMediaPipelineConfig&#160;</td><td class="fielddoc"><p><a class="el" href="classMediaPipelineConfig.html" title="Declarative description of a complete media pipeline.">MediaPipelineConfig</a> (metadata + stages + routes) </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a781a61c06aaf1ba83ae8f3ab5aadd369a703c02e6228ffb16ad816d6ff444c2f2" name="a781a61c06aaf1ba83ae8f3ab5aadd369a703c02e6228ffb16ad816d6ff444c2f2"></a>TypeMediaPipelineStats&#160;</td><td class="fielddoc"><p><a class="el" href="classMediaPipelineStats.html" title="Aggregated statistics for a running MediaPipeline.">MediaPipelineStats</a> (per-stage + aggregate) </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a781a61c06aaf1ba83ae8f3ab5aadd369aa61bbac5c7aa3eadfc68378b986b3337" name="a781a61c06aaf1ba83ae8f3ab5aadd369aa61bbac5c7aa3eadfc68378b986b3337"></a>TypeVideoFormat&#160;</td><td class="fielddoc"><p><a class="el" href="classVideoFormat.html" title="Combined video raster, frame rate, and scan mode.">VideoFormat</a> (length-prefixed string round-trip) </p>
 </td></tr>
 </table>
 
@@ -1365,7 +1389,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classDataStream.html">DataStream</a></li>
-    <li class="footer">Generated on 2026-04-15 10:27:00 from commit f6c93aa (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-16 04:42:40 from commit 9177fbf (1.0.0).</li>
   </ul>
 </div>
 </body>
