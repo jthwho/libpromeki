@@ -1,11 +1,3 @@
-# IO Abstractions and Filesystem — COMPLETE
-
-**Phase:** 2
-**Dependencies:** Phase 1
-
-All IO abstractions, filesystem utilities, in-memory IO, the resource filesystem (cirf with `:/.PROMEKI/` built-in set), and the File DIO helpers (`writeBulk`, `sync`, `writev`, `preallocate`, `setDirectIO` consistency fix) are implemented, tested, and merged. See git history for details.
-
----
 
 ## Known Issues
 

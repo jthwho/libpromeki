@@ -109,6 +109,8 @@ class MediaDesc {
          * (invalid) @ref VideoFormat when @p index is out of range.
          *
          * @param index Zero-based image layer index.
+         * @return The composed VideoFormat, or an invalid
+         *         VideoFormat when @p index is out of range.
          */
         VideoFormat videoFormat(size_t index) const {
                 if(index >= _imageList.size()) return VideoFormat();

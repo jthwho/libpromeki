@@ -15,6 +15,7 @@
 #include <promeki/audio.h>
 #include <promeki/buffer.h>
 #include <promeki/stringlist.h>
+#include <promeki/units.h>
 #include <atomic>
 #include <cstdint>
 
@@ -519,14 +520,8 @@ String MediaIOStats::toString() const {
         StringList parts;
 
         if(contains(BytesPerSecond)) {
-                // String::fromByteCount picks GB/MB/KB/B for us; we
-                // just append "/s" to turn a byte count into a rate.
-                double bps = getAs<double>(BytesPerSecond);
-                uint64_t rounded = bps > 0.0
-                        ? static_cast<uint64_t>(bps + 0.5)
-                        : uint64_t(0);
-                parts.pushToBack(String::format("{}/s",
-                        String::fromByteCount(rounded, 2)));
+                parts.pushToBack(Units::fromBytesPerSec(
+                        getAs<double>(BytesPerSecond)));
         }
         if(contains(FramesPerSecond)) {
                 parts.pushToBack(String::format("{:.1f} fps",

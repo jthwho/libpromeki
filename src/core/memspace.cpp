@@ -13,6 +13,7 @@
 #include <promeki/error.h>
 #include <promeki/logger.h>
 #include <promeki/map.h>
+#include <promeki/units.h>
 #include <promeki/util.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -223,28 +224,28 @@ StringList MemSpace::statsReport() const {
         lines.pushToBack(String::sprintf(
                 "  alloc:   %llu calls, %s  (fail: %llu, max single: %s)",
                 (unsigned long long)s.allocCount,
-                String::fromByteCount(s.allocBytes).cstr(),
+                Units::fromByteCount(s.allocBytes).cstr(),
                 (unsigned long long)s.allocFailCount,
-                String::fromByteCount(s.maxAllocBytes).cstr()));
+                Units::fromByteCount(s.maxAllocBytes).cstr()));
         lines.pushToBack(String::sprintf(
                 "  release: %llu calls, %s",
                 (unsigned long long)s.releaseCount,
-                String::fromByteCount(s.releaseBytes).cstr()));
+                Units::fromByteCount(s.releaseBytes).cstr()));
         lines.pushToBack(String::sprintf(
                 "  live:    %llu outstanding, %s  (peak: %llu, %s)",
                 (unsigned long long)s.liveCount,
-                String::fromByteCount(s.liveBytes).cstr(),
+                Units::fromByteCount(s.liveBytes).cstr(),
                 (unsigned long long)s.peakCount,
-                String::fromByteCount(s.peakBytes).cstr()));
+                Units::fromByteCount(s.peakBytes).cstr()));
         lines.pushToBack(String::sprintf(
                 "  copy:    %llu calls, %s  (fail: %llu)",
                 (unsigned long long)s.copyCount,
-                String::fromByteCount(s.copyBytes).cstr(),
+                Units::fromByteCount(s.copyBytes).cstr(),
                 (unsigned long long)s.copyFailCount));
         lines.pushToBack(String::sprintf(
                 "  fill:    %llu calls, %s",
                 (unsigned long long)s.fillCount,
-                String::fromByteCount(s.fillBytes).cstr()));
+                Units::fromByteCount(s.fillBytes).cstr()));
         return lines;
 }
 

@@ -26,7 +26,6 @@
 PROMEKI_NAMESPACE_BEGIN
 
 class StringList;
-class ByteCountStyle;
 
 /**
  * @brief Encoding-aware string class with copy-on-write semantics.
@@ -291,66 +290,6 @@ class String {
                         std::string s = std::vformat(fmt, args);
                         return fromUtf8(s.data(), s.size());
                 }
-
-                /**
-                 * @brief Formats a byte count as a human-readable string (metric default).
-                 *
-                 * Picks the largest unit whose value is >= 1 and
-                 * renders the result with @p maxDecimals digits after
-                 * the decimal point.  Trailing zeros in the fractional
-                 * part are trimmed, and a value that lands exactly on
-                 * an integer is rendered without a decimal point.
-                 *
-                 * This overload always uses the metric (1000-based)
-                 * unit family — `B`, `KB`, `MB`, `GB`, `TB`, `PB`,
-                 * `EB` — and does not require the caller to include
-                 * @c promeki/enums.h.  To select between metric and
-                 * binary at runtime, use the overload that accepts a
-                 * @c const @c Enum @c & corresponding to the
-                 * well-known @c ByteCountStyle registered in
-                 * @ref enums.h.
-                 *
-                 * @par Examples
-                 * @code
-                 *   String::fromByteCount(0);                      // "0 B"
-                 *   String::fromByteCount(1500);                   // "1.5 KB"
-                 *   String::fromByteCount(1500, 0);                // "2 KB"
-                 *   String::fromByteCount(1500000, 2);             // "1.5 MB"
-                 *   String::fromByteCount(1234567890123ULL, 2);    // "1.23 TB"
-                 * @endcode
-                 *
-                 * @param bytes       The byte count to format.
-                 * @param maxDecimals Maximum digits after the decimal point (default 3).
-                 * @return A new String containing the formatted value and unit,
-                 *         separated by a single space (e.g. "1.5 MB").
-                 */
-                static String fromByteCount(uint64_t bytes, int maxDecimals = 3);
-
-                /**
-                 * @brief Formats a byte count with an explicit @ref ByteCountStyle.
-                 *
-                 * Takes the strongly-typed @ref ByteCountStyle enum
-                 * directly so the unit family is checked at compile
-                 * time — passing an unrelated enum kind (e.g.
-                 * @c VideoPattern) fails to compile.  Runtime values
-                 * stored in a @ref Variant can still be passed here
-                 * by constructing a @ref ByteCountStyle from the
-                 * integer or round-tripped @ref Enum.
-                 *
-                 * @par Examples
-                 * @code
-                 *   #include <promeki/enums.h>
-                 *
-                 *   String::fromByteCount(1048576, 3, ByteCountStyle::Binary); // "1 MiB"
-                 *   String::fromByteCount(1024,    3, ByteCountStyle::Metric); // "1.024 KB"
-                 * @endcode
-                 *
-                 * @param bytes       The byte count to format.
-                 * @param maxDecimals Maximum digits after the decimal point.
-                 * @param style       The unit family to use.
-                 * @return A new String containing the formatted value and unit.
-                 */
-                static String fromByteCount(uint64_t bytes, int maxDecimals, const ByteCountStyle &style);
 
                 /**
                  * @brief Creates a String by decoding UTF-8 data.

@@ -6,6 +6,7 @@
  */
 
 #include <promeki/benchmarkreporter.h>
+#include <promeki/units.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -83,10 +84,10 @@ String BenchmarkReporter::summaryReport() const {
         for(const auto &s : stats) {
                 result += s.fromId.name() + " -> " + s.toId.name() + "\n";
                 result += "  count: " + String::number(s.count)
-                        + "  avg: " + String::number(s.avg * 1000.0, 3) + "ms"
-                        + "  min: " + String::number(s.min * 1000.0, 3) + "ms"
-                        + "  max: " + String::number(s.max * 1000.0, 3) + "ms"
-                        + "  stddev: " + String::number(s.stddev * 1000.0, 3) + "ms"
+                        + "  avg: " + Units::fromDuration(s.avg, 3)
+                        + "  min: " + Units::fromDuration(s.min, 3)
+                        + "  max: " + Units::fromDuration(s.max, 3)
+                        + "  stddev: " + Units::fromDuration(s.stddev, 3)
                         + "\n";
         }
         return result;

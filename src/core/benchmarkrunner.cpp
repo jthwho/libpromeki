@@ -11,6 +11,7 @@
 #include <promeki/datetime.h>
 #include <promeki/buildinfo.h>
 #include <promeki/logger.h>
+#include <promeki/units.h>
 #include <cstdio>
 #include <cmath>
 #include <exception>
@@ -20,68 +21,8 @@ PROMEKI_NAMESPACE_BEGIN
 // ============================================================================
 // Formatting helpers
 // ============================================================================
-//
-// Shared by the per-case verbose progress output, the final
-// formatTable() / formatComparison() tables, and the
-// formatRegisteredCases() list dump.  Time values are auto-scaled
-// to ns/us/ms/s, byte rates to B/s/KB/s/MB/s/GB/s using the 1024-base
-// unit family, and item rates to raw/k/M/G with one decimal of
-// precision.  String widths are measured in bytes (matching
-// String::size()), so the formatters deliberately stay in ASCII —
-// no `μ`, no unicode glyphs — so column padding is always correct.
 
 namespace {
-
-/** @brief Formats a nanosecond count as e.g. `"8.97 ms"` with an ASCII unit. */
-String formatTimeNs(double ns, int precision = 2) {
-        const char *unit;
-        double value;
-        if(ns < 1.0e3) {
-                value = ns;
-                unit  = "ns";
-        } else if(ns < 1.0e6) {
-                value = ns / 1.0e3;
-                unit  = "us";
-        } else if(ns < 1.0e9) {
-                value = ns / 1.0e6;
-                unit  = "ms";
-        } else {
-                value = ns / 1.0e9;
-                unit  = "s";
-        }
-        return String::number(value, precision) + " " + unit;
-}
-
-/** @brief Formats a bytes/sec rate as e.g. `"881.6 MB/s"` using 1024-base units. */
-String formatBytesPerSec(double bps, int precision = 1) {
-        if(bps <= 0.0) return String("-");
-        const double k = 1024.0;
-        const char *unit;
-        double value;
-        if(bps < k) {
-                value = bps;
-                unit  = "B/s";
-        } else if(bps < k * k) {
-                value = bps / k;
-                unit  = "KB/s";
-        } else if(bps < k * k * k) {
-                value = bps / (k * k);
-                unit  = "MB/s";
-        } else {
-                value = bps / (k * k * k);
-                unit  = "GB/s";
-        }
-        return String::number(value, precision) + " " + unit;
-}
-
-/** @brief Formats an items/sec rate with k/M/G suffix. */
-String formatItemsPerSec(double ips, int precision = 1) {
-        if(ips <= 0.0) return String("-");
-        if(ips < 1.0e3) return String::number(ips, precision);
-        if(ips < 1.0e6) return String::number(ips / 1.0e3, precision) + "k";
-        if(ips < 1.0e9) return String::number(ips / 1.0e6, precision) + "M";
-        return String::number(ips / 1.0e9, precision) + "G";
-}
 
 /** @brief Formats a uint64 iteration count with thousands-group commas. */
 String formatIterCount(uint64_t n) {
@@ -520,7 +461,7 @@ BenchmarkResult BenchmarkRunner::measureCase(const BenchmarkCase &theCase) {
                 // than raw nanosecond counts.  The iter count is
                 // grouped with commas so 3,718 is easier to scan than
                 // 3718.
-                String timeStr = formatTimeNs(r.avgNsPerIter);
+                String timeStr = Units::fromDurationNs(r.avgNsPerIter);
                 String iterStr = formatIterCount(iter);
                 std::printf("%s  (%s iter, %u %s)\n",
                             timeStr.cstr(),
@@ -636,10 +577,10 @@ String BenchmarkRunner::formatTable() const {
                 suiteCol.cells.pushToBack(r.suite);
                 nameCol.cells.pushToBack(r.name);
                 iterCol.cells.pushToBack(formatIterCount(r.iterations));
-                timeCol.cells.pushToBack(formatTimeNs(r.avgNsPerIter));
-                stddevCol.cells.pushToBack(formatTimeNs(r.stddevNsPerIter));
-                itemsCol.cells.pushToBack(formatItemsPerSec(r.itemsPerSecond));
-                rateCol.cells.pushToBack(formatBytesPerSec(r.bytesPerSecond));
+                timeCol.cells.pushToBack(Units::fromDurationNs(r.avgNsPerIter));
+                stddevCol.cells.pushToBack(Units::fromDurationNs(r.stddevNsPerIter));
+                itemsCol.cells.pushToBack(Units::fromItemsPerSec(r.itemsPerSecond));
+                rateCol.cells.pushToBack(Units::fromBytesPerSec(r.bytesPerSecond));
                 if(r.succeeded) {
                         statusCol.cells.pushToBack(String());
                 } else {
@@ -678,12 +619,12 @@ String BenchmarkRunner::formatComparison(const List<BenchmarkResult> &baseline) 
         for(const auto &r : _results) {
                 suiteCol.cells.pushToBack(r.suite);
                 nameCol.cells.pushToBack(r.name);
-                currentCol.cells.pushToBack(formatTimeNs(r.avgNsPerIter));
+                currentCol.cells.pushToBack(Units::fromDurationNs(r.avgNsPerIter));
 
                 String fullName = r.suite + "." + r.name;
                 if(baseMap.contains(fullName)) {
                         const BenchmarkResult &b = baseMap[fullName];
-                        baseCol.cells.pushToBack(formatTimeNs(b.avgNsPerIter));
+                        baseCol.cells.pushToBack(Units::fromDurationNs(b.avgNsPerIter));
                         if(b.avgNsPerIter > 0.0) {
                                 double delta = 100.0 * (r.avgNsPerIter - b.avgNsPerIter)
                                         / b.avgNsPerIter;

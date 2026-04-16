@@ -170,3 +170,42 @@ TEST_CASE("Duration: fromHours zero") {
         Duration d = Duration::fromHours(0);
         CHECK(d.isZero());
 }
+
+TEST_CASE("Duration: toScaledString") {
+        Duration d = Duration::fromMilliseconds(1500);
+        CHECK(d.toScaledString() == "1.5 s");
+
+        Duration us = Duration::fromMicroseconds(42);
+        CHECK(us.toScaledString() == "42 us");
+
+        Duration h = Duration::fromHours(2);
+        CHECK(h.toScaledString() == "2 h");
+}
+
+TEST_CASE("Duration: format default is HMS") {
+        Duration d = Duration::fromSeconds(3661);
+        String s = String::format("{}", d);
+        CHECK(s.contains("1h"));
+        CHECK(s.contains("1m"));
+        CHECK(s.contains("1s"));
+}
+
+TEST_CASE("Duration: format hms spec") {
+        Duration d = Duration::fromSeconds(90);
+        String s = String::format("{:hms}", d);
+        CHECK(s.contains("1m"));
+        CHECK(s.contains("30s"));
+}
+
+TEST_CASE("Duration: format scaled spec") {
+        Duration d = Duration::fromMilliseconds(1500);
+        String s = String::format("{:scaled}", d);
+        CHECK(s == "1.5 s");
+}
+
+TEST_CASE("Duration: format scaled with width") {
+        Duration d = Duration::fromMicroseconds(42);
+        String s = String::format("{:scaled:>12}", d);
+        CHECK(s.size() == 12);
+        CHECK(s.contains("42 us"));
+}

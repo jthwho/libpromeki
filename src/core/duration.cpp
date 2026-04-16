@@ -8,6 +8,7 @@
 #include <cmath>
 #include <promeki/duration.h>
 #include <promeki/string.h>
+#include <promeki/units.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -34,6 +35,10 @@ String Duration::toString() const {
                 result += String::sprintf("%llds", (long long)s);
         }
         return result;
+}
+
+String Duration::toScaledString(int precision) const {
+        return Units::fromDurationNs(static_cast<double>(nanoseconds()), precision);
 }
 
 PROMEKI_NAMESPACE_END

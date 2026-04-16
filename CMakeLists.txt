@@ -762,6 +762,7 @@ set(PROMEKI_HEADERS
     include/promeki/timestamp.h
     include/promeki/util.h
     include/promeki/umid.h
+    include/promeki/units.h
     include/promeki/uuid.h
     include/promeki/variant.h
     include/promeki/variantdatabase.h
@@ -870,6 +871,7 @@ set(PROMEKI_SOURCES
     src/core/timecodegenerator.cpp
     src/core/timestamp.cpp
     src/core/umid.cpp
+    src/core/units.cpp
     src/core/util.cpp
     src/core/uuid.cpp
     src/core/variant.cpp
@@ -1651,6 +1653,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/timecodegenerator.cpp
         tests/timestamp.cpp
         tests/umid.cpp
+        tests/units.cpp
         tests/uuid.cpp
         tests/variant.cpp
         tests/variantdatabase.cpp

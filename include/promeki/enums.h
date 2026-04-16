@@ -479,7 +479,7 @@ inline const MetadataRtpFormat MetadataRtpFormat::St2110_40    { 1 };
 /**
  * @brief Well-known Enum type for human-readable byte-count formatting.
  *
- * Selects the unit family used by @ref String::fromByteCount when
+ * Selects the unit family used by @ref Units::fromByteCount when
  * formatting an allocation size or similar byte-valued quantity:
  *
  * - @c Metric — powers of 1000 with SI suffixes: `B`, `KB`, `MB`,
@@ -496,7 +496,7 @@ inline const MetadataRtpFormat MetadataRtpFormat::St2110_40    { 1 };
  *
  * @par Example
  * @code
- * String s = String::fromByteCount(1048576, 3, ByteCountStyle::Binary);
+ * String s = Units::fromByteCount(1048576, 3, ByteCountStyle::Binary);
  * // → "1 MiB"
  *
  * // Round-trip through Variant still works:

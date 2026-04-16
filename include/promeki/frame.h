@@ -132,6 +132,8 @@ class Frame {
                  * or not convertible to a FrameRate.
                  *
                  * @param index Zero-based image layer index.
+                 * @return The composed VideoFormat, or an invalid
+                 *         VideoFormat on failure.
                  */
                 VideoFormat videoFormat(size_t index) const {
                         if(index >= _imageList.size()) return VideoFormat();

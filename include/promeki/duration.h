@@ -157,10 +157,20 @@ class Duration {
                 bool isNegative() const { return _ns.count() < 0; }
 
                 /**
-                 * @brief Returns a human-readable representation (e.g. "1h 23m 45s").
+                 * @brief Returns a human-readable HMS representation (e.g. "1h 23m 45.123s").
                  * @return Formatted string.
                  */
                 String toString() const;
+
+                /**
+                 * @brief Returns an auto-scaled representation (e.g. "1.5 ms").
+                 *
+                 * Delegates to @ref Units::fromDurationNs.
+                 *
+                 * @param precision Number of significant decimal digits.
+                 * @return Formatted string.
+                 */
+                String toScaledString(int precision = 2) const;
 
                 /** @brief Addition operator. */
                 Duration operator+(const Duration &o) const { return Duration(_ns + o._ns); }
@@ -191,4 +201,59 @@ class Duration {
 
 PROMEKI_NAMESPACE_END
 
-PROMEKI_FORMAT_VIA_TOSTRING(promeki::Duration);
+/**
+ * @brief @c std::formatter specialization for @ref promeki::Duration.
+ *
+ * @par Format spec syntax
+ * @code
+ *   {}           // default HMS  e.g. "1h 23m 45.123s"
+ *   {:hms}       // explicit HMS
+ *   {:scaled}    // auto-scaled  e.g. "1.5 ms"
+ * @endcode
+ *
+ * Standard string format specifiers (width, fill, alignment) follow
+ * the style keyword after a colon:
+ * @code
+ *   {:scaled:>16}  // auto-scaled, right-justified, width 16
+ * @endcode
+ */
+template <>
+struct std::formatter<promeki::Duration> {
+        enum class Style { Hms, Scaled };
+
+        Style _style = Style::Hms;
+        std::formatter<std::string_view> _base;
+
+        constexpr auto parse(std::format_parse_context &ctx) {
+                auto it = ctx.begin();
+                auto end = ctx.end();
+
+                auto tryKeyword = [&](const char *kw, Style s) {
+                        auto p = it;
+                        while(*kw && p != end && *p == *kw) { ++p; ++kw; }
+                        if(*kw == 0 && (p == end || *p == '}' || *p == ':')) {
+                                it = p;
+                                _style = s;
+                                return true;
+                        }
+                        return false;
+                };
+
+                if(!tryKeyword("scaled", Style::Scaled)) {
+                        tryKeyword("hms", Style::Hms);
+                }
+
+                if(it != end && *it == ':') ++it;
+
+                ctx.advance_to(it);
+                return _base.parse(ctx);
+        }
+
+        template <typename FormatContext>
+        auto format(const promeki::Duration &d, FormatContext &ctx) const {
+                promeki::String s = (_style == Style::Scaled)
+                        ? d.toScaledString()
+                        : d.toString();
+                return _base.format(std::string_view(s.cstr(), s.byteCount()), ctx);
+        }
+};

@@ -35,6 +35,7 @@ Add free `operator<<(TextStream &, const T &)` and `operator>>(TextStream &, T &
 - [ ] `Error` — name and description
 - [ ] `Duration` — formatted representation
 - [ ] `FrameRate` — string representation
+- [ ] `VideoFormat` — SMPTE or generic string
 - [ ] `StringList` — delimited output
 - [ ] `List<T>` — bracketed, comma-separated (where T is streamable)
 - [ ] `Map<K,V>` — bracketed key-value pairs

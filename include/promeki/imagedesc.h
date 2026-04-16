@@ -273,12 +273,12 @@ class ImageDesc {
                 }
 
                 /**
-                 * @brief Returns the scan mode (progressive / interlaced / unknown).
+                 * @brief Returns the video scan mode.
                  *
                  * Replaces the earlier @c bool interlaced flag with a
-                 * three-state @ref VideoScanMode value so the field
-                 * order is captured alongside the interlaced-vs-
-                 * progressive distinction.
+                 * full @ref VideoScanMode value so progressive, PsF,
+                 * and the various interlaced field orders are all
+                 * captured.
                  *
                  * @return The scan mode.
                  */

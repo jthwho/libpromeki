@@ -1,15 +1,5 @@
 # Random Ideas That Need Exploration
 
-1. We have a way to convert a byte count to human in String (e.g. 10000000 to 10 MB).  We also
-   have other bits in the library that compute human strings for time (e.g. 1.67 ms).  We ought
-   to just put all this metric (or 1024 based) logic all in one place.  The units are kind of
-   arbitrary, we could keep those w/ the caller.  *Plan is to land this as a new `Units` class
-   (its own header) rather than stacking more statics on `String`, keeping `String` focused.
-   Candidates for the first cut: byte counts (metric + IEC), durations (ns / µs / ms / s / m /
-   h), frequencies (Hz / kHz / MHz / GHz), and sample counts → time at a given sample rate.
-   Everything should take an explicit `ByteCountStyle` / `DurationStyle` / etc. enum so the
-   caller picks the unit family and the formatter picks the scale automatically.*
-
 3. We should probably rename mediaplay to mediaio.  We should also add full documentation in
    docs for it and a man page.  The utils doc should link to this one.
 
