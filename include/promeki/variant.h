@@ -9,6 +9,9 @@
 
 #include <variant>
 #include <cstdint>
+#include <format>
+#include <string>
+#include <string_view>
 #include <promeki/config.h>
 #include <promeki/namespace.h>
 #include <promeki/util.h>
@@ -22,6 +25,7 @@
 #include <promeki/timecode.h>
 #include <promeki/rational.h>
 #include <promeki/framerate.h>
+#include <promeki/videoformat.h>
 #include <promeki/stringlist.h>
 #include <promeki/color.h>
 #include <promeki/list.h>
@@ -79,6 +83,7 @@ PROMEKI_NAMESPACE_BEGIN
  * | TypeTimecode  | `Timecode`          |
  * | TypeRational  | `Rational<int>`     |
  * | TypeFrameRate | `FrameRate`         |
+ * | TypeVideoFormat | `VideoFormat`     |
  * | TypeStringList| `StringList`        |
  * | TypeColor     | `Color`             |
  * | TypeColorModel | `ColorModel`      |
@@ -132,6 +137,7 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeTimecode, Timecode)       \
         X(TypeRational, Rational<int>)  \
         X(TypeFrameRate, FrameRate)     \
+        X(TypeVideoFormat, VideoFormat) \
         X(TypeStringList, StringList)   \
         X(TypeColor, Color)             \
         X(TypeColorModel, ColorModel)   \
@@ -368,6 +374,16 @@ template <typename... Types> class VariantImpl {
                                                         static_cast<unsigned int>(arg.denominator())));
                                         }
 
+                                } else if constexpr (std::is_same_v<To, VideoFormat>) {
+                                        if constexpr (std::is_same_v<From, String>) {
+                                                auto [vf, e] = VideoFormat::fromString(arg);
+                                                if(e.isError()) {
+                                                        if(err != nullptr) *err = Error::Invalid;
+                                                        return VideoFormat();
+                                                }
+                                                return vf;
+                                        }
+
                                 } else if constexpr (std::is_same_v<To, StringList>) {
                                         if constexpr (std::is_same_v<From, String>) return arg.split(",");
 
@@ -452,6 +468,7 @@ template <typename... Types> class VariantImpl {
                                         if constexpr (std::is_same_v<From, Timecode>) return arg.toString().first();
                                         if constexpr (std::is_same_v<From, Rational<int>>) return arg.toString();
                                         if constexpr (std::is_same_v<From, FrameRate>) return arg.toString();
+                                        if constexpr (std::is_same_v<From, VideoFormat>) return arg.toString();
                                         if constexpr (std::is_same_v<From, StringList>) return arg.join(",");
                                         if constexpr (std::is_same_v<From, Color>) return arg.toString();
                                         if constexpr (detail::is_type_registry_v<From>) return arg.name();
@@ -552,6 +569,7 @@ template <typename... Types> class VariantImpl {
                                 case TypeTimecode:
                                 case TypeRational:
                                 case TypeFrameRate:
+                                case TypeVideoFormat:
                                 case TypeStringList:
                                 case TypeColor:
                                 case TypeColorModel:
@@ -572,6 +590,67 @@ template <typename... Types> class VariantImpl {
                                         break;
                         }
                         return *this;
+                }
+
+                /**
+                 * @brief Formats the stored value using a type-specific format spec.
+                 *
+                 * Builds the format string @c "{:<spec>}" and routes it to
+                 * @c std::vformat with the held value, so the type's own
+                 * @c std::formatter specialization is invoked.  This means
+                 * rich types use their native style keywords (Timecode
+                 * accepts @c "smpte" / @c "smpte-fps" / @c "field",
+                 * VideoFormat accepts @c "smpte" / @c "named", etc.) and
+                 * primitives use the standard @c std::format spec grammar
+                 * (@c "x", @c ".2f", @c "05d", ...).
+                 *
+                 * An empty @p spec is short-circuited to @ref get<String>(),
+                 * which reproduces the existing default toString() behavior
+                 * for every supported type.  Variant alternatives that have
+                 * no @c std::formatter specialization fall back to formatting
+                 * the spec against the value's String form, so width / fill
+                 * / alignment still work for them.
+                 *
+                 * If @p spec is malformed (caught as @c std::format_error),
+                 * the default String form is returned and @p err is set to
+                 * @c Error::Invalid.
+                 *
+                 * @param spec  Type-specific format spec, without the
+                 *              surrounding @c {} or leading @c ':'.
+                 * @param err   Optional error output, set to @c Error::Ok on
+                 *              success or @c Error::Invalid if the spec
+                 *              could not be applied.
+                 * @return      The formatted String.
+                 */
+                String format(const String &spec, Error *err = nullptr) const {
+                        if(err != nullptr) *err = Error::Ok;
+                        String defaultStr = get<String>();
+                        if(spec.isEmpty()) return defaultStr;
+
+                        std::string fmtStr;
+                        fmtStr.reserve(spec.byteCount() + 3);
+                        fmtStr += "{:";
+                        fmtStr.append(spec.cstr(), spec.byteCount());
+                        fmtStr += '}';
+
+                        try {
+                                return std::visit([&fmtStr, &defaultStr](auto &&arg) -> String {
+                                        using T = std::decay_t<decltype(arg)>;
+                                        if constexpr (std::is_same_v<T, std::monostate>) {
+                                                (void)fmtStr;
+                                                return String();
+                                        } else if constexpr (std::is_default_constructible_v<std::formatter<T, char>>) {
+                                                const auto &val = arg;
+                                                return String(std::vformat(fmtStr, std::make_format_args(val)));
+                                        } else {
+                                                std::string_view sv(defaultStr.cstr(), defaultStr.byteCount());
+                                                return String(std::vformat(fmtStr, std::make_format_args(sv)));
+                                        }
+                                }, v);
+                        } catch(const std::format_error &) {
+                                if(err != nullptr) *err = Error::Invalid;
+                                return defaultStr;
+                        }
                 }
 
                 /**

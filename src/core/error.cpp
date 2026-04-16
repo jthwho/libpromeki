@@ -91,7 +91,8 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(CorruptData, NONE, "Stored data is structurally corrupt"),
         DEFINE_ERROR(DeviceError, NONE, "Hardware device reported an error"),
         DEFINE_ERROR(DeviceNotFound, NONE, "Hardware device was not found or cannot be opened"),
-        DEFINE_ERROR(FormatMismatch, NONE, "Audio/video format does not match the expected format")
+        DEFINE_ERROR(FormatMismatch, NONE, "Audio/video format does not match the expected format"),
+        DEFINE_ERROR(FontUnavailable, NONE, "Font could not be loaded or has zero metrics")
 };
 
 static StructDatabase<int, Error::Code> &posixErrorDb() {

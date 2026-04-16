@@ -104,4 +104,47 @@ bool Audio::allocate(const MemSpace &ms) {
         return true;
 }
 
+std::optional<String> Audio::resolveTemplateKey(const String &key, const String &spec) const {
+        if(!key.isEmpty() && key.cstr()[0] == '@') {
+                return resolvePseudoKey(key, spec);
+        }
+        Metadata::ID id = Metadata::ID::find(key);
+        if(id.isValid() && _desc.metadata().contains(id)) {
+                return _desc.metadata().get(id).format(spec);
+        }
+        return std::nullopt;
+}
+
+std::optional<String> Audio::resolvePseudoKey(const String &key, const String &spec) const {
+        Variant v;
+        if(key == String("@SampleRate"))           v = _desc.sampleRate();
+        else if(key == String("@Channels"))        v = static_cast<uint32_t>(_desc.channels());
+        else if(key == String("@DataType"))        v = _desc.dataTypeName();
+        else if(key == String("@Samples"))         v = static_cast<uint64_t>(_samples);
+        else if(key == String("@MaxSamples"))      v = static_cast<uint64_t>(_maxSamples);
+        else if(key == String("@Frames"))          v = static_cast<uint64_t>(frames());
+        else if(key == String("@BytesPerSample"))  v = static_cast<uint64_t>(_desc.bytesPerSample());
+        else if(key == String("@IsValid"))         v = isValid();
+        else if(key == String("@IsCompressed"))    v = isCompressed();
+        else if(key == String("@IsNative"))        v = isNative();
+        else if(key == String("@CompressedSize"))  v = static_cast<uint64_t>(compressedSize());
+        else if(key == String("@CodecFourCC")) {
+                FourCC fc = _desc.codecFourCC();
+                uint32_t raw = fc.value();
+                if(raw == 0) {
+                        v = String();
+                } else {
+                        char buf[5];
+                        buf[0] = static_cast<char>((raw >> 24) & 0xFF);
+                        buf[1] = static_cast<char>((raw >> 16) & 0xFF);
+                        buf[2] = static_cast<char>((raw >>  8) & 0xFF);
+                        buf[3] = static_cast<char>( raw        & 0xFF);
+                        buf[4] = '\0';
+                        v = String(buf);
+                }
+        }
+        else return std::nullopt;
+        return v.format(spec);
+}
+
 PROMEKI_NAMESPACE_END

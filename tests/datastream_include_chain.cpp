@@ -68,7 +68,7 @@ TEST_CASE("include chain: ImageDesc serializes through imagedesc.h alone") {
 
         ImageDesc in(1280, 720, PixelDesc::RGBA8_sRGB);
         in.setLinePad(8);
-        in.setInterlaceMode(InterlaceMode::Progressive);
+        in.setVideoScanMode(VideoScanMode::Progressive);
         {
                 DataStream ws = DataStream::createWriter(&dev);
                 ws << in;
@@ -84,7 +84,7 @@ TEST_CASE("include chain: ImageDesc serializes through imagedesc.h alone") {
                 CHECK(out.height() == 720);
                 CHECK(out.pixelDesc().id() == PixelDesc::RGBA8_sRGB);
                 CHECK(out.linePad() == 8);
-                CHECK(out.interlaceMode() == InterlaceMode::Progressive);
+                CHECK(out.videoScanMode() == VideoScanMode::Progressive);
         }
 }
 

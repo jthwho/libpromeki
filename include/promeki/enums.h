@@ -622,30 +622,41 @@ inline const TimecodePackFormat TimecodePackFormat::Ltc  { 1 };
  * - @c InterlacedOddFirst  — interlaced with the odd (bottom) field
  *                            first in time (PAL / 576i legacy, some
  *                            consumer DV variants).
+ * - @c PsF                 — Progressive segmented Frame: a
+ *                            progressive image carried as two fields
+ *                            over an interlaced transport (common for
+ *                            24p / 25p / 30p material on HD-SDI at
+ *                            1080psf23.98, 1080psf24, 1080psf25,
+ *                            1080psf29.97).  For display purposes it
+ *                            behaves as progressive, but the wire
+ *                            format is two-field.
  */
-class InterlaceMode : public TypedEnum<InterlaceMode> {
+class VideoScanMode : public TypedEnum<VideoScanMode> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("InterlaceMode", 0,
+                PROMEKI_REGISTER_ENUM_TYPE("VideoScanMode", 0,
                                 { "Unknown",             0 },
                                 { "Progressive",         1 },
                                 { "Interlaced",          2 },
                                 { "InterlacedEvenFirst", 3 },
-                                { "InterlacedOddFirst",  4 });  // default: Unknown
+                                { "InterlacedOddFirst",  4 },
+                                { "PsF",                 5 });  // default: Unknown
 
-                using TypedEnum<InterlaceMode>::TypedEnum;
+                using TypedEnum<VideoScanMode>::TypedEnum;
 
-                static const InterlaceMode Unknown;
-                static const InterlaceMode Progressive;
-                static const InterlaceMode Interlaced;
-                static const InterlaceMode InterlacedEvenFirst;
-                static const InterlaceMode InterlacedOddFirst;
+                static const VideoScanMode Unknown;
+                static const VideoScanMode Progressive;
+                static const VideoScanMode Interlaced;
+                static const VideoScanMode InterlacedEvenFirst;
+                static const VideoScanMode InterlacedOddFirst;
+                static const VideoScanMode PsF;
 };
 
-inline const InterlaceMode InterlaceMode::Unknown             { 0 };
-inline const InterlaceMode InterlaceMode::Progressive         { 1 };
-inline const InterlaceMode InterlaceMode::Interlaced          { 2 };
-inline const InterlaceMode InterlaceMode::InterlacedEvenFirst { 3 };
-inline const InterlaceMode InterlaceMode::InterlacedOddFirst  { 4 };
+inline const VideoScanMode VideoScanMode::Unknown             { 0 };
+inline const VideoScanMode VideoScanMode::Progressive         { 1 };
+inline const VideoScanMode VideoScanMode::Interlaced          { 2 };
+inline const VideoScanMode VideoScanMode::InterlacedEvenFirst { 3 };
+inline const VideoScanMode VideoScanMode::InterlacedOddFirst  { 4 };
+inline const VideoScanMode VideoScanMode::PsF                 { 5 };
 
 /**
  * @brief Well-known Enum type for MediaIO open direction.

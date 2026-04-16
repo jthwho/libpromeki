@@ -356,6 +356,10 @@ void DataStream::writeFrameRateData(const FrameRate &val) {
         *this << static_cast<uint32_t>(val.denominator());
 }
 
+void DataStream::writeVideoFormatData(const VideoFormat &val) {
+        writeStringData(val.toString());
+}
+
 void DataStream::writeTimecodeData(const Timecode &val) {
         // Timecode carries a mode (format) plus digits; the canonical
         // toString() form preserves all information and round-trips through
@@ -541,6 +545,18 @@ FrameRate DataStream::readFrameRateData() {
         *this >> num >> den;
         if(_status != Ok) return FrameRate();
         return FrameRate(FrameRate::RationalType(num, den));
+}
+
+VideoFormat DataStream::readVideoFormatData() {
+        String s = readStringData();
+        if(_status != Ok) return VideoFormat();
+        auto [vf, err] = VideoFormat::fromString(s);
+        if(err.isError()) {
+                setError(ReadCorruptData,
+                        String::sprintf("Failed to parse VideoFormat from '%s'", s.cstr()));
+                return VideoFormat();
+        }
+        return vf;
 }
 
 Timecode DataStream::readTimecodeData() {
@@ -781,6 +797,12 @@ DataStream &DataStream::operator<<(const FrameRate &val) {
         return *this;
 }
 
+DataStream &DataStream::operator<<(const VideoFormat &val) {
+        writeTag(TypeVideoFormat);
+        writeVideoFormatData(val);
+        return *this;
+}
+
 DataStream &DataStream::operator<<(const Timecode &val) {
         writeTag(TypeTimecode);
         writeTimecodeData(val);
@@ -882,6 +904,7 @@ DataStream &DataStream::operator<<(const Variant &val) {
                 case Variant::TypeTimecode:   *this << val.get<Timecode>(); break;
                 case Variant::TypeRational:   *this << val.get<Rational<int>>(); break;
                 case Variant::TypeFrameRate:  *this << val.get<FrameRate>(); break;
+                case Variant::TypeVideoFormat: *this << val.get<VideoFormat>(); break;
                 case Variant::TypeStringList: *this << val.get<StringList>(); break;
                 case Variant::TypeColor:      *this << val.get<Color>(); break;
                 case Variant::TypeColorModel: *this << val.get<ColorModel>(); break;
@@ -1049,6 +1072,12 @@ DataStream &DataStream::operator>>(FrameRate &val) {
         return *this;
 }
 
+DataStream &DataStream::operator>>(VideoFormat &val) {
+        if(!readTag(TypeVideoFormat)) { val = VideoFormat(); return *this; }
+        val = readVideoFormatData();
+        return *this;
+}
+
 DataStream &DataStream::operator>>(Timecode &val) {
         if(!readTag(TypeTimecode)) { val = Timecode(); return *this; }
         val = readTimecodeData();
@@ -1188,6 +1217,7 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                         break;
                 }
                 case TypeFrameRate:   val = readFrameRateData(); break;
+                case TypeVideoFormat: val = readVideoFormatData(); break;
                 case TypeTimecode:    val = readTimecodeData(); break;
                 case TypeColor:       val = readColorData(); break;
                 case TypeColorModel:  val = readColorModelData(); break;

@@ -122,4 +122,38 @@ Image Image::convert(const PixelDesc &pd, const Metadata &metadata,
 #endif
 }
 
+std::optional<String> Image::resolveTemplateKey(const String &key, const String &spec) const {
+        if(!key.isEmpty() && key.cstr()[0] == '@') {
+                return resolvePseudoKey(key, spec);
+        }
+        Metadata::ID id = Metadata::ID::find(key);
+        if(id.isValid() && _desc.metadata().contains(id)) {
+                return _desc.metadata().get(id).format(spec);
+        }
+        return std::nullopt;
+}
+
+std::optional<String> Image::resolvePseudoKey(const String &key, const String &spec) const {
+        // Build a Variant for the requested introspection value and let
+        // Variant::format apply the spec — this gives templates the full
+        // std::format vocabulary for free (e.g. "{@Width:05}").
+        Variant v;
+        if(key == String("@Width"))                v = static_cast<uint32_t>(_desc.width());
+        else if(key == String("@Height"))          v = static_cast<uint32_t>(_desc.height());
+        else if(key == String("@Size"))            v = _desc.size();
+        else if(key == String("@PixelDesc"))       v = _desc.pixelDesc();
+        else if(key == String("@PixelFormat"))     v = _desc.pixelFormat();
+        else if(key == String("@ColorModel"))      v = _desc.colorModel();
+        else if(key == String("@LinePad"))         v = static_cast<uint64_t>(_desc.linePad());
+        else if(key == String("@LineAlign"))       v = static_cast<uint64_t>(_desc.lineAlign());
+        else if(key == String("@ScanMode"))        v = _desc.videoScanMode().valueName();
+        else if(key == String("@PlaneCount"))      v = static_cast<int32_t>(_desc.planeCount());
+        else if(key == String("@IsValid"))         v = isValid();
+        else if(key == String("@IsCompressed"))    v = isCompressed();
+        else if(key == String("@IsExclusive"))     v = isExclusive();
+        else if(key == String("@CompressedSize"))  v = static_cast<uint64_t>(compressedSize());
+        else return std::nullopt;
+        return v.format(spec);
+}
+
 PROMEKI_NAMESPACE_END

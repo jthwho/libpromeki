@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <optional>
+#include <type_traits>
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
 #include <promeki/buffer.h>
@@ -340,11 +342,101 @@ class Image {
                 Image convert(const PixelDesc &pd, const Metadata &metadata,
                               const MediaConfig &config = MediaConfig()) const;
 
+                /**
+                 * @brief Resolves a single template key against this image's structure.
+                 *
+                 * Used by @ref makeString and by enclosing containers
+                 * (e.g. @ref Frame::resolveTemplateKey for the
+                 * @c Image[N].xxx subscript syntax) to render a single
+                 * @c {Key[:spec]} placeholder in isolation.  The
+                 * returned @c std::optional is populated when the key
+                 * names something this image can describe:
+                 *
+                 *  - @b "@<Pseudo>" — one of the introspection pseudo
+                 *    keys listed in @ref makeString.  The @c "@" prefix
+                 *    keeps these from colliding with metadata keys.
+                 *  - Any registered metadata key — looked up in
+                 *    @ref metadata and rendered with
+                 *    @ref Variant::format.
+                 *
+                 * Returns @c std::nullopt when the key matches neither.
+                 *
+                 * @param key  The placeholder key (no braces, no colon).
+                 * @param spec The format spec (may be empty).
+                 */
+                std::optional<String> resolveTemplateKey(const String &key, const String &spec) const;
+
+                /**
+                 * @brief Substitutes @c {Key[:spec]} placeholders against this image.
+                 *
+                 * Delegates to @ref Metadata::format for direct
+                 * metadata keys.  Adds an introspection layer that
+                 * resolves @c "@"-prefixed pseudo keys describing the
+                 * image's own structure (so templates can pull values
+                 * out of the image even when nothing has been written
+                 * to its metadata).
+                 *
+                 * Recognised pseudo keys:
+                 *
+                 *  - @c \@Width — image width in pixels (uint32).
+                 *  - @c \@Height — image height in pixels (uint32).
+                 *  - @c \@Size — @c "WxH" via @ref Size2Du32.
+                 *  - @c \@PixelDesc — pixel description name.
+                 *  - @c \@PixelFormat — pixel format name.
+                 *  - @c \@ColorModel — color model name.
+                 *  - @c \@LinePad — line padding in bytes (uint64).
+                 *  - @c \@LineAlign — scanline alignment in bytes (uint64).
+                 *  - @c \@ScanMode — scan mode (progressive / interlaced / unknown).
+                 *  - @c \@PlaneCount — number of memory planes (int).
+                 *  - @c \@IsValid — bool.
+                 *  - @c \@IsCompressed — bool.
+                 *  - @c \@IsExclusive — bool.
+                 *  - @c \@CompressedSize — encoded byte count, or 0 (uint64).
+                 *
+                 * @par Example
+                 * @code
+                 * Image img(1920, 1080, PixelDesc::RGBA8_sRGB);
+                 * String s = img.makeString("{@Size} {@PixelDesc}");
+                 * // "1920x1080 RGBA8_sRGB"
+                 * @endcode
+                 *
+                 * @tparam Resolver Callable with signature
+                 *                  @c std::optional<String>(const String &, const String &).
+                 *                  Pass @c nullptr (or use the no-resolver overload) to
+                 *                  skip the user fallback path.
+                 * @param tmpl     Template string with @c {Key[:spec]} placeholders.
+                 * @param resolver Optional fallback resolver consulted for keys that
+                 *                 are neither @c "@"-prefixed pseudo keys nor present
+                 *                 in @ref metadata.
+                 * @param err      Optional error output (set to @c Error::IdNotFound
+                 *                 when any key is unresolved).
+                 */
+                template <typename Resolver>
+                String makeString(const String &tmpl, Resolver &&resolver, Error *err = nullptr) const {
+                        return _desc.metadata().format(tmpl,
+                                [this, &resolver](const String &key, const String &spec) -> std::optional<String> {
+                                        if(!key.isEmpty() && key.cstr()[0] == '@') {
+                                                auto v = resolvePseudoKey(key, spec);
+                                                if(v.has_value()) return v;
+                                        }
+                                        if constexpr (!std::is_same_v<std::decay_t<Resolver>, std::nullptr_t>) {
+                                                return resolver(key, spec);
+                                        }
+                                        return std::nullopt;
+                                }, err);
+                }
+
+                /** @brief Convenience overload of @ref makeString with no fallback resolver. */
+                String makeString(const String &tmpl, Error *err = nullptr) const {
+                        return makeString(tmpl, nullptr, err);
+                }
+
         private:
                 ImageDesc       _desc;
                 Buffer::PtrList _planeList;
 
                 bool allocate(const MemSpace &ms);
+                std::optional<String> resolvePseudoKey(const String &key, const String &spec) const;
 };
 
 PROMEKI_NAMESPACE_END

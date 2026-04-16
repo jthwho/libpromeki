@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <optional>
+#include <type_traits>
 #include <promeki/namespace.h>
 #include <promeki/stringregistry.h>
 #include <promeki/variant.h>
@@ -282,7 +284,7 @@ class VariantDatabase {
                  * the way back.
                  *
                  * The coercion runs only when:
-                 *  - @p value is @ref Variant::TypeString, and
+                 *  - @p value is @c Variant::TypeString, and
                  *  - a spec is registered for @p id, and
                  *  - the spec does @em not accept @c TypeString
                  *    natively (so JSON strings that are legitimately
@@ -464,6 +466,155 @@ class VariantDatabase {
                         }
                         if(err) *err = Error::Ok;
                         return result;
+                }
+
+                /**
+                 * @brief Substitutes @c {Key} / @c {Key:spec} tokens in a template string.
+                 *
+                 * Walks @p tmpl character by character.  Each balanced
+                 * @c {…} token is split on the first @c ':' into a key
+                 * name and an optional format spec; the key is looked
+                 * up in this database (without registering it) and the
+                 * stored Variant is rendered via @ref Variant::format,
+                 * which dispatches the spec to the held type's own
+                 * @c std::formatter.  Literal braces are escaped as
+                 * @c "{{" and @c "}}", matching the @c std::format
+                 * convention.
+                 *
+                 * When the database itself does not contain the key,
+                 * the optional @p resolver callback is consulted with
+                 * @c (keyName, spec).  A returned @c std::optional<String>
+                 * holding a value is substituted as-is — typically the
+                 * caller will format a Variant from another scope (a
+                 * parent database, an environment lookup, etc.) and
+                 * return the result, enabling nested resolution chains.
+                 * A returned @c std::nullopt (or an absent resolver)
+                 * leaves the key unresolved: the output gets the
+                 * literal text @c "[UNKNOWN KEY: <name>]" and @p err is
+                 * set to @c Error::IdNotFound.
+                 *
+                 * @p err is set to @c Error::Ok when every token was
+                 * either found in this database or resolved by the
+                 * callback, and to @c Error::IdNotFound if @em any
+                 * token fell through to the @c "[UNKNOWN KEY: …]"
+                 * path.  The output string is always returned (never
+                 * empty on partial resolution) so the caller can both
+                 * surface a clear error and still render best-effort
+                 * text.
+                 *
+                 * @par Example: simple substitution
+                 * @code
+                 * cfg.set(VideoFormatKey, VideoFormat(VideoFormat::Smpte1080p29_97));
+                 * cfg.set(TimecodeKey,    Timecode(Timecode::NDF24, 1, 0, 0, 0));
+                 * String s = cfg.format("Format: {VideoFormat:smpte}, TC: {Timecode:smpte}");
+                 * // "Format: 1080p29.97, TC: 01:00:00:00"
+                 * @endcode
+                 *
+                 * @par Example: nested resolution via resolver callback
+                 * @code
+                 * Error err;
+                 * String s = childDb.format("{Local} / {Inherited}",
+                 *     [&parentDb](const String &key, const String &spec) -> std::optional<String> {
+                 *         Error sub;
+                 *         String r = parentDb.format("{" + key + (spec.isEmpty() ? "" : ":" + spec) + "}", &sub);
+                 *         if(sub.isError()) return std::nullopt;
+                 *         return r;
+                 *     }, &err);
+                 * @endcode
+                 *
+                 * @tparam Resolver  Callable with signature
+                 *                   @c std::optional<String>(const String &key, const String &spec).
+                 *                   Pass @c nullptr (or use the no-resolver overload) to
+                 *                   skip the fallback path.
+                 * @param tmpl       Template string with @c {Key[:spec]} placeholders.
+                 * @param resolver   Optional fallback callback for keys not in this database.
+                 * @param err        Optional error output, set to @c Error::Ok on full
+                 *                   resolution or @c Error::IdNotFound if any key was
+                 *                   unresolved.
+                 * @return           The substituted output.
+                 */
+                template <typename Resolver>
+                String format(const String &tmpl, Resolver &&resolver, Error *err = nullptr) const {
+                        if(err != nullptr) *err = Error::Ok;
+                        std::string out;
+                        out.reserve(tmpl.byteCount());
+                        const char *src = tmpl.cstr();
+                        const size_t len = tmpl.byteCount();
+                        bool sawUnresolved = false;
+                        size_t i = 0;
+                        while(i < len) {
+                                char c = src[i];
+                                if(c == '{') {
+                                        if(i + 1 < len && src[i + 1] == '{') {
+                                                out.push_back('{');
+                                                i += 2;
+                                                continue;
+                                        }
+                                        size_t end = i + 1;
+                                        while(end < len && src[end] != '}') ++end;
+                                        if(end >= len) {
+                                                out.append(src + i, len - i);
+                                                break;
+                                        }
+                                        std::string_view body(src + i + 1, end - (i + 1));
+                                        size_t colon = body.find(':');
+                                        std::string_view keyView = (colon == std::string_view::npos)
+                                                ? body : body.substr(0, colon);
+                                        std::string_view specView = (colon == std::string_view::npos)
+                                                ? std::string_view() : body.substr(colon + 1);
+                                        String keyName(keyView.data(), keyView.size());
+                                        String specStr(specView.data(), specView.size());
+                                        ID id = ID::find(keyName);
+                                        auto it = id.isValid() ? _data.find(id.id()) : _data.end();
+                                        if(it != _data.end()) {
+                                                String rendered = it->second.format(specStr);
+                                                out.append(rendered.cstr(), rendered.byteCount());
+                                        } else {
+                                                std::optional<String> resolved;
+                                                if constexpr (!std::is_same_v<std::decay_t<Resolver>, std::nullptr_t>) {
+                                                        resolved = resolver(keyName, specStr);
+                                                }
+                                                if(resolved.has_value()) {
+                                                        const String &r = *resolved;
+                                                        out.append(r.cstr(), r.byteCount());
+                                                } else {
+                                                        sawUnresolved = true;
+                                                        out += "[UNKNOWN KEY: ";
+                                                        out.append(keyView.data(), keyView.size());
+                                                        out += ']';
+                                                }
+                                        }
+                                        i = end + 1;
+                                } else if(c == '}') {
+                                        if(i + 1 < len && src[i + 1] == '}') {
+                                                out.push_back('}');
+                                                i += 2;
+                                        } else {
+                                                out.push_back('}');
+                                                ++i;
+                                        }
+                                } else {
+                                        out.push_back(c);
+                                        ++i;
+                                }
+                        }
+                        if(sawUnresolved && err != nullptr) *err = Error::IdNotFound;
+                        return String(std::move(out));
+                }
+
+                /**
+                 * @brief Convenience overload of @ref format with no resolver callback.
+                 *
+                 * Equivalent to calling the resolver overload with @c nullptr.
+                 * Missing keys produce @c "[UNKNOWN KEY: <name>]" in the
+                 * output and set @p err to @c Error::IdNotFound.
+                 *
+                 * @param tmpl Template string with @c {Key[:spec]} placeholders.
+                 * @param err  Optional error output.
+                 * @return     The substituted output.
+                 */
+                String format(const String &tmpl, Error *err = nullptr) const {
+                        return format(tmpl, nullptr, err);
                 }
 
                 /**

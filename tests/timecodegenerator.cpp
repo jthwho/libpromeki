@@ -28,7 +28,7 @@ TEST_CASE("TimecodeGenerator_Default") {
 // ============================================================================
 
 TEST_CASE("TimecodeGenerator_ConstructWithRate") {
-    TimecodeGenerator gen(FrameRate(FrameRate::FPS_2997));
+    TimecodeGenerator gen(FrameRate(FrameRate::FPS_29_97));
     CHECK(gen.frameRate().numerator() == 30000);
     CHECK(gen.frameRate().denominator() == 1001);
     CHECK(!gen.dropFrame());
@@ -36,7 +36,7 @@ TEST_CASE("TimecodeGenerator_ConstructWithRate") {
 }
 
 TEST_CASE("TimecodeGenerator_ConstructWithRateAndDF") {
-    TimecodeGenerator gen(FrameRate(FrameRate::FPS_2997), true);
+    TimecodeGenerator gen(FrameRate(FrameRate::FPS_29_97), true);
     CHECK(gen.dropFrame());
     CHECK(gen.timecodeMode() == Timecode::Mode(Timecode::DF30));
 }
@@ -54,7 +54,7 @@ TEST_CASE("TimecodeGenerator_Mode24") {
 
 TEST_CASE("TimecodeGenerator_Mode23976") {
     TimecodeGenerator gen;
-    gen.setFrameRate(FrameRate(FrameRate::FPS_2398));
+    gen.setFrameRate(FrameRate(FrameRate::FPS_23_98));
     CHECK(gen.timecodeMode() == Timecode::Mode(Timecode::NDF24));
     CHECK(!gen.dropFrame());
 }
@@ -68,14 +68,14 @@ TEST_CASE("TimecodeGenerator_Mode25") {
 
 TEST_CASE("TimecodeGenerator_Mode2997NDF") {
     TimecodeGenerator gen;
-    gen.setFrameRate(FrameRate(FrameRate::FPS_2997));
+    gen.setFrameRate(FrameRate(FrameRate::FPS_29_97));
     CHECK(gen.timecodeMode() == Timecode::Mode(Timecode::NDF30));
     CHECK(!gen.dropFrame());
 }
 
 TEST_CASE("TimecodeGenerator_Mode2997DF") {
     TimecodeGenerator gen;
-    gen.setFrameRate(FrameRate(FrameRate::FPS_2997));
+    gen.setFrameRate(FrameRate(FrameRate::FPS_29_97));
     gen.setDropFrame(true);
     CHECK(gen.timecodeMode() == Timecode::Mode(Timecode::DF30));
     CHECK(gen.dropFrame());
@@ -236,7 +236,7 @@ TEST_CASE("TimecodeGenerator_ResetAfterJam") {
 // ============================================================================
 
 TEST_CASE("TimecodeGenerator_DFSkip") {
-    TimecodeGenerator gen(FrameRate(FrameRate::FPS_2997), true);
+    TimecodeGenerator gen(FrameRate(FrameRate::FPS_29_97), true);
     CHECK(gen.dropFrame());
 
     // Set TC just before a minute boundary
@@ -258,7 +258,7 @@ TEST_CASE("TimecodeGenerator_DFSkip") {
 }
 
 TEST_CASE("TimecodeGenerator_DFNoSkipAt10Min") {
-    TimecodeGenerator gen(FrameRate(FrameRate::FPS_2997), true);
+    TimecodeGenerator gen(FrameRate(FrameRate::FPS_29_97), true);
 
     // Set TC just before a 10-minute boundary — NO skip
     gen.setTimecode(Timecode(Timecode::DF30, 0, 9, 59, 28));
@@ -277,7 +277,7 @@ TEST_CASE("TimecodeGenerator_DFNoSkipAt10Min") {
 // ============================================================================
 
 TEST_CASE("TimecodeGenerator_Default2997IsNDF") {
-    TimecodeGenerator gen(FrameRate(FrameRate::FPS_2997));
+    TimecodeGenerator gen(FrameRate(FrameRate::FPS_29_97));
     CHECK(!gen.dropFrame());
     CHECK(gen.timecodeMode() == Timecode::Mode(Timecode::NDF30));
 }

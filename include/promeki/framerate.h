@@ -19,18 +19,18 @@ PROMEKI_NAMESPACE_BEGIN
 #define PROMEKI_WELL_KNOWN_FRAME_RATES \
     X(FPS_Invalid,  "INV",      0,          1) \
     X(FPS_120,      "120",      120,        1) \
-    X(FPS_11988,    "119.88",   120000,     1001) \
+    X(FPS_119_88,    "119.88",   120000,     1001) \
     X(FPS_100,      "100",      100,        1) \
     X(FPS_60,       "60",       60,         1) \
-    X(FPS_5994,     "59.94",    60000,      1001) \
+    X(FPS_59_94,     "59.94",    60000,      1001) \
     X(FPS_50,       "50",       50,         1) \
     X(FPS_48,       "48",       48,         1) \
-    X(FPS_4795,     "47.95",    48000,      1001) \
+    X(FPS_47_95,     "47.95",    48000,      1001) \
     X(FPS_30,       "30",       30,         1) \
-    X(FPS_2997,     "29.97",    30000,      1001) \
+    X(FPS_29_97,     "29.97",    30000,      1001) \
     X(FPS_25,       "25",       25,         1) \
     X(FPS_24,       "24",       24,         1) \
-    X(FPS_2398,     "23.98",    24000,      1001)
+    X(FPS_23_98,     "23.98",    24000,      1001)
 
 /**
  * @brief Represents a video frame rate as a rational number.
@@ -154,7 +154,7 @@ class FrameRate {
                  *
                  * @par Example
                  * @code
-                 * FrameRate fps(FrameRate::FPS_2997);     // 30000/1001
+                 * FrameRate fps(FrameRate::FPS_29_97);     // 30000/1001
                  * Duration  d = fps.frameDuration();      // ~33_366_666 ns
                  * @endcode
                  *

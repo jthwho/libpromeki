@@ -45,6 +45,7 @@
 #include <promeki/frame.h>
 #include <promeki/framerate.h>
 #include <promeki/size2d.h>
+#include <promeki/videoformat.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
@@ -130,8 +131,7 @@ BenchmarkCase::Function buildPipelineCase(PipelineSpec spec) {
                 // to 30 fps so the LTC decoder lock-in time is
                 // predictable across runs.
                 MediaIO::Config tpgCfg = MediaIO::defaultConfig("TPG");
-                tpgCfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_30));
-                tpgCfg.set(MediaConfig::VideoSize, Size2Du32(spec.width, spec.height));
+                tpgCfg.set(MediaConfig::VideoFormat, VideoFormat(Size2Du32(spec.width, spec.height), FrameRate(FrameRate::FPS_30)));
                 tpgCfg.set(MediaConfig::VideoPixelFormat, PixelDesc(spec.pd));
                 MediaIO *tpg = MediaIO::create(tpgCfg);
                 if(tpg == nullptr || tpg->open(MediaIO::Output).isError()) {

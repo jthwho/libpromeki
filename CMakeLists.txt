@@ -767,6 +767,7 @@ set(PROMEKI_HEADERS
     include/promeki/variantdatabase.h
     include/promeki/variantspec.h
     include/promeki/videocodec.h
+    include/promeki/videoformat.h
     include/promeki/waitcondition.h
     include/promeki/widget.h
     include/promeki/xyzcolor.h
@@ -873,6 +874,7 @@ set(PROMEKI_SOURCES
     src/core/uuid.cpp
     src/core/variant.cpp
     src/core/variantspec.cpp
+    src/core/videoformat.cpp
     src/core/widget.cpp
     src/core/xyzcolor.cpp
 )
@@ -1653,6 +1655,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/variant.cpp
         tests/variantdatabase.cpp
         tests/variantspec.cpp
+        tests/videoformat.cpp
         tests/waitcondition.cpp
         tests/xyzcolor.cpp
     )

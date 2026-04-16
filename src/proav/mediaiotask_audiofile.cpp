@@ -67,7 +67,7 @@ MediaIO::FormatDesc MediaIOTask_AudioFile::formatDesc() {
                                 const VariantSpec *gs = MediaConfig::spec(id);
                                 specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
                         };
-                        s(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_2997));
+                        s(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_29_97));
                         s(MediaConfig::AudioRate, 48000.0f);
                         s(MediaConfig::AudioChannels, int32_t(2));
                         return specs;

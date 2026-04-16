@@ -26,7 +26,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Example
  * @code
  * TimecodeGenerator gen;
- * gen.setFrameRate(FrameRate(FrameRate::FPS_2997));
+ * gen.setFrameRate(FrameRate(FrameRate::FPS_29_97));
  * gen.setTimecode(Timecode(Timecode::NDF30, 1, 0, 0, 0));
  * for(int i = 0; i < 100; i++) {
  *     Timecode tc = gen.advance();

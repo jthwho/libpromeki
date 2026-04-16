@@ -61,7 +61,7 @@ Result<FrameRate> FrameRate::fromString(const String &str) {
         }
 
         // Also accept "23.976" as an alias for "23.98"
-        if(str == "23.976") return makeResult(FrameRate(FPS_2398));
+        if(str == "23.976") return makeResult(FrameRate(FPS_23_98));
 
         // Try fraction form: num/den
         const char *slash = strchr(str.cstr(), '/');

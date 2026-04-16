@@ -16,7 +16,7 @@
 #include <promeki/mediaconfig.h>
 #include <promeki/mediaio.h>
 #include <promeki/pipelinestats.h>
-#include <promeki/size2d.h>
+#include <promeki/videoformat.h>
 
 using namespace promeki;
 
@@ -32,6 +32,7 @@ MediaPipelineConfig makeTpgToConverter() {
         src.name = "src";
         src.type = "TPG";
         src.mode = MediaIO::Output;
+        src.config.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
         src.config.set(MediaConfig::VideoEnabled, true);
         src.config.set(MediaConfig::AudioEnabled, false);
         cfg.addStage(src);
@@ -254,6 +255,7 @@ TEST_CASE("MediaPipeline_InjectStageSkipsFactory") {
         src.name = "src";
         src.type = "TPG";
         src.mode = MediaIO::Output;
+        src.config.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
         src.config.set(MediaConfig::VideoEnabled, true);
         src.config.set(MediaConfig::AudioEnabled, false);
         mpc.addStage(src);

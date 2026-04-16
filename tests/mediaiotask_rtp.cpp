@@ -585,7 +585,7 @@ TEST_CASE("MediaIOTask_Rtp_AudioNoDriftAcrossFrames") {
         REQUIRE(io != nullptr);
 
         MediaDesc md;
-        md.setFrameRate(FrameRate(FrameRate::FPS_2997));
+        md.setFrameRate(FrameRate(FrameRate::FPS_29_97));
         md.audioList().pushToBack(
                 AudioDesc(AudioDesc::PCMI_S16LE, 48000.0f, 2));
         io->setMediaDesc(md);

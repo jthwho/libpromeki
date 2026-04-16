@@ -203,7 +203,7 @@ TEST_CASE("MediaIOTask_Converter_OutputMediaDesc") {
         // Describe the upstream stage's output so the Converter can
         // compute its own output descriptor.
         MediaDesc pending;
-        pending.setFrameRate(FrameRate(FrameRate::FPS_2997));
+        pending.setFrameRate(FrameRate(FrameRate::FPS_29_97));
         pending.imageList().pushToBack(
                 ImageDesc(Size2Du32(640, 480), PixelDesc(PixelDesc::RGB8_sRGB)));
         io->setMediaDesc(pending);
@@ -214,7 +214,7 @@ TEST_CASE("MediaIOTask_Converter_OutputMediaDesc") {
         REQUIRE(vd.imageList().size() == 1);
         CHECK(vd.imageList()[0].pixelDesc() == PixelDesc(PixelDesc::RGBA8_sRGB));
         CHECK(vd.imageList()[0].size() == Size2Du32(640, 480));
-        CHECK(vd.frameRate() == FrameRate(FrameRate::FPS_2997));
+        CHECK(vd.frameRate() == FrameRate(FrameRate::FPS_29_97));
         CHECK_FALSE(io->canSeek());
 
         io->close();

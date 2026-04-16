@@ -276,22 +276,22 @@ class ImageDesc {
                  * @brief Returns the scan mode (progressive / interlaced / unknown).
                  *
                  * Replaces the earlier @c bool interlaced flag with a
-                 * three-state @ref InterlaceMode value so the field
+                 * three-state @ref VideoScanMode value so the field
                  * order is captured alongside the interlaced-vs-
                  * progressive distinction.
                  *
                  * @return The scan mode.
                  */
-                InterlaceMode interlaceMode() const {
-                        return _interlaceMode;
+                VideoScanMode videoScanMode() const {
+                        return _videoScanMode;
                 }
 
                 /**
                  * @brief Sets the scan mode.
                  * @param mode The scan mode to store.
                  */
-                void setInterlaceMode(const InterlaceMode &mode) {
-                        _interlaceMode = mode;
+                void setVideoScanMode(const VideoScanMode &mode) {
+                        _videoScanMode = mode;
                         return;
                 }
 
@@ -335,14 +335,14 @@ class ImageDesc {
                 Size2Du32               _size;
                 size_t                  _linePad = 0;
                 size_t                  _lineAlign = 1;
-                InterlaceMode           _interlaceMode = InterlaceMode::Unknown;
+                VideoScanMode           _videoScanMode = VideoScanMode::Unknown;
                 PixelDesc               _pixelDesc;
                 Metadata                _metadata;
 };
 
 /**
  * @brief Writes an ImageDesc as tag + size + pixelDesc + linePad + lineAlign
- *        + interlaceMode + metadata.
+ *        + videoScanMode + metadata.
  * @param stream The stream to write to.
  * @param desc   The ImageDesc to serialize.
  * @return The stream, for chaining.
@@ -353,7 +353,7 @@ inline DataStream &operator<<(DataStream &stream, const ImageDesc &desc) {
         stream << desc.pixelDesc();
         stream << static_cast<uint64_t>(desc.linePad());
         stream << static_cast<uint64_t>(desc.lineAlign());
-        stream << static_cast<uint32_t>(desc.interlaceMode().value());
+        stream << static_cast<uint32_t>(desc.videoScanMode().value());
         stream << desc.metadata();
         return stream;
 }
@@ -369,14 +369,14 @@ inline DataStream &operator>>(DataStream &stream, ImageDesc &desc) {
         Size2Du32 size;
         PixelDesc pd;
         uint64_t linePad = 0, lineAlign = 1;
-        uint32_t interlaceValue = 0;
+        uint32_t scanValue = 0;
         Metadata meta;
-        stream >> size >> pd >> linePad >> lineAlign >> interlaceValue >> meta;
+        stream >> size >> pd >> linePad >> lineAlign >> scanValue >> meta;
         if(stream.status() != DataStream::Ok) { desc = ImageDesc(); return stream; }
         desc = ImageDesc(size, pd);
         desc.setLinePad(static_cast<size_t>(linePad));
         desc.setLineAlign(static_cast<size_t>(lineAlign));
-        desc.setInterlaceMode(InterlaceMode{static_cast<int>(interlaceValue)});
+        desc.setVideoScanMode(VideoScanMode{static_cast<int>(scanValue)});
         desc.metadata() = std::move(meta);
         return stream;
 }

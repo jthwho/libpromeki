@@ -1591,7 +1591,7 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandOpen &cmd) {
                 // math still works but downstream receivers may not
                 // know the frame rate via SDP.
                 _frameRate = cfg.getAs<FrameRate>(MediaConfig::FrameRate,
-                                                   FrameRate(FrameRate::FPS_2997));
+                                                   FrameRate(FrameRate::FPS_29_97));
         }
 
         // Reader-side SDP ingest.  The RtpSdp config key is

@@ -15,6 +15,7 @@
 #include <promeki/timecode.h>
 #include <promeki/framerate.h>
 #include <promeki/size2d.h>
+#include <promeki/videoformat.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/enums.h>
 #include <promeki/enumlist.h>
@@ -52,8 +53,7 @@ void buildRig(InspectorRig &rig, uint32_t streamId,
         // click on ch1 — that's how the inspector gets both the click
         // marker and the LTC stream to verify.
         MediaIO::Config tpgCfg = MediaIO::defaultConfig("TPG");
-        tpgCfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_30));
-        tpgCfg.set(MediaConfig::VideoSize, Size2Du32(1920, 1080));
+        tpgCfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p30));
         tpgCfg.set(MediaConfig::VideoPixelFormat, PixelDesc(PixelDesc::RGBA8_sRGB));
         tpgCfg.set(MediaConfig::TimecodeStart, String("01:00:00:00"));
         tpgCfg.set(MediaConfig::StreamID, streamId);

@@ -648,3 +648,153 @@ TEST_CASE("VariantDatabase: inequality different size") {
 
         CHECK(a != b);
 }
+
+// ============================================================================
+// format() template substitution
+// ============================================================================
+
+TEST_CASE("VariantDatabase: format substitutes a single key with default spec") {
+        using DB = VariantDatabase<"FmtTagBasic">;
+        DB::ID name("Name");
+        DB db;
+        db.set(name, String("Alice"));
+        CHECK(db.format("Hello {Name}!") == String("Hello Alice!"));
+}
+
+TEST_CASE("VariantDatabase: format dispatches per-type spec to VideoFormat") {
+        using DB = VariantDatabase<"FmtTagVF">;
+        DB::ID vf("VideoFormat");
+        DB db;
+        db.set(vf, VideoFormat(VideoFormat::Smpte1080p29_97));
+        CHECK(db.format("The video format is {VideoFormat:smpte}")
+              == String("The video format is 1080p29.97"));
+        CHECK(db.format("Named: {VideoFormat:named}")
+              == String("Named: HDp29.97"));
+}
+
+TEST_CASE("VariantDatabase: format dispatches per-type spec to Timecode") {
+        using DB = VariantDatabase<"FmtTagTc">;
+        DB::ID tc("Timecode");
+        DB db;
+        db.set(tc, Timecode(Timecode::NDF24, 1, 0, 0, 0));
+        CHECK(db.format("TC={Timecode:smpte}") == String("TC=01:00:00:00"));
+}
+
+TEST_CASE("VariantDatabase: format applies std::format spec to primitives") {
+        using DB = VariantDatabase<"FmtTagNum">;
+        DB::ID n("Count");
+        DB db;
+        db.set(n, int32_t(42));
+        CHECK(db.format("{Count:05d}") == String("00042"));
+        CHECK(db.format("hex={Count:x}") == String("hex=2a"));
+}
+
+TEST_CASE("VariantDatabase: format replaces missing key with sentinel") {
+        using DB = VariantDatabase<"FmtTagMiss">;
+        DB db;
+        CHECK(db.format("Value: {NotThere}")
+              == String("Value: [UNKNOWN KEY: NotThere]"));
+        CHECK(db.format("Value: {NotThere:smpte}")
+              == String("Value: [UNKNOWN KEY: NotThere]"));
+}
+
+TEST_CASE("VariantDatabase: format reports IdNotFound when a key is missing") {
+        using DB = VariantDatabase<"FmtTagErr">;
+        DB::ID present("Present");
+        DB db;
+        db.set(present, int32_t(1));
+
+        Error err;
+        String s = db.format("{Present} and {Absent}", &err);
+        CHECK(err == Error::IdNotFound);
+        CHECK(s == String("1 and [UNKNOWN KEY: Absent]"));
+
+        // All keys resolved -> Error::Ok.
+        Error ok;
+        String s2 = db.format("{Present}", &ok);
+        CHECK(ok.isOk());
+        CHECK(s2 == String("1"));
+}
+
+TEST_CASE("VariantDatabase: format consults resolver for missing keys") {
+        using DB = VariantDatabase<"FmtTagResolver">;
+        DB::ID a("A");
+        DB db;
+        db.set(a, int32_t(7));
+
+        auto resolver = [](const String &key, const String &spec) -> std::optional<String> {
+                if(key == String("B")) {
+                        // Echo the spec back so we can verify it was forwarded.
+                        return String("B-resolved(") + spec + String(")");
+                }
+                return std::nullopt;
+        };
+
+        Error err;
+        String s = db.format("{A}/{B:custom}/{C}", resolver, &err);
+        // C is still unresolved, so err must report IdNotFound, but the
+        // resolver-supplied B value is interpolated cleanly.
+        CHECK(err == Error::IdNotFound);
+        CHECK(s == String("7/B-resolved(custom)/[UNKNOWN KEY: C]"));
+}
+
+TEST_CASE("VariantDatabase: format resolver enables database nesting") {
+        using DB = VariantDatabase<"FmtTagNest">;
+        DB::ID local("Local");
+        DB::ID shared("Shared");
+
+        DB parent;
+        parent.set(shared, VideoFormat(VideoFormat::Smpte1080p29_97));
+
+        DB child;
+        child.set(local, String("hello"));
+
+        Error err;
+        String s = child.format("{Local} on {Shared:smpte}",
+                [&parent](const String &key, const String &spec) -> std::optional<String> {
+                        DB::ID id = DB::ID::find(key);
+                        if(!id.isValid() || !parent.contains(id)) return std::nullopt;
+                        return parent.get(id).format(spec);
+                }, &err);
+        CHECK(err.isOk());
+        CHECK(s == String("hello on 1080p29.97"));
+}
+
+TEST_CASE("VariantDatabase: format resolver returning nullopt falls back to sentinel") {
+        using DB = VariantDatabase<"FmtTagResolverMiss">;
+        DB db;
+        Error err;
+        String s = db.format("{X}",
+                [](const String &, const String &) -> std::optional<String> { return std::nullopt; },
+                &err);
+        CHECK(err == Error::IdNotFound);
+        CHECK(s == String("[UNKNOWN KEY: X]"));
+}
+
+TEST_CASE("VariantDatabase: format honors {{ and }} escapes") {
+        using DB = VariantDatabase<"FmtTagEsc">;
+        DB::ID v("V");
+        DB db;
+        db.set(v, int32_t(7));
+        CHECK(db.format("literal {{ and }} braces, value={V}")
+              == String("literal { and } braces, value=7"));
+}
+
+TEST_CASE("VariantDatabase: format renders multiple tokens in one pass") {
+        using DB = VariantDatabase<"FmtTagMulti">;
+        DB::ID vf("VideoFormat");
+        DB::ID tc("Timecode");
+        DB::ID who("Who");
+        DB db;
+        db.set(vf, VideoFormat(VideoFormat::Smpte1080p29_97));
+        db.set(tc, Timecode(Timecode::NDF24, 1, 2, 3, 4));
+        db.set(who, String("rec1"));
+        String out = db.format("[{Who}] {VideoFormat:smpte} @ {Timecode:smpte}");
+        CHECK(out == String("[rec1] 1080p29.97 @ 01:02:03:04"));
+}
+
+TEST_CASE("VariantDatabase: format leaves text without tokens unchanged") {
+        using DB = VariantDatabase<"FmtTagPass">;
+        DB db;
+        CHECK(db.format("no tokens here") == String("no tokens here"));
+}

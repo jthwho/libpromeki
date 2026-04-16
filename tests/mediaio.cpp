@@ -16,6 +16,7 @@
 #include <promeki/timecode.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/framerate.h>
+#include <promeki/videoformat.h>
 #include <promeki/dir.h>
 #include <promeki/imgseq.h>
 #include <promeki/file.h>
@@ -46,7 +47,7 @@ TEST_CASE("MediaIO_RegistryContainsTPG") {
 TEST_CASE("MediaIO_CreateByType") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_2997));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -164,10 +165,11 @@ TEST_CASE("MediaIO_DefaultConfigTPG") {
         // so an unconfigured TPG produces a ready-to-use reference
         // stream (1080p29.97 colour bars with burn-in, stereo AvSync
         // audio marker on 48 kHz PCM, timecode starting at 01:00:00:00).
-        CHECK(cfg.getAs<FrameRate>(MediaConfig::FrameRate).isValid());
+        VideoFormat vfmt = cfg.getAs<VideoFormat>(MediaConfig::VideoFormat);
+        CHECK(vfmt.isValid());
+        CHECK(vfmt.raster() == Size2Du32(1920, 1080));
+        CHECK(vfmt.frameRate() == FrameRate(FrameRate::FPS_29_97));
         CHECK(cfg.getAs<bool>(MediaConfig::VideoEnabled) == true);
-        CHECK(cfg.getAs<Size2Du32>(MediaConfig::VideoSize)
-              == Size2Du32(1920, 1080));
         CHECK(cfg.getAs<bool>(MediaConfig::VideoBurnEnabled) == true);
         CHECK(cfg.getAs<int>(MediaConfig::VideoBurnFontSize) == 0);
         CHECK(cfg.getAs<bool>(MediaConfig::AudioEnabled) == true);
@@ -207,7 +209,7 @@ TEST_CASE("MediaIO_DefaultConfigTPG") {
 TEST_CASE("MediaIO_Introspection_ClosedStateIsZero") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_30));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p30));
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -225,9 +227,8 @@ TEST_CASE("MediaIO_Introspection_ReadPrefetchCounts") {
         // submitted on the way out.
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_30));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(Size2Du32(16, 16), FrameRate(FrameRate::FPS_30)));
         cfg.set(MediaConfig::VideoEnabled, true);
-        cfg.set(MediaConfig::VideoSize, Size2Du32(16, 16));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Output).isOk());
@@ -283,9 +284,8 @@ TEST_CASE("MediaIO_Introspection_PendingWritesDrainAfterClose") {
 TEST_CASE("MediaIO_Introspection_FrameAvailableMatchesReadyReads") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_30));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(Size2Du32(16, 16), FrameRate(FrameRate::FPS_30)));
         cfg.set(MediaConfig::VideoEnabled, true);
-        cfg.set(MediaConfig::VideoSize, Size2Du32(16, 16));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Output).isOk());
@@ -308,9 +308,8 @@ TEST_CASE("MediaIO_Introspection_FrameAvailableMatchesReadyReads") {
 TEST_CASE("MediaIO_TPG_FullGeneration") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(Size2Du32(320, 240), FrameRate(FrameRate::FPS_24)));
         cfg.set(MediaConfig::VideoEnabled, true);
-        cfg.set(MediaConfig::VideoSize, Size2Du32(320, 240));
         cfg.set(MediaConfig::VideoPattern, VideoPattern::ColorBars);
         cfg.set(MediaConfig::AudioEnabled, true);
         { EnumList __m = EnumList::forType<AudioPattern>(); __m.append(AudioPattern::Tone); cfg.set(MediaConfig::AudioChannelModes, __m); }
@@ -375,9 +374,8 @@ TEST_CASE("MediaIO_TPG_FullGeneration") {
 TEST_CASE("MediaIO_TPG_VideoOnly") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_25));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(Size2Du32(64, 64), FrameRate(FrameRate::FPS_25)));
         cfg.set(MediaConfig::VideoEnabled, true);
-        cfg.set(MediaConfig::VideoSize, Size2Du32(64, 64));
         cfg.set(MediaConfig::VideoPattern, VideoPattern::Ramp);
 
         MediaIO *io = MediaIO::create(cfg);
@@ -405,7 +403,7 @@ TEST_CASE("MediaIO_TPG_VideoOnly") {
 TEST_CASE("MediaIO_TPG_AudioOnly") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_30));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p30));
         cfg.set(MediaConfig::AudioEnabled, true);
         { EnumList __m = EnumList::forType<AudioPattern>(); __m.append(AudioPattern::Silence); cfg.set(MediaConfig::AudioChannelModes, __m); }
         cfg.set(MediaConfig::AudioChannels, 4);
@@ -435,7 +433,7 @@ TEST_CASE("MediaIO_TPG_AudioCadence_29_97_48k") {
         // frame (no constant-1602 drift).
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_2997));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
         cfg.set(MediaConfig::AudioEnabled, true);
         { EnumList __m = EnumList::forType<AudioPattern>(); __m.append(AudioPattern::Silence); cfg.set(MediaConfig::AudioChannelModes, __m); }
         cfg.set(MediaConfig::AudioRate, 48000.0f);
@@ -466,7 +464,7 @@ TEST_CASE("MediaIO_TPG_AudioCadence_30_48k_isConstant") {
         // sample count.
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_30));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p30));
         cfg.set(MediaConfig::AudioEnabled, true);
         { EnumList __m = EnumList::forType<AudioPattern>(); __m.append(AudioPattern::Silence); cfg.set(MediaConfig::AudioChannelModes, __m); }
         cfg.set(MediaConfig::AudioRate, 48000.0f);
@@ -494,7 +492,7 @@ TEST_CASE("MediaIO_TPG_AudioCadence_30_48k_isConstant") {
 TEST_CASE("MediaIO_TPG_TimecodeOnly") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_2997));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
         cfg.set(MediaConfig::TimecodeEnabled, true);
         cfg.set(MediaConfig::TimecodeDropFrame, true);
         cfg.set(MediaConfig::TimecodeStart, "10:00:00;00");
@@ -520,7 +518,7 @@ TEST_CASE("MediaIO_TPG_TimecodeOnly") {
 TEST_CASE("MediaIO_TPG_WriterNotSupported") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::VideoEnabled, true);
 
         MediaIO *io = MediaIO::create(cfg);
@@ -532,7 +530,7 @@ TEST_CASE("MediaIO_TPG_WriterNotSupported") {
 TEST_CASE("MediaIO_TPG_NothingEnabledFails") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         // No video, audio, or timecode enabled
 
         MediaIO *io = MediaIO::create(cfg);
@@ -544,7 +542,7 @@ TEST_CASE("MediaIO_TPG_NothingEnabledFails") {
 TEST_CASE("MediaIO_TPG_InvalidPatternFails") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::VideoEnabled, true);
         cfg.set(MediaConfig::VideoPattern, "bogus_pattern");
 
@@ -557,7 +555,7 @@ TEST_CASE("MediaIO_TPG_InvalidPatternFails") {
 TEST_CASE("MediaIO_TPG_ReadBeforeOpenFails") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::VideoEnabled, true);
 
         MediaIO *io = MediaIO::create(cfg);
@@ -571,7 +569,7 @@ TEST_CASE("MediaIO_TPG_ReadBeforeOpenFails") {
 TEST_CASE("MediaIO_TPG_DoubleOpenFails") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::VideoEnabled, true);
 
         MediaIO *io = MediaIO::create(cfg);
@@ -589,7 +587,7 @@ TEST_CASE("MediaIO_TPG_DoubleOpenFails") {
 TEST_CASE("MediaIO_TPG_NoSeek") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::VideoEnabled, true);
 
         MediaIO *io = MediaIO::create(cfg);
@@ -611,9 +609,8 @@ TEST_CASE("MediaIO_TPG_NoSeek") {
 TEST_CASE("MediaIO_TPG_Motion") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(Size2Du32(64, 64), FrameRate(FrameRate::FPS_24)));
         cfg.set(MediaConfig::VideoEnabled, true);
-        cfg.set(MediaConfig::VideoSize, Size2Du32(64, 64));
         cfg.set(MediaConfig::VideoPattern, VideoPattern::ColorBars);
         cfg.set(MediaConfig::VideoMotion, 2.0);
 
@@ -758,7 +755,7 @@ TEST_CASE("MediaIO_ImageFile_ConfigFrameRateOverride") {
         {
                 MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
                 cfg.set(MediaConfig::Filename, String(fn));
-                FrameRate wanted(FrameRate::FPS_2997);
+                FrameRate wanted(FrameRate::FPS_29_97);
                 cfg.set(MediaConfig::FrameRate, wanted);
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
@@ -931,7 +928,7 @@ TEST_CASE("MediaIO_ImageFile_ProbeDetectsFormat") {
 TEST_CASE("MediaIO_BaseClass_FrameRateAccessor") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -944,7 +941,7 @@ TEST_CASE("MediaIO_BaseClass_FrameRateAccessor") {
 TEST_CASE("MediaIO_BaseClass_AudioDescAccessor") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::AudioEnabled, true);
         cfg.set(MediaConfig::AudioRate, 48000.0f);
         cfg.set(MediaConfig::AudioChannels, 4);
@@ -962,7 +959,7 @@ TEST_CASE("MediaIO_BaseClass_AudioDescAccessor") {
 TEST_CASE("MediaIO_BaseClass_AudioDescEmpty") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::VideoEnabled, true);
         // No audio enabled
         MediaIO *io = MediaIO::create(cfg);
@@ -981,7 +978,7 @@ TEST_CASE("MediaIO_BaseClass_AudioDescEmpty") {
 TEST_CASE("MediaIO_TPG_StepZeroHoldsTimecode") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::TimecodeEnabled, true);
         cfg.set(MediaConfig::TimecodeStart, "01:00:00:00");
         MediaIO *io = MediaIO::create(cfg);
@@ -1004,7 +1001,7 @@ TEST_CASE("MediaIO_TPG_StepZeroHoldsTimecode") {
 TEST_CASE("MediaIO_TPG_StepForwardAdvancesTimecode") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::TimecodeEnabled, true);
         cfg.set(MediaConfig::TimecodeStart, "01:00:00:00");
         MediaIO *io = MediaIO::create(cfg);
@@ -1033,9 +1030,8 @@ TEST_CASE("MediaIO_TPG_PrefetchDepth_DefaultIsTaskValue") {
         // (1 for TPG since it doesn't override).
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(Size2Du32(32, 32), FrameRate(FrameRate::FPS_24)));
         cfg.set(MediaConfig::VideoEnabled, true);
-        cfg.set(MediaConfig::VideoSize, Size2Du32(32, 32));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Output).isOk());
@@ -1049,9 +1045,8 @@ TEST_CASE("MediaIO_TPG_PrefetchDepth_UserOverride") {
         // win — the task's default does not overwrite it.
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(Size2Du32(32, 32), FrameRate(FrameRate::FPS_24)));
         cfg.set(MediaConfig::VideoEnabled, true);
-        cfg.set(MediaConfig::VideoSize, Size2Du32(32, 32));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         io->setPrefetchDepth(4);
@@ -1073,7 +1068,7 @@ TEST_CASE("MediaIO_TPG_PrefetchDepth_UserOverride") {
 TEST_CASE("MediaIO_TPG_PrefetchDepth_ClampsToOne") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -1091,7 +1086,7 @@ TEST_CASE("MediaIO_TPG_PrefetchDepth_ClampsToOne") {
 TEST_CASE("MediaIO_TPG_DefaultSeekMode_IsExact") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -1159,7 +1154,7 @@ TEST_CASE("MediaIO_AudioFile_SeekDefault_ResolvesToExact") {
 TEST_CASE("MediaIO_TrackSelection_PreOpenOnly") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -1187,7 +1182,7 @@ TEST_CASE("MediaIO_TrackSelection_PreOpenOnly") {
 TEST_CASE("MediaIO_TPG_FrameAvailable_AfterRead") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -1208,9 +1203,8 @@ TEST_CASE("MediaIO_TPG_FrameAvailable_AfterRead") {
 TEST_CASE("MediaIO_TPG_ReopenSameInstance") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(Size2Du32(32, 32), FrameRate(FrameRate::FPS_24)));
         cfg.set(MediaConfig::VideoEnabled, true);
-        cfg.set(MediaConfig::VideoSize, Size2Du32(32, 32));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
 
@@ -1238,7 +1232,7 @@ TEST_CASE("MediaIO_SendParams_DefaultIsNotSupported") {
         // default implementation returns NotSupported.
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -1253,7 +1247,7 @@ TEST_CASE("MediaIO_SendParams_DefaultIsNotSupported") {
 TEST_CASE("MediaIO_SendParams_RequiresOpen") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -1270,7 +1264,7 @@ TEST_CASE("MediaIO_SendParams_RequiresOpen") {
 TEST_CASE("MediaIO_CancelPending_NoOpWhenClosed") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -1292,7 +1286,7 @@ TEST_CASE("MediaIO_Stats_DefaultPopulatesStandardKeys") {
         // rather than an empty stats bag.
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -1311,7 +1305,7 @@ TEST_CASE("MediaIO_Stats_DefaultPopulatesStandardKeys") {
 TEST_CASE("MediaIO_Stats_RequiresOpen") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -1448,9 +1442,8 @@ TEST_CASE("MediaIO_TPG_CancelPendingDropsReadResults") {
         // subsequent blocking read should still succeed (it submits fresh).
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(Size2Du32(32, 32), FrameRate(FrameRate::FPS_24)));
         cfg.set(MediaConfig::VideoEnabled, true);
-        cfg.set(MediaConfig::VideoSize, Size2Du32(32, 32));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Output).isOk());
@@ -2083,12 +2076,12 @@ TEST_CASE("MediaIO_ImageSequence_FrameRateSourceConfig") {
         MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
         cfg.set(MediaConfig::Filename, mask);
         cfg.set(MediaConfig::FrameRate,
-                FrameRate(FrameRate::FPS_2997));
+                FrameRate(FrameRate::FPS_29_97));
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Output).isOk());
-        CHECK(io->frameRate() == FrameRate(FrameRate::FPS_2997));
+        CHECK(io->frameRate() == FrameRate(FrameRate::FPS_29_97));
         const Metadata &md = io->metadata();
         CHECK(md.getAs<String>(Metadata::FrameRateSource) == "config");
         io->close();

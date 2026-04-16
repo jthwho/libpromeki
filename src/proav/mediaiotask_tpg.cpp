@@ -7,6 +7,7 @@
 
 #include <cmath>
 #include <promeki/mediaiotask_tpg.h>
+#include <promeki/videoformat.h>
 #include <promeki/image.h>
 #include <promeki/audio.h>
 #include <promeki/frame.h>
@@ -39,14 +40,16 @@ MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
                                 const VariantSpec *gs = MediaConfig::spec(id);
                                 specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
                         };
-                        // General
-                        s(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_2997));
+                        // General — VideoFormat provides both the
+                        // raster (1920×1080) and frame rate (29.97)
+                        // in a single key, replacing the former
+                        // separate FrameRate + VideoSize pair.
+                        s(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
                         // Video — enabled by default so an unconfigured
-                        // TPG produces a usable 1080p59.94 colour-bars
+                        // TPG produces a usable 1080p29.97 colour-bars
                         // stream out of the box.
                         s(MediaConfig::VideoEnabled, true);
                         s(MediaConfig::VideoPattern, VideoPattern::ColorBars);
-                        s(MediaConfig::VideoSize, Size2Du32(1920, 1080));
                         s(MediaConfig::VideoPixelFormat, PixelDesc(PixelDesc::RGB8_sRGB));
                         s(MediaConfig::VideoSolidColor, Color::Black);
                         s(MediaConfig::VideoMotion, 0.0);
@@ -57,7 +60,7 @@ MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
                         s(MediaConfig::VideoBurnEnabled, true);
                         s(MediaConfig::VideoBurnFontPath, String());
                         s(MediaConfig::VideoBurnFontSize, int32_t(0));
-                        s(MediaConfig::VideoBurnText, String());
+                        s(MediaConfig::VideoBurnText, String("{Timecode:smpte}"));
                         s(MediaConfig::VideoBurnPosition, BurnPosition::BottomCenter);
                         s(MediaConfig::VideoBurnTextColor, Color::White);
                         s(MediaConfig::VideoBurnBgColor, Color::Black);
@@ -129,16 +132,16 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
 
         const MediaIO::Config &cfg = cmd.config;
 
-        // -- Frame rate (required) --
-        FrameRate fps = cfg.getAs<FrameRate>(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_2997));
-        if(!fps.isValid()) {
-                promekiErr("MediaIOTask_TPG: invalid frame rate");
+        // -- VideoFormat (required) --
+        VideoFormat vfmt = cfg.getAs<VideoFormat>(MediaConfig::VideoFormat);
+        if(!vfmt.isValid()) {
+                promekiErr("MediaIOTask_TPG: invalid or missing VideoFormat");
                 return Error::InvalidArgument;
         }
-        _frameRate = fps;
+        _frameRate = vfmt.frameRate();
 
         MediaDesc mediaDesc;
-        mediaDesc.setFrameRate(fps);
+        mediaDesc.setFrameRate(_frameRate);
 
         // -- Video --
         _videoEnabled = cfg.getAs<bool>(MediaConfig::VideoEnabled, false);
@@ -153,10 +156,10 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
                 _videoPattern.setPattern(
                         static_cast<VideoTestPattern::Pattern>(patEnum.value()));
 
-                Size2Du32 size = cfg.getAs<Size2Du32>(MediaConfig::VideoSize, Size2Du32(1920, 1080));
+                Size2Du32 size = vfmt.raster();
                 PixelDesc pd = cfg.getAs<PixelDesc>(MediaConfig::VideoPixelFormat, PixelDesc(PixelDesc::RGB8_sRGB));
                 if(!size.isValid()) {
-                        promekiErr("MediaIOTask_TPG: invalid dimensions %s",
+                        promekiErr("MediaIOTask_TPG: invalid raster dimensions %s",
                                    size.toString().cstr());
                         return Error::InvalidDimension;
                 }
@@ -191,16 +194,19 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
 
                 // Burn-in configuration.  VideoTestPattern owns the
                 // cached background and applies the burn on a copy, so
-                // there's no pre-render pass needed here.
-                bool burnEnabled = cfg.getAs<bool>(MediaConfig::VideoBurnEnabled, true);
-                _videoPattern.setBurnEnabled(burnEnabled);
-                if(burnEnabled) {
+                // there's no pre-render pass needed here.  The actual
+                // burn text is computed per-frame from
+                // @ref _burnTextTemplate via @ref Frame::makeString
+                // after the frame's metadata has been populated.
+                _burnEnabled = cfg.getAs<bool>(MediaConfig::VideoBurnEnabled, true);
+                _videoPattern.setBurnEnabled(_burnEnabled);
+                if(_burnEnabled) {
                         _videoPattern.setBurnFontFilename(
                                 cfg.getAs<String>(MediaConfig::VideoBurnFontPath, String()));
                         _videoPattern.setBurnFontSize(
                                 cfg.getAs<int>(MediaConfig::VideoBurnFontSize, 0));
-                        _videoPattern.setBurnText(
-                                cfg.getAs<String>(MediaConfig::VideoBurnText, String()));
+                        _burnTextTemplate =
+                                cfg.getAs<String>(MediaConfig::VideoBurnText, String());
                         _videoPattern.setBurnTextColor(
                                 cfg.getAs<Color>(MediaConfig::VideoBurnTextColor, Color::White));
                         _videoPattern.setBurnBackgroundColor(
@@ -306,7 +312,7 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
 
                 bool dropFrame = cfg.getAs<bool>(MediaConfig::TimecodeDropFrame, false);
                 _tcGen.setDropFrame(dropFrame);
-                _tcGen.setFrameRate(fps);
+                _tcGen.setFrameRate(_frameRate);
         }
 
         // Must have at least one component enabled
@@ -320,7 +326,7 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
         // Fill output fields
         cmd.mediaDesc = mediaDesc;
         if(_audioEnabled) cmd.audioDesc = _audioDesc;
-        cmd.frameRate = fps;
+        cmd.frameRate = _frameRate;
         cmd.canSeek = false;
         cmd.frameCount = MediaIO::FrameCountInfinite;
         return Error::Ok;
@@ -341,6 +347,8 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandClose &cmd) {
         _dataEncoder = ImageDataEncoder();
         _dataEncoderEnabled = false;
         _videoPattern.setBurnEnabled(false);
+        _burnEnabled = false;
+        _burnTextTemplate = String();
         return Error::Ok;
 }
 
@@ -372,43 +380,6 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandRead &cmd) {
                 }
         }
 
-        // Video.  VideoTestPattern manages static-background caching
-        // internally — we just hand it the current timecode so the
-        // burn-in stage (if enabled) can draw the top line.
-        if(_videoEnabled) {
-                Image img = _videoPattern.create(_imageDesc, _motionOffset,
-                                                 _timecodeEnabled ? tc : Timecode());
-                if(_timecodeEnabled) {
-                        img.metadata().set(Metadata::Timecode, tc);
-                }
-
-                // Binary data encoder pass — runs after the test
-                // pattern (and any burn-in) has been rendered, so the
-                // stamped band overwrites the top of the picture.  We
-                // emit two items per frame:
-                //   item 0: (streamID << 32) | frameNumber  (frame ID)
-                //   item 1: BCD timecode word (Timecode::toBcd64)
-                if(_dataEncoderEnabled && _dataEncoder.isValid()) {
-                        const uint64_t frameId =
-                                (static_cast<uint64_t>(_streamId) << 32) |
-                                static_cast<uint32_t>(_frameCount & 0xffffffffu);
-                        const uint64_t tcBcd =
-                                (_timecodeEnabled && tc.isValid())
-                                        ? tc.toBcd64()
-                                        : uint64_t(0);
-                        List<ImageDataEncoder::Item> items;
-                        items.pushToBack({ 0, _dataEncoderRepeat, frameId });
-                        items.pushToBack({ _dataEncoderRepeat, _dataEncoderRepeat, tcBcd });
-                        Error encErr = _dataEncoder.encode(img, items);
-                        if(encErr.isError()) {
-                                promekiWarn("MediaIOTask_TPG: data encoder pass "
-                                            "failed: %s", encErr.name().cstr());
-                        }
-                }
-
-                frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
-        }
-
         // Audio.  Compute the per-frame sample count via the rational
         // cadence in FrameRate so fractional NTSC rates (29.97, 59.94,
         // ...) emit alternating sample counts whose cumulative total
@@ -425,9 +396,70 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandRead &cmd) {
                 }
         }
 
-        // Frame-level timecode metadata
+        // Video background — pure pattern, no burn yet.  Pushed to the
+        // frame so the per-frame burn template (resolved below) can see
+        // it via {Image[0].*} and {@VideoFormat}.
+        if(_videoEnabled) {
+                Image img = _videoPattern.create(_imageDesc, _motionOffset,
+                                                 _timecodeEnabled ? tc : Timecode());
+                if(_timecodeEnabled) {
+                        img.metadata().set(Metadata::Timecode, tc);
+                }
+                frame.modify()->imageList().pushToBack(
+                        Image::Ptr::create(std::move(img)));
+        }
+
+        // Frame-level metadata.  Written before the burn template
+        // resolves so {Timecode}, {FrameRate}, and {@VideoFormat} all
+        // pick it up.  FrameRate is required for VideoFormat to
+        // render its rate component.
+        frame.modify()->metadata().set(Metadata::FrameRate, _frameRate);
         if(_timecodeEnabled) {
                 frame.modify()->metadata().set(Metadata::Timecode, tc);
+        }
+
+        // Resolve and apply the burn against the now-populated frame.
+        // All mutations go through the Image::Ptr already inside the
+        // frame's imageList so the frame always reflects the final
+        // state.  modify() on the Ptr detaches from the cached
+        // background plane; ensureExclusive() detaches the pixel
+        // buffers so painting is safe.
+        if(_videoEnabled && _burnEnabled && !_burnTextTemplate.isEmpty()) {
+                String burnText = frame->makeString(_burnTextTemplate);
+                if(!burnText.isEmpty()) {
+                        Image *imgMut = frame.modify()->imageList().back().modify();
+                        imgMut->ensureExclusive();
+                        Error burnErr = _videoPattern.applyBurn(*imgMut, burnText);
+                        if(burnErr.isError()) {
+                                promekiWarn("MediaIOTask_TPG: applyBurn failed: %s",
+                                            burnErr.name().cstr());
+                        }
+                }
+        }
+
+        // Binary data encoder pass — runs last so the stamped band
+        // sits on top of both the pattern and any burn-in.  We emit
+        // two items per frame:
+        //   item 0: (streamID << 32) | frameNumber  (frame ID)
+        //   item 1: BCD timecode word (Timecode::toBcd64)
+        if(_videoEnabled && _dataEncoderEnabled && _dataEncoder.isValid()) {
+                const uint64_t frameId =
+                        (static_cast<uint64_t>(_streamId) << 32) |
+                        static_cast<uint32_t>(_frameCount & 0xffffffffu);
+                const uint64_t tcBcd =
+                        (_timecodeEnabled && tc.isValid())
+                                ? tc.toBcd64()
+                                : uint64_t(0);
+                List<ImageDataEncoder::Item> items;
+                items.pushToBack({ 0, _dataEncoderRepeat, frameId });
+                items.pushToBack({ _dataEncoderRepeat, _dataEncoderRepeat, tcBcd });
+                Image *imgMut = frame.modify()->imageList().back().modify();
+                imgMut->ensureExclusive();
+                Error encErr = _dataEncoder.encode(*imgMut, items);
+                if(encErr.isError()) {
+                        promekiWarn("MediaIOTask_TPG: data encoder pass "
+                                    "failed: %s", encErr.name().cstr());
+                }
         }
 
         // Advance motion by step (negative step reverses direction)

@@ -238,7 +238,8 @@ class DataStream {
                         TypeMediaPipelineStage  = 0x3B, ///< @brief MediaPipelineConfig::Stage
                         TypeMediaPipelineRoute  = 0x3C, ///< @brief MediaPipelineConfig::Route
                         TypeMediaPipelineConfig = 0x3D, ///< @brief MediaPipelineConfig (metadata + stages + routes)
-                        TypeMediaPipelineStats  = 0x3E  ///< @brief MediaPipelineStats (per-stage + aggregate)
+                        TypeMediaPipelineStats  = 0x3E, ///< @brief MediaPipelineStats (per-stage + aggregate)
+                        TypeVideoFormat        = 0x3F  ///< @brief VideoFormat (length-prefixed string round-trip)
                 };
 
                 /** @brief Current wire format version. */
@@ -423,6 +424,8 @@ class DataStream {
                 DataStream &operator<<(const TimeStamp &val);
                 /** @brief Writes a FrameRate as two uint32 values. */
                 DataStream &operator<<(const FrameRate &val);
+                /** @brief Writes a VideoFormat as its canonical string representation. */
+                DataStream &operator<<(const VideoFormat &val);
                 /** @brief Writes a Timecode as its canonical string representation. */
                 DataStream &operator<<(const Timecode &val);
                 /** @brief Writes a Color as its lossless ModelFormat string. */
@@ -497,6 +500,8 @@ class DataStream {
                 DataStream &operator>>(TimeStamp &val);
                 /** @brief Reads a FrameRate from two tagged uint32 values. */
                 DataStream &operator>>(FrameRate &val);
+                /** @brief Reads a VideoFormat from its canonical string representation. */
+                DataStream &operator>>(VideoFormat &val);
                 /** @brief Reads a Timecode from its canonical string representation. */
                 DataStream &operator>>(Timecode &val);
                 /** @brief Reads a Color from its lossless ModelFormat string. */
@@ -675,6 +680,7 @@ class DataStream {
                 void writeDateTimeData(const DateTime &val);
                 void writeTimeStampData(const TimeStamp &val);
                 void writeFrameRateData(const FrameRate &val);
+                void writeVideoFormatData(const VideoFormat &val);
                 void writeTimecodeData(const Timecode &val);
                 void writeColorData(const Color &val);
                 void writeColorModelData(const ColorModel &val);
@@ -704,6 +710,7 @@ class DataStream {
                 DateTime readDateTimeData();
                 TimeStamp readTimeStampData();
                 FrameRate readFrameRateData();
+                VideoFormat readVideoFormatData();
                 Timecode  readTimecodeData();
                 Color     readColorData();
                 ColorModel readColorModelData();

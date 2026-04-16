@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <optional>
+#include <type_traits>
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
 #include <promeki/audiodesc.h>
@@ -224,6 +226,82 @@ class Audio {
                         return reinterpret_cast<T *>(_buffer->data());
                 }
 
+                /**
+                 * @brief Resolves a single template key against this audio buffer's structure.
+                 *
+                 * Mirrors @ref Image::resolveTemplateKey — used by
+                 * @ref makeString and by enclosing containers
+                 * (@ref Frame::resolveTemplateKey for the
+                 * @c Audio[N].xxx subscript syntax) to render a single
+                 * @c {Key[:spec]} placeholder.  Returns a value when
+                 * the key names something this audio object can
+                 * describe (a registered metadata key, or one of the
+                 * @c "@"-prefixed pseudo keys listed in
+                 * @ref makeString) and @c std::nullopt otherwise.
+                 *
+                 * @param key  The placeholder key (no braces, no colon).
+                 * @param spec The format spec (may be empty).
+                 */
+                std::optional<String> resolveTemplateKey(const String &key, const String &spec) const;
+
+                /**
+                 * @brief Substitutes @c {Key[:spec]} placeholders against this audio buffer.
+                 *
+                 * Delegates to @ref Metadata::format for direct
+                 * metadata keys.  Adds an introspection layer that
+                 * resolves @c "@"-prefixed pseudo keys describing the
+                 * audio buffer's own structure.
+                 *
+                 * Recognised pseudo keys:
+                 *
+                 *  - @c \@SampleRate — sample rate in Hz (float).
+                 *  - @c \@Channels — channel count (uint32).
+                 *  - @c \@DataType — short data-type name (e.g. @c "PCMI_S16LE").
+                 *  - @c \@Samples — current sample count (uint64).
+                 *  - @c \@MaxSamples — buffer capacity in samples (uint64).
+                 *  - @c \@Frames — total sample frames (samples × channels) (uint64).
+                 *  - @c \@BytesPerSample — single-sample size in bytes (uint64).
+                 *  - @c \@IsValid — bool.
+                 *  - @c \@IsCompressed — bool.
+                 *  - @c \@IsNative — bool (true if format matches host native float).
+                 *  - @c \@CompressedSize — encoded byte count, or 0 (uint64).
+                 *  - @c \@CodecFourCC — four-character codec code, or empty (string).
+                 *
+                 * @par Example
+                 * @code
+                 * Audio aud(AudioDesc(48000, 2, AudioDesc::Float32), 1024);
+                 * String s = aud.makeString("{@SampleRate}Hz {@Channels}ch x {@Samples}");
+                 * // "48000Hz 2ch x 1024"
+                 * @endcode
+                 *
+                 * @tparam Resolver Callable returning @c std::optional<String>.  Pass
+                 *                  @c nullptr to disable the user fallback.
+                 * @param tmpl     Template string with @c {Key[:spec]} placeholders.
+                 * @param resolver Optional fallback resolver consulted for keys that
+                 *                 are neither @c "@"-prefixed pseudo keys nor present
+                 *                 in @ref metadata.
+                 * @param err      Optional error output.
+                 */
+                template <typename Resolver>
+                String makeString(const String &tmpl, Resolver &&resolver, Error *err = nullptr) const {
+                        return _desc.metadata().format(tmpl,
+                                [this, &resolver](const String &key, const String &spec) -> std::optional<String> {
+                                        if(!key.isEmpty() && key.cstr()[0] == '@') {
+                                                auto v = resolvePseudoKey(key, spec);
+                                                if(v.has_value()) return v;
+                                        }
+                                        if constexpr (!std::is_same_v<std::decay_t<Resolver>, std::nullptr_t>) {
+                                                return resolver(key, spec);
+                                        }
+                                        return std::nullopt;
+                                }, err);
+                }
+
+                /** @brief Convenience overload of @ref makeString with no fallback resolver. */
+                String makeString(const String &tmpl, Error *err = nullptr) const {
+                        return makeString(tmpl, nullptr, err);
+                }
+
         private:
                 Buffer::Ptr     _buffer;
                 AudioDesc       _desc;
@@ -231,6 +309,7 @@ class Audio {
                 size_t          _maxSamples = 0;
 
                 bool allocate(const MemSpace &ms);
+                std::optional<String> resolvePseudoKey(const String &key, const String &spec) const;
 };
 
 PROMEKI_NAMESPACE_END

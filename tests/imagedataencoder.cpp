@@ -19,6 +19,7 @@
 #include <promeki/timecode.h>
 #include <promeki/framerate.h>
 #include <promeki/size2d.h>
+#include <promeki/videoformat.h>
 
 using namespace promeki;
 
@@ -391,8 +392,7 @@ TEST_CASE("ImageDataEncoder end-to-end via TPG MediaIO") {
         // and a known stream ID so we can match it back.
         const uint32_t kStreamId = 0xC0FFEEAAu;
         MediaIO::Config cfg = MediaIO::defaultConfig("TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_30));
-        cfg.set(MediaConfig::VideoSize, Size2Du32(1920, 1080));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p30));
         cfg.set(MediaConfig::VideoPixelFormat, PixelDesc(PixelDesc::RGBA8_sRGB));
         cfg.set(MediaConfig::TimecodeEnabled, true);
         cfg.set(MediaConfig::TimecodeStart, String("01:00:00:00"));

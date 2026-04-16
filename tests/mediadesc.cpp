@@ -82,7 +82,7 @@ TEST_CASE("MediaDesc_Default") {
 
 TEST_CASE("MediaDesc_SetFrameRate") {
         MediaDesc vd;
-        vd.setFrameRate(FrameRate(FrameRate::FPS_2997));
+        vd.setFrameRate(FrameRate(FrameRate::FPS_29_97));
         CHECK(vd.frameRate().isValid());
         CHECK(vd.frameRate().numerator() == 30000);
         CHECK(vd.frameRate().denominator() == 1001);
@@ -118,6 +118,53 @@ TEST_CASE("MediaDesc_CopyIsIndependent") {
         CHECK(v2.frameRate().numerator() == 30);
 }
 
+TEST_CASE("MediaDesc_videoFormat_composes_raster_rate_and_scan") {
+        MediaDesc md;
+        md.setFrameRate(FrameRate(FrameRate::FPS_29_97));
+
+        ImageDesc hd(1920, 1080, PixelDesc::RGBA8_sRGB);
+        hd.setVideoScanMode(VideoScanMode::InterlacedEvenFirst);
+        md.imageList().pushToBack(hd);
+
+        ImageDesc uhd(3840, 2160, PixelDesc::RGBA8_sRGB);
+        uhd.setVideoScanMode(VideoScanMode::Progressive);
+        md.imageList().pushToBack(uhd);
+
+        VideoFormat v0 = md.videoFormat(0);
+        CHECK(v0.isValid());
+        CHECK(v0.raster() == Size2Du32(1920, 1080));
+        CHECK(v0.frameRate() == FrameRate(FrameRate::FPS_29_97));
+        CHECK(v0.videoScanMode() == VideoScanMode::InterlacedEvenFirst);
+        CHECK(v0.toString() == "1080i59.94");
+
+        VideoFormat v1 = md.videoFormat(1);
+        CHECK(v1.isValid());
+        CHECK(v1.raster() == Size2Du32(3840, 2160));
+        CHECK(v1.videoScanMode() == VideoScanMode::Progressive);
+        CHECK(v1.toString() == "2160p29.97");
+}
+
+TEST_CASE("MediaDesc_videoFormat_out_of_range_returns_invalid") {
+        MediaDesc md;
+        md.setFrameRate(FrameRate(FrameRate::FPS_24));
+        md.imageList().pushToBack(ImageDesc(1920, 1080, PixelDesc::RGBA8_sRGB));
+
+        CHECK_FALSE(md.videoFormat(1).isValid());
+        CHECK_FALSE(md.videoFormat(99).isValid());
+}
+
+TEST_CASE("MediaDesc_videoFormat_empty_list_returns_invalid") {
+        MediaDesc md;
+        md.setFrameRate(FrameRate(FrameRate::FPS_30));
+        CHECK_FALSE(md.videoFormat(0).isValid());
+}
+
+TEST_CASE("MediaDesc_videoFormat_invalid_rate_yields_invalid_format") {
+        MediaDesc md;
+        md.imageList().pushToBack(ImageDesc(1920, 1080, PixelDesc::RGBA8_sRGB));
+        CHECK_FALSE(md.videoFormat(0).isValid());
+}
+
 TEST_CASE("MediaDesc_Metadata") {
         MediaDesc vd;
         CHECK(vd.metadata().isEmpty());
@@ -127,7 +174,7 @@ TEST_CASE("MediaDesc_Metadata") {
 
 TEST_CASE("MediaDesc_MultipleStreams") {
         MediaDesc vd;
-        vd.setFrameRate(FrameRate(FrameRate::FPS_2398));
+        vd.setFrameRate(FrameRate(FrameRate::FPS_23_98));
         vd.imageList().pushToBack(ImageDesc(1920, 1080, PixelDesc::RGBA8_sRGB));
         vd.imageList().pushToBack(ImageDesc(3840, 2160, PixelDesc::RGB8_sRGB));
         vd.audioList().pushToBack(AudioDesc(48000.0f, 2));

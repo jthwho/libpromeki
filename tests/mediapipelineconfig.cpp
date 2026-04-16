@@ -14,6 +14,7 @@
 #include <promeki/datastream.h>
 #include <promeki/dir.h>
 #include <promeki/size2d.h>
+#include <promeki/videoformat.h>
 
 using namespace promeki;
 
@@ -31,7 +32,7 @@ MediaPipelineConfig makeSample() {
         src.name = "src";
         src.type = "TPG";
         src.mode = MediaIO::Output;
-        src.config.set(MediaConfig::VideoSize, Size2Du32(1920, 1080));
+        src.config.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
         src.config.set(MediaConfig::VideoEnabled, true);
         cfg.addStage(src);
 

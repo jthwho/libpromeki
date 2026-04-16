@@ -14,6 +14,7 @@
 #include <promeki/audiodesc.h>
 #include <promeki/metadata.h>
 #include <promeki/framerate.h>
+#include <promeki/videoformat.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -98,6 +99,22 @@ class MediaDesc {
         const ImageDescList &imageList() const { return _imageList; }
         /** @brief Returns a mutable reference to the list of image descriptions. */
         ImageDescList &imageList() { return _imageList; }
+
+        /**
+         * @brief Returns the VideoFormat for the image at @p index.
+         *
+         * Composes the MediaDesc-wide @ref frameRate with the
+         * per-image raster (@ref ImageDesc::size) and scan mode
+         * (@ref ImageDesc::videoScanMode).  Returns a default
+         * (invalid) @ref VideoFormat when @p index is out of range.
+         *
+         * @param index Zero-based image layer index.
+         */
+        VideoFormat videoFormat(size_t index) const {
+                if(index >= _imageList.size()) return VideoFormat();
+                const ImageDesc &img = _imageList[index];
+                return VideoFormat(img.size(), _frameRate, img.videoScanMode());
+        }
 
         /** @brief Returns a const reference to the list of audio descriptions. */
         const AudioDescList &audioList() const { return _audioList; }

@@ -96,7 +96,8 @@ class Error {
                         CorruptData,             ///< Stored data is structurally corrupt.
                         DeviceError,             ///< Hardware device reported an error.
                         DeviceNotFound,          ///< Hardware device was not found or cannot be opened.
-                        FormatMismatch           ///< Audio/video format does not match the expected format.
+                        FormatMismatch,          ///< Audio/video format does not match the expected format.
+                        FontUnavailable          ///< Font could not be loaded or has zero metrics.
                 };
 
                 /**

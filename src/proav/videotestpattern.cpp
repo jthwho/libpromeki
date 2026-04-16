@@ -15,6 +15,7 @@
 #include <promeki/fastfont.h>
 #include <promeki/timecode.h>
 #include <promeki/rect.h>
+#include <promeki/stringlist.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -99,10 +100,6 @@ void VideoTestPattern::invalidateImageCache() const {
         _cachePixelDescId = 0;
 }
 
-Image VideoTestPattern::create(const ImageDesc &desc, double motionOffset) const {
-        return create(desc, motionOffset, Timecode());
-}
-
 ImageDesc VideoTestPattern::rgbScratchDesc(const ImageDesc &target) const {
         // Use RGBA8_sRGB as the scratch format rather than RGB16 so
         // the fallback scratch -> target CSC lands on an already-
@@ -124,42 +121,18 @@ ImageDesc VideoTestPattern::rgbScratchDesc(const ImageDesc &target) const {
 Image VideoTestPattern::create(const ImageDesc &desc, double motionOffset,
                                const Timecode &currentTimecode) const {
         const bool directPaint = desc.pixelDesc().hasPaintEngine();
-        const bool wantTc = _burnEnabled && currentTimecode.isValid();
-        const bool wantText = _burnEnabled && !_burnText.isEmpty();
-        const bool wantBurn = wantTc || wantText;
 
-        // Decide which format the cache should hold.
-        //
-        // 1. Paintable target (RGB, BGR, ...): cache holds the target
-        //    format directly.  Burn (if any) happens on a detached
-        //    copy, no conversion ever runs.
-        //
-        // 2. Non-paintable target (YUV, YCbCr, ...) with no burn:
-        //    cache holds the *already-converted* target-format image.
-        //    We do the one-time RGB16->target conversion inside the
-        //    cache builder, then every subsequent create() call is a
-        //    shallow copy with zero CSC work.
-        //
-        // 3. Non-paintable target with burn: cache must hold a
-        //    paintable RGB16 background so we can burn onto a detached
-        //    copy each frame.  We then convert to the target format
-        //    after burn, via the cached CSCPipeline.
-        //
-        // The cache key includes the pixel desc ID, so toggling burn
-        // on/off automatically invalidates when the cache format
-        // changes between (2) and (3).
-        const bool cacheInRGBBackground = !directPaint && wantBurn;
-        const ImageDesc cacheDesc = cacheInRGBBackground
-                ? rgbScratchDesc(desc)
-                : desc;
-
-        // Renders @p dst in place (paintable formats) or via an RGB16
-        // scratch + Image::convert() (non-paintable).  The convert()
-        // path pulls a compiled pipeline from the global CSC cache, so
-        // repeated calls for the same format pair don't recompile.
-        auto renderInto = [this, directPaint, cacheInRGBBackground,
-                           &desc](Image &dst, double mo,
-                                  const Color *solidColor) {
+        // The background is always cached in the caller's target
+        // pixel format.  For paintable targets the pattern paints
+        // directly into the cache slot; for non-paintable targets we
+        // render into an RGB16 scratch and convert into the slot via
+        // the global CSC cache, so the per-call cost after the first
+        // build is a shallow cache lookup either way.  Burn-in is a
+        // separate pass (@ref applyBurn) so create() never has to pick
+        // a paintable intermediate just because text might be drawn
+        // later.
+        auto renderInto = [this, directPaint, &desc](Image &dst, double mo,
+                                                     const Color *solidColor) {
                 auto runPattern = [this, mo, solidColor](Image &t) {
                         if(solidColor != nullptr) {
                                 renderSolid(t, *solidColor);
@@ -167,13 +140,12 @@ Image VideoTestPattern::create(const ImageDesc &desc, double motionOffset,
                                 render(t, mo);
                         }
                 };
-                if(directPaint || cacheInRGBBackground) {
-                        // dst is in a paintable format (target or RGB16).
+                if(directPaint) {
                         runPattern(dst);
                         return;
                 }
-                // Non-paintable target with no burn: render into an
-                // RGB16 scratch, then convert into the cache slot.
+                // Non-paintable target: render into an RGB16 scratch
+                // and convert into the cache slot.
                 ImageDesc rgbDesc = rgbScratchDesc(desc);
                 Image scratch(rgbDesc);
                 if(!scratch.isValid()) return;
@@ -187,16 +159,16 @@ Image VideoTestPattern::create(const ImageDesc &desc, double motionOffset,
 
         if(_pattern == AvSync) {
                 // AvSync: slot 0 = marker (white), slot 1 = non-marker
-                // (black).  Each slot is cached once in cacheDesc format
+                // (black).  Each slot is cached once in target format
                 // and reused on every subsequent call.
                 const bool marker = currentTimecode.isValid()
                                     && currentTimecode.frame() == 0;
                 if(marker) {
-                        out = cachedImage(0, cacheDesc, [&](Image &img) {
+                        out = cachedImage(0, desc, [&](Image &img) {
                                 renderInto(img, 0.0, &Color::White);
                         });
                 } else {
-                        out = cachedImage(1, cacheDesc, [&](Image &img) {
+                        out = cachedImage(1, desc, [&](Image &img) {
                                 renderInto(img, 0.0, &Color::Black);
                         });
                 }
@@ -205,35 +177,15 @@ Image VideoTestPattern::create(const ImageDesc &desc, double motionOffset,
                 // and reuse on subsequent calls.  setPattern() and
                 // setSolidColor() dump the cache, so the slot is
                 // always consistent with _pattern / _solidColor.
-                out = cachedImage(0, cacheDesc, [&](Image &img) {
+                out = cachedImage(0, desc, [&](Image &img) {
                         renderInto(img, 0.0, nullptr);
                 });
         } else {
                 // Dynamic pattern (Noise, or any non-zero motion offset)
                 // — render fresh every call, no caching.
-                out = Image(cacheDesc);
+                out = Image(desc);
                 if(out.isValid()) {
                         renderInto(out, motionOffset, nullptr);
-                }
-        }
-
-        if(!out.isValid()) return out;
-
-        if(wantBurn) {
-                // Burn on a detached copy so the cached background (if
-                // any) stays pristine for the next frame.  `out` is in
-                // a paintable format here: either the target (case 1)
-                // or the RGB16 background (case 3).
-                out.ensureExclusive();
-                renderBurn(out, currentTimecode);
-
-                // Case 3: convert the burn-in RGB16 image to the
-                // caller's target format.  The global CSC cache keeps
-                // the compiled pipeline alive between calls so this
-                // doesn't pay compile() cost every frame.
-                if(cacheInRGBBackground) {
-                        out = out.convert(desc.pixelDesc(),
-                                          desc.metadata());
                 }
         }
 
@@ -249,19 +201,24 @@ void VideoTestPattern::applyBurnFontConfig() const {
         _burnFontConfigDirty = false;
 }
 
-void VideoTestPattern::renderBurn(Image &img, const Timecode &tc) const {
+Error VideoTestPattern::applyBurn(Image &img, const String &burnText) const {
+        if(!_burnEnabled || burnText.isEmpty()) return Error::Ok;
+        if(!img.isValid()) return Error::InvalidArgument;
+        if(!img.pixelDesc().hasPaintEngine()) {
+                promekiWarn("VideoTestPattern::applyBurn: image pixel "
+                            "format '%s' has no paint engine — burn skipped",
+                            img.pixelDesc().name().cstr());
+                return Error::NotSupported;
+        }
+
         // An empty _burnFontFilename is intentional: FastFont falls
         // back to the library's bundled default font internally.
-        // Build the text lines we'll actually draw.
-        String tcLine;
-        if(tc.isValid()) {
-                auto tcResult = tc.toString();
-                tcLine = tcResult.first();
-        }
-        const String &textLine = _burnText;
-        const bool hasTc = !tcLine.isEmpty();
-        const bool hasText = !textLine.isEmpty();
-        if(!hasTc && !hasText) return;
+        // Interpret literal backslash-n as newline so config strings
+        // from the command line (where shell quoting prevents real
+        // newlines) split correctly.  Then split on actual newlines.
+        String text = burnText.replace("\\n", "\n");
+        StringList lines = text.split("\n");
+        if(lines.isEmpty()) return Error::Ok;
 
         // Resolve the effective font size.  A configured size of 0
         // (auto) scales from the rendered image height using 36 px at
@@ -295,15 +252,23 @@ void VideoTestPattern::renderBurn(Image &img, const Timecode &tc) const {
         const int lineHeight = _burnFont->lineHeight();
         if(lineHeight <= 0 || ascender <= 0) {
                 // FastFont failed to load — don't draw anything.
-                return;
+                return Error::FontUnavailable;
         }
 
-        const int tcWidth = hasTc ? _burnFont->measureText(tcLine) : 0;
-        const int textWidth = hasText ? _burnFont->measureText(textLine) : 0;
-        const int maxTextWidth = tcWidth > textWidth ? tcWidth : textWidth;
+        // Measure each line; the bounding box width is the max line
+        // width and the height stacks all lines with a quarter-line
+        // gap between them.
+        List<int> widths;
+        int maxTextWidth = 0;
+        for(const String &line : lines) {
+                int w = _burnFont->measureText(line);
+                widths.pushToBack(w);
+                if(w > maxTextWidth) maxTextWidth = w;
+        }
         const int lineSpacing = lineHeight / 4;
-        const int totalHeight = (hasTc ? lineHeight : 0)
-                              + (hasText ? (hasTc ? lineSpacing : 0) + lineHeight : 0);
+        const int n = static_cast<int>(lines.size());
+        const int totalHeight = n * lineHeight
+                              + (n > 1 ? (n - 1) * lineSpacing : 0);
 
         int x = 0, y = 0;
         computeBurnPosition((int)img.width(), (int)img.height(),
@@ -318,17 +283,14 @@ void VideoTestPattern::renderBurn(Image &img, const Timecode &tc) const {
                 pe.fillRect(bgPixel, bgRect);
         }
 
-        // Draw timecode line first (top), then static text below.
+        // Draw lines top-to-bottom, each centered inside the bounding box.
         int cursorY = y;
-        if(hasTc) {
-                const int lineX = x + (maxTextWidth - tcWidth) / 2;
-                _burnFont->drawText(tcLine, lineX, cursorY);
+        for(int i = 0; i < n; ++i) {
+                const int lineX = x + (maxTextWidth - widths[i]) / 2;
+                _burnFont->drawText(lines[i], lineX, cursorY);
                 cursorY += lineHeight + lineSpacing;
         }
-        if(hasText) {
-                const int lineX = x + (maxTextWidth - textWidth) / 2;
-                _burnFont->drawText(textLine, lineX, cursorY);
-        }
+        return Error::Ok;
 }
 
 void VideoTestPattern::computeBurnPosition(int frameW, int frameH,

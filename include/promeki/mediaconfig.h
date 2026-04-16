@@ -110,6 +110,12 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                 // Video — shared across backends
                 // ============================================================
 
+                /// @brief VideoFormat — combined video raster, frame rate, and scan mode.
+                PROMEKI_DECLARE_ID(VideoFormat,
+                        VariantSpec().setType(Variant::TypeVideoFormat)
+                                .setDefault(promeki::VideoFormat())
+                                .setDescription("Combined video raster, frame rate, and scan mode."));
+
                 /// @brief bool — enable video generation / decode.
                 PROMEKI_DECLARE_ID(VideoEnabled,
                         VariantSpec().setType(Variant::TypeBool)
@@ -182,11 +188,13 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                 .setMin(int32_t(0))
                                 .setDescription("Burn-in font size in pixels."));
 
-                /// @brief String — static burn-in text (auto when empty).
+                /// @brief String — burn-in text template (Frame::makeString).
                 PROMEKI_DECLARE_ID(VideoBurnText,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
-                                .setDescription("Static burn-in text (auto when empty)."));
+                                .setDescription("Burn-in text as a Frame::makeString "
+                                        "template, resolved per-frame against the "
+                                        "frame's metadata.  Use \\n for multi-line."));
 
                 /// @brief Enum @ref BurnPosition — on-screen position.
                 PROMEKI_DECLARE_ID(VideoBurnPosition,

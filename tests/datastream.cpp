@@ -2436,7 +2436,7 @@ TEST_CASE("DataStream: round-trip ImageDesc") {
         ImageDesc desc(1920, 1080, PixelDesc::RGBA8_sRGB);
         desc.setLinePad(16);
         desc.setLineAlign(64);
-        desc.setInterlaceMode(InterlaceMode::InterlacedEvenFirst);
+        desc.setVideoScanMode(VideoScanMode::InterlacedEvenFirst);
         desc.metadata().set(Metadata::Title, String("test frame"));
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
@@ -2454,7 +2454,7 @@ TEST_CASE("DataStream: round-trip ImageDesc") {
                 CHECK(out.pixelDesc().id() == PixelDesc::RGBA8_sRGB);
                 CHECK(out.linePad() == 16);
                 CHECK(out.lineAlign() == 64);
-                CHECK(out.interlaceMode() == InterlaceMode::InterlacedEvenFirst);
+                CHECK(out.videoScanMode() == VideoScanMode::InterlacedEvenFirst);
                 CHECK(out.metadata().get(Metadata::Title).get<String>() == String("test frame"));
         }
 }

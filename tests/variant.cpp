@@ -460,10 +460,10 @@ TEST_CASE("Variant_ColorCommaStringConversion") {
 // ============================================================================
 
 TEST_CASE("Variant_FrameRate_Store") {
-    Variant v(FrameRate(FrameRate::FPS_2997));
+    Variant v(FrameRate(FrameRate::FPS_29_97));
     CHECK(v.isValid());
     CHECK(v.type() == Variant::TypeFrameRate);
-    CHECK(v.get<FrameRate>() == FrameRate(FrameRate::FPS_2997));
+    CHECK(v.get<FrameRate>() == FrameRate(FrameRate::FPS_29_97));
 }
 
 TEST_CASE("Variant_FrameRate_AllWellKnownRates") {
@@ -483,17 +483,17 @@ TEST_CASE("Variant_FrameRate_AllWellKnownRates") {
         Variant v(FrameRate(FrameRate::FPS_50));
         CHECK(v.get<FrameRate>() == FrameRate(FrameRate::FPS_50));
     }
-    SUBCASE("FPS_5994") {
-        Variant v(FrameRate(FrameRate::FPS_5994));
-        CHECK(v.get<FrameRate>() == FrameRate(FrameRate::FPS_5994));
+    SUBCASE("FPS_59_94") {
+        Variant v(FrameRate(FrameRate::FPS_59_94));
+        CHECK(v.get<FrameRate>() == FrameRate(FrameRate::FPS_59_94));
     }
     SUBCASE("FPS_60") {
         Variant v(FrameRate(FrameRate::FPS_60));
         CHECK(v.get<FrameRate>() == FrameRate(FrameRate::FPS_60));
     }
-    SUBCASE("FPS_2398") {
-        Variant v(FrameRate(FrameRate::FPS_2398));
-        CHECK(v.get<FrameRate>() == FrameRate(FrameRate::FPS_2398));
+    SUBCASE("FPS_23_98") {
+        Variant v(FrameRate(FrameRate::FPS_23_98));
+        CHECK(v.get<FrameRate>() == FrameRate(FrameRate::FPS_23_98));
     }
 }
 
@@ -510,7 +510,7 @@ TEST_CASE("Variant_FrameRate_ToFloat") {
 }
 
 TEST_CASE("Variant_FrameRate_ToString") {
-    Variant v(FrameRate(FrameRate::FPS_2997));
+    Variant v(FrameRate(FrameRate::FPS_29_97));
     String s = v.get<String>();
     CHECK_FALSE(s.isEmpty());
 }
@@ -518,13 +518,13 @@ TEST_CASE("Variant_FrameRate_ToString") {
 TEST_CASE("Variant_FrameRate_FromString") {
     Variant v(String("29.97"));
     FrameRate fr = v.get<FrameRate>();
-    CHECK(fr == FrameRate(FrameRate::FPS_2997));
+    CHECK(fr == FrameRate(FrameRate::FPS_29_97));
 }
 
 TEST_CASE("Variant_FrameRate_FromString_Fraction") {
     Variant v(String("30000/1001"));
     FrameRate fr = v.get<FrameRate>();
-    CHECK(fr == FrameRate(FrameRate::FPS_2997));
+    CHECK(fr == FrameRate(FrameRate::FPS_29_97));
 }
 
 TEST_CASE("Variant_FrameRate_FromInvalidString") {
@@ -538,7 +538,7 @@ TEST_CASE("Variant_FrameRate_FromInvalidString") {
 TEST_CASE("Variant_FrameRate_FromRational") {
     Variant v(Rational<int>(30000, 1001));
     FrameRate fr = v.get<FrameRate>();
-    CHECK(fr == FrameRate(FrameRate::FPS_2997));
+    CHECK(fr == FrameRate(FrameRate::FPS_29_97));
 }
 
 TEST_CASE("Variant_FrameRate_ToStandardType") {
@@ -854,4 +854,65 @@ TEST_CASE("Variant_AudioCodec_RoundTrip") {
         CHECK(v.get<String>() == "Opus");
         Variant w(String("AAC"));
         CHECK(w.get<AudioCodec>() == AudioCodec(AudioCodec::AAC));
+}
+
+// ============================================================================
+// format(spec)
+// ============================================================================
+
+TEST_CASE("Variant_Format_EmptySpec_UsesDefault") {
+        Variant v(VideoFormat(VideoFormat::Smpte1080p29_97));
+        CHECK(v.format(String()) == String("1080p29.97"));
+        CHECK(v.format(String("")) == String("1080p29.97"));
+}
+
+TEST_CASE("Variant_Format_VideoFormat_Styles") {
+        Variant v(VideoFormat(VideoFormat::Smpte1080p29_97));
+        CHECK(v.format("smpte") == String("1080p29.97"));
+        CHECK(v.format("named") == String("HDp29.97"));
+}
+
+TEST_CASE("Variant_Format_Timecode_Styles") {
+        Variant v(Timecode(Timecode::NDF24, 1, 0, 0, 0));
+        CHECK(v.format("smpte") == String("01:00:00:00"));
+        // smpte-fps appends the rate; just check the prefix matches.
+        String withFps = v.format("smpte-fps");
+        CHECK(withFps.find(String("01:00:00:00")) == 0);
+}
+
+TEST_CASE("Variant_Format_Primitive_StdSpec") {
+        Variant v(int32_t(255));
+        CHECK(v.format("x") == String("ff"));
+        CHECK(v.format("05d") == String("00255"));
+        Variant d(3.14159);
+        CHECK(d.format(".2f") == String("3.14"));
+}
+
+TEST_CASE("Variant_Format_String_Width") {
+        Variant v(String("hi"));
+        CHECK(v.format(">5") == String("   hi"));
+        CHECK(v.format("*<5") == String("hi***"));
+}
+
+TEST_CASE("Variant_Format_NoFormatter_FallsBack") {
+        // UUID has no std::formatter — spec is applied to its String form.
+        Variant v(UUID(String("12345678-1234-1234-1234-1234567890ab")));
+        String full = v.format(String());
+        // Width spec on a non-formattable type reuses the String form.
+        String widened = v.format(">40");
+        CHECK(widened.byteCount() == 40);
+        CHECK(widened.find(full) != String::npos);
+}
+
+TEST_CASE("Variant_Format_InvalidSpec_ReturnsDefault") {
+        Variant v(int32_t(7));
+        Error err;
+        String s = v.format("not_a_real_spec", &err);
+        CHECK(err.isError());
+        CHECK(s == String("7"));
+}
+
+TEST_CASE("Variant_Format_Invalid_Variant_Empty") {
+        Variant v;
+        CHECK(v.format("smpte") == String());
 }

@@ -82,18 +82,18 @@ TEST_CASE("ImageDesc_SetLineAlign") {
     CHECK(desc.lineAlign() == 16);
 }
 
-TEST_CASE("ImageDesc_SetInterlaceMode") {
+TEST_CASE("ImageDesc_SetVideoScanMode") {
     ImageDesc desc;
-    CHECK(desc.interlaceMode() == InterlaceMode::Unknown);
+    CHECK(desc.videoScanMode() == VideoScanMode::Unknown);
 
-    desc.setInterlaceMode(InterlaceMode::Progressive);
-    CHECK(desc.interlaceMode() == InterlaceMode::Progressive);
+    desc.setVideoScanMode(VideoScanMode::Progressive);
+    CHECK(desc.videoScanMode() == VideoScanMode::Progressive);
 
-    desc.setInterlaceMode(InterlaceMode::InterlacedEvenFirst);
-    CHECK(desc.interlaceMode() == InterlaceMode::InterlacedEvenFirst);
+    desc.setVideoScanMode(VideoScanMode::InterlacedEvenFirst);
+    CHECK(desc.videoScanMode() == VideoScanMode::InterlacedEvenFirst);
 
-    desc.setInterlaceMode(InterlaceMode::InterlacedOddFirst);
-    CHECK(desc.interlaceMode() == InterlaceMode::InterlacedOddFirst);
+    desc.setVideoScanMode(VideoScanMode::InterlacedOddFirst);
+    CHECK(desc.videoScanMode() == VideoScanMode::InterlacedOddFirst);
 }
 
 // ============================================================================

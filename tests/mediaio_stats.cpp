@@ -22,6 +22,7 @@
 #include <promeki/benchmarkreporter.h>
 #include <promeki/frame.h>
 #include <promeki/framerate.h>
+#include <promeki/videoformat.h>
 #include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/buffer.h>
@@ -114,7 +115,7 @@ class TelemetryTestTask : public MediaIOTask {
 TEST_CASE("MediaIO stats: freshly opened reports zero rates and counters") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -255,7 +256,7 @@ TEST_CASE("MediaIO stats: counters reset to zero on reopen") {
 TEST_CASE("MediaIO stats: latency keys populated when benchmarking is on") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::VideoEnabled, true);
         cfg.set(MediaConfig::EnableBenchmark, true);
         MediaIO *io = MediaIO::create(cfg);
@@ -291,7 +292,7 @@ TEST_CASE("MediaIO stats: latency keys populated when benchmarking is on") {
 TEST_CASE("MediaIO stats: latency keys stay zero when no reporter attached") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::VideoEnabled, true);
         cfg.set(MediaConfig::EnableBenchmark, true);
         MediaIO *io = MediaIO::create(cfg);
@@ -315,7 +316,7 @@ TEST_CASE("MediaIO stats: PendingOperations populated by base class") {
         // see backlog without the backend having to track it.
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p24));
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);

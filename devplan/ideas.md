@@ -10,15 +10,6 @@
    Everything should take an explicit `ByteCountStyle` / `DurationStyle` / etc. enum so the
    caller picks the unit family and the formatter picks the scale automatically.*
 
-2. We should add a VideoFormat object to the class.  This should class should take care of
-   handling SMPTE/well know format names.  It should be very accepting of names (e.g. 1080p50,
-   1920x1080 50p, 4Kp60, etc) but provide toString() names that try to be SMPTE names first and
-   then more generic names if the VideoFormat isn't a SMPTE rate.  We should add the ability to
-   get the VideoFormat from MediaDesc (should take an arg w/ the image index, default to 0).
-   *Plan: lives in core (not proav) since `MediaDesc` is core.  Must also be registered as a
-   Variant type.  The `InterlaceMode` enum that now lives on `ImageDesc` should feed into the
-   `p`/`i` suffix so `VideoFormat::toString()` picks `1080i50` vs `1080p50` automatically.*
-
 3. We should probably rename mediaplay to mediaio.  We should also add full documentation in
    docs for it and a man page.  The utils doc should link to this one.
 
@@ -159,4 +150,37 @@
 20. Need to get the timestamps wired in completely. MediaIO should synthesize timestamps for tasks
     that don't create them.  MediaDesc should capture the timestamp relationship (what clock domain
     the image and audio come from and if there's an offset between timestamps)
+
+21. Add a `PixelAspect` object (its own header, Variant-registered) to represent pixel aspect ratio
+    independently of `VideoFormat`.  `VideoFormat` deliberately stays a pure raster + rate + scan
+    triple — PAR varies with how a raster is captured / displayed (NTSC 720×486 at 4:3 vs 16:9, DCI
+    2048×1080 anamorphic vs flat, etc.) and tying it into `VideoFormat` would force every format
+    consumer to think about display aspect when most don't care.  Storage should be a `Rational`
+    (10:11, 40:33, 12:11, 16:11, 1:1, …) with a well-known-PAR enum for the common SMPTE/DCI
+    values and a `displayAspect(const Size2Du32 &raster) const` helper that multiplies PAR by the
+    raster aspect.  Lives alongside `VideoFormat` in core.  Downstream: `ImageDesc` gets a
+    `pixelAspect()` field so renderers (SDL viewer, image file writers) can honour it, and
+    `MediaDesc` exposes it per-image-index.  Not a blocker for the current VideoFormat work but
+    worth landing before too many callers assume 1:1 pixels.
+
+22. We should only have one Application object and get rid of the inheritance.  Things like SDL and
+    TUI should be able to install what they need into the application.  This will allow us to, for
+    instance, have a SDL application that still uses TUI for the text interface.
+
+23. We really need to clean up the tests:
+        - Generally clean up the output of the unit tests.
+        - Clean up the tests folder structure to become:
+            - tests/unit: the unit tests (what's currently in tests/)
+            - tests/func: the functional tests (what's currently in functests/)
+            - tests/data: data required for testing (what's currently in testdata/)
+
+24. PixelFormat needs a new name like PixelMemDesc and PixelFormat should become PixelDesc.  Then we
+    need to make sure we're using PixelFormat (not PixelDesc) across all library names and strings.
+
+25. Fix the TPG LTC generation when fps is > 30
+
+26. Fix timecode display for HFR.
+
+27. Migrate shared memory video link so we can share video across processes.
+
 

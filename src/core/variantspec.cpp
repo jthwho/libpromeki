@@ -17,6 +17,7 @@
 #include <promeki/pixelformat.h>
 #include <promeki/rational.h>
 #include <promeki/videocodec.h>
+#include <promeki/videoformat.h>
 #include <promeki/size2d.h>
 #include <promeki/stringlist.h>
 #include <promeki/timecode.h>
@@ -78,6 +79,7 @@ String singleTypeName(Variant::Type t, Enum::Type enumType) {
                 case Variant::TypeTimecode:     return "Timecode";
                 case Variant::TypeRational:     return "Rational";
                 case Variant::TypeFrameRate:    return "FrameRate";
+                case Variant::TypeVideoFormat:  return "VideoFormat";
                 case Variant::TypeStringList:   return "StringList";
                 case Variant::TypeColor:        return "Color";
                 case Variant::TypeColorModel:   return "ColorModel";
@@ -138,6 +140,11 @@ Variant parseAsType(Variant::Type type, Enum::Type enumType,
                 }
                 case Variant::TypeFrameRate: {
                         auto r = FrameRate::fromString(str);
+                        if(r.second().isError() || !r.first().isValid()) break;
+                        return Variant(r.first());
+                }
+                case Variant::TypeVideoFormat: {
+                        auto r = VideoFormat::fromString(str);
                         if(r.second().isError() || !r.first().isValid()) break;
                         return Variant(r.first());
                 }

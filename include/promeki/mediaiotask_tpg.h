@@ -16,7 +16,7 @@
 #include <promeki/imagedesc.h>
 #include <promeki/audiodesc.h>
 #include <promeki/mediadesc.h>
-#include <promeki/size2d.h>
+#include <promeki/videoformat.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -38,14 +38,13 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Config keys — General
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
- * | @ref MediaConfig::FrameRate | FrameRate | 29.97 | Frame rate (required). |
+ * | @ref MediaConfig::VideoFormat | VideoFormat | Smpte1080p29_97 | Video format (raster + frame rate + scan mode). Required. |
  *
  * @par Config keys — Video
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
  * | @ref MediaConfig::VideoEnabled     | bool      | true       | Enable video generation. |
  * | @ref MediaConfig::VideoPattern     | Enum @ref VideoPattern | ColorBars | Pattern selector. |
- * | @ref MediaConfig::VideoSize        | Size2Du32 | 1920x1080  | Frame size. |
  * | @ref MediaConfig::VideoPixelFormat | PixelDesc | RGB8_sRGB  | Pixel description. |
  * | @ref MediaConfig::VideoSolidColor  | Color     | Black      | Fill color for SolidColor pattern. |
  * | @ref MediaConfig::VideoMotion      | double    | 0.0        | Motion speed. |
@@ -56,7 +55,7 @@ PROMEKI_NAMESPACE_BEGIN
  * | @ref MediaConfig::VideoBurnEnabled   | bool      | true       | Enable text burn-in on the pattern. |
  * | @ref MediaConfig::VideoBurnFontPath  | String    | ""         | TrueType font path. Empty = bundled default font. |
  * | @ref MediaConfig::VideoBurnFontSize  | int       | 0          | Font size in pixels. 0 = auto-scale from image height (36px at 1080p). |
- * | @ref MediaConfig::VideoBurnText      | String    | ""         | Static custom burn text (shown below timecode). |
+ * | @ref MediaConfig::VideoBurnText      | String    | "{Timecode:smpte}" | @ref Frame::makeString template for the burn text.  Resolved per-frame against the assembled @ref Frame after all per-frame metadata has been added.  Empty string disables the burn for the call.  Use @c '\n' inside the template to span multiple lines. |
  * | @ref MediaConfig::VideoBurnPosition  | Enum @ref BurnPosition | BottomCenter | Position preset. |
  * | @ref MediaConfig::VideoBurnTextColor | Color     | White      | Burn text foreground color. |
  * | @ref MediaConfig::VideoBurnBgColor   | Color     | Black      | Burn text background color. |
@@ -64,9 +63,12 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * The burn-in runs on top of the cached static background when the
  * pattern is non-moving, so turning burn on is effectively free on the
- * render side beyond one plane copy plus the text draw.  When the
- * timecode generator is also enabled (@ref MediaConfig::TimecodeEnabled),
- * the current timecode is drawn on the top line of the burn block.
+ * render side beyond one plane copy plus the text draw.  The text
+ * itself comes from @ref MediaConfig::VideoBurnText, which is treated
+ * as a @ref Frame::makeString template — it is resolved against the
+ * assembled @ref Frame after all per-frame metadata (timecode, etc.)
+ * has been written, so any registered metadata key may be referenced
+ * via @c {Key[:spec]}.
  *
  * @par Config keys — Audio
  * | Key | Type | Default | Description |
@@ -131,6 +133,8 @@ class MediaIOTask_TPG : public MediaIOTask {
                 double                  _motion = 0.0;
                 double                  _motionOffset = 0.0;
                 bool                    _videoEnabled = false;
+                bool                    _burnEnabled = false;
+                String                  _burnTextTemplate;
 
                 // Binary data encoder pass (VITC-style frame stamp).
                 ImageDataEncoder        _dataEncoder;

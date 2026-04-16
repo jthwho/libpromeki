@@ -49,19 +49,19 @@ class FastFont;
  *
  * @par Burn-in
  *
- * When @c burnEnabled() is true, @c create() draws an optional text
- * block on top of the pattern.  The block can contain two lines:
- *
- * - A @b timecode line, rendered only when the caller supplies a valid
- *   @c Timecode via the @c create() overload that takes one.
- * - A @b custom text line, rendered whenever @c burnText() is
- *   non-empty.
- *
- * Both lines are optional and can be shown independently or together.
- * If neither is present the burn stage is a no-op.  Burn-in uses the
- * @c FastFont glyph cache so repeated draws of the same characters at
- * the same size/color are a memcpy per scanline with no per-pixel
- * alpha blending — see @ref fonts.
+ * Burn-in is a separate pass: callers render the background via
+ * @c create(), then draw a text overlay via @c applyBurn() once the
+ * text content has been determined.  This lets the caller assemble
+ * upstream context (e.g. a @c Frame with metadata) before deciding
+ * what to burn in.  The overlay text may contain @c '\n' to span
+ * multiple lines; each line is centered horizontally within the
+ * bounding box and the whole block is positioned according to
+ * @c burnPosition().  Burn-in uses the @c FastFont glyph cache so
+ * repeated draws of the same characters at the same size/color are a
+ * memcpy per scanline with no per-pixel alpha blending — see
+ * @ref fonts.  The image must be in a paintable pixel format
+ * (@c PixelDesc::hasPaintEngine() == true); @c applyBurn() returns
+ * @c Error::NotSupported on non-paintable formats.
  *
  * @par Example
  * @code
@@ -74,14 +74,11 @@ class FastFont;
  * Image a = gen.create(desc);  // renders colorbars
  * Image b = gen.create(desc);  // returns cache
  *
- * // Add a burn-in timecode line. A call to setBurnFontFilename() is
- * // optional — without it the library's bundled default font is used.
+ * // Add a burn-in line.  A font filename may optionally be set;
+ * // without it the library's bundled default font is used.
  * gen.setBurnFontSize(48);
- * gen.setBurnText("mediaplay");
- * gen.setBurnEnabled(true);
- *
- * Timecode tc(Timecode::NDF24, 1, 0, 0, 0);
- * Image c = gen.create(desc, 0.0, tc);  // cached bg + burned text
+ * a.ensureExclusive();
+ * gen.applyBurn(a, "01:00:00:00\nmediaplay");
  * @endcode
  */
 class VideoTestPattern {
@@ -154,10 +151,11 @@ class VideoTestPattern {
                 /**
                  * @brief Enables or disables text burn-in.
                  *
-                 * When enabled, @c create() draws the configured burn text
-                 * (and the per-frame timecode, if provided) on top of the
-                 * background pattern.  A font filename must also be set
-                 * before the burn will actually draw anything.
+                 * When @c false, @c applyBurn() is a no-op regardless
+                 * of the text passed in.  The flag exists as a
+                 * convenience gate for callers that drive a
+                 * @c VideoTestPattern from a config and want a single
+                 * place to turn the overlay on or off.
                  */
                 void setBurnEnabled(bool val) { _burnEnabled = val; }
 
@@ -186,17 +184,6 @@ class VideoTestPattern {
                  *           reference of 36 px at 1080 lines.
                  */
                 void setBurnFontSize(int px);
-
-                /** @brief Returns the static burn text (the custom-text line). */
-                const String &burnText() const { return _burnText; }
-
-                /**
-                 * @brief Sets the static burn text line.
-                 *
-                 * Drawn below the timecode line when both are present.
-                 * Pass an empty string to remove the custom line.
-                 */
-                void setBurnText(const String &text) { _burnText = text; }
 
                 /** @brief Returns the burn-in foreground color. */
                 const Color &burnTextColor() const { return _burnTextColor; }
@@ -247,40 +234,48 @@ class VideoTestPattern {
                  * For static patterns (not @c Noise) called with
                  * @c motionOffset == 0, the background is rendered once
                  * and cached; subsequent calls with the same @c desc
-                 * and solid-color settings either return the cache
-                 * directly (burn disabled) or return a detached copy
-                 * with the burn text drawn on top (burn enabled).
+                 * return a shallow copy of the cache.
                  *
-                 * When burn-in is enabled but the caller does not
-                 * provide a @c Timecode, only the configured static
-                 * burn text is rendered — use the three-argument
-                 * overload to include a per-frame timecode line.
+                 * The @p currentTimecode is only used by the @c AvSync
+                 * pattern to choose between the marker (white,
+                 * @c tc.frame()==0) and non-marker (black) cached
+                 * frames.  Burn-in is a separate pass — see
+                 * @ref applyBurn.
                  *
-                 * @param desc         Image descriptor specifying size and pixel format.
-                 * @param motionOffset Horizontal motion offset in pixels.
+                 * @param desc             Image descriptor specifying size and pixel format.
+                 * @param motionOffset     Horizontal motion offset in pixels.
+                 * @param currentTimecode  Per-frame timecode (used by @c AvSync only).
                  * @return A new Image containing the rendered pattern.
                  */
-                Image create(const ImageDesc &desc, double motionOffset = 0.0) const;
+                Image create(const ImageDesc &desc,
+                             double motionOffset = 0.0,
+                             const Timecode &currentTimecode = Timecode()) const;
 
                 /**
-                 * @brief Creates a new Image with the pattern and an optional per-frame timecode burn.
+                 * @brief Draws a text overlay onto an existing image.
                  *
-                 * Same caching behavior as the two-argument overload:
-                 * the background for a static pattern is rendered once
-                 * and copied on every subsequent call before the
-                 * timecode line is burned in, so the cost of an
-                 * always-changing timecode is one plane copy plus the
-                 * FastFont text draw per frame.
+                 * Splits @p burnText on @c '\n' and renders each line
+                 * stacked under the burn font, centered horizontally
+                 * within the bounding box and positioned according to
+                 * @ref burnPosition.  When @ref burnEnabled is @c false
+                 * or @p burnText is empty this is a no-op and returns
+                 * @c Error::Ok.  The image must already be detached
+                 * (call @c Image::ensureExclusive before invoking).
                  *
-                 * @param desc             Image descriptor.
-                 * @param motionOffset     Horizontal motion offset in pixels.
-                 * @param currentTimecode  Per-frame timecode.  If invalid,
-                 *                         no timecode line is drawn (only
-                 *                         the static burn text, if set).
-                 * @return A new Image.
+                 * @param img      Target image.  Must be valid and in a
+                 *                 paintable pixel format
+                 *                 (@c PixelDesc::hasPaintEngine() ==
+                 *                 true).  Mutated in place.
+                 * @param burnText Text to draw.  May contain @c '\n'
+                 *                 for multi-line.
+                 * @retval Error::Ok               On success or no-op.
+                 * @retval Error::InvalidArgument  @p img is invalid.
+                 * @retval Error::NotSupported     The image's pixel format
+                 *                                 has no paint engine.
+                 * @retval Error::FontUnavailable  The burn font could
+                 *                                 not be loaded.
                  */
-                Image create(const ImageDesc &desc, double motionOffset,
-                             const Timecode &currentTimecode) const;
+                Error applyBurn(Image &img, const String &burnText) const;
 
                 /**
                  * @brief Renders the pattern into an existing Image.
@@ -338,7 +333,6 @@ class VideoTestPattern {
                 // separately so image-size changes can trigger a font
                 // reconfigure via _burnFontConfigDirty.
                 mutable int     _burnEffectiveFontSize = 36;
-                String          _burnText;
                 Color           _burnTextColor = Color::White;
                 Color           _burnBackgroundColor = Color::Black;
                 bool            _burnDrawBackground = true;
@@ -418,7 +412,6 @@ class VideoTestPattern {
                 void invalidateImageCache() const;
 
                 void applyBurnFontConfig() const;
-                void renderBurn(Image &img, const Timecode &tc) const;
                 void computeBurnPosition(int frameW, int frameH,
                                          int textW, int totalH, int ascender,
                                          int &x, int &y) const;

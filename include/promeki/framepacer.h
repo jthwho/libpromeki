@@ -43,7 +43,7 @@ PROMEKI_NAMESPACE_BEGIN
  * of the stream begins and pass that as the origin:
  *
  * @code
- * FramePacer pacer(FrameRate(FrameRate::FPS_2997));
+ * FramePacer pacer(FrameRate(FrameRate::FPS_29_97));
  * pacer.setClock(&ptpClock);
  * pacer.reset(streamPhaseNs);   // PTP time of frame 0
  * while(running) {
@@ -86,7 +86,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par Typical wall-clock usage
  * @code
- * FramePacer pacer(FrameRate(FrameRate::FPS_2997));
+ * FramePacer pacer(FrameRate(FrameRate::FPS_29_97));
  * pacer.reset();
  * while(running) {
  *     auto r = pacer.pace();

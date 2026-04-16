@@ -19,6 +19,7 @@
 #include <promeki/benchmarkreporter.h>
 #include <promeki/frame.h>
 #include <promeki/framerate.h>
+#include <promeki/videoformat.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/uuid.h>
 
@@ -38,7 +39,7 @@ MediaIO *makeTpgReader(bool enableBenchmark = false,
                       const UUID &uuidOverride = UUID()) {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
-        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_2997));
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
         cfg.set(MediaConfig::VideoEnabled, true);
         if(!nameOverride.isEmpty()) {
                 cfg.set(MediaConfig::Name, nameOverride);
