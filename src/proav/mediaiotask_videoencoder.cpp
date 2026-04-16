@@ -83,6 +83,7 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandOpen &cmd) {
         }
 
         const MediaIO::Config &cfg = cmd.config;
+        _config = cfg;
 
         _codec = cfg.getAs<VideoCodec>(MediaConfig::VideoCodec);
         if(!_codec.isValid()) {
@@ -177,6 +178,7 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandClose &cmd) {
                 _encoder = nullptr;
         }
         _pendingSrcFrames.clear();
+        _config = MediaConfig();
         _codec = VideoCodec();
         _capacity = 0;
         _frameCount = 0;
@@ -187,6 +189,11 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandClose &cmd) {
         _multiImageWarned = false;
         _closed = true;
         return Error::Ok;
+}
+
+void MediaIOTask_VideoEncoder::configChanged(const MediaConfig &delta) {
+        _config.merge(delta);
+        if(_encoder != nullptr) _encoder->configure(_config);
 }
 
 Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandWrite &cmd) {

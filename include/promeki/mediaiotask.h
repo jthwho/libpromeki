@@ -222,6 +222,23 @@ class MediaIOTask {
                 virtual Error executeCmd(MediaIOCommandStats &cmd);
 
                 /**
+                 * @brief Called when a write command carries a non-empty
+                 *        @ref Frame::configUpdate delta.
+                 *
+                 * Invoked on the worker thread immediately before
+                 * @c executeCmd(MediaIOCommandWrite &) for the same
+                 * frame, so the backend sees the new parameters before
+                 * the frame is processed.  The default implementation
+                 * is a no-op — backends that support dynamic
+                 * reconfiguration (e.g. bitrate changes on an encoder)
+                 * override this to merge @p delta into their running
+                 * config and adjust internal state.
+                 *
+                 * @param delta Only the keys that changed.
+                 */
+                virtual void configChanged(const MediaConfig &delta);
+
+                /**
                  * @brief Returns the number of frames the task is
                  *        holding internally beyond what
                  *        @c pendingWrites tracks.

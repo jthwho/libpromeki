@@ -199,6 +199,19 @@ VideoCodec VideoCodec::lookup(const String &name) {
                                          : VideoCodec(Invalid);
 }
 
+VideoCodec VideoCodec::fromPixelDesc(const PixelDesc &pd) {
+        if(!pd.isValid()) return VideoCodec(Invalid);
+        int target = static_cast<int>(pd.id());
+        auto &reg = registry();
+        for(const auto &[id, data] : reg.entries) {
+                if(id == Invalid) continue;
+                for(int cpd : data.compressedPixelDescs) {
+                        if(cpd == target) return VideoCodec(id);
+                }
+        }
+        return VideoCodec(Invalid);
+}
+
 VideoCodec::IDList VideoCodec::registeredIDs() {
         auto &reg = registry();
         IDList ret;

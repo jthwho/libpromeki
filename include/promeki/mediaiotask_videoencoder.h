@@ -9,6 +9,7 @@
 
 #include <promeki/namespace.h>
 #include <promeki/mediaiotask.h>
+#include <promeki/mediaconfig.h>
 #include <promeki/codec.h>
 #include <promeki/mediapacket.h>
 #include <promeki/string.h>
@@ -120,8 +121,10 @@ class MediaIOTask_VideoEncoder : public MediaIOTask {
                 // @c _pendingSrcFrames so audio / metadata travel with
                 // the correct input even when NVENC buffers an earlier
                 // frame and emits it on a later submit.
+                void configChanged(const MediaConfig &delta) override;
                 void drainEncoderInto();
 
+                MediaConfig           _config;
                 VideoCodec            _codec;
                 VideoEncoder         *_encoder = nullptr;
                 int                   _capacity = 8;

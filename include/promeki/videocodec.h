@@ -15,6 +15,7 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+class PixelDesc;
 class VideoEncoder;
 class VideoDecoder;
 
@@ -169,6 +170,15 @@ class VideoCodec {
                  * @return The matching codec, or an invalid codec if not found.
                  */
                 static VideoCodec lookup(const String &name);
+
+                /**
+                 * @brief Finds the codec whose @ref compressedPixelDescs list
+                 *        contains @p pd.
+                 * @param pd A compressed PixelDesc (e.g. @c PixelDesc::H264).
+                 * @return The matching codec, or an invalid codec if no
+                 *         registered codec claims @p pd.
+                 */
+                static VideoCodec fromPixelDesc(const PixelDesc &pd);
 
                 /**
                  * @brief Constructs a VideoCodec from an ID.

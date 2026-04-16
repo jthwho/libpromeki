@@ -967,6 +967,10 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/nvencvideoencoder.h
         include/promeki/nvdecvideodecoder.h
         include/promeki/mediaiotask_converter.h
+        include/promeki/mediaiotask_csc.h
+        include/promeki/mediaiotask_src.h
+        include/promeki/mediaiotask_burn.h
+        include/promeki/mediaiotask_framesync.h
         include/promeki/mediaiotask_videoencoder.h
         include/promeki/mediaiotask_videodecoder.h
         include/promeki/mediaiotask_rawbitstream.h
@@ -1018,6 +1022,10 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/mediapacket.cpp
         src/proav/mediaiotask.cpp
         src/proav/mediaiotask_converter.cpp
+        src/proav/mediaiotask_csc.cpp
+        src/proav/mediaiotask_src.cpp
+        src/proav/mediaiotask_burn.cpp
+        src/proav/mediaiotask_framesync.cpp
         src/proav/mediaiotask_videoencoder.cpp
         src/proav/mediaiotask_videodecoder.cpp
         src/proav/mediaiotask_rawbitstream.cpp
@@ -1725,6 +1733,10 @@ if(PROMEKI_BUILD_TESTS)
             tests/mediapipelinestats.cpp
             tests/mediapipeline.cpp
             tests/mediaiotask_converter.cpp
+            tests/mediaiotask_csc.cpp
+            tests/mediaiotask_src.cpp
+            tests/mediaiotask_burn.cpp
+            tests/mediaiotask_framesync.cpp
             tests/mediaiotask_videoencoder.cpp
             tests/mediaiotask_videodecoder.cpp
             tests/mediaiotask_inspector.cpp

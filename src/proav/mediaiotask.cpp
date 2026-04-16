@@ -39,6 +39,10 @@ Error MediaIOTask::executeCmd(MediaIOCommandStats &cmd) {
         return Error::Ok;
 }
 
+void MediaIOTask::configChanged(const MediaConfig &delta) {
+        (void)delta;
+}
+
 int MediaIOTask::pendingOutput() const {
         return 0;
 }

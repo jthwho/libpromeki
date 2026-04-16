@@ -61,7 +61,7 @@ New static constants: `kSrcProbeFrequencyHz`, `kPcmMarkerPreambleSamples`, `kPcm
 
 **Inspector new-pattern coverage** — two new test cases in `tests/mediaiotask_inspector.cpp`: `Inspector pipeline carries a SrcProbe channel unharmed` and `Inspector pipeline carries a ChannelId channel map unharmed`, exercising the full TPG→Inspector pipeline with the new pattern types.
 
-**Phase 4c additions (this session):**
+**Phase 4c additions:**
 
 **`MediaIOTask_ImageFile` sidecar audio** — automatic Broadcast WAV sidecar alongside image sequences.  On write: when audio is present in the pending `MediaDesc`, the backend creates a `<prefix>.wav` alongside the image files (e.g. `shot_####.dpx` → `shot.wav`), writes frame-aligned audio with silence padding on frames that carry no audio, and records the sidecar filename in the `.imgseq` JSON under `"audioFile"`.  On read: the backend probes for a sidecar `.wav` (resolution priority: `.imgseq` `"audioFile"` field → `SidecarAudioPath` config override → auto-derived name), opens it, and delivers frame-aligned audio chunks via `FrameRate::samplesPerFrame()`.  Seeking syncs both the image position and the audio file position via `AudioFile::seekToSample()`.  Three new `MediaConfig` keys: `SidecarAudioEnabled` (bool, default true — suppress sidecar on both read and write), `SidecarAudioPath` (String — override auto-derived path), `AudioSource` (Enum `AudioSourceHint` — `Sidecar`/`Embedded`, selects preferred source when both are available, falls back to the other).  `AudioSourceHint` TypedEnum added to `enums.h`.
 
@@ -72,6 +72,26 @@ New static constants: `kSrcProbeFrequencyHz`, `kPcmMarkerPreambleSamples`, `kPcm
 **`MediaIOTask_Inspector` improvements** — log lines simplified (removed `"Frame N:"` prefix from periodic report lines — the prefix was redundant with the report header and cluttered grep output).  `executeCmd(Close)` now emits a structured final-report block (total frames, per-check decode rates and pass/fail counts, A/V sync last offset, continuity discontinuity count).
 
 All test coverage lives in `tests/mediaio.cpp`, `tests/quicktime.cpp`, `tests/mediaiotask_quicktime.cpp`, `tests/strand.cpp`, `tests/audiobuffer.cpp`, `tests/bufferpool.cpp`, `tests/histogram.cpp`, `tests/jpegxsimagecodec.cpp`, `tests/imagefileio_jpegxs.cpp`, `tests/crc.cpp`, `tests/imagedataencoder.cpp`, `tests/imagedatadecoder.cpp`, `tests/mediaiotask_inspector.cpp`, `tests/enumlist.cpp`, `tests/audiotestpattern.cpp`, plus the per-backend format tests. See git history for the sprawling completed-work log — this document stays focused on what still needs to be built.
+
+**Phase 4e additions:**
+
+**Four new purpose-built `MediaIOTask` backends** — each is a focused `InputAndOutput`-only processing stage with a FIFO output queue, no-drop write semantics, one-shot capacity warning, and a `pendingOutput()` override.  All four are registered via `PROMEKI_REGISTER_MEDIAIO`, carry a `defaultConfig()` lambda, and have comprehensive doctest unit-test suites.
+
+- **`MediaIOTask_CSC`** (`include/promeki/mediaiotask_csc.h`, `src/proav/mediaiotask_csc.cpp`) — uncompressed pixel-format conversion via `Image::convert()`.  Config: `OutputPixelDesc` (pass-through when invalid or when source == target), `Capacity` (default 4).  Compressed sources/targets are rejected with `Error::NotSupported`.  Stats: `FramesConverted`, `QueueDepth`, `QueueCapacity`.  Output `MediaDesc` reflects the target `PixelDesc` at open time.  Tests: 11 cases in `tests/mediaiotask_csc.cpp`.
+
+- **`MediaIOTask_SRC`** (`include/promeki/mediaiotask_src.h`, `src/proav/mediaiotask_src.cpp`) — audio sample-format conversion via `Audio::convertTo()`.  Config: `OutputAudioDataType` (pass-through when `Invalid`), `Capacity` (default 4).  Unknown audio data type string rejects at `open()`.  Video images pass through unchanged.  Stats: `FramesConverted`, `QueueDepth`, `QueueCapacity`.  Tests: 11 cases in `tests/mediaiotask_src.cpp`.
+
+- **`MediaIOTask_Burn`** (`include/promeki/mediaiotask_burn.h`, `src/proav/mediaiotask_burn.cpp`) — text burn-in overlay via `VideoTestPattern::applyBurn()`.  Config: `VideoBurnEnabled` (default true), `VideoBurnFontPath`, `VideoBurnFontSize`, `VideoBurnText` (default `"{Timecode:smpte}"`), `VideoBurnPosition`, `VideoBurnTextColor`, `VideoBurnBgColor`, `VideoBurnDrawBg`, `Capacity` (default 4).  Non-paintable pixel formats pass through with a one-shot warning.  Stats: `FramesBurned`, `QueueDepth`, `QueueCapacity`.  Tests: 9 cases in `tests/mediaiotask_burn.cpp`.
+
+- **`MediaIOTask_FrameSync`** (`include/promeki/mediaiotask_framesync.h`, `src/proav/mediaiotask_framesync.cpp`) — wraps `FrameSync` as a `MediaIO` backend.  Write side pushes source frames into `FrameSync`; read side calls `FrameSync::pullFrame()`.  Default clock is `SyntheticClock` (non-blocking, suitable for offline / file pipelines).  `setClock(Clock *)` substitutes an external clock for real-time playback; `frameSync()` exposes the underlying `FrameSync` for fine-tuning before `open()`.  Config: `OutputFrameRate` (invalid = inherit source), `OutputAudioRate` (0 = inherit), `OutputAudioChannels` (0 = inherit), `OutputAudioDataType` (Invalid = inherit), `InputQueueCapacity` (default 8).  `open()` fails when `pendingMediaDesc` has no valid frame rate.  Stats: `FramesPushed`, `FramesPulled`, plus `FramesRepeated` / `FramesDropped` from `FrameSync`.  Tests: 13 cases in `tests/mediaiotask_framesync.cpp`.
+
+**New `MediaConfig` keys** (all in `mediaconfig.h`) — `OutputFrameRate` (FrameRate), `OutputAudioRate` (float), `OutputAudioChannels` (S32), `InputQueueCapacity` (S32) — added for the FrameSync backend.
+
+**`VideoCodec::fromPixelDesc(const PixelDesc &)`** — new static method that scans the VideoCodec registry for the codec whose `compressedPixelDescs` list contains the given `PixelDesc`.  Returns an invalid codec if none claims it.  Used by the auto-detect path below.
+
+**`MediaIOTask_VideoDecoder` auto-detect** — `MediaConfig::VideoCodec` is now optional.  When omitted, `open()` succeeds immediately and defers codec creation until the first `writeFrame()` call, where it inspects the incoming `MediaPacket::pixelDesc` and resolves the codec via `VideoCodec::fromPixelDesc()`.  The `executeCmd(MediaIOCommandOpen)` path resets all internal state regardless.  Existing explicit-codec behaviour is unchanged.
+
+**`Frame::configUpdate` live reconfiguration** — `Frame` gained a `MediaConfig _configUpdate` member with `configUpdate()` accessors and `setConfigUpdate(MediaConfig)`.  `MediaIO::writeFrame()` now checks the frame's config update before executing the write command; if non-empty it calls `_task->configChanged(delta)`.  `MediaIOTask::configChanged(const MediaConfig &)` is a new virtual with a no-op default.  `MediaIOTask_VideoEncoder` and `MediaIOTask_VideoDecoder` both override it: each stores the running `_config`, merges the delta via `VariantDatabase::merge()`, and forwards the updated config to the underlying encoder/decoder via `configure()`.
 
 ---
 

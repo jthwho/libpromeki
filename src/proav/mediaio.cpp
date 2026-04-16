@@ -1151,6 +1151,11 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
                         MediaIOCommand *raw = cmd.modify();
                         auto *cw = static_cast<MediaIOCommandWrite *>(raw);
 
+                        if(cw->frame.isValid() &&
+                           !cw->frame->configUpdate().isEmpty()) {
+                                _task->configChanged(cw->frame->configUpdate());
+                        }
+
                         // Dequeue → taskBegin → executeCmd → taskEnd
                         // form the worker-side stamp sequence.
                         // Together with the enqueue stamp on the user

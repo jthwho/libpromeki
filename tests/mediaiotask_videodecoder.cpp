@@ -48,7 +48,7 @@ TEST_CASE("MediaIOTask_VideoDecoder: backend is registered under \"VideoDecoder\
         CHECK(fd->canInputAndOutput);
 }
 
-TEST_CASE("MediaIOTask_VideoDecoder: open requires VideoCodec") {
+TEST_CASE("MediaIOTask_VideoDecoder: open without VideoCodec defers to auto-detect") {
         MediaIO::Config cfg = MediaIO::defaultConfig("VideoDecoder");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -59,7 +59,8 @@ TEST_CASE("MediaIOTask_VideoDecoder: open requires VideoCodec") {
         io->setMediaDesc(srcDesc);
 
         Error err = io->open(MediaIO::InputAndOutput);
-        CHECK(err.isError());
+        CHECK(!err.isError());
+        io->close();
         delete io;
 }
 

@@ -564,6 +564,48 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                 .setDescription("Internal FIFO capacity in frames."));
 
                 // ============================================================
+                // FrameSync (MediaIOTask_FrameSync)
+                // ============================================================
+
+                /// @brief FrameRate — output frame rate for the FrameSync task.
+                /// When invalid (default), the output rate is inherited from
+                /// @c pendingMediaDesc — i.e. the source rate passes through.
+                /// Set to a valid FrameRate to resync to a different cadence.
+                PROMEKI_DECLARE_ID(OutputFrameRate,
+                        VariantSpec().setType(Variant::TypeFrameRate)
+                                .setDefault(promeki::FrameRate())
+                                .setDescription("FrameSync output frame rate "
+                                        "(invalid = inherit from source)."));
+
+                /// @brief float — output audio sample rate for the FrameSync task.
+                /// When zero (default), the sample rate is inherited from
+                /// @c pendingMediaDesc.  Set to a positive value to resample
+                /// to a different rate.
+                PROMEKI_DECLARE_ID(OutputAudioRate,
+                        VariantSpec().setType(Variant::TypeFloat)
+                                .setDefault(0.0f)
+                                .setMin(0.0f)
+                                .setDescription("FrameSync output audio sample rate "
+                                        "(0 = inherit from source)."));
+
+                /// @brief int — output audio channel count for the FrameSync task.
+                /// When zero (default), the channel count is inherited from
+                /// @c pendingMediaDesc.
+                PROMEKI_DECLARE_ID(OutputAudioChannels,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("FrameSync output audio channel count "
+                                        "(0 = inherit from source)."));
+
+                /// @brief int — input queue depth for the FrameSync task.
+                PROMEKI_DECLARE_ID(InputQueueCapacity,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(8))
+                                .setMin(int32_t(1))
+                                .setDescription("FrameSync input queue depth."));
+
+                // ============================================================
                 // JPEG codec
                 // ============================================================
 

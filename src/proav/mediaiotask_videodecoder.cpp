@@ -57,43 +57,26 @@ MediaIOTask_VideoDecoder::~MediaIOTask_VideoDecoder() {
         delete _decoder;
 }
 
-Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandOpen &cmd) {
-        if(cmd.mode != MediaIO::InputAndOutput) {
-                promekiErr("MediaIOTask_VideoDecoder: only InputAndOutput mode is supported");
-                return Error::NotSupported;
-        }
+void MediaIOTask_VideoDecoder::configChanged(const MediaConfig &delta) {
+        _config.merge(delta);
+        if(_decoder != nullptr) _decoder->configure(_config);
+}
 
-        const MediaIO::Config &cfg = cmd.config;
-
-        _codec = cfg.getAs<VideoCodec>(MediaConfig::VideoCodec);
-        if(!_codec.isValid()) {
-                promekiErr("MediaIOTask_VideoDecoder: VideoCodec is required "
-                           "(e.g. \"H264\", \"HEVC\", \"JPEG\")");
-                return Error::InvalidArgument;
-        }
-        if(!_codec.canDecode()) {
+Error MediaIOTask_VideoDecoder::createDecoder(const VideoCodec &codec) {
+        if(!codec.canDecode()) {
                 promekiErr("MediaIOTask_VideoDecoder: codec '%s' has no "
                            "registered decoder factory",
-                           _codec.name().cstr());
+                           codec.name().cstr());
                 return Error::NotSupported;
         }
-
-        VideoDecoder *dec = _codec.createDecoder();
+        VideoDecoder *dec = codec.createDecoder();
         if(dec == nullptr) {
                 promekiErr("MediaIOTask_VideoDecoder: createDecoder('%s') returned null",
-                           _codec.name().cstr());
+                           codec.name().cstr());
                 return Error::NotSupported;
         }
-        dec->configure(cfg);
+        dec->configure(_config);
 
-        _outputPixelDesc = cfg.getAs<PixelDesc>(MediaConfig::OutputPixelDesc, PixelDesc());
-        _outputPixelDescSet = _outputPixelDesc.isValid();
-        // When the caller didn't pin a specific output format, fall
-        // back to the decoder's first supportedOutputs() entry so the
-        // downstream MediaDesc carries the right PixelDesc from the
-        // start (e.g. NVDEC always emits NV12 / Rec.709).  Without
-        // this, the pipeline mistakenly reports the compressed
-        // upstream format as the decoder's output.
         if(!_outputPixelDescSet) {
                 List<int> supported = dec->supportedOutputs();
                 if(!supported.isEmpty()) {
@@ -103,16 +86,46 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandOpen &cmd) {
                 }
         }
 
+        _codec   = codec;
+        _decoder = dec;
+        return Error::Ok;
+}
+
+Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandOpen &cmd) {
+        if(cmd.mode != MediaIO::InputAndOutput) {
+                promekiErr("MediaIOTask_VideoDecoder: only InputAndOutput mode is supported");
+                return Error::NotSupported;
+        }
+
+        const MediaIO::Config &cfg = cmd.config;
+        _config = cfg;
+
+        _outputPixelDesc = cfg.getAs<PixelDesc>(MediaConfig::OutputPixelDesc, PixelDesc());
+        _outputPixelDescSet = _outputPixelDesc.isValid();
+
         _capacity = cfg.getAs<int>(MediaConfig::Capacity, 8);
         if(_capacity < 1) _capacity = 1;
 
-        // Build the downstream-visible MediaDesc: each compressed
-        // source image is replaced by one at the uncompressed target
-        // format the caller asked for (or the decoder's native format
-        // when no explicit OutputPixelDesc was given — we can't know
-        // the real dimensions or native format until the first frame
-        // arrives, so for now we substitute OutputPixelDesc when set
-        // and leave the source's geometry otherwise unchanged).
+        _codec            = VideoCodec();
+        _decoder          = nullptr;
+        _frameCount       = 0;
+        _readCount        = 0;
+        _packetsDecoded   = 0;
+        _imagesOut        = 0;
+        _capacityWarned   = false;
+        _closed           = false;
+        _outputQueue.clear();
+        _pendingSrcFrames.clear();
+
+        VideoCodec codec = cfg.getAs<VideoCodec>(MediaConfig::VideoCodec);
+        if(codec.isValid()) {
+                Error err = createDecoder(codec);
+                if(err.isError()) return err;
+        } else {
+                promekiInfo("MediaIOTask_VideoDecoder: no VideoCodec configured, "
+                            "will auto-detect from first packet");
+        }
+
         MediaDesc outDesc;
         outDesc.setFrameRate(cmd.pendingMediaDesc.frameRate());
         for(const auto &srcImg : cmd.pendingMediaDesc.imageList()) {
@@ -123,16 +136,6 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandOpen &cmd) {
         for(const auto &srcAudio : cmd.pendingMediaDesc.audioList()) {
                 outDesc.audioList().pushToBack(srcAudio);
         }
-
-        _decoder          = dec;
-        _frameCount       = 0;
-        _readCount        = 0;
-        _packetsDecoded   = 0;
-        _imagesOut        = 0;
-        _capacityWarned   = false;
-        _closed           = false;
-        _outputQueue.clear();
-        _pendingSrcFrames.clear();
 
         cmd.mediaDesc     = outDesc;
         if(!outDesc.audioList().isEmpty()) cmd.audioDesc = outDesc.audioList()[0];
@@ -155,6 +158,7 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandClose &cmd) {
                 _decoder = nullptr;
         }
         _pendingSrcFrames.clear();
+        _config = MediaConfig();
         _codec = VideoCodec();
         _outputPixelDesc = PixelDesc();
         _outputPixelDescSet = false;
@@ -173,10 +177,42 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandWrite &cmd) {
                 promekiErr("MediaIOTask_VideoDecoder: write with null frame");
                 return Error::InvalidArgument;
         }
-        if(_decoder == nullptr) {
-                return Error::NotSupported;
-        }
         stampWorkBegin();
+
+        const Frame &frame = *cmd.frame;
+
+        if(_decoder == nullptr) {
+                const MediaPacket::PtrList &pkts = frame.packetList();
+                bool found = false;
+                for(const auto &pktPtr : pkts) {
+                        if(!pktPtr || !pktPtr->isValid()) continue;
+                        VideoCodec codec = VideoCodec::fromPixelDesc(pktPtr->pixelDesc());
+                        if(!codec.isValid()) {
+                                promekiErr("MediaIOTask_VideoDecoder: cannot resolve "
+                                           "VideoCodec from PixelDesc '%s'",
+                                           pktPtr->pixelDesc().name().cstr());
+                                stampWorkEnd();
+                                return Error::NotSupported;
+                        }
+                        Error err = createDecoder(codec);
+                        if(err.isError()) {
+                                stampWorkEnd();
+                                return err;
+                        }
+                        promekiInfo("MediaIOTask_VideoDecoder: auto-detected codec '%s' "
+                                    "from packet PixelDesc '%s'",
+                                    codec.name().cstr(),
+                                    pktPtr->pixelDesc().name().cstr());
+                        found = true;
+                        break;
+                }
+                if(!found) {
+                        promekiErr("MediaIOTask_VideoDecoder: no valid packet to "
+                                   "detect codec from");
+                        stampWorkEnd();
+                        return Error::InvalidArgument;
+                }
+        }
 
         if(static_cast<int>(_outputQueue.size()) >= _capacity && !_capacityWarned) {
                 promekiWarn("MediaIOTask_VideoDecoder: output queue exceeded capacity "
@@ -185,15 +221,6 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandWrite &cmd) {
                 _capacityWarned = true;
         }
 
-        const Frame &frame = *cmd.frame;
-
-        // Submit every packet in order, draining decoded frames between
-        // submissions so a packet carrying multiple NAL units (SPS +
-        // PPS + IDR concatenated) doesn't flood the queue ahead of the
-        // frames that come out.  Push the source Frame onto the
-        // pending FIFO before each submit so drainDecoderInto can pair
-        // each emitted image with the right input even when the DPB
-        // delays a few frames on startup.
         for(const auto &pktPtr : frame.packetList()) {
                 if(!pktPtr || !pktPtr->isValid()) continue;
                 _pendingSrcFrames.pushToBack(cmd.frame);

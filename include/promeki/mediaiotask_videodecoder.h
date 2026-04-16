@@ -9,6 +9,7 @@
 
 #include <promeki/namespace.h>
 #include <promeki/mediaiotask.h>
+#include <promeki/mediaconfig.h>
 #include <promeki/codec.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/string.h>
@@ -28,10 +29,16 @@ PROMEKI_NAMESPACE_BEGIN
  * image in @ref Frame::imageList.  Audio on the input Frame is
  * forwarded unchanged so it stays synchronised on the same PTS.
  *
- * The registered backend name is @c "VideoDecoder"; callers pick a
- * concrete codec via @ref MediaConfig::VideoCodec (e.g. @c "H264",
- * @c "HEVC") — the task looks up the matching factory through
- * @ref VideoDecoder::createDecoder.
+ * The registered backend name is @c "VideoDecoder"; callers select a
+ * concrete codec in one of two ways:
+ *
+ *  -# **Explicit** — set @ref MediaConfig::VideoCodec in the config
+ *     (e.g. @c "H264", @c "HEVC").  The decoder is created during
+ *     @c open().
+ *  -# **Auto-detect** — omit @ref MediaConfig::VideoCodec.  The task
+ *     defers decoder creation until the first @c writeFrame() call,
+ *     where it inspects the incoming @ref MediaPacket::pixelDesc and
+ *     resolves the codec via @ref VideoCodec::fromPixelDesc.
  *
  * @par Mode support
  *
@@ -41,11 +48,11 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
- * | @ref MediaConfig::VideoCodec        | String   | (required) | Codec factory name (@c "H264", @c "HEVC"). |
- * | @ref MediaConfig::OutputPixelDesc  | PixelDesc | Invalid    | Desired uncompressed output format. Empty / Invalid means "use decoder's native". |
- * | @ref MediaConfig::Capacity         | int       | 8          | Output FIFO depth. |
+ * | @ref MediaConfig::VideoCodec       | VideoCodec | (auto)  | Codec to use.  When omitted the codec is detected from the first packet's @ref MediaPacket::pixelDesc. |
+ * | @ref MediaConfig::OutputPixelDesc  | PixelDesc  | Invalid | Desired uncompressed output format. Empty / Invalid means "use decoder's native". |
+ * | @ref MediaConfig::Capacity         | int        | 8       | Output FIFO depth. |
  *
- * @par Example
+ * @par Example — explicit codec
  * @code
  * MediaIO::Config cfg;
  * cfg.set(MediaConfig::Type,          "VideoDecoder");
@@ -56,7 +63,20 @@ PROMEKI_NAMESPACE_BEGIN
  * dec->open(MediaIO::InputAndOutput);
  * dec->writeFrame(packetFrame);
  * Frame::Ptr decoded;
- * dec->readFrame(decoded);   // decoded->imageList()[0] is the uncompressed image.
+ * dec->readFrame(decoded);
+ * dec->close();
+ * @endcode
+ *
+ * @par Example — auto-detect codec from packet
+ * @code
+ * MediaIO::Config cfg;
+ * cfg.set(MediaConfig::Type, "VideoDecoder");
+ * MediaIO *dec = MediaIO::create(cfg);
+ * dec->setMediaDesc(compressedDesc);
+ * dec->open(MediaIO::InputAndOutput);
+ * dec->writeFrame(packetFrame);   // codec resolved here
+ * Frame::Ptr decoded;
+ * dec->readFrame(decoded);
  * dec->close();
  * @endcode
  */
@@ -90,8 +110,11 @@ class MediaIOTask_VideoDecoder : public MediaIOTask {
                 // metadata travel with the right input even across
                 // the DPB / reorder buffering delay every H.264 /
                 // HEVC decoder has on startup.
+                void configChanged(const MediaConfig &delta) override;
                 void drainDecoderInto();
+                Error createDecoder(const VideoCodec &codec);
 
+                MediaConfig           _config;
                 VideoCodec            _codec;
                 VideoDecoder         *_decoder = nullptr;
                 PixelDesc             _outputPixelDesc;

@@ -323,6 +323,31 @@ are deleted, and the `SdlPlayerImpl` config key is retired.
 
 ---
 
+## Phase 3.5 — MediaIOTask_FrameSync (SHIPPED)
+
+`MediaIOTask_FrameSync` (`include/promeki/mediaiotask_framesync.h`,
+`src/proav/mediaiotask_framesync.cpp`) wraps `FrameSync` as a
+registered `MediaIO` backend (name `"FrameSync"`, `canInputAndOutput`
+only).  Write side calls `FrameSync::pushFrame()`; read side calls
+`FrameSync::pullFrame()`.  Default clock is a built-in `SyntheticClock`
+so the backend runs non-blocking for offline / file pipelines;
+`setClock(Clock *)` substitutes an external clock before `open()` for
+real-time use.  `frameSync()` exposes the underlying `FrameSync`
+instance for callers that construct the task directly via
+`MediaIO::adoptTask()`.
+
+Config keys: `OutputFrameRate` (invalid = inherit source),
+`OutputAudioRate` (0 = inherit), `OutputAudioChannels` (0 = inherit),
+`OutputAudioDataType` (Invalid = inherit), `InputQueueCapacity`
+(default 8).  All four new `MediaConfig` IDs are declared in
+`mediaconfig.h`.
+
+Stats: `FramesPushed`, `FramesPulled`, `FramesRepeated`, `FramesDropped`.
+
+Tests: 13 cases in `tests/mediaiotask_framesync.cpp`.
+
+---
+
 ## Phase 4 — FramePacer removal (PENDING)
 
 Remaining after this changeset:
@@ -332,8 +357,9 @@ Remaining after this changeset:
 3. ~~Land the new SDLPlayer alongside the old one; manual smoke test
    both.~~ (shipped — `createSDLPlayer` / `createSDLPlayerOld`;
    `mediaplay` selects via `MediaConfig::SdlPlayerImpl`.)
-4. Migrate any other pacer users (RTP sender) to FrameSync.
-5. Delete `FramePacer`, `SDLPlayerOldTask`, `createSDLPlayerOld`, the
+4. ~~Land `MediaIOTask_FrameSync` for pipeline use.~~ (shipped — `tests/mediaiotask_framesync.cpp`)
+5. Migrate any other pacer users (RTP sender) to FrameSync.
+6. Delete `FramePacer`, `SDLPlayerOldTask`, `createSDLPlayerOld`, the
    `MediaConfig::SdlPlayerImpl` key, and the pacer-specific glue.
 
 ---

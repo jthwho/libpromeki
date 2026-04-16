@@ -18,6 +18,7 @@
 #include <promeki/mediapacket.h>
 #include <promeki/metadata.h>
 #include <promeki/list.h>
+#include <promeki/mediaconfig.h>
 #include <promeki/videoformat.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -182,6 +183,25 @@ class Frame {
                 void setBenchmark(Benchmark::Ptr bm) { _benchmark = std::move(bm); return; }
 
                 /**
+                 * @brief Returns a const reference to the config update delta.
+                 *
+                 * When non-empty, the config update is applied by the
+                 * receiving @ref MediaIOTask before the frame is
+                 * processed.  This gives frame-level synchronisation
+                 * for dynamic parameter changes (bitrate, quality,
+                 * etc.) — the update travels with the write command
+                 * through the strand queue, so a flush can never
+                 * separate a config change from its frame.
+                 */
+                const MediaConfig &configUpdate() const { return _configUpdate; }
+
+                /** @brief Returns a mutable reference to the config update delta. */
+                MediaConfig &configUpdate() { return _configUpdate; }
+
+                /** @brief Replaces the config update delta. */
+                void setConfigUpdate(MediaConfig cfg) { _configUpdate = std::move(cfg); }
+
+                /**
                  * @brief Resolves a single template key against this frame's structure.
                  *
                  * Used by @ref makeString.  Returns a value when the
@@ -282,6 +302,7 @@ class Frame {
                 MediaPacket::PtrList   _packetList;
                 Metadata               _metadata;
                 Benchmark::Ptr         _benchmark;
+                MediaConfig            _configUpdate;
 
                 std::optional<String> resolvePseudoKey(const String &key, const String &spec) const;
 };
