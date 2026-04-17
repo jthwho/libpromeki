@@ -570,13 +570,13 @@ void CSCPipeline::buildMatrixStage(const ColorModel &src, const ColorModel &dst,
         std::memset(stage.matrixPreOffset, 0, sizeof(stage.matrixPreOffset));
         std::memset(stage.matrixOffset, 0, sizeof(stage.matrixOffset));
 
-        // Pure gamut conversion in linear space: srcNPM * dstInvNPM
+        // Pure gamut conversion in linear space: dstInvNPM * srcNPM
         ColorModel srcRGB = baseRGBModel(src);
         ColorModel dstRGB = baseRGBModel(dst);
 
         ColorModel srcLin = linearVariant(srcRGB);
         ColorModel dstLin = linearVariant(dstRGB);
-        Matrix3x3 gamutMatrix = srcLin.data()->rgbToXyz * dstLin.data()->xyzToRgb;
+        Matrix3x3 gamutMatrix = dstLin.data()->xyzToRgb * srcLin.data()->rgbToXyz;
 
         for(int i = 0; i < 3; i++)
                 for(int j = 0; j < 3; j++)

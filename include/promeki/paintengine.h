@@ -305,12 +305,16 @@ class PaintEngine {
                         size_t count = pd.isValid() ? pd.compCount() : 4;
                         uint16_t data[PixelFormat::MaxComps] = {};
                         for(size_t i = 0; i < count && i < 3; i++) {
-                                data[i] = static_cast<uint16_t>(c.comp(i) * 65535.0f);
+                                float v = c.comp(i) * 65535.0f;
+                                if(v < 0.0f) v = 0.0f;
+                                if(v > 65535.0f) v = 65535.0f;
+                                data[i] = static_cast<uint16_t>(v);
                         }
-                        if(pd.isValid() && pd.hasAlpha() && pd.alphaCompIndex() >= 0) {
-                                data[pd.alphaCompIndex()] = static_cast<uint16_t>(c.alpha() * 65535.0f);
-                        } else if(count >= 4) {
-                                data[3] = static_cast<uint16_t>(c.alpha() * 65535.0f);
+                        if(count >= 4) {
+                                float a = c.alpha() * 65535.0f;
+                                if(a < 0.0f) a = 0.0f;
+                                if(a > 65535.0f) a = 65535.0f;
+                                data[3] = static_cast<uint16_t>(a);
                         }
                         return d->createPixel(data, count);
                 }

@@ -1035,7 +1035,10 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/mediaiotask_rtp.cpp
         src/proav/mediaiotask_tpg.cpp
         src/proav/paintengine.cpp
+        src/proav/paintengine_422.cpp
         src/proav/paintengine_interleaved.cpp
+        src/proav/paintengine_multiplane.cpp
+        src/proav/paintengine_packed.cpp
         src/proav/quicktime.cpp
         src/proav/quicktime_atom.cpp
         src/proav/quicktime_reader.cpp

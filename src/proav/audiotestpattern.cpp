@@ -30,7 +30,27 @@ static constexpr float kPcmMarkerSyncLevel = 1.0f;
 static constexpr float kPcmMarkerBitLevel  = 0.8f;
 static constexpr float kPcmMarkerParityLevel = 0.6f;
 
+/// EBU line-up reference level: −18 dBFS.
+static const AudioLevel kEbuLineupLevel = AudioLevel::fromDbfs(-18.0);
+
+/// IEC 60958 biphase-mark amplitude.
+static constexpr float kIec60958Level = 0.8f;
+
+/// Professional channel-status block (192 bits / 24 bytes).
+/// Byte 0 bit 0 = 1 → professional.
+/// Byte 0 bits 1-2 = 0 → linear PCM, no emphasis.
+/// Byte 2 bits 0-3 = 0010 → 48 kHz sample rate.
+/// Byte 3 bits 0-2 = 101 → 24-bit word length.
+/// Rest zeroed.
+static constexpr uint8_t kIec60958ChannelStatus[24] = {
+        0x01, 0x00, 0x02, 0x05, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
 } // anonymous namespace
+
+const List<double> AudioTestPattern::kDefaultSteppedToneFreqs = {100.0, 1000.0, 10000.0};
 
 AudioTestPattern::AudioTestPattern(const AudioDesc &desc)
         : _desc(desc),
@@ -72,6 +92,20 @@ Error AudioTestPattern::configure() {
         _dualTonePhase2    = 0.0;
         _noiseSampleCursor = 0;
         _pcmMarkerCounter  = 0;
+        _sweepSampleCursor = 0.0;
+        _sweepPhase        = 0.0;
+        _polarityCursor    = 0.0;
+        _steppedToneSampleCursor = 0.0;
+        _steppedTonePhase        = 0.0;
+        _blitsSampleCursor       = 0;
+        _blitsPhase              = 0.0;
+        _ebuLineupSampleCursor   = 0;
+        _ebuLineupPhase          = 0.0;
+        _iec60958SampleCursor    = 0;
+
+        if(_steppedToneFreqs.isEmpty()) {
+                _steppedToneFreqs = kDefaultSteppedToneFreqs;
+        }
 
         const size_t channels = _desc.channels();
 
@@ -87,6 +121,7 @@ Error AudioTestPattern::configure() {
                 if(m == AudioPattern::LTC)        needsLtc        = true;
                 if(m == AudioPattern::WhiteNoise) needsWhiteNoise = true;
                 if(m == AudioPattern::PinkNoise)  needsPinkNoise  = true;
+                if(m == AudioPattern::Dialnorm)   needsPinkNoise  = true;
         }
 
         if(needsLtc) {
@@ -134,8 +169,10 @@ Error AudioTestPattern::configure() {
                         cfg.level = _toneLevel;
                 } else {
                         // LTC / AvSync / noise / chirp / dual-tone /
-                        // PcmMarker / unknown → no persistent AudioGen
-                        // state; the per-call dispatch handles them.
+                        // PcmMarker / sweep / polarity / stepped-tone /
+                        // BLITS / EBU lineup / dialnorm / IEC 60958 /
+                        // unknown → no persistent AudioGen state; the
+                        // per-call dispatch handles them.
                         buildGen = false;
                 }
 
@@ -472,6 +509,34 @@ Audio AudioTestPattern::create(size_t samples, const Timecode &tc) const {
                         writePcmMarkerChannel(out, ch, channels, samples, pcmPayload);
                         continue;
                 }
+                if(mode == AudioPattern::Sweep) {
+                        writeSweepChannel(out, ch, channels, samples);
+                        continue;
+                }
+                if(mode == AudioPattern::Polarity) {
+                        writePolarityChannel(out, ch, channels, samples);
+                        continue;
+                }
+                if(mode == AudioPattern::SteppedTone) {
+                        writeSteppedToneChannel(out, ch, channels, samples);
+                        continue;
+                }
+                if(mode == AudioPattern::Blits) {
+                        writeBlitsChannel(out, ch, channels, channels, samples);
+                        continue;
+                }
+                if(mode == AudioPattern::EbuLineup) {
+                        writeEbuLineupChannel(out, ch, channels, samples);
+                        continue;
+                }
+                if(mode == AudioPattern::Dialnorm) {
+                        writeDialnormChannel(out, ch, channels, samples);
+                        continue;
+                }
+                if(mode == AudioPattern::Iec60958) {
+                        writeIec60958Channel(out, ch, channels, samples);
+                        continue;
+                }
 
                 // Everything else flows through a per-channel AudioGen.
                 // Channels beyond the mode list, or channels explicitly
@@ -494,18 +559,35 @@ Audio AudioTestPattern::create(size_t samples, const Timecode &tc) const {
         // whether or not a given channel is present on this stream.
 
         // Noise channels share a single cumulative read cursor.
-        // Advance it once per create() call so successive frames read
-        // successive regions of the cached buffer — the per-frame
-        // advance is what turns a static repeating slice into a
-        // rolling, spectrally-flat stream.  The cursor wraps at the
-        // buffer length of whichever noise buffer is populated (they
-        // have the same length by construction); if neither is
-        // populated we still advance so the state stays predictable
-        // across configure() → create() sequences that switch modes.
         size_t noiseBufLen = _whiteNoiseBuffer.size();
         if(noiseBufLen == 0) noiseBufLen = _pinkNoiseBuffer.size();
         if(noiseBufLen > 0) {
                 _noiseSampleCursor = (_noiseSampleCursor + samples) % noiseBufLen;
+        }
+
+        // BLITS / EBU lineup / IEC 60958 cursors advance once per
+        // create() call so they stay synchronised across channels.
+        const size_t sampleRate = _desc.sampleRate();
+        if(sampleRate > 0) {
+                const size_t blitsCycle =
+                        static_cast<size_t>(
+                                (kBlitsSegmentSec * (3.0 + static_cast<double>(channels)))
+                                * static_cast<double>(sampleRate));
+                if(blitsCycle > 0) {
+                        _blitsSampleCursor = (_blitsSampleCursor + samples) % blitsCycle;
+                }
+
+                const size_t ebuCycle =
+                        static_cast<size_t>(kEbuLineupCycleSec * static_cast<double>(sampleRate));
+                if(ebuCycle > 0) {
+                        _ebuLineupSampleCursor = (_ebuLineupSampleCursor + samples) % ebuCycle;
+                }
+
+                const size_t iecFrame =
+                        kIec60958StatusBits * kIec60958SamplesPerBit;
+                if(iecFrame > 0) {
+                        _iec60958SampleCursor = (_iec60958SampleCursor + samples) % iecFrame;
+                }
         }
 
         return audio;
@@ -696,6 +778,259 @@ void AudioTestPattern::writePcmMarkerChannel(float *out, size_t channel,
 
         // Remaining samples are left at zero (the buffer was
         // pre-zeroed in create()) — they act as an inter-frame gap.
+}
+
+void AudioTestPattern::writeSweepChannel(float *out, size_t channel,
+                                         size_t channels, size_t samples) const {
+        const double sampleRate = static_cast<double>(_desc.sampleRate());
+        if(sampleRate <= 0.0) return;
+        if(_sweepDurationSec <= 0.0) return;
+
+        const double periodSamples = _sweepDurationSec * sampleRate;
+        const double fStart = _sweepStartFreq;
+        const double fEnd   = _sweepEndFreq;
+        if(fStart <= 0.0 || fEnd <= 0.0) return;
+        if(periodSamples <= 0.0) return;
+
+        const double fRange = fEnd - fStart;
+        const float  level  = _toneLevel.toLinearFloat();
+        const double wrapMod = kTwoPi;
+
+        double cursor = _sweepSampleCursor;
+        if(cursor < 0.0) cursor = 0.0;
+        if(cursor >= periodSamples) cursor = std::fmod(cursor, periodSamples);
+
+        double phase = _sweepPhase;
+        for(size_t s = 0; s < samples; ++s) {
+                const double progress = cursor / periodSamples;
+                const double freq     = fStart + progress * fRange;
+                phase += kTwoPi * freq / sampleRate;
+                if(phase >= wrapMod) phase = std::fmod(phase, wrapMod);
+                out[s * channels + channel] =
+                        level * static_cast<float>(std::sin(phase));
+
+                cursor += 1.0;
+                if(cursor >= periodSamples) cursor -= periodSamples;
+        }
+
+        _sweepPhase        = phase;
+        _sweepSampleCursor = cursor;
+}
+
+void AudioTestPattern::writePolarityChannel(float *out, size_t channel,
+                                            size_t channels, size_t samples) const {
+        const double sampleRate = static_cast<double>(_desc.sampleRate());
+        if(sampleRate <= 0.0) return;
+        if(_polarityPulseHz <= 0.0) return;
+        if(_polarityPulseWidthSec <= 0.0) return;
+
+        const double periodSamples = sampleRate / _polarityPulseHz;
+        const double pulseSamples  = _polarityPulseWidthSec * sampleRate;
+        const float  level         = _toneLevel.toLinearFloat();
+
+        double cursor = _polarityCursor;
+        if(cursor < 0.0) cursor = 0.0;
+        if(cursor >= periodSamples) cursor = std::fmod(cursor, periodSamples);
+
+        for(size_t s = 0; s < samples; ++s) {
+                float v = 0.0f;
+                if(cursor < pulseSamples) {
+                        const double t = M_PI * cursor / pulseSamples;
+                        v = level * static_cast<float>(std::sin(t));
+                }
+                out[s * channels + channel] = v;
+
+                cursor += 1.0;
+                if(cursor >= periodSamples) cursor -= periodSamples;
+        }
+
+        _polarityCursor = cursor;
+}
+
+void AudioTestPattern::writeSteppedToneChannel(float *out, size_t channel,
+                                               size_t channels, size_t samples) const {
+        const double sampleRate = static_cast<double>(_desc.sampleRate());
+        if(sampleRate <= 0.0) return;
+        if(_steppedToneFreqs.isEmpty()) return;
+        if(_steppedToneStepSec <= 0.0) return;
+
+        const size_t numSteps     = _steppedToneFreqs.size();
+        const double stepSamples  = _steppedToneStepSec * sampleRate;
+        const double cycleSamples = stepSamples * static_cast<double>(numSteps);
+        const float  level        = _toneLevel.toLinearFloat();
+        const double wrapMod      = kTwoPi;
+
+        double cursor = _steppedToneSampleCursor;
+        if(cursor < 0.0) cursor = 0.0;
+        if(cursor >= cycleSamples) cursor = std::fmod(cursor, cycleSamples);
+
+        double phase = _steppedTonePhase;
+        for(size_t s = 0; s < samples; ++s) {
+                const size_t stepIdx =
+                        static_cast<size_t>(cursor / stepSamples) % numSteps;
+                const double freq = _steppedToneFreqs[stepIdx];
+                phase += kTwoPi * freq / sampleRate;
+                if(phase >= wrapMod) phase = std::fmod(phase, wrapMod);
+                out[s * channels + channel] =
+                        level * static_cast<float>(std::sin(phase));
+
+                cursor += 1.0;
+                if(cursor >= cycleSamples) cursor -= cycleSamples;
+        }
+
+        _steppedTonePhase        = phase;
+        _steppedToneSampleCursor = cursor;
+}
+
+void AudioTestPattern::writeBlitsChannel(float *out, size_t channel,
+                                         size_t channels, size_t totalChannels,
+                                         size_t samples) const {
+        // Simplified EBU Tech 3304 BLITS cycle:
+        //   Segment 0                 : all channels play kBlitsFreqHz
+        //   Segments 1..totalChannels : only the matching channel plays
+        //   Segment totalChannels+1   : all channels, odd channels inverted
+        //   Segment totalChannels+2   : silence
+        const double sampleRate = static_cast<double>(_desc.sampleRate());
+        if(sampleRate <= 0.0) return;
+
+        const size_t numSegments    = totalChannels + 3;
+        const double segmentSamples = kBlitsSegmentSec * sampleRate;
+        const float  level          = kEbuLineupLevel.toLinearFloat();
+        const double wFreq          = kTwoPi * kBlitsFreqHz / sampleRate;
+        const double wrapMod        = kTwoPi;
+
+        size_t cursor = _blitsSampleCursor;
+        double phase  = _blitsPhase;
+        for(size_t s = 0; s < samples; ++s) {
+                const size_t seg =
+                        static_cast<size_t>(
+                                static_cast<double>(cursor) / segmentSamples)
+                        % numSegments;
+
+                float v = 0.0f;
+                bool active = false;
+                bool invert = false;
+
+                if(seg == 0) {
+                        active = true;
+                } else if(seg >= 1 && seg <= totalChannels) {
+                        active = (channel == (seg - 1));
+                } else if(seg == totalChannels + 1) {
+                        active = true;
+                        invert = (channel & 1u) != 0;
+                }
+                // seg == totalChannels + 2 → silence
+
+                if(active) {
+                        v = level * static_cast<float>(std::sin(phase));
+                        if(invert) v = -v;
+                }
+
+                out[s * channels + channel] = v;
+                phase += wFreq;
+                if(phase >= wrapMod) phase = std::fmod(phase, wrapMod);
+                ++cursor;
+        }
+
+        _blitsPhase = phase;
+}
+
+void AudioTestPattern::writeEbuLineupChannel(float *out, size_t channel,
+                                             size_t channels, size_t samples) const {
+        const double sampleRate = static_cast<double>(_desc.sampleRate());
+        if(sampleRate <= 0.0) return;
+
+        const double onSamples    = kEbuLineupOnSec * sampleRate;
+        const float  level        = kEbuLineupLevel.toLinearFloat();
+        const double wFreq        = kTwoPi * kEbuLineupFreqHz / sampleRate;
+        const double wrapMod      = kTwoPi;
+
+        size_t cursor = _ebuLineupSampleCursor;
+        double phase  = _ebuLineupPhase;
+        for(size_t s = 0; s < samples; ++s) {
+                float v = 0.0f;
+                if(static_cast<double>(cursor) < onSamples) {
+                        v = level * static_cast<float>(std::sin(phase));
+                }
+                out[s * channels + channel] = v;
+                phase += wFreq;
+                if(phase >= wrapMod) phase = std::fmod(phase, wrapMod);
+                ++cursor;
+        }
+
+        _ebuLineupPhase = phase;
+}
+
+void AudioTestPattern::writeDialnormChannel(float *out, size_t channel,
+                                            size_t channels, size_t samples) const {
+        if(_pinkNoiseBuffer.isEmpty()) return;
+        const size_t bufLen = _pinkNoiseBuffer.size();
+
+        // Scale from the buffer's peak level (_toneLevel) to _dialnormLevel.
+        const float toneLinear     = _toneLevel.toLinearFloat();
+        const float dialnormLinear = _dialnormLevel.toLinearFloat();
+        const float scale = (toneLinear > 0.0f)
+                ? (dialnormLinear / toneLinear)
+                : 0.0f;
+
+        const size_t channelStride =
+                bufLen / (channels > 1 ? channels : 1);
+        const size_t channelOffset = (channel * channelStride) % bufLen;
+        const size_t base = (channelOffset + _noiseSampleCursor) % bufLen;
+
+        for(size_t s = 0; s < samples; ++s) {
+                const size_t idx = (base + s) % bufLen;
+                out[s * channels + channel] = _pinkNoiseBuffer[idx] * scale;
+        }
+}
+
+void AudioTestPattern::writeIec60958Channel(float *out, size_t channel,
+                                            size_t channels, size_t samples) const {
+        // Biphase mark encoding: each bit of the channel-status block
+        // occupies kIec60958SamplesPerBit samples.  A transition always
+        // occurs at the start of each bit cell.  A '1' bit adds a
+        // mid-cell transition; a '0' bit does not.  This produces a
+        // decodable clock-embedded waveform in the PCM domain.
+        const size_t frameLen =
+                kIec60958StatusBits * kIec60958SamplesPerBit;
+
+        size_t cursor = _iec60958SampleCursor;
+        float polarity = 1.0f;
+
+        // Reconstruct polarity at the current cursor position so
+        // that chunks starting mid-frame stay phase-coherent.
+        for(size_t i = 0; i < cursor; ++i) {
+                const size_t bitIdx = i / kIec60958SamplesPerBit;
+                const size_t sub    = i % kIec60958SamplesPerBit;
+                const size_t byteIdx = bitIdx / 8;
+                const size_t bitOff  = bitIdx % 8;
+                const int bit = (kIec60958ChannelStatus[byteIdx] >> bitOff) & 1;
+
+                if(sub == 0) {
+                        polarity = -polarity;
+                } else if(sub == kIec60958SamplesPerBit / 2 && bit) {
+                        polarity = -polarity;
+                }
+        }
+
+        for(size_t s = 0; s < samples; ++s) {
+                const size_t pos     = cursor % frameLen;
+                const size_t bitIdx  = pos / kIec60958SamplesPerBit;
+                const size_t sub     = pos % kIec60958SamplesPerBit;
+                const size_t byteIdx = bitIdx / 8;
+                const size_t bitOff  = bitIdx % 8;
+                const int bit = (kIec60958ChannelStatus[byteIdx] >> bitOff) & 1;
+
+                if(sub == 0) {
+                        polarity = -polarity;
+                } else if(sub == kIec60958SamplesPerBit / 2 && bit) {
+                        polarity = -polarity;
+                }
+
+                out[s * channels + channel] = kIec60958Level * polarity;
+                ++cursor;
+                if(cursor >= frameLen) cursor -= frameLen;
+        }
 }
 
 Audio AudioTestPattern::create(size_t samples) const {

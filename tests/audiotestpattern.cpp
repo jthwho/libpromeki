@@ -783,3 +783,363 @@ TEST_CASE("AudioTestPattern_PcmMarkerUsesTimecodeBcd") {
         }
         CHECK(decoded == expected);
 }
+
+// ============================================================================
+// Sweep
+// ============================================================================
+
+TEST_CASE("AudioTestPattern_SweepProducesNonZeroAudio") {
+        AudioDesc desc(48000, 1);
+        AudioTestPattern gen(desc);
+        gen.setChannelModes(makeModes({AudioPattern::Sweep}));
+        gen.setSweepStartFreq(100.0);
+        gen.setSweepEndFreq(10000.0);
+        gen.setSweepDurationSec(1.0);
+        REQUIRE(gen.configure().isOk());
+
+        Audio audio = gen.create(1024);
+        REQUIRE(audio.isValid());
+        CHECK(audioPeakChannel(audio, 0) > 0.05f);
+}
+
+TEST_CASE("AudioTestPattern_SweepContinuousAcrossChunks") {
+        AudioDesc desc(48000, 1);
+        AudioTestPattern gen(desc);
+        gen.setChannelModes(makeModes({AudioPattern::Sweep}));
+        gen.setSweepStartFreq(100.0);
+        gen.setSweepEndFreq(10000.0);
+        gen.setSweepDurationSec(1.0);
+        REQUIRE(gen.configure().isOk());
+
+        // Produce audio in two small chunks and verify the last sample of
+        // the first chunk and first sample of the second are not identical
+        // zero-boundary artefacts (continuity check).
+        Audio a = gen.create(512);
+        Audio b = gen.create(512);
+        REQUIRE(a.isValid());
+        REQUIRE(b.isValid());
+
+        const float *da = a.data<float>();
+        const float *db = b.data<float>();
+        // Neither frame should be silent.
+        CHECK(audioPeakChannel(a, 0) > 0.05f);
+        CHECK(audioPeakChannel(b, 0) > 0.05f);
+        // Last sample of first chunk and first sample of second should be
+        // close (no discontinuity jump larger than a full waveform swing).
+        const float jump = std::abs(da[511] - db[0]);
+        CHECK(jump < 2.0f);
+}
+
+// ============================================================================
+// Polarity
+// ============================================================================
+
+TEST_CASE("AudioTestPattern_PolarityPositiveGoingImpulse") {
+        // The polarity pattern emits positive half-sine impulses.  The
+        // peak value in the first chunk should be positive.
+        const double sampleRate = 48000.0;
+        AudioDesc desc(static_cast<float>(sampleRate), 1);
+        AudioTestPattern gen(desc);
+        gen.setChannelModes(makeModes({AudioPattern::Polarity}));
+        gen.setPolarityPulseHz(4.0);          // 4 pulses per second
+        gen.setPolarityPulseWidthSec(0.001);  // 1 ms half-sine
+        REQUIRE(gen.configure().isOk());
+
+        Audio audio = gen.create(4800);  // 100 ms
+        REQUIRE(audio.isValid());
+
+        const float *data = audio.data<float>();
+        float maxPositive = 0.0f;
+        float maxNegative = 0.0f;
+        for(size_t s = 0; s < 4800; ++s) {
+                if(data[s] > maxPositive) maxPositive = data[s];
+                if(data[s] < maxNegative) maxNegative = data[s];
+        }
+        // Should have positive peaks and no negative peaks beyond floating-
+        // point noise (half-sine is strictly positive).
+        CHECK(maxPositive > 0.05f);
+        CHECK(maxNegative > -0.001f);
+}
+
+TEST_CASE("AudioTestPattern_PolarityPeriodicImpulses") {
+        // Verify that multiple impulses occur within a longer window.
+        const double sampleRate = 48000.0;
+        AudioDesc desc(static_cast<float>(sampleRate), 1);
+        AudioTestPattern gen(desc);
+        gen.setChannelModes(makeModes({AudioPattern::Polarity}));
+        gen.setPolarityPulseHz(10.0);         // 10 Hz → 10 impulses/s
+        gen.setPolarityPulseWidthSec(0.002);  // 2 ms pulse
+        REQUIRE(gen.configure().isOk());
+
+        Audio audio = gen.create(static_cast<size_t>(sampleRate));  // 1 s
+        REQUIRE(audio.isValid());
+
+        // Count impulse peaks by finding local positive maxima above threshold.
+        const float *data = audio.data<float>();
+        int impulseCount = 0;
+        bool inPulse = false;
+        for(size_t s = 0; s < static_cast<size_t>(sampleRate); ++s) {
+                if(!inPulse && data[s] > 0.05f) { ++impulseCount; inPulse = true; }
+                if(inPulse && data[s] < 0.01f)  { inPulse = false; }
+        }
+        CHECK(impulseCount >= 9);
+        CHECK(impulseCount <= 11);
+}
+
+// ============================================================================
+// SteppedTone
+// ============================================================================
+
+TEST_CASE("AudioTestPattern_SteppedToneDefaultFreqs") {
+        // Default stepped tone list is {100, 1000, 10000} Hz.
+        AudioDesc desc(48000, 1);
+        AudioTestPattern gen(desc);
+        gen.setChannelModes(makeModes({AudioPattern::SteppedTone}));
+        REQUIRE(gen.configure().isOk());
+
+        CHECK(gen.steppedToneFreqs().size() == 3);
+        CHECK(gen.steppedToneFreqs()[0] == doctest::Approx(100.0));
+        CHECK(gen.steppedToneFreqs()[1] == doctest::Approx(1000.0));
+        CHECK(gen.steppedToneFreqs()[2] == doctest::Approx(10000.0));
+}
+
+TEST_CASE("AudioTestPattern_SteppedToneProducesAudio") {
+        AudioDesc desc(48000, 1);
+        AudioTestPattern gen(desc);
+        gen.setChannelModes(makeModes({AudioPattern::SteppedTone}));
+        gen.setSteppedToneFreqs({440.0, 880.0});
+        gen.setSteppedToneStepSec(0.5);
+        REQUIRE(gen.configure().isOk());
+
+        Audio audio = gen.create(1024);
+        REQUIRE(audio.isValid());
+        CHECK(audioPeakChannel(audio, 0) > 0.05f);
+}
+
+TEST_CASE("AudioTestPattern_SteppedToneContinuousAcrossChunks") {
+        AudioDesc desc(48000, 1);
+        AudioTestPattern gen(desc);
+        gen.setChannelModes(makeModes({AudioPattern::SteppedTone}));
+        gen.setSteppedToneFreqs({1000.0});
+        gen.setSteppedToneStepSec(10.0);  // single freq, no step transition
+        REQUIRE(gen.configure().isOk());
+
+        Audio a = gen.create(512);
+        Audio b = gen.create(512);
+        REQUIRE(a.isValid());
+        REQUIRE(b.isValid());
+
+        // Both chunks should have audio.
+        CHECK(audioPeakChannel(a, 0) > 0.05f);
+        CHECK(audioPeakChannel(b, 0) > 0.05f);
+
+        // No large discontinuity at the chunk boundary.
+        const float *da = a.data<float>();
+        const float *db = b.data<float>();
+        CHECK(std::abs(da[511] - db[0]) < 2.0f);
+}
+
+// ============================================================================
+// EbuLineup
+// ============================================================================
+
+TEST_CASE("AudioTestPattern_EbuLineupOnTonePhase") {
+        // First kEbuLineupOnSec seconds should have signal; remainder silence.
+        const double sampleRate = 48000.0;
+        AudioDesc desc(static_cast<float>(sampleRate), 1);
+        AudioTestPattern gen(desc);
+        gen.setChannelModes(makeModes({AudioPattern::EbuLineup}));
+        REQUIRE(gen.configure().isOk());
+
+        const size_t onSamples =
+                static_cast<size_t>(AudioTestPattern::kEbuLineupOnSec * sampleRate);
+        const size_t cycleSamples =
+                static_cast<size_t>(AudioTestPattern::kEbuLineupCycleSec * sampleRate);
+
+        // Render the entire 5-second cycle in one shot.
+        Audio audio = gen.create(cycleSamples);
+        REQUIRE(audio.isValid());
+
+        const float *data = audio.data<float>();
+
+        // Samples in the on-phase should have a non-trivial magnitude.
+        float onPeak = 0.0f;
+        for(size_t s = 48; s < onSamples; ++s) {  // skip first ~1 ms (phase ramp)
+                float v = std::abs(data[s]);
+                if(v > onPeak) onPeak = v;
+        }
+        CHECK(onPeak > 0.05f);
+
+        // Samples in the off-phase should be silent.
+        float offPeak = 0.0f;
+        for(size_t s = onSamples; s < cycleSamples; ++s) {
+                float v = std::abs(data[s]);
+                if(v > offPeak) offPeak = v;
+        }
+        CHECK(offPeak == doctest::Approx(0.0f));
+}
+
+// ============================================================================
+// Dialnorm
+// ============================================================================
+
+TEST_CASE("AudioTestPattern_DialnormLowerThanToneLevel") {
+        // Dialnorm output should be quieter than a standard tone at the
+        // default tone level, since its target is typically around -24 dBFS.
+        AudioDesc desc(48000, 1);
+        AudioTestPattern gen(desc);
+        gen.setChannelModes(makeModes({AudioPattern::Dialnorm}));
+        REQUIRE(gen.configure().isOk());
+
+        Audio audio = gen.create(4800);
+        REQUIRE(audio.isValid());
+        float peak = audioPeakChannel(audio, 0);
+
+        // Default dialnorm level is -24 dBFS — linear ~0.063.
+        // Allow generous headroom since the pink-noise buffer is not
+        // necessarily at exactly the tone level peak.
+        CHECK(peak > 0.001f);
+        CHECK(peak < 0.5f);
+}
+
+TEST_CASE("AudioTestPattern_DialnormCustomLevel") {
+        AudioDesc desc(48000, 1);
+        AudioTestPattern gen(desc);
+        gen.setChannelModes(makeModes({AudioPattern::Dialnorm}));
+        gen.setDialnormLevel(AudioLevel::fromDbfs(-18.0));
+        REQUIRE(gen.configure().isOk());
+
+        Audio audio = gen.create(4800);
+        REQUIRE(audio.isValid());
+        CHECK(audioPeakChannel(audio, 0) > 0.001f);
+}
+
+// ============================================================================
+// Iec60958
+// ============================================================================
+
+TEST_CASE("AudioTestPattern_Iec60958ConstantAmplitude") {
+        // The IEC 60958 pattern should output at kIec60958Level only
+        // (biphase mark — constant magnitude, varying sign).
+        AudioDesc desc(48000, 1);
+        AudioTestPattern gen(desc);
+        gen.setChannelModes(makeModes({AudioPattern::Iec60958}));
+        REQUIRE(gen.configure().isOk());
+
+        Audio audio = gen.create(1024);
+        REQUIRE(audio.isValid());
+
+        const float *data = audio.data<float>();
+        for(size_t s = 0; s < 1024; ++s) {
+                // Each sample is ±kIec60958Level.
+                CHECK(std::abs(std::abs(data[s]) - 0.8f) < 0.001f);
+        }
+}
+
+TEST_CASE("AudioTestPattern_Iec60958FrameRepeatsEveryFullCycle") {
+        // Rendering two consecutive full-frame-length chunks should produce
+        // identical output — the IEC 60958 channel-status block repeats
+        // exactly once per frameLen samples.
+        AudioDesc desc(48000, 1);
+        AudioTestPattern gen(desc);
+        gen.setChannelModes(makeModes({AudioPattern::Iec60958}));
+        REQUIRE(gen.configure().isOk());
+
+        const size_t frameLen =
+                AudioTestPattern::kIec60958StatusBits *
+                AudioTestPattern::kIec60958SamplesPerBit;
+
+        // Render two consecutive full frames.
+        Audio frame1 = gen.create(frameLen);
+        Audio frame2 = gen.create(frameLen);
+        REQUIRE(frame1.isValid());
+        REQUIRE(frame2.isValid());
+
+        const float *d1 = frame1.data<float>();
+        const float *d2 = frame2.data<float>();
+
+        // Both frames should carry signal.
+        CHECK(audioPeakChannel(frame1, 0) > 0.5f);
+        CHECK(audioPeakChannel(frame2, 0) > 0.5f);
+
+        // Two full frames should be identical — the block repeats every frameLen.
+        for(size_t s = 0; s < frameLen; ++s) {
+                REQUIRE(d1[s] == doctest::Approx(d2[s]));
+        }
+}
+
+TEST_CASE("AudioTestPattern_Iec60958PartialFrameShifted") {
+        // Rendering frameLen/2 samples twice should give a phase-shifted
+        // result — the second half of the block, not the first.
+        AudioDesc desc(48000, 1);
+        AudioTestPattern gen(desc);
+        gen.setChannelModes(makeModes({AudioPattern::Iec60958}));
+        REQUIRE(gen.configure().isOk());
+
+        const size_t frameLen =
+                AudioTestPattern::kIec60958StatusBits *
+                AudioTestPattern::kIec60958SamplesPerBit;
+        const size_t half = frameLen / 2;
+
+        Audio chunk1 = gen.create(half);
+        Audio chunk2 = gen.create(half);
+        REQUIRE(chunk1.isValid());
+        REQUIRE(chunk2.isValid());
+
+        CHECK(audioPeakChannel(chunk1, 0) > 0.5f);
+        CHECK(audioPeakChannel(chunk2, 0) > 0.5f);
+
+        // The two halves will generally differ in content (different bits).
+        const float *d1 = chunk1.data<float>();
+        const float *d2 = chunk2.data<float>();
+        bool differ = false;
+        for(size_t s = 0; s < half; ++s) {
+                if(d1[s] != d2[s]) { differ = true; break; }
+        }
+        CHECK(differ);
+}
+
+// ============================================================================
+// Blits
+// ============================================================================
+
+TEST_CASE("AudioTestPattern_BlitsAllChannelsToneInFirstSegment") {
+        // BLITS segment 0: all channels carry the identification tone.
+        const double sampleRate = 48000.0;
+        AudioDesc desc(static_cast<float>(sampleRate), 2);
+        AudioTestPattern gen(desc);
+        gen.setChannelModes(makeModes({AudioPattern::Blits, AudioPattern::Blits}));
+        REQUIRE(gen.configure().isOk());
+
+        // The first segment is kBlitsSegmentSec long.
+        const size_t seg0Samples =
+                static_cast<size_t>(AudioTestPattern::kBlitsSegmentSec * sampleRate);
+
+        Audio audio = gen.create(seg0Samples);
+        REQUIRE(audio.isValid());
+
+        // Both channels should carry signal in segment 0.
+        CHECK(audioPeakChannel(audio, 0) > 0.05f);
+        CHECK(audioPeakChannel(audio, 1) > 0.05f);
+}
+
+TEST_CASE("AudioTestPattern_BlitsSingleChannelSegment") {
+        // BLITS segment 1 should silence channel 1 and carry tone on channel 0.
+        const double sampleRate = 48000.0;
+        AudioDesc desc(static_cast<float>(sampleRate), 2);
+        AudioTestPattern gen(desc);
+        gen.setChannelModes(makeModes({AudioPattern::Blits, AudioPattern::Blits}));
+        REQUIRE(gen.configure().isOk());
+
+        // Skip segment 0.
+        const size_t seg0Samples =
+                static_cast<size_t>(AudioTestPattern::kBlitsSegmentSec * sampleRate);
+        gen.create(seg0Samples);  // advance past segment 0
+
+        // Now render segment 1 (channel 0 solo).
+        Audio seg1 = gen.create(seg0Samples);
+        REQUIRE(seg1.isValid());
+
+        CHECK(audioPeakChannel(seg1, 0) > 0.05f);
+        CHECK(audioPeakChannel(seg1, 1) < 0.001f);
+}

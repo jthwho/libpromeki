@@ -50,6 +50,13 @@ class Timecode;
  *                  `channelIdBaseFreq() + ch * channelIdStepFreq()`,
  *                  so a downstream consumer that sees channels out of
  *                  order can identify each one by frequency.
+ *  - @c Sweep — linear frequency sweep.
+ *  - @c Polarity — positive half-sine impulse for polarity verification.
+ *  - @c SteppedTone — cycles through discrete frequency steps.
+ *  - @c Blits — EBU BLITS identification / polarity / silence cycle.
+ *  - @c EbuLineup — 1 kHz at −18 dBFS, 3 s on / 2 s off.
+ *  - @c Dialnorm — pink noise at a calibrated loudness.
+ *  - @c Iec60958 — biphase-mark channel-status block in PCM.
  *
  * Call @ref configure after changing any pattern parameter and before
  * calling @ref create or @ref render.  The class is not thread-safe;
@@ -183,6 +190,54 @@ class AudioTestPattern {
                 /** @brief Sets the DualTone amplitude ratio. */
                 void setDualToneRatio(double ratio) { _dualToneRatio = ratio; }
 
+                /** @brief Returns the Sweep start frequency in Hz. */
+                double sweepStartFreq() const { return _sweepStartFreq; }
+
+                /** @brief Sets the Sweep start frequency in Hz. */
+                void setSweepStartFreq(double hz) { _sweepStartFreq = hz; }
+
+                /** @brief Returns the Sweep end frequency in Hz. */
+                double sweepEndFreq() const { return _sweepEndFreq; }
+
+                /** @brief Sets the Sweep end frequency in Hz. */
+                void setSweepEndFreq(double hz) { _sweepEndFreq = hz; }
+
+                /** @brief Returns the Sweep period in seconds. */
+                double sweepDurationSec() const { return _sweepDurationSec; }
+
+                /** @brief Sets the Sweep period in seconds. */
+                void setSweepDurationSec(double sec) { _sweepDurationSec = sec; }
+
+                /** @brief Returns the Polarity pulse repetition rate in Hz. */
+                double polarityPulseHz() const { return _polarityPulseHz; }
+
+                /** @brief Sets the Polarity pulse repetition rate in Hz. */
+                void setPolarityPulseHz(double hz) { _polarityPulseHz = hz; }
+
+                /** @brief Returns the Polarity half-sine pulse width in seconds. */
+                double polarityPulseWidthSec() const { return _polarityPulseWidthSec; }
+
+                /** @brief Sets the Polarity half-sine pulse width in seconds. */
+                void setPolarityPulseWidthSec(double sec) { _polarityPulseWidthSec = sec; }
+
+                /** @brief Returns the SteppedTone frequency list. */
+                const List<double> &steppedToneFreqs() const { return _steppedToneFreqs; }
+
+                /** @brief Sets the SteppedTone frequency list. */
+                void setSteppedToneFreqs(const List<double> &freqs) { _steppedToneFreqs = freqs; }
+
+                /** @brief Returns the SteppedTone step duration in seconds. */
+                double steppedToneStepSec() const { return _steppedToneStepSec; }
+
+                /** @brief Sets the SteppedTone step duration in seconds. */
+                void setSteppedToneStepSec(double sec) { _steppedToneStepSec = sec; }
+
+                /** @brief Returns the Dialnorm target level. */
+                AudioLevel dialnormLevel() const { return _dialnormLevel; }
+
+                /** @brief Sets the Dialnorm target level. */
+                void setDialnormLevel(AudioLevel level) { _dialnormLevel = level; }
+
                 /**
                  * @brief Returns the noise buffer length in seconds.
                  *
@@ -309,6 +364,30 @@ class AudioTestPattern {
                         kPcmMarkerStartSamples +
                         kPcmMarkerPayloadBits + 1;  // +1 trailing parity bit
 
+                /// @brief Default SteppedTone frequency list (low / mid / high).
+                static const List<double> kDefaultSteppedToneFreqs;
+
+                /// @brief EBU line-up tone frequency (Hz).
+                static constexpr double kEbuLineupFreqHz = 1000.0;
+
+                /// @brief EBU line-up on-time within the 5 s cycle.
+                static constexpr double kEbuLineupOnSec = 3.0;
+
+                /// @brief EBU line-up full cycle length.
+                static constexpr double kEbuLineupCycleSec = 5.0;
+
+                /// @brief BLITS identification tone frequency (Hz).
+                static constexpr double kBlitsFreqHz = 1000.0;
+
+                /// @brief Duration of each BLITS segment in seconds.
+                static constexpr double kBlitsSegmentSec = 1.0;
+
+                /// @brief IEC 60958 professional channel-status block length in bits.
+                static constexpr size_t kIec60958StatusBits = 192;
+
+                /// @brief Samples per biphase-mark symbol in the Iec60958 pattern.
+                static constexpr size_t kIec60958SamplesPerBit = 4;
+
         private:
                 AudioDesc       _desc;
                 EnumList        _channelModes;
@@ -325,6 +404,18 @@ class AudioTestPattern {
                 double          _dualToneFreq1 = 60.0;
                 double          _dualToneFreq2 = 7000.0;
                 double          _dualToneRatio = 0.25;
+
+                double          _sweepStartFreq   = 20.0;
+                double          _sweepEndFreq     = 20000.0;
+                double          _sweepDurationSec = 1.0;
+
+                double          _polarityPulseHz       = 1.0;
+                double          _polarityPulseWidthSec = 0.001;
+
+                List<double>    _steppedToneFreqs;
+                double          _steppedToneStepSec = 1.0;
+
+                AudioLevel      _dialnormLevel = AudioLevel::fromDbfs(-24.0);
 
                 double          _noiseBufferSeconds = 10.0;
                 uint32_t        _noiseSeed          = 0x505244A4u; // 'PRDA' — TPG test seed
@@ -392,6 +483,22 @@ class AudioTestPattern {
                 // timecode.  Incremented on every create() call.
                 mutable uint64_t _pcmMarkerCounter = 0;
 
+                mutable double  _sweepSampleCursor = 0.0;
+                mutable double  _sweepPhase        = 0.0;
+
+                mutable double  _polarityCursor = 0.0;
+
+                mutable double  _steppedToneSampleCursor = 0.0;
+                mutable double  _steppedTonePhase        = 0.0;
+
+                mutable size_t  _blitsSampleCursor = 0;
+                mutable double  _blitsPhase        = 0.0;
+
+                mutable size_t  _ebuLineupSampleCursor = 0;
+                mutable double  _ebuLineupPhase        = 0.0;
+
+                mutable size_t  _iec60958SampleCursor = 0;
+
                 void clearGenerators();
                 AudioPattern modeForChannel(size_t channelIndex) const;
                 const Audio &avSyncBurst(size_t samples) const;
@@ -407,6 +514,20 @@ class AudioTestPattern {
                                           size_t samples) const;
                 void writePcmMarkerChannel(float *out, size_t channel, size_t channels,
                                            size_t samples, uint64_t payload) const;
+                void writeSweepChannel(float *out, size_t channel, size_t channels,
+                                       size_t samples) const;
+                void writePolarityChannel(float *out, size_t channel, size_t channels,
+                                          size_t samples) const;
+                void writeSteppedToneChannel(float *out, size_t channel, size_t channels,
+                                             size_t samples) const;
+                void writeBlitsChannel(float *out, size_t channel, size_t channels,
+                                       size_t totalChannels, size_t samples) const;
+                void writeEbuLineupChannel(float *out, size_t channel, size_t channels,
+                                           size_t samples) const;
+                void writeDialnormChannel(float *out, size_t channel, size_t channels,
+                                          size_t samples) const;
+                void writeIec60958Channel(float *out, size_t channel, size_t channels,
+                                          size_t samples) const;
 };
 
 PROMEKI_NAMESPACE_END

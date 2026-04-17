@@ -125,18 +125,28 @@ void UnpackInterleavedImpl(const void *src, float *const *buffers,
         }
 
         // DPX 10-bit packed: 3 x 10-bit in a 32-bit word (big-endian byte order).
-        // Layout: R[9:0] at bits 31-22, G[9:0] at bits 21-12, B[9:0] at bits 11-2, pad at 1-0.
+        // Method A: comp0 at bits 31-22, comp1 at 21-12, comp2 at 11-2
+        // Method B: comp0 at bits 9-0, comp1 at 19-10, comp2 at 29-20
+        // Distinguish by compByteOffset[0]: 0 = Method A, nonzero = Method B.
         if(pixelsPerBlock == 1 && compCount == 3 && bitsPerComp == 10 && bytesPerBlock == 4) {
+                bool methodB = (compByteOffset[0] != 0 &&
+                                compByteOffset[0] == compByteOffset[1] &&
+                                compByteOffset[1] == compByteOffset[2]);
                 for(size_t x = 0; x < width; x++) {
                         const uint8_t *px = p + x * 4;
-                        // Read as big-endian 32-bit word
                         uint32_t word = (static_cast<uint32_t>(px[0]) << 24)
                                       | (static_cast<uint32_t>(px[1]) << 16)
                                       | (static_cast<uint32_t>(px[2]) <<  8)
                                       |  static_cast<uint32_t>(px[3]);
-                        buffers[0][x] = static_cast<float>((word >> 22) & 0x3FF);
-                        buffers[1][x] = static_cast<float>((word >> 12) & 0x3FF);
-                        buffers[2][x] = static_cast<float>((word >>  2) & 0x3FF);
+                        if(methodB) {
+                                buffers[0][x] = static_cast<float>((word      ) & 0x3FF);
+                                buffers[1][x] = static_cast<float>((word >> 10) & 0x3FF);
+                                buffers[2][x] = static_cast<float>((word >> 20) & 0x3FF);
+                        } else {
+                                buffers[0][x] = static_cast<float>((word >> 22) & 0x3FF);
+                                buffers[1][x] = static_cast<float>((word >> 12) & 0x3FF);
+                                buffers[2][x] = static_cast<float>((word >>  2) & 0x3FF);
+                        }
                 }
                 return;
         }

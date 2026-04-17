@@ -88,7 +88,7 @@ static Image makeGradientRGBA8(size_t w, size_t h) {
 
 static Image makeColorBars8(size_t w = 160, size_t h = 2) {
         VideoTestPattern gen;
-        gen.setPattern(VideoTestPattern::ColorBars);
+        gen.setPattern(VideoPattern::ColorBars);
         return gen.create(ImageDesc(w, h, PixelDesc::RGBA8_sRGB));
 }
 
@@ -301,7 +301,7 @@ TEST_CASE("CSC L4: VideoTestPattern bars through fast path") {
 
 TEST_CASE("CSC L4: 75% bars through fast path") {
         VideoTestPattern gen;
-        gen.setPattern(VideoTestPattern::ColorBars75);
+        gen.setPattern(VideoPattern::ColorBars75);
         Image src = gen.create(ImageDesc(160, 2, PixelDesc::RGBA8_sRGB));
         REQUIRE(src.isValid());
         Image dst = src.convert(PixelDesc::YUV8_422_Rec709, src.metadata());
@@ -423,7 +423,7 @@ TEST_CASE("CSC L7: 10-bit bar values") {
         // Generate 10-bit bars directly via VideoTestPattern (PaintEngine now
         // supports RGBA10_LE natively).
         VideoTestPattern gen;
-        gen.setPattern(VideoTestPattern::ColorBars);
+        gen.setPattern(VideoPattern::ColorBars);
         Image src10 = gen.create(ImageDesc(160, 2, PixelDesc::RGBA10_LE_sRGB));
         REQUIRE(src10.isValid());
 

@@ -32,34 +32,27 @@ PROMEKI_NAMESPACE_BEGIN
  *   @c "const Enum &"; runtime compatibility with @ref Variant and any
  *   @ref Enum-based API is preserved via public inheritance.
  *
- * The integer values are stable and match the corresponding C++ `enum`
- * inside the subsystem that originally defined them (e.g.
- * VideoTestPattern::Pattern), so code that still holds the C++ `enum`
- * internally can convert in either direction via a plain @c static_cast
- * on @c Enum::value().
+ * Subsystems that consume these values (e.g. @c VideoTestPattern) alias
+ * the well-known class directly via @c using, so there is no parallel
+ * C++ @c enum to keep in sync.
  *
  * The registered string names use the same CamelCase spelling as the C++
- * constants on the wrapper struct (e.g. @c "ColorBars", @c "BottomCenter",
- * @c "LTC") rather than the legacy all-lowercase config strings.  Call
- * sites that previously wrote @c "colorbars" / @c "bottomcenter" /
- * @c "tone" / @c "422" need to be updated to the CamelCase form or, better,
- * to use the typed constants directly.
+ * constants on the wrapper class (e.g. @c "ColorBars", @c "BottomCenter",
+ * @c "LTC").  Use the typed constants directly at call sites.
  * @{
  */
 
 /**
  * @brief Well-known Enum type for video test pattern generator modes.
  *
- * Mirrors @c VideoTestPattern::Pattern in value and order.  Used as the
- * value type for the @c MediaIOTask_TPG @c ConfigVideoPattern config key.
+ * The canonical enum for @c VideoTestPattern — used directly as
+ * @c VideoTestPattern::Pattern (a type alias).  Config keys such as
+ * @c MediaConfig::VideoPattern store and retrieve this type.
  *
  * @par Example
  * @code
  * cfg.set(MediaConfig::VideoPattern, VideoPattern::ZonePlate);
- * Enum e = cfg.getAs<Enum>(MediaConfig::VideoPattern,
- *                          VideoPattern::ColorBars);
- * VideoTestPattern::Pattern pat =
- *         static_cast<VideoTestPattern::Pattern>(e.value());
+ * gen.setPattern(VideoPattern::ColorBars);
  * @endcode
  */
 class VideoPattern : public TypedEnum<VideoPattern> {
@@ -76,7 +69,15 @@ class VideoPattern : public TypedEnum<VideoPattern> {
                                 { "Black",        8  },
                                 { "Noise",        9  },
                                 { "ZonePlate",    10 },
-                                { "AvSync",       11 });  // default: ColorBars
+                                { "ColorChecker", 11 },
+                                { "SMPTE219",     12 },
+                                { "AvSync",       13 },
+                                { "MultiBurst",   14 },
+                                { "LimitRange",   15 },
+                                { "CircularZone", 16 },
+                                { "Alignment",    17 },
+                                { "SDIPathEQ",    18 },
+                                { "SDIPathPLL",   19 });  // default: ColorBars
 
                 using TypedEnum<VideoPattern>::TypedEnum;
 
@@ -91,7 +92,15 @@ class VideoPattern : public TypedEnum<VideoPattern> {
                 static const VideoPattern Black;
                 static const VideoPattern Noise;
                 static const VideoPattern ZonePlate;
+                static const VideoPattern ColorChecker;
+                static const VideoPattern SMPTE219;
                 static const VideoPattern AvSync;
+                static const VideoPattern MultiBurst;
+                static const VideoPattern LimitRange;
+                static const VideoPattern CircularZone;
+                static const VideoPattern Alignment;
+                static const VideoPattern SDIPathEQ;
+                static const VideoPattern SDIPathPLL;
 };
 
 inline const VideoPattern VideoPattern::ColorBars    { 0  };
@@ -105,14 +114,22 @@ inline const VideoPattern VideoPattern::White        { 7  };
 inline const VideoPattern VideoPattern::Black        { 8  };
 inline const VideoPattern VideoPattern::Noise        { 9  };
 inline const VideoPattern VideoPattern::ZonePlate    { 10 };
-inline const VideoPattern VideoPattern::AvSync       { 11 };
+inline const VideoPattern VideoPattern::ColorChecker { 11 };
+inline const VideoPattern VideoPattern::SMPTE219     { 12 };
+inline const VideoPattern VideoPattern::AvSync       { 13 };
+inline const VideoPattern VideoPattern::MultiBurst   { 14 };
+inline const VideoPattern VideoPattern::LimitRange   { 15 };
+inline const VideoPattern VideoPattern::CircularZone { 16 };
+inline const VideoPattern VideoPattern::Alignment    { 17 };
+inline const VideoPattern VideoPattern::SDIPathEQ    { 18 };
+inline const VideoPattern VideoPattern::SDIPathPLL   { 19 };
 
 /**
  * @brief Well-known Enum type for on-screen burn-in position presets.
  *
- * Mirrors @c VideoTestPattern::BurnPosition in value and order.  Used as
- * the value type for the @c MediaIOTask_TPG @c ConfigVideoBurnPosition
- * config key.
+ * The canonical enum for burn-in position — used directly by
+ * @c VideoTestPattern.  Config keys such as
+ * @c MediaConfig::VideoBurnPosition store and retrieve this type.
  */
 class BurnPosition : public TypedEnum<BurnPosition> {
         public:
@@ -198,21 +215,63 @@ inline const BurnPosition BurnPosition::Center       { 6 };
  *                   See @ref MediaConfig::AudioDualToneFreq1,
  *                   @ref MediaConfig::AudioDualToneFreq2, and
  *                   @ref MediaConfig::AudioDualToneRatio.
+ * - @c Sweep      — linear frequency sweep from
+ *                   @ref AudioTestPattern::sweepStartFreq to
+ *                   @ref AudioTestPattern::sweepEndFreq over
+ *                   @ref AudioTestPattern::sweepDurationSec.
+ *                   Complements the logarithmic @c Chirp for
+ *                   frequency-response measurements where a
+ *                   constant Hz/s sweep rate is preferred.
+ * - @c Polarity   — positive-going half-sine impulse repeated at
+ *                   @ref AudioTestPattern::polarityPulseHz.  If the
+ *                   received waveform goes positive first, the path
+ *                   is non-inverting; negative first means an
+ *                   odd number of polarity inversions.
+ * - @c SteppedTone — discrete frequency steps cycling through
+ *                   @ref AudioTestPattern::steppedToneFreqs, each
+ *                   held for @ref AudioTestPattern::steppedToneStepSec.
+ *                   Default 100 Hz / 1 kHz / 10 kHz covers the
+ *                   low / mid / high bands for per-band level
+ *                   alignment.
+ * - @c Blits      — simplified EBU Tech 3304 BLITS (Broadcast
+ *                   Loudness and Identification Tone Sequence).
+ *                   Channel-aware cycle: all-channel tone, sequential
+ *                   per-channel identification, polarity check (odd
+ *                   channels inverted), then silence.
+ * - @c EbuLineup  — EBU line-up tone: 1 kHz at −18 dBFS with a
+ *                   3 s on / 2 s off cadence.  The standard reference
+ *                   for broadcast level alignment.
+ * - @c Dialnorm   — broadband pink noise calibrated to a target
+ *                   loudness (default −24 dBFS RMS, approximating
+ *                   −24 LKFS per ITU-R BS.1770).  Reads from the
+ *                   same cached pink-noise buffer as @c PinkNoise
+ *                   but at its own amplitude.
+ * - @c Iec60958   — biphase-mark-encoded IEC 60958 professional
+ *                   channel-status block (192 bits) in the PCM
+ *                   domain.  Enables bit-exact verification of
+ *                   digital audio transport paths.
  */
 class AudioPattern : public TypedEnum<AudioPattern> {
         public:
                 PROMEKI_REGISTER_ENUM_TYPE("AudioPattern", 0,
-                                { "Tone",       0 },
-                                { "Silence",    1 },
-                                { "LTC",        2 },
-                                { "AvSync",     3 },
-                                { "SrcProbe",   4 },
-                                { "ChannelId",  5 },
-                                { "PcmMarker",  6 },
-                                { "WhiteNoise", 7 },
-                                { "PinkNoise",  8 },
-                                { "Chirp",      9 },
-                                { "DualTone",  10 });  // default: Tone
+                                { "Tone",        0 },
+                                { "Silence",     1 },
+                                { "LTC",         2 },
+                                { "AvSync",      3 },
+                                { "SrcProbe",    4 },
+                                { "ChannelId",   5 },
+                                { "PcmMarker",   6 },
+                                { "WhiteNoise",  7 },
+                                { "PinkNoise",   8 },
+                                { "Chirp",       9 },
+                                { "DualTone",   10 },
+                                { "Sweep",      11 },
+                                { "Polarity",   12 },
+                                { "SteppedTone",13 },
+                                { "Blits",      14 },
+                                { "EbuLineup",  15 },
+                                { "Dialnorm",   16 },
+                                { "Iec60958",   17 });  // default: Tone
 
                 using TypedEnum<AudioPattern>::TypedEnum;
 
@@ -227,19 +286,33 @@ class AudioPattern : public TypedEnum<AudioPattern> {
                 static const AudioPattern PinkNoise;
                 static const AudioPattern Chirp;
                 static const AudioPattern DualTone;
+                static const AudioPattern Sweep;
+                static const AudioPattern Polarity;
+                static const AudioPattern SteppedTone;
+                static const AudioPattern Blits;
+                static const AudioPattern EbuLineup;
+                static const AudioPattern Dialnorm;
+                static const AudioPattern Iec60958;
 };
 
-inline const AudioPattern AudioPattern::Tone       { 0  };
-inline const AudioPattern AudioPattern::Silence    { 1  };
-inline const AudioPattern AudioPattern::LTC        { 2  };
-inline const AudioPattern AudioPattern::AvSync     { 3  };
-inline const AudioPattern AudioPattern::SrcProbe   { 4  };
-inline const AudioPattern AudioPattern::ChannelId  { 5  };
-inline const AudioPattern AudioPattern::PcmMarker  { 6  };
-inline const AudioPattern AudioPattern::WhiteNoise { 7  };
-inline const AudioPattern AudioPattern::PinkNoise  { 8  };
-inline const AudioPattern AudioPattern::Chirp      { 9  };
-inline const AudioPattern AudioPattern::DualTone   { 10 };
+inline const AudioPattern AudioPattern::Tone        { 0  };
+inline const AudioPattern AudioPattern::Silence     { 1  };
+inline const AudioPattern AudioPattern::LTC         { 2  };
+inline const AudioPattern AudioPattern::AvSync      { 3  };
+inline const AudioPattern AudioPattern::SrcProbe    { 4  };
+inline const AudioPattern AudioPattern::ChannelId   { 5  };
+inline const AudioPattern AudioPattern::PcmMarker   { 6  };
+inline const AudioPattern AudioPattern::WhiteNoise  { 7  };
+inline const AudioPattern AudioPattern::PinkNoise   { 8  };
+inline const AudioPattern AudioPattern::Chirp       { 9  };
+inline const AudioPattern AudioPattern::DualTone    { 10 };
+inline const AudioPattern AudioPattern::Sweep       { 11 };
+inline const AudioPattern AudioPattern::Polarity    { 12 };
+inline const AudioPattern AudioPattern::SteppedTone { 13 };
+inline const AudioPattern AudioPattern::Blits       { 14 };
+inline const AudioPattern AudioPattern::EbuLineup   { 15 };
+inline const AudioPattern AudioPattern::Dialnorm    { 16 };
+inline const AudioPattern AudioPattern::Iec60958    { 17 };
 
 /**
  * @brief Well-known Enum type for chroma subsampling modes.

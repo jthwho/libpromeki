@@ -153,8 +153,7 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
                                    cfg.get(MediaConfig::VideoPattern).get<String>().cstr());
                         return Error::InvalidArgument;
                 }
-                _videoPattern.setPattern(
-                        static_cast<VideoTestPattern::Pattern>(patEnum.value()));
+                _videoPattern.setPattern(VideoPattern(patEnum.value()));
 
                 Size2Du32 size = vfmt.raster();
                 PixelDesc pd = cfg.getAs<PixelDesc>(MediaConfig::VideoPixelFormat, PixelDesc(PixelDesc::RGB8_sRGB));
@@ -222,8 +221,7 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
                                                    .get<String>().cstr());
                                 return Error::InvalidArgument;
                         }
-                        _videoPattern.setBurnPosition(
-                                static_cast<VideoTestPattern::BurnPosition>(posEnum.value()));
+                        _videoPattern.setBurnPosition(BurnPosition(posEnum.value()));
                 }
         }
 

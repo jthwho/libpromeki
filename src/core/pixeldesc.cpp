@@ -995,7 +995,7 @@ static PixelDesc::Data makeRGB10_DPX_LE() {
 static PixelDesc::Data makeYUV10_DPX_B() {
         return makeYCbCrDesc(PixelDesc::YUV10_DPX_B_Rec709,
                 "YUV10_DPX_B_Rec709", "10-bit YCbCr 4:4:4 DPX packed method B, Rec.709, limited range",
-                PixelFormat::I_3x10_DPX, ycbcrSem10);
+                PixelFormat::I_3x10_DPX_B, ycbcrSem10);
 }
 
 // ---------------------------------------------------------------------------
@@ -2016,18 +2016,58 @@ PixelDesc::IDList PixelDesc::registeredIDs() {
 // Paint engine factory declarations from implementation files
 // ---------------------------------------------------------------------------
 
+// paintengine_interleaved.cpp factories
 PaintEngine createPaintEngine_RGBA8(const PixelDesc::Data *d, const Image &img);
 PaintEngine createPaintEngine_RGB8(const PixelDesc::Data *d, const Image &img);
-PaintEngine createPaintEngine_RGBA10_LE(const PixelDesc::Data *d, const Image &img);
-PaintEngine createPaintEngine_RGB10_LE(const PixelDesc::Data *d, const Image &img);
-PaintEngine createPaintEngine_RGBA12_LE(const PixelDesc::Data *d, const Image &img);
-PaintEngine createPaintEngine_RGB12_LE(const PixelDesc::Data *d, const Image &img);
-PaintEngine createPaintEngine_RGBA16_LE(const PixelDesc::Data *d, const Image &img);
-PaintEngine createPaintEngine_RGB16_LE(const PixelDesc::Data *d, const Image &img);
 PaintEngine createPaintEngine_BGRA8(const PixelDesc::Data *d, const Image &img);
 PaintEngine createPaintEngine_BGR8(const PixelDesc::Data *d, const Image &img);
 PaintEngine createPaintEngine_ARGB8(const PixelDesc::Data *d, const Image &img);
 PaintEngine createPaintEngine_ABGR8(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_RGBA10_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_RGB10_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_BGRA10_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_BGR10_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_ARGB10_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_ABGR10_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_RGBA12_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_RGB12_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_BGRA12_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_BGR12_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_ARGB12_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_ABGR12_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_RGBA16_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_RGB16_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_BGRA16_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_BGR16_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_ARGB16_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_ABGR16_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_YUV8_444(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_YUV10_444_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_YUV12_444_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_YUV16_444_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_Mono8(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_Mono10_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_Mono12_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_Mono16_LE(const PixelDesc::Data *d, const Image &img);
+
+// paintengine_422.cpp factories
+PaintEngine createPaintEngine_YUYV8(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_YUYV10_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_UYVY8(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_UYVY10_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_UYVY12_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_UYVY16_LE(const PixelDesc::Data *d, const Image &img);
+
+// paintengine_multiplane.cpp factories
+PaintEngine createPaintEngine_MultiPlane8(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_MultiPlane10_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_MultiPlane12_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_MultiPlane16_LE(const PixelDesc::Data *d, const Image &img);
+
+// paintengine_packed.cpp factories
+PaintEngine createPaintEngine_DPX_A(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_DPX_B(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_v210(const PixelDesc::Data *d, const Image &img);
 
 // ---------------------------------------------------------------------------
 // Register paint engine factories with PixelDesc entries.
@@ -2043,27 +2083,136 @@ static struct PixelDescPaintEngineInit {
                         PixelDesc::registerData(std::move(d));
                 };
 
-                // 8-bit
+                // RGBA/RGB 8-bit
                 patch(PixelDesc::RGBA8_sRGB, createPaintEngine_RGBA8);
                 patch(PixelDesc::RGB8_sRGB,  createPaintEngine_RGB8);
 
-                // 10-bit LE
+                // BGRA/BGR 8-bit
+                patch(PixelDesc::BGRA8_sRGB, createPaintEngine_BGRA8);
+                patch(PixelDesc::BGR8_sRGB,  createPaintEngine_BGR8);
+
+                // ARGB/ABGR 8-bit
+                patch(PixelDesc::ARGB8_sRGB, createPaintEngine_ARGB8);
+                patch(PixelDesc::ABGR8_sRGB, createPaintEngine_ABGR8);
+
+                // RGBA/RGB 10-bit LE
                 patch(PixelDesc::RGBA10_LE_sRGB, createPaintEngine_RGBA10_LE);
                 patch(PixelDesc::RGB10_LE_sRGB,  createPaintEngine_RGB10_LE);
 
-                // 12-bit LE
+                // BGRA/BGR 10-bit LE
+                patch(PixelDesc::BGRA10_LE_sRGB, createPaintEngine_BGRA10_LE);
+                patch(PixelDesc::BGR10_LE_sRGB,  createPaintEngine_BGR10_LE);
+
+                // ARGB/ABGR 10-bit LE
+                patch(PixelDesc::ARGB10_LE_sRGB, createPaintEngine_ARGB10_LE);
+                patch(PixelDesc::ABGR10_LE_sRGB, createPaintEngine_ABGR10_LE);
+
+                // RGBA/RGB 12-bit LE
                 patch(PixelDesc::RGBA12_LE_sRGB, createPaintEngine_RGBA12_LE);
                 patch(PixelDesc::RGB12_LE_sRGB,  createPaintEngine_RGB12_LE);
 
-                // 16-bit LE
+                // BGRA/BGR 12-bit LE
+                patch(PixelDesc::BGRA12_LE_sRGB, createPaintEngine_BGRA12_LE);
+                patch(PixelDesc::BGR12_LE_sRGB,  createPaintEngine_BGR12_LE);
+
+                // ARGB/ABGR 12-bit LE
+                patch(PixelDesc::ARGB12_LE_sRGB, createPaintEngine_ARGB12_LE);
+                patch(PixelDesc::ABGR12_LE_sRGB, createPaintEngine_ABGR12_LE);
+
+                // RGBA/RGB 16-bit LE
                 patch(PixelDesc::RGBA16_LE_sRGB, createPaintEngine_RGBA16_LE);
                 patch(PixelDesc::RGB16_LE_sRGB,  createPaintEngine_RGB16_LE);
 
-                // Component-reordered 8-bit
-                patch(PixelDesc::BGRA8_sRGB, createPaintEngine_BGRA8);
-                patch(PixelDesc::BGR8_sRGB,  createPaintEngine_BGR8);
-                patch(PixelDesc::ARGB8_sRGB, createPaintEngine_ARGB8);
-                patch(PixelDesc::ABGR8_sRGB, createPaintEngine_ABGR8);
+                // BGRA/BGR 16-bit LE
+                patch(PixelDesc::BGRA16_LE_sRGB, createPaintEngine_BGRA16_LE);
+                patch(PixelDesc::BGR16_LE_sRGB,  createPaintEngine_BGR16_LE);
+
+                // ARGB/ABGR 16-bit LE
+                patch(PixelDesc::ARGB16_LE_sRGB, createPaintEngine_ARGB16_LE);
+                patch(PixelDesc::ABGR16_LE_sRGB, createPaintEngine_ABGR16_LE);
+
+                // YCbCr 4:4:4 LE
+                patch(PixelDesc::YUV8_Rec709,      createPaintEngine_YUV8_444);
+                patch(PixelDesc::YUV10_LE_Rec709,   createPaintEngine_YUV10_444_LE);
+                patch(PixelDesc::YUV12_LE_Rec709,   createPaintEngine_YUV12_444_LE);
+                patch(PixelDesc::YUV16_LE_Rec709,   createPaintEngine_YUV16_444_LE);
+
+                // Monochrome LE
+                patch(PixelDesc::Mono8_sRGB,      createPaintEngine_Mono8);
+                patch(PixelDesc::Mono10_LE_sRGB,  createPaintEngine_Mono10_LE);
+                patch(PixelDesc::Mono12_LE_sRGB,  createPaintEngine_Mono12_LE);
+                patch(PixelDesc::Mono16_LE_sRGB,  createPaintEngine_Mono16_LE);
+
+                // --- 4:2:2 interleaved (YUYV) ---
+                patch(PixelDesc::YUV8_422_Rec709,        createPaintEngine_YUYV8);
+                patch(PixelDesc::YUV10_422_Rec709,       createPaintEngine_YUYV10_LE);
+                patch(PixelDesc::YUV8_422_Rec601,        createPaintEngine_YUYV8);
+                patch(PixelDesc::YUV8_422_Rec709_Full,   createPaintEngine_YUYV8);
+                patch(PixelDesc::YUV8_422_Rec601_Full,   createPaintEngine_YUYV8);
+
+                // --- 4:2:2 interleaved (UYVY) ---
+                patch(PixelDesc::YUV8_422_UYVY_Rec709,       createPaintEngine_UYVY8);
+                patch(PixelDesc::YUV8_422_UYVY_Rec601,       createPaintEngine_UYVY8);
+                patch(PixelDesc::YUV10_422_UYVY_LE_Rec709,   createPaintEngine_UYVY10_LE);
+                patch(PixelDesc::YUV12_422_UYVY_LE_Rec709,   createPaintEngine_UYVY12_LE);
+                patch(PixelDesc::YUV16_422_UYVY_LE_Rec709,   createPaintEngine_UYVY16_LE);
+                patch(PixelDesc::YUV10_422_UYVY_LE_Rec2020,  createPaintEngine_UYVY10_LE);
+                patch(PixelDesc::YUV12_422_UYVY_LE_Rec2020,  createPaintEngine_UYVY12_LE);
+
+                // --- Planar 4:2:2 LE ---
+                patch(PixelDesc::YUV8_422_Planar_Rec709,       createPaintEngine_MultiPlane8);
+                patch(PixelDesc::YUV10_422_Planar_LE_Rec709,   createPaintEngine_MultiPlane10_LE);
+                patch(PixelDesc::YUV12_422_Planar_LE_Rec709,   createPaintEngine_MultiPlane12_LE);
+                patch(PixelDesc::YUV16_422_Planar_LE_Rec709,   createPaintEngine_MultiPlane16_LE);
+
+                // --- Planar 4:2:0 LE ---
+                patch(PixelDesc::YUV8_420_Planar_Rec709,       createPaintEngine_MultiPlane8);
+                patch(PixelDesc::YUV10_420_Planar_LE_Rec709,   createPaintEngine_MultiPlane10_LE);
+                patch(PixelDesc::YUV12_420_Planar_LE_Rec709,   createPaintEngine_MultiPlane12_LE);
+                patch(PixelDesc::YUV16_420_Planar_LE_Rec709,   createPaintEngine_MultiPlane16_LE);
+
+                // --- Planar 4:2:0 LE (Rec.2020) ---
+                patch(PixelDesc::YUV10_420_Planar_LE_Rec2020,  createPaintEngine_MultiPlane10_LE);
+                patch(PixelDesc::YUV12_420_Planar_LE_Rec2020,  createPaintEngine_MultiPlane12_LE);
+
+                // --- Planar 4:2:0 LE (Rec.601 / full-range) ---
+                patch(PixelDesc::YUV8_420_Planar_Rec601,       createPaintEngine_MultiPlane8);
+                patch(PixelDesc::YUV8_420_Planar_Rec709_Full,  createPaintEngine_MultiPlane8);
+                patch(PixelDesc::YUV8_420_Planar_Rec601_Full,  createPaintEngine_MultiPlane8);
+
+                // --- Planar 4:1:1 ---
+                patch(PixelDesc::YUV8_411_Planar_Rec709,       createPaintEngine_MultiPlane8);
+
+                // --- Planar RGB ---
+                patch(PixelDesc::RGB8_Planar_sRGB,             createPaintEngine_MultiPlane8);
+
+                // --- Semi-planar 4:2:0 (NV12) LE ---
+                patch(PixelDesc::YUV8_420_SemiPlanar_Rec709,       createPaintEngine_MultiPlane8);
+                patch(PixelDesc::YUV10_420_SemiPlanar_LE_Rec709,   createPaintEngine_MultiPlane10_LE);
+                patch(PixelDesc::YUV12_420_SemiPlanar_LE_Rec709,   createPaintEngine_MultiPlane12_LE);
+                patch(PixelDesc::YUV16_420_SemiPlanar_LE_Rec709,   createPaintEngine_MultiPlane16_LE);
+
+                // --- Semi-planar 4:2:0 (NV12) Rec.601 ---
+                patch(PixelDesc::YUV8_420_SemiPlanar_Rec601,       createPaintEngine_MultiPlane8);
+
+                // --- Semi-planar 4:2:0 (NV21) LE ---
+                patch(PixelDesc::YUV8_420_NV21_Rec709,             createPaintEngine_MultiPlane8);
+                patch(PixelDesc::YUV10_420_NV21_LE_Rec709,         createPaintEngine_MultiPlane10_LE);
+                patch(PixelDesc::YUV12_420_NV21_LE_Rec709,         createPaintEngine_MultiPlane12_LE);
+
+                // --- Semi-planar 4:2:2 (NV16) LE ---
+                patch(PixelDesc::YUV8_422_SemiPlanar_Rec709,       createPaintEngine_MultiPlane8);
+                patch(PixelDesc::YUV10_422_SemiPlanar_LE_Rec709,   createPaintEngine_MultiPlane10_LE);
+                patch(PixelDesc::YUV12_422_SemiPlanar_LE_Rec709,   createPaintEngine_MultiPlane12_LE);
+
+                // --- DPX 3x10 packed ---
+                patch(PixelDesc::RGB10_DPX_sRGB,       createPaintEngine_DPX_A);
+                patch(PixelDesc::RGB10_DPX_LE_sRGB,    createPaintEngine_DPX_A);
+                patch(PixelDesc::YUV10_DPX_Rec709,     createPaintEngine_DPX_A);
+                patch(PixelDesc::YUV10_DPX_B_Rec709,   createPaintEngine_DPX_B);
+
+                // --- v210 packed 4:2:2 ---
+                patch(PixelDesc::YUV10_422_v210_Rec709, createPaintEngine_v210);
         }
 } __pixelDescPaintEngineInit;
 

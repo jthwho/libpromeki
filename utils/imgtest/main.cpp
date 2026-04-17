@@ -44,7 +44,7 @@ static int drawCenteredText(BasicFont &font, const String &text, int cx, int y) 
 static Image buildTestImage(size_t w, size_t h) {
         // Start with color bars in the top portion
         VideoTestPattern gen;
-        gen.setPattern(VideoTestPattern::ColorBars);
+        gen.setPattern(VideoPattern::ColorBars);
         ImageDesc desc(w, h, PixelDesc(PixelDesc::RGBA8_sRGB));
         Image img = gen.create(desc);
 

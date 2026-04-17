@@ -15,6 +15,7 @@
 #include <promeki/imagedesc.h>
 #include <promeki/image.h>
 #include <promeki/timecode.h>
+#include <promeki/enums.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -66,7 +67,7 @@ class FastFont;
  * @par Example
  * @code
  * VideoTestPattern gen;
- * gen.setPattern(VideoTestPattern::ColorBars);
+ * gen.setPattern(VideoPattern::ColorBars);
  *
  * // Static pattern, no burn: the first create() renders, subsequent
  * // calls return the cached image via shallow copy.
@@ -83,32 +84,8 @@ class FastFont;
  */
 class VideoTestPattern {
         public:
-                /** @brief Video test pattern type. */
-                enum Pattern {
-                        ColorBars,      ///< @brief SMPTE 100% color bars.
-                        ColorBars75,    ///< @brief SMPTE 75% color bars.
-                        Ramp,           ///< @brief Luminance gradient ramp.
-                        Grid,           ///< @brief White grid lines on black.
-                        Crosshatch,     ///< @brief Diagonal crosshatch lines.
-                        Checkerboard,   ///< @brief Alternating black/white squares.
-                        SolidColor,     ///< @brief Solid fill with configured color.
-                        White,          ///< @brief Solid white.
-                        Black,          ///< @brief Solid black.
-                        Noise,          ///< @brief Random pixel noise.
-                        ZonePlate,      ///< @brief Circular zone plate.
-                        AvSync          ///< @brief A/V sync marker: white on tc.frame()==0, black otherwise.
-                };
-
-                /** @brief Text-burn position preset. */
-                enum BurnPosition {
-                        BurnTopLeft,        ///< @brief Top-left corner.
-                        BurnTopCenter,      ///< @brief Top center.
-                        BurnTopRight,       ///< @brief Top-right corner.
-                        BurnBottomLeft,     ///< @brief Bottom-left corner.
-                        BurnBottomCenter,   ///< @brief Bottom center (default).
-                        BurnBottomRight,    ///< @brief Bottom-right corner.
-                        BurnCenter          ///< @brief Center of frame.
-                };
+                /** @brief Video test pattern type (alias for @ref VideoPattern). */
+                using Pattern = VideoPattern;
 
                 /** @brief Constructs a VideoTestPattern with default settings (ColorBars). */
                 VideoTestPattern();
@@ -127,8 +104,8 @@ class VideoTestPattern {
                  *
                  * @par Example
                  * @code
-                 * gen.setPattern(VideoTestPattern::ColorBars);
-                 * gen.setPattern(VideoTestPattern::ZonePlate);
+                 * gen.setPattern(VideoPattern::ColorBars);
+                 * gen.setPattern(VideoPattern::ZonePlate);
                  * @endcode
                  */
                 void setPattern(Pattern pattern);
@@ -219,16 +196,6 @@ class VideoTestPattern {
                 void setBurnPosition(BurnPosition pos) { _burnPosition = pos; }
 
                 /**
-                 * @brief Parses a burn position name (lowercase) to enum.
-                 * @param name One of: topleft, topcenter, topright,
-                 *             bottomleft, bottomcenter, bottomright, center.
-                 */
-                static Result<BurnPosition> burnPositionFromString(const String &name);
-
-                /** @brief Returns the lowercase name of a burn position. */
-                static String burnPositionToString(BurnPosition pos);
-
-                /**
                  * @brief Creates a new Image and renders the pattern into it.
                  *
                  * For static patterns (not @c Noise) called with
@@ -291,35 +258,9 @@ class VideoTestPattern {
                  */
                 void render(Image &img, double motionOffset = 0.0) const;
 
-                /**
-                 * @brief Parses a pattern name string to a Pattern enum value.
-                 * @param name Pattern name (lowercase, e.g. "colorbars", "zoneplate").
-                 * @return Result containing the Pattern on success, or Error::Invalid.
-                 *
-                 * @par Example
-                 * @code
-                 * auto [pat, err] = VideoTestPattern::fromString("colorbars75");
-                 * if(err.isOk()) gen.setPattern(pat);
-                 * @endcode
-                 */
-                static Result<Pattern> fromString(const String &name);
-
-                /**
-                 * @brief Returns the name string for a Pattern enum value.
-                 * @param pattern The pattern value.
-                 * @return The pattern name string (lowercase).
-                 *
-                 * @par Example
-                 * @code
-                 * String name = VideoTestPattern::toString(VideoTestPattern::ZonePlate);
-                 * // name == "zoneplate"
-                 * @endcode
-                 */
-                static String toString(Pattern pattern);
-
         private:
                 // Background pattern state
-                Pattern         _pattern = ColorBars;
+                VideoPattern    _pattern = VideoPattern::ColorBars;
                 Color           _solidColor;
 
                 // Burn-in config
@@ -336,7 +277,7 @@ class VideoTestPattern {
                 Color           _burnTextColor = Color::White;
                 Color           _burnBackgroundColor = Color::Black;
                 bool            _burnDrawBackground = true;
-                BurnPosition    _burnPosition = BurnBottomCenter;
+                BurnPosition    _burnPosition = BurnPosition::BottomCenter;
 
                 // Generic image cache: a small fixed array of slots
                 // shared by all patterns.  Slot meanings are local to
@@ -438,6 +379,13 @@ class VideoTestPattern {
                 void renderZonePlate(Image &img, double phase) const;
                 void renderNoise(Image &img) const;
                 void renderSolid(Image &img, const Color &color) const;
+                void renderColorChecker(Image &img) const;
+                void renderSMPTE219(Image &img) const;
+                void renderMultiBurst(Image &img) const;
+                void renderLimitRange(Image &img) const;
+                void renderCircularZone(Image &img, double phase) const;
+                void renderAlignment(Image &img) const;
+                void renderSDIPathological(Image &img, bool isEQ) const;
 };
 
 PROMEKI_NAMESPACE_END

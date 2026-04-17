@@ -111,6 +111,25 @@ static PixelFormat::Data makeInterleaved3x10() {
         return d;
 }
 
+static PixelFormat::Data makeInterleaved3x10_DPX_B() {
+        PixelFormat::Data d;
+        d.id             = PixelFormat::I_3x10_DPX_B;
+        d.name           = "3x10_DPX_B";
+        d.desc           = "3 components, 10 bits each, DPX Method B packed";
+        d.sampling       = PixelFormat::Sampling444;
+        d.pixelsPerBlock = 1;
+        d.bytesPerBlock  = 4;
+        d.compCount      = 3;
+        d.comps[0]       = { 0, 10, 3 };
+        d.comps[1]       = { 0, 10, 3 };
+        d.comps[2]       = { 0, 10, 3 };
+        d.planeCount     = 1;
+        d.planes[0]      = { "" };
+        d.lineStrideFunc = interleavedLineStride;
+        d.planeSizeFunc  = interleavedPlaneSize;
+        return d;
+}
+
 static PixelFormat::Data makeInterleaved422_3x8() {
         PixelFormat::Data d;
         d.id             = PixelFormat::I_422_3x8;
@@ -1246,6 +1265,7 @@ struct PixelFormatRegistry {
                 add(makeInterleaved4x8());
                 add(makeInterleaved3x8());
                 add(makeInterleaved3x10());
+                add(makeInterleaved3x10_DPX_B());
                 add(makeInterleaved422_3x8());
                 add(makeInterleaved422_3x10());
                 add(makeInterleavedUYVY3x8());

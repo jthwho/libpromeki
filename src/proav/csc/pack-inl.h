@@ -131,7 +131,12 @@ void PackInterleavedImpl(const float *const *buffers, void *dst,
         }
 
         // DPX 10-bit packed: 3 x 10-bit in a 32-bit word (big-endian byte order).
+        // Method A: comp0 at bits 31-22, comp1 at 21-12, comp2 at 11-2
+        // Method B: comp0 at bits 9-0, comp1 at 19-10, comp2 at 29-20
         if(pixelsPerBlock == 1 && compCount == 3 && bitsPerComp == 10 && bytesPerBlock == 4) {
+                bool methodB = (compByteOffset[0] != 0 &&
+                                compByteOffset[0] == compByteOffset[1] &&
+                                compByteOffset[1] == compByteOffset[2]);
                 for(size_t x = 0; x < width; x++) {
                         auto clamp10 = [](float v) -> uint32_t {
                                 int i = static_cast<int>(v + 0.5f);
@@ -139,11 +144,12 @@ void PackInterleavedImpl(const float *const *buffers, void *dst,
                                 if(i > 1023) i = 1023;
                                 return static_cast<uint32_t>(i);
                         };
-                        uint32_t r = clamp10(buffers[0][x]);
-                        uint32_t g = clamp10(buffers[1][x]);
-                        uint32_t b = clamp10(buffers[2][x]);
-                        uint32_t word = (r << 22) | (g << 12) | (b << 2);
-                        // Store as big-endian
+                        uint32_t c0 = clamp10(buffers[0][x]);
+                        uint32_t c1 = clamp10(buffers[1][x]);
+                        uint32_t c2 = clamp10(buffers[2][x]);
+                        uint32_t word = methodB
+                                ? (c0 | (c1 << 10) | (c2 << 20))
+                                : ((c0 << 22) | (c1 << 12) | (c2 << 2));
                         p[x * 4 + 0] = static_cast<uint8_t>(word >> 24);
                         p[x * 4 + 1] = static_cast<uint8_t>(word >> 16);
                         p[x * 4 + 2] = static_cast<uint8_t>(word >>  8);

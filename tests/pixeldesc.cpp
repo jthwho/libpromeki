@@ -691,7 +691,7 @@ TEST_CASE("PixelDesc: YUV10_DPX_B_Rec709") {
                 CHECK(pd.isValid());
                 CHECK(pd.id() == PixelDesc::YUV10_DPX_B_Rec709);
                 CHECK(pd.name() == "YUV10_DPX_B_Rec709");
-                CHECK(pd.pixelFormat().id() == PixelFormat::I_3x10_DPX);
+                CHECK(pd.pixelFormat().id() == PixelFormat::I_3x10_DPX_B);
         }
         SUBCASE("component semantics are YCbCr") {
                 PixelDesc pd(PixelDesc::YUV10_DPX_B_Rec709);
@@ -717,14 +717,18 @@ TEST_CASE("PixelDesc: hasPaintEngine") {
                 CHECK(PixelDesc(PixelDesc::RGB8_sRGB).hasPaintEngine());
         }
 
-        SUBCASE("YUV formats have no registered paint engine") {
-                // YCbCr / YUV layouts have no PaintEngine — callers must
-                // render into an RGB scratch and convert.
-                CHECK_FALSE(PixelDesc(PixelDesc::YUV8_422_Rec709).hasPaintEngine());
-                CHECK_FALSE(PixelDesc(PixelDesc::YUV8_422_UYVY_Rec709).hasPaintEngine());
-                CHECK_FALSE(PixelDesc(PixelDesc::YUV8_420_SemiPlanar_Rec709).hasPaintEngine());
-                CHECK_FALSE(PixelDesc(PixelDesc::YUV8_420_Planar_Rec709).hasPaintEngine());
-                CHECK_FALSE(PixelDesc(PixelDesc::YUV10_422_Rec709).hasPaintEngine());
+        SUBCASE("YUV formats have registered paint engines") {
+                CHECK(PixelDesc(PixelDesc::YUV8_422_Rec709).hasPaintEngine());
+                CHECK(PixelDesc(PixelDesc::YUV8_422_UYVY_Rec709).hasPaintEngine());
+                CHECK(PixelDesc(PixelDesc::YUV8_420_SemiPlanar_Rec709).hasPaintEngine());
+                CHECK(PixelDesc(PixelDesc::YUV8_420_Planar_Rec709).hasPaintEngine());
+                CHECK(PixelDesc(PixelDesc::YUV10_422_Rec709).hasPaintEngine());
+        }
+
+        SUBCASE("compressed formats have no paint engine") {
+                CHECK_FALSE(PixelDesc(PixelDesc::H264).hasPaintEngine());
+                CHECK_FALSE(PixelDesc(PixelDesc::HEVC).hasPaintEngine());
+                CHECK_FALSE(PixelDesc(PixelDesc::JPEG_RGB8_sRGB).hasPaintEngine());
         }
 }
 

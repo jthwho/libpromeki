@@ -52,6 +52,7 @@ endif()
 # capture MediaIO backend the user picks at runtime (V4L2 by default
 # on Linux builds that have it enabled).
 add_subdirectory(framesync)
+add_subdirectory(paintengine)
 
 if(PROMEKI_FUNCTEST_HAVE_SDL)
     add_subdirectory(sdlaudioclock)

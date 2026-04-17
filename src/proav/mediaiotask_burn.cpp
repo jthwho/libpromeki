@@ -86,8 +86,7 @@ Error MediaIOTask_Burn::executeCmd(MediaIOCommandOpen &cmd) {
                                            .get<String>().cstr());
                         return Error::InvalidArgument;
                 }
-                _pattern.setBurnPosition(
-                        static_cast<VideoTestPattern::BurnPosition>(posEnum.value()));
+                _pattern.setBurnPosition(BurnPosition(posEnum.value()));
         }
 
         _capacity = cfg.getAs<int>(MediaConfig::Capacity, 4);

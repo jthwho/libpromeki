@@ -232,6 +232,9 @@ class PixelFormat {
                         // -- Planar 4:4:4 (RGB / YUV 4:4:4) --
                         P_444_3x8            = 79,   ///< 3 planes, 8-bit, 4:4:4 (equal-sized planes, no subsampling).
 
+                        // -- DPX Method B packed --
+                        I_3x10_DPX_B         = 80,   ///< 3 components, 10 bits, DPX Method B packed (30 bits in 4 bytes).
+
                         UserDefined          = 1024  ///< First ID available for user-registered types.
                 };
 
