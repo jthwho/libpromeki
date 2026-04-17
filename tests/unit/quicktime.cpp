@@ -27,7 +27,7 @@ namespace {
  * tests run from any working directory.
  */
 String fixturePath(const char *name) {
-        return String(PROMEKI_SOURCE_DIR) + "/testdata/quicktime/" + name;
+        return String(PROMEKI_SOURCE_DIR) + "/tests/data/quicktime/" + name;
 }
 
 } // namespace

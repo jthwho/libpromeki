@@ -22,7 +22,7 @@ using namespace promeki;
 namespace {
 
 String fixturePath(const char *name) {
-        return String(PROMEKI_SOURCE_DIR) + "/testdata/quicktime/" + name;
+        return String(PROMEKI_SOURCE_DIR) + "/tests/data/quicktime/" + name;
 }
 
 Buffer::Ptr makeFilledBuffer(size_t size, uint8_t byte) {

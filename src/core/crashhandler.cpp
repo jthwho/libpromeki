@@ -106,13 +106,15 @@ MemSpaceCacheEntry g_memSpaces[MaxMemSpaces] = {};
 size_t g_memSpaceCount          = 0;
 bool   g_memSpacesTruncated     = false;
 
+bool   g_consoleTraceEnabled    = true;
+
 // Signals we handle.
 constexpr int CrashSignals[] = { SIGSEGV, SIGABRT, SIGBUS, SIGFPE, SIGILL };
 constexpr int NumCrashSignals = sizeof(CrashSignals) / sizeof(CrashSignals[0]);
 
 /// Signal-safe write of a C string to a file descriptor.
 void safeWrite(int fd, const char *s) {
-        if(s == nullptr) return;
+        if(fd < 0 || s == nullptr) return;
         size_t len = 0;
         while(s[len] != '\0') ++len;
         while(len > 0) {
@@ -841,7 +843,7 @@ void enableCoreDumps() {
 // the opening header and the trailing "saved to" line.
 // ============================================================================
 
-void writeReportBody(int logFd, bool isCrash) {
+void writeReportBody(int consoleFd, int logFd, bool isCrash) {
         char numBuf[32];
         char timeBuf[32];
 
@@ -852,80 +854,80 @@ void writeReportBody(int logFd, bool isCrash) {
         // Timestamp (time() is signal-safe, and the ISO formatter is
         // hand-rolled to be signal-safe too).
         time_t now = time(nullptr);
-        safeWrite2(STDERR_FILENO, logFd, "Time: ");
-        safeWrite2(STDERR_FILENO, logFd,
+        safeWrite2(consoleFd, logFd, "Time: ");
+        safeWrite2(consoleFd, logFd,
                    formatIsoUtc(now, timeBuf, sizeof(timeBuf)));
-        safeWrite2(STDERR_FILENO, logFd, "  (epoch ");
-        safeWrite2(STDERR_FILENO, logFd,
+        safeWrite2(consoleFd, logFd, "  (epoch ");
+        safeWrite2(consoleFd, logFd,
                    utoa(static_cast<uint64_t>(now), numBuf, sizeof(numBuf)));
-        safeWrite2(STDERR_FILENO, logFd, ")\n");
+        safeWrite2(consoleFd, logFd, ")\n");
 
         // Process uptime: now - startTime, signal-safe arithmetic.
         if(g_startTime != 0 && now >= g_startTime) {
                 uint64_t uptime = static_cast<uint64_t>(now - g_startTime);
-                safeWrite2(STDERR_FILENO, logFd, "Uptime: ");
-                safeWrite2(STDERR_FILENO, logFd,
+                safeWrite2(consoleFd, logFd, "Uptime: ");
+                safeWrite2(consoleFd, logFd,
                            utoa(uptime, numBuf, sizeof(numBuf)));
-                safeWrite2(STDERR_FILENO, logFd, " seconds\n");
+                safeWrite2(consoleFd, logFd, " seconds\n");
         }
 
         // PID / PPID.
-        safeWrite2(STDERR_FILENO, logFd, "PID: ");
-        safeWrite2(STDERR_FILENO, logFd,
+        safeWrite2(consoleFd, logFd, "PID: ");
+        safeWrite2(consoleFd, logFd,
                    utoa(static_cast<uint64_t>(getpid()),
                         numBuf, sizeof(numBuf)));
-        safeWrite2(STDERR_FILENO, logFd, "   Parent PID: ");
-        safeWrite2(STDERR_FILENO, logFd,
+        safeWrite2(consoleFd, logFd, "   Parent PID: ");
+        safeWrite2(consoleFd, logFd,
                    utoa(static_cast<uint64_t>(getppid()),
                         numBuf, sizeof(numBuf)));
-        safeWrite2(STDERR_FILENO, logFd, "\n");
+        safeWrite2(consoleFd, logFd, "\n");
 
         // User / group (real & effective).
-        safeWrite2(STDERR_FILENO, logFd, "User: ");
-        safeWrite2(STDERR_FILENO, logFd,
+        safeWrite2(consoleFd, logFd, "User: ");
+        safeWrite2(consoleFd, logFd,
                    utoa(static_cast<uint64_t>(getuid()),
                         numBuf, sizeof(numBuf)));
-        safeWrite2(STDERR_FILENO, logFd, "/");
-        safeWrite2(STDERR_FILENO, logFd,
+        safeWrite2(consoleFd, logFd, "/");
+        safeWrite2(consoleFd, logFd,
                    utoa(static_cast<uint64_t>(geteuid()),
                         numBuf, sizeof(numBuf)));
-        safeWrite2(STDERR_FILENO, logFd, " (real/effective)   Group: ");
-        safeWrite2(STDERR_FILENO, logFd,
+        safeWrite2(consoleFd, logFd, " (real/effective)   Group: ");
+        safeWrite2(consoleFd, logFd,
                    utoa(static_cast<uint64_t>(getgid()),
                         numBuf, sizeof(numBuf)));
-        safeWrite2(STDERR_FILENO, logFd, "/");
-        safeWrite2(STDERR_FILENO, logFd,
+        safeWrite2(consoleFd, logFd, "/");
+        safeWrite2(consoleFd, logFd,
                    utoa(static_cast<uint64_t>(getegid()),
                         numBuf, sizeof(numBuf)));
-        safeWrite2(STDERR_FILENO, logFd, "\n");
+        safeWrite2(consoleFd, logFd, "\n");
 
         // errno at entry.  Usually stale garbage on a fault, but
         // occasionally meaningful when a crash originates from a
         // failing syscall wrapper.
-        safeWrite2(STDERR_FILENO, logFd, "errno: ");
-        safeWrite2(STDERR_FILENO, logFd,
+        safeWrite2(consoleFd, logFd, "errno: ");
+        safeWrite2(consoleFd, logFd,
                    itoa(savedErrno, numBuf, sizeof(numBuf)));
-        safeWrite2(STDERR_FILENO, logFd, "\n");
+        safeWrite2(consoleFd, logFd, "\n");
 
         // Host
         if(g_hostname[0] != '\0') {
-                safeWrite2(STDERR_FILENO, logFd, "Host: ");
-                safeWrite2(STDERR_FILENO, logFd, g_hostname);
-                safeWrite2(STDERR_FILENO, logFd, "\n");
+                safeWrite2(consoleFd, logFd, "Host: ");
+                safeWrite2(consoleFd, logFd, g_hostname);
+                safeWrite2(consoleFd, logFd, "\n");
         }
 
         // Working directory at install time.
         if(g_workingDir[0] != '\0') {
-                safeWrite2(STDERR_FILENO, logFd, "Working Dir: ");
-                safeWrite2(STDERR_FILENO, logFd, g_workingDir);
-                safeWrite2(STDERR_FILENO, logFd, "\n");
+                safeWrite2(consoleFd, logFd, "Working Dir: ");
+                safeWrite2(consoleFd, logFd, g_workingDir);
+                safeWrite2(consoleFd, logFd, "\n");
         }
 
         // Command line.
         if(g_cmdLine[0] != '\0') {
-                safeWrite2(STDERR_FILENO, logFd, "Command: ");
-                safeWrite2(STDERR_FILENO, logFd, g_cmdLine);
-                safeWrite2(STDERR_FILENO, logFd, "\n");
+                safeWrite2(consoleFd, logFd, "Command: ");
+                safeWrite2(consoleFd, logFd, g_cmdLine);
+                safeWrite2(consoleFd, logFd, "\n");
         }
 
         // --- Build info ---
@@ -933,26 +935,26 @@ void writeReportBody(int logFd, bool isCrash) {
         // the binary, so reading them is fully signal-safe.
         const BuildInfo *bi = getBuildInfo();
         if(bi != nullptr) {
-                safeWrite2(STDERR_FILENO, logFd, "\n--- Build Info ---\n");
-                safeWrite2(STDERR_FILENO, logFd, "Name:     ");
-                safeWrite2(STDERR_FILENO, logFd, bi->name);
-                safeWrite2(STDERR_FILENO, logFd, "\n");
-                safeWrite2(STDERR_FILENO, logFd, "Version:  ");
-                safeWrite2(STDERR_FILENO, logFd, bi->version);
-                safeWrite2(STDERR_FILENO, logFd, "\n");
-                safeWrite2(STDERR_FILENO, logFd, "Type:     ");
-                safeWrite2(STDERR_FILENO, logFd, bi->type);
-                safeWrite2(STDERR_FILENO, logFd, "\n");
-                safeWrite2(STDERR_FILENO, logFd, "Repo:     ");
-                safeWrite2(STDERR_FILENO, logFd, bi->repoident);
-                safeWrite2(STDERR_FILENO, logFd, "\n");
-                safeWrite2(STDERR_FILENO, logFd, "Built:    ");
-                safeWrite2(STDERR_FILENO, logFd, bi->date);
-                safeWrite2(STDERR_FILENO, logFd, " ");
-                safeWrite2(STDERR_FILENO, logFd, bi->time);
-                safeWrite2(STDERR_FILENO, logFd, " on ");
-                safeWrite2(STDERR_FILENO, logFd, bi->hostname);
-                safeWrite2(STDERR_FILENO, logFd, "\n");
+                safeWrite2(consoleFd, logFd, "\n--- Build Info ---\n");
+                safeWrite2(consoleFd, logFd, "Name:     ");
+                safeWrite2(consoleFd, logFd, bi->name);
+                safeWrite2(consoleFd, logFd, "\n");
+                safeWrite2(consoleFd, logFd, "Version:  ");
+                safeWrite2(consoleFd, logFd, bi->version);
+                safeWrite2(consoleFd, logFd, "\n");
+                safeWrite2(consoleFd, logFd, "Type:     ");
+                safeWrite2(consoleFd, logFd, bi->type);
+                safeWrite2(consoleFd, logFd, "\n");
+                safeWrite2(consoleFd, logFd, "Repo:     ");
+                safeWrite2(consoleFd, logFd, bi->repoident);
+                safeWrite2(consoleFd, logFd, "\n");
+                safeWrite2(consoleFd, logFd, "Built:    ");
+                safeWrite2(consoleFd, logFd, bi->date);
+                safeWrite2(consoleFd, logFd, " ");
+                safeWrite2(consoleFd, logFd, bi->time);
+                safeWrite2(consoleFd, logFd, " on ");
+                safeWrite2(consoleFd, logFd, bi->hostname);
+                safeWrite2(consoleFd, logFd, "\n");
         }
 
         // --- Library Options ---
@@ -960,29 +962,29 @@ void writeReportBody(int logFd, bool isCrash) {
         // at install() time.  Handy for "why did it do/not do X?"
         // debugging of the library's own knobs.
         if(g_libOptsSnapshot[0] != '\0') {
-                safeWrite2(STDERR_FILENO, logFd, "\n--- Library Options ---\n");
-                safeWrite2(STDERR_FILENO, logFd, g_libOptsSnapshot);
+                safeWrite2(consoleFd, logFd, "\n--- Library Options ---\n");
+                safeWrite2(consoleFd, logFd, g_libOptsSnapshot);
         }
 
         // --- OS Info ---
         // g_os* were snapshotted from uname() at install() time so
         // reading them here is signal-safe.
-        safeWrite2(STDERR_FILENO, logFd, "\n--- OS Info ---\n");
-        safeWrite2(STDERR_FILENO, logFd, "Built For: ");
-        safeWrite2(STDERR_FILENO, logFd, PROMEKI_PLATFORM);
-        safeWrite2(STDERR_FILENO, logFd, "\n");
+        safeWrite2(consoleFd, logFd, "\n--- OS Info ---\n");
+        safeWrite2(consoleFd, logFd, "Built For: ");
+        safeWrite2(consoleFd, logFd, PROMEKI_PLATFORM);
+        safeWrite2(consoleFd, logFd, "\n");
         if(g_osSysname[0] != '\0') {
-                safeWrite2(STDERR_FILENO, logFd, "System:    ");
-                safeWrite2(STDERR_FILENO, logFd, g_osSysname);
-                safeWrite2(STDERR_FILENO, logFd, " ");
-                safeWrite2(STDERR_FILENO, logFd, g_osRelease);
-                safeWrite2(STDERR_FILENO, logFd, "\n");
-                safeWrite2(STDERR_FILENO, logFd, "Kernel:    ");
-                safeWrite2(STDERR_FILENO, logFd, g_osVersion);
-                safeWrite2(STDERR_FILENO, logFd, "\n");
-                safeWrite2(STDERR_FILENO, logFd, "Arch:      ");
-                safeWrite2(STDERR_FILENO, logFd, g_osMachine);
-                safeWrite2(STDERR_FILENO, logFd, "\n");
+                safeWrite2(consoleFd, logFd, "System:    ");
+                safeWrite2(consoleFd, logFd, g_osSysname);
+                safeWrite2(consoleFd, logFd, " ");
+                safeWrite2(consoleFd, logFd, g_osRelease);
+                safeWrite2(consoleFd, logFd, "\n");
+                safeWrite2(consoleFd, logFd, "Kernel:    ");
+                safeWrite2(consoleFd, logFd, g_osVersion);
+                safeWrite2(consoleFd, logFd, "\n");
+                safeWrite2(consoleFd, logFd, "Arch:      ");
+                safeWrite2(consoleFd, logFd, g_osMachine);
+                safeWrite2(consoleFd, logFd, "\n");
         }
 
         // CPU count (sysconf is signal-safe in practice on every
@@ -990,11 +992,11 @@ void writeReportBody(int logFd, bool isCrash) {
         // read of a cached value).
         long nCpu = sysconf(_SC_NPROCESSORS_ONLN);
         if(nCpu > 0) {
-                safeWrite2(STDERR_FILENO, logFd, "CPUs:      ");
-                safeWrite2(STDERR_FILENO, logFd,
+                safeWrite2(consoleFd, logFd, "CPUs:      ");
+                safeWrite2(consoleFd, logFd,
                            utoa(static_cast<uint64_t>(nCpu),
                                 numBuf, sizeof(numBuf)));
-                safeWrite2(STDERR_FILENO, logFd, " online\n");
+                safeWrite2(consoleFd, logFd, " online\n");
         }
 
 #if defined(PROMEKI_PLATFORM_LINUX)
@@ -1014,50 +1016,50 @@ void writeReportBody(int logFd, bool isCrash) {
         // --- Memory ---
         // getrusage is in the async-signal-safe list as of POSIX.1-2024
         // and is a syscall wrapper on every platform we care about.
-        safeWrite2(STDERR_FILENO, logFd, "\n--- Memory ---\n");
+        safeWrite2(consoleFd, logFd, "\n--- Memory ---\n");
         struct rusage ru;
         if(getrusage(RUSAGE_SELF, &ru) == 0) {
                 // ru_maxrss units differ by platform: KiB on Linux,
                 // bytes on macOS/BSD.
-                safeWrite2(STDERR_FILENO, logFd, "Peak RSS:          ");
-                safeWrite2(STDERR_FILENO, logFd,
+                safeWrite2(consoleFd, logFd, "Peak RSS:          ");
+                safeWrite2(consoleFd, logFd,
                            utoa(static_cast<uint64_t>(ru.ru_maxrss),
                                 numBuf, sizeof(numBuf)));
 #if defined(PROMEKI_PLATFORM_APPLE) || defined(PROMEKI_PLATFORM_BSD)
-                safeWrite2(STDERR_FILENO, logFd, " bytes\n");
+                safeWrite2(consoleFd, logFd, " bytes\n");
 #else
-                safeWrite2(STDERR_FILENO, logFd, " KiB\n");
+                safeWrite2(consoleFd, logFd, " KiB\n");
 #endif
-                safeWrite2(STDERR_FILENO, logFd, "Page Faults:       ");
-                safeWrite2(STDERR_FILENO, logFd,
+                safeWrite2(consoleFd, logFd, "Page Faults:       ");
+                safeWrite2(consoleFd, logFd,
                            utoa(static_cast<uint64_t>(ru.ru_minflt),
                                 numBuf, sizeof(numBuf)));
-                safeWrite2(STDERR_FILENO, logFd, " minor / ");
-                safeWrite2(STDERR_FILENO, logFd,
+                safeWrite2(consoleFd, logFd, " minor / ");
+                safeWrite2(consoleFd, logFd,
                            utoa(static_cast<uint64_t>(ru.ru_majflt),
                                 numBuf, sizeof(numBuf)));
-                safeWrite2(STDERR_FILENO, logFd, " major\n");
+                safeWrite2(consoleFd, logFd, " major\n");
 
-                safeWrite2(STDERR_FILENO, logFd, "CPU Time (user):   ");
-                safeWrite2(STDERR_FILENO, logFd,
+                safeWrite2(consoleFd, logFd, "CPU Time (user):   ");
+                safeWrite2(consoleFd, logFd,
                            utoa(static_cast<uint64_t>(ru.ru_utime.tv_sec),
                                 numBuf, sizeof(numBuf)));
-                safeWrite2(STDERR_FILENO, logFd, "s\n");
-                safeWrite2(STDERR_FILENO, logFd, "CPU Time (system): ");
-                safeWrite2(STDERR_FILENO, logFd,
+                safeWrite2(consoleFd, logFd, "s\n");
+                safeWrite2(consoleFd, logFd, "CPU Time (system): ");
+                safeWrite2(consoleFd, logFd,
                            utoa(static_cast<uint64_t>(ru.ru_stime.tv_sec),
                                 numBuf, sizeof(numBuf)));
-                safeWrite2(STDERR_FILENO, logFd, "s\n");
+                safeWrite2(consoleFd, logFd, "s\n");
 
-                safeWrite2(STDERR_FILENO, logFd, "Context Switches:  ");
-                safeWrite2(STDERR_FILENO, logFd,
+                safeWrite2(consoleFd, logFd, "Context Switches:  ");
+                safeWrite2(consoleFd, logFd,
                            utoa(static_cast<uint64_t>(ru.ru_nvcsw),
                                 numBuf, sizeof(numBuf)));
-                safeWrite2(STDERR_FILENO, logFd, " voluntary / ");
-                safeWrite2(STDERR_FILENO, logFd,
+                safeWrite2(consoleFd, logFd, " voluntary / ");
+                safeWrite2(consoleFd, logFd,
                            utoa(static_cast<uint64_t>(ru.ru_nivcsw),
                                 numBuf, sizeof(numBuf)));
-                safeWrite2(STDERR_FILENO, logFd, " involuntary\n");
+                safeWrite2(consoleFd, logFd, " involuntary\n");
         }
 
 #if defined(PROMEKI_PLATFORM_LINUX)
@@ -1068,11 +1070,11 @@ void writeReportBody(int logFd, bool isCrash) {
         if(sysinfo(&si) == 0) {
                 uint64_t unit = si.mem_unit ? si.mem_unit : 1;
                 auto writeMb = [&](const char *label, uint64_t bytes) {
-                        safeWrite2(STDERR_FILENO, logFd, label);
-                        safeWrite2(STDERR_FILENO, logFd,
+                        safeWrite2(consoleFd, logFd, label);
+                        safeWrite2(consoleFd, logFd,
                                    utoa(bytes / (1024 * 1024),
                                         numBuf, sizeof(numBuf)));
-                        safeWrite2(STDERR_FILENO, logFd, " MiB\n");
+                        safeWrite2(consoleFd, logFd, " MiB\n");
                 };
                 writeMb("System RAM Total:  ", si.totalram  * unit);
                 writeMb("System RAM Free:   ", si.freeram   * unit);
@@ -1097,32 +1099,32 @@ void writeReportBody(int logFd, bool isCrash) {
         // fill).  Reads the Atomic<uint64_t> counters directly from
         // the install-time snapshot's cached Stats pointers — no map
         // traversal, no allocation, no locks.
-        writeMemSpaceStats(STDERR_FILENO, logFd);
+        writeMemSpaceStats(consoleFd, logFd);
 
         // --- Resource Limits ---
         // getrlimit is POSIX-standard and async-signal-safe (reads
         // kernel state into a user buffer).  Useful for diagnosing
         // stack overflow (STACK), too-many-open-files (NOFILE), and
         // OOM-adjacent (AS / DATA) crashes.
-        safeWrite2(STDERR_FILENO, logFd, "\n--- Resource Limits ---\n");
-        writeOneRlimit(STDERR_FILENO, logFd, "Stack:   ", RLIMIT_STACK);
-        writeOneRlimit(STDERR_FILENO, logFd, "NOFILE:  ", RLIMIT_NOFILE);
-        writeOneRlimit(STDERR_FILENO, logFd, "AS:      ", RLIMIT_AS);
-        writeOneRlimit(STDERR_FILENO, logFd, "Data:    ", RLIMIT_DATA);
-        writeOneRlimit(STDERR_FILENO, logFd, "Core:    ", RLIMIT_CORE);
+        safeWrite2(consoleFd, logFd, "\n--- Resource Limits ---\n");
+        writeOneRlimit(consoleFd, logFd, "Stack:   ", RLIMIT_STACK);
+        writeOneRlimit(consoleFd, logFd, "NOFILE:  ", RLIMIT_NOFILE);
+        writeOneRlimit(consoleFd, logFd, "AS:      ", RLIMIT_AS);
+        writeOneRlimit(consoleFd, logFd, "Data:    ", RLIMIT_DATA);
+        writeOneRlimit(consoleFd, logFd, "Core:    ", RLIMIT_CORE);
 #ifdef RLIMIT_NPROC
-        writeOneRlimit(STDERR_FILENO, logFd, "NPROC:   ", RLIMIT_NPROC);
+        writeOneRlimit(consoleFd, logFd, "NPROC:   ", RLIMIT_NPROC);
 #endif
 
         // --- Thread ---
         uint64_t tid = gettid_safe();
         const char *threadLabel = isCrash ? "Crashed Thread" : "Current Thread";
         const char *threadMark  = isCrash ? "<-- crashed"    : "<-- current";
-        safeWrite2(STDERR_FILENO, logFd, "\n--- ");
-        safeWrite2(STDERR_FILENO, logFd, threadLabel);
-        safeWrite2(STDERR_FILENO, logFd, " ---\n");
-        safeWrite2(STDERR_FILENO, logFd, "TID: ");
-        safeWrite2(STDERR_FILENO, logFd, utoa(tid, numBuf, sizeof(numBuf)));
+        safeWrite2(consoleFd, logFd, "\n--- ");
+        safeWrite2(consoleFd, logFd, threadLabel);
+        safeWrite2(consoleFd, logFd, " ---\n");
+        safeWrite2(consoleFd, logFd, "TID: ");
+        safeWrite2(consoleFd, logFd, utoa(tid, numBuf, sizeof(numBuf)));
         char threadName[64];
         int nameLen = readThreadName(tid, threadName, sizeof(threadName));
         if(nameLen <= 0) {
@@ -1132,22 +1134,22 @@ void writeReportBody(int logFd, bool isCrash) {
                 nameLen = readCurrentThreadName(threadName, sizeof(threadName));
         }
         if(nameLen > 0) {
-                safeWrite2(STDERR_FILENO, logFd, "  Name: ");
-                safeWrite2(STDERR_FILENO, logFd, threadName);
+                safeWrite2(consoleFd, logFd, "  Name: ");
+                safeWrite2(consoleFd, logFd, threadName);
         }
-        safeWrite2(STDERR_FILENO, logFd, "\n");
+        safeWrite2(consoleFd, logFd, "\n");
 
         // --- All threads ---
-        safeWrite2(STDERR_FILENO, logFd, "\n--- All Threads ---\n");
-        writeThreadList(STDERR_FILENO, logFd, tid, threadMark);
+        safeWrite2(consoleFd, logFd, "\n--- All Threads ---\n");
+        writeThreadList(consoleFd, logFd, tid, threadMark);
 
         // --- Stack trace ---
-        safeWrite2(STDERR_FILENO, logFd, "\n--- Stack Trace ---\n");
+        safeWrite2(consoleFd, logFd, "\n--- Stack Trace ---\n");
         constexpr int MaxFrames = 100;
         void *frames[MaxFrames];
         int frameCt = backtrace(frames, MaxFrames);
         if(frameCt > 0) {
-                writeStackTrace(STDERR_FILENO, logFd, frames, frameCt);
+                writeStackTrace(consoleFd, logFd, frames, frameCt);
         }
 
 #if defined(PROMEKI_PLATFORM_LINUX)
@@ -1188,7 +1190,7 @@ void writeReportBody(int logFd, bool isCrash) {
         // --- End marker ---
         // A missing trailer means the report was truncated by the
         // kernel (SIGKILL mid-write), disk-full, or similar.
-        safeWrite2(STDERR_FILENO, logFd, "\n=== END OF REPORT ===\n");
+        safeWrite2(consoleFd, logFd, "\n=== END OF REPORT ===\n");
 }
 
 // ============================================================================
@@ -1237,7 +1239,7 @@ void signalHandler(int signo, siginfo_t *info, void *ucontext) {
         // the helper no-ops on unsupported arch/OS combos.
         writeCpuRegisters(STDERR_FILENO, logFd, ucontext);
 
-        writeReportBody(logFd, /*isCrash=*/true);
+        writeReportBody(STDERR_FILENO, logFd, /*isCrash=*/true);
 
         if(logFd >= 0) {
                 ::close(logFd);
@@ -1424,13 +1426,9 @@ bool CrashHandler::isInstalled() {
 }
 
 void CrashHandler::writeTrace(const char *reason) {
-        // Atomic sequence number makes each call's filename unique
-        // within this process, so repeated traces don't overwrite
-        // each other.
         static std::atomic<uint32_t> traceSeq{0};
         uint32_t seq = traceSeq.fetch_add(1, std::memory_order_relaxed) + 1;
 
-        // Build the trace log path.
         String appName = Application::appName();
         if(appName.isEmpty()) appName = "promeki";
         FilePath logDir;
@@ -1450,24 +1448,24 @@ void CrashHandler::writeTrace(const char *reason) {
                            O_WRONLY | O_CREAT | O_TRUNC,
                            0644);
 
-        // Header
-        safeWrite2(STDERR_FILENO, logFd, "\n=== TRACE");
-        if(reason != nullptr && reason[0] != '\0') {
-                safeWrite2(STDERR_FILENO, logFd, ": ");
-                safeWrite2(STDERR_FILENO, logFd, reason);
-        }
-        safeWrite2(STDERR_FILENO, logFd, " ===\n");
+        int consoleFd = g_consoleTraceEnabled ? STDERR_FILENO : -1;
 
-        writeReportBody(logFd, /*isCrash=*/false);
+        safeWrite2(consoleFd, logFd, "\n=== TRACE");
+        if(reason != nullptr && reason[0] != '\0') {
+                safeWrite2(consoleFd, logFd, ": ");
+                safeWrite2(consoleFd, logFd, reason);
+        }
+        safeWrite2(consoleFd, logFd, " ===\n");
+
+        writeReportBody(consoleFd, logFd, /*isCrash=*/false);
 
         if(logFd >= 0) {
                 ::close(logFd);
-                safeWrite(STDERR_FILENO, "\nTrace saved to: ");
-                safeWrite(STDERR_FILENO, tracePath.cstr());
-                safeWrite(STDERR_FILENO, "\n");
+                safeWrite(consoleFd, "\nTrace saved to: ");
+                safeWrite(consoleFd, tracePath.cstr());
+                safeWrite(consoleFd, "\n");
         }
 
-        // Best-effort logger flush.
         promekiLogSync();
 }
 
@@ -1490,5 +1488,21 @@ void CrashHandler::writeTrace(const char *reason) {
 }
 
 #endif
+
+bool CrashHandler::consoleTraceEnabled() {
+#if defined(PROMEKI_PLATFORM_POSIX)
+        return g_consoleTraceEnabled;
+#else
+        return true;
+#endif
+}
+
+void CrashHandler::setConsoleTraceEnabled(bool enabled) {
+#if defined(PROMEKI_PLATFORM_POSIX)
+        g_consoleTraceEnabled = enabled;
+#else
+        (void)enabled;
+#endif
+}
 
 PROMEKI_NAMESPACE_END

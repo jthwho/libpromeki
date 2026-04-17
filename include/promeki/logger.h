@@ -242,6 +242,14 @@ class Logger {
                 }
 
                 /**
+                 * @brief Returns whether console logging is enabled.
+                 * @return true if console output is active.
+                 */
+                bool consoleLoggingEnabled() const {
+                        return _consoleLogging.value();
+                }
+
+                /**
                  * @brief Enables or disables console (stderr) log output.
                  * @param val true to enable console logging, false to disable.
                  */

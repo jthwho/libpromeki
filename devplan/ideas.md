@@ -157,12 +157,18 @@
     TUI should be able to install what they need into the application.  This will allow us to, for
     instance, have a SDL application that still uses TUI for the text interface.
 
-23. We really need to clean up the tests:
-        - Generally clean up the output of the unit tests.
-        - Clean up the tests folder structure to become:
-            - tests/unit: the unit tests (what's currently in tests/)
-            - tests/func: the functional tests (what's currently in functests/)
-            - tests/data: data required for testing (what's currently in testdata/)
+23. ~~We really need to clean up the tests:~~  **DONE (2026-04-16)**
+        - ~~Generally clean up the output of the unit tests.~~
+        - ~~Clean up the tests folder structure to become:~~
+            - ~~tests/unit: the unit tests (what's currently in tests/)~~
+            - ~~tests/func: the functional tests (what's currently in functests/)~~
+            - ~~tests/data: data required for testing (what's currently in testdata/)~~
+        - Implemented: tests/unit/, tests/func/, tests/data/ restructure done;
+          doctest_main.cpp gained --verbose / --logger flags; default run is
+          quiet (logger console output and crash-handler stderr suppressed);
+          Terminal gained configurable I/O fds; CrashHandler gained
+          consoleTraceEnabled()/setConsoleTraceEnabled(); test output reduced
+          from ~1064 lines to 6 lines.
 
 24. PixelFormat needs a new name like PixelMemDesc and PixelFormat should become PixelDesc.  Then we
     need to make sure we're using PixelFormat (not PixelDesc) across all library names and strings.

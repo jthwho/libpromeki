@@ -231,3 +231,30 @@ TEST_CASE("CrashHandler: refreshCrashHandler is a no-op when uninstalled") {
 
         if(wasInstalled) CrashHandler::install();
 }
+
+// ============================================================================
+// consoleTraceEnabled / setConsoleTraceEnabled
+// ============================================================================
+
+TEST_CASE("CrashHandler: consoleTraceEnabled default is true") {
+        // The default state must be true so that production builds always
+        // echo traces to stderr unless explicitly suppressed.
+        bool saved = CrashHandler::consoleTraceEnabled();
+        // Restore whatever the runner has configured (may be false in quiet mode).
+        CrashHandler::setConsoleTraceEnabled(true);
+        CHECK(CrashHandler::consoleTraceEnabled());
+        CrashHandler::setConsoleTraceEnabled(saved);
+}
+
+TEST_CASE("CrashHandler: setConsoleTraceEnabled round-trips") {
+        bool saved = CrashHandler::consoleTraceEnabled();
+
+        CrashHandler::setConsoleTraceEnabled(false);
+        CHECK_FALSE(CrashHandler::consoleTraceEnabled());
+
+        CrashHandler::setConsoleTraceEnabled(true);
+        CHECK(CrashHandler::consoleTraceEnabled());
+
+        CrashHandler::setConsoleTraceEnabled(saved);
+        CHECK(CrashHandler::consoleTraceEnabled() == saved);
+}

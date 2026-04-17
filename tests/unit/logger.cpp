@@ -31,21 +31,16 @@ TEST_CASE("Logger_levelToChar") {
 
 TEST_CASE("Logger_LogLevelFiltering") {
         Logger &logger = Logger::defaultLogger();
-
-        SUBCASE("Default level is Info") {
-                CHECK(logger.level() == Logger::Info);
-        }
+        int savedLevel = logger.level();
 
         SUBCASE("setLogLevel changes threshold") {
                 logger.setLogLevel(Logger::Warn);
                 logger.sync();
                 CHECK(logger.level() == Logger::Warn);
-
-                // Restore default
-                logger.setLogLevel(Logger::Info);
-                logger.sync();
-                CHECK(logger.level() == Logger::Info);
         }
+
+        logger.setLogLevel(static_cast<Logger::LogLevel>(savedLevel));
+        logger.sync();
 }
 
 // ============================================================================
@@ -71,18 +66,18 @@ TEST_CASE("Logger_Sync") {
 
 TEST_CASE("Logger_ConsoleLoggingToggle") {
         Logger &logger = Logger::defaultLogger();
+        bool savedConsole = logger.consoleLoggingEnabled();
 
-        // Disable console logging, log a message, re-enable
         logger.setConsoleLoggingEnabled(false);
+        CHECK_FALSE(logger.consoleLoggingEnabled());
         logger.log(Logger::Info, PROMEKI_SOURCE_FILE, __LINE__, "This should not appear on console");
         logger.sync();
 
         logger.setConsoleLoggingEnabled(true);
-        logger.log(Logger::Info, PROMEKI_SOURCE_FILE, __LINE__, "Console logging re-enabled");
+        CHECK(logger.consoleLoggingEnabled());
         logger.sync();
 
-        // No crash or hang means it works
-        CHECK(true);
+        logger.setConsoleLoggingEnabled(savedConsole);
 }
 
 // ============================================================================
@@ -91,17 +86,15 @@ TEST_CASE("Logger_ConsoleLoggingToggle") {
 
 TEST_CASE("Logger_ForceLevel") {
         Logger &logger = Logger::defaultLogger();
+        int savedLevel = logger.level();
 
-        // Set level to Err so only Err and Force pass
         logger.setLogLevel(Logger::Err);
         logger.sync();
 
-        // Force should still be logged (not filtered)
         logger.log(Logger::Force, PROMEKI_SOURCE_FILE, __LINE__, "Forced message at Err level");
         logger.sync();
 
-        // Restore
-        logger.setLogLevel(Logger::Info);
+        logger.setLogLevel(static_cast<Logger::LogLevel>(savedLevel));
         logger.sync();
         CHECK(true);
 }

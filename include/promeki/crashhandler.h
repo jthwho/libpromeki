@@ -141,6 +141,23 @@ class CrashHandler {
                  *        If non-null, appears in the trace header.
                  */
                 static void writeTrace(const char *reason = nullptr);
+
+                /**
+                 * @brief Returns whether writeTrace() echoes to stderr.
+                 * @return true if console output is enabled (the default).
+                 */
+                static bool consoleTraceEnabled();
+
+                /**
+                 * @brief Enables or disables stderr output from writeTrace().
+                 *
+                 * When disabled, writeTrace() still writes the trace to a log
+                 * file but suppresses the stderr echo.  Has no effect on the
+                 * signal handler crash path, which always writes to stderr.
+                 *
+                 * @param enabled true to echo traces to stderr, false to suppress.
+                 */
+                static void setConsoleTraceEnabled(bool enabled);
 };
 
 PROMEKI_NAMESPACE_END

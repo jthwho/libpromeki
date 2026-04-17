@@ -61,14 +61,27 @@ class Terminal {
                         TrueColor       ///< 24-bit true color support.
                 };
 
-                /** @brief Constructs a Terminal and saves the current terminal state. */
+                /** @brief Constructs a Terminal using stdin/stdout. */
                 Terminal();
+
+                /**
+                 * @brief Constructs a Terminal with explicit I/O file descriptors.
+                 * @param inputFd  File descriptor for input (e.g. STDIN_FILENO or a PTY).
+                 * @param outputFd File descriptor for output (e.g. STDOUT_FILENO or a PTY).
+                 */
+                Terminal(int inputFd, int outputFd);
 
                 /** @brief Destructor. Restores terminal state and cleans up. */
                 ~Terminal();
 
                 Terminal(const Terminal &) = delete;
                 Terminal &operator=(const Terminal &) = delete;
+
+                /** @brief Returns the input file descriptor. */
+                int inputFd() const { return _inputFd; }
+
+                /** @brief Returns the output file descriptor. */
+                int outputFd() const { return _outputFd; }
 
                 /**
                  * @brief Enables raw terminal mode (disables line buffering, echo, etc).
@@ -179,7 +192,7 @@ class Terminal {
                 static ColorSupport colorSupport();
 
                 /**
-                 * @brief Writes raw bytes to stdout.
+                 * @brief Writes raw bytes to the output file descriptor.
                  * @param data The data to write.
                  * @param len  Number of bytes to write.
                  * @return A Result containing the number of bytes written,
@@ -188,6 +201,10 @@ class Terminal {
                 Result<int> writeOutput(const char *data, int len);
 
         private:
+                void init();
+
+                int             _inputFd;
+                int             _outputFd;
                 bool            _rawMode = false;
                 bool            _mouseTracking = false;
                 bool            _bracketedPaste = false;

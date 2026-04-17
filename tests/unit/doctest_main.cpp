@@ -43,14 +43,16 @@ class LogStreambuf : public std::streambuf {
 };
 
 int main(int argc, char **argv) {
-        // Check for --logger flag before passing args to doctest.
-        // When set, the default logger formatters are preserved.
+        bool verbose = false;
         bool useDefaultLogger = false;
         int filteredArgc = 0;
         char **filteredArgv = new char *[argc];
         for(int i = 0; i < argc; i++) {
-                if(std::string(argv[i]) == "--logger") {
+                if(std::string(argv[i]) == "--verbose") {
+                        verbose = true;
+                } else if(std::string(argv[i]) == "--logger") {
                         useDefaultLogger = true;
+                        verbose = true;
                 } else {
                         filteredArgv[filteredArgc++] = argv[i];
                 }
@@ -64,13 +66,11 @@ int main(int argc, char **argv) {
                 );
         }
 
-        // Enable core dumps and install the library crash handler
-        // before running any tests.  Using the library's own
-        // CrashHandler means doctest runs exercise the same crash-
-        // reporting path our applications use — any bug in the
-        // handler will show up here first.  Core dumps are enabled
-        // by flipping the LibraryOptions flag before install(),
-        // which honours it.
+        if(!verbose) {
+                Logger::defaultLogger().setConsoleLoggingEnabled(false);
+                CrashHandler::setConsoleTraceEnabled(false);
+        }
+
         LibraryOptions::instance().set(LibraryOptions::CoreDumps, true);
         CrashHandler::install();
 
@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
 
         doctest::Context context;
         context.applyCommandLine(filteredArgc, filteredArgv);
-        context.setCout(&logstream);
+        if(verbose) context.setCout(&logstream);
         int res = context.run();
 
         promekiLogSync();

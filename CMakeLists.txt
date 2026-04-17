@@ -1422,11 +1422,11 @@ endif()
 # Functional Tests #############################################################
 #
 # Always configured, never part of the default build.  Targets inside
-# functests/ inherit EXCLUDE_FROM_ALL from this add_subdirectory call,
+# tests/func/ inherit EXCLUDE_FROM_ALL from this add_subdirectory call,
 # so `cmake --build <dir>` leaves them alone but
 # `cmake --build <dir> --target <name>-functest` still builds one on
-# demand.  See functests/CMakeLists.txt for the full rationale.
-add_subdirectory(functests EXCLUDE_FROM_ALL)
+# demand.  See tests/func/CMakeLists.txt for the full rationale.
+add_subdirectory(tests/func EXCLUDE_FROM_ALL)
 
 # Install ######################################################################
 
@@ -1547,256 +1547,256 @@ install(FILES
 
 if(PROMEKI_BUILD_TESTS)
     set(UNITTEST_SOURCES
-        tests/doctest_main.cpp
-        tests/algorithm.cpp
-        tests/ansistream.cpp
-        tests/application.cpp
-        tests/array.cpp
-        tests/atomic.cpp
-        tests/audiocodec.cpp
-        tests/audiolevel.cpp
-        tests/typeregistry_isolation.cpp
-        tests/benchmarkrunner.cpp
-        tests/buffer.cpp
-        tests/bufferediodevice.cpp
-        tests/bufferiodevice.cpp
-        tests/bufferpool.cpp
-        tests/bufferview.cpp
-        tests/buildinfo.cpp
-        tests/bytearray.cpp
-        tests/ciepoint.cpp
-        tests/ciewavelengthtable.cpp
-        tests/cmdlineparser.cpp
-        tests/color.cpp
-        tests/colormodel.cpp
-        tests/configoption.cpp
-        tests/crashhandler.cpp
-        tests/clockdomain.cpp
-        tests/crc.cpp
-        tests/cuda.cpp
-        tests/datastream.cpp
-        tests/datastream_include_chain.cpp
-        tests/datetime.cpp
-        tests/deque.cpp
-        tests/dir.cpp
-        tests/duration.cpp
-        tests/elapsedtimer.cpp
-        tests/enum.cpp
-        tests/enumlist.cpp
-        tests/env.cpp
-        tests/error.cpp
-        tests/event.cpp
-        tests/eventloop.cpp
-        tests/file.cpp
-        tests/fileformatfactory.cpp
-        tests/fileinfo.cpp
-        tests/fileiodevice.cpp
-        tests/filepath.cpp
-        tests/fnv1a.cpp
-        tests/fourcc.cpp
-        tests/framepacer.cpp
-        tests/framesync.cpp
-        tests/framerate.cpp
-        tests/future.cpp
-        tests/h264bitstream.cpp
-        tests/hashmap.cpp
-        tests/hashset.cpp
-        tests/hevcbitstream.cpp
-        tests/histogram.cpp
-        tests/iodevice.cpp
-        tests/json.cpp
-        tests/line.cpp
-        tests/libraryoptions.cpp
-        tests/list.cpp
-        tests/logger.cpp
-        tests/map.cpp
-        tests/matrix.cpp
-        tests/matrix3x3.cpp
-        tests/mediatimestamp.cpp
-        tests/md5.cpp
-        tests/mempool.cpp
-        tests/memspace.cpp
-        tests/metadata.cpp
-        tests/mutex.cpp
-        tests/numname.cpp
-        tests/obfuscatedstring.cpp
-        tests/objectbase.cpp
-        tests/objectbase2.cpp
-        tests/periodiccallback.cpp
-        tests/pair.cpp
-        tests/pidcontroller.cpp
-        tests/pixelformat.cpp
-        tests/point.cpp
-        tests/priorityqueue.cpp
-        tests/process.cpp
-        tests/queue.cpp
-        tests/random.cpp
-        tests/rational.cpp
-        tests/ratetracker.cpp
-        tests/readwritelock.cpp
-        tests/rect.cpp
-        tests/regex.cpp
-        tests/resource.cpp
-        tests/result.cpp
-        tests/securebuffer.cpp
-        tests/set.cpp
-        tests/sha1.cpp
-        tests/sharedptr.cpp
-        tests/signal.cpp
-        tests/signalhandler.cpp
-        tests/size2d.cpp
-        tests/span.cpp
-        tests/stack.cpp
-        tests/statsaccumulator.cpp
-        tests/streamstring.cpp
-        tests/string.cpp
-        tests/stringiodevice.cpp
-        tests/stringlist.cpp
-        tests/stringregistry.cpp
-        tests/strand.cpp
-        tests/structdatabase.cpp
-        tests/system.cpp
-        tests/terminal.cpp
-        tests/textstream.cpp
-        tests/thread.cpp
-        tests/threadpool.cpp
-        tests/timecode.cpp
-        tests/timecodegenerator.cpp
-        tests/timestamp.cpp
-        tests/umid.cpp
-        tests/units.cpp
-        tests/uuid.cpp
-        tests/variant.cpp
-        tests/variantdatabase.cpp
-        tests/variantspec.cpp
-        tests/videoformat.cpp
-        tests/waitcondition.cpp
-        tests/xyzcolor.cpp
+        tests/unit/doctest_main.cpp
+        tests/unit/algorithm.cpp
+        tests/unit/ansistream.cpp
+        tests/unit/application.cpp
+        tests/unit/array.cpp
+        tests/unit/atomic.cpp
+        tests/unit/audiocodec.cpp
+        tests/unit/audiolevel.cpp
+        tests/unit/typeregistry_isolation.cpp
+        tests/unit/benchmarkrunner.cpp
+        tests/unit/buffer.cpp
+        tests/unit/bufferediodevice.cpp
+        tests/unit/bufferiodevice.cpp
+        tests/unit/bufferpool.cpp
+        tests/unit/bufferview.cpp
+        tests/unit/buildinfo.cpp
+        tests/unit/bytearray.cpp
+        tests/unit/ciepoint.cpp
+        tests/unit/ciewavelengthtable.cpp
+        tests/unit/cmdlineparser.cpp
+        tests/unit/color.cpp
+        tests/unit/colormodel.cpp
+        tests/unit/configoption.cpp
+        tests/unit/crashhandler.cpp
+        tests/unit/clockdomain.cpp
+        tests/unit/crc.cpp
+        tests/unit/cuda.cpp
+        tests/unit/datastream.cpp
+        tests/unit/datastream_include_chain.cpp
+        tests/unit/datetime.cpp
+        tests/unit/deque.cpp
+        tests/unit/dir.cpp
+        tests/unit/duration.cpp
+        tests/unit/elapsedtimer.cpp
+        tests/unit/enum.cpp
+        tests/unit/enumlist.cpp
+        tests/unit/env.cpp
+        tests/unit/error.cpp
+        tests/unit/event.cpp
+        tests/unit/eventloop.cpp
+        tests/unit/file.cpp
+        tests/unit/fileformatfactory.cpp
+        tests/unit/fileinfo.cpp
+        tests/unit/fileiodevice.cpp
+        tests/unit/filepath.cpp
+        tests/unit/fnv1a.cpp
+        tests/unit/fourcc.cpp
+        tests/unit/framepacer.cpp
+        tests/unit/framesync.cpp
+        tests/unit/framerate.cpp
+        tests/unit/future.cpp
+        tests/unit/h264bitstream.cpp
+        tests/unit/hashmap.cpp
+        tests/unit/hashset.cpp
+        tests/unit/hevcbitstream.cpp
+        tests/unit/histogram.cpp
+        tests/unit/iodevice.cpp
+        tests/unit/json.cpp
+        tests/unit/line.cpp
+        tests/unit/libraryoptions.cpp
+        tests/unit/list.cpp
+        tests/unit/logger.cpp
+        tests/unit/map.cpp
+        tests/unit/matrix.cpp
+        tests/unit/matrix3x3.cpp
+        tests/unit/mediatimestamp.cpp
+        tests/unit/md5.cpp
+        tests/unit/mempool.cpp
+        tests/unit/memspace.cpp
+        tests/unit/metadata.cpp
+        tests/unit/mutex.cpp
+        tests/unit/numname.cpp
+        tests/unit/obfuscatedstring.cpp
+        tests/unit/objectbase.cpp
+        tests/unit/objectbase2.cpp
+        tests/unit/periodiccallback.cpp
+        tests/unit/pair.cpp
+        tests/unit/pidcontroller.cpp
+        tests/unit/pixelformat.cpp
+        tests/unit/point.cpp
+        tests/unit/priorityqueue.cpp
+        tests/unit/process.cpp
+        tests/unit/queue.cpp
+        tests/unit/random.cpp
+        tests/unit/rational.cpp
+        tests/unit/ratetracker.cpp
+        tests/unit/readwritelock.cpp
+        tests/unit/rect.cpp
+        tests/unit/regex.cpp
+        tests/unit/resource.cpp
+        tests/unit/result.cpp
+        tests/unit/securebuffer.cpp
+        tests/unit/set.cpp
+        tests/unit/sha1.cpp
+        tests/unit/sharedptr.cpp
+        tests/unit/signal.cpp
+        tests/unit/signalhandler.cpp
+        tests/unit/size2d.cpp
+        tests/unit/span.cpp
+        tests/unit/stack.cpp
+        tests/unit/statsaccumulator.cpp
+        tests/unit/streamstring.cpp
+        tests/unit/string.cpp
+        tests/unit/stringiodevice.cpp
+        tests/unit/stringlist.cpp
+        tests/unit/stringregistry.cpp
+        tests/unit/strand.cpp
+        tests/unit/structdatabase.cpp
+        tests/unit/system.cpp
+        tests/unit/terminal.cpp
+        tests/unit/textstream.cpp
+        tests/unit/thread.cpp
+        tests/unit/threadpool.cpp
+        tests/unit/timecode.cpp
+        tests/unit/timecodegenerator.cpp
+        tests/unit/timestamp.cpp
+        tests/unit/umid.cpp
+        tests/unit/units.cpp
+        tests/unit/uuid.cpp
+        tests/unit/variant.cpp
+        tests/unit/variantdatabase.cpp
+        tests/unit/variantspec.cpp
+        tests/unit/videoformat.cpp
+        tests/unit/waitcondition.cpp
+        tests/unit/xyzcolor.cpp
     )
 
     if(PROMEKI_ENABLE_NETWORK)
         list(APPEND UNITTEST_SOURCES
-            tests/network/abstractsocket.cpp
-            tests/network/ipv4address.cpp
-            tests/network/ipv6address.cpp
-            tests/network/eui64.cpp
-            tests/network/loopbacktransport.cpp
-            tests/network/macaddress.cpp
-            tests/network/multicastmanager.cpp
-            tests/network/multicastreceiver.cpp
-            tests/network/networkaddress.cpp
-            tests/network/prioritysocket.cpp
-            tests/network/rawsocket.cpp
-            tests/network/rtppacket.cpp
-            tests/network/rtppayload.cpp
-            tests/network/rtpsession.cpp
-            tests/network/sdpsession.cpp
-            tests/network/socketaddress.cpp
-            tests/network/tcpserver.cpp
-            tests/network/tcpsocket.cpp
-            tests/network/udpsocket.cpp
-            tests/network/udpsockettransport.cpp
+            tests/unit/network/abstractsocket.cpp
+            tests/unit/network/ipv4address.cpp
+            tests/unit/network/ipv6address.cpp
+            tests/unit/network/eui64.cpp
+            tests/unit/network/loopbacktransport.cpp
+            tests/unit/network/macaddress.cpp
+            tests/unit/network/multicastmanager.cpp
+            tests/unit/network/multicastreceiver.cpp
+            tests/unit/network/networkaddress.cpp
+            tests/unit/network/prioritysocket.cpp
+            tests/unit/network/rawsocket.cpp
+            tests/unit/network/rtppacket.cpp
+            tests/unit/network/rtppayload.cpp
+            tests/unit/network/rtpsession.cpp
+            tests/unit/network/sdpsession.cpp
+            tests/unit/network/socketaddress.cpp
+            tests/unit/network/tcpserver.cpp
+            tests/unit/network/tcpsocket.cpp
+            tests/unit/network/udpsocket.cpp
+            tests/unit/network/udpsockettransport.cpp
         )
     endif()
 
     if(PROMEKI_ENABLE_PROAV)
         list(APPEND UNITTEST_SOURCES
-            tests/audio.cpp
-            tests/audioblock.cpp
-            tests/audiobuffer.cpp
-            tests/audiodesc.cpp
-            tests/audiofilefactory.cpp
-            tests/audiotestpattern.cpp
-            tests/codec.cpp
-            tests/encodeddesc.cpp
-            tests/fastfont.cpp
-            tests/basicfont.cpp
-            tests/frame.cpp
-            tests/image.cpp
-            tests/imagedataencoder.cpp
-            tests/imagedatadecoder.cpp
-            tests/imagedesc.cpp
-            tests/imagefile.cpp
-            tests/imagefileio.cpp
-            tests/imagefileio_dpx.cpp
-            tests/imagefileio_cin.cpp
-            tests/imagefileio_tga.cpp
-            tests/imagefileio_sgi.cpp
-            tests/imagefileio_pnm.cpp
-            tests/imgseq.cpp
-            tests/jpegimagecodec.cpp
-            tests/ltcdecoder.cpp
-            tests/ltcencoder.cpp
-            tests/mediadesc.cpp
-            tests/mediaio.cpp
-            tests/mediaio_identifiers.cpp
-            tests/mediapacket.cpp
-            tests/mediaio_stats.cpp
-            tests/mediapipelineconfig.cpp
-            tests/mediapipelinestats.cpp
-            tests/mediapipeline.cpp
-            tests/mediaiotask_converter.cpp
-            tests/mediaiotask_csc.cpp
-            tests/mediaiotask_src.cpp
-            tests/mediaiotask_burn.cpp
-            tests/mediaiotask_framesync.cpp
-            tests/mediaiotask_videoencoder.cpp
-            tests/mediaiotask_videodecoder.cpp
-            tests/mediaiotask_inspector.cpp
-            tests/mediaiotask_quicktime.cpp
-            tests/mediaiotask_rtp.cpp
-            tests/paintengine.cpp
-            tests/pixeldesc.cpp
-            tests/videocodec.cpp
-            tests/videocodec_registry.cpp
-            tests/quicktime.cpp
-            tests/videotestpattern.cpp
+            tests/unit/audio.cpp
+            tests/unit/audioblock.cpp
+            tests/unit/audiobuffer.cpp
+            tests/unit/audiodesc.cpp
+            tests/unit/audiofilefactory.cpp
+            tests/unit/audiotestpattern.cpp
+            tests/unit/codec.cpp
+            tests/unit/encodeddesc.cpp
+            tests/unit/fastfont.cpp
+            tests/unit/basicfont.cpp
+            tests/unit/frame.cpp
+            tests/unit/image.cpp
+            tests/unit/imagedataencoder.cpp
+            tests/unit/imagedatadecoder.cpp
+            tests/unit/imagedesc.cpp
+            tests/unit/imagefile.cpp
+            tests/unit/imagefileio.cpp
+            tests/unit/imagefileio_dpx.cpp
+            tests/unit/imagefileio_cin.cpp
+            tests/unit/imagefileio_tga.cpp
+            tests/unit/imagefileio_sgi.cpp
+            tests/unit/imagefileio_pnm.cpp
+            tests/unit/imgseq.cpp
+            tests/unit/jpegimagecodec.cpp
+            tests/unit/ltcdecoder.cpp
+            tests/unit/ltcencoder.cpp
+            tests/unit/mediadesc.cpp
+            tests/unit/mediaio.cpp
+            tests/unit/mediaio_identifiers.cpp
+            tests/unit/mediapacket.cpp
+            tests/unit/mediaio_stats.cpp
+            tests/unit/mediapipelineconfig.cpp
+            tests/unit/mediapipelinestats.cpp
+            tests/unit/mediapipeline.cpp
+            tests/unit/mediaiotask_converter.cpp
+            tests/unit/mediaiotask_csc.cpp
+            tests/unit/mediaiotask_src.cpp
+            tests/unit/mediaiotask_burn.cpp
+            tests/unit/mediaiotask_framesync.cpp
+            tests/unit/mediaiotask_videoencoder.cpp
+            tests/unit/mediaiotask_videodecoder.cpp
+            tests/unit/mediaiotask_inspector.cpp
+            tests/unit/mediaiotask_quicktime.cpp
+            tests/unit/mediaiotask_rtp.cpp
+            tests/unit/paintengine.cpp
+            tests/unit/pixeldesc.cpp
+            tests/unit/videocodec.cpp
+            tests/unit/videocodec_registry.cpp
+            tests/unit/quicktime.cpp
+            tests/unit/videotestpattern.cpp
         )
         if(PROMEKI_ENABLE_CSC)
             list(APPEND UNITTEST_SOURCES
-                tests/cscpipeline.cpp
+                tests/unit/cscpipeline.cpp
             )
         endif()
         if(PROMEKI_ENABLE_PNG)
             list(APPEND UNITTEST_SOURCES
-                tests/imagefileio_png.cpp
+                tests/unit/imagefileio_png.cpp
             )
         endif()
         if(PROMEKI_ENABLE_JPEG)
             list(APPEND UNITTEST_SOURCES
-                tests/imagefileio_jpeg.cpp
+                tests/unit/imagefileio_jpeg.cpp
             )
         endif()
         if(PROMEKI_ENABLE_JPEGXS)
             list(APPEND UNITTEST_SOURCES
-                tests/jpegxsimagecodec.cpp
-                tests/imagefileio_jpegxs.cpp
+                tests/unit/jpegxsimagecodec.cpp
+                tests/unit/imagefileio_jpegxs.cpp
             )
         endif()
         if(PROMEKI_ENABLE_NVENC)
             list(APPEND UNITTEST_SOURCES
-                tests/nvencvideoencoder.cpp
+                tests/unit/nvencvideoencoder.cpp
             )
         endif()
         if(PROMEKI_ENABLE_NVDEC)
             list(APPEND UNITTEST_SOURCES
-                tests/nvdecvideodecoder.cpp
+                tests/unit/nvdecvideodecoder.cpp
             )
         endif()
         if(PROMEKI_ENABLE_SRC)
             list(APPEND UNITTEST_SOURCES
-                tests/audioresampler.cpp
+                tests/unit/audioresampler.cpp
             )
         endif()
     endif()
 
     if(PROMEKI_ENABLE_MUSIC)
         list(APPEND UNITTEST_SOURCES
-            tests/midinote.cpp
-            tests/midinotenames.cpp
-            tests/musicalnote.cpp
-            tests/musicalscale.cpp
-            tests/notesequenceparser.cpp
+            tests/unit/midinote.cpp
+            tests/unit/midinotenames.cpp
+            tests/unit/musicalnote.cpp
+            tests/unit/musicalscale.cpp
+            tests/unit/notesequenceparser.cpp
         )
     endif()
 
@@ -1812,26 +1812,26 @@ if(PROMEKI_BUILD_TESTS)
 
     if(PROMEKI_BUILD_TUI)
         set(UNITTEST_TUI_SOURCES
-            tests/doctest_main.cpp
-            tests/tui/button.cpp
-            tests/tui/checkbox.cpp
-            tests/tui/frame.cpp
-            tests/tui/inputparser.cpp
-            tests/tui/label.cpp
-            tests/tui/layout.cpp
-            tests/tui/lineedit.cpp
-            tests/tui/listview.cpp
-            tests/tui/menu.cpp
-            tests/tui/painter.cpp
-            tests/tui/palette.cpp
-            tests/tui/progressbar.cpp
-            tests/tui/screen.cpp
-            tests/tui/scrollarea.cpp
-            tests/tui/splitter.cpp
-            tests/tui/statusbar.cpp
-            tests/tui/tabwidget.cpp
-            tests/tui/textarea.cpp
-            tests/tui/widget.cpp
+            tests/unit/doctest_main.cpp
+            tests/unit/tui/button.cpp
+            tests/unit/tui/checkbox.cpp
+            tests/unit/tui/frame.cpp
+            tests/unit/tui/inputparser.cpp
+            tests/unit/tui/label.cpp
+            tests/unit/tui/layout.cpp
+            tests/unit/tui/lineedit.cpp
+            tests/unit/tui/listview.cpp
+            tests/unit/tui/menu.cpp
+            tests/unit/tui/painter.cpp
+            tests/unit/tui/palette.cpp
+            tests/unit/tui/progressbar.cpp
+            tests/unit/tui/screen.cpp
+            tests/unit/tui/scrollarea.cpp
+            tests/unit/tui/splitter.cpp
+            tests/unit/tui/statusbar.cpp
+            tests/unit/tui/tabwidget.cpp
+            tests/unit/tui/textarea.cpp
+            tests/unit/tui/widget.cpp
         )
         add_executable(unittest-tui ${UNITTEST_TUI_SOURCES})
         target_compile_definitions(unittest-tui PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:DevRelease>>:PROMEKI_DEBUG_ENABLE>)
@@ -1843,9 +1843,9 @@ if(PROMEKI_BUILD_TESTS)
 
     if(PROMEKI_BUILD_SDL)
         set(UNITTEST_SDL_SOURCES
-            tests/doctest_main.cpp
-            tests/sdl/sdlaudioclock.cpp
-            tests/sdl/sdlrenderer.cpp
+            tests/unit/doctest_main.cpp
+            tests/unit/sdl/sdlaudioclock.cpp
+            tests/unit/sdl/sdlrenderer.cpp
         )
         add_executable(unittest-sdl ${UNITTEST_SDL_SOURCES})
         target_compile_definitions(unittest-sdl PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:DevRelease>>:PROMEKI_DEBUG_ENABLE>)

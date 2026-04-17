@@ -44,7 +44,21 @@ static void sigwinchHandler(int) {
 
 #endif
 
-Terminal::Terminal() {
+Terminal::Terminal() :
+        _inputFd(STDIN_FILENO),
+        _outputFd(STDOUT_FILENO)
+{
+        init();
+}
+
+Terminal::Terminal(int inputFd, int outputFd) :
+        _inputFd(inputFd),
+        _outputFd(outputFd)
+{
+        init();
+}
+
+void Terminal::init() {
 #if defined(PROMEKI_PLATFORM_POSIX)
         _origState = new ::termios;
         std::memset(_origState, 0, sizeof(::termios));
@@ -66,7 +80,7 @@ Error Terminal::enableRawMode() {
         if(_rawMode) return Error();
 #if defined(PROMEKI_PLATFORM_POSIX)
         ::termios *orig = static_cast<::termios *>(_origState);
-        if(tcgetattr(STDIN_FILENO, orig) == -1) return Error::syserr();
+        if(tcgetattr(_inputFd, orig) == -1) return Error::syserr();
         ::termios raw = *orig;
         raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
         raw.c_oflag &= ~(OPOST);
@@ -74,7 +88,7 @@ Error Terminal::enableRawMode() {
         raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
         raw.c_cc[VMIN] = 0;
         raw.c_cc[VTIME] = 0;
-        if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1) return Error::syserr();
+        if(tcsetattr(_inputFd, TCSAFLUSH, &raw) == -1) return Error::syserr();
         _rawMode = true;
         return Error();
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
@@ -99,7 +113,7 @@ Error Terminal::enableRawMode() {
 Error Terminal::disableRawMode() {
         if(!_rawMode) return Error();
 #if defined(PROMEKI_PLATFORM_POSIX)
-        if(tcsetattr(STDIN_FILENO, TCSAFLUSH, static_cast<::termios *>(_origState)) == -1) return Error::syserr();
+        if(tcsetattr(_inputFd, TCSAFLUSH, static_cast<::termios *>(_origState)) == -1) return Error::syserr();
         _rawMode = false;
         return Error();
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
@@ -117,7 +131,7 @@ Result<int> Terminal::readInput(char *buf, int maxLen) {
                 int cols, rows;
                 windowSize(cols, rows);
         }
-        ssize_t n = read(STDIN_FILENO, buf, maxLen);
+        ssize_t n = read(_inputFd, buf, maxLen);
         if(n == -1) {
                 if(errno == EAGAIN || errno == EWOULDBLOCK) return makeResult(0);
                 return makeError<int>(Error::syserr());
@@ -139,7 +153,7 @@ Result<int> Terminal::readInput(char *buf, int maxLen) {
 Error Terminal::windowSize(int &cols, int &rows) const {
 #if defined(PROMEKI_PLATFORM_POSIX)
         struct winsize ws;
-        if(ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) != 0) return Error::syserr();
+        if(ioctl(_outputFd, TIOCGWINSZ, &ws) != 0) return Error::syserr();
         cols = ws.ws_col;
         rows = ws.ws_row;
         return Error();
@@ -317,7 +331,7 @@ Terminal::ColorSupport Terminal::colorSupport() {
 
 Result<int> Terminal::writeOutput(const char *data, int len) {
 #if defined(PROMEKI_PLATFORM_POSIX)
-        ssize_t n = write(STDOUT_FILENO, data, len);
+        ssize_t n = write(_outputFd, data, len);
         if(n < 0) return makeError<int>(Error::syserr());
         return makeResult(static_cast<int>(n));
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
