@@ -1472,6 +1472,251 @@ TEST_CASE("MediaIO_TPG_CancelPendingDropsReadResults") {
 }
 
 // ============================================================================
+// Close semantics (sync and async)
+// ============================================================================
+
+TEST_CASE("MediaIO_Close_NotOpenReturnsNotOpen") {
+        MediaIO::Config cfg;
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(Size2Du32(16, 16), FrameRate(FrameRate::FPS_24)));
+        cfg.set(MediaConfig::VideoEnabled, true);
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        CHECK(io->close() == Error::NotOpen);
+        CHECK(io->close(false) == Error::NotOpen);
+        delete io;
+}
+
+TEST_CASE("MediaIO_Close_SyncEmitsClosedSignal") {
+        MediaIO::Config cfg;
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(Size2Du32(16, 16), FrameRate(FrameRate::FPS_24)));
+        cfg.set(MediaConfig::VideoEnabled, true);
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Output).isOk());
+
+        std::atomic<int> closedCount{0};
+        std::atomic<int> closedErr{-1};
+        io->closedSignal.connect([&](Error e) {
+                closedErr.store(static_cast<int>(e.code()));
+                closedCount.fetch_add(1);
+        });
+
+        CHECK(io->close().isOk());
+        CHECK(closedCount.load() == 1);
+        CHECK(closedErr.load() == static_cast<int>(Error::Ok));
+        CHECK_FALSE(io->isOpen());
+        CHECK_FALSE(io->isClosing());
+        delete io;
+}
+
+TEST_CASE("MediaIO_Close_AsyncReturnsImmediatelyAndEmitsClosed") {
+        MediaIO::Config cfg;
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(Size2Du32(16, 16), FrameRate(FrameRate::FPS_24)));
+        cfg.set(MediaConfig::VideoEnabled, true);
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Output).isOk());
+
+        std::atomic<int> closedCount{0};
+        io->closedSignal.connect([&](Error) {
+                closedCount.fetch_add(1);
+        });
+
+        // Non-blocking submit returns Ok immediately.
+        CHECK(io->close(false).isOk());
+
+        // Wait for finalize to run.  Strand runs on the shared thread
+        // pool; a short bounded wait is sufficient for the TPG backend.
+        for(int i = 0; i < 200 && closedCount.load() == 0; i++) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        CHECK(closedCount.load() == 1);
+        CHECK_FALSE(io->isOpen());
+        CHECK_FALSE(io->isClosing());
+        delete io;
+}
+
+TEST_CASE("MediaIO_Close_DoubleCloseWhileClosingReturnsNotOpen") {
+        // A second close() issued while the first async close is still
+        // in flight must be rejected (NotOpen) — the finalize task
+        // flips _closing back to false only after it finishes.
+        MediaIO::Config cfg;
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(Size2Du32(16, 16), FrameRate(FrameRate::FPS_24)));
+        cfg.set(MediaConfig::VideoEnabled, true);
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Output).isOk());
+
+        std::atomic<int> closedCount{0};
+        io->closedSignal.connect([&](Error) { closedCount.fetch_add(1); });
+
+        CHECK(io->close(false).isOk());
+        CHECK(io->isClosing());
+        // Second close while first is pending.
+        CHECK(io->close(false) == Error::NotOpen);
+        CHECK(io->close() == Error::NotOpen);
+
+        for(int i = 0; i < 200 && closedCount.load() == 0; i++) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        CHECK(closedCount.load() == 1);
+        delete io;
+}
+
+TEST_CASE("MediaIO_Close_AsyncEmitsSyntheticEOS") {
+        // Consumer path: no prefetch in flight.  After close(false),
+        // readFrame() must return EndOfFile at least once (the
+        // synthetic trailing entry pushed by finalize).
+        MediaIO::Config cfg;
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(Size2Du32(16, 16), FrameRate(FrameRate::FPS_24)));
+        cfg.set(MediaConfig::VideoEnabled, true);
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Output).isOk());
+
+        // Drain one real read so prefetch is settled, then close async.
+        Frame::Ptr realFrame;
+        CHECK(io->readFrame(realFrame).isOk());
+        CHECK(realFrame.isValid());
+
+        std::atomic<int> closedCount{0};
+        io->closedSignal.connect([&](Error) { closedCount.fetch_add(1); });
+
+        CHECK(io->close(false).isOk());
+
+        // Wait for finalize to push the synthetic EOS and fire closed.
+        for(int i = 0; i < 200 && closedCount.load() == 0; i++) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        REQUIRE(closedCount.load() == 1);
+
+        // The queue still holds the EOS entry (async path doesn't drain
+        // for us).  readFrame must return EndOfFile when popping it,
+        // regardless of the now-NotOpen state.
+        Frame::Ptr f;
+        CHECK(io->readFrame(f, /*block=*/false) == Error::EndOfFile);
+        // Queue is now empty; further reads see NotOpen.
+        CHECK(io->readFrame(f, /*block=*/false) == Error::NotOpen);
+        delete io;
+}
+
+TEST_CASE("MediaIO_Close_AsyncDeliversAllPendingReadsBeforeEOS") {
+        // Graceful close: reads submitted before close() must complete
+        // and their frames must appear in the queue BEFORE the trailing
+        // synthetic EOS.
+        MediaIO::Config cfg;
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(Size2Du32(16, 16), FrameRate(FrameRate::FPS_24)));
+        cfg.set(MediaConfig::VideoEnabled, true);
+        cfg.set(MediaConfig::AudioEnabled, false);
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        // Deep prefetch so several reads are in flight when close runs.
+        io->setPrefetchDepth(4);
+        REQUIRE(io->open(MediaIO::Output).isOk());
+
+        // Kick off prefetch by doing one non-blocking read.
+        {
+                Frame::Ptr f;
+                io->readFrame(f, /*block=*/false);
+        }
+
+        std::atomic<int> closedCount{0};
+        io->closedSignal.connect([&](Error) { closedCount.fetch_add(1); });
+        CHECK(io->close(false).isOk());
+
+        for(int i = 0; i < 200 && closedCount.load() == 0; i++) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        REQUIRE(closedCount.load() == 1);
+
+        // Drain the queue; every entry before the EOS must be a
+        // successful real frame.
+        int realFrames = 0;
+        bool sawEOS = false;
+        while(true) {
+                Frame::Ptr f;
+                Error e = io->readFrame(f, /*block=*/false);
+                if(e == Error::EndOfFile) { sawEOS = true; break; }
+                if(e == Error::NotOpen) break;  // queue empty, no EOS?
+                REQUIRE(e.isOk());
+                CHECK(f.isValid());
+                realFrames++;
+                if(realFrames > 100) break;  // safety
+        }
+        CHECK(sawEOS);
+        CHECK(realFrames >= 1);
+        delete io;
+}
+
+TEST_CASE("MediaIO_Close_AsyncRejectsNewWrites") {
+        // writeFrame() during an async close must return NotOpen
+        // without queueing any new work behind the finalize task.
+        MediaIO::Config cfg = MediaIO::defaultConfig("Converter");
+        cfg.set(MediaConfig::Capacity, 4);
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+
+        Image img(8, 8, PixelDesc(PixelDesc::RGB8_sRGB));
+        img.fill(0);
+        Frame::Ptr f = Frame::Ptr::create();
+        f.modify()->imageList().pushToBack(Image::Ptr::create(std::move(img)));
+
+        std::atomic<int> closedCount{0};
+        io->closedSignal.connect([&](Error) { closedCount.fetch_add(1); });
+
+        CHECK(io->close(false).isOk());
+        CHECK(io->isClosing());
+        // Write during close is rejected.
+        CHECK(io->writeFrame(f) == Error::NotOpen);
+        CHECK(io->writeFrame(f, /*block=*/false) == Error::NotOpen);
+
+        for(int i = 0; i < 200 && closedCount.load() == 0; i++) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        CHECK(closedCount.load() == 1);
+        delete io;
+}
+
+TEST_CASE("MediaIO_Close_ReopenAfterAsyncStartsClean") {
+        // Reopening on the same instance after an async close must
+        // begin with an empty read queue — any orphaned synthetic
+        // EOS from the previous session must be cleared by open().
+        MediaIO::Config cfg;
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::VideoFormat, VideoFormat(Size2Du32(16, 16), FrameRate(FrameRate::FPS_24)));
+        cfg.set(MediaConfig::VideoEnabled, true);
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Output).isOk());
+
+        std::atomic<int> closedCount{0};
+        io->closedSignal.connect([&](Error) { closedCount.fetch_add(1); });
+        CHECK(io->close(false).isOk());
+        for(int i = 0; i < 200 && closedCount.load() == 0; i++) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        REQUIRE(closedCount.load() == 1);
+
+        // Reopen without draining the EOS from the queue.  open()
+        // must clear it so the first read returns a real frame.
+        REQUIRE(io->open(MediaIO::Output).isOk());
+        Frame::Ptr f;
+        Error e = io->readFrame(f);
+        CHECK(e.isOk());
+        CHECK(f.isValid());
+
+        io->close();
+        delete io;
+}
+
+// ============================================================================
 // Post-close behavior
 // ============================================================================
 

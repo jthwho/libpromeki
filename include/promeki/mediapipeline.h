@@ -18,6 +18,7 @@
 #include <promeki/mediapipelinestats.h>
 #include <promeki/namespace.h>
 #include <promeki/objectbase.h>
+#include <promeki/set.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
 
@@ -160,10 +161,46 @@ class MediaPipeline : public ObjectBase {
                 /**
                  * @brief Closes every stage and releases the MediaIO instances.
                  *
-                 * Safe to call in any state; subsequent @ref build calls
-                 * recreate the stages.
+                 * Uses a graceful cascade: the true source stages (no
+                 * upstream in the pipeline) are closed first via
+                 * @ref MediaIO::close with @c block=false.  As each
+                 * source's synthetic EOS reaches @ref drainSource and
+                 * latches @c upstreamDone, every direct downstream
+                 * consumer of that source is closed in turn — so
+                 * intermediate stages only see close() after all their
+                 * input frames have been written to them.  The pipeline
+                 * emits @ref closedSignal (and the repurposed
+                 * @ref finishedSignal) once every stage has emitted its
+                 * own @ref MediaIO::closedSignal.
+                 *
+                 * Safe to call in any state:
+                 * - @c Empty / @c Closed: no-op.
+                 * - @c Built: stages are destroyed without opening.
+                 * - @c Open / @c Stopped: stages are closed in parallel
+                 *   (no drain to propagate through).
+                 * - @c Running: full cascade through the DAG.
+                 *
+                 * @param block When @c true (default), blocks until the
+                 *              cascade has completed.  When @c false,
+                 *              returns immediately and the caller learns
+                 *              completion through @ref closedSignal.
+                 * @return @c Error::Ok on success or @c Error::Ok after
+                 *         successful async submit.  Errors reported by
+                 *         individual stages are aggregated into the
+                 *         @ref closedSignal payload rather than the
+                 *         return value; the return value only reflects
+                 *         up-front failures such as the pipeline already
+                 *         closing.
                  */
-                Error close();
+                Error close(bool block = true);
+
+                /**
+                 * @brief Returns true while an async close is in flight.
+                 *
+                 * Set by @ref close(bool) on entry and cleared when
+                 * every stage has emitted @ref MediaIO::closedSignal.
+                 */
+                bool isClosing() const { return _closing; }
 
                 /** @brief Returns the current lifecycle state. */
                 State state() const { return _state; }
@@ -229,13 +266,35 @@ class MediaPipeline : public ObjectBase {
                 PROMEKI_SIGNAL(stageClosed,  String);
 
                 /**
-                 * @brief Emitted once the pipeline drains to completion.
+                 * @brief Emitted once the pipeline has finished draining
+                 *        AND every stage has fully closed.
                  *
-                 * @p clean is @c true for natural EOF / stop-on-complete,
-                 * @c false if the pipeline tore down because of an error.
+                 * Fires alongside @ref closedSignal at the end of the
+                 * cascade (natural EOF or explicit @ref close).  @p clean
+                 * is @c true for natural EOF with no errors, @c false if
+                 * an error interrupted the flow.  Sinks have flushed
+                 * their in-flight writes by this point — consumers that
+                 * previously relied on @c finishedSignal firing as soon
+                 * as sources hit EOF now see it after sink drain too.
                  * @signal
                  */
                 PROMEKI_SIGNAL(finished, bool);
+
+                /**
+                 * @brief Emitted once every stage's @ref MediaIO::closedSignal
+                 *        has fired and the pipeline has transitioned to
+                 *        @ref State::Closed.
+                 *
+                 * Fires for every completed close path — explicit
+                 * @ref close, natural EOF auto-cascade, and
+                 * error-triggered teardown — so consumers have a
+                 * single completion signal to wait on regardless of
+                 * what drove the cascade.  The payload is the first
+                 * non-Ok per-stage close error, or @ref Error::Ok
+                 * when every stage closed cleanly.
+                 * @signal
+                 */
+                PROMEKI_SIGNAL(closed, Error);
 
         private:
                 // One record per outgoing route.  Back-pressure is
@@ -267,8 +326,42 @@ class MediaPipeline : public ObjectBase {
 
                 void drainSource(const String &srcName);
                 void onWriteError(const String &stageName, Error err);
-                void checkDrained();
-                void finish(bool clean);
+
+                /**
+                 * @brief Common entry point for every close trigger
+                 *        (explicit @ref close, natural EOF, error).
+                 *
+                 * Idempotent: the first call latches @c _closing and
+                 * arms the cascade; subsequent calls only downgrade
+                 * the @c clean flag if @p clean is @c false.  Callers
+                 * waiting for completion watch @ref state for
+                 * @ref State::Closed.
+                 *
+                 * @param clean Seeds the @c clean flag that eventually
+                 *              feeds @ref finishedSignal — caller sets
+                 *              @c false when triggering from an error.
+                 */
+                void initiateClose(bool clean);
+
+                /**
+                 * @brief Called on every stage's @ref MediaIO::closedSignal.
+                 *
+                 * Removes the stage from the outstanding set, captures
+                 * the first non-Ok close error, and fires the pipeline's
+                 * finish + closed signals when the set empties.
+                 */
+                void onStageClosed(const String &stageName, Error err);
+
+                /**
+                 * @brief Finalizes the pipeline close after every stage
+                 *        has reported closed.
+                 *
+                 * Emits @ref finishedSignal and @ref closedSignal,
+                 * releases the @ref MediaIO instances, transitions to
+                 * @ref State::Closed, and fulfills any outstanding
+                 * close-future.
+                 */
+                void finalizeClose();
 
                 MediaPipelineConfig                   _config;
                 State                                 _state    = State::Empty;
@@ -276,8 +369,17 @@ class MediaPipeline : public ObjectBase {
                 promeki::Map<String, MediaIO *>       _injected;
                 promeki::Map<String, SourceState>     _sources;
                 promeki::List<String>                 _topoOrder;
-                bool                                  _finished = false;
+
+                // Close-cascade bookkeeping.  Latched by
+                // @ref initiateClose and unwound in
+                // @ref finalizeClose.  @c _cleanFinish is the running
+                // "no errors observed" bit that eventually feeds
+                // @ref finishedSignal; drops to false on any
+                // operational or close-time error.
+                bool                                  _closing = false;
                 bool                                  _cleanFinish = false;
+                promeki::Set<String>                  _stagesAwaitingClosed;
+                Error                                 _closeError = Error::Ok;
 
                 // Pipeline-layer telemetry counters surfaced via
                 // PipelineStats on every @ref stats() call.  Atomic

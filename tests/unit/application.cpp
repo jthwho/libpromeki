@@ -113,3 +113,66 @@ TEST_CASE("Application: exitCode default is zero") {
         CHECK(Application::exitCode() == 0);
         CHECK_FALSE(Application::shouldQuit());
 }
+
+TEST_CASE("Application: quit-request handler intercepts and suppresses") {
+        char arg0[] = "test";
+        char *argv[] = { arg0 };
+        Application app(1, argv);
+
+        int observedCode = -1;
+        Application::setQuitRequestHandler([&observedCode](int code) -> bool {
+                observedCode = code;
+                return true; // suppress default quit
+        });
+
+        Application::quit(17);
+        CHECK(observedCode == 17);
+        // Handler returned true — shouldQuit must NOT have been set,
+        // and exitCode must NOT have been overwritten.
+        CHECK_FALSE(Application::shouldQuit());
+        CHECK(Application::exitCode() == 0);
+
+        Application::setQuitRequestHandler(nullptr);
+}
+
+TEST_CASE("Application: quit-request handler falls through on false") {
+        char arg0[] = "test";
+        char *argv[] = { arg0 };
+        Application app(1, argv);
+
+        int observedCode = -1;
+        Application::setQuitRequestHandler([&observedCode](int code) -> bool {
+                observedCode = code;
+                return false; // let default quit run
+        });
+
+        Application::quit(9);
+        CHECK(observedCode == 9);
+        CHECK(Application::shouldQuit());
+        CHECK(Application::exitCode() == 9);
+
+        Application::setQuitRequestHandler(nullptr);
+}
+
+TEST_CASE("Application: quit-request handler cleared with nullptr") {
+        char arg0[] = "test";
+        char *argv[] = { arg0 };
+        Application app(1, argv);
+
+        int callCount = 0;
+        Application::setQuitRequestHandler([&callCount](int) -> bool {
+                ++callCount;
+                return true;
+        });
+        Application::quit(1);
+        CHECK(callCount == 1);
+        CHECK_FALSE(Application::shouldQuit());
+
+        // Clear and try again — handler should not run, default path
+        // engages.
+        Application::setQuitRequestHandler(nullptr);
+        Application::quit(2);
+        CHECK(callCount == 1); // unchanged
+        CHECK(Application::shouldQuit());
+        CHECK(Application::exitCode() == 2);
+}

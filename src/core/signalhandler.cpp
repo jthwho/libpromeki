@@ -68,14 +68,12 @@ void deliverQuit(int signo) {
         promekiInfo("SignalHandler: received signal %d, requesting quit (code %d)",
                     signo, code);
 
-        // 1. Tell any pump loop that polls Application::shouldQuit().
+        // Application::quit runs any installed QuitRequestHandler,
+        // sets the shouldQuit flag, and wakes the main EventLoop.
+        // A handler that defers quitting (e.g. kicking off an async
+        // pipeline close) intercepts the request and leaves the
+        // exec() loop running so the cascade can complete.
         Application::quit(code);
-
-        // 2. Wake any thread blocked in EventLoop::exec() on the main
-        //    thread's event loop.  Safe to call from any thread —
-        //    EventLoop::quit() pushes onto its lock-protected queue.
-        EventLoop *mainLoop = Application::mainEventLoop();
-        if(mainLoop != nullptr) mainLoop->quit(code);
 }
 
 #if defined(PROMEKI_PLATFORM_POSIX)

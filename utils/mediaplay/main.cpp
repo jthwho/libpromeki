@@ -442,9 +442,45 @@ int main(int argc, char **argv) {
                         fprintf(stderr, "Pipeline error at '%s': %s\n",
                                 stageName.cstr(), err.desc().cstr());
                 }, &pipeline);
+        // finishedSignal now fires at the END of the close cascade
+        // (alongside closedSignal), so just use it for a diagnostic
+        // line when the run wasn't clean — the actual quit happens
+        // from closedSignal below.
         pipeline.finishedSignal.connect([](bool clean) {
-                Application::quit(clean ? 0 : 1);
+                if(!clean) {
+                        fprintf(stderr, "Pipeline did not finish cleanly.\n");
+                }
         }, &pipeline);
+        // Cascade finished — drive the actual EventLoop quit now that
+        // every stage has drained and released its resources.
+        pipeline.closedSignal.connect([](Error err) {
+                Application::quit(err.isOk() ? 0 : 1);
+        }, &pipeline);
+
+        // Intercept Ctrl-C / signal-driven quit so the pipeline has a
+        // chance to drain and close gracefully before the EventLoop
+        // tears down.  The handler is invoked by
+        // @ref Application::quit (from the signal-watcher thread on
+        // POSIX); post the actual close onto the main EventLoop so
+        // pipeline state is only mutated on its owning thread.
+        EventLoop *mainEL = Application::mainEventLoop();
+        Application::setQuitRequestHandler([&pipeline, mainEL](int /*code*/) -> bool {
+                if(pipeline.state() == MediaPipeline::State::Closed
+                   || pipeline.isClosing()) {
+                        // Pipeline already closed or closing — let the
+                        // default quit path run so the EventLoop exits.
+                        return false;
+                }
+                // Post the close onto the main EventLoop so pipeline
+                // state is only mutated on its owning thread (the
+                // handler itself runs on the signal-watcher thread).
+                // close(false) is idempotent on re-entry, so the
+                // posted callable doesn't need to re-check state.
+                auto kick = [&pipeline]() { (void)pipeline.close(false); };
+                if(mainEL != nullptr) mainEL->postCallable(std::move(kick));
+                else kick();
+                return true;
+        });
 
         SDLApplication *sdlApp = SDLApplication::instance();
         if(ui.window != nullptr) {
@@ -530,6 +566,13 @@ int main(int argc, char **argv) {
         }
 
         int rc = app.exec();
+
+        // Drop the quit-request handler now that exec() has returned —
+        // it captures @p pipeline by reference and the pipeline goes
+        // out of scope at the end of main.  Any further Application::quit
+        // calls (e.g. from a late cleanup path) fall through to the
+        // default behaviour.
+        Application::setQuitRequestHandler(nullptr);
 
         // Stop the stats thread first so it can't race the final
         // emitStats() call below — once we return from wait() the

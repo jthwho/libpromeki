@@ -761,6 +761,15 @@ Error MediaIO::open(Mode mode) {
         if(mode == NotOpen) return Error::InvalidArgument;
         if(_task == nullptr) return Error::Invalid;
 
+        // Defensive: drain any orphaned read results (e.g. an
+        // unconsumed trailing EOS left behind when an async close
+        // completed without the consumer draining).  Guarantees the
+        // new session starts with an empty queue.
+        {
+                MediaIOCommand::Ptr drop;
+                while(_readResultQueue.popOrFail(drop)) {}
+        }
+
         // Resolve the Name / Uuid / EnableBenchmark defaults before
         // building the open command so the backend sees the final
         // values via _config and the stamp sites see meaningful IDs on
@@ -821,23 +830,7 @@ Error MediaIO::open(Mode mode) {
         return err;
 }
 
-Error MediaIO::close() {
-        if(!isOpen()) return Error::NotOpen;
-
-        auto *cmdClose = new MediaIOCommandClose();
-        MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdClose);
-        Error err = submitAndWait(cmd);
-
-        // Wait for any in-flight strand tasks (e.g. trailing reads) to drain
-        // before resetting state.
-        _strand.waitForIdle();
-
-        // Drain any unconsumed read results
-        _readResultQueue.clear();
-        _pendingReadCount.setValue(0);
-        _pendingWriteCount.setValue(0);
-
-        // Reset cache regardless of close result
+void MediaIO::resetClosedState() {
         _mode = NotOpen;
         _mediaDesc = MediaDesc();
         _audioDesc = AudioDesc();
@@ -851,13 +844,67 @@ Error MediaIO::close() {
         _prefetchDepthExplicit = false;
         _writeDepth = 4;
         _atEnd = false;
-
+        _pendingReadCount.setValue(0);
+        _pendingWriteCount.setValue(0);
         // Clear the benchmark-enable latch so a reopen with a fresh
         // config can toggle it back on without carrying state from the
         // previous run.  The stamp IDs are re-registered from the
         // resolved name in the next open() anyway.
         _benchmarkEnabled = false;
-        return err;
+        _closing = false;
+}
+
+Error MediaIO::close(bool block) {
+        if(!isOpen() || _closing) return Error::NotOpen;
+
+        // Latch closing state.  This gates readFrame() from submitting
+        // new prefetches and writeFrame() from accepting new writes,
+        // while still letting readFrame() drain any results already
+        // in flight plus the trailing EOS pushed by the finalize task.
+        _closing = true;
+
+        // Graceful close: do NOT cancel pending strand work.  Any
+        // reads/writes submitted before close() keep running to
+        // completion — blocking callers unblock with their real
+        // result, prefetched reads land in _readResultQueue as
+        // usual.  The finalize task below is pushed to the back of
+        // the strand queue so it only runs after every prior task
+        // has completed.
+        Future<Error> closeFuture = _strand.submit([this]() -> Error {
+                auto *cmdClose = new MediaIOCommandClose();
+                MediaIOCommand::Ptr closeCmd =
+                        MediaIOCommand::Ptr::takeOwnership(cmdClose);
+                Error err = dispatchCommand(closeCmd);
+
+                // Push a single synthetic EOS read result so
+                // signal-driven consumers receive exactly one trailing
+                // frameReady whose readFrame() pop returns
+                // Error::EndOfFile.  It sits at the tail of the queue
+                // behind any real read results produced by prefetches
+                // that ran before close, so the consumer sees them
+                // all first and EOS last.
+                auto *cmdEos = new MediaIOCommandRead();
+                cmdEos->result = Error::EndOfFile;
+                _readResultQueue.push(
+                        MediaIOCommand::Ptr::takeOwnership(cmdEos));
+                frameReadySignal.emit();
+
+                resetClosedState();
+                closedSignal.emit(err);
+                return err;
+        });
+
+        if(!block) return Error::Ok;
+        auto r = closeFuture.result();
+        // Sync close: drain any results that finalize pushed (the
+        // real prior reads plus the trailing EOS) so that, on return,
+        // @ref readyReads reports zero — matching the pre-refactor
+        // contract.  Signal-driven async consumers don't need this;
+        // they walk the queue themselves on @c frameReady.
+        MediaIOCommand::Ptr drop;
+        while(_readResultQueue.popOrFail(drop)) {}
+        if(r.second().isError()) return r.second();
+        return r.first();
 }
 
 // ============================================================================
@@ -929,22 +976,34 @@ int MediaIO::writesAccepted() const {
 }
 
 Error MediaIO::readFrame(Frame::Ptr &frame, bool block) {
-        if(!isOpen()) return Error::NotOpen;
-        // readFrame() pulls a frame out of the MediaIO — the caller is
-        // consuming the backend's output, so the backend must have
-        // been opened in Output (source) or InputAndOutput mode.
-        if(_mode != Output && _mode != InputAndOutput) return Error::NotSupported;
-
-        // Once EOF has been hit, every subsequent read returns EOF
-        // without going down to the backend.  Cleared on seek/close.
-        if(_atEnd) return Error::EndOfFile;
-
+        // Drain any already-ready result first — including the
+        // trailing EOS pushed by the close finalize task.  Doing this
+        // before the open-state checks lets cross-thread consumers
+        // observe the synthetic EOS even after the strand has run
+        // @ref resetClosedState (which flips @c _mode to NotOpen
+        // before the signal slot runs on the consumer's event loop).
+        // Stale entries from a prior session cannot leak here because
+        // @ref open clears the queue.
         MediaIOCommand::Ptr resultCmd;
         bool gotResult = _readResultQueue.popOrFail(resultCmd);
         if(!gotResult) {
+                if(!isOpen()) return Error::NotOpen;
+                // readFrame() pulls a frame out of the MediaIO — the
+                // caller is consuming the backend's output, so the
+                // backend must have been opened in Output (source) or
+                // InputAndOutput mode.
+                if(_mode != Output && _mode != InputAndOutput) return Error::NotSupported;
+                // Once EOF has been hit, every subsequent read returns
+                // EOF without going down to the backend.  Cleared on
+                // seek/close.
+                if(_atEnd) return Error::EndOfFile;
                 // Top up the in-flight read queue to the desired depth.
-                while(_pendingReadCount.value() < _prefetchDepth) {
-                        submitReadCommand();
+                // During an async close we don't submit new prefetches —
+                // the finalize step will push a synthetic EOS instead.
+                if(!_closing) {
+                        while(_pendingReadCount.value() < _prefetchDepth) {
+                                submitReadCommand();
+                        }
                 }
                 if(!block) return Error::TryAgain;
                 // Block on the result queue until something arrives.
@@ -953,9 +1012,16 @@ Error MediaIO::readFrame(Frame::Ptr &frame, bool block) {
                 resultCmd = popped;
         } else {
                 // We just consumed a prefetched result; top up again so
-                // the next call has work waiting.
-                while(_pendingReadCount.value() < _prefetchDepth) {
-                        submitReadCommand();
+                // the next call has work waiting.  Skip during async
+                // close (no new prefetches) or after the backend is
+                // gone (@c _mode flipped back to NotOpen by
+                // @ref resetClosedState).  The mode check covers the
+                // not-open case without a separate @ref isOpen call.
+                if(!_closing && !_atEnd &&
+                   (_mode == Output || _mode == InputAndOutput)) {
+                        while(_pendingReadCount.value() < _prefetchDepth) {
+                                submitReadCommand();
+                        }
                 }
         }
 
@@ -1058,7 +1124,7 @@ size_t MediaIO::cancelPending() {
 }
 
 Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
-        if(!isOpen()) return Error::NotOpen;
+        if(!isOpen() || _closing) return Error::NotOpen;
         // writeFrame() pushes a frame into the MediaIO — the caller is
         // feeding the backend, so the backend must have been opened in
         // Input (sink) or InputAndOutput mode.
@@ -1223,7 +1289,7 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
 }
 
 Error MediaIO::sendParams(const String &name, const MediaIOParams &params, MediaIOParams *result) {
-        if(!isOpen()) return Error::NotOpen;
+        if(!isOpen() || _closing) return Error::NotOpen;
 
         // Base-class Benchmark commands short-circuit before reaching
         // the strand so they don't queue behind real work — callers
@@ -1255,7 +1321,7 @@ Error MediaIO::sendParams(const String &name, const MediaIOParams &params, Media
 }
 
 MediaIOStats MediaIO::stats() {
-        if(!isOpen()) return MediaIOStats();
+        if(!isOpen() || _closing) return MediaIOStats();
         auto *cmdStats = new MediaIOCommandStats();
         MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdStats);
         // Urgent: telemetry pollers (UI overlays, live monitors) call
@@ -1296,7 +1362,7 @@ void MediaIO::setStep(int val) {
 }
 
 Error MediaIO::seekToFrame(int64_t frameNumber, SeekMode mode) {
-        if(!isOpen()) return Error::NotOpen;
+        if(!isOpen() || _closing) return Error::NotOpen;
         if(!_canSeek) return Error::IllegalSeek;
 
         // Cancel any prefetched reads from the old position before

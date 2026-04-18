@@ -43,6 +43,7 @@ Application::~Application() {
         data().arguments.clear();
         data().exitCode = 0;
         data().shouldQuit = false;
+        data().quitHandler = nullptr;
         return;
 }
 
@@ -130,8 +131,25 @@ void Application::writeTrace(const char *reason) {
 }
 
 void Application::quit(int exitCode) {
+        // If an intercept handler is installed, give it first crack —
+        // it may swallow the request (e.g. to trigger an async
+        // shutdown that calls quit() again when it's done).
+        QuitRequestHandler handler = data().quitHandler;
+        if(handler) {
+                if(handler(exitCode)) return;
+        }
         data().exitCode = exitCode;
         data().shouldQuit = true;
+        // Wake any thread blocked in EventLoop::exec() on the main
+        // thread's event loop so it unwinds promptly.  Safe from any
+        // thread — EventLoop::quit() is mutex-protected.
+        EventLoop *mainLoop = mainEventLoop();
+        if(mainLoop != nullptr) mainLoop->quit(exitCode);
+        return;
+}
+
+void Application::setQuitRequestHandler(QuitRequestHandler handler) {
+        data().quitHandler = std::move(handler);
         return;
 }
 

@@ -1129,11 +1129,49 @@ class MediaIO : public ObjectBase {
                 /**
                  * @brief Closes the media resource.
                  *
-                 * Enqueues a CmdClose and blocks until the worker exits.
+                 * Submits a CmdClose to the strand, then runs a finalize
+                 * step that drops any stale prefetched results, pushes a
+                 * single synthetic EOS read result onto the ready queue
+                 * (so signal-driven consumers receive exactly one trailing
+                 * @c frameReady carrying @c Error::EndOfFile), resets the
+                 * cached descriptor state, and emits @c closed with the
+                 * close result.
                  *
-                 * @return Error::Ok on success, or an error.
+                 * Behaves in two modes:
+                 *
+                 * - **Blocking (@p block = true, default)**: enqueues the
+                 *   close + finalize task and waits for it to complete
+                 *   before returning.  On return the MediaIO is fully
+                 *   closed and all state reset — identical semantics to
+                 *   the pre-async implementation.
+                 *
+                 * - **Non-blocking (@p block = false)**: enqueues the
+                 *   close + finalize task and returns @ref Error::Ok
+                 *   immediately.  The actual close completion arrives
+                 *   via the @c closed signal.  While the close is in
+                 *   flight @ref isClosing returns true and @ref readFrame
+                 *   / @ref writeFrame stop submitting new work (reads
+                 *   still drain any queued results so the consumer can
+                 *   observe the trailing EOS).  Callers must not touch
+                 *   the cached descriptor accessors (@ref mediaDesc,
+                 *   @ref frameRate, etc.) between this call returning
+                 *   and @ref closedSignal firing.
+                 *
+                 * @param block If true (default), blocks until close completes.
+                 * @return @ref Error::Ok on success (or successful submit
+                 *         in non-blocking mode), @ref Error::NotOpen if
+                 *         the MediaIO isn't open or is already closing.
                  */
-                Error close();
+                Error close(bool block = true);
+
+                /**
+                 * @brief Returns true while an async close is in flight.
+                 *
+                 * Set by @ref close(bool) when @p block is false, cleared
+                 * by the finalize step just before @ref closedSignal
+                 * fires.  Always false outside of an async close window.
+                 */
+                bool isClosing() const { return _closing; }
 
                 // ---- Cached descriptor accessors ----
 
@@ -1474,12 +1512,36 @@ class MediaIO : public ObjectBase {
                  */
                 PROMEKI_SIGNAL(descriptorChanged);
 
+                /**
+                 * @brief Emitted when a @ref close request completes.
+                 * @signal
+                 *
+                 * Fires after the backend's Close command has run, the
+                 * synthetic trailing EOS has been pushed to the read
+                 * queue, and the cached state has been reset.  Carries
+                 * the close completion @ref Error.  Fires for both
+                 * blocking and non-blocking closes — blocking callers
+                 * simply see it before @ref close returns.
+                 */
+                PROMEKI_SIGNAL(closed, Error);
+
         private:
                 friend class MediaIOTask;
 
                 Error dispatchCommand(MediaIOCommand::Ptr cmd);
                 Error submitAndWait(MediaIOCommand::Ptr cmd, bool urgent = false);
                 void  submitReadCommand();
+                /**
+                 * @brief Resets cached descriptor state to the not-open defaults.
+                 *
+                 * Called from the close finalize task on the strand
+                 * thread.  Also clears the @c _closing flag and the
+                 * pending read/write counters.  Not thread-safe against
+                 * concurrent user-thread reads of the cached accessors —
+                 * callers of @ref close with @p block = false must wait
+                 * for @ref closedSignal before touching those accessors.
+                 */
+                void  resetClosedState();
                 void  resolveIdentifiersAndBenchmark();
                 void  ensureFrameBenchmark(Frame::Ptr &frame);
                 void  submitBenchmarkIfSink(const Frame::Ptr &frame);
@@ -1528,6 +1590,7 @@ class MediaIO : public ObjectBase {
                 bool                        _prefetchDepthExplicit = false;
                 int                         _writeDepth = 4;
                 bool                        _atEnd = false;
+                bool                        _closing = false;
 
                 // Per-instance identifiers.  _localId is assigned from a
                 // process-wide atomic counter in the constructor and is

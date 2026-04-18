@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <atomic>
 #include <chrono>
 #include <thread>
 
@@ -277,4 +278,204 @@ TEST_CASE("MediaPipeline_InjectStageSkipsFactory") {
         // deleting it here after close confirms it's still alive.
         CHECK(p.close().isOk());
         delete external;
+}
+
+// ============================================================================
+// Close cascade (sync + async)
+// ============================================================================
+
+namespace {
+
+// Pumps the EventLoop until @p pred returns true, or @p timeoutMs elapses.
+// Returns true if the predicate fired, false on timeout.
+template <typename Pred>
+bool pumpUntil(EventLoop &loop, Pred pred, int64_t timeoutMs = 2000) {
+        ElapsedTimer t;
+        t.start();
+        while(t.elapsed() < timeoutMs) {
+                loop.processEvents();
+                if(pred()) return true;
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        return false;
+}
+
+} // namespace
+
+TEST_CASE("MediaPipeline_CloseAsyncEmitsClosedSignal") {
+        EventLoop loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makeTpgToConverter()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+
+        std::atomic<int> closedCount{0};
+        std::atomic<int> finishedCount{0};
+        p.closedSignal.connect([&closedCount](Error) {
+                closedCount.fetch_add(1);
+        }, &p);
+        p.finishedSignal.connect([&finishedCount](bool) {
+                finishedCount.fetch_add(1);
+        }, &p);
+
+        CHECK(p.close(false).isOk());
+        CHECK(p.isClosing());
+
+        REQUIRE(pumpUntil(loop, [&]() { return closedCount.load() > 0; }));
+        CHECK(closedCount.load() == 1);
+        CHECK(finishedCount.load() == 1);
+        CHECK(p.state() == MediaPipeline::State::Closed);
+        CHECK_FALSE(p.isClosing());
+}
+
+TEST_CASE("MediaPipeline_CloseSyncPumpsEventsFromOwnEventLoop") {
+        // When called from the pipeline's own EventLoop, close(true)
+        // must pump events while waiting for the future so the
+        // cross-thread closedSignal dispatches actually run.
+        EventLoop loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makeTpgToConverter()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+
+        std::atomic<int> closedCount{0};
+        p.closedSignal.connect([&closedCount](Error) {
+                closedCount.fetch_add(1);
+        }, &p);
+
+        CHECK(p.close(true).isOk());
+        // close(true) can't return without finalizeClose having run;
+        // the signal must have been delivered synchronously during
+        // the pump loop.
+        CHECK(closedCount.load() == 1);
+        CHECK(p.state() == MediaPipeline::State::Closed);
+}
+
+TEST_CASE("MediaPipeline_CloseFinishedFiresAtEndOfCascade") {
+        // Before the refactor, finishedSignal fired when sources hit
+        // EOF but sinks might still be writing.  With the cascade,
+        // finishedSignal only fires alongside closedSignal after
+        // every stage has emitted its own closedSignal.
+        EventLoop loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makeTpgToConverter()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+
+        std::atomic<int> stageClosedCount{0};
+        std::atomic<int> finishedCount{0};
+        std::atomic<int> closedCount{0};
+        p.stageClosedSignal.connect([&stageClosedCount](const String &) {
+                stageClosedCount.fetch_add(1);
+        }, &p);
+        p.finishedSignal.connect([&finishedCount, &stageClosedCount](bool) {
+                // Every stage must be closed by the time finishedSignal fires.
+                CHECK(stageClosedCount.load() >= 2);
+                finishedCount.fetch_add(1);
+        }, &p);
+        p.closedSignal.connect([&closedCount, &stageClosedCount](Error) {
+                CHECK(stageClosedCount.load() >= 2);
+                closedCount.fetch_add(1);
+        }, &p);
+
+        CHECK(p.close(false).isOk());
+        REQUIRE(pumpUntil(loop, [&]() { return closedCount.load() > 0; }));
+        CHECK(stageClosedCount.load() == 2); // src + csc
+        CHECK(finishedCount.load() == 1);
+        CHECK(closedCount.load() == 1);
+}
+
+TEST_CASE("MediaPipeline_DoubleCloseRejected") {
+        EventLoop loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makeTpgToConverter()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+
+        std::atomic<int> closedCount{0};
+        p.closedSignal.connect([&closedCount](Error) {
+                closedCount.fetch_add(1);
+        }, &p);
+
+        CHECK(p.close(false).isOk());
+        CHECK(p.isClosing());
+        // While the first close is in flight, a second async close
+        // should be a no-op (caller sees Ok, the existing cascade
+        // just carries through).  We can't check the return value
+        // directly without leaking an implementation detail; just
+        // verify it doesn't crash and exactly one closed signal fires.
+        CHECK(p.close(false).isOk());
+
+        REQUIRE(pumpUntil(loop, [&]() { return closedCount.load() > 0; }));
+        CHECK(closedCount.load() == 1);
+}
+
+TEST_CASE("MediaPipeline_CloseOnBuiltStateCascadesWithoutDrain") {
+        // Built but not opened: every stage is not-open, so initiateClose
+        // must finalize synchronously via the alreadyClosed path.
+        EventLoop loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makeTpgToConverter()).isOk());
+
+        std::atomic<int> closedCount{0};
+        p.closedSignal.connect([&closedCount](Error) {
+                closedCount.fetch_add(1);
+        }, &p);
+
+        CHECK(p.close(false).isOk());
+        // With no event loop involvement needed (signals fire
+        // synchronously on the strand-less path), finalize should
+        // have run before close(false) returned.
+        CHECK(closedCount.load() == 1);
+        CHECK(p.state() == MediaPipeline::State::Closed);
+}
+
+TEST_CASE("MediaPipeline_CloseFromRunningEmitsNoSpuriousError") {
+        // After the cascade triggers close on the source, its strand
+        // emits one last frameReady (the one paired with the synthetic
+        // EOS push).  Without the drainSource guard on upstreamDone, a
+        // second drainSource invocation for that kick would observe a
+        // stage whose _mode had already reset to NotOpen and surface
+        // the NotOpen readFrame return as a pipelineError.  Verifies
+        // that the full async close cycle emits zero pipeline errors.
+        EventLoop loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makeTpgToConverter()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+
+        std::atomic<int> errorCount{0};
+        std::atomic<int> closedCount{0};
+        std::atomic<bool> cleanFinish{false};
+        p.pipelineErrorSignal.connect([&errorCount](const String &, Error) {
+                errorCount.fetch_add(1);
+        }, &p);
+        p.finishedSignal.connect([&cleanFinish](bool clean) {
+                cleanFinish.store(clean);
+        }, &p);
+        p.closedSignal.connect([&closedCount](Error) {
+                closedCount.fetch_add(1);
+        }, &p);
+
+        CHECK(p.close(false).isOk());
+        REQUIRE(pumpUntil(loop, [&]() { return closedCount.load() > 0; }));
+        CHECK(errorCount.load() == 0);
+        CHECK(cleanFinish.load() == true);
+}
+
+TEST_CASE("MediaPipeline_CloseOnClosedStateIsNoOp") {
+        EventLoop loop;
+        MediaPipeline p;
+        REQUIRE(p.build(makeTpgToConverter()).isOk());
+        CHECK(p.close().isOk());
+        CHECK(p.state() == MediaPipeline::State::Closed);
+
+        // Second close on an already-Closed pipeline: does nothing,
+        // emits no signals, returns Ok.
+        std::atomic<int> closedCount{0};
+        p.closedSignal.connect([&closedCount](Error) {
+                closedCount.fetch_add(1);
+        }, &p);
+        CHECK(p.close().isOk());
+        CHECK(closedCount.load() == 0);
 }

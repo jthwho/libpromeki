@@ -219,6 +219,35 @@
  *
  * Non-blocking writes report errors only via the @c writeError signal.
  *
+ * @subsection mediaio_async_close Async close
+ *
+ * @c close(bool) defaults to blocking.  Pass @c false to return
+ * immediately and learn completion via the @c closed signal:
+ *
+ * @code
+ * io->closedSignal.connect([](Error err) {
+ *         if(err.isError()) { ... }
+ * }, thisObject);
+ * io->close(false);   // returns Ok immediately
+ * // ... pipeline keeps running; eventually closedSignal fires.
+ * @endcode
+ *
+ * Behaviour during an async close:
+ *
+ * - Any reads/writes submitted before the @c close call run to
+ *   completion on the strand — blocking callers still unblock
+ *   with the real result, prefetched reads land in the ready
+ *   queue, and outgoing writes complete normally.
+ * - New @c readFrame / @c writeFrame / @c seekToFrame /
+ *   @c sendParams calls return @c Error::NotOpen (the
+ *   @c isClosing flag gates them).
+ * - Exactly one synthetic @c readFrame result with
+ *   @c Error::EndOfFile is appended to the ready queue after the
+ *   real trailing frames, so signal-driven consumers see one last
+ *   @c frameReady carrying EOS.  Cached descriptor accessors
+ *   (@c mediaDesc, @c frameRate, ...) must not be read between
+ *   the @c close call and the @c closed signal.
+ *
  * @subsection mediaio_seek Seeking
  *
  * @code

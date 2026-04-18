@@ -57,8 +57,27 @@
  *   synchronous kick.
  * - @ref MediaPipeline::stop cancels pending commands on every stage
  *   and disconnects the drain.
- * - @ref MediaPipeline::close closes each stage in topological order
- *   and releases the underlying @ref MediaIO objects.
+ * - @ref MediaPipeline::close runs a graceful cascade.  The true
+ *   source stages (no upstream in the DAG) are closed first with
+ *   @ref MediaIO::close(bool) set to non-blocking.  As each source's
+ *   synthetic EOS reaches the drain loop and latches @c upstreamDone,
+ *   every direct downstream consumer of that source is closed in turn
+ *   — so intermediate stages only see @c close() after all their
+ *   input frames have been written to them.  When every stage has
+ *   emitted its own @ref MediaIO::closedSignal the pipeline emits
+ *   @ref MediaPipeline::closedSignal and transitions to
+ *   @c State::Closed.  Natural EOF (all sources exhaust their
+ *   input) triggers the same cascade automatically, so consumers
+ *   have a single completion signal to wait on regardless of what
+ *   stopped the run.
+ *
+ * @ref MediaPipeline::close can be called blocking (waits until
+ * the cascade completes, pumping the owning @ref EventLoop when
+ * invoked from it) or non-blocking (returns immediately, learns
+ * completion via @c closedSignal).  @ref MediaPipeline::finishedSignal
+ * is repurposed to fire alongside @c closedSignal at the end of the
+ * cascade and carries a @c clean bool that summarises whether any
+ * operational or close-time error was observed.
  *
  * @section mediapipeline_json JSON schema
  *
@@ -216,9 +235,11 @@
  * pipeline.open();
  * pipeline.start();
  *
- * // Quit when the pipeline naturally drains.
- * pipeline.finishedSignal.connect(
- *     [](bool clean) { Application::quit(clean ? 0 : 1); }, &pipeline);
+ * // Quit once the graceful close cascade has run to completion.
+ * // Natural EOF auto-initiates the cascade; Ctrl-C can be wired to
+ * // pipeline.close(false) via Application::setQuitRequestHandler.
+ * pipeline.closedSignal.connect(
+ *     [](Error err) { Application::quit(err.isOk() ? 0 : 1); }, &pipeline);
  *
  * return app.exec();
  * @endcode

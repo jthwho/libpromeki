@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <functional>
+
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
@@ -267,9 +269,56 @@ class Application {
 
                 /**
                  * @brief Requests the application to quit.
-                 * @param exitCode The exit code (retrievable via exitCode()).
+                 *
+                 * If a @ref QuitRequestHandler has been installed via
+                 * @ref setQuitRequestHandler, it is invoked first.  When
+                 * the handler returns @c true, it has accepted
+                 * responsibility for eventually driving the actual quit
+                 * itself (typically after some async shutdown completes)
+                 * and this call neither sets @ref shouldQuit nor wakes
+                 * the main @ref EventLoop.  When the handler returns
+                 * @c false, or no handler is installed, the call
+                 * proceeds with the default quit behaviour: the
+                 * exit-code and @ref shouldQuit flag are set and the
+                 * main @ref EventLoop is poked so any blocked
+                 * @ref EventLoop::exec unwinds.
+                 *
+                 * @param exitCode The exit code (retrievable via @ref exitCode).
                  */
                 static void quit(int exitCode = 0);
+
+                /**
+                 * @brief Handler signature for @ref setQuitRequestHandler.
+                 *
+                 * Receives the requested exit code.  Return @c true to
+                 * intercept the quit (the handler will call
+                 * @ref quit again, or some equivalent, once async
+                 * shutdown completes) and @c false to fall through to
+                 * the default quit behaviour.
+                 */
+                using QuitRequestHandler = std::function<bool(int exitCode)>;
+
+                /**
+                 * @brief Installs a handler invoked on every @ref quit call.
+                 *
+                 * Use this to defer the actual event-loop teardown until
+                 * an async shutdown has completed — for example, running
+                 * @ref MediaPipeline::close with @c block=false and
+                 * re-invoking @ref quit from the pipeline's
+                 * @c closedSignal.  Pass an empty function to clear the
+                 * handler.
+                 *
+                 * Only one handler may be installed at a time; a second
+                 * call replaces the first.  The handler runs on the
+                 * calling thread of the @ref quit invocation (typically
+                 * the signal-delivery thread), so it must be
+                 * thread-safe — the canonical pattern is to post work
+                 * to the main @ref EventLoop from inside the handler
+                 * rather than doing it inline.
+                 *
+                 * @param handler The handler (or an empty function to clear).
+                 */
+                static void setQuitRequestHandler(QuitRequestHandler handler);
 
                 /**
                  * @brief Returns true if quit() has been called.
@@ -285,12 +334,13 @@ class Application {
 
         private:
                 struct Data {
-                        StringList      arguments;
-                        UUID            appUUID;
-                        String          appName;
-                        Thread          *mainThread = nullptr;
-                        int             exitCode = 0;
-                        bool            shouldQuit = false;
+                        StringList         arguments;
+                        UUID               appUUID;
+                        String             appName;
+                        Thread             *mainThread = nullptr;
+                        int                exitCode = 0;
+                        bool               shouldQuit = false;
+                        QuitRequestHandler quitHandler;
                 };
                 static Data &data();
 };

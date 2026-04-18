@@ -341,7 +341,6 @@ Error MediaPipeline::start() {
         }
 
         _state = State::Running;
-        _finished = false;
         _cleanFinish = false;
         _framesProduced.setValue(0);
         _writeRetries.setValue(0);
@@ -382,33 +381,148 @@ Error MediaPipeline::stop() {
         return Error::Ok;
 }
 
-Error MediaPipeline::close() {
+Error MediaPipeline::close(bool block) {
+        initiateClose(/*clean=*/true);
+        if(!block) return Error::Ok;
+
+        // Callers blocking on close() must not stall the cascade:
+        // MediaIO stages emit closedSignal from their strand threads
+        // and those signals are marshalled to this pipeline's owning
+        // EventLoop.  When the caller runs on that same EventLoop we
+        // have to pump events ourselves while we wait, otherwise the
+        // posted callables just sit there and the cascade never
+        // finishes.
+        EventLoop *currentEL = EventLoop::current();
+        EventLoop *ownerEL   = eventLoop();
+        while(_state != State::Closed) {
+                if(currentEL != nullptr && currentEL == ownerEL) {
+                        currentEL->processEvents(EventLoop::WaitForMore, 10);
+                } else {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                }
+        }
+        return _closeError;
+}
+
+void MediaPipeline::initiateClose(bool clean) {
+        // Nothing to do: no stages alive, no cascade needed.
         if(_state == State::Empty || _state == State::Closed) {
                 _state = State::Closed;
-                return Error::Ok;
-        }
-        if(_state == State::Running) {
-                (void)stop();
+                return;
         }
 
-        // Close in topological order so sources flush before their
-        // downstream sinks release resources they depend on.
+        // Already underway — just downgrade the clean flag on
+        // error-path re-entry so the eventual finishedSignal
+        // reflects the error that re-triggered us.
+        if(_closing) {
+                if(!clean) _cleanFinish = false;
+                return;
+        }
+
+        _closing = true;
+        _closeError = Error::Ok;
+        _cleanFinish = clean;
+
+        // Build the "stages to wait for" set now so every stage we're
+        // about to arm has already been registered.  We wire the
+        // closedSignal first, then kick off the close, to avoid a
+        // race where a very fast close emits before we connect.
+        _stagesAwaitingClosed.clear();
+        for(auto it = _stages.cbegin(); it != _stages.cend(); ++it) {
+                const String &stageName = it->first;
+                MediaIO *io = it->second;
+                if(io == nullptr) continue;
+                _stagesAwaitingClosed.insert(stageName);
+                io->closedSignal.connect(
+                        [this, stageName](Error err) {
+                                onStageClosed(stageName, err);
+                        }, this);
+        }
+
+        if(_stagesAwaitingClosed.isEmpty()) {
+                // Nothing to wait on — finalize synchronously.
+                finalizeClose();
+                return;
+        }
+
+        // Pick the trigger stages.  In Running state we only close the
+        // true sources (stages with no upstream in the DAG); cascade
+        // fires the rest as drainSource latches each upstreamDone.
+        // In Open / Stopped there's no drain to propagate through, so
+        // close every open stage directly in parallel.
+        const bool cascade = (_state == State::Running);
+
+        // Collect the set of stages that are downstream of some route —
+        // anything NOT in that set is a true source.
+        promeki::Set<String> hasUpstream;
+        const MediaPipelineConfig::RouteList &routes = _config.routes();
+        for(size_t i = 0; i < routes.size(); ++i) {
+                hasUpstream.insert(routes[i].to);
+        }
+
+        // Classification pass — snapshot the work into local lists so
+        // the mutation passes below can trigger a re-entrant
+        // @ref finalizeClose (via @ref onStageClosed) without
+        // invalidating the detection iterators.
+        promeki::List<String> triggers;
+        promeki::List<String> alreadyClosed;
         for(size_t i = 0; i < _topoOrder.size(); ++i) {
                 const String &name = _topoOrder[i];
-                auto it = _stages.find(name);
-                if(it == _stages.end() || it->second == nullptr) continue;
-                if(!it->second->isOpen()) continue;
-                Error err = it->second->close();
-                if(err.isError()) {
-                        promekiWarn("MediaPipeline::close: stage '%s' close failed: %s",
-                                    name.cstr(), err.desc().cstr());
+                auto sit = _stages.find(name);
+                if(sit == _stages.end() || sit->second == nullptr) continue;
+                if(!sit->second->isOpen()) {
+                        alreadyClosed.pushToBack(name);
+                        continue;
                 }
-                stageClosedSignal.emit(name);
+                if(!cascade || !hasUpstream.contains(name)) {
+                        triggers.pushToBack(name);
+                }
         }
 
-        destroyStages();
+        // Kick the live triggers first — they're the ones we genuinely
+        // want to stay in the waiting set until their closedSignal
+        // arrives.  If close(false) comes back with an error we treat
+        // the stage as already done so the cascade can still finish.
+        for(size_t i = 0; i < triggers.size(); ++i) {
+                auto it = _stages.find(triggers[i]);
+                if(it == _stages.end() || it->second == nullptr) continue;
+                Error err = it->second->close(false);
+                if(err.isError()) onStageClosed(triggers[i], err);
+        }
+
+        // Then drain the already-closed stages.  Doing this after
+        // the live triggers guarantees that if every stage was
+        // already closed going in, finalizeClose runs exactly once
+        // from the final onStageClosed call.
+        for(size_t i = 0; i < alreadyClosed.size(); ++i) {
+                onStageClosed(alreadyClosed[i], Error::Ok);
+        }
+}
+
+void MediaPipeline::onStageClosed(const String &stageName, Error err) {
+        if(err.isError() && _closeError.isOk()) _closeError = err;
+        _stagesAwaitingClosed.remove(stageName);
+        stageClosedSignal.emit(stageName);
+        if(_stagesAwaitingClosed.isEmpty() && _closing) {
+                finalizeClose();
+        }
+}
+
+void MediaPipeline::finalizeClose() {
+        // Drop to Closed and notify listeners before destroying stages
+        // so slots that probe the pipeline see the terminal state.
+        // Blocking callers in @ref close pump events (or poll) until
+        // they observe @ref State::Closed, so flipping it here unblocks
+        // them immediately.
         _state = State::Closed;
-        return Error::Ok;
+        bool clean = _cleanFinish && _closeError.isOk();
+        finishedSignal.emit(clean);
+        closedSignal.emit(_closeError);
+
+        destroyStages();
+
+        _closing = false;
+        _stagesAwaitingClosed.clear();
 }
 
 // ============================================================================
@@ -416,11 +530,23 @@ Error MediaPipeline::close() {
 // ============================================================================
 
 void MediaPipeline::drainSource(const String &srcName) {
+        // Allow drain to continue during an async close so the synthetic
+        // EOS pushed by each stage's finalize step can propagate through
+        // the graph.  Only stop hard after the pipeline has fully
+        // transitioned to Closed.
         if(_state != State::Running) return;
         auto it = _sources.find(srcName);
         if(it == _sources.end()) return;
         SourceState &ss = it->second;
         if(ss.from == nullptr) return;
+        // Once this source has latched EOF (natural or synthetic) and
+        // the cascade has fired, any further frameReady kicks are
+        // spurious — e.g., the finalize task emits frameReady after
+        // pushing the EOS, which the first drainSource call already
+        // consumed.  A second invocation would try @c readFrame on a
+        // stage whose @c _mode has flipped to @c NotOpen and surface
+        // that as a spurious pipeline error.
+        if(ss.upstreamDone) return;
 
         // Back-pressure: we gate on @ref MediaIO::writesAccepted for
         // every outgoing edge before pulling the next source frame.
@@ -442,7 +568,27 @@ void MediaPipeline::drainSource(const String &srcName) {
                 if(err == Error::TryAgain) return;
                 if(err == Error::EndOfFile) {
                         ss.upstreamDone = true;
-                        checkDrained();
+                        // Arm (or join) the pipeline-level close
+                        // cascade BEFORE touching downstream — the
+                        // initiateClose call wires the per-stage
+                        // closedSignal listeners that finalize waits
+                        // on, so it has to run before any stage's
+                        // finalize can emit.  initiateClose is
+                        // idempotent on re-entry, so it's cheap to
+                        // call from either the natural-EOF trigger
+                        // or the explicit @ref close trigger.
+                        initiateClose(/*clean=*/true);
+                        // Cascade: close every direct downstream
+                        // consumer of this source.  Graceful close
+                        // lets their pending input writes complete
+                        // before they push their own synthetic EOS.
+                        for(size_t i = 0; i < ss.edges.size(); ++i) {
+                                MediaIO *to = ss.edges[i].to;
+                                if(to == nullptr) continue;
+                                if(!to->isOpen()) continue;
+                                if(to->isClosing()) continue;
+                                (void)to->close(false);
+                        }
                         return;
                 }
                 if(err.isError()) {
@@ -450,7 +596,7 @@ void MediaPipeline::drainSource(const String &srcName) {
                                 _pipelineErrors.fetchAndAdd(1);
                                 pipelineErrorSignal.emit(srcName, err);
                         }
-                        finish(false);
+                        initiateClose(/*clean=*/false);
                         return;
                 }
 
@@ -470,7 +616,15 @@ void MediaPipeline::drainSource(const String &srcName) {
                                         _writeRetries.fetchAndAdd(1);
                                         PROMEKI_ASSERT(werr != Error::TryAgain);
                                 }
-                                onWriteError(e.toName, werr);
+                                // Writes during an already-running close
+                                // are expected to come back NotOpen once
+                                // the downstream stage has latched its
+                                // own _closing flag.  Treat those as
+                                // cascade plumbing, not an operational
+                                // error.
+                                if(werr != Error::NotOpen || !_closing) {
+                                        onWriteError(e.toName, werr);
+                                }
                                 return;
                         }
                 }
@@ -483,28 +637,9 @@ void MediaPipeline::onWriteError(const String &stageName, Error err) {
                 _pipelineErrors.fetchAndAdd(1);
                 pipelineErrorSignal.emit(stageName, err);
         }
-        finish(false);
+        initiateClose(/*clean=*/false);
 }
 
-void MediaPipeline::checkDrained() {
-        // Every source must have hit EOF before we call the pipeline
-        // done.  Sinks may still have in-flight writes of their own;
-        // those are bounded by the strands' work queues and will
-        // complete on their own — no per-edge hold to wait on now
-        // that the writesAccepted gate guarantees every fan-out
-        // succeeds synchronously.
-        for(auto it = _sources.cbegin(); it != _sources.cend(); ++it) {
-                if(!it->second.upstreamDone) return;
-        }
-        finish(true);
-}
-
-void MediaPipeline::finish(bool clean) {
-        if(_finished) return;
-        _finished     = true;
-        _cleanFinish  = clean;
-        finishedSignal.emit(clean);
-}
 
 // ============================================================================
 // Introspection
