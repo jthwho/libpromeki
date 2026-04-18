@@ -12,6 +12,12 @@
 #include <promeki/objectbase.h>
 #include <promeki/timerevent.h>
 #include <promeki/logger.h>
+#include <promeki/platform.h>
+
+#if defined(PROMEKI_PLATFORM_POSIX)
+#include <unistd.h>
+#include <fcntl.h>
+#endif
 
 using namespace promeki;
 
@@ -439,3 +445,238 @@ TEST_CASE("EventLoop: timer callback can stop another timer without deadlocking"
         // tolerate scheduler jitter.
         CHECK(bFires.load() < 50);
 }
+
+#if defined(PROMEKI_PLATFORM_POSIX)
+
+namespace {
+
+// Helper for the IoSource tests: a non-blocking pipe pair that
+// closes both ends when it goes out of scope.
+struct TestPipe {
+        int read_fd  = -1;
+        int write_fd = -1;
+
+        TestPipe() {
+                int fds[2];
+                REQUIRE(::pipe(fds) == 0);
+                read_fd = fds[0];
+                write_fd = fds[1];
+                int flags = ::fcntl(read_fd, F_GETFL);
+                ::fcntl(read_fd, F_SETFL, flags | O_NONBLOCK);
+        }
+        ~TestPipe() {
+                if(read_fd  >= 0) ::close(read_fd);
+                if(write_fd >= 0) ::close(write_fd);
+        }
+
+        void writeByte() {
+                char b = 'x';
+                ssize_t n = ::write(write_fd, &b, 1);
+                (void)n;
+        }
+};
+
+} // namespace
+
+TEST_CASE("EventLoop: IoSource fires on pipe readability") {
+        EventLoop loop;
+        TestPipe pipe;
+        std::atomic<int> fireCount{0};
+        std::atomic<uint32_t> lastEvents{0};
+
+        int h = loop.addIoSource(pipe.read_fd, EventLoop::IoRead,
+                [&](int fd, uint32_t ev) {
+                        lastEvents.store(ev);
+                        char buf[16];
+                        while(::read(fd, buf, sizeof(buf)) > 0) { }
+                        fireCount.fetch_add(1);
+                        loop.quit();
+                });
+        CHECK(h >= 0);
+
+        std::thread t([&] {
+                std::this_thread::sleep_for(std::chrono::milliseconds(20));
+                pipe.writeByte();
+        });
+        loop.exec();
+        t.join();
+
+        CHECK(fireCount.load() == 1);
+        CHECK((lastEvents.load() & EventLoop::IoRead) != 0);
+        loop.removeIoSource(h);
+}
+
+TEST_CASE("EventLoop: addIoSource rejects bad arguments") {
+        EventLoop loop;
+
+        // Bad fd.
+        CHECK(loop.addIoSource(-1, EventLoop::IoRead,
+                [](int, uint32_t){}) == -1);
+
+        // Empty callback.
+        CHECK(loop.addIoSource(0, EventLoop::IoRead,
+                EventLoop::IoCallback()) == -1);
+
+        // No event bits requested.
+        TestPipe pipe;
+        CHECK(loop.addIoSource(pipe.read_fd, 0,
+                [](int, uint32_t){}) == -1);
+}
+
+TEST_CASE("EventLoop: removeIoSource stops further firing") {
+        EventLoop loop;
+        TestPipe pipe;
+        std::atomic<int> fireCount{0};
+        int h = loop.addIoSource(pipe.read_fd, EventLoop::IoRead,
+                [&](int fd, uint32_t) {
+                        char buf[16];
+                        while(::read(fd, buf, sizeof(buf)) > 0) { }
+                        fireCount.fetch_add(1);
+                });
+
+        // Fire once, drain the pipe, then unregister and confirm
+        // a subsequent write does not wake the loop.
+        pipe.writeByte();
+        loop.postCallable([&] {
+                // Give the IoSource a chance to fire first.  Since
+                // postCallable goes onto the queue and IoSource is
+                // handled via poll() return, a single pass of
+                // exec() can't be predicted to order them; instead
+                // we drive exec() until the source has fired at
+                // least once, then remove it.
+        });
+        loop.startTimer(50, [&] {
+                if(fireCount.load() >= 1) {
+                        loop.removeIoSource(h);
+                        loop.quit();
+                } else {
+                        pipe.writeByte();
+                }
+        }, false);
+        loop.exec();
+
+        CHECK(fireCount.load() >= 1);
+        int beforeSecondWrite = fireCount.load();
+
+        // Write again and pump the loop briefly — the callback
+        // must not fire again because the source was removed.
+        pipe.writeByte();
+        loop.startTimer(50, [&] { loop.quit(); }, true);
+        loop.exec();
+        CHECK(fireCount.load() == beforeSecondWrite);
+}
+
+TEST_CASE("EventLoop: IoSource coexists with timers") {
+        EventLoop loop;
+        TestPipe pipe;
+        std::atomic<int> ioFires{0};
+        std::atomic<int> timerFires{0};
+
+        int h = loop.addIoSource(pipe.read_fd, EventLoop::IoRead,
+                [&](int fd, uint32_t) {
+                        char buf[16];
+                        while(::read(fd, buf, sizeof(buf)) > 0) { }
+                        ioFires.fetch_add(1);
+                });
+        loop.startTimer(5, [&] {
+                timerFires.fetch_add(1);
+                if(timerFires.load() >= 3) loop.quit();
+        }, false);
+
+        std::thread t([&] {
+                std::this_thread::sleep_for(std::chrono::milliseconds(8));
+                pipe.writeByte();
+        });
+        loop.exec();
+        t.join();
+
+        CHECK(timerFires.load() >= 3);
+        CHECK(ioFires.load() >= 1);
+        loop.removeIoSource(h);
+}
+
+TEST_CASE("EventLoop: addIoSource from another thread wakes the loop") {
+        EventLoop loop;
+        TestPipe pipe;
+        std::atomic<int> fireCount{0};
+
+        // Kick off exec() with nothing registered.  The loop will
+        // block in poll() on just the wake fd.  From another
+        // thread, register a new source for a fd that is already
+        // readable.  The loop must observe the addIoSource wake
+        // and include the new source in its next poll.
+        pipe.writeByte();
+
+        std::thread t([&] {
+                std::this_thread::sleep_for(std::chrono::milliseconds(30));
+                int h = loop.addIoSource(pipe.read_fd, EventLoop::IoRead,
+                        [&](int fd, uint32_t) {
+                                char buf[16];
+                                while(::read(fd, buf, sizeof(buf)) > 0) { }
+                                fireCount.fetch_add(1);
+                                loop.quit();
+                        });
+                CHECK(h >= 0);
+        });
+        loop.exec();
+        t.join();
+
+        CHECK(fireCount.load() == 1);
+}
+
+TEST_CASE("EventLoop: multiple IoSources fire independently") {
+        EventLoop loop;
+        TestPipe pipe1;
+        TestPipe pipe2;
+        std::atomic<int> fires1{0};
+        std::atomic<int> fires2{0};
+
+        loop.addIoSource(pipe1.read_fd, EventLoop::IoRead,
+                [&](int fd, uint32_t) {
+                        char buf[16];
+                        while(::read(fd, buf, sizeof(buf)) > 0) { }
+                        fires1.fetch_add(1);
+                });
+        loop.addIoSource(pipe2.read_fd, EventLoop::IoRead,
+                [&](int fd, uint32_t) {
+                        char buf[16];
+                        while(::read(fd, buf, sizeof(buf)) > 0) { }
+                        fires2.fetch_add(1);
+                        if(fires1.load() >= 1 && fires2.load() >= 1) {
+                                loop.quit();
+                        }
+                });
+
+        std::thread t([&] {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                pipe1.writeByte();
+                pipe2.writeByte();
+        });
+        loop.exec();
+        t.join();
+
+        CHECK(fires1.load() >= 1);
+        CHECK(fires2.load() >= 1);
+}
+
+TEST_CASE("EventLoop: IoSource callback can remove itself") {
+        EventLoop loop;
+        TestPipe pipe;
+        std::atomic<int> fireCount{0};
+        int h = -1;
+
+        h = loop.addIoSource(pipe.read_fd, EventLoop::IoRead,
+                [&](int fd, uint32_t) {
+                        char buf[16];
+                        while(::read(fd, buf, sizeof(buf)) > 0) { }
+                        fireCount.fetch_add(1);
+                        loop.removeIoSource(h);
+                        loop.quit();
+                });
+        REQUIRE(h >= 0);
+        pipe.writeByte();
+        loop.exec();
+        CHECK(fireCount.load() == 1);
+}
+
+#endif // PROMEKI_PLATFORM_POSIX

@@ -9,7 +9,9 @@
 #include <promeki/application.h>
 #include <promeki/eventloop.h>
 #include <promeki/libraryoptions.h>
+#include <promeki/list.h>
 #include <promeki/logger.h>
+#include <promeki/mutex.h>
 #include <promeki/platform.h>
 
 #include <atomic>
@@ -152,6 +154,99 @@ void applyWatcherThreadName() {
         Logger::setThreadName("promeki-signals");
 }
 
+// ============================================================================
+// Custom (non-termination) signal subscribers
+// ============================================================================
+//
+// Subsystems like TuiSubsystem (SIGWINCH) route their non-termination
+// signals through this single handler rather than installing their
+// own sigaction hooks.  The async sigaction forwards the signal
+// number through the self-pipe exactly as it does for termination
+// signals; the watcher distinguishes based on signo and dispatches
+// to the subscribers list in normal-context.
+
+struct Subscriber {
+        int                                handle;
+        int                                signo;
+        SignalHandler::Callback            cb;
+};
+
+Mutex                                     g_subscribersMutex;
+List<Subscriber>                          g_subscribers;
+std::atomic<int>                          g_nextHandle{1};
+
+// Per-custom-signal saved sigaction.  Entries live from the first
+// subscribe() for that signal until uninstall() tears them down;
+// unsubscribe() does not remove the sigaction, so a stray signal for
+// a signal with no live subscribers is drained and ignored.
+struct CustomSignalInstall {
+        int                                signo;
+        struct sigaction                   saved;
+};
+List<CustomSignalInstall>                 g_customInstalls;
+
+bool isTerminationSignal(int signo) {
+        for(int i = 0; i < kNumTerminationSignals; ++i) {
+                if(kTerminationSignals[i] == signo) return true;
+        }
+        return false;
+}
+
+// Caller must hold @c g_subscribersMutex.
+bool customSignalAlreadyInstalled(int signo) {
+        for(size_t i = 0; i < g_customInstalls.size(); ++i) {
+                if(g_customInstalls[i].signo == signo) return true;
+        }
+        return false;
+}
+
+// Installs the async sigaction hook for @p signo and records the
+// previous disposition so uninstall() can restore it.  Caller must
+// hold @c g_subscribersMutex.  Returns true on success.
+bool installCustomSignalLocked(int signo) {
+        struct sigaction sa;
+        std::memset(&sa, 0, sizeof(sa));
+        sa.sa_handler = asyncSignalHandler;
+        sigemptyset(&sa.sa_mask);
+        // Block all termination signals while the custom handler
+        // runs so a quit signal doesn't race against a mid-dispatch
+        // custom signal on the same thread.
+        for(int j = 0; j < kNumTerminationSignals; ++j) {
+                sigaddset(&sa.sa_mask, kTerminationSignals[j]);
+        }
+        // SA_RESTART: a custom signal shouldn't unwind blocking
+        // syscalls on unrelated threads.  Subscribers that want to
+        // wake a loop post a callable from the watcher thread
+        // instead.
+        sa.sa_flags = SA_RESTART;
+        CustomSignalInstall entry;
+        entry.signo = signo;
+        if(sigaction(signo, &sa, &entry.saved) != 0) {
+                promekiWarn("SignalHandler::subscribe: sigaction(%d) failed (errno %d)",
+                            signo, errno);
+                return false;
+        }
+        g_customInstalls.pushToBack(entry);
+        return true;
+}
+
+// Dispatches any subscribers registered for @p signo.  Runs on the
+// watcher thread in normal context.
+void dispatchSubscribers(int signo) {
+        List<SignalHandler::Callback> callbacks;
+        {
+                Mutex::Locker lock(g_subscribersMutex);
+                for(size_t i = 0; i < g_subscribers.size(); ++i) {
+                        if(g_subscribers[i].signo == signo) {
+                                callbacks.pushToBack(g_subscribers[i].cb);
+                        }
+                }
+        }
+        for(size_t i = 0; i < callbacks.size(); ++i) {
+                if(callbacks[i]) callbacks[i](signo);
+        }
+}
+
 // Worker body: block on read() until a byte arrives from the signal
 // handler or uninstall() pokes us.
 void watcherMain() {
@@ -169,7 +264,12 @@ void watcherMain() {
                         // Shutdown sentinel from uninstall().
                         break;
                 }
-                deliverQuit(static_cast<int>(byte));
+                const int signo = static_cast<int>(byte);
+                if(isTerminationSignal(signo)) {
+                        deliverQuit(signo);
+                } else {
+                        dispatchSubscribers(signo);
+                }
         }
 }
 
@@ -316,6 +416,25 @@ void SignalHandler::uninstall() {
                         g_savedValid[i] = false;
                 }
         }
+        // Restore the saved disposition for every custom signal that
+        // had been installed via subscribe(), and drop the subscriber
+        // list.  Take the lock only long enough to move the entries
+        // out — sigaction() itself is not required to be called
+        // under the lock (it is a syscall with its own kernel-side
+        // synchronization).
+        {
+                List<CustomSignalInstall> toRestore;
+                {
+                        Mutex::Locker lock(g_subscribersMutex);
+                        toRestore = std::move(g_customInstalls);
+                        g_customInstalls = List<CustomSignalInstall>();
+                        g_subscribers = List<Subscriber>();
+                }
+                for(size_t i = 0; i < toRestore.size(); ++i) {
+                        sigaction(toRestore[i].signo,
+                                  &toRestore[i].saved, nullptr);
+                }
+        }
 
         // Ask the watcher to exit, then poke it with a sentinel byte
         // so the blocked read() returns.
@@ -357,6 +476,50 @@ void SignalHandler::uninstall() {
 
 bool SignalHandler::isInstalled() {
         return g_installed.load(std::memory_order_acquire);
+}
+
+int SignalHandler::subscribe(int signo, Callback cb) {
+#if defined(PROMEKI_PLATFORM_POSIX)
+        if(!cb) {
+                promekiWarn("SignalHandler::subscribe: empty callback");
+                return -1;
+        }
+        if(isTerminationSignal(signo)) {
+                promekiWarn("SignalHandler::subscribe: signal %d is reserved "
+                            "for termination handling", signo);
+                return -1;
+        }
+        if(!g_installed.load(std::memory_order_acquire)) {
+                promekiWarn("SignalHandler::subscribe: handler not installed — "
+                            "call install() first");
+                return -1;
+        }
+        const int handle = g_nextHandle.fetch_add(1, std::memory_order_relaxed);
+        Mutex::Locker lock(g_subscribersMutex);
+        if(!customSignalAlreadyInstalled(signo)) {
+                if(!installCustomSignalLocked(signo)) return -1;
+        }
+        Subscriber sub{handle, signo, std::move(cb)};
+        g_subscribers.pushToBack(std::move(sub));
+        return handle;
+#else
+        (void)signo;
+        (void)cb;
+        promekiWarn("SignalHandler::subscribe: not implemented on this platform");
+        return -1;
+#endif
+}
+
+void SignalHandler::unsubscribe(int handle) {
+#if defined(PROMEKI_PLATFORM_POSIX)
+        if(handle < 0) return;
+        Mutex::Locker lock(g_subscribersMutex);
+        g_subscribers.removeIf([handle](const Subscriber &s) {
+                return s.handle == handle;
+        });
+#else
+        (void)handle;
+#endif
 }
 
 PROMEKI_NAMESPACE_END

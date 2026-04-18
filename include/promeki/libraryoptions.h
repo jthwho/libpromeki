@@ -112,6 +112,50 @@ class LibraryOptions : public VariantDatabase<"LibraryOptions"> {
                                 .setDescription(
                                         "Override for Dir::temp() (empty = OS default)."));
 
+                /// @brief String — override for the path returned by
+                /// @ref Dir::ipc (empty = platform default, which is
+                /// @c /dev/shm/promeki on Linux — a tmpfs location well
+                /// suited to both shared-memory objects and named
+                /// @c AF_UNIX sockets — and @ref Dir::temp elsewhere).
+                ///
+                /// The IPC directory is where cross-process primitives
+                /// (shared memory regions, local-socket files, lock
+                /// files) live.  Set this option to pin the path for
+                /// every IPC-consuming feature in the library in one
+                /// place.  Common use cases:
+                ///
+                ///  - Move IPC traffic off a read-only or restricted
+                ///    @c /dev/shm onto a writable partition.
+                ///  - Isolate test runs by pointing at a per-test
+                ///    directory.
+                ///  - Align with a site's /run layout for cross-user
+                ///    IPC: create a group-owned directory at
+                ///    deployment time and point every process at it.
+                ///
+                /// Set via code:
+                ///
+                /// @code
+                /// LibraryOptions::instance().set(
+                ///     LibraryOptions::IpcDir,
+                ///     String("/run/promeki/ipc"));
+                /// @endcode
+                ///
+                /// ...or via the environment:
+                ///
+                /// @code
+                /// export PROMEKI_OPT_IpcDir=/run/promeki/ipc
+                /// @endcode
+                ///
+                /// The override is returned verbatim — the directory
+                /// is not auto-created.  Callers that require the
+                /// directory to exist should @ref Dir::mkpath the
+                /// result themselves.
+                PROMEKI_DECLARE_ID(IpcDir,
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription(
+                                        "Override for Dir::ipc() (empty = platform default)."));
+
                 // ============================================================
                 // Termination signal handling
                 // ============================================================

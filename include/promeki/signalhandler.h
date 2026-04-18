@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <functional>
+
 #include <promeki/namespace.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -110,6 +112,57 @@ class SignalHandler {
                  *         a matching @ref uninstall.
                  */
                 static bool isInstalled();
+
+                /** @brief Callback type for @ref subscribe. */
+                using Callback = std::function<void(int signo)>;
+
+                /**
+                 * @brief Subscribes a callback for a non-termination signal.
+                 *
+                 * Lets other subsystems (e.g. TuiSubsystem for
+                 * SIGWINCH) route signals through the single
+                 * @ref SignalHandler self-pipe watcher thread instead
+                 * of installing their own @c sigaction hooks.  The
+                 * callback runs on the watcher thread in normal
+                 * context — it may take locks, allocate, and post
+                 * onto event loops.
+                 *
+                 * On first subscription for @p signo the @c sigaction
+                 * hook is installed; the hook stays registered until
+                 * @ref uninstall.  Multiple subscribers for the same
+                 * signal are dispatched in subscription order.
+                 *
+                 * @param signo  The signal number (must not be one of
+                 *               the reserved termination signals —
+                 *               @c SIGINT / @c SIGTERM / @c SIGHUP /
+                 *               @c SIGQUIT).
+                 * @param cb     Callback invoked with @p signo each
+                 *               time the signal arrives.
+                 * @return       Handle @c >= 0 on success; @c -1 if
+                 *               @p signo is reserved, @p cb is empty,
+                 *               the handler is not installed, or the
+                 *               @c sigaction call failed.
+                 *
+                 * @note Subscribers installed before @ref install are
+                 *       rejected — install the handler first.
+                 *       @ref Application constructs with the handler
+                 *       already installed, which is the expected
+                 *       subscription entry point.
+                 */
+                static int subscribe(int signo, Callback cb);
+
+                /**
+                 * @brief Removes a subscription previously installed via @ref subscribe.
+                 *
+                 * Idempotent: unknown handles are silently ignored.
+                 * The underlying @c sigaction hook stays installed for
+                 * the life of this @ref SignalHandler install — a
+                 * stray signal arriving for a signal with no live
+                 * subscribers is drained and dropped.
+                 *
+                 * @param handle The handle returned by @ref subscribe.
+                 */
+                static void unsubscribe(int handle);
 };
 
 PROMEKI_NAMESPACE_END

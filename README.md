@@ -157,7 +157,7 @@ BSD-socket abstractions and real-time media transport protocols.
 
 An optional shared library providing a terminal widget toolkit.
 
-- **Application & rendering** — `TuiApplication`, `TuiScreen`,
+- **Application & rendering** — `TuiSubsystem`, `TuiScreen`,
   `TuiPainter`, `TuiPalette`
 - **Widgets** — `Label`, `LineEdit`, `TextArea`, `Button`, `CheckBox`,
   `ProgressBar`, `ListView`, `Frame`, `ScrollArea`, `Splitter`,
@@ -168,7 +168,7 @@ An optional shared library providing a terminal widget toolkit.
 
 An optional shared library for SDL3-based applications (off by default).
 
-- `SDLApplication`, `SDLWindow`, `SDLVideoWidget`, `SDLAudioOutput`
+- `SdlSubsystem`, `SDLWindow`, `SDLVideoWidget`, `SDLAudioOutput`
 - `SDLPlayer` — MediaIO-backed player with video display and audio
   output
 

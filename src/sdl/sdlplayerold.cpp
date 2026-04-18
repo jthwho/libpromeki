@@ -6,7 +6,7 @@
  */
 
 #include <promeki/sdl/sdlplayerold.h>
-#include <promeki/sdl/sdlapplication.h>
+#include <promeki/sdl/sdlsubsystem.h>
 #include <promeki/sdl/sdlaudiooutput.h>
 #include <promeki/sdl/sdlvideowidget.h>
 #include <promeki/sdl/sdlwindow.h>
@@ -308,9 +308,9 @@ void SDLPlayerOldTask::wakeMainThread() {
         // the "Teardown ordering" note in sdlplayerold.h: the capture of
         // `this` relies on the caller closing the MediaIO and letting
         // the event loop drain before destroying it.
-        SDLApplication *app = SDLApplication::instance();
-        if(app != nullptr) {
-                app->eventLoop().postCallable([this]() {
+        SdlSubsystem *app = SdlSubsystem::instance();
+        if(app != nullptr && app->eventLoop() != nullptr) {
+                app->eventLoop()->postCallable([this]() {
                         renderPending();
                 });
         }

@@ -27,15 +27,8 @@ class SDLWindow;
  * register themselves with the pump so that events can be routed
  * by SDL window ID.
  *
- * Supports two modes:
- * - **Non-blocking** (default): drains all pending events via
- *   SDL_PollEvent and returns immediately.
- * - **Blocking**: waits for the first event via SDL_WaitEvent,
- *   processes it, then drains any remaining pending events.
- *   This avoids busy-waiting in the main loop.
- *
  * This is not an ObjectBase — it is infrastructure owned by
- * SDLApplication (similar to TuiScreen or TuiInputParser).
+ * SdlSubsystem (similar to TuiScreen or TuiInputParser).
  */
 class SDLEventPump {
         public:
@@ -46,14 +39,15 @@ class SDLEventPump {
                 SDLEventPump &operator=(const SDLEventPump &) = delete;
 
                 /**
-                 * @brief Pumps SDL events and dispatches them.
+                 * @brief Drains all pending SDL events and dispatches them.
                  *
-                 * @param blocking If true, blocks until at least one event
-                 *        is available (via SDL_WaitEvent), then drains all
-                 *        remaining events.  If false (default), polls all
-                 *        pending events and returns immediately.
+                 * Non-blocking: calls @c SDL_PollEvent in a loop until
+                 * the SDL queue is empty.  SdlSubsystem invokes this
+                 * from the EventLoop IoSource callback that fires
+                 * when @c SDL_AddEventWatch signals that new events
+                 * have arrived.
                  */
-                void pumpEvents(bool blocking = false);
+                void pumpEvents();
 
                 /**
                  * @brief Registers a window for event routing.

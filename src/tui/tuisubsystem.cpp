@@ -1,34 +1,80 @@
 /**
- * @file      application.cpp
+ * @file      tuisubsystem.cpp
  * @copyright Howard Logic. All rights reserved.
  *
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/tui/application.h>
+#include <promeki/tui/tuisubsystem.h>
 #include <promeki/tui/widget.h>
 #include <promeki/tui/painter.h>
 #include <promeki/tui/layout.h>
 #include <promeki/keyevent.h>
 #include <promeki/mouseevent.h>
 #include <promeki/eventloop.h>
+#include <promeki/atomic.h>
+#include <promeki/platform.h>
+#include <promeki/logger.h>
+#include <promeki/signalhandler.h>
+#include <promeki/util.h>
 
 #if defined(PROMEKI_PLATFORM_POSIX)
+#include <csignal>
 #include <unistd.h>
-#include <poll.h>
 #endif
 
 PROMEKI_NAMESPACE_BEGIN
 
-TuiApplication *TuiApplication::_instance = nullptr;
+TuiSubsystem *TuiSubsystem::_instance = nullptr;
 
-TuiApplication::TuiApplication(int argc, char **argv)
-        : Application(argc, argv), _ansiStream(Application::stdoutDevice()) {
+TuiSubsystem::TuiSubsystem()
+        : _eventLoop(Application::mainEventLoop()),
+          _ansiStream(Application::stdoutDevice()) {
+        // Singletons by design — constructing a second TuiSubsystem
+        // while one is still live would silently clobber the instance
+        // pointer and leave the terminal in an undefined state.
+        // Catch it as a programming error at construction.
+        PROMEKI_ASSERT(_instance == nullptr);
+        if(_eventLoop == nullptr) {
+                promekiErr("TuiSubsystem: no Application / main EventLoop — "
+                           "construct an Application before a TuiSubsystem");
+        }
         _instance = this;
         _screen.setColorMode(Terminal::colorSupport());
+
+        _terminal.enableRawMode();
+        _terminal.enableAlternateScreen();
+        _terminal.enableMouseTracking();
+        _terminal.enableBracketedPaste();
+        _terminal.installSignalHandlers();
+
+        _ansiStream.hideCursor();
+        _ansiStream.clearScreen();
+        _ansiStream.flush();
+
+        // Capture initial window size so the root widget (when it is
+        // set later via setRootWidget) can be laid out to the
+        // terminal.  Repeated in setRootWidget to handle the case
+        // where the size changes between TuiSubsystem construction
+        // and the first widget attach.
+        int cols, rows;
+        if(_terminal.windowSize(cols, rows).isOk()) {
+                _lastCols = cols;
+                _lastRows = rows;
+                _screen.resize(cols, rows);
+        }
+
+        setupEventSources();
+
+        // Queue the initial paint through the same coalescing post
+        // path runtime repaints use.  The callable fires on the
+        // first processEvents() iteration inside app.exec().
+        markNeedsRepaint();
 }
 
-TuiApplication::~TuiApplication() {
+TuiSubsystem::~TuiSubsystem() {
+        teardownEventSources();
+
         _terminal.disableMouseTracking();
         _terminal.disableBracketedPaste();
         _terminal.disableAlternateScreen();
@@ -39,96 +85,79 @@ TuiApplication::~TuiApplication() {
         if(_instance == this) _instance = nullptr;
 }
 
-void TuiApplication::setRootWidget(TuiWidget *widget) {
+void TuiSubsystem::setRootWidget(TuiWidget *widget) {
         _rootWidget = widget;
         if(_rootWidget) {
                 int cols, rows;
                 if(_terminal.windowSize(cols, rows).isOk()) {
                         _rootWidget->setGeometry(Rect2Di32(0, 0, cols, rows));
                 }
+                if(!_focusWidget) focusNext(false);
+                markNeedsRepaint();
         }
 }
 
-int TuiApplication::exec() {
-        _terminal.enableRawMode();
-        _terminal.enableAlternateScreen();
-        _terminal.enableMouseTracking();
-        _terminal.enableBracketedPaste();
-        _terminal.installSignalHandlers();
-
-        _terminal.setResizeCallback([this](int cols, int rows) {
-                (void)cols;
-                (void)rows;
-                handleResize();
-        });
-
-        _ansiStream.hideCursor();
-        _ansiStream.clearScreen();
-        _ansiStream.flush();
-
-        // Initial size
-        int cols, rows;
-        if(_terminal.windowSize(cols, rows).isOk()) {
-                _lastCols = cols;
-                _lastRows = rows;
-                _screen.resize(cols, rows);
-                if(_rootWidget) {
-                        _rootWidget->setGeometry(Rect2Di32(0, 0, cols, rows));
-                }
-        }
-
-        // Set initial focus to first focusable widget if none set
-        if(!_focusWidget) {
-                focusNext(false);
-        }
-
-        _running = true;
-        _needsRepaint = true; // Force initial paint
-
-        while(_running) {
-                // Check for resize
-                handleResize();
-
-                // Process EventLoop events (timers, posted callables, etc.)
-                _eventLoop.processEvents();
-
-                // Process any available input
-                processInput();
-
-                // Paint if anything is dirty
-                if(_needsRepaint) {
-                        paintWidgets();
-                        _screen.flush(_ansiStream);
-                        _needsRepaint = false;
-                }
-
-                // Wait for input (blocks up to 16ms)
-#if defined(PROMEKI_PLATFORM_POSIX)
-                struct pollfd pfd;
-                pfd.fd = STDIN_FILENO;
-                pfd.events = POLLIN;
-                poll(&pfd, 1, 16); // ~60fps max
-#endif
-        }
-
-        return _exitCode;
-}
-
-void TuiApplication::quit(int exitCode) {
-        _exitCode = exitCode;
-        _running = false;
-}
-
-void TuiApplication::updateAll() {
+void TuiSubsystem::updateAll() {
         _screen.invalidate();
         markNeedsRepaint();
 }
 
-void TuiApplication::markNeedsRepaint() {
-        _needsRepaint = true;
+void TuiSubsystem::markNeedsRepaint() {
+        // Coalesce: at most one repaint pending at any time.  If we
+        // were the first to flip the flag to true we post the
+        // actual paint; subsequent calls before that post fires are
+        // absorbed.  Safe from any thread — the paint callable
+        // always runs on the EventLoop thread.
+        if(_eventLoop == nullptr) return;
+        if(_repaintQueued.exchange(true)) return;
+        _eventLoop->postCallable([this] { doPaint(); });
 }
 
-void TuiApplication::setFocusWidget(TuiWidget *widget) {
+void TuiSubsystem::doPaint() {
+        _repaintQueued.setValue(false);
+        paintWidgets();
+        _screen.flush(_ansiStream);
+}
+
+void TuiSubsystem::setupEventSources() {
+#if defined(PROMEKI_PLATFORM_POSIX)
+        if(_eventLoop == nullptr) return;
+
+        _stdinSourceHandle = _eventLoop->addIoSource(STDIN_FILENO,
+                EventLoop::IoRead,
+                [this](int, uint32_t) { processInput(); });
+
+        // Route SIGWINCH through the single SignalHandler watcher
+        // thread.  Its callback runs in normal context, so all it
+        // needs to do is post the resize handling onto the main
+        // EventLoop — there is no sigaction, no self-pipe, and no
+        // IoSource owned by this subsystem.  SignalHandler is
+        // installed by Application's constructor, so by the time any
+        // TuiSubsystem is built the subscriber API is live.
+        EventLoop *loop = _eventLoop;
+        _winchSubscription = SignalHandler::subscribe(SIGWINCH,
+                [this, loop](int) {
+                        if(loop != nullptr) {
+                                loop->postCallable([this] { handleResize(); });
+                        }
+                });
+#endif // PROMEKI_PLATFORM_POSIX
+}
+
+void TuiSubsystem::teardownEventSources() {
+#if defined(PROMEKI_PLATFORM_POSIX)
+        if(_winchSubscription >= 0) {
+                SignalHandler::unsubscribe(_winchSubscription);
+                _winchSubscription = -1;
+        }
+        if(_eventLoop != nullptr && _stdinSourceHandle >= 0) {
+                _eventLoop->removeIoSource(_stdinSourceHandle);
+                _stdinSourceHandle = -1;
+        }
+#endif
+}
+
+void TuiSubsystem::setFocusWidget(TuiWidget *widget) {
         if(_focusWidget == widget) return;
         if(_focusWidget) {
                 _focusWidget->setFocused(false);
@@ -146,7 +175,7 @@ void TuiApplication::setFocusWidget(TuiWidget *widget) {
         markNeedsRepaint();
 }
 
-void TuiApplication::focusNext(bool reverse) {
+void TuiSubsystem::focusNext(bool reverse) {
         List<TuiWidget *> focusable;
         if(_rootWidget) collectFocusable(_rootWidget, focusable);
         if(focusable.isEmpty()) return;
@@ -170,7 +199,7 @@ void TuiApplication::focusNext(bool reverse) {
         setFocusWidget(focusable[next]);
 }
 
-void TuiApplication::collectFocusable(TuiWidget *widget, List<TuiWidget *> &list) {
+void TuiSubsystem::collectFocusable(TuiWidget *widget, List<TuiWidget *> &list) {
         if(!widget->isEffectivelyVisible() || !widget->isEnabled()) return;
         if(widget->focusPolicy() == StrongFocus || widget->focusPolicy() == TabFocus) {
                 list += widget;
@@ -181,7 +210,7 @@ void TuiApplication::collectFocusable(TuiWidget *widget, List<TuiWidget *> &list
         }
 }
 
-void TuiApplication::processInput() {
+void TuiSubsystem::processInput() {
         char buf[256];
         auto [n, readErr] = _terminal.readInput(buf, sizeof(buf));
         if(readErr.isError() || n <= 0) return;
@@ -197,11 +226,11 @@ void TuiApplication::processInput() {
         }
 }
 
-void TuiApplication::dispatchKeyEvent(const TuiInputParser::ParsedEvent &ev) {
+void TuiSubsystem::dispatchKeyEvent(const TuiInputParser::ParsedEvent &ev) {
         // Ctrl+Q quits the application
         if(ev.key == static_cast<KeyEvent::Key>('q') &&
            (ev.modifiers & KeyEvent::CtrlModifier)) {
-                quit(0);
+                Application::quit(0);
                 return;
         }
 
@@ -225,7 +254,7 @@ void TuiApplication::dispatchKeyEvent(const TuiInputParser::ParsedEvent &ev) {
         }
 }
 
-TuiWidget *TuiApplication::widgetAt(TuiWidget *widget, const Point2Di32 &globalPos) {
+TuiWidget *TuiSubsystem::widgetAt(TuiWidget *widget, const Point2Di32 &globalPos) {
         if(!widget->isEffectivelyVisible()) return nullptr;
 
         Point2Di32 screenPos = widget->mapToGlobal(Point2Di32(0, 0));
@@ -244,7 +273,7 @@ TuiWidget *TuiApplication::widgetAt(TuiWidget *widget, const Point2Di32 &globalP
         return widget;
 }
 
-void TuiApplication::dispatchMouseEvent(const TuiInputParser::ParsedEvent &ev) {
+void TuiSubsystem::dispatchMouseEvent(const TuiInputParser::ParsedEvent &ev) {
         if(!_rootWidget) return;
 
         MouseEvent::Action action = ev.mouseAction;
@@ -259,7 +288,6 @@ void TuiApplication::dispatchMouseEvent(const TuiInputParser::ParsedEvent &ev) {
                    ev.mouseButton == _lastClickButton &&
                    ev.mousePos == _lastClickPos) {
                         action = MouseEvent::DoubleClick;
-                        // Reset so a third click doesn't become another double-click
                         _lastClickTime = TimePoint{};
                         _lastClickButton = MouseEvent::NoButton;
                         _lastClickPos = Point2Di32(-1, -1);
@@ -272,25 +300,21 @@ void TuiApplication::dispatchMouseEvent(const TuiInputParser::ParsedEvent &ev) {
 
         MouseEvent mouseEv(ev.mousePos, ev.mouseButton, action, ev.modifiers, ev.mouseButtons);
 
-        // If a widget has the mouse grab, send all events directly to it
         if(_mouseGrab) {
                 _mouseGrab->mouseEvent(&mouseEv);
                 markNeedsRepaint();
                 return;
         }
 
-        // Find the widget under the mouse
         TuiWidget *target = widgetAt(_rootWidget, ev.mousePos);
         if(!target) return;
 
-        // Focus the clicked widget if it accepts focus
         if(action == MouseEvent::Press || action == MouseEvent::DoubleClick) {
                 if(target->focusPolicy() == ClickFocus || target->focusPolicy() == StrongFocus) {
                         setFocusWidget(target);
                 }
         }
 
-        // Propagate up the widget tree until accepted
         TuiWidget *t = target;
         while(t) {
                 t->mouseEvent(&mouseEv);
@@ -300,7 +324,7 @@ void TuiApplication::dispatchMouseEvent(const TuiInputParser::ParsedEvent &ev) {
         markNeedsRepaint();
 }
 
-void TuiApplication::handleResize() {
+void TuiSubsystem::handleResize() {
         int cols, rows;
         if(_terminal.windowSize(cols, rows).isError()) return;
         if(cols == _lastCols && rows == _lastRows) return;
@@ -320,16 +344,15 @@ void TuiApplication::handleResize() {
         markNeedsRepaint();
 }
 
-void TuiApplication::paintWidgets() {
+void TuiSubsystem::paintWidgets() {
         if(!_rootWidget) return;
         _screen.clear();
         paintWidget(_rootWidget);
 }
 
-void TuiApplication::paintWidget(TuiWidget *widget) {
+void TuiSubsystem::paintWidget(TuiWidget *widget) {
         if(!widget->isVisible()) return;
 
-        // Calculate screen position
         Point2Di32 screenPos = widget->mapToGlobal(Point2Di32(0, 0));
         Rect2Di32 clipRect(screenPos.x(), screenPos.y(),
                         widget->width(), widget->height());
@@ -338,7 +361,6 @@ void TuiApplication::paintWidget(TuiWidget *widget) {
         TuiPaintEvent ev;
         widget->paintEvent(&ev);
 
-        // Paint children
         for(auto child : widget->childList()) {
                 TuiWidget *tw = dynamic_cast<TuiWidget *>(child);
                 if(tw) paintWidget(tw);

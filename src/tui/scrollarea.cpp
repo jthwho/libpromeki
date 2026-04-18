@@ -8,7 +8,7 @@
 #include <promeki/tui/scrollarea.h>
 #include <promeki/tui/painter.h>
 #include <promeki/tui/palette.h>
-#include <promeki/tui/application.h>
+#include <promeki/tui/tuisubsystem.h>
 #include <promeki/keyevent.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -63,7 +63,7 @@ Size2Di32 TuiScrollArea::sizeHint() const {
 }
 
 void TuiScrollArea::paintEvent(TuiPaintEvent *) {
-        TuiApplication *app = TuiApplication::instance();
+        TuiSubsystem *app = TuiSubsystem::instance();
         if(!app) return;
 
         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));

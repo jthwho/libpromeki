@@ -6,7 +6,7 @@
  */
 
 #include <promeki/tui/widget.h>
-#include <promeki/tui/application.h>
+#include <promeki/tui/tuisubsystem.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -17,7 +17,7 @@ TuiWidget::~TuiWidget() = default;
 
 void TuiWidget::update() {
         Widget::update();
-        TuiApplication *app = TuiApplication::instance();
+        TuiSubsystem *app = TuiSubsystem::instance();
         if(app) app->markNeedsRepaint();
 }
 

@@ -195,6 +195,34 @@ class MediaPipeline : public ObjectBase {
                 Error close(bool block = true);
 
                 /**
+                 * @brief Default close-watchdog timeout, milliseconds.
+                 *
+                 * A clean close cascade relies on frames draining from
+                 * each stage's input to its output.  If a stage gets
+                 * stuck on an external signal that never fires — a
+                 * @ref FrameBridge output waiting for a consumer that
+                 * never arrives, for example — the cascade never
+                 * reaches the stuck stage and the pipeline stalls
+                 * indefinitely.  The watchdog escalates to a forced
+                 * close on every still-open stage once this deadline
+                 * expires.
+                 */
+                static constexpr unsigned int DefaultCloseTimeoutMs = 3000;
+
+                /**
+                 * @brief Sets the close-watchdog timeout.
+                 *
+                 * A value of zero disables the watchdog — callers who
+                 * want an unbounded graceful close can opt out.
+                 *
+                 * @param ms Timeout in milliseconds.
+                 */
+                void setCloseTimeoutMs(unsigned int ms) { _closeTimeoutMs = ms; }
+
+                /** @brief Returns the current close-watchdog timeout. */
+                unsigned int closeTimeoutMs() const { return _closeTimeoutMs; }
+
+                /**
                  * @brief Returns true while an async close is in flight.
                  *
                  * Set by @ref close(bool) on entry and cleared when
@@ -344,6 +372,23 @@ class MediaPipeline : public ObjectBase {
                 void initiateClose(bool clean);
 
                 /**
+                 * @brief Watchdog: force-close any stage still open
+                 *        after @ref _closeTimeoutMs has elapsed since
+                 *        the cascade was armed.  The cascade lets
+                 *        stages drain gracefully, but any stage whose
+                 *        @c executeCmd blocks on an external signal
+                 *        (e.g. a FrameBridge output waiting for a
+                 *        consumer) can stall the whole teardown —
+                 *        this unblocks it and submits a close on its
+                 *        strand so the cascade can finish.
+                 */
+                void forceCloseRemaining();
+
+                // ObjectBase override — routes the close watchdog's
+                // TimerEvent to @ref forceCloseRemaining.
+                void timerEvent(TimerEvent *e) override;
+
+                /**
                  * @brief Called on every stage's @ref MediaIO::closedSignal.
                  *
                  * Removes the stage from the outstanding set, captures
@@ -380,6 +425,14 @@ class MediaPipeline : public ObjectBase {
                 bool                                  _cleanFinish = false;
                 promeki::Set<String>                  _stagesAwaitingClosed;
                 Error                                 _closeError = Error::Ok;
+
+                // Close-watchdog timer.  Armed by @ref initiateClose,
+                // stopped by @ref finalizeClose, and escalates to
+                // @ref forceCloseRemaining when it fires.  Zero means
+                // "no watchdog armed".
+                unsigned int                          _closeTimeoutMs =
+                        DefaultCloseTimeoutMs;
+                int                                   _closeWatchdogTimerId = -1;
 
                 // Pipeline-layer telemetry counters surfaced via
                 // PipelineStats on every @ref stats() call.  Atomic

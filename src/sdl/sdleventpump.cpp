@@ -7,7 +7,7 @@
 
 #include <promeki/sdl/sdleventpump.h>
 #include <promeki/sdl/sdlwindow.h>
-#include <promeki/sdl/sdlapplication.h>
+#include <promeki/sdl/sdlsubsystem.h>
 #include <promeki/mouseevent.h>
 #include <promeki/logger.h>
 
@@ -15,16 +15,8 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-void SDLEventPump::pumpEvents(bool blocking) {
+void SDLEventPump::pumpEvents() {
         SDL_Event e;
-
-        // In blocking mode, wait for the first event (no CPU burn)
-        if(blocking) {
-                if(!SDL_WaitEvent(&e)) return;
-                dispatchEvent(e);
-        }
-
-        // Drain all remaining pending events
         while(SDL_PollEvent(&e)) {
                 dispatchEvent(e);
         }
@@ -34,8 +26,7 @@ void SDLEventPump::pumpEvents(bool blocking) {
 void SDLEventPump::dispatchEvent(const SDL_Event &e) {
         switch(e.type) {
                 case SDL_EVENT_QUIT: {
-                        SDLApplication *app = SDLApplication::instance();
-                        if(app != nullptr) app->quit(0);
+                        Application::quit(0);
                         break;
                 }
 
@@ -108,10 +99,7 @@ void SDLEventPump::handleWindowEvent(const SDL_Event &e) {
                         window->hide();
                         window->destroyWindow();
                         // If no windows remain, quit the application
-                        if(_windowMap.isEmpty()) {
-                                SDLApplication *app = SDLApplication::instance();
-                                if(app != nullptr) app->quit(0);
-                        }
+                        if(_windowMap.isEmpty()) Application::quit(0);
                         break;
 
                 case SDL_EVENT_WINDOW_RESIZED:

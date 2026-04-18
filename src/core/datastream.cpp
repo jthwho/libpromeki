@@ -914,6 +914,10 @@ DataStream &DataStream::operator<<(const Variant &val) {
                 case Variant::TypeEnum:       *this << val.get<Enum>(); break;
                 case Variant::TypeEnumList:   *this << val.get<EnumList>(); break;
                 case Variant::TypeMediaTimeStamp: *this << val.get<MediaTimeStamp>(); break;
+                case Variant::TypeMasteringDisplay:
+                        *this << val.get<MasteringDisplay>(); break;
+                case Variant::TypeContentLightLevel:
+                        *this << val.get<ContentLightLevel>(); break;
 #if PROMEKI_ENABLE_NETWORK
                 case Variant::TypeMacAddress: *this << val.get<MacAddress>(); break;
                 case Variant::TypeEUI64:      *this << val.get<EUI64>(); break;
@@ -1240,6 +1244,28 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                         break;
                 }
                 case TypeStringList:  val = readStringListData(); break;
+                case TypeMasteringDisplay: {
+                        // Outer tag already consumed; inner values are tagged
+                        // doubles read via operator>>.  Ten doubles total:
+                        // red.x, red.y, green.x, green.y, blue.x, blue.y,
+                        // whitePoint.x, whitePoint.y, minLum, maxLum.
+                        double rx = 0.0, ry = 0.0, gx = 0.0, gy = 0.0;
+                        double bx = 0.0, by = 0.0, wx = 0.0, wy = 0.0;
+                        double minL = 0.0, maxL = 0.0;
+                        *this >> rx >> ry >> gx >> gy >> bx >> by >> wx >> wy >> minL >> maxL;
+                        if(_status != Ok) { val = Variant(); break; }
+                        val = MasteringDisplay(CIEPoint(rx, ry), CIEPoint(gx, gy),
+                                               CIEPoint(bx, by), CIEPoint(wx, wy),
+                                               minL, maxL);
+                        break;
+                }
+                case TypeContentLightLevel: {
+                        uint32_t maxCLL = 0, maxFALL = 0;
+                        *this >> maxCLL >> maxFALL;
+                        if(_status != Ok) { val = Variant(); break; }
+                        val = ContentLightLevel(maxCLL, maxFALL);
+                        break;
+                }
 #if PROMEKI_ENABLE_NETWORK
                 case TypeMacAddress: {
                         String s = readStringData();

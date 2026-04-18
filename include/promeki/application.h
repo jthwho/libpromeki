@@ -11,13 +11,13 @@
 #include <functional>
 
 #include <promeki/namespace.h>
+#include <promeki/eventloop.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
 #include <promeki/uuid.h>
 
 PROMEKI_NAMESPACE_BEGIN
 class Thread;
-class EventLoop;
 class IODevice;
 PROMEKI_NAMESPACE_END
 
@@ -332,6 +332,23 @@ class Application {
                  */
                 static int exitCode();
 
+                /**
+                 * @brief Runs the main event loop until quit() is called.
+                 *
+                 * Thin wrapper around @c mainEventLoop()->exec().  The
+                 * Application's own @ref EventLoop is constructed with
+                 * the Application itself; any @c Subsystem objects
+                 * (SDL, TUI, ...) installed before this call have
+                 * registered their I/O sources on that loop, so
+                 * @c exec() blocks until one of them or a posted
+                 * @ref quit() causes the loop to exit.
+                 *
+                 * @return The exit code passed to @ref quit (or the
+                 *         exit code passed to @c EventLoop::quit()
+                 *         directly).
+                 */
+                int exec();
+
         private:
                 struct Data {
                         StringList         arguments;
@@ -343,6 +360,14 @@ class Application {
                         QuitRequestHandler quitHandler;
                 };
                 static Data &data();
+
+                // The main-thread EventLoop.  Constructed as a member
+                // of Application so subsystems installed on the stack
+                // immediately after `Application app(argc, argv);`
+                // have a ready-made loop to register their I/O
+                // sources on.  Declared after the static data accessor
+                // so it participates in member init order.
+                EventLoop               _eventLoop;
 };
 
 PROMEKI_NAMESPACE_END

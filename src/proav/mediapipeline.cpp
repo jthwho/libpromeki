@@ -9,6 +9,7 @@
 
 #include <promeki/logger.h>
 #include <promeki/set.h>
+#include <promeki/timerevent.h>
 #include <promeki/util.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -497,6 +498,58 @@ void MediaPipeline::initiateClose(bool clean) {
         for(size_t i = 0; i < alreadyClosed.size(); ++i) {
                 onStageClosed(alreadyClosed[i], Error::Ok);
         }
+
+        // Arm the close watchdog.  If the cascade relies on frames
+        // draining through a stuck stage (for example a FrameBridge
+        // output blocked in @c waitForConsumer with no consumers),
+        // the normal upstream-done propagation will never reach the
+        // downstream trigger points.  After @ref _closeTimeoutMs we
+        // escalate to @ref forceCloseRemaining to unblock everything
+        // and let the cascade finish.  A zero timeout disables the
+        // watchdog entirely — callers opting into an unbounded
+        // graceful close.
+        if(_closing && _closeTimeoutMs > 0 && _closeWatchdogTimerId < 0) {
+                _closeWatchdogTimerId = startTimer(_closeTimeoutMs,
+                                                   /*singleShot=*/true);
+        }
+}
+
+void MediaPipeline::timerEvent(TimerEvent *e) {
+        if(e != nullptr && e->timerId() == _closeWatchdogTimerId) {
+                _closeWatchdogTimerId = -1;
+                forceCloseRemaining();
+                return;
+        }
+        ObjectBase::timerEvent(e);
+}
+
+void MediaPipeline::forceCloseRemaining() {
+        if(!_closing || _state == State::Closed) return;
+        // Snapshot the outstanding set — close(false) on a stage can
+        // re-enter via its closedSignal handler, mutating
+        // _stagesAwaitingClosed while we iterate.
+        promeki::List<String> remaining;
+        for(auto it = _stagesAwaitingClosed.cbegin();
+            it != _stagesAwaitingClosed.cend(); ++it) {
+                remaining.pushToBack(*it);
+        }
+        for(size_t i = 0; i < remaining.size(); ++i) {
+                auto sit = _stages.find(remaining[i]);
+                if(sit == _stages.end() || sit->second == nullptr) continue;
+                MediaIO *io = sit->second;
+                if(!io->isOpen()) continue;
+                if(io->isClosing()) continue;
+                promekiWarn("MediaPipeline: close watchdog escalating "
+                            "stage '%s' to forced close",
+                            remaining[i].cstr());
+                // close(false) invokes the backend's
+                // cancelBlockingWork first, so a stuck executeCmd
+                // (e.g. FrameBridge waitForConsumer) unwinds with
+                // Error::Cancelled and the strand can process the
+                // submitted close.
+                Error err = io->close(false);
+                if(err.isError()) onStageClosed(remaining[i], err);
+        }
 }
 
 void MediaPipeline::onStageClosed(const String &stageName, Error err) {
@@ -509,6 +562,13 @@ void MediaPipeline::onStageClosed(const String &stageName, Error err) {
 }
 
 void MediaPipeline::finalizeClose() {
+        // Disarm the watchdog — a clean cascade has landed inside the
+        // deadline.  Safe to call with an inactive id.
+        if(_closeWatchdogTimerId >= 0) {
+                stopTimer(_closeWatchdogTimerId);
+                _closeWatchdogTimerId = -1;
+        }
+
         // Drop to Closed and notify listeners before destroying stages
         // so slots that probe the pipeline see the terminal state.
         // Blocking callers in @ref close pump events (or poll) until

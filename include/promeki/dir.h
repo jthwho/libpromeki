@@ -180,6 +180,31 @@ class Dir {
                 static Dir temp();
 
                 /**
+                 * @brief Returns a Dir for the library's IPC directory.
+                 *
+                 * The IPC directory is where cross-process primitives
+                 * — shared memory regions, local-socket files, lock
+                 * files, etc. — live by convention.  Use this rather
+                 * than hard-coding paths so IPC traffic can be moved
+                 * in one place via @ref LibraryOptions::IpcDir.
+                 *
+                 * Resolves in this order:
+                 *  1. @ref LibraryOptions::IpcDir — non-empty override
+                 *     (set programmatically or via the
+                 *     @c PROMEKI_OPT_IpcDir env var).
+                 *  2. On Linux: @c /dev/shm/promeki — tmpfs-backed,
+                 *     fast, and well suited to both @c shm_open objects
+                 *     and path-named @c AF_UNIX sockets.  The @c promeki
+                 *     sub-directory is @em not auto-created; callers
+                 *     that need it should @ref mkpath the returned
+                 *     @ref Dir.
+                 *  3. Other platforms: the result of @ref Dir::temp.
+                 *
+                 * @return A Dir wrapping the effective IPC directory.
+                 */
+                static Dir ipc();
+
+                /**
                  * @brief Sets the current working directory.
                  * @param path The new working directory.
                  * @return Error::Ok on success, or an error on failure.

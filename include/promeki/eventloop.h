@@ -21,6 +21,11 @@ PROMEKI_NAMESPACE_BEGIN
 
 class ObjectBase;
 
+// Defined in eventloop.cpp; owns the platform-specific wake file
+// descriptor (eventfd on Linux, self-pipe elsewhere) used to
+// interrupt poll() when new work is posted.
+class EventLoopWakeFd;
+
 /**
  * @brief Per-thread event loop providing event dispatch, timers, and posted callables.
  * @ingroup events
@@ -130,26 +135,6 @@ class EventLoop {
                 void postCallable(std::function<void()> func);
 
                 /**
-                 * @brief Sets a wake callback invoked whenever new work is posted.
-                 *
-                 * The callback is invoked from inside @c postCallable,
-                 * @c postEvent, and @c quit after the item has been
-                 * pushed to the queue.  It is intended for use by an
-                 * external blocking mechanism (for example, the SDL
-                 * event pump blocked on @c SDL_WaitEvent) that must be
-                 * woken so it can return and let the owning event loop
-                 * drain its queue.
-                 *
-                 * The callback runs on the posting thread, which may be
-                 * any thread, so it must be thread-safe.  Only one wake
-                 * callback may be registered at a time; passing an
-                 * empty function removes the current callback.
-                 *
-                 * @param cb The wake callback, or an empty function to clear.
-                 */
-                void setWakeCallback(std::function<void()> cb);
-
-                /**
                  * @brief Posts an Event to this EventLoop for delivery to a receiver.
                  *
                  * Takes ownership of @p event.  Thread-safe.  The event will be
@@ -222,6 +207,97 @@ class EventLoop {
                  */
                 int exitCode() const { return _exitCode.value(); }
 
+                /**
+                 * @brief Returns milliseconds until the next timer fires.
+                 *
+                 * Intended for external pumps that want to bound their
+                 * own wait (e.g. @c SDL_WaitEventTimeout) by the
+                 * loop's next timer deadline so armed timers fire on
+                 * schedule even when no external events are arriving.
+                 *
+                 * @return The milliseconds remaining until the next
+                 *         timer fire (minimum 1 for sub-millisecond
+                 *         remaining), or @c 0 when no timer is armed.
+                 */
+                unsigned int nextTimerTimeout() const;
+
+                /** @brief Bitmask values for @ref addIoSource. */
+                enum IoEvent : uint32_t {
+                        IoRead  = 0x01,  ///< fd is readable
+                        IoWrite = 0x02,  ///< fd is writable
+                        IoError = 0x04   ///< error / hangup (always reported; mask is informational)
+                };
+
+                /**
+                 * @brief Callback invoked when a registered I/O source becomes ready.
+                 *
+                 * The @p events bitmask reports which of @ref IoRead /
+                 * @ref IoWrite / @ref IoError actually fired for this
+                 * wake.  Always a subset (or equal to) the events the
+                 * source was registered with, plus @ref IoError which
+                 * is reported whenever @c POLLERR / @c POLLHUP surface
+                 * regardless of the caller's mask.
+                 */
+                using IoCallback = std::function<void(int fd, uint32_t events)>;
+
+                /**
+                 * @brief Registers a file descriptor to be monitored by this EventLoop.
+                 *
+                 * While registered, @p cb is invoked on the EventLoop's
+                 * thread each time @p fd becomes ready for any of the
+                 * requested @p events.  The callback runs synchronously
+                 * between @c processEvents iterations (not from inside
+                 * @c poll), so it may call any EventLoop API including
+                 * @ref removeIoSource on itself.
+                 *
+                 * Thread-safe: may be called from any thread.  When
+                 * called cross-thread, the EventLoop is woken so its
+                 * next poll includes the newly registered fd.
+                 *
+                 * The caller retains ownership of @p fd — the EventLoop
+                 * never closes it.  Close the fd only after
+                 * @ref removeIoSource has been called and the handle
+                 * is no longer in use.
+                 *
+                 * The API intentionally uses an opaque integer handle
+                 * rather than an ObjectBase-receiver pattern: TUI and
+                 * SDL register a handful of long-lived sources at
+                 * startup and unregister them at shutdown, which maps
+                 * naturally onto a return-the-handle-and-hold-it model.
+                 * An ObjectBase-receiver variant can be layered on top
+                 * later if a widget-like consumer emerges — don't add
+                 * one speculatively.
+                 *
+                 * @param fd     The file descriptor to monitor.
+                 * @param events Bitmask of @ref IoEvent values requesting
+                 *               read / write readiness notifications.
+                 * @param cb     Callback invoked with (fd, readyEvents)
+                 *               on each readiness event.
+                 * @return A handle @c >= 0 on success, or @c -1 on
+                 *         failure (invalid @p fd, empty @p cb, empty
+                 *         @p events, or unsupported on this platform).
+                 *
+                 * @note On non-POSIX platforms (Windows, Emscripten)
+                 *       this call currently returns @c -1 and records
+                 *       @c Error::NotImplemented in the library log.
+                 *       Emscripten cooperative loops should move to
+                 *       explicit non-blocking @ref processEvents calls.
+                 */
+                int addIoSource(int fd, uint32_t events, IoCallback cb);
+
+                /**
+                 * @brief Removes a previously-registered I/O source.
+                 *
+                 * Thread-safe.  If called cross-thread while a callback
+                 * is in flight on the loop thread, the in-flight
+                 * callback completes first; subsequent readiness events
+                 * for this handle do not fire.  Unknown handles are
+                 * silently ignored.
+                 *
+                 * @param handle The handle returned by @ref addIoSource.
+                 */
+                void removeIoSource(int handle);
+
         private:
                 struct CallableItem { std::function<void()> func; };
                 struct EventItem { ObjectBase *receiver; Event *event; };
@@ -255,30 +331,55 @@ class EventLoop {
                 List<TimerInfo>                 _timers;
                 Atomic<int>                     _nextTimerId{1};
 
-                // Optional wake callback, invoked after any post.  The
-                // common use case (SDLApplication) sets this once at
-                // startup and never changes it, so a plain function
-                // with a mutex around mutation is sufficient; the
-                // read/invoke path happens on every post but the
-                // mutex is uncontended in practice.
-                mutable Mutex                   _wakeMutex;
-                std::function<void()>           _wakeCallback;
+                // Platform wake fd (eventfd on Linux, self-pipe
+                // elsewhere).  Owned by the EventLoop; opened in the
+                // constructor, closed in the destructor.  Written by
+                // postCallable / postEvent / quit / startTimer /
+                // stopTimer to unblock poll() in waitOnSources, and
+                // included in every poll set as index 0.
+                EventLoopWakeFd                 *_wake = nullptr;
 
-                void notifyWake();
+                // I/O source registration.  Mutation under _ioMutex,
+                // poll set built under _ioMutex into a short-lived
+                // stack copy, callbacks fired after the lock is
+                // released so a callback may call addIoSource /
+                // removeIoSource on the same EventLoop without
+                // deadlocking.
+                struct IoSource {
+                        int             handle;
+                        int             fd;
+                        uint32_t        events;
+                        IoCallback      cb;
+                        bool            pendingRemove = false;
+                };
+                mutable Mutex                   _ioMutex;
+                List<IoSource>                  _ioSources;
+                Atomic<int>                     _nextIoHandle{1};
 
                 /**
-                 * @brief Wakes the owning thread if called cross-thread.
+                 * @brief Writes to the internal wake fd unconditionally.
                  *
-                 * Pushes a no-op CallableItem so a sleeping @c Queue::pop
-                 * returns and @c processEvents re-evaluates timer state.
-                 * No-op when called from the owning thread, since that
-                 * thread is by definition not asleep in @c pop.
+                 * Cheap: one @c write(wakeFd, ...) call.  Safe to call
+                 * from any thread.  Redundant wakes are harmless —
+                 * the fd is drained inside @c waitOnSources before
+                 * the queue is processed, and a spurious wake just
+                 * costs one extra @c poll() return.
                  */
-                void wakeIfCrossThread();
+                void wakeSelf();
 
                 bool dispatchItem(Item &item);
                 void processTimers();
-                unsigned int nextTimerTimeout() const;
+
+                // Waits on the wake fd + registered I/O sources via
+                // poll(), for up to @p waitMs milliseconds (0 = wait
+                // indefinitely — callers clamp by timers before
+                // calling).  On return, drains the wake fd and fires
+                // any ready I/O source callbacks.  On non-POSIX
+                // platforms, falls back to the condvar-based
+                // Queue::pop wait so Windows / Emscripten builds
+                // still compile and behave as before (minus
+                // IoSource support).
+                void waitOnSources(unsigned int waitMs);
 };
 
 PROMEKI_NAMESPACE_END

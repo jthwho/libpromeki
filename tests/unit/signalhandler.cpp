@@ -153,4 +153,117 @@ TEST_CASE("SignalHandler: SIGINT translates to Application::quit and wakes Event
                                        savedDoubleTap);
 }
 
+// ============================================================================
+// Custom signal subscription (SIGUSR1)
+// ============================================================================
+
+TEST_CASE("SignalHandler: subscribe rejects invalid arguments") {
+        const bool wasInstalled = SignalHandler::isInstalled();
+        SignalHandler::install();
+
+        // Termination signals are reserved.
+        CHECK(SignalHandler::subscribe(SIGINT,
+                [](int){}) == -1);
+        CHECK(SignalHandler::subscribe(SIGTERM,
+                [](int){}) == -1);
+
+        // Empty callback.
+        CHECK(SignalHandler::subscribe(SIGUSR1,
+                SignalHandler::Callback()) == -1);
+
+        // Subscribe before install is refused.
+        SignalHandler::uninstall();
+        CHECK(SignalHandler::subscribe(SIGUSR1,
+                [](int){}) == -1);
+
+        if(wasInstalled) SignalHandler::install();
+}
+
+TEST_CASE("SignalHandler: subscribe dispatches the callback on signal delivery") {
+        const bool wasInstalled = SignalHandler::isInstalled();
+        SignalHandler::install();
+
+        std::atomic<int> count{0};
+        std::atomic<int> lastSigno{0};
+        int h = SignalHandler::subscribe(SIGUSR1, [&](int signo) {
+                lastSigno.store(signo, std::memory_order_relaxed);
+                count.fetch_add(1, std::memory_order_relaxed);
+        });
+        REQUIRE(h >= 0);
+
+        REQUIRE(::kill(::getpid(), SIGUSR1) == 0);
+
+        ElapsedTimer timer;
+        timer.start();
+        while(count.load() < 1 && timer.elapsed() < 1000) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        CHECK(count.load() >= 1);
+        CHECK(lastSigno.load() == SIGUSR1);
+
+        SignalHandler::unsubscribe(h);
+        if(!wasInstalled) SignalHandler::uninstall();
+}
+
+TEST_CASE("SignalHandler: unsubscribe stops further callbacks") {
+        const bool wasInstalled = SignalHandler::isInstalled();
+        SignalHandler::install();
+
+        std::atomic<int> count{0};
+        int h = SignalHandler::subscribe(SIGUSR1, [&](int) {
+                count.fetch_add(1, std::memory_order_relaxed);
+        });
+        REQUIRE(h >= 0);
+
+        REQUIRE(::kill(::getpid(), SIGUSR1) == 0);
+        ElapsedTimer timer;
+        timer.start();
+        while(count.load() < 1 && timer.elapsed() < 1000) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        REQUIRE(count.load() >= 1);
+
+        SignalHandler::unsubscribe(h);
+        int before = count.load();
+
+        // A second SIGUSR1 after unsubscribe must not invoke the
+        // now-dead callback.  Give the watcher thread time to drain
+        // the pipe — if it had dispatched, count would have grown.
+        REQUIRE(::kill(::getpid(), SIGUSR1) == 0);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        CHECK(count.load() == before);
+
+        if(!wasInstalled) SignalHandler::uninstall();
+}
+
+TEST_CASE("SignalHandler: multiple subscribers receive the same signal") {
+        const bool wasInstalled = SignalHandler::isInstalled();
+        SignalHandler::install();
+
+        std::atomic<int> a{0};
+        std::atomic<int> b{0};
+        int ha = SignalHandler::subscribe(SIGUSR1, [&](int) {
+                a.fetch_add(1, std::memory_order_relaxed);
+        });
+        int hb = SignalHandler::subscribe(SIGUSR1, [&](int) {
+                b.fetch_add(1, std::memory_order_relaxed);
+        });
+        REQUIRE(ha >= 0);
+        REQUIRE(hb >= 0);
+        CHECK(ha != hb);
+
+        REQUIRE(::kill(::getpid(), SIGUSR1) == 0);
+        ElapsedTimer timer;
+        timer.start();
+        while((a.load() < 1 || b.load() < 1) && timer.elapsed() < 1000) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        CHECK(a.load() >= 1);
+        CHECK(b.load() >= 1);
+
+        SignalHandler::unsubscribe(ha);
+        SignalHandler::unsubscribe(hb);
+        if(!wasInstalled) SignalHandler::uninstall();
+}
+
 #endif // PROMEKI_PLATFORM_POSIX

@@ -43,6 +43,12 @@ void MediaIOTask::configChanged(const MediaConfig &delta) {
         (void)delta;
 }
 
+void MediaIOTask::cancelBlockingWork() {
+        // No-op for backends whose executeCmd is strictly
+        // non-blocking.  Backends that may block inside executeCmd
+        // override this to signal their wait loops to unwind.
+}
+
 int MediaIOTask::pendingOutput() const {
         return 0;
 }

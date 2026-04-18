@@ -606,6 +606,80 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                 .setDescription("FrameSync input queue depth."));
 
                 // ============================================================
+                // FrameBridge (cross-process shared-memory frame transport)
+                // ============================================================
+
+                /// @brief String — logical bridge name.  Required.  Identifies
+                /// the FrameBridge output that inputs connect to.
+                PROMEKI_DECLARE_ID(FrameBridgeName,
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("FrameBridge logical name (required)."));
+
+                /// @brief int — number of ring-buffer slots.  Default 2 (ping-pong).
+                PROMEKI_DECLARE_ID(FrameBridgeRingDepth,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(2))
+                                .setMin(int32_t(2))
+                                .setDescription("FrameBridge ring-buffer depth."));
+
+                /// @brief int — per-slot metadata reserve bytes (default 64 KiB).
+                PROMEKI_DECLARE_ID(FrameBridgeMetadataReserveBytes,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(64 * 1024))
+                                .setMin(int32_t(512))
+                                .setDescription("FrameBridge metadata reserve per slot, bytes."));
+
+                /// @brief double — extra audio capacity fraction above worst-case
+                /// samples-per-frame (default 0.20).
+                PROMEKI_DECLARE_ID(FrameBridgeAudioHeadroomFraction,
+                        VariantSpec().setType(Variant::TypeDouble)
+                                .setDefault(0.20)
+                                .setMin(0.0)
+                                .setDescription("FrameBridge audio headroom fraction."));
+
+                /// @brief int — POSIX file mode for the shm and socket (default 0600).
+                PROMEKI_DECLARE_ID(FrameBridgeAccessMode,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0600))
+                                .setDescription("FrameBridge POSIX access mode."));
+
+                /// @brief String — group name for cross-user access (empty = skip).
+                PROMEKI_DECLARE_ID(FrameBridgeGroupName,
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("FrameBridge chown group (empty = skip)."));
+
+                /// @brief bool — input-side sync mode (default true).
+                ///
+                /// When @c true (the default) the consumer acknowledges
+                /// every frame before the publisher advances, providing
+                /// natural back-pressure.  When @c false the consumer
+                /// runs free and the publisher never waits — faster,
+                /// but the consumer must keep up or it will miss
+                /// frames.  Only consulted when the MediaIO task is
+                /// opened on the consumer side.
+                PROMEKI_DECLARE_ID(FrameBridgeSyncMode,
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(true)
+                                .setDescription("FrameBridge input sync mode."));
+
+                /// @brief bool — publisher blocks until a consumer attaches
+                /// (default true).
+                ///
+                /// When @c true (the default) the output-side
+                /// @c writeFrame blocks instead of silently dropping
+                /// frames while no consumer is connected.  Set
+                /// @c false to let the publisher run free even when
+                /// nobody is listening (e.g. live capture that must
+                /// not stall).  Only consulted when the MediaIO task
+                /// is opened on the producer side.
+                PROMEKI_DECLARE_ID(FrameBridgeWaitForConsumer,
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(true)
+                                .setDescription("FrameBridge output: block writeFrame until consumer connects."));
+
+                // ============================================================
                 // JPEG codec
                 // ============================================================
 

@@ -239,7 +239,11 @@ class DataStream {
                         TypeMediaPipelineRoute  = 0x3C, ///< @brief MediaPipelineConfig::Route
                         TypeMediaPipelineConfig = 0x3D, ///< @brief MediaPipelineConfig (metadata + stages + routes)
                         TypeMediaPipelineStats  = 0x3E, ///< @brief MediaPipelineStats (per-stage + aggregate)
-                        TypeVideoFormat        = 0x3F  ///< @brief VideoFormat (length-prefixed string round-trip)
+                        TypeVideoFormat        = 0x3F, ///< @brief VideoFormat (length-prefixed string round-trip)
+
+                        // HDR color metadata ------------------------------------
+                        TypeMasteringDisplay    = 0x40, ///< @brief MasteringDisplay (SMPTE ST 2086): 10 tagged doubles
+                        TypeContentLightLevel   = 0x41  ///< @brief ContentLightLevel (CTA-861.3): two tagged uint32
                 };
 
                 /** @brief Current wire format version. */
@@ -968,6 +972,89 @@ inline DataStream &operator>>(DataStream &stream, XYZColor &col) {
         stream >> x >> y >> z;
         if(stream.status() != DataStream::Ok) { col = XYZColor(); return stream; }
         col = XYZColor(x, y, z);
+        return stream;
+}
+
+// ============================================================================
+// MasteringDisplay / ContentLightLevel operators
+// ============================================================================
+//
+// Both types flow in through variant.h (HDR color metadata carried by Variant
+// and Metadata).  Inline here so they share datastream.h's include chain and
+// stay near the rest of the compact color types.
+
+/**
+ * @brief Writes a MasteringDisplay as tag + ten tagged doubles.
+ *
+ * Encoded as: red.x, red.y, green.x, green.y, blue.x, blue.y,
+ * whitePoint.x, whitePoint.y, minLuminance, maxLuminance.
+ *
+ * @param stream The stream to write to.
+ * @param md     The MasteringDisplay to serialize.
+ * @return The stream, for chaining.
+ */
+inline DataStream &operator<<(DataStream &stream, const MasteringDisplay &md) {
+        stream.writeTag(DataStream::TypeMasteringDisplay);
+        stream << md.red().x()        << md.red().y()
+               << md.green().x()      << md.green().y()
+               << md.blue().x()       << md.blue().y()
+               << md.whitePoint().x() << md.whitePoint().y()
+               << md.minLuminance()   << md.maxLuminance();
+        return stream;
+}
+
+/**
+ * @brief Reads a MasteringDisplay, validating the tag and ten tagged doubles.
+ * @param stream The stream to read from.
+ * @param md     The MasteringDisplay to populate.
+ * @return The stream, for chaining.
+ */
+inline DataStream &operator>>(DataStream &stream, MasteringDisplay &md) {
+        if(!stream.readTag(DataStream::TypeMasteringDisplay)) {
+                md = MasteringDisplay();
+                return stream;
+        }
+        double rx = 0.0, ry = 0.0, gx = 0.0, gy = 0.0;
+        double bx = 0.0, by = 0.0, wx = 0.0, wy = 0.0;
+        double minL = 0.0, maxL = 0.0;
+        stream >> rx >> ry >> gx >> gy >> bx >> by >> wx >> wy >> minL >> maxL;
+        if(stream.status() != DataStream::Ok) { md = MasteringDisplay(); return stream; }
+        md = MasteringDisplay(CIEPoint(rx, ry), CIEPoint(gx, gy),
+                              CIEPoint(bx, by), CIEPoint(wx, wy),
+                              minL, maxL);
+        return stream;
+}
+
+/**
+ * @brief Writes a ContentLightLevel as tag + two tagged uint32 values.
+ *
+ * Encoded as: maxCLL, maxFALL.
+ *
+ * @param stream The stream to write to.
+ * @param cll    The ContentLightLevel to serialize.
+ * @return The stream, for chaining.
+ */
+inline DataStream &operator<<(DataStream &stream, const ContentLightLevel &cll) {
+        stream.writeTag(DataStream::TypeContentLightLevel);
+        stream << cll.maxCLL() << cll.maxFALL();
+        return stream;
+}
+
+/**
+ * @brief Reads a ContentLightLevel, validating the tag and two tagged uint32 values.
+ * @param stream The stream to read from.
+ * @param cll    The ContentLightLevel to populate.
+ * @return The stream, for chaining.
+ */
+inline DataStream &operator>>(DataStream &stream, ContentLightLevel &cll) {
+        if(!stream.readTag(DataStream::TypeContentLightLevel)) {
+                cll = ContentLightLevel();
+                return stream;
+        }
+        uint32_t maxCLL = 0, maxFALL = 0;
+        stream >> maxCLL >> maxFALL;
+        if(stream.status() != DataStream::Ok) { cll = ContentLightLevel(); return stream; }
+        cll = ContentLightLevel(maxCLL, maxFALL);
         return stream;
 }
 

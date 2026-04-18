@@ -12,6 +12,7 @@
 #include <promeki/file.h>
 #include <promeki/libraryoptions.h>
 #include <promeki/numnameseq.h>
+#include <promeki/platform.h>
 
 using namespace promeki;
 
@@ -59,6 +60,38 @@ TEST_CASE("Dir: temp respects LibraryOptions::TempDir override") {
         CHECK(def.exists());
 
         LibraryOptions::instance().set(LibraryOptions::TempDir, saved);
+}
+
+TEST_CASE("Dir: ipc default is non-empty") {
+        // The override is cleared by other tests; make sure the default
+        // path exists and is non-empty on any platform we run on.
+        const String saved = LibraryOptions::instance().getAs<String>(
+                LibraryOptions::IpcDir);
+        LibraryOptions::instance().set(LibraryOptions::IpcDir, String());
+
+        Dir d = Dir::ipc();
+        CHECK_FALSE(d.path().isEmpty());
+#if defined(PROMEKI_PLATFORM_LINUX)
+        CHECK(d.path().toString() == String("/dev/shm/promeki"));
+#endif
+
+        LibraryOptions::instance().set(LibraryOptions::IpcDir, saved);
+}
+
+TEST_CASE("Dir: ipc respects LibraryOptions::IpcDir override") {
+        const String saved = LibraryOptions::instance().getAs<String>(
+                LibraryOptions::IpcDir);
+
+        LibraryOptions::instance().set(LibraryOptions::IpcDir,
+                String("/var/run/promeki-test-override"));
+        CHECK(Dir::ipc().path().toString() ==
+              String("/var/run/promeki-test-override"));
+
+        LibraryOptions::instance().set(LibraryOptions::IpcDir, String());
+        Dir def = Dir::ipc();
+        CHECK_FALSE(def.path().isEmpty());
+
+        LibraryOptions::instance().set(LibraryOptions::IpcDir, saved);
 }
 
 TEST_CASE("Dir: mkdir and remove") {

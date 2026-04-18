@@ -10,6 +10,7 @@
 #include <fnmatch.h>
 #include <promeki/dir.h>
 #include <promeki/libraryoptions.h>
+#include <promeki/platform.h>
 #include <promeki/stringlist.h>
 #include <promeki/resource.h>
 
@@ -183,6 +184,28 @@ Dir Dir::temp() {
         }
         std::error_code ec;
         return Dir(FilePath(std::filesystem::temp_directory_path(ec)));
+}
+
+Dir Dir::ipc() {
+        // Library-wide override wins — same model as Dir::temp.
+        const String override = LibraryOptions::instance()
+                .getAs<String>(LibraryOptions::IpcDir, String());
+        if(!override.isEmpty()) {
+                return Dir(FilePath(override));
+        }
+#if defined(PROMEKI_PLATFORM_LINUX)
+        // /dev/shm is a tmpfs mount available on all sane Linux
+        // distros and hosts both shm_open objects and AF_UNIX socket
+        // files.  The 'promeki' sub-directory isolates our IPC
+        // resources from other applications that use /dev/shm
+        // directly.
+        return Dir(FilePath("/dev/shm/promeki"));
+#else
+        // Macs, BSDs, Windows: fall back to the temp directory.  A
+        // deployment that needs cross-user IPC should set
+        // LibraryOptions::IpcDir to a suitable location.
+        return Dir::temp();
+#endif
 }
 
 Error Dir::setCurrent(const FilePath &path) {

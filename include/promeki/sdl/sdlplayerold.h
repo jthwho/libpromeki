@@ -101,7 +101,7 @@ class SDLAudioOutput;
  *
  * The main thread's render callable captures a pointer to the task.
  * The caller must therefore @c close() the MediaIO and let the main
- * event loop drain (for example by quitting the @c SDLApplication
+ * event loop drain (for example by quitting the @c SdlSubsystem
  * before @c delete) before destroying the owning MediaIO.  Destroying
  * the MediaIO while a render callable is still queued on the main
  * thread's event loop is undefined behavior — mirroring the same

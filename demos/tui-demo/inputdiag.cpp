@@ -3,7 +3,7 @@
  * @brief     Diagnostic: shows parsed TUI input events on screen
  */
 
-#include <promeki/tui/application.h>
+#include <promeki/tui/tuisubsystem.h>
 #include <promeki/tui/widget.h>
 #include <promeki/tui/label.h>
 #include <promeki/tui/button.h>
@@ -31,7 +31,7 @@ class DiagWidget : public TuiWidget {
 
         protected:
                 void paintEvent(TuiPaintEvent *) override {
-                        TuiApplication *app = TuiApplication::instance();
+                        TuiSubsystem *app = TuiSubsystem::instance();
                         if(!app) return;
                         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
                         Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
@@ -116,7 +116,7 @@ class DiagRoot : public TuiWidget {
 
         protected:
                 void paintEvent(TuiPaintEvent *) override {
-                        TuiApplication *app = TuiApplication::instance();
+                        TuiSubsystem *app = TuiSubsystem::instance();
                         if(!app) return;
                         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
                         Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
@@ -137,11 +137,12 @@ class DiagRoot : public TuiWidget {
 };
 
 int main(int argc, char **argv) {
-        TuiApplication app(argc, argv);
+        Application  app(argc, argv);
+        TuiSubsystem tui;
 
         DiagRoot root;
-        app.setRootWidget(&root);
-        app.setFocusWidget(root.diag());
+        tui.setRootWidget(&root);
+        tui.setFocusWidget(root.diag());
 
         return app.exec();
 }

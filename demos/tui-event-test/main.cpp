@@ -5,7 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/tui/application.h>
+#include <promeki/tui/tuisubsystem.h>
 #include <promeki/tui/widget.h>
 #include <promeki/tui/label.h>
 #include <promeki/tui/layout.h>
@@ -125,7 +125,7 @@ class EventTestWidget : public TuiWidget {
 
         protected:
                 void paintEvent(TuiPaintEvent *) override {
-                        TuiApplication *app = TuiApplication::instance();
+                        TuiSubsystem *app = TuiSubsystem::instance();
                         if(!app) return;
                         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
                         Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
@@ -243,10 +243,11 @@ class EventTestWidget : public TuiWidget {
 };
 
 int main(int argc, char **argv) {
-        TuiApplication app(argc, argv);
+        Application  app(argc, argv);
+        TuiSubsystem tui;
 
         EventTestWidget root;
-        app.setRootWidget(&root);
+        tui.setRootWidget(&root);
 
         return app.exec();
 }

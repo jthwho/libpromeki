@@ -8,7 +8,7 @@
 #include <promeki/tui/tabwidget.h>
 #include <promeki/tui/painter.h>
 #include <promeki/tui/palette.h>
-#include <promeki/tui/application.h>
+#include <promeki/tui/tuisubsystem.h>
 #include <promeki/keyevent.h>
 #include <promeki/mouseevent.h>
 
@@ -70,7 +70,7 @@ void TuiTabWidget::updateTabGeometry() {
 }
 
 void TuiTabWidget::paintEvent(TuiPaintEvent *) {
-        TuiApplication *app = TuiApplication::instance();
+        TuiSubsystem *app = TuiSubsystem::instance();
         if(!app) return;
 
         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
@@ -143,7 +143,7 @@ void TuiTabWidget::keyEvent(KeyEvent *e) {
                 }
                 if(e->key() == KeyEvent::Key_Enter || e->key() == KeyEvent::Key_Space) {
                         // Activate the current tab (move focus into it)
-                        TuiApplication *app = TuiApplication::instance();
+                        TuiSubsystem *app = TuiSubsystem::instance();
                         if(app) app->focusNext(false);
                         e->accept();
                         return;

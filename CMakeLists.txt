@@ -737,6 +737,7 @@ set(PROMEKI_HEADERS
     include/promeki/regex.h
     include/promeki/resource.h
     include/promeki/securemem.h
+    include/promeki/selfpipe.h
     include/promeki/set.h
     include/promeki/sha1.h
     include/promeki/sharedptr.h
@@ -851,8 +852,10 @@ set(PROMEKI_SOURCES
     src/core/rect.cpp
     src/core/regex.cpp
     src/core/resource.cpp
+    src/core/selfpipe.cpp
     src/core/set.cpp
     src/core/sha1.cpp
+    src/core/sharedmemory.cpp
     src/core/sharedptr.cpp
     src/core/signal.cpp
     src/core/signalhandler.cpp
@@ -889,6 +892,9 @@ if(PROMEKI_ENABLE_NETWORK)
         include/promeki/abstractsocket.h
         include/promeki/ipv4address.h
         include/promeki/ipv6address.h
+        include/promeki/klvframe.h
+        include/promeki/localserver.h
+        include/promeki/localsocket.h
         include/promeki/loopbacktransport.h
         include/promeki/macaddress.h
         include/promeki/multicastmanager.h
@@ -912,6 +918,9 @@ if(PROMEKI_ENABLE_NETWORK)
         src/network/ipv4address.cpp
         src/network/ipv6address.cpp
         src/network/eui64.cpp
+        src/network/klvframe.cpp
+        src/network/localserver.cpp
+        src/network/localsocket.cpp
         src/network/loopbacktransport.cpp
         src/network/macaddress.cpp
         src/network/multicastmanager.cpp
@@ -949,6 +958,8 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/fastfont.h
         include/promeki/font.h
         include/promeki/frame.h
+        include/promeki/framebridge.h
+        include/promeki/mediaiotask_framebridge.h
         include/promeki/image.h
         include/promeki/imagedesc.h
         include/promeki/imagefile.h
@@ -998,6 +1009,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/codec.cpp
         src/proav/encodeddesc.cpp
         src/proav/frame.cpp
+        src/proav/framebridge.cpp
         src/proav/framesync.cpp
         src/proav/image.cpp
         src/proav/imagedataencoder.cpp
@@ -1027,6 +1039,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/mediaiotask_csc.cpp
         src/proav/mediaiotask_src.cpp
         src/proav/mediaiotask_burn.cpp
+        src/proav/mediaiotask_framebridge.cpp
         src/proav/mediaiotask_framesync.cpp
         src/proav/mediaiotask_videoencoder.cpp
         src/proav/mediaiotask_videodecoder.cpp
@@ -1304,7 +1317,7 @@ endif()
 
 if(PROMEKI_BUILD_TUI)
     set(PROMEKI_TUI_HEADERS
-        include/promeki/tui/application.h
+        include/promeki/tui/tuisubsystem.h
         include/promeki/tui/button.h
         include/promeki/tui/checkbox.h
         include/promeki/tui/frame.h
@@ -1328,7 +1341,7 @@ if(PROMEKI_BUILD_TUI)
     )
 
     set(PROMEKI_TUI_SOURCES
-        src/tui/application.cpp
+        src/tui/tuisubsystem.cpp
         src/tui/button.cpp
         src/tui/checkbox.cpp
         src/tui/frame.cpp
@@ -1372,7 +1385,7 @@ if(PROMEKI_BUILD_SDL)
     find_package(SDL3 REQUIRED)
 
     set(PROMEKI_SDL_HEADERS
-        include/promeki/sdl/sdlapplication.h
+        include/promeki/sdl/sdlsubsystem.h
         include/promeki/sdl/sdlaudioclock.h
         include/promeki/sdl/sdlaudiooutput.h
         include/promeki/sdl/sdleventpump.h
@@ -1383,7 +1396,7 @@ if(PROMEKI_BUILD_SDL)
     )
 
     set(PROMEKI_SDL_SOURCES
-        src/sdl/sdlapplication.cpp
+        src/sdl/sdlsubsystem.cpp
         src/sdl/sdlaudiooutput.cpp
         src/sdl/sdlaudioclock.cpp
         src/sdl/sdleventpump.cpp
@@ -1641,8 +1654,10 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/resource.cpp
         tests/unit/result.cpp
         tests/unit/securebuffer.cpp
+        tests/unit/selfpipe.cpp
         tests/unit/set.cpp
         tests/unit/sha1.cpp
+        tests/unit/sharedmemory.cpp
         tests/unit/sharedptr.cpp
         tests/unit/signal.cpp
         tests/unit/signalhandler.cpp
@@ -1682,6 +1697,8 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/network/ipv4address.cpp
             tests/unit/network/ipv6address.cpp
             tests/unit/network/eui64.cpp
+            tests/unit/network/klvframe.cpp
+            tests/unit/network/localsocket.cpp
             tests/unit/network/loopbacktransport.cpp
             tests/unit/network/macaddress.cpp
             tests/unit/network/multicastmanager.cpp
@@ -1714,6 +1731,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/fastfont.cpp
             tests/unit/basicfont.cpp
             tests/unit/frame.cpp
+            tests/unit/framebridge.cpp
             tests/unit/image.cpp
             tests/unit/imagedataencoder.cpp
             tests/unit/imagedatadecoder.cpp
@@ -1741,6 +1759,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/mediaiotask_csc.cpp
             tests/unit/mediaiotask_src.cpp
             tests/unit/mediaiotask_burn.cpp
+            tests/unit/mediaiotask_framebridge.cpp
             tests/unit/mediaiotask_framesync.cpp
             tests/unit/mediaiotask_videoencoder.cpp
             tests/unit/mediaiotask_videodecoder.cpp
@@ -1833,6 +1852,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/tui/statusbar.cpp
             tests/unit/tui/tabwidget.cpp
             tests/unit/tui/textarea.cpp
+            tests/unit/tui/tuisubsystem.cpp
             tests/unit/tui/widget.cpp
         )
         add_executable(unittest-tui ${UNITTEST_TUI_SOURCES})
@@ -1848,6 +1868,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/doctest_main.cpp
             tests/unit/sdl/sdlaudioclock.cpp
             tests/unit/sdl/sdlrenderer.cpp
+            tests/unit/sdl/sdlsubsystem.cpp
         )
         add_executable(unittest-sdl ${UNITTEST_SDL_SOURCES})
         target_compile_definitions(unittest-sdl PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:DevRelease>>:PROMEKI_DEBUG_ENABLE>)

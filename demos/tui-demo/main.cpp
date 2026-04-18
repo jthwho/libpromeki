@@ -5,7 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/tui/application.h>
+#include <promeki/tui/tuisubsystem.h>
 #include <promeki/tui/widget.h>
 #include <promeki/tui/label.h>
 #include <promeki/tui/button.h>
@@ -146,7 +146,7 @@ class BasicWidgetsTab : public TuiWidget {
                 }
 
                 void paintEvent(TuiPaintEvent *) override {
-                        TuiApplication *app = TuiApplication::instance();
+                        TuiSubsystem *app = TuiSubsystem::instance();
                         if(!app) return;
                         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
                         Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
@@ -197,8 +197,7 @@ void BasicWidgetsTab::world() {
 }
 
 void BasicWidgetsTab::quit() {
-        TuiApplication *app = TuiApplication::instance();
-        if(app) app->quit(0);
+        Application::quit(0);
 }
 
 void BasicWidgetsTab::checkboxToggled(bool checked) {
@@ -261,7 +260,7 @@ class TextInputTab : public TuiWidget {
 
         protected:
                 void paintEvent(TuiPaintEvent *) override {
-                        TuiApplication *app = TuiApplication::instance();
+                        TuiSubsystem *app = TuiSubsystem::instance();
                         if(!app) return;
                         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
                         Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
@@ -363,7 +362,7 @@ class ListViewTab : public TuiWidget {
 
         protected:
                 void paintEvent(TuiPaintEvent *) override {
-                        TuiApplication *app = TuiApplication::instance();
+                        TuiSubsystem *app = TuiSubsystem::instance();
                         if(!app) return;
                         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
                         Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
@@ -429,7 +428,7 @@ class SplitterTab : public TuiWidget {
 
         protected:
                 void paintEvent(TuiPaintEvent *) override {
-                        TuiApplication *app = TuiApplication::instance();
+                        TuiSubsystem *app = TuiSubsystem::instance();
                         if(!app) return;
                         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
                         Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
@@ -461,7 +460,7 @@ class ColorsTab : public TuiWidget {
 
         protected:
                 void paintEvent(TuiPaintEvent *) override {
-                        TuiApplication *app = TuiApplication::instance();
+                        TuiSubsystem *app = TuiSubsystem::instance();
                         if(!app) return;
                         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
                         Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
@@ -642,7 +641,7 @@ class DemoWidget : public TuiWidget {
 
         protected:
                 void paintEvent(TuiPaintEvent *) override {
-                        TuiApplication *app = TuiApplication::instance();
+                        TuiSubsystem *app = TuiSubsystem::instance();
                         if(!app) return;
                         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
                         Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
@@ -679,10 +678,11 @@ class DemoWidget : public TuiWidget {
 };
 
 int main(int argc, char **argv) {
-        TuiApplication app(argc, argv);
+        Application  app(argc, argv);
+        TuiSubsystem tui;
 
         DemoWidget root;
-        app.setRootWidget(&root);
+        tui.setRootWidget(&root);
 
         return app.exec();
 }

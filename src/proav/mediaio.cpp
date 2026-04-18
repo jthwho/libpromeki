@@ -863,6 +863,13 @@ Error MediaIO::close(bool block) {
         // in flight plus the trailing EOS pushed by the finalize task.
         _closing = true;
 
+        // Give the backend a chance to unwind any in-flight blocking
+        // command from the caller's thread — backends whose executeCmd
+        // can block on external signals (for example, a FrameBridge
+        // publisher waiting for a consumer) would otherwise keep the
+        // strand busy and starve the Close we're about to submit.
+        if(_task) _task->cancelBlockingWork();
+
         // Graceful close: do NOT cancel pending strand work.  Any
         // reads/writes submitted before close() keep running to
         // completion — blocking callers unblock with their real

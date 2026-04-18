@@ -261,6 +261,20 @@ class Metadata : public VariantDatabase<"Metadata"> {
                                 .setDefault(promeki::MediaTimeStamp())
                                 .setDescription("Clock-domain-aware timestamp for media timing."));
 
+                /// @brief FrameBridge publish timestamp for this frame.
+                ///
+                /// The moment the publisher placed this frame in the
+                /// @ref FrameBridge output queue, expressed in the
+                /// @ref ClockDomain::SystemMonotonic domain.  Set by
+                /// @ref MediaIOTask_FrameBridge on every consumer-side
+                /// frame so downstream stages can measure cross-process
+                /// transport latency and correlate with other
+                /// @ref MediaTimeStamp fields.
+                PROMEKI_DECLARE_ID(FrameBridgeTimeStamp,
+                        VariantSpec().setType(Variant::TypeMediaTimeStamp)
+                                .setDefault(promeki::MediaTimeStamp())
+                                .setDescription("FrameBridge publish timestamp (SystemMonotonic)."));
+
                 /// @brief RTP timestamp from the packet header (uint32_t).
                 ///
                 /// The raw 32-bit RTP timestamp carried in the packet(s)

@@ -23,6 +23,13 @@ Application::Data &Application::data() {
 }
 
 Application::Application(int argc, char **argv) {
+        // _eventLoop is a member and has already been constructed by
+        // the time this body runs, which sets EventLoop::current() on
+        // the main thread.  Thread::adoptCurrentThread then lazily
+        // caches that pointer the first time mainEventLoop() is
+        // queried — so subsystems (SDL, TUI) constructed immediately
+        // after this Application on the stack see a ready-made main
+        // EventLoop via Application::mainEventLoop().
         data().arguments = StringList(static_cast<size_t>(argc), const_cast<const char **>(argv));
         data().mainThread = Thread::adoptCurrentThread();
         LibraryOptions::instance().loadFromEnvironment();
@@ -159,6 +166,10 @@ bool Application::shouldQuit() {
 
 int Application::exitCode() {
         return data().exitCode;
+}
+
+int Application::exec() {
+        return _eventLoop.exec();
 }
 
 PROMEKI_NAMESPACE_END

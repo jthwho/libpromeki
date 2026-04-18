@@ -11,7 +11,7 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-class TuiApplication;
+class TuiSubsystem;
 
 // Backward-compatible type aliases so existing TUI code compiles
 // unchanged.  The actual types now live in core/widget.h.
@@ -25,7 +25,7 @@ using TuiSizePolicy = SizePolicy;
  * @ingroup tui_core
  *
  * Thin subclass of the core Widget that adds TUI-specific
- * behavior: notifying TuiApplication when the widget is dirty
+ * behavior: notifying TuiSubsystem when the widget is dirty
  * so that the screen can be repainted.
  *
  * All geometry, visibility, focus, size policy, layout, and
@@ -46,13 +46,13 @@ class TuiWidget : public Widget {
                 /**
                  * @brief Marks the widget as needing a repaint.
                  *
-                 * Overrides Widget::update() to also notify TuiApplication
+                 * Overrides Widget::update() to also notify TuiSubsystem
                  * that the screen needs repainting.
                  */
                 void update() override;
 
         private:
-                friend class TuiApplication;
+                friend class TuiSubsystem;
 };
 
 PROMEKI_NAMESPACE_END

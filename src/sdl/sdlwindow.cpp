@@ -6,7 +6,7 @@
  */
 
 #include <promeki/sdl/sdlwindow.h>
-#include <promeki/sdl/sdlapplication.h>
+#include <promeki/sdl/sdlsubsystem.h>
 #include <promeki/logger.h>
 #include <promeki/layout.h>
 
@@ -153,7 +153,7 @@ void SDLWindow::createWindow() {
         }
 
         // Register with the event pump
-        SDLApplication *app = SDLApplication::instance();
+        SdlSubsystem *app = SdlSubsystem::instance();
         if(app != nullptr) {
                 app->eventPump().registerWindow(this);
         }
@@ -166,7 +166,7 @@ void SDLWindow::destroyWindow() {
         if(_sdlWindow == nullptr) return;
 
         // Unregister from the event pump
-        SDLApplication *app = SDLApplication::instance();
+        SdlSubsystem *app = SdlSubsystem::instance();
         if(app != nullptr) {
                 app->eventPump().unregisterWindow(this);
         }

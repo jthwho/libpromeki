@@ -8,7 +8,7 @@
 #include <promeki/tui/splitter.h>
 #include <promeki/tui/painter.h>
 #include <promeki/tui/palette.h>
-#include <promeki/tui/application.h>
+#include <promeki/tui/tuisubsystem.h>
 #include <promeki/keyevent.h>
 #include <promeki/mouseevent.h>
 
@@ -60,7 +60,7 @@ void TuiSplitter::updateChildGeometry() {
 }
 
 void TuiSplitter::paintEvent(TuiPaintEvent *) {
-        TuiApplication *app = TuiApplication::instance();
+        TuiSubsystem *app = TuiSubsystem::instance();
         if(!app) return;
 
         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
@@ -136,7 +136,7 @@ void TuiSplitter::mouseEvent(MouseEvent *e) {
                 }
                 if(onSep) {
                         _dragging = true;
-                        TuiApplication *app = TuiApplication::instance();
+                        TuiSubsystem *app = TuiSubsystem::instance();
                         if(app) app->grabMouse(this);
                         e->accept();
                 }
@@ -149,7 +149,7 @@ void TuiSplitter::mouseEvent(MouseEvent *e) {
                 e->accept();
         } else if(e->action() == MouseEvent::Release && _dragging) {
                 _dragging = false;
-                TuiApplication *app = TuiApplication::instance();
+                TuiSubsystem *app = TuiSubsystem::instance();
                 if(app) app->releaseMouse();
                 e->accept();
         }

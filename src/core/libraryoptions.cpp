@@ -23,6 +23,7 @@ LibraryOptions &LibraryOptions::instance() {
                 // populate from their spec defaults.
                 const ID ids[] = { CrashHandler, CoreDumps, CrashLogDir,
                                    CaptureEnvironment,
+                                   TempDir, IpcDir,
                                    TerminationSignalHandler,
                                    SignalDoubleTapExit };
                 for(const ID &id : ids) {

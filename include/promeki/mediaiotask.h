@@ -239,6 +239,26 @@ class MediaIOTask {
                 virtual void configChanged(const MediaConfig &delta);
 
                 /**
+                 * @brief Requests that any in-flight blocking command unwind.
+                 *
+                 * Called by @ref MediaIO::close on the caller's thread
+                 * (not the strand) before the Close command is
+                 * submitted.  Backends whose @c executeCmd can block
+                 * waiting on external signals — for instance the
+                 * @c FrameBridge publisher waiting for a consumer or
+                 * sync ACK — should override this to prod that wait
+                 * loose (typically by setting a thread-safe atomic
+                 * checked inside the blocking call) so the queued
+                 * Close isn't stuck behind a permanently-blocked
+                 * command.
+                 *
+                 * Must be thread-safe with respect to whatever thread
+                 * is running @c executeCmd at the moment.  The default
+                 * implementation is a no-op.
+                 */
+                virtual void cancelBlockingWork();
+
+                /**
                  * @brief Returns the number of frames the task is
                  *        holding internally beyond what
                  *        @c pendingWrites tracks.

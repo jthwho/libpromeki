@@ -92,7 +92,9 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(DeviceError, NONE, "Hardware device reported an error"),
         DEFINE_ERROR(DeviceNotFound, NONE, "Hardware device was not found or cannot be opened"),
         DEFINE_ERROR(FormatMismatch, NONE, "Audio/video format does not match the expected format"),
-        DEFINE_ERROR(FontUnavailable, NONE, "Font could not be loaded or has zero metrics")
+        DEFINE_ERROR(FontUnavailable, NONE, "Font could not be loaded or has zero metrics"),
+        DEFINE_ERROR(BrokenPipe, EPIPE, "Peer closed the stream"),
+        DEFINE_ERROR(ConnectionReset, ECONNRESET, "Peer reset the connection")
 };
 
 static StructDatabase<int, Error::Code> &posixErrorDb() {

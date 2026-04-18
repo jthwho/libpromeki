@@ -8,7 +8,7 @@
 #include <promeki/tui/menu.h>
 #include <promeki/tui/painter.h>
 #include <promeki/tui/palette.h>
-#include <promeki/tui/application.h>
+#include <promeki/tui/tuisubsystem.h>
 #include <promeki/keyevent.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -73,7 +73,7 @@ Size2Di32 TuiMenu::sizeHint() const {
 void TuiMenu::paintEvent(TuiPaintEvent *) {
         if(!_open) return;
 
-        TuiApplication *app = TuiApplication::instance();
+        TuiSubsystem *app = TuiSubsystem::instance();
         if(!app) return;
 
         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
@@ -170,7 +170,7 @@ Size2Di32 TuiMenuBar::sizeHint() const {
 }
 
 void TuiMenuBar::paintEvent(TuiPaintEvent *) {
-        TuiApplication *app = TuiApplication::instance();
+        TuiSubsystem *app = TuiSubsystem::instance();
         if(!app) return;
 
         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
@@ -232,7 +232,7 @@ void TuiMenuBar::keyEvent(KeyEvent *e) {
                                 menu->setGeometry(Rect2Di32(pos.x(), pos.y(),
                                         hint.width(), hint.height()));
                                 menu->open();
-                                TuiApplication *app = TuiApplication::instance();
+                                TuiSubsystem *app = TuiSubsystem::instance();
                                 if(app) app->setFocusWidget(menu);
                         }
                         e->accept();

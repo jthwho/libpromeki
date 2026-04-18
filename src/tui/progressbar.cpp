@@ -8,7 +8,7 @@
 #include <promeki/tui/progressbar.h>
 #include <promeki/tui/painter.h>
 #include <promeki/tui/palette.h>
-#include <promeki/tui/application.h>
+#include <promeki/tui/tuisubsystem.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -39,7 +39,7 @@ Size2Di32 TuiProgressBar::sizeHint() const {
 }
 
 void TuiProgressBar::paintEvent(TuiPaintEvent *) {
-        TuiApplication *app = TuiApplication::instance();
+        TuiSubsystem *app = TuiSubsystem::instance();
         if(!app) return;
 
         Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));

@@ -39,6 +39,9 @@
 #include <promeki/mediadesc.h>
 #include <promeki/rect.h>
 #include <promeki/point.h>
+#include <promeki/masteringdisplay.h>
+#include <promeki/contentlightlevel.h>
+#include <promeki/ciepoint.h>
 
 using namespace promeki;
 
@@ -2624,4 +2627,175 @@ TEST_CASE("DataStream: round-trip through FileIODevice") {
         }
 
         std::fclose(tmp);
+}
+
+// ============================================================================
+// HDR metadata: MasteringDisplay + ContentLightLevel
+// ============================================================================
+
+TEST_CASE("DataStream: round-trip MasteringDisplay direct") {
+        WriterFixture f;
+        MasteringDisplay md(CIEPoint(0.708, 0.292),
+                            CIEPoint(0.170, 0.797),
+                            CIEPoint(0.131, 0.046),
+                            CIEPoint(0.3127, 0.3290),
+                            0.005, 1000.0);
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << md;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        {
+                DataStream rs = DataStream::createReader(&f.dev);
+                MasteringDisplay out;
+                rs >> out;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK(out == md);
+        }
+}
+
+TEST_CASE("DataStream: round-trip MasteringDisplay HDR10 constant") {
+        WriterFixture f;
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << MasteringDisplay::HDR10;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        {
+                DataStream rs = DataStream::createReader(&f.dev);
+                MasteringDisplay out;
+                rs >> out;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK(out == MasteringDisplay::HDR10);
+        }
+}
+
+TEST_CASE("DataStream: round-trip default-constructed MasteringDisplay") {
+        WriterFixture f;
+        MasteringDisplay md;
+        REQUIRE_FALSE(md.isValid());
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << md;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        {
+                DataStream rs = DataStream::createReader(&f.dev);
+                MasteringDisplay out;
+                rs >> out;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK_FALSE(out.isValid());
+                CHECK(out == md);
+        }
+}
+
+TEST_CASE("DataStream: round-trip ContentLightLevel direct") {
+        WriterFixture f;
+        ContentLightLevel cll(1000, 400);
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << cll;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        {
+                DataStream rs = DataStream::createReader(&f.dev);
+                ContentLightLevel out;
+                rs >> out;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK(out == cll);
+                CHECK(out.maxCLL() == 1000);
+                CHECK(out.maxFALL() == 400);
+        }
+}
+
+TEST_CASE("DataStream: round-trip default-constructed ContentLightLevel") {
+        WriterFixture f;
+        ContentLightLevel cll;
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << cll;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        {
+                DataStream rs = DataStream::createReader(&f.dev);
+                ContentLightLevel out;
+                rs >> out;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK(out == cll);
+                CHECK(out.maxCLL() == 0);
+                CHECK(out.maxFALL() == 0);
+        }
+}
+
+TEST_CASE("DataStream: round-trip Variant MasteringDisplay") {
+        WriterFixture f;
+        MasteringDisplay md = MasteringDisplay::HDR10;
+        Variant v(md);
+        REQUIRE(v.type() == Variant::TypeMasteringDisplay);
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << v;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        {
+                DataStream rs = DataStream::createReader(&f.dev);
+                Variant out;
+                rs >> out;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK(out.type() == Variant::TypeMasteringDisplay);
+                CHECK(out.get<MasteringDisplay>() == md);
+        }
+}
+
+TEST_CASE("DataStream: round-trip Variant ContentLightLevel") {
+        WriterFixture f;
+        ContentLightLevel cll(4000, 1200);
+        Variant v(cll);
+        REQUIRE(v.type() == Variant::TypeContentLightLevel);
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << v;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        {
+                DataStream rs = DataStream::createReader(&f.dev);
+                Variant out;
+                rs >> out;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK(out.type() == Variant::TypeContentLightLevel);
+                CHECK(out.get<ContentLightLevel>() == cll);
+        }
+}
+
+TEST_CASE("DataStream: round-trip Metadata carrying HDR types") {
+        WriterFixture f;
+        Metadata meta;
+        meta.set(Metadata::MasteringDisplay, MasteringDisplay::HDR10);
+        meta.set(Metadata::ContentLightLevel, ContentLightLevel(1000, 400));
+        meta.set(Metadata::Title, String("HDR Test"));
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << meta;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        {
+                DataStream rs = DataStream::createReader(&f.dev);
+                Metadata out;
+                rs >> out;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK(out == meta);
+                CHECK(out.getAs<MasteringDisplay>(Metadata::MasteringDisplay) ==
+                      MasteringDisplay::HDR10);
+                CHECK(out.getAs<ContentLightLevel>(Metadata::ContentLightLevel) ==
+                      ContentLightLevel(1000, 400));
+                CHECK(out.getAs<String>(Metadata::Title) == String("HDR Test"));
+        }
 }

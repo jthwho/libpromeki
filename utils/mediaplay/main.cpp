@@ -49,7 +49,7 @@
 #include <promeki/string.h>
 #include <promeki/thread.h>
 
-#include <promeki/sdl/sdlapplication.h>
+#include <promeki/sdl/sdlsubsystem.h>
 #include <promeki/sdl/sdlaudiooutput.h>
 #include <promeki/sdl/sdlplayer.h>
 #include <promeki/sdl/sdlplayerold.h>
@@ -276,7 +276,8 @@ int main(int argc, char **argv) {
                 return 1;
         }
 
-        SDLApplication app(argc, argv);
+        Application  app(argc, argv);
+        SdlSubsystem sdl;
 
         // Default SDL sink when the user did not pass any -d and did
         // not ask to load a preset.  Saved presets carry their own
@@ -471,9 +472,6 @@ int main(int argc, char **argv) {
                         // default quit path run so the EventLoop exits.
                         return false;
                 }
-                // Post the close onto the main EventLoop so pipeline
-                // state is only mutated on its owning thread (the
-                // handler itself runs on the signal-watcher thread).
                 // close(false) is idempotent on re-entry, so the
                 // posted callable doesn't need to re-check state.
                 auto kick = [&pipeline]() { (void)pipeline.close(false); };
@@ -482,20 +480,17 @@ int main(int argc, char **argv) {
                 return true;
         });
 
-        SDLApplication *sdlApp = SDLApplication::instance();
         if(ui.window != nullptr) {
-                ui.window->closedSignal.connect([sdlApp]() {
-                        if(sdlApp != nullptr) sdlApp->quit(0);
-                });
+                ui.window->closedSignal.connect([]() { Application::quit(0); });
         }
-        if(opts.duration > 0.0) {
-                sdlApp->eventLoop().startTimer(
+        if(opts.duration > 0.0 && mainEL != nullptr) {
+                mainEL->startTimer(
                         static_cast<unsigned int>(opts.duration * 1000.0),
-                        [sdlApp]() { sdlApp->quit(0); },
+                        []() { Application::quit(0); },
                         true);
         }
-        if(opts.verbose) {
-                sdlApp->eventLoop().startTimer(2000, [&pipeline]() {
+        if(opts.verbose && mainEL != nullptr) {
+                mainEL->startTimer(2000, [&pipeline]() {
                         MediaPipelineStats s = pipeline.stats();
                         StringList lines = s.describe();
                         for(size_t i = 0; i < lines.size(); ++i) {

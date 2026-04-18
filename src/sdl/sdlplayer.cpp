@@ -6,7 +6,7 @@
  */
 
 #include <promeki/sdl/sdlplayer.h>
-#include <promeki/sdl/sdlapplication.h>
+#include <promeki/sdl/sdlsubsystem.h>
 #include <promeki/sdl/sdlaudiooutput.h>
 #include <promeki/sdl/sdlvideowidget.h>
 #include <promeki/sdl/sdlwindow.h>
@@ -285,9 +285,9 @@ void SDLPlayerTask::pullLoop() {
 }
 
 void SDLPlayerTask::wakeMainThread() {
-        SDLApplication *app = SDLApplication::instance();
-        if(app != nullptr) {
-                app->eventLoop().postCallable([this]() {
+        SdlSubsystem *app = SdlSubsystem::instance();
+        if(app != nullptr && app->eventLoop() != nullptr) {
+                app->eventLoop()->postCallable([this]() {
                         renderPending();
                 });
         }
