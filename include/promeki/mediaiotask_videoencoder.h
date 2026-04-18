@@ -88,7 +88,9 @@ PROMEKI_NAMESPACE_BEGIN
  * enc->open(MediaIO::InputAndOutput);
  * enc->writeFrame(nv12Frame);
  * Frame::Ptr encoded;
- * enc->readFrame(encoded);  // encoded->packetList()[0] is the H.264 packet.
+ * enc->readFrame(encoded);
+ * // encoded->imageList()[0] is a compressed Image whose
+ * // Image::packet() carries the H.264 bitstream.
  * enc->close();
  * @endcode
  */

@@ -722,6 +722,22 @@ class VideoScanMode : public TypedEnum<VideoScanMode> {
                 static const VideoScanMode InterlacedEvenFirst;
                 static const VideoScanMode InterlacedOddFirst;
                 static const VideoScanMode PsF;
+
+                /**
+                 * @brief Returns true if this scan mode represents an
+                 * interlaced (two-field) raster — @ref Interlaced,
+                 * @ref InterlacedEvenFirst, or @ref InterlacedOddFirst.
+                 * @ref PsF is @em not considered interlaced by this
+                 * helper: its wire format is interlaced but its
+                 * content (and coded bitstream, when packed) is
+                 * progressive.
+                 */
+                bool isInterlaced() const {
+                        const int v = value();
+                        return v == 2 /*Interlaced*/
+                            || v == 3 /*InterlacedEvenFirst*/
+                            || v == 4 /*InterlacedOddFirst*/;
+                }
 };
 
 inline const VideoScanMode VideoScanMode::Unknown             { 0 };
@@ -1087,7 +1103,8 @@ class VideoEncoderPreset : public TypedEnum<VideoEncoderPreset> {
                                 { "UltraLowLatency", 0 },
                                 { "LowLatency",      1 },
                                 { "Balanced",        2 },
-                                { "HighQuality",     3 });  // default: Balanced
+                                { "HighQuality",     3 },
+                                { "Lossless",        4 });  // default: Balanced
 
                 using TypedEnum<VideoEncoderPreset>::TypedEnum;
 
@@ -1095,12 +1112,253 @@ class VideoEncoderPreset : public TypedEnum<VideoEncoderPreset> {
                 static const VideoEncoderPreset LowLatency;
                 static const VideoEncoderPreset Balanced;
                 static const VideoEncoderPreset HighQuality;
+                static const VideoEncoderPreset Lossless;
 };
 
 inline const VideoEncoderPreset VideoEncoderPreset::UltraLowLatency { 0 };
 inline const VideoEncoderPreset VideoEncoderPreset::LowLatency      { 1 };
 inline const VideoEncoderPreset VideoEncoderPreset::Balanced        { 2 };
 inline const VideoEncoderPreset VideoEncoderPreset::HighQuality     { 3 };
+inline const VideoEncoderPreset VideoEncoderPreset::Lossless        { 4 };
+
+/**
+ * @brief Well-known Enum type for video value range (aka quantization
+ *        range / full-range flag).
+ *
+ * @c Limited means studio / broadcast / "video" range — 16..235 on 8-bit
+ * Y'CbCr luma, 16..240 on the chroma channels, and the bit-depth
+ * scaling of those values for 10/12/16-bit.  @c Full means the whole
+ * digital range (0..255 on 8-bit, 0..2^N-1 in general).  @c Unknown is
+ * the "auto-derive" / "not declared" default used by @ref PixelDesc
+ * entries that pre-date the field being explicit, and by
+ * @ref MediaConfig keys that want downstream code to infer the range
+ * from the accompanying @ref PixelDesc.
+ *
+ * The numeric values are local to libpromeki and do @em not match any
+ * codec-specific on-wire representation.  Encoders translate to
+ * codec-native signalling (H.264/HEVC VUI @c videoFullRangeFlag, AV1
+ * @c colorRange, etc.) at session init.
+ */
+class VideoRange : public TypedEnum<VideoRange> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("VideoRange", 0,
+                                { "Unknown", 0 },
+                                { "Limited", 1 },
+                                { "Full",    2 });  // default: Unknown
+
+                using TypedEnum<VideoRange>::TypedEnum;
+
+                static const VideoRange Unknown;
+                static const VideoRange Limited;
+                static const VideoRange Full;
+};
+
+inline const VideoRange VideoRange::Unknown { 0 };
+inline const VideoRange VideoRange::Limited { 1 };
+inline const VideoRange VideoRange::Full    { 2 };
+
+/**
+ * @brief Well-known Enum type for VUI / container color primaries.
+ *
+ * Numeric values match ISO/IEC 23091-4 / ITU-T H.273 (and, by design,
+ * the NV_ENC_VUI_COLOR_PRIMARIES / AV1 `color_primaries` enumerations
+ * used in-bitstream by H.264 / HEVC / AV1).  Use this enum anywhere a
+ * codec-agnostic color-primaries identifier is needed (VideoEncoder
+ * VUI signalling, SDP `colorimetry=` parameters, etc.).
+ *
+ * Only the spec-registered values are exposed; reserved slots are
+ * omitted.
+ */
+class ColorPrimaries : public TypedEnum<ColorPrimaries> {
+        public:
+                // The @c Auto numeric value (255) deliberately sits
+                // outside the 0..22 H.273 value range so it can never
+                // collide with a spec-registered primary.  Encoders
+                // that see @c Auto resolve it by inspecting the input
+                // PixelDesc's ColorModel at session init time.
+                PROMEKI_REGISTER_ENUM_TYPE("ColorPrimaries", 255,
+                                { "BT709",       1 },
+                                { "Unspecified", 2 },
+                                { "BT470M",      4 },
+                                { "BT470BG",     5 },
+                                { "SMPTE170M",   6 },
+                                { "SMPTE240M",   7 },
+                                { "Film",        8 },
+                                { "BT2020",      9 },
+                                { "SMPTE428",   10 },
+                                { "SMPTE431",   11 },
+                                { "SMPTE432",   12 },
+                                { "JEDEC_P22",  22 },
+                                { "Auto",      255 });  // default: Auto
+
+                using TypedEnum<ColorPrimaries>::TypedEnum;
+
+                static const ColorPrimaries Auto;
+                static const ColorPrimaries Unspecified;
+                static const ColorPrimaries BT709;
+                static const ColorPrimaries BT470M;
+                static const ColorPrimaries BT470BG;
+                static const ColorPrimaries SMPTE170M;
+                static const ColorPrimaries SMPTE240M;
+                static const ColorPrimaries Film;
+                static const ColorPrimaries BT2020;
+                static const ColorPrimaries SMPTE428;
+                static const ColorPrimaries SMPTE431;
+                static const ColorPrimaries SMPTE432;
+                static const ColorPrimaries JEDEC_P22;
+};
+
+inline const ColorPrimaries ColorPrimaries::Auto        { 255 };
+inline const ColorPrimaries ColorPrimaries::Unspecified {  2 };
+inline const ColorPrimaries ColorPrimaries::BT709       {  1 };
+inline const ColorPrimaries ColorPrimaries::BT470M      {  4 };
+inline const ColorPrimaries ColorPrimaries::BT470BG     {  5 };
+inline const ColorPrimaries ColorPrimaries::SMPTE170M   {  6 };
+inline const ColorPrimaries ColorPrimaries::SMPTE240M   {  7 };
+inline const ColorPrimaries ColorPrimaries::Film        {  8 };
+inline const ColorPrimaries ColorPrimaries::BT2020      {  9 };
+inline const ColorPrimaries ColorPrimaries::SMPTE428    { 10 };
+inline const ColorPrimaries ColorPrimaries::SMPTE431    { 11 };
+inline const ColorPrimaries ColorPrimaries::SMPTE432    { 12 };
+inline const ColorPrimaries ColorPrimaries::JEDEC_P22   { 22 };
+
+/**
+ * @brief Well-known Enum type for VUI / container transfer characteristic
+ *        (opto-electronic transfer function).
+ *
+ * Numeric values match ISO/IEC 23091-4 / ITU-T H.273.  This covers all
+ * of the common SDR and HDR curves: @c BT709 (Rec.709 gamma),
+ * @c SMPTE2084 (PQ, for HDR10 / HDR10+ / Dolby Vision base layer), and
+ * @c ARIB_STD_B67 (HLG).
+ */
+class TransferCharacteristics : public TypedEnum<TransferCharacteristics> {
+        public:
+                // The @c Auto numeric value (255) sits outside the
+                // 0..18 H.273 value range.  NB: auto-derivation
+                // currently cannot pick between SDR gamma, PQ, and HLG
+                // — the library's ColorModel doesn't distinguish HDR
+                // transfer curves yet — so @c Auto resolves to the
+                // SDR curve matching the primaries and callers must
+                // set an explicit @c SMPTE2084 / @c ARIB_STD_B67 for
+                // HDR content.
+                PROMEKI_REGISTER_ENUM_TYPE("TransferCharacteristics", 255,
+                                { "BT709",         1 },
+                                { "Unspecified",   2 },
+                                { "Gamma22",       4 },
+                                { "Gamma28",       5 },
+                                { "SMPTE170M",     6 },
+                                { "SMPTE240M",     7 },
+                                { "Linear",        8 },
+                                { "Log",           9 },
+                                { "LogSqrt",      10 },
+                                { "IEC61966_2_4", 11 },
+                                { "BT1361",       12 },
+                                { "SRGB",         13 },
+                                { "BT2020_10",    14 },
+                                { "BT2020_12",    15 },
+                                { "SMPTE2084",    16 },
+                                { "SMPTE428",     17 },
+                                { "ARIB_STD_B67", 18 },
+                                { "Auto",        255 });  // default: Auto
+
+                using TypedEnum<TransferCharacteristics>::TypedEnum;
+
+                static const TransferCharacteristics Auto;
+                static const TransferCharacteristics Unspecified;
+                static const TransferCharacteristics BT709;
+                static const TransferCharacteristics Gamma22;
+                static const TransferCharacteristics Gamma28;
+                static const TransferCharacteristics SMPTE170M;
+                static const TransferCharacteristics SMPTE240M;
+                static const TransferCharacteristics Linear;
+                static const TransferCharacteristics Log;
+                static const TransferCharacteristics LogSqrt;
+                static const TransferCharacteristics IEC61966_2_4;
+                static const TransferCharacteristics BT1361;
+                static const TransferCharacteristics SRGB;
+                static const TransferCharacteristics BT2020_10;
+                static const TransferCharacteristics BT2020_12;
+                static const TransferCharacteristics SMPTE2084;   ///< PQ (HDR10).
+                static const TransferCharacteristics SMPTE428;
+                static const TransferCharacteristics ARIB_STD_B67; ///< HLG.
+};
+
+inline const TransferCharacteristics TransferCharacteristics::Auto          { 255 };
+inline const TransferCharacteristics TransferCharacteristics::Unspecified   {  2 };
+inline const TransferCharacteristics TransferCharacteristics::BT709         {  1 };
+inline const TransferCharacteristics TransferCharacteristics::Gamma22       {  4 };
+inline const TransferCharacteristics TransferCharacteristics::Gamma28       {  5 };
+inline const TransferCharacteristics TransferCharacteristics::SMPTE170M     {  6 };
+inline const TransferCharacteristics TransferCharacteristics::SMPTE240M     {  7 };
+inline const TransferCharacteristics TransferCharacteristics::Linear        {  8 };
+inline const TransferCharacteristics TransferCharacteristics::Log           {  9 };
+inline const TransferCharacteristics TransferCharacteristics::LogSqrt       { 10 };
+inline const TransferCharacteristics TransferCharacteristics::IEC61966_2_4  { 11 };
+inline const TransferCharacteristics TransferCharacteristics::BT1361        { 12 };
+inline const TransferCharacteristics TransferCharacteristics::SRGB          { 13 };
+inline const TransferCharacteristics TransferCharacteristics::BT2020_10     { 14 };
+inline const TransferCharacteristics TransferCharacteristics::BT2020_12     { 15 };
+inline const TransferCharacteristics TransferCharacteristics::SMPTE2084     { 16 };
+inline const TransferCharacteristics TransferCharacteristics::SMPTE428      { 17 };
+inline const TransferCharacteristics TransferCharacteristics::ARIB_STD_B67  { 18 };
+
+/**
+ * @brief Well-known Enum type for VUI / container matrix coefficients
+ *        (luma-chroma derivation from the RGB primaries).
+ *
+ * Numeric values match ISO/IEC 23091-4 / ITU-T H.273.  @c RGB is used
+ * when the bitstream stores RGB natively (e.g. HEVC RGB 4:4:4, AV1
+ * subsampling_x=subsampling_y=0 RGB).
+ */
+class MatrixCoefficients : public TypedEnum<MatrixCoefficients> {
+        public:
+                // @c Auto (numeric 255) sits outside the 0..11 H.273
+                // range.  Encoders resolve @c Auto from the input
+                // PixelDesc's ColorModel (RGB models → @c RGB,
+                // YCbCr_Rec709 → @c BT709, YCbCr_Rec2020 → @c BT2020_NCL,
+                // etc.) at session init time.
+                PROMEKI_REGISTER_ENUM_TYPE("MatrixCoefficients", 255,
+                                { "RGB",         0 },
+                                { "BT709",       1 },
+                                { "Unspecified", 2 },
+                                { "FCC",         4 },
+                                { "BT470BG",     5 },
+                                { "SMPTE170M",   6 },
+                                { "SMPTE240M",   7 },
+                                { "YCgCo",       8 },
+                                { "BT2020_NCL",  9 },
+                                { "BT2020_CL",  10 },
+                                { "SMPTE2085",  11 },
+                                { "Auto",      255 });  // default: Auto
+
+                using TypedEnum<MatrixCoefficients>::TypedEnum;
+
+                static const MatrixCoefficients Auto;
+                static const MatrixCoefficients Unspecified;
+                static const MatrixCoefficients RGB;
+                static const MatrixCoefficients BT709;
+                static const MatrixCoefficients FCC;
+                static const MatrixCoefficients BT470BG;
+                static const MatrixCoefficients SMPTE170M;
+                static const MatrixCoefficients SMPTE240M;
+                static const MatrixCoefficients YCgCo;
+                static const MatrixCoefficients BT2020_NCL;
+                static const MatrixCoefficients BT2020_CL;
+                static const MatrixCoefficients SMPTE2085;
+};
+
+inline const MatrixCoefficients MatrixCoefficients::Auto        { 255 };
+inline const MatrixCoefficients MatrixCoefficients::Unspecified {  2 };
+inline const MatrixCoefficients MatrixCoefficients::RGB         {  0 };
+inline const MatrixCoefficients MatrixCoefficients::BT709       {  1 };
+inline const MatrixCoefficients MatrixCoefficients::FCC         {  4 };
+inline const MatrixCoefficients MatrixCoefficients::BT470BG     {  5 };
+inline const MatrixCoefficients MatrixCoefficients::SMPTE170M   {  6 };
+inline const MatrixCoefficients MatrixCoefficients::SMPTE240M   {  7 };
+inline const MatrixCoefficients MatrixCoefficients::YCgCo       {  8 };
+inline const MatrixCoefficients MatrixCoefficients::BT2020_NCL  {  9 };
+inline const MatrixCoefficients MatrixCoefficients::BT2020_CL   { 10 };
+inline const MatrixCoefficients MatrixCoefficients::SMPTE2085   { 11 };
 
 /** @} */
 

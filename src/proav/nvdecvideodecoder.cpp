@@ -44,6 +44,10 @@
 #include <promeki/logger.h>
 #include <promeki/metadata.h>
 #include <promeki/videocodec.h>
+#include <promeki/timecode.h>
+#include <promeki/masteringdisplay.h>
+#include <promeki/contentlightlevel.h>
+#include <promeki/ciepoint.h>
 
 #include <deque>
 #include <mutex>
@@ -117,6 +121,214 @@ bool loadCuvid() {
         return loadCuvidLocked();
 }
 
+// ---------------------------------------------------------------------------
+// Minimal bit reader for SEI payload parsing.  SEI data is byte-aligned
+// big-endian RBSP; our parsers only need unsigned-read primitives up to
+// 32 bits wide.  Bounds checking is strict — any read past the end of
+// the payload returns 0 and flips an error flag the caller can check.
+// ---------------------------------------------------------------------------
+class BitReader {
+        public:
+                BitReader(const uint8_t *data, size_t size)
+                        : _data(data), _size(size) {}
+
+                uint32_t readBits(int n) {
+                        if(n <= 0 || n > 32) return 0;
+                        uint32_t val = 0;
+                        for(int i = 0; i < n; ++i) {
+                                const size_t byteIdx = _pos / 8;
+                                if(byteIdx >= _size) { _err = true; return 0; }
+                                const int bitIdx = 7 - (_pos % 8);
+                                val = (val << 1) | ((_data[byteIdx] >> bitIdx) & 0x1u);
+                                ++_pos;
+                        }
+                        return val;
+                }
+
+                bool readFlag() { return readBits(1) != 0; }
+                bool error() const { return _err; }
+                size_t bitsConsumed() const { return _pos; }
+
+        private:
+                const uint8_t *_data;
+                size_t         _size;
+                size_t         _pos = 0;
+                bool           _err = false;
+};
+
+// Parse one H.264 clock_timestamp set (pic_timing SEI) into a
+// Timecode::Mode + digits.  Returns a default-constructed Timecode on
+// malformed input.  Follows ITU-T H.264 § D.1 / D.2.2 (pic_timing).
+//
+// The caller has already consumed the pic_struct nibble that precedes
+// the NumClockTS timestamp sets in H.264.  For HEVC time_code SEI the
+// structure is slightly different but the inner clock_timestamp fields
+// are byte-for-byte identical, so one parser serves both.
+Timecode parseClockTimestamp(BitReader &br) {
+        const uint32_t countingType   = br.readBits(5); (void)countingType;
+        const bool fullTimestampFlag  = br.readFlag();
+        const bool discontinuityFlag  = br.readFlag(); (void)discontinuityFlag;
+        const bool cntDroppedFlag     = br.readFlag();
+        uint32_t nFrames              = br.readBits(8);
+        uint32_t seconds = 0, minutes = 0, hours = 0;
+        if(fullTimestampFlag) {
+                seconds = br.readBits(6);
+                minutes = br.readBits(6);
+                hours   = br.readBits(5);
+        } else {
+                const bool secondsFlag = br.readFlag();
+                if(secondsFlag) {
+                        seconds = br.readBits(6);
+                        const bool minutesFlag = br.readFlag();
+                        if(minutesFlag) {
+                                minutes = br.readBits(6);
+                                const bool hoursFlag = br.readFlag();
+                                if(hoursFlag) hours = br.readBits(5);
+                        }
+                }
+        }
+        if(br.error()) return Timecode();
+
+        // Pick a Timecode mode from what we have.  We don't know the
+        // bitstream's nominal frame rate without parsing the VUI
+        // timing info (and even then it's ambiguous for 23.98/29.97),
+        // so we default to NDF30 and flip to DF30 when cnt_dropped_flag
+        // is set.  Callers who know the true rate can re-stamp the
+        // Mode via Timecode::setMode() later.
+        Timecode::Mode mode(cntDroppedFlag ? Timecode::DF30 : Timecode::NDF30);
+        return Timecode(mode,
+                static_cast<Timecode::DigitType>(hours),
+                static_cast<Timecode::DigitType>(minutes),
+                static_cast<Timecode::DigitType>(seconds),
+                static_cast<Timecode::DigitType>(nFrames));
+}
+
+// Parse H.264 pic_timing SEI.  This SEI has a format that depends on
+// VUI flags we don't have at parse time — pic_struct_present_flag
+// gates the pic_struct / clock_timestamp block.  NVENC always emits
+// with pic_struct_present_flag = 1 when enableTimeCode is set, so we
+// assume the same and parse the full form.  If the bits don't look
+// sensible (overflow digits), we return an invalid Timecode.
+Timecode parseH264PicTiming(const uint8_t *payload, size_t size) {
+        BitReader br(payload, size);
+        // cpb_removal_delay / dpb_output_delay come first when
+        // NalHrdBpPresent / VclHrdBpPresent is set.  Without the SPS
+        // VUI we can't know their lengths; for NVENC output those
+        // HRD blocks are absent, so the payload begins directly with
+        // pic_struct (4 bits) and NumClockTS clock_timestamp sets.
+        const uint32_t picStruct = br.readBits(4);
+        // Table D-1 of H.264 maps pic_struct → NumClockTS (1..3).
+        static const uint8_t kNumClockTsTable[9] = { 1, 1, 1, 2, 2, 3, 3, 2, 3 };
+        const int numClockTS = (picStruct < 9) ? kNumClockTsTable[picStruct] : 1;
+        for(int i = 0; i < numClockTS; ++i) {
+                const bool clockTsFlag = br.readFlag();
+                if(!clockTsFlag) continue;
+                Timecode tc = parseClockTimestamp(br);
+                if(tc.isValid()) {
+                        // time_offset follows as a signed 24-bit value
+                        // per time_offset_length, which we don't know
+                        // here — skip.  Any remaining TS sets are
+                        // ignored because we only emit one Metadata::Timecode.
+                        return tc;
+                }
+        }
+        return Timecode();
+}
+
+// Parse HEVC time_code SEI.  HEVC structure:
+//   num_clock_ts (2 bits)
+//   for each TS: clock_timestamp_flag (1) + clock_timestamp set.
+// Unlike H.264 the HEVC variant does not have a leading pic_struct
+// nibble and carries its own counts inline.
+Timecode parseHevcTimeCode(const uint8_t *payload, size_t size) {
+        BitReader br(payload, size);
+        const uint32_t numClockTS = br.readBits(2);
+        for(uint32_t i = 0; i < numClockTS; ++i) {
+                const bool clockTsFlag = br.readFlag();
+                if(!clockTsFlag) continue;
+                // HEVC: units_field_based_flag (1) + counting_type (5) +
+                //       full_timestamp_flag (1) + discontinuity_flag (1) +
+                //       cnt_dropped_flag (1) + n_frames (9) + ...
+                // vs. H.264's units_field_based_flag omitted and n_frames
+                // only 8 bits.  Handle both by re-reading.
+                const bool unitsFieldBased    = br.readFlag(); (void)unitsFieldBased;
+                const uint32_t countingType   = br.readBits(5); (void)countingType;
+                const bool fullTimestampFlag  = br.readFlag();
+                const bool discontinuityFlag  = br.readFlag(); (void)discontinuityFlag;
+                const bool cntDroppedFlag     = br.readFlag();
+                uint32_t nFrames              = br.readBits(9);
+                uint32_t seconds = 0, minutes = 0, hours = 0;
+                if(fullTimestampFlag) {
+                        seconds = br.readBits(6);
+                        minutes = br.readBits(6);
+                        hours   = br.readBits(5);
+                } else {
+                        const bool secondsFlag = br.readFlag();
+                        if(secondsFlag) {
+                                seconds = br.readBits(6);
+                                const bool minutesFlag = br.readFlag();
+                                if(minutesFlag) {
+                                        minutes = br.readBits(6);
+                                        const bool hoursFlag = br.readFlag();
+                                        if(hoursFlag) hours = br.readBits(5);
+                                }
+                        }
+                }
+                if(br.error()) return Timecode();
+                Timecode::Mode mode(cntDroppedFlag ? Timecode::DF30 : Timecode::NDF30);
+                return Timecode(mode,
+                        static_cast<Timecode::DigitType>(hours),
+                        static_cast<Timecode::DigitType>(minutes),
+                        static_cast<Timecode::DigitType>(seconds),
+                        static_cast<Timecode::DigitType>(nFrames));
+        }
+        return Timecode();
+}
+
+// Parse mastering_display_colour_volume SEI (payloadType 137).  On
+// wire the fields are defined as big-endian (SMPTE ST 2086 / HEVC spec
+// D.2.28), but NVDEC's parser delivers the pSEIData buffer with the
+// integer fields already byte-swapped to host order — so we read the
+// u16 / u32 values using the host's native endianness rather than the
+// bitstream convention.  This was confirmed empirically against the
+// NVENC → NVDEC round-trip: payloads that matched the bitstream spec
+// when swapped.
+bool parseMasteringDisplaySei(const uint8_t *p, size_t size, MasteringDisplay &out) {
+        if(size < 24) return false;
+        auto u16 = [&](size_t o) {
+                uint16_t v;
+                std::memcpy(&v, p + o, sizeof(v));
+                return v;
+        };
+        auto u32 = [&](size_t o) {
+                uint32_t v;
+                std::memcpy(&v, p + o, sizeof(v));
+                return v;
+        };
+        // Display primaries are stored in (G, B, R) order in the SEI
+        // payload — the spec's little inversion from the usual R/G/B.
+        CIEPoint g(u16( 0) / 50000.0, u16( 2) / 50000.0);
+        CIEPoint b(u16( 4) / 50000.0, u16( 6) / 50000.0);
+        CIEPoint r(u16( 8) / 50000.0, u16(10) / 50000.0);
+        CIEPoint w(u16(12) / 50000.0, u16(14) / 50000.0);
+        const double maxLuma = u32(16) / 10000.0;
+        const double minLuma = u32(20) / 10000.0;
+        out = MasteringDisplay(r, g, b, w, minLuma, maxLuma);
+        return true;
+}
+
+// Parse content_light_level_info SEI (payloadType 144).  Two 16-bit
+// values — MaxCLL, MaxFALL — delivered in host byte order (see note on
+// parseMasteringDisplaySei for the endianness rationale).
+bool parseContentLightLevelSei(const uint8_t *p, size_t size, ContentLightLevel &out) {
+        if(size < 4) return false;
+        uint16_t maxCll, maxFall;
+        std::memcpy(&maxCll,  p + 0, sizeof(maxCll));
+        std::memcpy(&maxFall, p + 2, sizeof(maxFall));
+        out = ContentLightLevel(maxCll, maxFall);
+        return true;
+}
+
 // Maps CUresult to the closest Error code; anything we don't
 // explicitly translate becomes LibraryFailure + a log line carrying
 // the CUDA error string.
@@ -171,12 +383,35 @@ class NvdecVideoDecoder::Impl {
                 ~Impl() { destroySession(); }
 
                 void configure(const MediaConfig &cfg) {
-                        (void)cfg;
-                        // No user-tunable NVDEC state today.  We keep
-                        // the override hook for symmetry with the
-                        // VideoDecoder base class; later revisions may
-                        // accept explicit max-width / max-height hints
-                        // or a preferred output PixelDesc.
+                        // Caller-visible overrides for the VUI color
+                        // description.  Default is Auto / Unknown, which
+                        // means "use whatever the bitstream signals" —
+                        // any other value wins over the bitstream-parsed
+                        // counterpart and gets stamped verbatim onto
+                        // every output Image's Metadata.
+                        //
+                        // Helper: VariantDatabase::getAs<Enum> returns a
+                        // default-constructed Enum (value -1) when the
+                        // key is absent, not the spec default, so we
+                        // look up the spec default ourselves to get Auto
+                        // / Unknown instead of an InvalidValue sentinel
+                        // that would leak into the resolve() logic below.
+                        auto readEnum = [&cfg](MediaConfig::ID key) -> Enum {
+                                const VariantSpec *s = MediaConfig::spec(key);
+                                if(!cfg.contains(key)) {
+                                        return s ? s->defaultValue().get<Enum>()
+                                                 : Enum();
+                                }
+                                return cfg.getAs<Enum>(key);
+                        };
+                        _overridePrimaries = ColorPrimaries(readEnum(
+                                MediaConfig::VideoColorPrimaries).value());
+                        _overrideTransfer  = TransferCharacteristics(readEnum(
+                                MediaConfig::VideoTransferCharacteristics).value());
+                        _overrideMatrix    = MatrixCoefficients(readEnum(
+                                MediaConfig::VideoMatrixCoefficients).value());
+                        _overrideRange     = VideoRange(readEnum(
+                                MediaConfig::VideoRange).value());
                 }
 
                 Error submitPacket(const MediaPacket &pkt, Codec codec) {
@@ -264,6 +499,31 @@ class NvdecVideoDecoder::Impl {
                 // across the codec boundary.
                 std::deque<Metadata> _packetMetaQueue;
 
+                // Bitstream-parsed sequence metadata.  Filled in by
+                // handleSequence from CUVIDEOFORMAT::video_signal_description
+                // and applied to every output Image unless the caller
+                // overrode the field via MediaConfig.  Values are the
+                // raw H.273 numeric codepoints (0..255).
+                ColorPrimaries          _bitstreamPrimaries     { ColorPrimaries::Unspecified };
+                TransferCharacteristics _bitstreamTransfer      { TransferCharacteristics::Unspecified };
+                MatrixCoefficients      _bitstreamMatrix        { MatrixCoefficients::Unspecified };
+                VideoRange              _bitstreamRange         { VideoRange::Unknown };
+
+                // Caller-supplied overrides from MediaConfig.  When set
+                // to a non-Auto / non-Unknown value these supersede the
+                // bitstream-parsed counterpart on the output Metadata.
+                ColorPrimaries          _overridePrimaries      { ColorPrimaries::Auto };
+                TransferCharacteristics _overrideTransfer       { TransferCharacteristics::Auto };
+                MatrixCoefficients      _overrideMatrix         { MatrixCoefficients::Auto };
+                VideoRange              _overrideRange          { VideoRange::Unknown };
+
+                // Pending per-picture SEI — populated by handleSEI as the
+                // parser feeds us messages for the next picture, then
+                // drained in handleDisplay onto the matching output Image.
+                // The parser's contract is that pfnGetSEIMsg fires before
+                // pfnDisplayPicture for the same picIdx.
+                std::deque<Metadata> _pendingSeiMeta;
+
                 // ---- Callback thunks ----------------------------------
                 static int CUDAAPI onSequence(void *user, CUVIDEOFORMAT *fmt) {
                         return static_cast<Impl *>(user)->handleSequence(fmt);
@@ -273,6 +533,9 @@ class NvdecVideoDecoder::Impl {
                 }
                 static int CUDAAPI onDisplay(void *user, CUVIDPARSERDISPINFO *info) {
                         return static_cast<Impl *>(user)->handleDisplay(info);
+                }
+                static int CUDAAPI onSEI(void *user, CUVIDSEIMESSAGEINFO *info) {
+                        return static_cast<Impl *>(user)->handleSEI(info);
                 }
 
                 // ---- Session lifecycle --------------------------------
@@ -294,6 +557,7 @@ class NvdecVideoDecoder::Impl {
                         pp.pfnSequenceCallback    = &Impl::onSequence;
                         pp.pfnDecodePicture       = &Impl::onDecode;
                         pp.pfnDisplayPicture      = &Impl::onDisplay;
+                        pp.pfnGetSEIMsg           = &Impl::onSEI;
 
                         CUresult r = gCuvid.CreateVideoParser(&_parser, &pp);
                         if(r != CUDA_SUCCESS) {
@@ -367,6 +631,19 @@ class NvdecVideoDecoder::Impl {
 
                         _codedWidth  = fmt->coded_width;
                         _codedHeight = fmt->coded_height;
+
+                        // CUVIDEOFORMAT::video_signal_description carries
+                        // the parsed H.264/HEVC VUI fields (and AV1's
+                        // sequence-header color description once CUVID
+                        // supports it).  Cache them so handleDisplay
+                        // can stamp them on every output Image.  Values
+                        // are already the raw H.273 numeric codepoints.
+                        const auto &vsd = fmt->video_signal_description;
+                        _bitstreamPrimaries = ColorPrimaries(vsd.color_primaries);
+                        _bitstreamTransfer  = TransferCharacteristics(vsd.transfer_characteristics);
+                        _bitstreamMatrix    = MatrixCoefficients(vsd.matrix_coefficients);
+                        _bitstreamRange     = vsd.video_full_range_flag
+                                ? VideoRange::Full : VideoRange::Limited;
                         // Some encoders (notably NVENC HEVC at small
                         // resolutions) don't populate display_area at
                         // all — if both sides are zero, treat the full
@@ -416,6 +693,65 @@ class NvdecVideoDecoder::Impl {
                         // parser to honour the same DPB size we just
                         // configured the decoder with.
                         return static_cast<int>(ci.ulNumDecodeSurfaces);
+                }
+
+                // Parser SEI callback.  Fires once per picture with
+                // the concatenated list of SEI messages that were
+                // present for that picture.  We extract timecode
+                // (H.264 pic_timing / HEVC time_code), mastering
+                // display colour volume, and content light level into a
+                // per-picture Metadata that handleDisplay later merges
+                // onto the output Image.
+                int handleSEI(CUVIDSEIMESSAGEINFO *info) {
+                        if(!info || info->sei_message_count == 0 ||
+                           info->pSEIData == nullptr || info->pSEIMessage == nullptr) {
+                                return 1;
+                        }
+                        const uint8_t *data = static_cast<const uint8_t *>(info->pSEIData);
+                        size_t offset = 0;
+                        Metadata sei;
+                        for(unsigned int i = 0; i < info->sei_message_count; ++i) {
+                                const CUSEIMESSAGE &m = info->pSEIMessage[i];
+                                const size_t sz = m.sei_message_size;
+                                const uint8_t *p = data + offset;
+                                offset += sz;
+
+                                switch(m.sei_message_type) {
+                                    case 1: {   // H.264 pic_timing
+                                        Timecode tc = parseH264PicTiming(p, sz);
+                                        if(tc.isValid()) sei.set(Metadata::Timecode, tc);
+                                        break;
+                                    }
+                                    case 136: { // HEVC time_code
+                                        Timecode tc = parseHevcTimeCode(p, sz);
+                                        if(tc.isValid()) sei.set(Metadata::Timecode, tc);
+                                        break;
+                                    }
+                                    case 137: { // mastering_display_colour_volume
+                                        MasteringDisplay md;
+                                        if(parseMasteringDisplaySei(p, sz, md)) {
+                                                sei.set(Metadata::MasteringDisplay, md);
+                                        }
+                                        break;
+                                    }
+                                    case 144: { // content_light_level_info
+                                        ContentLightLevel cll;
+                                        if(parseContentLightLevelSei(p, sz, cll)) {
+                                                sei.set(Metadata::ContentLightLevel, cll);
+                                        }
+                                        break;
+                                    }
+                                    default:
+                                        // Other payload types (buffering_period,
+                                        // user_data_unregistered, film_grain, …)
+                                        // are out of scope for this pass.  They
+                                        // stay on the bitstream but we don't
+                                        // surface them in the decoded Image.
+                                        break;
+                                }
+                        }
+                        _pendingSeiMeta.push_back(std::move(sei));
+                        return 1;
                 }
 
                 int handleDecode(CUVIDPICPARAMS *pic) {
@@ -514,6 +850,92 @@ class NvdecVideoDecoder::Impl {
                                 img.metadata() = std::move(_packetMetaQueue.front());
                                 _packetMetaQueue.pop_front();
                         }
+
+                        // Merge bitstream-parsed per-picture SEI (the
+                        // Timecode, MasteringDisplay, ContentLightLevel
+                        // keys that handleSEI populated for this picture)
+                        // into the output Image's metadata.  Explicit
+                        // values from pfnGetSEIMsg override whatever the
+                        // packet metadata carried — the bitstream is the
+                        // authoritative source when it's present.
+                        if(!_pendingSeiMeta.empty()) {
+                                Metadata sei = std::move(_pendingSeiMeta.front());
+                                _pendingSeiMeta.pop_front();
+                                img.metadata().merge(sei);
+                        }
+
+                        // Stamp the bitstream-parsed color description
+                        // unless the caller supplied an explicit override
+                        // via MediaConfig.  Both sides default to Auto /
+                        // Unknown, so the common case just propagates
+                        // whatever the sequence header said.
+                        //
+                        // The @c resolve helper picks override when it's
+                        // a concrete value, otherwise falls back to
+                        // bitstream.  @c -1 (InvalidValue) and @c 255
+                        // (Auto) and @c 0 (Unknown / Unspecified for
+                        // the color-description enums) all count as "no
+                        // opinion, defer to the bitstream".
+                        auto isSentinel = [](int v) {
+                                return v == -1 || v == 0 || v == 255;
+                        };
+                        auto resolve = [&isSentinel](int override_, int bitstream) -> int {
+                                return isSentinel(override_) ? bitstream : override_;
+                        };
+                        int v;
+                        v = resolve(_overridePrimaries.value(), _bitstreamPrimaries.value());
+                        if(!isSentinel(v)) {
+                                // Construct the Enum via the (Type, int)
+                                // ctor so the Variant stores a concrete
+                                // Enum instance rather than slicing from
+                                // a TypedEnum<> temporary — std::variant
+                                // demands exact type match, and derived-
+                                // to-base slicing through template
+                                // arguments has produced default-valued
+                                // Enum entries in practice.
+                                img.metadata().set(Metadata::VideoColorPrimaries,
+                                                   Enum(ColorPrimaries::Type, v));
+                        }
+                        v = resolve(_overrideTransfer.value(), _bitstreamTransfer.value());
+                        if(!isSentinel(v)) {
+                                img.metadata().set(Metadata::VideoTransferCharacteristics,
+                                                   Enum(TransferCharacteristics::Type, v));
+                        }
+                        v = resolve(_overrideMatrix.value(), _bitstreamMatrix.value());
+                        if(!isSentinel(v)) {
+                                img.metadata().set(Metadata::VideoMatrixCoefficients,
+                                                   Enum(MatrixCoefficients::Type, v));
+                        }
+                        // VideoRange uses 0=Unknown (not 255), so pass-through.
+                        v = resolve(_overrideRange.value(), _bitstreamRange.value());
+                        if(!isSentinel(v)) {
+                                img.metadata().set(Metadata::VideoRange,
+                                                   Enum(VideoRange::Type, v));
+                        }
+
+                        // Map NVDEC's per-picture progressive_frame /
+                        // top_field_first bits onto @ref VideoScanMode and
+                        // stamp the result on the decoded Image's
+                        // metadata.  The parser exposes these off the
+                        // display info rather than the sequence header
+                        // because an interlaced stream can carry
+                        // progressive pictures and vice versa — the
+                        // per-picture Pic Timing SEI (H.264 pic_struct
+                        // / HEVC pic_struct) is the authoritative signal.
+                        //
+                        // @c progressive_frame=1 → Progressive,
+                        // @c progressive_frame=0 + top_first=1 → InterlacedEvenFirst,
+                        // @c progressive_frame=0 + top_first=0 → InterlacedOddFirst.
+                        VideoScanMode scan = VideoScanMode::Unknown;
+                        if(info->progressive_frame) {
+                                scan = VideoScanMode::Progressive;
+                        } else {
+                                scan = info->top_field_first
+                                        ? VideoScanMode::InterlacedEvenFirst
+                                        : VideoScanMode::InterlacedOddFirst;
+                        }
+                        img.metadata().set(Metadata::VideoScanMode,
+                                           Enum(VideoScanMode::Type, scan.value()));
 
                         _outQueue.push_back(std::move(img));
                         return 1;

@@ -10,6 +10,7 @@
 #include <promeki/mediapacket.h>
 #include <promeki/bufferview.h>
 #include <promeki/frame.h>
+#include <promeki/image.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -103,18 +104,11 @@ Error MediaIOTask_RawBitstream::executeCmd(MediaIOCommandWrite &cmd) {
         stampWorkBegin();
 
         const Frame &frame = *cmd.frame;
-        if(frame.packetList().isEmpty()) {
-                if(!_warnedNoPackets) {
-                        promekiWarn("MediaIOTask_RawBitstream: Frame has no packets — "
-                                    "is an encoder stage upstream of this sink?");
-                        _warnedNoPackets = true;
-                }
-                stampWorkEnd();
-                return Error::Ok;
-        }
-
-        for(const auto &pktPtr : frame.packetList()) {
-                if(!pktPtr) continue;
+        bool anyPacket = false;
+        for(const Image::Ptr &imgPtr : frame.imageList()) {
+                if(!imgPtr.isValid() || !imgPtr->isCompressed()) continue;
+                const MediaPacket::Ptr &pktPtr = imgPtr->packet();
+                if(!pktPtr.isValid()) continue;
                 const MediaPacket &pkt = *pktPtr;
                 const BufferView &view = pkt.view();
                 if(view.size() == 0 || !view.isValid()) continue;
@@ -128,6 +122,17 @@ Error MediaIOTask_RawBitstream::executeCmd(MediaIOCommandWrite &cmd) {
                 }
                 _packetsWritten++;
                 _bytesWritten += static_cast<int64_t>(view.size());
+                anyPacket = true;
+        }
+        if(!anyPacket) {
+                if(!_warnedNoPackets) {
+                        promekiWarn("MediaIOTask_RawBitstream: Frame has no compressed "
+                                    "Image with an attached MediaPacket — is an encoder "
+                                    "stage upstream of this sink?");
+                        _warnedNoPackets = true;
+                }
+                stampWorkEnd();
+                return Error::Ok;
         }
 
         cmd.currentFrame = _packetsWritten;

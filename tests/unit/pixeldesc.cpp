@@ -171,6 +171,36 @@ TEST_CASE("PixelDesc: JPEG YCbCr complement — matrix × range grid") {
         }
 }
 
+TEST_CASE("PixelDesc: videoRange auto-derives from compSemantics") {
+        // Well-known PixelDescs don't set Data::videoRange explicitly
+        // yet, so all of these exercise the auto-derivation path in
+        // PixelDesc::registerData.  The shape of the inference is:
+        //   rangeMin > 0          → Limited
+        //   rangeMin==0 && max==(2^N-1) → Full
+        // Anything else stays Unknown.
+
+        SUBCASE("RGB full-range 8-bit") {
+                PixelDesc pd(PixelDesc::RGBA8_sRGB);
+                CHECK(pd.videoRange() == VideoRange::Full);
+        }
+        SUBCASE("RGB full-range 10-bit") {
+                PixelDesc pd(PixelDesc::RGB10_LE_sRGB);
+                CHECK(pd.videoRange() == VideoRange::Full);
+        }
+        SUBCASE("YCbCr limited 8-bit") {
+                PixelDesc pd(PixelDesc::YUV8_422_Rec709);
+                CHECK(pd.videoRange() == VideoRange::Limited);
+        }
+        SUBCASE("YCbCr limited 10-bit") {
+                PixelDesc pd(PixelDesc::YUV10_422_Rec709);
+                CHECK(pd.videoRange() == VideoRange::Limited);
+        }
+        SUBCASE("YCbCr full-range intermediate") {
+                PixelDesc pd(PixelDesc::YUV8_422_Rec709_Full);
+                CHECK(pd.videoRange() == VideoRange::Full);
+        }
+}
+
 TEST_CASE("PixelDesc: full-range uncompressed YCbCr intermediates") {
         // The encode-source intermediates for the full-range JPEG
         // variants live as first-class PixelDescs so Image::convert

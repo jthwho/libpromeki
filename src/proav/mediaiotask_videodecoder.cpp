@@ -47,6 +47,17 @@ MediaIO::FormatDesc MediaIOTask_VideoDecoder::formatDesc() {
                         };
                         s(MediaConfig::VideoCodec);
                         s(MediaConfig::OutputPixelDesc);
+                        // VUI color-description overrides.  Default Auto /
+                        // Unknown means the decoder uses whatever the
+                        // bitstream signalled.  Explicit values let the
+                        // caller force a tag on a mistagged stream — the
+                        // decoder stamps them verbatim on the output
+                        // Image's Metadata instead of the bitstream
+                        // value.
+                        s(MediaConfig::VideoColorPrimaries);
+                        s(MediaConfig::VideoTransferCharacteristics);
+                        s(MediaConfig::VideoMatrixCoefficients);
+                        s(MediaConfig::VideoRange);
                         sWithDefault(MediaConfig::Capacity, int32_t(8));
                         return specs;
                 }
@@ -181,37 +192,44 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandWrite &cmd) {
 
         const Frame &frame = *cmd.frame;
 
+        // Collect every compressed Image on the Frame whose attached
+        // MediaPacket carries the bitstream we need to decode.  Under
+        // the Image::packet model that's the single source of truth —
+        // producers (encoder output, container demux, RTP reader,
+        // ImageFile loader) all attach the encoded bytes to the
+        // compressed Image they emit.
+        List<MediaPacket::Ptr> packets;
+        for(const Image::Ptr &imgPtr : frame.imageList()) {
+                if(!imgPtr.isValid() || !imgPtr->isCompressed()) continue;
+                const MediaPacket::Ptr &pkt = imgPtr->packet();
+                if(pkt.isValid() && pkt->isValid()) packets.pushToBack(pkt);
+        }
+
         if(_decoder == nullptr) {
-                const MediaPacket::PtrList &pkts = frame.packetList();
-                bool found = false;
-                for(const auto &pktPtr : pkts) {
-                        if(!pktPtr || !pktPtr->isValid()) continue;
-                        VideoCodec codec = VideoCodec::fromPixelDesc(pktPtr->pixelDesc());
-                        if(!codec.isValid()) {
-                                promekiErr("MediaIOTask_VideoDecoder: cannot resolve "
-                                           "VideoCodec from PixelDesc '%s'",
-                                           pktPtr->pixelDesc().name().cstr());
-                                stampWorkEnd();
-                                return Error::NotSupported;
-                        }
-                        Error err = createDecoder(codec);
-                        if(err.isError()) {
-                                stampWorkEnd();
-                                return err;
-                        }
-                        promekiInfo("MediaIOTask_VideoDecoder: auto-detected codec '%s' "
-                                    "from packet PixelDesc '%s'",
-                                    codec.name().cstr(),
-                                    pktPtr->pixelDesc().name().cstr());
-                        found = true;
-                        break;
-                }
-                if(!found) {
-                        promekiErr("MediaIOTask_VideoDecoder: no valid packet to "
-                                   "detect codec from");
+                if(packets.isEmpty()) {
+                        promekiErr("MediaIOTask_VideoDecoder: no compressed Image "
+                                   "with an attached MediaPacket on the write frame");
                         stampWorkEnd();
                         return Error::InvalidArgument;
                 }
+                const MediaPacket &pkt = *packets[0];
+                VideoCodec codec = VideoCodec::fromPixelDesc(pkt.pixelDesc());
+                if(!codec.isValid()) {
+                        promekiErr("MediaIOTask_VideoDecoder: cannot resolve "
+                                   "VideoCodec from PixelDesc '%s'",
+                                   pkt.pixelDesc().name().cstr());
+                        stampWorkEnd();
+                        return Error::NotSupported;
+                }
+                Error err = createDecoder(codec);
+                if(err.isError()) {
+                        stampWorkEnd();
+                        return err;
+                }
+                promekiInfo("MediaIOTask_VideoDecoder: auto-detected codec '%s' "
+                            "from packet PixelDesc '%s'",
+                            codec.name().cstr(),
+                            pkt.pixelDesc().name().cstr());
         }
 
         if(static_cast<int>(_outputQueue.size()) >= _capacity && !_capacityWarned) {
@@ -221,8 +239,7 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandWrite &cmd) {
                 _capacityWarned = true;
         }
 
-        for(const auto &pktPtr : frame.packetList()) {
-                if(!pktPtr || !pktPtr->isValid()) continue;
+        for(const MediaPacket::Ptr &pktPtr : packets) {
                 _pendingSrcFrames.pushToBack(cmd.frame);
                 Error err = _decoder->submitPacket(*pktPtr);
                 if(err.isError()) {

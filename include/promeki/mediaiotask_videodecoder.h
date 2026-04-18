@@ -23,10 +23,11 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @c MediaIOTask_VideoDecoder is the symmetric counterpart of
  * @ref MediaIOTask_VideoEncoder.  It accepts a Frame whose
- * @ref Frame::packetList carries one encoded access unit, hands each
- * packet to a concrete @ref VideoDecoder via @c submitPacket, and
- * drains @c receiveFrame producing one output Frame per decoded
- * image in @ref Frame::imageList.  Audio on the input Frame is
+ * compressed Images in @ref Frame::imageList carry the encoded
+ * bitstream via @ref Image::packet, hands each packet to a
+ * concrete @ref VideoDecoder via @c submitPacket, and drains
+ * @c receiveFrame producing one output Frame per decoded image
+ * in @ref Frame::imageList.  Audio on the input Frame is
  * forwarded unchanged so it stays synchronised on the same PTS.
  *
  * The registered backend name is @c "VideoDecoder"; callers select a

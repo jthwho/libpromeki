@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder.
  */
 
+#include <cstring>
 #include <promeki/mediaiotask_videoencoder.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/enums.h>
@@ -13,8 +14,10 @@
 #include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/mediadesc.h>
+#include <promeki/mediapacket.h>
 #include <promeki/metadata.h>
 #include <promeki/pixeldesc.h>
+#include <promeki/buffer.h>
 #include <promeki/logger.h>
 #include <promeki/mediatimestamp.h>
 
@@ -66,6 +69,19 @@ MediaIO::FormatDesc MediaIOTask_VideoEncoder::formatDesc() {
                         s(MediaConfig::VideoProfile);
                         s(MediaConfig::VideoLevel);
                         s(MediaConfig::VideoQp);
+                        s(MediaConfig::VideoSpatialAQ);
+                        s(MediaConfig::VideoSpatialAQStrength);
+                        s(MediaConfig::VideoTemporalAQ);
+                        s(MediaConfig::VideoMultiPass);
+                        s(MediaConfig::VideoRepeatHeaders);
+                        s(MediaConfig::VideoTimecodeSEI);
+                        s(MediaConfig::VideoColorPrimaries);
+                        s(MediaConfig::VideoTransferCharacteristics);
+                        s(MediaConfig::VideoMatrixCoefficients);
+                        s(MediaConfig::VideoRange);
+                        s(MediaConfig::VideoScanMode);
+                        s(MediaConfig::HdrMasteringDisplay);
+                        s(MediaConfig::HdrContentLightLevel);
                         sWithDefault(MediaConfig::Capacity, int32_t(8));
                         return specs;
                 }
@@ -257,6 +273,9 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandWrite &cmd) {
                 stampWorkEnd();
                 return Error::InvalidArgument;
         }
+        if(srcImgPtr->metadata().getAs<bool>(Metadata::ForceKeyframe)) {
+                _encoder->requestKeyframe();
+        }
         Error err = _encoder->submitFrame(*srcImgPtr, pts);
         if(err.isError()) {
                 promekiErr("MediaIOTask_VideoEncoder: submitFrame failed: %s",
@@ -313,7 +332,38 @@ void MediaIOTask_VideoEncoder::drainEncoderInto() {
                                 out->audioList().pushToBack(a);
                         }
                 }
-                out->packetList().pushToBack(pkt);
+
+                // Wrap the encoder's MediaPacket in a compressed Image
+                // so the packet travels with its owning essence.  The
+                // width/height come from the origin's first image (the
+                // compressed frame represents that picture).  The
+                // packet's BufferView buffers are adopted into plane
+                // 0 zero-copy — when the view spans the whole backing
+                // buffer that's literal zero-copy; otherwise fall back
+                // to a single copy into a plain Buffer::Ptr plane.
+                Size2Du32 imgSize;
+                if(origin.isValid() && !origin->imageList().isEmpty()) {
+                        imgSize = origin->imageList()[0]->size();
+                }
+                const BufferView &view = pkt->view();
+                Buffer::Ptr plane;
+                if(view.buffer().isValid()
+                   && view.offset() == 0
+                   && view.size() == view.buffer()->size()) {
+                        plane = view.buffer();
+                } else if(view.isValid() && view.size() > 0) {
+                        plane = Buffer::Ptr::create(view.size());
+                        std::memcpy(plane.modify()->data(), view.data(), view.size());
+                        plane.modify()->setSize(view.size());
+                }
+                Image compressed = plane.isValid()
+                        ? Image::fromBuffer(plane, imgSize.width(), imgSize.height(),
+                                            pkt->pixelDesc())
+                        : Image();
+                if(compressed.isValid()) {
+                        compressed.setPacket(pkt);
+                        out->imageList().pushToBack(Image::Ptr::create(std::move(compressed)));
+                }
                 _outputQueue.pushToBack(std::move(outFrame));
                 _packetsOut++;
         }

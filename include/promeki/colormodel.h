@@ -296,6 +296,47 @@ class ColorModel {
                 static ColorModel lookup(const String &name);
 
                 /**
+                 * @brief H.273 / ISO/IEC 23091-4 codepoint triplet
+                 *        describing a color space in codec VUI terms.
+                 *
+                 * Each field is the numeric value that would appear in
+                 * an H.264 / HEVC VUI or AV1 color-description header.
+                 * A @c 0 indicates "not derivable from this ColorModel"
+                 * — callers typically substitute @c 2 (Unspecified) in
+                 * that case, or fall through to an explicit user override.
+                 *
+                 * @note Transfer characteristics auto-derivation does
+                 *       @em not distinguish HDR curves (PQ / HLG) today
+                 *       because the library's @ref ColorModel doesn't
+                 *       model them explicitly yet.  HDR callers must
+                 *       stamp the correct transfer on the encoder config.
+                 */
+                struct H273 {
+                        uint8_t primaries  = 0;   ///< H.273 @c colour_primaries.
+                        uint8_t transfer   = 0;   ///< H.273 @c transfer_characteristics.
+                        uint8_t matrix     = 0;   ///< H.273 @c matrix_coefficients.
+                };
+
+                /**
+                 * @brief Returns the H.273 codepoint triplet for a
+                 *        well-known ColorModel ID.
+                 *
+                 * Covers the SDR models that libpromeki ships as
+                 * well-known: sRGB / Rec.709 / Rec.601 PAL / Rec.601
+                 * NTSC / Rec.2020 / DCI-P3 / Adobe RGB / ACES AP0 /
+                 * ACES AP1, plus the YCbCr_* derivations.  Linear
+                 * variants map the transfer field to @c 8 (Linear);
+                 * CIE XYZ / Lab / HSV / HSL return all-zeros.
+                 *
+                 * User-defined ColorModel IDs are not recognised and
+                 * fall through to the all-zero default; that's by
+                 * design — the library-wide mapping can't know what a
+                 * user's custom model is supposed to represent on the
+                 * wire.
+                 */
+                static H273 toH273(ID id);
+
+                /**
                  * @brief Constructs a ColorModel from an ID.
                  *
                  * Resolves the ID to internal data via a construct-on-first-use

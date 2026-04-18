@@ -60,8 +60,7 @@ static VideoCodec::Data makeAV1() {
         d.name = "AV1";
         d.desc = "AV1 (AOMedia Video 1)";
         d.fourccList = { "av01" };
-        // No AV1-specific PixelDesc entries yet; add when the
-        // compressed pair is registered.
+        d.compressedPixelDescs = { static_cast<int>(PixelDesc::AV1) };
         return d;
 }
 

@@ -14,6 +14,7 @@
 #include <promeki/buffer.h>
 #include <promeki/imagedesc.h>
 #include <promeki/mediaconfig.h>
+#include <promeki/mediapacket.h>
 #include <promeki/paintengine.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -29,13 +30,23 @@ PROMEKI_NAMESPACE_BEGIN
  * When shared ownership is needed, use Image::Ptr.
  *
  * @par Compressed images
- * Image also represents compressed (encoded) image data such as JPEG.
- * A compressed image uses a compressed pixel description (e.g.
- * PixelDesc::JPEG_RGB8_sRGB) and stores the encoded bitstream in its
- * single plane buffer. Use isCompressed() to test whether an image
- * is compressed, compressedSize() to get the encoded byte count,
- * and data() to access the raw encoded bytes. The preferred way to
- * create a compressed image is the fromCompressedData() factory.
+ * Image also represents compressed (encoded) image data such as JPEG,
+ * JPEG XS, H.264, or HEVC.  A compressed Image uses a compressed pixel
+ * description (e.g. PixelDesc::JPEG_RGB8_sRGB) and stores the encoded
+ * bitstream in its single plane buffer.  Use isCompressed() to test
+ * whether an Image is compressed, compressedSize() to get the encoded
+ * byte count, and data() to access the raw encoded bytes.  The
+ * preferred way to create a compressed Image is the fromBuffer() or
+ * fromCompressedData() factory.
+ *
+ * Compressed Images produced by pipeline stages (VideoEncoder,
+ * container demuxers, RTP readers, ImageFile loaders) also carry an
+ * attached @ref MediaPacket accessible via packet().  The packet holds
+ * the encoded bytes together with PTS/DTS and codec-level flags
+ * (keyframe, parameter-set, end-of-stream) that downstream consumers
+ * such as VideoDecoder read directly.  plane(0) and the packet's
+ * BufferView share the same backing @ref Buffer when the producer
+ * arranged zero-copy.  Uncompressed Images always have a null packet().
  *
  * @par Example — creating a compressed image
  * @code
@@ -45,6 +56,7 @@ PROMEKI_NAMESPACE_BEGIN
  *                                        srcImage.metadata());
  * assert(jpeg.isCompressed());
  * assert(jpeg.compressedSize() == jpegSize);
+ * // packet() is null here; ImageFile::load() populates it automatically.
  * @endcode
  */
 class Image {
@@ -150,6 +162,35 @@ class Image {
                  */
                 Metadata &metadata() {
                         return _desc.metadata();
+                }
+
+                /**
+                 * @brief Returns the compressed bitstream packet attached to this Image.
+                 *
+                 * Only populated for compressed Images (the essence lives
+                 * in the packet's BufferView; plane(0) typically shares
+                 * the same backing buffer).  Null for uncompressed
+                 * Images.  The attached packet is the canonical location
+                 * for the bitstream, PTS/DTS, and codec-level flags
+                 * (keyframe, parameter-set, end-of-stream) that a
+                 * downstream @ref VideoDecoder consumes.
+                 */
+                const MediaPacket::Ptr &packet() const {
+                        return _packet;
+                }
+
+                /**
+                 * @brief Replaces the attached compressed-bitstream packet.
+                 *
+                 * Producers (video encoders, RTP readers, container
+                 * demuxers, ImageFile loaders) attach a MediaPacket
+                 * when the loaded Image is compressed.  Consumers
+                 * (video decoders, raw-bitstream sinks, muxers) read
+                 * this via @ref packet().  Pass a null @ref
+                 * MediaPacket::Ptr to clear any attached packet.
+                 */
+                void setPacket(MediaPacket::Ptr pkt) {
+                        _packet = std::move(pkt);
                 }
 
                 /**
@@ -432,8 +473,9 @@ class Image {
                 }
 
         private:
-                ImageDesc       _desc;
-                Buffer::PtrList _planeList;
+                ImageDesc         _desc;
+                Buffer::PtrList   _planeList;
+                MediaPacket::Ptr  _packet;
 
                 bool allocate(const MemSpace &ms);
                 std::optional<String> resolvePseudoKey(const String &key, const String &spec) const;

@@ -13,6 +13,8 @@
 #include <promeki/frame.h>
 #include <promeki/image.h>
 #include <promeki/audio.h>
+#include <promeki/buffer.h>
+#include <promeki/mediapacket.h>
 #include <promeki/imagedesc.h>
 #include <promeki/audiodesc.h>
 #include <promeki/mediadesc.h>
@@ -1256,31 +1258,21 @@ void MediaIOTask_Rtp::emitVideoFrame() {
                             w, h, PixelDesc(pdId).name().cstr());
         }
 
-        // Build an Image from the reassembled buffer.  For
-        // compressed formats we use fromCompressedData so the bytes
-        // ride as plane 0 of the compressed Image; for uncompressed
-        // formats we wrap the raw pixel data in a buffer and use
-        // fromBuffer.
+        // Build an Image from the reassembled buffer.  Both compressed
+        // and uncompressed paths copy into a fresh Buffer::Ptr that
+        // the Image adopts via fromBuffer — this lets the compressed
+        // path share the same allocation with the MediaPacket we push
+        // into the Frame below, so downstream decoders get zero-copy
+        // access to the bitstream.
         Image img;
+        Buffer::Ptr plane = Buffer::Ptr::create(reassembled.size());
+        std::memcpy(plane->data(), reassembled.data(), reassembled.size());
+        plane->setSize(reassembled.size());
         const PixelDesc &pd = _video.readerImageDesc.pixelDesc();
-        if(pd.isCompressed()) {
-                img = Image::fromCompressedData(
-                        reassembled.data(),
-                        reassembled.size(),
-                        _video.readerImageDesc.width(),
-                        _video.readerImageDesc.height(),
-                        pd);
-        } else {
-                // Uncompressed — copy into a fresh buffer that the
-                // Image adopts via fromBuffer.
-                Buffer::Ptr plane = Buffer::Ptr::create(reassembled.size());
-                std::memcpy(plane->data(), reassembled.data(), reassembled.size());
-                plane->setSize(reassembled.size());
-                img = Image::fromBuffer(plane,
-                        _video.readerImageDesc.width(),
-                        _video.readerImageDesc.height(),
-                        pd);
-        }
+        img = Image::fromBuffer(plane,
+                _video.readerImageDesc.width(),
+                _video.readerImageDesc.height(),
+                pd);
         if(!img.isValid()) {
                 // This is expected for the first frame when the
                 // receiver joins a stream already in progress — the
@@ -1324,9 +1316,8 @@ void MediaIOTask_Rtp::emitVideoFrame() {
         // this frame (rxFrameStartTime); MediaTimeStamp uses the
         // same value.  The raw RTP timestamp and packet count are
         // recorded for protocol-level diagnostics.
+        MediaTimeStamp capMts(_video.rxFrameStartTime, _video.clockDomain);
         {
-                MediaTimeStamp capMts(_video.rxFrameStartTime,
-                        _video.clockDomain);
                 Image::Ptr &imgPtr = f->imageList().back();
                 Metadata &imgMeta = imgPtr.modify()->metadata();
                 imgMeta.set(Metadata::CaptureTime, capMts);
@@ -1337,6 +1328,18 @@ void MediaIOTask_Rtp::emitVideoFrame() {
                         imgMeta.set(Metadata::PtpGrandmasterId,
                                 _video.ptpGrandmaster);
                 }
+        }
+
+        // Compressed streams also attach a MediaPacket to the Image
+        // sharing the same backing buffer, so a downstream VideoDecoder
+        // stage sees the bitstream via the canonical Image::packet
+        // accessor (every intraframe packet is a keyframe).
+        if(pd.isCompressed()) {
+                auto pkt = MediaPacket::Ptr::create(plane, pd);
+                pkt.modify()->setPts(capMts);
+                pkt.modify()->setDts(capMts);
+                pkt.modify()->addFlag(MediaPacket::Keyframe);
+                f->imageList().back().modify()->setPacket(std::move(pkt));
         }
 
         // Aggregate audio: drain one frame's worth of samples from

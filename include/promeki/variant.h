@@ -35,6 +35,8 @@
 #include <promeki/pixelformat.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/videocodec.h>
+#include <promeki/masteringdisplay.h>
+#include <promeki/contentlightlevel.h>
 #include <promeki/enum.h>
 #include <promeki/enumlist.h>
 #if PROMEKI_ENABLE_NETWORK
@@ -148,6 +150,8 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeAudioCodec, AudioCodec)   \
         X(TypeEnum, Enum)               \
         X(TypeEnumList, EnumList)       \
+        X(TypeMasteringDisplay, MasteringDisplay) \
+        X(TypeContentLightLevel, ContentLightLevel) \
         PROMEKI_VARIANT_TYPES_NETWORK
 
 namespace detail {

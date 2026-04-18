@@ -17,6 +17,8 @@
 #include <promeki/pixeldesc.h>
 #include <promeki/metadata.h>
 #include <promeki/mediaconfig.h>
+#include <promeki/mediapacket.h>
+#include <promeki/frame.h>
 
 using namespace promeki;
 
@@ -303,4 +305,39 @@ TEST_CASE("ImageFileIO JPEG: save empty image returns error") {
         sf.setFilename("/tmp/promeki_jpeg_empty.jpg");
         // No image set — frame is empty.
         CHECK(sf.save() != Error::Ok);
+}
+
+// ============================================================================
+// MediaPacket attachment — a compressed-image load attaches a
+// MediaPacket to the Image so a downstream MediaIOTask_VideoDecoder
+// stage can read Image::packet() without having to re-wrap plane(0).
+// ============================================================================
+
+TEST_CASE("ImageFileIO JPEG: load attaches a MediaPacket to the Image") {
+        const char *fn = "/tmp/promeki_jpeg_packet.jpg";
+        Image src = makeGradientRGB8(64, 48);
+
+        ImageFile sf(ImageFile::JPEG);
+        sf.setFilename(fn);
+        sf.setImage(src);
+        REQUIRE(sf.save() == Error::Ok);
+
+        ImageFile lf(ImageFile::JPEG);
+        lf.setFilename(fn);
+        REQUIRE(lf.load() == Error::Ok);
+
+        const Frame &frame = lf.frame();
+        REQUIRE(frame.imageList().size() == 1);
+
+        const Image &img = *frame.imageList()[0];
+        REQUIRE(img.isCompressed());
+        REQUIRE(img.packet().isValid());
+        const MediaPacket &pkt = *img.packet();
+        CHECK(pkt.isValid());
+        CHECK(pkt.pixelDesc() == img.pixelDesc());
+        CHECK(pkt.size() == img.compressedSize());
+        CHECK(pkt.isKeyframe());
+        CHECK(pkt.buffer().ptr() == img.plane(0).ptr());
+
+        std::remove(fn);
 }

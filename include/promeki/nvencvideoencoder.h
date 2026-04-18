@@ -16,10 +16,10 @@
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief Hardware H.264 / HEVC video encoder backed by NVIDIA NVENC.
+ * @brief Hardware H.264 / HEVC / AV1 video encoder backed by NVIDIA NVENC.
  * @ingroup proav
  *
- * Registered under the codec names @c "H264" and @c "HEVC", so
+ * Registered under the codec names @c "H264", @c "HEVC", and @c "AV1", so
  * callers ask for this backend through the generic
  * @ref VideoEncoder::createEncoder factory rather than constructing
  * it directly.  The constructor picks which codec the instance emits
@@ -71,7 +71,8 @@ class NvencVideoEncoder : public VideoEncoder {
                 /** @brief Which codec this instance emits. */
                 enum Codec {
                         Codec_H264,   ///< H.264 / AVC (@c NV_ENC_CODEC_H264_GUID).
-                        Codec_HEVC    ///< H.265 / HEVC (@c NV_ENC_CODEC_HEVC_GUID).
+                        Codec_HEVC,   ///< H.265 / HEVC (@c NV_ENC_CODEC_HEVC_GUID).
+                        Codec_AV1     ///< AV1 (@c NV_ENC_CODEC_AV1_GUID).
                 };
 
                 /**

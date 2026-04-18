@@ -40,16 +40,12 @@ TEST_CASE("VideoCodec: lookup by name returns the registered entry") {
 }
 
 TEST_CASE("VideoCodec: codecs without a registered backend report null cleanly") {
-        // AV1 is metadata-only at this stage — the registry knows
-        // about it (name / fourccs) but no backend has wired in
-        // factories for it.  When a real AV1 encoder/decoder lands,
-        // pick whatever still has no factory for this assertion.
-        VideoCodec av1(VideoCodec::AV1);
-        CHECK(av1.isValid());
-        CHECK_FALSE(av1.canEncode());
-        CHECK_FALSE(av1.canDecode());
-        CHECK(av1.createEncoder() == nullptr);
-        CHECK(av1.createDecoder() == nullptr);
+        VideoCodec vp9(VideoCodec::VP9);
+        CHECK(vp9.isValid());
+        CHECK_FALSE(vp9.canEncode());
+        CHECK_FALSE(vp9.canDecode());
+        CHECK(vp9.createEncoder() == nullptr);
+        CHECK(vp9.createDecoder() == nullptr);
 }
 
 #if PROMEKI_ENABLE_NVENC

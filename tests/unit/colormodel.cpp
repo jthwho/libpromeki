@@ -42,6 +42,36 @@ TEST_CASE("ColorModel: LinearSRGB model properties") {
         CHECK(m.isLinear());
 }
 
+TEST_CASE("ColorModel: toH273() maps well-known models") {
+        // SDR RGB family.
+        CHECK(ColorModel::toH273(ColorModel::sRGB).primaries       == 1);
+        CHECK(ColorModel::toH273(ColorModel::sRGB).transfer        == 13);
+        CHECK(ColorModel::toH273(ColorModel::sRGB).matrix          == 0);
+
+        CHECK(ColorModel::toH273(ColorModel::Rec709).primaries     == 1);
+        CHECK(ColorModel::toH273(ColorModel::Rec709).transfer      == 1);
+
+        CHECK(ColorModel::toH273(ColorModel::Rec2020).primaries    == 9);
+        CHECK(ColorModel::toH273(ColorModel::Rec2020).transfer     == 14);
+
+        CHECK(ColorModel::toH273(ColorModel::Rec601_PAL).primaries == 5);
+        CHECK(ColorModel::toH273(ColorModel::Rec601_NTSC).primaries == 6);
+        CHECK(ColorModel::toH273(ColorModel::DCI_P3).primaries      == 12);
+
+        // Linear variants substitute transfer=8.
+        CHECK(ColorModel::toH273(ColorModel::LinearRec709).transfer == 8);
+        CHECK(ColorModel::toH273(ColorModel::LinearRec2020).transfer == 8);
+
+        // YCbCr derivations stamp the matching matrix coefficients.
+        CHECK(ColorModel::toH273(ColorModel::YCbCr_Rec709).matrix   == 1);
+        CHECK(ColorModel::toH273(ColorModel::YCbCr_Rec2020).matrix  == 9);
+        CHECK(ColorModel::toH273(ColorModel::YCbCr_Rec601).matrix   == 6);
+
+        // Non-addressable models fall back to all-zero.
+        CHECK(ColorModel::toH273(ColorModel::CIEXYZ).primaries      == 0);
+        CHECK(ColorModel::toH273(ColorModel::Invalid).primaries     == 0);
+}
+
 TEST_CASE("ColorModel: sRGB and Rec709 share primaries") {
         auto &sp = ColorModel(ColorModel::sRGB).primaries();
         auto &rp = ColorModel(ColorModel::Rec709).primaries();

@@ -180,7 +180,6 @@ class QuickTimeWriter : public QuickTime::Impl {
                 List<QuickTimeWriterTrack>  _writeTracks;
                 Metadata                    _writerMetadata;
                 uint32_t                    _nextTrackId = 1;
-                uint32_t                    _movieTimescale = 600;  ///< Conventional default.
 
                 // Fragmented-mode state. Sample bytes are accumulated in
                 // per-track @c QuickTimeWriterTrack::fragPayload buffers

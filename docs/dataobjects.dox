@@ -39,6 +39,8 @@
  * | @ref InspectorEvent | Per-frame measurement record produced by @ref MediaIOTask_Inspector |
  * | @ref InspectorSnapshot | Aggregate accumulator state from @ref MediaIOTask_Inspector |
  * | @ref InspectorDiscontinuity | One detected discontinuity in the inspector's frame stream |
+ * | @ref ContentLightLevel | HDR content light level (MaxCLL / MaxFALL, CTA-861.3) |
+ * | @ref MasteringDisplay | HDR mastering display color volume (SMPTE ST 2086) |
  *
  * @section shareable Shareable
  *
@@ -77,9 +79,10 @@
  * | @ref HashSet | Unordered set (std::unordered_set wrapper) |
  * | @ref Deque | Double-ended queue (std::deque wrapper) |
  * | @ref Array | Fixed-size array (std::array wrapper) |
- * | @ref Image | Image descriptor + pixel buffer planes |
- * | @ref Audio | Audio descriptor + sample buffer |
+ * | @ref Image | Image descriptor + pixel buffer planes (compressed images carry an attached @ref MediaPacket) |
+ * | @ref Audio | Audio descriptor + sample buffer (compressed audio carries an attached @ref MediaPacket) |
  * | @ref Frame | Container of images, audio, and metadata |
+ * | @ref MediaPacket | Encoded bitstream access unit — attached to its owning @ref Image or @ref Audio |
  * | @ref EncodedDesc | Compressed/encoded media descriptor |
  *
  * @section dataobj_threading Thread Safety and Cross-Thread Sharing

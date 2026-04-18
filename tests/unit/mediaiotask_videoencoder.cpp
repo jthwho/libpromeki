@@ -66,11 +66,8 @@ TEST_CASE("MediaIOTask_VideoEncoder: open requires VideoCodec") {
 }
 
 TEST_CASE("MediaIOTask_VideoEncoder: open rejects a codec without an encoder factory") {
-        // VideoCodec::AV1 is metadata-only at this stage — no
-        // encoder backend is registered for it — so open() must
-        // refuse with NotSupported rather than silently no-op.
         MediaIO::Config cfg = MediaIO::defaultConfig("VideoEncoder");
-        cfg.set(MediaConfig::VideoCodec, VideoCodec(VideoCodec::AV1));
+        cfg.set(MediaConfig::VideoCodec, VideoCodec(VideoCodec::VP9));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
 
@@ -118,12 +115,14 @@ TEST_CASE("MediaIOTask_VideoEncoder: write -> read emits a packet via passthroug
         Error rerr = io->readFrame(outFrame, true);
         REQUIRE(rerr == Error::Ok);
         REQUIRE(outFrame);
-        REQUIRE(outFrame->packetList().size() == 1);
+        REQUIRE(outFrame->imageList().size() == 1);
 
-        const MediaPacket::Ptr &pkt = outFrame->packetList()[0];
-        REQUIRE(pkt);
-        CHECK(pkt->isKeyframe());
-        CHECK(pkt->size() == src.plane(0)->size());
+        const Image &outImg = *outFrame->imageList()[0];
+        REQUIRE(outImg.isCompressed());
+        REQUIRE(outImg.packet().isValid());
+        const MediaPacket &pkt = *outImg.packet();
+        CHECK(pkt.isKeyframe());
+        CHECK(pkt.size() == src.plane(0)->size());
 
         io->close();
         delete io;

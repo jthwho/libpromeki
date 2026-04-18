@@ -14,6 +14,7 @@
 #include <promeki/audiodesc.h>
 #include <promeki/buffer.h>
 #include <promeki/list.h>
+#include <promeki/mediapacket.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -146,6 +147,28 @@ class Audio {
                  */
                 Metadata &metadata() {
                         return _desc.metadata();
+                }
+
+                /**
+                 * @brief Returns the compressed bitstream packet attached to this Audio.
+                 *
+                 * Populated only for compressed audio (AAC, Opus, and
+                 * other bitstream codecs) — the encoded bytes live in
+                 * the attached packet, and this Audio object carries
+                 * the descriptor / timing metadata.  Null for
+                 * uncompressed PCM audio.
+                 */
+                const MediaPacket::Ptr &packet() const {
+                        return _packet;
+                }
+
+                /**
+                 * @brief Replaces the attached compressed-bitstream packet.
+                 *
+                 * Pass a null @ref MediaPacket::Ptr to clear.
+                 */
+                void setPacket(MediaPacket::Ptr pkt) {
+                        _packet = std::move(pkt);
                 }
 
                 /**
@@ -303,10 +326,11 @@ class Audio {
                 }
 
         private:
-                Buffer::Ptr     _buffer;
-                AudioDesc       _desc;
-                size_t          _samples = 0;
-                size_t          _maxSamples = 0;
+                Buffer::Ptr       _buffer;
+                AudioDesc         _desc;
+                size_t            _samples = 0;
+                size_t            _maxSamples = 0;
+                MediaPacket::Ptr  _packet;
 
                 bool allocate(const MemSpace &ms);
                 std::optional<String> resolvePseudoKey(const String &key, const String &spec) const;

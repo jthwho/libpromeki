@@ -14,6 +14,7 @@
 #include <promeki/colormodel.h>
 #include <promeki/pixelformat.h>
 #include <promeki/videocodec.h>
+#include <promeki/enums.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -324,6 +325,7 @@ class PixelDesc {
                         // ----- Video codec compressed formats (QuickTime/MP4 family) ------------
                         H264                               = 135,  ///< H.264 / AVC compressed video (avc1/avc3).
                         HEVC                               = 136,  ///< H.265 / HEVC compressed video (hvc1/hev1).
+                        AV1                                = 161,  ///< AV1 (AOMedia Video 1) compressed video (av01).
                         ProRes_422_Proxy                   = 137,  ///< Apple ProRes 422 Proxy (apco).
                         ProRes_422_LT                      = 138,  ///< Apple ProRes 422 LT (apcs).
                         ProRes_422                         = 139,  ///< Apple ProRes 422 (apcn).
@@ -400,6 +402,10 @@ class PixelDesc {
                         // -- Planar RGB --
                         RGB8_Planar_sRGB                   = 160,  ///< 8-bit planar RGB (3 equal-sized planes: R, G, B), sRGB, full range.
 
+                        // -- Planar 4:4:4 YCbCr --
+                        YUV8_444_Planar_Rec709             = 162,  ///< 8-bit YCbCr 4:4:4 planar, Rec.709, limited range.
+                        YUV10_444_Planar_LE_Rec709         = 163,  ///< 10-bit YCbCr 4:4:4 planar LE, Rec.709.
+
                         UserDefined                        = 1024  ///< First ID available for user-registered types.
                 };
 
@@ -429,6 +435,7 @@ class PixelDesc {
                         List<ID>        decodeTargets;                    ///< Uncompressed PixelDescs the codec can decode to.
                         FourCCList      fourccList;                       ///< Associated FourCC codes.
                         CompSemantic    compSemantics[MaxComps] = {};     ///< Per-component semantics.
+                        VideoRange      videoRange;                       ///< Y'CbCr / RGB quantization range.  Left at VideoRange::Unknown by default; @ref registerData auto-derives from @c compSemantics[0] when possible.
 
                         /**
                          * @brief Creates a PaintEngine for drawing on the given image.
@@ -492,6 +499,25 @@ class PixelDesc {
 
                 /** @brief Returns the color model. */
                 const ColorModel &colorModel() const { return d->colorModel; }
+
+                /**
+                 * @brief Returns the Y'CbCr / RGB value range.
+                 *
+                 * @return @c VideoRange::Full when the format uses the
+                 *         whole digital code range (e.g. 0..255 on 8-bit
+                 *         RGB or full-range Y'CbCr), @c VideoRange::Limited
+                 *         for studio / "video" range Y'CbCr (16..235 on
+                 *         8-bit luma, 16..240 chroma), or
+                 *         @c VideoRange::Unknown when the description
+                 *         doesn't declare a range (user-defined formats
+                 *         registered without an explicit value).
+                 *
+                 * Well-known PixelDescs populate this field; user-registered
+                 * descriptions that leave @c Data::videoRange at
+                 * @c VideoRange::Unknown fall through to an auto-derivation
+                 * at @ref registerData time based on @c compSemantics[0].
+                 */
+                VideoRange videoRange() const { return d->videoRange; }
 
                 /** @brief Returns true if this description includes an alpha channel. */
                 bool hasAlpha() const { return d->hasAlpha; }

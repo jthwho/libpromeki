@@ -83,7 +83,6 @@ std::optional<String> Frame::resolvePseudoKey(const String &key, const String &s
         Variant v;
         if(key == String("@ImageCount"))         v = static_cast<uint64_t>(_imageList.size());
         else if(key == String("@AudioCount"))    v = static_cast<uint64_t>(_audioList.size());
-        else if(key == String("@PacketCount"))   v = static_cast<uint64_t>(_packetList.size());
         else if(key == String("@HasBenchmark"))  v = _benchmark.isValid();
         else if(key == String("@VideoFormat")) {
                 v = videoFormat(0);

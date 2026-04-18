@@ -54,6 +54,10 @@ endif()
 add_subdirectory(framesync)
 add_subdirectory(paintengine)
 
+if(PROMEKI_ENABLE_NVENC)
+    add_subdirectory(nvenc)
+endif()
+
 if(PROMEKI_FUNCTEST_HAVE_SDL)
     add_subdirectory(sdlaudioclock)
 endif()

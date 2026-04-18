@@ -18,6 +18,8 @@
 #include <promeki/pixeldesc.h>
 #include <promeki/metadata.h>
 #include <promeki/mediaconfig.h>
+#include <promeki/mediapacket.h>
+#include <promeki/frame.h>
 #include <promeki/timecode.h>
 #include <promeki/jpegxsimagecodec.h>
 
@@ -979,6 +981,64 @@ TEST_CASE("ImageFileIO JpegXS: RGBA8 input encodes as RGB") {
         REQUIRE(loaded.isValid());
         CHECK(loaded.isCompressed());
         CHECK(loaded.pixelDesc().id() == PixelDesc::JPEG_XS_RGB8_sRGB);
+
+        std::remove(fn);
+}
+
+// ============================================================================
+// MediaPacket attachment — ImageFile::load attaches a MediaPacket to
+// the compressed Image so a downstream MediaIOTask_VideoDecoder stage
+// can consume it via Image::packet().
+// ============================================================================
+
+TEST_CASE("ImageFileIO JpegXS: load attaches a MediaPacket to the Image") {
+        const char *fn = "/tmp/promeki_jpegxs_packet.jxs";
+        Image src = makePlanarYUV422_8(128, 96);
+
+        ImageFile sf(ImageFile::JpegXS);
+        sf.setFilename(fn);
+        sf.setImage(src);
+        REQUIRE(sf.save() == Error::Ok);
+
+        ImageFile lf(ImageFile::JpegXS);
+        lf.setFilename(fn);
+        REQUIRE(lf.load() == Error::Ok);
+
+        const Frame &frame = lf.frame();
+        REQUIRE(frame.imageList().size() == 1);
+
+        const Image &img = *frame.imageList()[0];
+        REQUIRE(img.isCompressed());
+        REQUIRE(img.packet().isValid());
+        const MediaPacket &pkt = *img.packet();
+        CHECK(pkt.isValid());
+        CHECK(pkt.pixelDesc() == img.pixelDesc());
+        CHECK(pkt.size() == img.compressedSize());
+        CHECK(pkt.isKeyframe());
+        // Zero-copy: packet must share plane 0's backing buffer.
+        CHECK(pkt.buffer().ptr() == img.plane(0).ptr());
+
+        std::remove(fn);
+}
+
+TEST_CASE("ImageFileIO JpegXS: successive loads don't stack packets") {
+        const char *fn = "/tmp/promeki_jpegxs_packet_reload.jxs";
+        Image src = makePlanarYUV422_8(64, 48);
+
+        ImageFile sf(ImageFile::JpegXS);
+        sf.setFilename(fn);
+        sf.setImage(src);
+        REQUIRE(sf.save() == Error::Ok);
+
+        ImageFile lf(ImageFile::JpegXS);
+        lf.setFilename(fn);
+        REQUIRE(lf.load() == Error::Ok);
+        REQUIRE(lf.load() == Error::Ok);
+
+        REQUIRE(lf.frame().imageList().size() == 1);
+        const Image &img = *lf.frame().imageList()[0];
+        CHECK(img.isCompressed());
+        REQUIRE(img.packet().isValid());
 
         std::remove(fn);
 }

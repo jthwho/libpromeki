@@ -18,15 +18,23 @@
  * created by name through @ref MediaIO::create or one of the
  * filename factories below.
  *
- * | Backend            | Direction | Purpose                                                                                                  |
- * |--------------------|-----------|----------------------------------------------------------------------------------------------------------|
- * | @c TPG             | source    | Synthetic test pattern generator — colour bars + audio (default @ref AudioPattern::AvSync, which embeds LTC on the LTC channel + a click marker on the others) + timecode + a @ref ImageDataEncoder data band stamped at the top of every frame. |
- * | @c Inspector       | sink      | Frame validator / monitor — decodes the TPG image data band, decodes audio LTC, reports A/V sync offset, tracks frame number / stream ID / TC continuity, and emits both per-frame events and a periodic summary log.  See @ref inspector for the QA-oriented user guide. |
- * | @c ImageFile       | both      | Single image or numbered image sequence (DPX, Cineon, PNG, JPEG, TGA, SGI, PNM, raw YUV).                |
- * | @c AudioFile       | both      | Single audio file via libsndfile (WAV, FLAC, AIFF, ...).                                                 |
- * | @c QuickTime       | both      | QuickTime / ISO-BMFF reader and writer (fragmented or moov-at-end layout).                               |
- * | @c Rtp             | both      | RTP transport for video / audio / metadata streams (SDP-driven; SMPTE 2110 / AES67 friendly).            |
- * | @c Converter       | both      | In-process pixel-format and audio-format converter that wraps a child read-side and a parent write-side. |
+ * | Backend            | Direction      | Purpose                                                                                                  |
+ * |--------------------|----------------|----------------------------------------------------------------------------------------------------------|
+ * | @c TPG             | source         | Synthetic test pattern generator — colour bars + audio (default @ref AudioPattern::AvSync, which embeds LTC on the LTC channel + a click marker on the others) + timecode + a @ref ImageDataEncoder data band stamped at the top of every frame. |
+ * | @c Inspector       | sink           | Frame validator / monitor — decodes the TPG image data band, decodes audio LTC, reports A/V sync offset, tracks frame number / stream ID / TC continuity, and emits both per-frame events and a periodic summary log.  See @ref inspector for the QA-oriented user guide. |
+ * | @c ImageFile       | both           | Single image or numbered image sequence (DPX, Cineon, PNG, JPEG, JPEG XS, TGA, SGI, PNM, raw YUV).  Compressed formats (JPEG / JPEG XS) deliver the bitstream as @ref Image::packet on the loaded compressed Image. |
+ * | @c AudioFile       | both           | Single audio file via libsndfile (WAV, FLAC, AIFF, ...).                                                 |
+ * | @c QuickTime       | both           | QuickTime / ISO-BMFF reader and writer (fragmented or moov-at-end layout); H.264 / HEVC samples are delivered as Annex-B bytes on @ref Image::packet for compressed tracks. |
+ * | @c Rtp             | both           | RTP transport for video / audio / metadata streams (SDP-driven; SMPTE 2110 / AES67 friendly).  Compressed payloads ride on @ref Image::packet so the downstream decoder stage can consume them directly. |
+ * | @c V4L2            | source         | Video4Linux2 capture device (webcams, capture cards exposing a V4L2 node).                               |
+ * | @c Converter       | transform      | In-process pixel-format converter that wraps a child read-side and a parent write-side.                  |
+ * | @c CSC             | transform      | Stand-alone colour-space / pixel-format converter stage.                                                 |
+ * | @c SRC             | transform      | Stand-alone audio sample-rate converter stage.                                                           |
+ * | @c Burn            | transform      | Burn-in overlay generator (text / timecode) for QA and review.                                           |
+ * | @c FrameSync       | transform      | Frame-rate sync / re-clock stage.                                                                        |
+ * | @c VideoEncoder    | transform      | Generic video-encoder stage that dispatches to the registered @ref VideoEncoder backend for the configured @ref MediaConfig::VideoCodec.  Emits one compressed @ref Image per encoded access unit with its @ref Image::packet populated. |
+ * | @c VideoDecoder    | transform      | Generic video-decoder stage — consumes the @ref Image::packet from each compressed input @ref Image and emits uncompressed @ref Image frames on the other side.  Auto-detects the codec from the packet's @ref MediaPacket::pixelDesc when @ref MediaConfig::VideoCodec is unset. |
+ * | @c RawBitstream    | sink           | Writes every compressed @ref Image "Image's" attached @ref MediaPacket payload verbatim to a file — the elementary-stream mirror of the encoder output. |
  *
  * The TPG and Inspector are designed to be used together with no
  * extra configuration: a default-config TPG produces everything the
@@ -35,6 +43,21 @@
  * just two factory calls plus a frame loop.  See
  * @ref inspector "Inspector — Frame validation and monitoring" for
  * the full walk-through.
+ *
+ * @section mediaio_compressed Compressed bitstream flow
+ *
+ * Compressed essence rides through the pipeline as a compressed
+ * @ref Image (or @ref Audio) carrying its encoded bytes on an
+ * attached @ref MediaPacket — @ref Image::packet is the canonical
+ * location for the bitstream, PTS / DTS, and codec-level flags
+ * (keyframe, parameter-set, end-of-stream).  There is no separate
+ * per-Frame packet list: producer stages (VideoEncoder, container
+ * demuxers, RTP readers, ImageFile loaders) attach the packet to
+ * the Image they emit, and consumer stages (VideoDecoder,
+ * RawBitstream, container muxers) read it off the compressed Image
+ * they receive.  plane 0 and the packet's BufferView share the
+ * same backing buffer when the producer was able to arrange zero
+ * copy, so the extra wrapping is free on the hot path.
  *
  * @section mediaio_overview Overview
  *

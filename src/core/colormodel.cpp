@@ -988,4 +988,52 @@ ColorModel::IDList ColorModel::registeredIDs() {
         return ret;
 }
 
+ColorModel::H273 ColorModel::toH273(ID id) {
+        // Table-driven map from well-known ColorModel ID to the H.273
+        // codepoint triplet.  Gamma-encoded RGB families return the
+        // conventional SDR transfer for their primaries; their @c Linear*
+        // counterparts swap in @c 8 (Linear).  YCbCr_* derivations
+        // inherit the primaries and transfer of their RGB counterpart
+        // and stamp the matching matrix coefficients.  Models that
+        // don't correspond to an H.273 triplet (XYZ / Lab / HSV / HSL
+        // / user-defined) return an all-zero triplet — callers
+        // substitute @c 2 (Unspecified) or fall through to an explicit
+        // override.
+        switch(id) {
+                // ---- RGB (gamma-encoded) ----
+                case sRGB:             return { 1, 13, 0 };    // BT.709 primaries, IEC 61966-2-1 transfer, RGB matrix.
+                case Rec709:           return { 1,  1, 0 };    // BT.709 everywhere, RGB storage.
+                case Rec601_PAL:       return { 5,  5, 0 };    // BT.470BG primaries, BT.470BG transfer, RGB matrix.
+                case Rec601_NTSC:      return { 6,  6, 0 };    // SMPTE-170M primaries + transfer, RGB matrix.
+                case Rec2020:          return { 9, 14, 0 };    // BT.2020 primaries, BT.2020-10 transfer, RGB matrix.
+                case DCI_P3:           return {12, 13, 0 };    // SMPTE-432 (P3-D65) primaries, sRGB-style transfer, RGB matrix.
+                case AdobeRGB:         return { 1,  4, 0 };    // Adobe RGB has no spec H.273 primary; approximate as BT.709 + gamma 2.2.
+
+                // ---- RGB (linear) ----
+                case LinearSRGB:       return { 1,  8, 0 };
+                case LinearRec709:     return { 1,  8, 0 };
+                case LinearRec601_PAL: return { 5,  8, 0 };
+                case LinearRec601_NTSC:return { 6,  8, 0 };
+                case LinearRec2020:    return { 9,  8, 0 };
+                case LinearDCI_P3:     return {12,  8, 0 };
+                case LinearAdobeRGB:   return { 1,  8, 0 };
+                case ACES_AP0:         return { 0,  8, 0 };    // AP0 primaries aren't in H.273 — leave primaries at 0.
+                case ACES_AP1:         return { 0,  8, 0 };    // AP1 primaries (ACEScg) aren't in H.273 either.
+
+                // ---- YCbCr derivations ----
+                case YCbCr_Rec709:     return { 1,  1, 1 };    // BT.709 primaries/transfer, BT.709 matrix.
+                case YCbCr_Rec601:     return { 6,  6, 6 };    // SMPTE-170M primaries/transfer/matrix — NTSC convention.
+                case YCbCr_Rec2020:    return { 9, 14, 9 };    // BT.2020 primaries/transfer, BT.2020-NCL matrix.
+
+                // ---- Non-H.273-addressable ----
+                case Invalid:
+                case CIEXYZ:
+                case CIELab:
+                case HSV_sRGB:
+                case HSL_sRGB:
+                default:
+                        return {};
+        }
+}
+
 PROMEKI_NAMESPACE_END

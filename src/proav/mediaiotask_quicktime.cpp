@@ -127,10 +127,13 @@ MediaIO::FormatDesc MediaIOTask_QuickTime::formatDesc() {
                         // first video / audio track it finds".
                         s(MediaConfig::VideoTrack, int32_t(-1));
                         s(MediaConfig::AudioTrack, int32_t(-1));
-                        // Writer defaults — fragmented layout is the
-                        // crash-safe choice for live capture, classic
-                        // is only appropriate for offline rendering.
-                        s(MediaConfig::QuickTimeLayout, QuickTimeLayout::Fragmented);
+                        // Writer defaults — Classic is the broadly
+                        // compatible choice for on-disk outputs; every
+                        // player handles it without surprises.
+                        // Fragmented stays available for streaming /
+                        // pipe / socket sinks and for crash-resilient
+                        // live capture (override via QuickTimeLayout cc).
+                        s(MediaConfig::QuickTimeLayout, QuickTimeLayout::Classic);
                         s(MediaConfig::QuickTimeFragmentFrames, int32_t(DefaultFragmentFrames));
                         s(MediaConfig::QuickTimeFlushSync, false);
                         return specs;
@@ -275,9 +278,11 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandOpen &cmd) {
         // ---- Writer ----
         _qt = QuickTime::createWriter(_filename);
 
-        // Pick a layout. Default is fragmented for crash safety.
-        // The QuickTimeLayout Enum integer values match
-        // QuickTime::Layout by construction so we can cast directly.
+        // Pick a layout. Default is Classic for broad player
+        // compatibility; Fragmented is opt-in for streaming or
+        // crash-resilient live captures. The QuickTimeLayout Enum
+        // integer values match QuickTime::Layout by construction so
+        // we can cast directly.
         Error layoutErr;
         Enum layoutEnum = cfg.get(MediaConfig::QuickTimeLayout)
                              .asEnum(QuickTimeLayout::Type, &layoutErr);
@@ -418,16 +423,18 @@ Error MediaIOTask_QuickTime::readVideoFrame(uint64_t frameIndex, Frame::Ptr &out
                             static_cast<unsigned long long>(frameIndex));
                 return Error::DecodeFailed;
         }
-        frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
+        Image::Ptr imgPtr = Image::Ptr::create(img);
+        frame.modify()->imageList().pushToBack(imgPtr);
 
-        // For H.264 / HEVC tracks, also emit a MediaPacket carrying
-        // the sample re-framed as an Annex-B byte stream so a
-        // downstream @c VideoDecoder stage (e.g. NVDec) can consume
-        // it directly.  Container-stored samples are length-prefixed
-        // (AVCC) and parameter sets (SPS / PPS / VPS) live only in
-        // the @c avcC / @c hvcC configuration record — convert here,
-        // and prepend the parameter sets in front of every keyframe
-        // so the decoder can be initialized from any seek point.
+        // For H.264 / HEVC tracks, also attach a MediaPacket to the
+        // Image carrying the sample re-framed as an Annex-B byte
+        // stream so a downstream @c VideoDecoder stage (e.g. NVDec)
+        // can consume it directly.  Container-stored samples are
+        // length-prefixed (AVCC) and parameter sets (SPS / PPS / VPS)
+        // live only in the @c avcC / @c hvcC configuration record —
+        // convert here, and prepend the parameter sets in front of
+        // every keyframe so the decoder can be initialised from any
+        // seek point.
         const bool isH264 = (vt.pixelDesc().id() == PixelDesc::H264);
         const bool isHEVC = (vt.pixelDesc().id() == PixelDesc::HEVC);
         if((isH264 || isHEVC) && vt.codecConfig().isValid()) {
@@ -472,10 +479,9 @@ Error MediaIOTask_QuickTime::readVideoFrame(uint64_t frameIndex, Frame::Ptr &out
                                         }
                                 }
                         }
-                        MediaPacket pkt(payload, vt.pixelDesc());
-                        if(s.keyframe) pkt.addFlag(MediaPacket::Keyframe);
-                        frame.modify()->packetList().pushToBack(
-                                MediaPacket::Ptr::create(std::move(pkt)));
+                        auto pkt = MediaPacket::Ptr::create(payload, vt.pixelDesc());
+                        if(s.keyframe) pkt.modify()->addFlag(MediaPacket::Keyframe);
+                        imgPtr.modify()->setPacket(std::move(pkt));
                 }
         }
 
@@ -602,14 +608,8 @@ Error MediaIOTask_QuickTime::setupWriterFromFrame(const Frame &frame) {
                 const Image &img = *frame.imageList()[0];
                 inferPixelDesc = img.pixelDesc();
                 inferSize      = img.size();
-        } else if(!frame.packetList().isEmpty()) {
-                // Size is unavailable from a packet alone.  Caller must
-                // have supplied it via pendingMediaDesc at open().
-                promekiErr("MediaIOTask_QuickTime: cannot infer writer tracks from a "
-                           "packet-only first frame; supply pendingMediaDesc.imageList() at open");
-                return Error::InvalidArgument;
         } else {
-                promekiErr("MediaIOTask_QuickTime: cannot infer writer tracks; first frame has no image or packet");
+                promekiErr("MediaIOTask_QuickTime: cannot infer writer tracks; first frame has no image");
                 return Error::InvalidArgument;
         }
 
@@ -707,18 +707,28 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandWrite &cmd) {
         Error err = setupWriterFromFrame(frame);
         if(err.isError()) { stampWorkEnd(); return err; }
 
-        // Build the video sample.  Compressed frames arrive as a
-        // MediaPacket in @c packetList() (e.g. from
-        // MediaIOTask_VideoEncoder); uncompressed / codec-as-image
-        // frames arrive via @c imageList().  Packet takes precedence
-        // when both are present.
+        // Build the video sample from the first image.  When a
+        // compressed Image carries an attached @ref MediaPacket (the
+        // canonical representation for encoder output and container
+        // demux), its bytes take precedence over plane(0) — the packet
+        // view may cover a subset of a larger backing buffer, or a
+        // remapped Annex-B byte stream built from the container's AVCC
+        // length-prefixed samples.
+        if(frame.imageList().isEmpty()) {
+                promekiWarn("MediaIOTask_QuickTime: write with no image; skipping");
+                stampWorkEnd();
+                return Error::InvalidArgument;
+        }
+
         QuickTime::Sample s;
         s.trackId  = _writerVideoTrackId;
         s.duration = 0;  // let the writer derive from track frame rate by default.
         s.keyframe = true;
 
-        if(!frame.packetList().isEmpty()) {
-                const MediaPacket &pkt = *frame.packetList()[0];
+        const Image &img = *frame.imageList()[0];
+        const MediaPacket::Ptr &pktPtr = img.packet();
+        if(pktPtr.isValid()) {
+                const MediaPacket &pkt = *pktPtr;
                 const BufferView &view = pkt.view();
                 if(!view.isValid() || view.size() == 0) {
                         promekiWarn("MediaIOTask_QuickTime: packet has no payload; skipping");
@@ -740,8 +750,7 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandWrite &cmd) {
                         s.data = Buffer::Ptr::create(std::move(copy));
                 }
                 s.keyframe = pkt.isKeyframe();
-        } else if(!frame.imageList().isEmpty()) {
-                const Image &img = *frame.imageList()[0];
+        } else {
                 // Pull the encoded bytes from plane(0). For compressed images
                 // this is the raw codec payload; for uncompressed images it's
                 // the pixel bytes.
@@ -755,10 +764,6 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandWrite &cmd) {
                 if(frame.metadata().contains(Metadata::FrameKeyframe)) {
                         s.keyframe = frame.metadata().get(Metadata::FrameKeyframe).get<bool>();
                 }
-        } else {
-                promekiWarn("MediaIOTask_QuickTime: write with no image or packet; skipping");
-                stampWorkEnd();
-                return Error::InvalidArgument;
         }
 
         err = _qt.writeSample(_writerVideoTrackId, s);

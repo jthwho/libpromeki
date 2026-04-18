@@ -10,6 +10,7 @@
  */
 
 #include <doctest/doctest.h>
+#include <promeki/config.h>
 #include <promeki/mediaio.h>
 #include <promeki/mediaiotask_videoencoder.h>
 #include <promeki/mediaiotask_videodecoder.h>
@@ -18,10 +19,12 @@
 #include <promeki/imagedesc.h>
 #include <promeki/frame.h>
 #include <promeki/image.h>
+#include <promeki/imagefile.h>
 #include <promeki/mediapacket.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/buffer.h>
 #include <promeki/videocodec.h>
+#include <cstdio>
 #include <cstring>
 
 using namespace promeki;
@@ -89,7 +92,9 @@ TEST_CASE("MediaIOTask_VideoDecoder: encoder → decoder round-trip via passthro
         Frame::Ptr encodedFrame;
         REQUIRE(enc->readFrame(encodedFrame, true) == Error::Ok);
         REQUIRE(encodedFrame);
-        REQUIRE(encodedFrame->packetList().size() == 1);
+        REQUIRE(encodedFrame->imageList().size() == 1);
+        REQUIRE(encodedFrame->imageList()[0]->isCompressed());
+        REQUIRE(encodedFrame->imageList()[0]->packet().isValid());
 
         // -- Decoder stage (passthrough codec) --
         MediaIO::Config decCfg = MediaIO::defaultConfig("VideoDecoder");
@@ -134,3 +139,95 @@ TEST_CASE("MediaIOTask_VideoDecoder: encoder → decoder round-trip via passthro
         delete dec;
         delete enc;
 }
+
+#if PROMEKI_ENABLE_JPEGXS
+// Full end-to-end path for an intraframe codec: a compressed JPEG XS
+// file loaded via ImageFile carries its bitstream as an attached
+// MediaPacket on the compressed Image, which is what
+// MediaIOTask_VideoDecoder consumes.  Both the explicit VideoCodec
+// route and the auto-detect route must produce an uncompressed
+// Image from the loaded Frame.
+TEST_CASE("MediaIOTask_VideoDecoder: decodes a JPEG XS file via Image::packet") {
+        constexpr int kW = 128;
+        constexpr int kH = 96;
+
+        // Write a real JPEG XS bitstream to a scratch file.
+        const char *fn = "/tmp/promeki_mediaio_jxs_decode.jxs";
+        Image src(kW, kH, PixelDesc(PixelDesc::YUV8_422_Planar_Rec709));
+        REQUIRE(src.isValid());
+        {
+                uint8_t *luma = static_cast<uint8_t *>(src.data(0));
+                const size_t stride = src.lineStride(0);
+                for(int y = 0; y < kH; ++y) {
+                        uint8_t *row = luma + y * stride;
+                        for(int x = 0; x < kW; ++x) {
+                                row[x] = static_cast<uint8_t>(16 + (x * 219) / kW);
+                        }
+                }
+        }
+        ImageFile sf(ImageFile::JpegXS);
+        sf.setFilename(fn);
+        sf.setImage(src);
+        REQUIRE(sf.save() == Error::Ok);
+
+        // Load it back — the Frame must carry a compressed Image with
+        // an attached MediaPacket (the upstream invariant the decoder
+        // relies on).
+        ImageFile lf(ImageFile::JpegXS);
+        lf.setFilename(fn);
+        REQUIRE(lf.load() == Error::Ok);
+        Frame::Ptr inFrame = Frame::Ptr::create(lf.frame());
+        REQUIRE(!inFrame->imageList().isEmpty());
+        REQUIRE(inFrame->imageList()[0]->isCompressed());
+        REQUIRE(inFrame->imageList()[0]->packet().isValid());
+
+        auto runDecoder = [&](bool explicitCodec) -> Frame::Ptr {
+                MediaIO::Config cfg = MediaIO::defaultConfig("VideoDecoder");
+                if(explicitCodec) {
+                        cfg.set(MediaConfig::VideoCodec,
+                                VideoCodec(VideoCodec::JPEG_XS));
+                }
+                MediaIO *dec = MediaIO::create(cfg);
+                REQUIRE(dec != nullptr);
+
+                MediaDesc srcDesc;
+                srcDesc.imageList().pushToBack(
+                        ImageDesc(Size2Du32(kW, kH),
+                                  PixelDesc(PixelDesc::JPEG_XS_YUV8_422_Rec709)));
+                dec->setMediaDesc(srcDesc);
+                REQUIRE(dec->open(MediaIO::InputAndOutput) == Error::Ok);
+
+                REQUIRE(dec->writeFrame(inFrame, true) == Error::Ok);
+
+                Frame::Ptr out;
+                REQUIRE(dec->readFrame(out, true) == Error::Ok);
+                dec->close();
+                delete dec;
+                return out;
+        };
+
+        {
+                Frame::Ptr decoded = runDecoder(/*explicitCodec=*/true);
+                REQUIRE(decoded);
+                REQUIRE(decoded->imageList().size() == 1);
+                const Image &img = *decoded->imageList()[0];
+                CHECK(img.isValid());
+                CHECK(!img.isCompressed());
+                CHECK(img.width() == kW);
+                CHECK(img.height() == kH);
+        }
+
+        {
+                Frame::Ptr decoded = runDecoder(/*explicitCodec=*/false);
+                REQUIRE(decoded);
+                REQUIRE(decoded->imageList().size() == 1);
+                const Image &img = *decoded->imageList()[0];
+                CHECK(img.isValid());
+                CHECK(!img.isCompressed());
+                CHECK(img.width() == kW);
+                CHECK(img.height() == kH);
+        }
+
+        std::remove(fn);
+}
+#endif // PROMEKI_ENABLE_JPEGXS

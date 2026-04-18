@@ -764,6 +764,164 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                 .setRange(int32_t(0), int32_t(51))
                                 .setDescription("Constant QP for CQP rate-control mode."));
 
+                /// @brief bool — enable spatial adaptive quantization.
+                PROMEKI_DECLARE_ID(VideoSpatialAQ,
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(false)
+                                .setDescription("Enable spatial adaptive quantization."));
+
+                /// @brief int — spatial AQ strength (1-15; 0 = auto).
+                PROMEKI_DECLARE_ID(VideoSpatialAQStrength,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setRange(int32_t(0), int32_t(15))
+                                .setDescription("Spatial AQ strength (1-15; 0 = auto)."));
+
+                /// @brief bool — enable temporal adaptive quantization.
+                PROMEKI_DECLARE_ID(VideoTemporalAQ,
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(false)
+                                .setDescription("Enable temporal adaptive quantization."));
+
+                /// @brief int — multi-pass encoding mode
+                /// (0 = disabled, 1 = quarter-resolution, 2 = full-resolution).
+                PROMEKI_DECLARE_ID(VideoMultiPass,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setRange(int32_t(0), int32_t(2))
+                                .setDescription("Multi-pass mode "
+                                                "(0=disabled, 1=quarter-res, 2=full-res)."));
+
+                /// @brief bool — emit SPS/PPS (H.264), VPS/SPS/PPS (HEVC),
+                /// or Sequence Header (AV1) with every IDR/key frame.
+                PROMEKI_DECLARE_ID(VideoRepeatHeaders,
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(false)
+                                .setDescription("Emit parameter sets / sequence headers "
+                                                "with every IDR."));
+
+                /// @brief bool — emit SMPTE timecode via codec SEI.  Carried
+                /// in Picture Timing SEI (H.264) / Time Code SEI (HEVC); the
+                /// per-frame value comes from @ref Metadata::Timecode on the
+                /// source Image.  Frames without a valid Timecode skip
+                /// insertion for that picture.  Ignored for AV1 (NVENC does
+                /// not expose a timecode OBU path).
+                PROMEKI_DECLARE_ID(VideoTimecodeSEI,
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(false)
+                                .setDescription("Emit SMPTE timecode SEI "
+                                                "(H.264 picture timing / HEVC time code)."));
+
+                /// @brief @ref ColorPrimaries — color primaries signalled
+                /// in the VUI (H.264/HEVC) or color description (AV1).
+                /// Numeric values per ISO/IEC 23091-4 / ITU-T H.273.
+                ///
+                /// Default @c Auto lets the encoder derive the value from
+                /// the first input frame's PixelDesc / ColorModel (Rec.709
+                /// → @c BT709, Rec.2020 → @c BT2020, sRGB → @c BT709, …).
+                /// Set @c Unspecified to suppress the color-description
+                /// block entirely, or pick a specific value to override.
+                PROMEKI_DECLARE_ID(VideoColorPrimaries,
+                        VariantSpec().setType(Variant::TypeEnum)
+                                .setDefault(promeki::ColorPrimaries::Auto)
+                                .setEnumType(promeki::ColorPrimaries::Type)
+                                .setDescription("VUI color primaries "
+                                                "(Auto = derive from input)."));
+
+                /// @brief @ref TransferCharacteristics — opto-electronic
+                /// transfer function signalled in the VUI.  Numeric values
+                /// per ISO/IEC 23091-4 / ITU-T H.273.
+                ///
+                /// Default @c Auto derives the SDR curve matching the
+                /// input primaries.  Auto-derivation cannot pick HDR
+                /// curves today — the library's @ref ColorModel doesn't
+                /// distinguish PQ / HLG yet — so HDR callers must set
+                /// @c SMPTE2084 (HDR10) or @c ARIB_STD_B67 (HLG) explicitly.
+                PROMEKI_DECLARE_ID(VideoTransferCharacteristics,
+                        VariantSpec().setType(Variant::TypeEnum)
+                                .setDefault(promeki::TransferCharacteristics::Auto)
+                                .setEnumType(promeki::TransferCharacteristics::Type)
+                                .setDescription("VUI transfer characteristics "
+                                                "(Auto = derive from input)."));
+
+                /// @brief @ref MatrixCoefficients — Y'CbCr derivation matrix
+                /// signalled in the VUI.  Numeric values per ISO/IEC 23091-4
+                /// / ITU-T H.273.
+                ///
+                /// Default @c Auto derives from the input PixelDesc's
+                /// ColorModel (RGB models → @c RGB, YCbCr_Rec709 →
+                /// @c BT709, YCbCr_Rec2020 → @c BT2020_NCL, …).
+                PROMEKI_DECLARE_ID(VideoMatrixCoefficients,
+                        VariantSpec().setType(Variant::TypeEnum)
+                                .setDefault(promeki::MatrixCoefficients::Auto)
+                                .setEnumType(promeki::MatrixCoefficients::Type)
+                                .setDescription("VUI matrix coefficients "
+                                                "(Auto = derive from input)."));
+
+                /// @brief @ref VideoRange — studio/limited vs. full-range
+                /// flag signalled in the VUI @c videoFullRangeFlag (H.264,
+                /// HEVC) or AV1 @c colorRange field.
+                ///
+                /// Default @c Unknown means "derive from the first input
+                /// frame's @ref PixelDesc::videoRange".  Callers can force
+                /// @c Limited or @c Full to override the PixelDesc-derived
+                /// signalling (rarely useful, but covers formats whose
+                /// on-wire representation disagrees with their source
+                /// convention).
+                PROMEKI_DECLARE_ID(VideoRange,
+                        VariantSpec().setType(Variant::TypeEnum)
+                                .setDefault(promeki::VideoRange::Unknown)
+                                .setEnumType(promeki::VideoRange::Type)
+                                .setDescription("VUI video range "
+                                                "(Unknown = derive from input)."));
+
+                /// @brief @ref VideoScanMode — raster scan mode signalled
+                /// through codec SEI (H.264 Picture Timing / HEVC Picture
+                /// Timing) and/or native interlaced coding.
+                ///
+                /// Default @c Unknown means "derive from the first input
+                /// frame's @ref ImageDesc::videoScanMode; fall back to
+                /// @c Progressive when that is also @c Unknown".  When
+                /// the resolved mode is interlaced the NVENC backend
+                /// flips on H.264 @c outputPictureTimingSEI / HEVC @c
+                /// outputPictureTimingSEI at session init so every
+                /// decoded picture carries its @c pic_struct, and then
+                /// maps @c InterlacedEvenFirst / @c InterlacedOddFirst
+                /// to @c NV_ENC_PIC_STRUCT_DISPLAY_FIELD_TOP_BOTTOM /
+                /// @c _BOTTOM_TOP in the per-picture @c NV_ENC_TIME_CODE.
+                ///
+                /// Per-frame overrides go through
+                /// @ref Metadata::VideoScanMode on the source Image,
+                /// which lets a stream carry mixed scan modes if the
+                /// source format allows it.  AV1 does not expose
+                /// interlaced signalling through NVENC, so interlaced
+                /// requests to the AV1 codec warn-once and fall through
+                /// as progressive.
+                PROMEKI_DECLARE_ID(VideoScanMode,
+                        VariantSpec().setType(Variant::TypeEnum)
+                                .setDefault(promeki::VideoScanMode::Unknown)
+                                .setEnumType(promeki::VideoScanMode::Type)
+                                .setDescription("Raster scan mode "
+                                                "(Unknown = derive from input)."));
+
+                /// @brief @ref MasteringDisplay — stream-level mastering
+                /// display color volume (SMPTE ST 2086).  When set, the
+                /// encoder embeds this in every IDR (HEVC/AV1 SEI/OBU).
+                /// Per-frame overrides via @ref Metadata::MasteringDisplay
+                /// on the source Image take precedence.
+                PROMEKI_DECLARE_ID(HdrMasteringDisplay,
+                        VariantSpec().setType(Variant::TypeMasteringDisplay)
+                                .setDescription("Stream-level mastering display metadata "
+                                                "(SMPTE ST 2086)."));
+
+                /// @brief @ref ContentLightLevel — stream-level content
+                /// light level information (CTA-861.3).  When set, the
+                /// encoder embeds this in every IDR (HEVC/AV1 SEI/OBU).
+                PROMEKI_DECLARE_ID(HdrContentLightLevel,
+                        VariantSpec().setType(Variant::TypeContentLightLevel)
+                                .setDescription("Stream-level content light level "
+                                                "(MaxCLL / MaxFALL)."));
+
                 /// @brief @ref VideoCodec — typed codec identity used by
                 /// the generic video encoder / decoder @ref MediaIOTask
                 /// backends to look up the concrete @ref VideoEncoder /

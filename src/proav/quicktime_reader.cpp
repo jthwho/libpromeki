@@ -1394,8 +1394,10 @@ Error QuickTimeReader::parseTraf(int64_t trafPayloadOffset, int64_t trafPayloadE
                 if(e.isError()) return e;
         }
 
-        // Update the track's sample count after appending.
-        _tracks[trackIdx].setSampleCount(_sampleIndices[trackIdx].offset.size());
+        // Update the track's sample count after appending. For PCM
+        // audio in compact mode this is total PCM frames; for everything
+        // else it's the number of MP4 samples in idx.offset.
+        _tracks[trackIdx].setSampleCount(sampleCount(_sampleIndices[trackIdx]));
         return Error::Ok;
 }
 
@@ -1444,6 +1446,64 @@ Error QuickTimeReader::parseTrun(int64_t trunPayloadOffset, int64_t trunPayloadE
         int64_t curOffset = base + (dataOffsetPresent ? dataOffset : 0);
 
         QuickTimeSampleIndex &idx = _sampleIndices[trackIdx];
+
+        // PCM audio in fragmented mode arrives as one MP4 sample per
+        // chunk, where each chunk holds many PCM frames stored back-to-
+        // back. We unify with the classic-layout reader by collecting
+        // chunks into the audioCompact representation: callers continue
+        // to address audio by PCM-frame index, the index translates that
+        // to (chunk, offset-within-chunk) on read. Without this, a
+        // 13-second stereo 48 kHz fragment (≈30 chunks) would still
+        // appear as 30 "samples" to upstream code that expects PCM-frame
+        // semantics, breaking samplesPerFrame()-driven slice reads.
+        const QuickTime::Track &trackRef = _tracks[trackIdx];
+        const bool isPcmAudio =
+                (trackRef.type() == QuickTime::Audio) &&
+                trackRef.audioDesc().isValid() &&
+                (trackRef.audioDesc().dataType() != AudioDesc::Invalid);
+        if(isPcmAudio) {
+                const uint32_t pcmStride =
+                        static_cast<uint32_t>(trackRef.audioDesc().bytesPerSampleStride());
+                if(pcmStride == 0) return Error::CorruptData;
+                if(idx.audioChunkOffsets.isEmpty() &&
+                   idx.audioChunkSamplesPerChunk.isEmpty()) {
+                        idx.audioCompact     = true;
+                        idx.audioSampleSize  = pcmStride;
+                        idx.audioSampleDelta = 1;
+                }
+                idx.audioChunkOffsets.reserve(idx.audioChunkOffsets.size() + sampleCount);
+                idx.audioChunkSamplesPerChunk.reserve(idx.audioChunkSamplesPerChunk.size() + sampleCount);
+                idx.audioChunkFirstSample.reserve(idx.audioChunkFirstSample.size() + sampleCount);
+
+                for(uint32_t i = 0; i < sampleCount; ++i) {
+                        uint32_t dur = perSampleDuration ? stream.readU32() : defSampleDuration;
+                        uint32_t sz  = perSampleSize     ? stream.readU32() : defSampleSize;
+                        if(perSampleFlags) stream.skip(4);
+                        if(perSampleCts)   stream.skip(4);
+                        if(stream.isError()) return Error::CorruptData;
+
+                        if(sz == 0 || dur == 0 || sz != dur * pcmStride) {
+                                promekiWarn("QuickTime: fragmented PCM sample size %u "
+                                            "inconsistent with duration %u × stride %u",
+                                            sz, dur, pcmStride);
+                                return Error::CorruptData;
+                        }
+
+                        idx.audioChunkOffsets.pushToBack(curOffset);
+                        idx.audioChunkSamplesPerChunk.pushToBack(dur);
+                        idx.audioChunkFirstSample.pushToBack(idx.audioTotalSamples);
+                        idx.audioTotalSamples += dur;
+
+                        curOffset += sz;
+                        cursorDts += dur;
+                }
+                prevDataEnd = curOffset;
+                (void)trunPayloadEnd;
+                (void)firstSampleFlagsPresent;
+                (void)firstSampleFlags;
+                return Error::Ok;
+        }
+
         idx.offset.reserve(idx.offset.size() + sampleCount);
 
         for(uint32_t i = 0; i < sampleCount; ++i) {

@@ -19,7 +19,6 @@ TEST_CASE("Frame: default construction") {
         Frame f;
         CHECK(f.imageList().isEmpty());
         CHECK(f.audioList().isEmpty());
-        CHECK(f.packetList().isEmpty());
 }
 
 TEST_CASE("Frame: metadata access") {
@@ -124,8 +123,8 @@ TEST_CASE("Frame: makeString resolves metadata, frame pseudo, and Image[N]/Audio
         // Direct frame metadata + frame pseudo keys.
         CHECK(f.makeString("[{Timecode:smpte}] {Title}")
               == String("[01:00:00:00] clip"));
-        CHECK(f.makeString("imgs={@ImageCount} auds={@AudioCount} pkts={@PacketCount}")
-              == String("imgs=1 auds=1 pkts=0"));
+        CHECK(f.makeString("imgs={@ImageCount} auds={@AudioCount}")
+              == String("imgs=1 auds=1"));
 
         // Subscripted descent into image: pseudo and metadata keys both work.
         CHECK(f.makeString("{Image[0].@Size} {Image[0].@PixelDesc}")
@@ -207,18 +206,23 @@ TEST_CASE("Audio: makeString resolves metadata and pseudo keys") {
         CHECK(aud.makeString("{Album}") == String("LiveSet"));
 }
 
-TEST_CASE("Frame: packetList carries compressed access units") {
-        Frame f;
+TEST_CASE("Image: carries its compressed MediaPacket") {
         auto buf = Buffer::Ptr::create(32);
         buf.modify()->setSize(16);
+        Image img = Image::fromBuffer(buf, 16, 1, PixelDesc(PixelDesc::H264));
+        REQUIRE(img.isValid());
+        CHECK(img.isCompressed());
+        CHECK_FALSE(img.packet().isValid());
+
         auto pkt = MediaPacket::Ptr::create(buf, PixelDesc(PixelDesc::H264));
         pkt.modify()->addFlag(MediaPacket::Keyframe);
+        img.setPacket(pkt);
 
-        f.packetList().pushToBack(pkt);
+        REQUIRE(img.packet().isValid());
+        CHECK(img.packet()->isKeyframe());
+        CHECK(img.packet()->pixelDesc().id() == PixelDesc::H264);
+        CHECK(img.packet()->buffer().ptr() == buf.ptr());
 
-        // Const accessor returns the same element.
-        const Frame &cf = f;
-        REQUIRE(cf.packetList().size() == 1);
-        CHECK(cf.packetList().at(0)->isKeyframe());
-        CHECK(cf.packetList().at(0)->pixelDesc().id() == PixelDesc::H264);
+        img.setPacket(MediaPacket::Ptr());
+        CHECK_FALSE(img.packet().isValid());
 }

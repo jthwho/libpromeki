@@ -16,6 +16,7 @@
 
 #include <cstring>
 #include <ctime>
+#include <numeric>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -26,6 +27,21 @@ using namespace quicktime_atom;
 // ---------------------------------------------------------------------------
 
 namespace {
+
+// ISO/IEC 14496-12 §8.8.3.1 sample_flags constants.
+//
+// 32-bit big-endian word:
+//   bits  4..5  is_leading                (0)
+//   bits  6..7  sample_depends_on         (0=unknown, 1=depends, 2=independent)
+//   bits  8..9  sample_is_depended_on     (0=unknown)
+//   bits 10..11 sample_has_redundancy     (0)
+//   bit  15     sample_is_non_sync_sample (0=sync)
+//
+// Demuxers that treat sample_depends_on=0 as "possibly depends on an earlier
+// sample" will keep scanning for a positive sync point; emitting the explicit
+// values below mirrors what ffmpeg produces and removes that ambiguity.
+constexpr uint32_t kSampleFlagsSync    = 0x02000000;  // depends_on=2, non_sync=0
+constexpr uint32_t kSampleFlagsNonSync = 0x01010000;  // depends_on=1, non_sync=1
 
 /** @brief Mac-epoch (1904-01-01) seconds for the current wall-clock time. */
 uint64_t macEpochNow() {
@@ -69,6 +85,37 @@ FourCC pcmFourCCForDataType(AudioDesc::DataType dt) {
                         // interpret samples as big-endian integer.
                         return FourCC("lpcm");
         }
+}
+
+// Rescales @p value from @p fromScale ticks-per-second to @p toScale,
+// rounding to nearest. 64-bit intermediates avoid overflow for any
+// combination of timescales that fit in 32 bits and durations in
+// 32 bits (32+32 = 64). Returns 0 if @p fromScale is 0.
+uint64_t rescaleRound(uint64_t value, uint32_t toScale, uint32_t fromScale) {
+        if(fromScale == 0) return 0;
+        return (value * static_cast<uint64_t>(toScale) + fromScale / 2) /
+               static_cast<uint64_t>(fromScale);
+}
+
+// Returns the LCM of all non-zero track timescales, suitable for use as
+// the movie timescale. Using LCM lets tkhd durations represent both
+// audio and video track durations with full precision instead of
+// truncating to a coarser conventional value like 600 or 1000. Falls
+// back to 1000 if the LCM overflows uint32_t or if no tracks have a
+// usable timescale (nothing to scale against).
+template<typename TrackList>
+uint32_t lcmTimescale(const TrackList &tracks) {
+        uint64_t ts = 1;
+        bool any = false;
+        for(const auto &t : tracks) {
+                if(t.timescale == 0) continue;
+                any = true;
+                uint64_t g = std::gcd(ts, static_cast<uint64_t>(t.timescale));
+                uint64_t next = (ts / g) * static_cast<uint64_t>(t.timescale);
+                if(next > 0xFFFFFFFFull) return 1000;
+                ts = next;
+        }
+        return any ? static_cast<uint32_t>(ts) : 1000u;
 }
 
 /** @brief Identity 3x3 transformation matrix used in tkhd / mvhd. */
@@ -206,6 +253,29 @@ void appendStsdBox(AtomWriter &w, const QuickTimeWriterTrack &t) {
                 // Sample rate as 16.16 fixed in the high 16 bits + 0 fraction.
                 uint32_t srFixed = static_cast<uint32_t>(t.audioDesc.sampleRate()) << 16;
                 w.writeU32(srFixed);
+
+                // 'chan' channel layout atom (CoreAudio Audio Channel Layout).
+                // Declares the exact channel ordering so demuxers don't have
+                // to guess — the absence of this atom is a known source of
+                // stereo channel-mapping ambiguity in mplayer / libav-based
+                // players. Tags follow Apple's CoreAudio definitions:
+                //   Mono             = (100 << 16) | 1   = 0x00640001
+                //   Stereo           = (101 << 16) | 2   = 0x00650002
+                //   DiscreteInOrder  = (147 << 16) | nCh — fallback for
+                //                      layouts we can't name precisely.
+                unsigned int nCh = t.audioDesc.channels();
+                uint32_t channelLayoutTag = 0;
+                switch(nCh) {
+                        case 1:  channelLayoutTag = 0x00640001; break; // Mono
+                        case 2:  channelLayoutTag = 0x00650002; break; // Stereo
+                        default: channelLayoutTag = (147u << 16) | nCh; break;
+                }
+                auto chanBox = w.beginFullBox(FourCC("chan"), 0, 0);
+                w.writeU32(channelLayoutTag);
+                w.writeU32(0);                    // channelBitmap (unused)
+                w.writeU32(0);                    // numberChannelDescriptions
+                w.endBox(chanBox);
+
                 w.endBox(ase);
         } else if(t.type == QuickTime::TimecodeTrack) {
                 auto tcse = w.beginBox(FourCC("tmcd"));
@@ -270,16 +340,27 @@ Error QuickTimeWriter::open() {
                 return err;
         }
 
-        // 1. ftyp (common to both layouts). For fragmented files the brand
-        // list advertises compatibility with ISO-BMFF fragmented media.
+        // 1. ftyp. QuickTime (Apple's container spec) does not define
+        // movie fragments — mvex/moof/traf are ISO-BMFF extensions. A
+        // player that routes by major_brand will pick its MOV demuxer on
+        // 'qt  ' and then fail to parse fragments, so LayoutFragmented
+        // must advertise an ISO-BMFF brand. 'iso5' is the brand that
+        // explicitly requires movie-fragment support (ISO/IEC 14496-12
+        // Annex E). LayoutClassic keeps 'qt  ' because classic MOV sample
+        // tables are what 'qt  ' promises.
         AtomWriter ftyp;
         auto ftypBox = ftyp.beginBox(kFtyp);
-        ftyp.writeFourCC(FourCC("qt  "));   // major brand
-        ftyp.writeU32(0x00000200);          // minor version
-        ftyp.writeFourCC(FourCC("qt  "));   // compatible: qt
         if(_layout == QuickTime::LayoutFragmented) {
-                ftyp.writeFourCC(FourCC("isom"));  // compatible: ISO-BMFF
-                ftyp.writeFourCC(FourCC("iso5"));  // compatible: ISO-BMFF v5 (has fragmentation)
+                ftyp.writeFourCC(FourCC("iso5"));  // major: ISO-BMFF with fragments
+                ftyp.writeU32(0x00000200);         // minor version
+                ftyp.writeFourCC(FourCC("iso5"));
+                ftyp.writeFourCC(FourCC("isom"));
+                ftyp.writeFourCC(FourCC("mp42"));
+                ftyp.writeFourCC(FourCC("qt  "));
+        } else {
+                ftyp.writeFourCC(FourCC("qt  "));  // major: QuickTime
+                ftyp.writeU32(0x00000200);         // minor version
+                ftyp.writeFourCC(FourCC("qt  "));
         }
         ftyp.endBox(ftypBox);
 
@@ -548,15 +629,19 @@ Error QuickTimeWriter::writeSample(uint32_t trackId, const QuickTime::Sample &sa
                 if(t.type == QuickTime::Audio) {
                         uint32_t samplesInChunk =
                                 static_cast<uint32_t>(payloadSize / t.pcmBytesPerSample);
-                        // Expand into per-PCM-frame samples so the trun's
-                        // data_offset + sample_size run matches the
-                        // canonical fMP4 PCM layout.
-                        for(uint32_t i = 0; i < samplesInChunk; ++i) {
-                                t.fragSampleSizes.pushToBack(t.pcmBytesPerSample);
-                                t.fragSampleDurations.pushToBack(1);
-                                t.fragSampleCtsOffsets.pushToBack(0);
-                                t.fragSampleKeyframes.pushToBack(1);
-                        }
+                        // Emit one MP4 sample per writeSample call carrying
+                        // the entire chunk: sample_size = chunk bytes,
+                        // sample_duration = PCM frames in the chunk (in
+                        // audio timescale = sample rate). Per-PCM-frame
+                        // expansion explodes trun entry counts (one per
+                        // PCM frame ≈ 48000/sec for 48 kHz audio), which
+                        // demuxers like mplayer parse into per-packet
+                        // structures and choke on. ffmpeg, GPAC, Bento4
+                        // all chunk PCM the same way.
+                        t.fragSampleSizes.pushToBack(static_cast<uint32_t>(payloadSize));
+                        t.fragSampleDurations.pushToBack(samplesInChunk);
+                        t.fragSampleCtsOffsets.pushToBack(0);
+                        t.fragSampleKeyframes.pushToBack(1);
                         t.fragRunningDts    += samplesInChunk;
                         t.totalAudioSamples += samplesInChunk;
                         t.totalDuration     += samplesInChunk;
@@ -713,13 +798,18 @@ Error QuickTimeWriter::writeMoov() {
         auto moov = w.beginBox(kMoov);
 
         // ---- mvhd ----
-        // Movie duration is the longest track duration converted to the movie timescale.
-        uint32_t movieTimescale = _movieTimescale;
+        // Movie timescale is chosen as the LCM of all track timescales so
+        // that every tkhd duration can represent its track's actual media
+        // duration without truncation. The older fixed value 600 is too
+        // coarse for 29.97 fps (30000/1001) — tkhd truncates to ~0.5333 s
+        // instead of the true ~0.5339 s, leaving decoders briefly holding
+        // samples past the reported track end and producing a flush burst
+        // on close.
+        uint32_t movieTimescale = lcmTimescale(_writeTracks);
         uint64_t movieDuration = 0;
         for(const QuickTimeWriterTrack &t : _writeTracks) {
                 if(t.timescale == 0) continue;
-                uint64_t durMovie = (t.totalDuration * static_cast<uint64_t>(movieTimescale)) /
-                                    static_cast<uint64_t>(t.timescale);
+                uint64_t durMovie = rescaleRound(t.totalDuration, movieTimescale, t.timescale);
                 if(durMovie > movieDuration) movieDuration = durMovie;
         }
 
@@ -926,10 +1016,7 @@ void QuickTimeWriter::appendTrak(AtomWriter &w, const QuickTimeWriterTrack &t,
         // Flags: track_enabled = 0x000001, track_in_movie = 0x000002, track_in_preview = 0x000004
         const uint32_t tkhdFlags = 0x000007;
         uint64_t now = macEpochNow();
-        uint64_t durMovie = (t.timescale > 0)
-                ? (t.totalDuration * static_cast<uint64_t>(movieTimescale)) /
-                  static_cast<uint64_t>(t.timescale)
-                : 0;
+        uint64_t durMovie = rescaleRound(t.totalDuration, movieTimescale, t.timescale);
 
         auto tkhd = w.beginFullBox(kTkhd, 0, tkhdFlags);
         w.writeU32(static_cast<uint32_t>(now));     // creation
@@ -1237,7 +1324,9 @@ Error QuickTimeWriter::writeInitMoov() {
 
         // mvhd — duration is 0 for an init segment (no samples yet). The
         // mvex.mehd carries a duration hint if we want one; we don't bother.
-        uint32_t movieTimescale = _movieTimescale;
+        // Movie timescale is LCM of track timescales to keep per-fragment
+        // duration math exact — see the matching comment in writeMoov().
+        uint32_t movieTimescale = lcmTimescale(_writeTracks);
         uint64_t now = macEpochNow();
         auto mvhd = w.beginFullBox(kMvhd, 0, 0);
         w.writeU32(static_cast<uint32_t>(now));   // creation_time
@@ -1397,18 +1486,19 @@ void QuickTimeWriter::appendMvex(AtomWriter &w) {
                 auto trex = w.beginFullBox(kTrex, 0, 0);
                 w.writeU32(t.id);                                  // track_ID
                 w.writeU32(1);                                     // default_sample_description_index
-                // default_sample_duration: for video use frame rate, for audio use 1, else 0.
+                // default_sample_duration: for video use frame rate, else 0.
+                // Audio chunks have variable durations (samples per chunk
+                // depends on the producer's chunking) so we let trun
+                // override per fragment rather than baking a misleading
+                // default here.
                 uint32_t defDur = 0;
                 if(t.type == QuickTime::Video && t.frameRate.isValid()) {
                         defDur = t.frameRate.rational().denominator();
-                } else if(t.type == QuickTime::Audio) {
-                        defDur = 1;
                 }
                 w.writeU32(defDur);
-                // default_sample_size: for audio PCM use bytes-per-sample,
-                // for variable-size video use 0 (trun overrides).
-                uint32_t defSize = (t.type == QuickTime::Audio) ? t.pcmBytesPerSample : 0;
-                w.writeU32(defSize);
+                // default_sample_size: 0 — audio chunk sizes vary, video
+                // sample sizes vary, trun overrides in both cases.
+                w.writeU32(0);
                 // default_sample_flags: 0 (sync sample). Each trun can
                 // override the first_sample_flags or per-sample_flags.
                 w.writeU32(0);
@@ -1479,6 +1569,35 @@ Error QuickTimeWriter::writeFragment() {
         for(const FragTrack &ft : fragTracks) {
                 QuickTimeWriterTrack &t = _writeTracks[ft.trackIndex];
 
+                // Collapse contiguous per-video-frame audio chunks into a
+                // single MP4 sample for this fragment. Upstream callers
+                // emit one audio chunk per video frame (1601/1602 PCM
+                // frames at 29.97/48k) which produces non-uniform
+                // durations — blocking the uniform-duration compressor
+                // below and forcing per-sample duration bytes into trun.
+                // Contiguity is guaranteed: all audio bytes for a
+                // fragment are appended back-to-back into fragPayload,
+                // and audio samples carry no CTS offset, so merging
+                // their sizes/durations into one entry is lossless.
+                // The resulting trun collapses to ~24 bytes regardless
+                // of fragment length.
+                if(t.type == QuickTime::Audio && t.fragSampleSizes.size() > 1) {
+                        uint64_t totalSize = 0;
+                        uint64_t totalDur  = 0;
+                        for(size_t i = 0; i < t.fragSampleSizes.size(); ++i) {
+                                totalSize += t.fragSampleSizes[i];
+                                totalDur  += t.fragSampleDurations[i];
+                        }
+                        t.fragSampleSizes.clear();
+                        t.fragSampleDurations.clear();
+                        t.fragSampleCtsOffsets.clear();
+                        t.fragSampleKeyframes.clear();
+                        t.fragSampleSizes.pushToBack(static_cast<uint32_t>(totalSize));
+                        t.fragSampleDurations.pushToBack(static_cast<uint32_t>(totalDur));
+                        t.fragSampleCtsOffsets.pushToBack(0);
+                        t.fragSampleKeyframes.pushToBack(1);
+                }
+
                 // Detect whether all samples share the same duration /
                 // size / flags — common for PCM audio (all PCM frames are
                 // identical) and also possible for constant-duration
@@ -1497,9 +1616,25 @@ Error QuickTimeWriter::writeFragment() {
                 }
                 bool hasCtts = false;
                 for(int32_t v : t.fragSampleCtsOffsets) { if(v != 0) { hasCtts = true; break; } }
-                uint32_t uniformSampleFlags = 0;
-                if(!t.fragSampleKeyframes.isEmpty() && !t.fragSampleKeyframes[0]) {
-                        uniformSampleFlags |= (1u << 16);
+                uint32_t uniformSampleFlags =
+                        (!t.fragSampleKeyframes.isEmpty() && t.fragSampleKeyframes[0])
+                                ? kSampleFlagsSync : kSampleFlagsNonSync;
+
+                // Detect the "first sample is sync, all others are non-sync"
+                // pattern (the usual video GOP). When it holds, tfhd's
+                // default_sample_flags (non-sync) covers samples 1..N-1 and
+                // trun's first_sample_flags overrides sample 0 — per-sample
+                // flag bytes are skipped entirely. Mirrors ffmpeg's fMP4
+                // output exactly.
+                bool firstSyncCompress = false;
+                if(!uniformFlags && sampleCount >= 2 && t.fragSampleKeyframes[0]) {
+                        firstSyncCompress = true;
+                        for(size_t i = 1; i < sampleCount; ++i) {
+                                if(t.fragSampleKeyframes[i]) {
+                                        firstSyncCompress = false;
+                                        break;
+                                }
+                        }
                 }
 
                 auto traf = moofWriter.beginBox(kTraf);
@@ -1510,15 +1645,20 @@ Error QuickTimeWriter::writeFragment() {
                 //   0x000010 default_sample_size_present
                 //   0x000020 default_sample_flags_present
                 uint32_t tfhdFlags = 0x020000;
-                if(uniformDuration) tfhdFlags |= 0x000008;
-                if(uniformSize)     tfhdFlags |= 0x000010;
-                if(uniformFlags)    tfhdFlags |= 0x000020;
+                if(uniformDuration)                    tfhdFlags |= 0x000008;
+                if(uniformSize)                        tfhdFlags |= 0x000010;
+                if(uniformFlags || firstSyncCompress)  tfhdFlags |= 0x000020;
 
                 auto tfhd = moofWriter.beginFullBox(kTfhd, 0, tfhdFlags);
                 moofWriter.writeU32(t.id);
                 if(uniformDuration) moofWriter.writeU32(t.fragSampleDurations[0]);
                 if(uniformSize)     moofWriter.writeU32(t.fragSampleSizes[0]);
-                if(uniformFlags)    moofWriter.writeU32(uniformSampleFlags);
+                if(uniformFlags) {
+                        moofWriter.writeU32(uniformSampleFlags);
+                } else if(firstSyncCompress) {
+                        // default covers samples 1..N-1, which are all non-sync
+                        moofWriter.writeU32(kSampleFlagsNonSync);
+                }
                 moofWriter.endBox(tfhd);
 
                 // tfdt: base_media_decode_time (v1, 64-bit)
@@ -1528,23 +1668,27 @@ Error QuickTimeWriter::writeFragment() {
 
                 // trun: data_offset is always present. Per-sample fields
                 // are only emitted for dimensions that aren't uniform.
+                bool writePerSampleFlags = !uniformFlags && !firstSyncCompress;
                 uint32_t trunFlags = 0x000001;  // data_offset_present
-                if(!uniformDuration) trunFlags |= 0x000100;  // sample_duration_present
-                if(!uniformSize)     trunFlags |= 0x000200;  // sample_size_present
-                if(!uniformFlags)    trunFlags |= 0x000400;  // sample_flags_present
-                if(hasCtts)          trunFlags |= 0x000800;  // sample_composition_time_offsets_present
+                if(firstSyncCompress)  trunFlags |= 0x000004;  // first_sample_flags_present
+                if(!uniformDuration)   trunFlags |= 0x000100;  // sample_duration_present
+                if(!uniformSize)       trunFlags |= 0x000200;  // sample_size_present
+                if(writePerSampleFlags) trunFlags |= 0x000400; // sample_flags_present
+                if(hasCtts)            trunFlags |= 0x000800;  // sample_composition_time_offsets_present
 
                 auto trun = moofWriter.beginFullBox(kTrun, hasCtts ? 1 : 0, trunFlags);
                 moofWriter.writeU32(sampleCount);
                 size_t dataOffsetPos = moofWriter.pos();
                 moofWriter.writeS32(0);  // patched below
+                if(firstSyncCompress) moofWriter.writeU32(kSampleFlagsSync);
 
                 for(size_t i = 0; i < sampleCount; ++i) {
                         if(!uniformDuration) moofWriter.writeU32(t.fragSampleDurations[i]);
                         if(!uniformSize)     moofWriter.writeU32(t.fragSampleSizes[i]);
-                        if(!uniformFlags) {
-                                uint32_t sflags = 0;
-                                if(!t.fragSampleKeyframes[i]) sflags |= (1u << 16);
+                        if(writePerSampleFlags) {
+                                uint32_t sflags = t.fragSampleKeyframes[i]
+                                                          ? kSampleFlagsSync
+                                                          : kSampleFlagsNonSync;
                                 moofWriter.writeU32(sflags);
                         }
                         if(hasCtts) {

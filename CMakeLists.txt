@@ -793,6 +793,8 @@ set(PROMEKI_SOURCES
     src/core/cmdlineparser.cpp
     src/core/color.cpp
     src/core/colormodel.cpp
+    src/core/contentlightlevel.cpp
+    src/core/masteringdisplay.cpp
     src/core/audiocodec.cpp
     src/core/crashhandler.cpp
     src/core/crc.cpp

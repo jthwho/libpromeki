@@ -7,18 +7,39 @@
 
 #include <promeki/imagefile.h>
 #include <promeki/imagefileio.h>
+#include <promeki/image.h>
+#include <promeki/mediapacket.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-ImageFile::ImageFile(int id) : 
-        _io(ImageFileIO::lookup(id)) 
+ImageFile::ImageFile(int id) :
+        _io(ImageFileIO::lookup(id))
 {
 
 }
 
 Error ImageFile::load(const MediaConfig &config) {
-        return _io->load(*this, config);
+        Error err = _io->load(*this, config);
+        if(err.isError()) return err;
+
+        // Attach a MediaPacket to every compressed Image the backend
+        // loaded — plane 0 already holds the encoded bitstream, so we
+        // just wrap it as a zero-copy packet and hand the ownership
+        // over to the Image.  A downstream @ref VideoDecoder consumes
+        // @ref Image::packet to decode intraframe bitstreams (JPEG,
+        // JPEG XS) read from disk.  Every packet is flagged Keyframe
+        // because intraframe codecs have no inter-frame state.
+        for(Image::Ptr &imgPtr : _frame.imageList()) {
+                if(!imgPtr.isValid() || !imgPtr->isCompressed()) continue;
+                if(imgPtr->packet().isValid()) continue;
+                const Buffer::Ptr &plane = imgPtr->plane(0);
+                if(!plane.isValid() || plane->size() == 0) continue;
+                auto pkt = MediaPacket::Ptr::create(plane, imgPtr->pixelDesc());
+                pkt.modify()->addFlag(MediaPacket::Keyframe);
+                imgPtr.modify()->setPacket(std::move(pkt));
+        }
+        return Error::Ok;
 }
 
 Error ImageFile::save(const MediaConfig &config) {

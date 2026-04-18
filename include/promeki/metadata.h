@@ -11,6 +11,7 @@
 #include <promeki/config.h>
 #include <promeki/variantdatabase.h>
 #include <promeki/sharedptr.h>
+#include <promeki/enums.h>
 #if PROMEKI_ENABLE_NETWORK
 #include <promeki/eui64.h>
 #endif
@@ -318,6 +319,15 @@ class Metadata : public VariantDatabase<"Metadata"> {
                                 .setDefault(false)
                                 .setDescription("Frame is a keyframe / intra frame."));
 
+                /// @brief Request the encoder to emit an IDR/keyframe for
+                /// this frame (bool).  Set by upstream stages (e.g. after
+                /// a recording pause/unpause) to signal that this frame is
+                /// not temporally related to the previous one.
+                PROMEKI_DECLARE_ID(ForceKeyframe,
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(false)
+                                .setDescription("Request encoder to emit an IDR for this frame."));
+
                 /// @brief This frame's MediaDesc differs from the previously
                 /// reported one (bool).
                 PROMEKI_DECLARE_ID(MediaDescChanged,
@@ -463,6 +473,80 @@ class Metadata : public VariantDatabase<"Metadata"> {
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
                                 .setDescription("Image orientation code (0 = left-to-right, top-to-bottom)."));
+
+                // ============================================================
+                // HDR metadata (SMPTE ST 2086 / CTA-861.3)
+                // ============================================================
+
+                /// @brief Mastering display color volume (SMPTE ST 2086).
+                PROMEKI_DECLARE_ID(MasteringDisplay,
+                        VariantSpec().setType(Variant::TypeMasteringDisplay)
+                                .setDescription("Mastering display color volume (SMPTE ST 2086)."));
+
+                /// @brief Content light level information (CTA-861.3).
+                PROMEKI_DECLARE_ID(ContentLightLevel,
+                        VariantSpec().setType(Variant::TypeContentLightLevel)
+                                .setDescription("Content light level info (MaxCLL / MaxFALL)."));
+
+                // ============================================================
+                // Codec VUI / color description (ISO/IEC 23091-4 / ITU-T H.273)
+                // ============================================================
+                //
+                // These mirror the @ref MediaConfig encoder-side keys, but
+                // on output: a @ref VideoDecoder parses the bitstream's VUI
+                // (H.264/HEVC) or color description (AV1) and stamps the
+                // recovered values here on every decoded @ref Image.  They
+                // are distinct from the legacy DPX @c TransferCharacteristic
+                // / @c Colorimetric keys above — those carry SMPTE 268M
+                // codepoints from DPX files, while these carry H.273
+                // codepoints from a compressed bitstream.
+
+                /// @brief Color primaries observed in the decoded bitstream.
+                PROMEKI_DECLARE_ID(VideoColorPrimaries,
+                        VariantSpec().setType(Variant::TypeEnum)
+                                .setDefault(promeki::ColorPrimaries::Unspecified)
+                                .setEnumType(promeki::ColorPrimaries::Type)
+                                .setDescription("VUI color primaries (ISO/IEC 23091-4)."));
+
+                /// @brief Transfer characteristics observed in the decoded bitstream.
+                PROMEKI_DECLARE_ID(VideoTransferCharacteristics,
+                        VariantSpec().setType(Variant::TypeEnum)
+                                .setDefault(promeki::TransferCharacteristics::Unspecified)
+                                .setEnumType(promeki::TransferCharacteristics::Type)
+                                .setDescription("VUI transfer characteristics (ISO/IEC 23091-4)."));
+
+                /// @brief Matrix coefficients observed in the decoded bitstream.
+                PROMEKI_DECLARE_ID(VideoMatrixCoefficients,
+                        VariantSpec().setType(Variant::TypeEnum)
+                                .setDefault(promeki::MatrixCoefficients::Unspecified)
+                                .setEnumType(promeki::MatrixCoefficients::Type)
+                                .setDescription("VUI matrix coefficients (ISO/IEC 23091-4)."));
+
+                /// @brief Value range observed in the decoded bitstream.
+                PROMEKI_DECLARE_ID(VideoRange,
+                        VariantSpec().setType(Variant::TypeEnum)
+                                .setDefault(promeki::VideoRange::Unknown)
+                                .setEnumType(promeki::VideoRange::Type)
+                                .setDescription("VUI video range (Unknown / Limited / Full)."));
+
+                /// @brief Scan mode observed in the decoded bitstream, or
+                /// supplied as a per-frame encoder override.
+                ///
+                /// On decode, an NVDEC picture's @c progressive_frame and
+                /// @c top_field_first bits are mapped here:
+                /// @c progressive_frame=1 → @c Progressive;
+                /// @c progressive_frame=0 with @c top_field_first=1 →
+                /// @c InterlacedEvenFirst; with @c top_field_first=0 →
+                /// @c InterlacedOddFirst.  On encode, this key overrides
+                /// the session-level @ref MediaConfig::VideoScanMode for
+                /// a single picture, which lets a stream carry mixed
+                /// scan modes when the codec path supports it.
+                PROMEKI_DECLARE_ID(VideoScanMode,
+                        VariantSpec().setType(Variant::TypeEnum)
+                                .setDefault(promeki::VideoScanMode::Unknown)
+                                .setEnumType(promeki::VideoScanMode::Type)
+                                .setDescription("Raster scan mode "
+                                                "(Progressive / Interlaced*)."));
 
                 // ============================================================
                 // Methods

@@ -1671,6 +1671,34 @@ static PixelDesc::Data makeHEVC() {
         return d;
 }
 
+static PixelDesc::Data makeAV1() {
+        PixelDesc::Data d;
+        d.id               = PixelDesc::AV1;
+        d.name             = "AV1";
+        d.desc             = "AV1 (AOMedia Video 1) compressed video";
+        d.pixelFormat      = PixelFormat(PixelFormat::P_420_3x10_LE);
+        d.colorModel       = ColorModel(ColorModel::YCbCr_Rec709);
+        d.compressed       = true;
+        d.videoCodec       = VideoCodec(VideoCodec::AV1);
+        d.fourccList       = { "av01" };
+        d.compSemantics[0] = ycbcrSem10[0];
+        d.compSemantics[1] = ycbcrSem10[1];
+        d.compSemantics[2] = ycbcrSem10[2];
+        return d;
+}
+
+static PixelDesc::Data makeYUV8_444_Planar() {
+        return makeYCbCrDesc(PixelDesc::YUV8_444_Planar_Rec709,
+                "YUV8_444_Planar_Rec709", "8-bit YCbCr 4:4:4 planar, Rec.709, limited range",
+                PixelFormat::P_444_3x8, ycbcrSem8);
+}
+
+static PixelDesc::Data makeYUV10_444_Planar_LE() {
+        return makeYCbCrDesc(PixelDesc::YUV10_444_Planar_LE_Rec709,
+                "YUV10_444_Planar_LE_Rec709", "10-bit YCbCr 4:4:4 planar LE, Rec.709, limited range",
+                PixelFormat::P_444_3x10_LE, ycbcrSem10);
+}
+
 static PixelDesc::Data makeProRes422Desc(PixelDesc::ID id, const char *name, const char *desc,
                                          FourCC fourcc, VideoCodec::ID codec) {
         PixelDesc::Data d;
@@ -1927,6 +1955,9 @@ struct PixelDescRegistry {
                 // Video codec compressed formats (QuickTime / MP4 / ISO-BMFF)
                 add(makeH264());
                 add(makeHEVC());
+                add(makeAV1());
+                add(makeYUV8_444_Planar());
+                add(makeYUV10_444_Planar_LE());
                 add(makeProRes_422_Proxy());
                 add(makeProRes_422_LT());
                 add(makeProRes_422());
@@ -1989,11 +2020,44 @@ const PixelDesc::Data *PixelDesc::lookupData(ID id) {
         return &reg.entries[Invalid];
 }
 
+// Auto-derive VideoRange from the Luma (YCbCr) or Red (RGB) component
+// range in compSemantics[0].  The library convention across the
+// well-known PixelDesc factories is:
+//
+//   Full range:    min == 0 and max is a power-of-two-minus-one
+//                  (255, 1023, 4095, 65535) — the full digital code
+//                  range for a given bit depth.
+//   Limited range: min > 0 and max < the corresponding full-range
+//                  maximum (e.g. 16..235 for 8-bit Y'CbCr luma,
+//                  64..940 for 10-bit).
+//
+// Anything that doesn't match either shape is left as Unknown.
+// Callers can always set @c Data::videoRange explicitly to override.
+static VideoRange autoDeriveVideoRange(const PixelDesc::Data &d) {
+        if(d.videoRange != VideoRange::Unknown) return d.videoRange;
+        const auto &c0 = d.compSemantics[0];
+        if(c0.rangeMax <= 0.0f) return VideoRange::Unknown;
+        if(c0.rangeMin > 0.0f) return VideoRange::Limited;
+        const int imax = static_cast<int>(c0.rangeMax);
+        // Full-range bit-depth maxima: 2^N - 1 for N in {8, 10, 12, 14, 16}.
+        // (14-bit is uncommon in practice but included for completeness.)
+        if(imax == 255  || imax == 1023 ||
+           imax == 4095 || imax == 16383 || imax == 65535) {
+                return VideoRange::Full;
+        }
+        return VideoRange::Unknown;
+}
+
 void PixelDesc::registerData(Data &&data) {
         auto &reg = registry();
         if(data.id != Invalid) {
                 reg.nameMap[data.name] = data.id;
         }
+        // Fill in a reasonable videoRange default when the factory
+        // didn't set one explicitly — the library ships a lot of
+        // pre-existing factories that predate the field, and they all
+        // carry component ranges consistent with their names.
+        data.videoRange = autoDeriveVideoRange(data);
         reg.entries[data.id] = std::move(data);
 }
 

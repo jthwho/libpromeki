@@ -26,33 +26,20 @@ PROMEKI_NAMESPACE_BEGIN
 class MediaDesc;
 
 /**
- * @brief A media frame containing images, audio, compressed packets, and metadata.
+ * @brief A media frame containing images, audio, and metadata.
  * @ingroup proav
  *
- * Aggregates one or more uncompressed image planes, one or more
- * audio tracks, one or more @ref MediaPacket "compressed packets",
- * and a metadata container into a single unit that represents a
- * frame of media content.
+ * Aggregates one or more @ref Image entries (uncompressed or
+ * compressed), one or more @ref Audio tracks, and a metadata
+ * container into a single unit that represents a frame of media
+ * content.
  *
- * The @ref packetList companion to @ref imageList / @ref audioList
- * holds encoded bitstream access units — the output of a @ref
- * VideoEncoder, the input to a @ref VideoDecoder, or the on-disk
- * samples read from a muxed container.  A single Frame may carry
- * uncompressed essence (images / audio) and compressed packets
- * simultaneously — for example, while a pipeline is mid-encode the
- * encoder task's output can be spliced back onto the same Frame
- * that carried the source image for that PTS.
- *
- * @par Example
- * @code
- * MediaDesc mdesc;
- * Frame::Ptr frame = Frame::Ptr::create(mdesc);
- * frame->setTimecode(Timecode(Timecode::NDF24, 1, 0, 0, 0));
- * Image img = frame->image(0);
- *
- * // After encoding, attach a compressed packet alongside the image:
- * frame.modify()->packetList().pushToBack(encoded);
- * @endcode
+ * Compressed bitstream access units are not stored as a separate
+ * list on the Frame — they travel with their owning essence via
+ * @ref Image::packet and @ref Audio::packet.  A compressed Image
+ * carries its encoded @ref MediaPacket directly; that's the
+ * canonical location a downstream @ref VideoDecoder reads from,
+ * and the canonical location a @ref VideoEncoder writes to.
  */
 class Frame {
         PROMEKI_SHARED_FINAL(Frame)
@@ -90,25 +77,6 @@ class Frame {
                  * @return The audio pointer list.
                  */
                 Audio::PtrList &audioList() { return _audioList; }
-
-                /**
-                 * @brief Returns a const reference to the list of compressed packets.
-                 *
-                 * Each entry is a @ref MediaPacket carrying one encoded
-                 * access unit (typically one coded video frame or one
-                 * encoded audio frame).  Empty by default — backends
-                 * that only deal in uncompressed essence never touch
-                 * this list.
-                 *
-                 * @return The packet pointer list.
-                 */
-                const MediaPacket::PtrList &packetList() const { return _packetList; }
-
-                /**
-                 * @brief Returns a mutable reference to the list of compressed packets.
-                 * @return The packet pointer list.
-                 */
-                MediaPacket::PtrList &packetList() { return _packetList; }
 
                 /**
                  * @brief Returns a const reference to the frame metadata.
@@ -236,8 +204,8 @@ class Frame {
                  *
                  *  1. Frame-level pseudo keys (prefixed with @c "@" so
                  *     they cannot collide with metadata keys):
-                 *     - @c \@ImageCount, @c \@AudioCount,
-                 *       @c \@PacketCount — list sizes (uint64).
+                 *     - @c \@ImageCount, @c \@AudioCount — list
+                 *       sizes (uint64).
                  *     - @c \@HasBenchmark — bool.
                  *     - @c \@VideoFormat / @c \@VideoFormat[N] —
                  *       @ref VideoFormat for image @c N (default 0).
@@ -299,7 +267,6 @@ class Frame {
         private:
                 Image::PtrList         _imageList;
                 Audio::PtrList         _audioList;
-                MediaPacket::PtrList   _packetList;
                 Metadata               _metadata;
                 Benchmark::Ptr         _benchmark;
                 MediaConfig            _configUpdate;
