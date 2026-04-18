@@ -13,5 +13,6 @@ var structPixelDesc_1_1Data =
     [ "id", "structPixelDesc_1_1Data.html#a5a40d17198925ae278e33a8aa3821b6a", null ],
     [ "name", "structPixelDesc_1_1Data.html#abca3659af0aa604e02291d0197c807ef", null ],
     [ "pixelFormat", "structPixelDesc_1_1Data.html#ae2ab827f7c0081ea7e9711acf99777b2", null ],
-    [ "videoCodec", "structPixelDesc_1_1Data.html#a83418620c6f1ac5d2aaed1756354bc5e", null ]
+    [ "videoCodec", "structPixelDesc_1_1Data.html#a83418620c6f1ac5d2aaed1756354bc5e", null ],
+    [ "videoRange", "structPixelDesc_1_1Data.html#a6f3c9681922db9f611a9bf8e58573a4c", null ]
 ];

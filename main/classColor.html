@@ -436,8 +436,8 @@ Static Public Attributes</h2></td></tr>
 <div class="line"><a class="code hl_class" href="classColor.html">Color</a> <a class="code hl_class" href="classList.html">c</a>(255, 128, 64);</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Using a static factory for a specific model</span></div>
-<div class="line"><a class="code hl_class" href="classColor.html">Color</a> <a class="code hl_class" href="classList.html">red</a>   = <a class="code hl_function" href="classColor.html#a285c3676b9febbc8cda0114292ef1a7d">Color::srgb</a>(1.0f, 0.0f, 0.0f);</div>
-<div class="line"><a class="code hl_class" href="classColor.html">Color</a> <a class="code hl_class" href="classList.html">green</a> = <a class="code hl_function" href="classColor.html#a428417bf0b16e05e90ebf6c1a71ad2db">Color::hsv</a>(120.0f / 360.0f, 1.0f, 1.0f);</div>
+<div class="line"><a class="code hl_class" href="classColor.html">Color</a> red   = <a class="code hl_function" href="classColor.html#a285c3676b9febbc8cda0114292ef1a7d">Color::srgb</a>(1.0f, 0.0f, 0.0f);</div>
+<div class="line"><a class="code hl_class" href="classColor.html">Color</a> green = <a class="code hl_function" href="classColor.html#a428417bf0b16e05e90ebf6c1a71ad2db">Color::hsv</a>(120.0f / 360.0f, 1.0f, 1.0f);</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// From a named constant</span></div>
 <div class="line"><a class="code hl_class" href="classColor.html">Color</a> <a class="code hl_class" href="classList.html">white</a> = <a class="code hl_variable" href="classColor.html#a64abba1de9a93b7b2cf3ddbde14f640b">Color::White</a>;</div>
@@ -459,14 +459,17 @@ Static Public Attributes</h2></td></tr>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 </div><!-- fragment --><dl class="section user"><dt>Converting between models</dt><dd></dd></dl>
 <p><a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a> can convert itself to any other color model:</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classColor.html">Color</a> <a class="code hl_class" href="classList.html">red</a> = <a class="code hl_variable" href="classColor.html#ade25ce437fd74a7b08fee1583b329c8e">Color::Red</a>;</div>
-<div class="line"><a class="code hl_class" href="classColor.html">Color</a> <a class="code hl_class" href="classList.html">hsvRed</a> = <a class="code hl_class" href="classList.html">red</a>.toHSV();       <span class="comment">// H~0, S=1, V=1</span></div>
-<div class="line"><a class="code hl_class" href="classColor.html">Color</a> <a class="code hl_class" href="classList.html">labRed</a> = <a class="code hl_class" href="classList.html">red</a>.toLab();       <span class="comment">// perceptual coordinates</span></div>
+<div class="fragment"><div class="line"><a class="code hl_class" href="classColor.html">Color</a> red = <a class="code hl_variable" href="classColor.html#ade25ce437fd74a7b08fee1583b329c8e">Color::Red</a>;</div>
+<div class="line"><a class="code hl_class" href="classColor.html">Color</a> <a class="code hl_class" href="classList.html">hsvRed</a> = red.<a class="code hl_function" href="classColor.html#adc2d1b9d4f8066fe2d63098d1852ae35">toHSV</a>();       <span class="comment">// H~0, S=1, V=1</span></div>
+<div class="line"><a class="code hl_class" href="classColor.html">Color</a> <a class="code hl_class" href="classList.html">labRed</a> = red.<a class="code hl_function" href="classColor.html#af3c27f93476c46a757ea9997a00f3a55">toLab</a>();       <span class="comment">// perceptual coordinates</span></div>
 <div class="line"><a class="code hl_class" href="classColor.html">Color</a> back   = <a class="code hl_class" href="classList.html">labRed</a>.toRGB();    <span class="comment">// back to sRGB</span></div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Or to any arbitrary model</span></div>
-<div class="line"><a class="code hl_class" href="classColor.html">Color</a> <a class="code hl_class" href="classList.html">r2020</a> = <a class="code hl_class" href="classList.html">red</a>.convert(<a class="code hl_enumvalue" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baac7a1faf43d1079b4c75ab576bb6220e2">ColorModel::Rec2020</a>);</div>
+<div class="line"><a class="code hl_class" href="classColor.html">Color</a> <a class="code hl_class" href="classList.html">r2020</a> = red.<a class="code hl_function" href="classColor.html#ad8f542b6d565d809aa114fea6af0654e">convert</a>(<a class="code hl_enumvalue" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baac7a1faf43d1079b4c75ab576bb6220e2">ColorModel::Rec2020</a>);</div>
+<div class="ttc" id="aclassColor_html_ad8f542b6d565d809aa114fea6af0654e"><div class="ttname"><a href="classColor.html#ad8f542b6d565d809aa114fea6af0654e">Color::convert</a></div><div class="ttdeci">Color convert(const ColorModel &amp;target) const</div><div class="ttdoc">Converts this color to a different color model.</div></div>
+<div class="ttc" id="aclassColor_html_adc2d1b9d4f8066fe2d63098d1852ae35"><div class="ttname"><a href="classColor.html#adc2d1b9d4f8066fe2d63098d1852ae35">Color::toHSV</a></div><div class="ttdeci">Color toHSV() const</div><div class="ttdoc">Converts to HSV (sRGB-based).</div></div>
 <div class="ttc" id="aclassColor_html_ade25ce437fd74a7b08fee1583b329c8e"><div class="ttname"><a href="classColor.html#ade25ce437fd74a7b08fee1583b329c8e">Color::Red</a></div><div class="ttdeci">static const Color Red</div><div class="ttdoc">Opaque red (255, 0, 0).</div><div class="ttdef"><b>Definition</b> color.h:470</div></div>
+<div class="ttc" id="aclassColor_html_af3c27f93476c46a757ea9997a00f3a55"><div class="ttname"><a href="classColor.html#af3c27f93476c46a757ea9997a00f3a55">Color::toLab</a></div><div class="ttdeci">Color toLab() const</div><div class="ttdoc">Converts to CIE L*a*b*.</div></div>
 </div><!-- fragment --><p>All conversions pass through CIE XYZ as the connection space. They are precise but not optimized for bulk pixel processing; use the library's image pipeline for that.</p>
 <dl class="section user"><dt>Serialization</dt><dd></dd></dl>
 <p>The default <a class="el" href="classColor.html#a6e3bdfaea506286b903fa5724606357a" title="Converts this color to a string representation.">toString()</a> format is lossless ModelFormat: "sRGB(1,0,0,1)". This preserves the color model and all four components, and can be parsed back by <a class="el" href="classColor.html#ac5717c109b931c65a7d54b725537807e" title="Creates a Color from a string representation.">fromString()</a>. The older sRGB-specific formats (hex, csv, float functional) are still available for display and compatibility.</p>
@@ -1120,7 +1123,7 @@ specified" for style inheritance. The static constant <a class="el" href="classC
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classColor.html">Color</a></li>
-    <li class="footer">Generated on 2026-04-16 05:30:02 from commit 7eadf34 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
   </ul>
 </div>
 </body>

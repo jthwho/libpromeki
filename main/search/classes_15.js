@@ -12,7 +12,7 @@ var searchData=
   ['variantdatabase_3c_22pipelinestats_22_3e_9',['VariantDatabase&lt;&quot;PipelineStats&quot;&gt;',['../classVariantDatabase.html',1,'']]],
   ['variantend_10',['VariantEnd',['../structdetail_1_1VariantEnd.html',1,'detail']]],
   ['variantimpl_11',['VariantImpl',['../classVariantImpl.html',1,'']]],
-  ['variantimpl_3c_20std_3a_3amonostate_2c_20bool_2c_20uint8_5ft_2c_20int8_5ft_2c_20uint16_5ft_2c_20int16_5ft_2c_20uint32_5ft_2c_20int32_5ft_2c_20uint64_5ft_2c_20int64_5ft_2c_20float_2c_20double_2c_20string_2c_20datetime_2c_20timestamp_2c_20mediatimestamp_2c_20size2du32_2c_20uuid_2c_20umid_2c_20timecode_2c_20rational_3c_20int_20_3e_2c_20framerate_2c_20videoformat_2c_20stringlist_2c_20color_2c_20colormodel_2c_20memspace_2c_20pixelformat_2c_20pixeldesc_2c_20videocodec_2c_20audiocodec_2c_20enum_2c_20enumlist_2c_20detail_3a_3avariantend_20_3e_12',['VariantImpl&lt; std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, Size2Du32, UUID, UMID, Timecode, Rational&lt; int &gt;, FrameRate, VideoFormat, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, VideoCodec, AudioCodec, Enum, EnumList, detail::VariantEnd &gt;',['../classVariantImpl.html',1,'']]],
+  ['variantimpl_3c_20std_3a_3amonostate_2c_20bool_2c_20uint8_5ft_2c_20int8_5ft_2c_20uint16_5ft_2c_20int16_5ft_2c_20uint32_5ft_2c_20int32_5ft_2c_20uint64_5ft_2c_20int64_5ft_2c_20float_2c_20double_2c_20string_2c_20datetime_2c_20timestamp_2c_20mediatimestamp_2c_20size2du32_2c_20uuid_2c_20umid_2c_20timecode_2c_20rational_3c_20int_20_3e_2c_20framerate_2c_20videoformat_2c_20stringlist_2c_20color_2c_20colormodel_2c_20memspace_2c_20pixelformat_2c_20pixeldesc_2c_20videocodec_2c_20audiocodec_2c_20enum_2c_20enumlist_2c_20masteringdisplay_2c_20contentlightlevel_2c_20detail_3a_3avariantend_20_3e_12',['VariantImpl&lt; std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, Size2Du32, UUID, UMID, Timecode, Rational&lt; int &gt;, FrameRate, VideoFormat, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, VideoCodec, AudioCodec, Enum, EnumList, MasteringDisplay, ContentLightLevel, detail::VariantEnd &gt;',['../classVariantImpl.html',1,'']]],
   ['variantspec_13',['VariantSpec',['../classVariantSpec.html',1,'']]],
   ['vboxlayout_14',['VBoxLayout',['../classVBoxLayout.html',1,'']]],
   ['videocodec_15',['VideoCodec',['../classVideoCodec.html',1,'']]],
@@ -21,7 +21,8 @@ var searchData=
   ['videoencoderpreset_18',['VideoEncoderPreset',['../classVideoEncoderPreset.html',1,'']]],
   ['videoformat_19',['VideoFormat',['../classVideoFormat.html',1,'']]],
   ['videopattern_20',['VideoPattern',['../classVideoPattern.html',1,'']]],
-  ['videoratecontrol_21',['VideoRateControl',['../classVideoRateControl.html',1,'']]],
-  ['videoscanmode_22',['VideoScanMode',['../classVideoScanMode.html',1,'']]],
-  ['videotestpattern_23',['VideoTestPattern',['../classVideoTestPattern.html',1,'']]]
+  ['videorange_21',['VideoRange',['../classVideoRange.html',1,'']]],
+  ['videoratecontrol_22',['VideoRateControl',['../classVideoRateControl.html',1,'']]],
+  ['videoscanmode_23',['VideoScanMode',['../classVideoScanMode.html',1,'']]],
+  ['videotestpattern_24',['VideoTestPattern',['../classVideoTestPattern.html',1,'']]]
 ];

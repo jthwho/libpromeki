@@ -35,7 +35,7 @@ var searchData=
   ['pps_32',['pps',['../structAvcDecoderConfig.html#a9e1f419e6cae32258370381491cdc675',1,'AvcDecoderConfig::pps'],['../structHevcDecoderConfig.html#ad5058c411ecc540e892f1685b9d3e14c',1,'HevcDecoderConfig::pps']]],
   ['prefix_33',['Prefix',['../classResource.html#a3cf64211e8d51acdc440e5f72108cb5f',1,'Resource']]],
   ['previousvalue_34',['previousValue',['../structInspectorDiscontinuity.html#a4805a1ae20db9515fa6dd56a9ddba30a',1,'InspectorDiscontinuity']]],
-  ['primaries_35',['primaries',['../structColorModel_1_1Data.html#aa359cf26fcd139998b7917a7df0e71ee',1,'ColorModel::Data']]],
+  ['primaries_35',['primaries',['../structColorModel_1_1Data.html#aa359cf26fcd139998b7917a7df0e71ee',1,'ColorModel::Data::primaries'],['../structColorModel_1_1H273.html#a3c8de41271d17fe01d8c85226d6e1d4d',1,'ColorModel::H273::primaries']]],
   ['primercount_36',['PrimerCount',['../classImageDataEncoder.html#a64dd4fc8d33cb79b1356b2b5b2502284',1,'ImageDataEncoder']]],
   ['printdeviceinfo_37',['printDeviceInfo',['../structMediaIO_1_1FormatDesc.html#a777e7032562afbf4fb040df2692dcb9b',1,'MediaIO::FormatDesc']]],
   ['priv_38',['priv',['../structMemAllocation.html#ada6e558f49dfafad5c48f44f2ef309ed',1,'MemAllocation']]],

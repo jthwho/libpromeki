@@ -392,7 +392,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Returns the number of frames paced since the last <code><a class="el" href="classFramePacer.html#a3188f9f7e86c24208e0e1abc1b458dd1" title="Resets the pacer for a new run.">reset()</a></code>. </p>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classFrame.html" title="A media frame containing images, audio, compressed packets, and metadata.">Frame</a> count (0 before the first <code><a class="el" href="classFramePacer.html#a421cf42767c2e195f4243964d0b94f1f" title="Paces one frame and returns the result.">pace()</a></code>). </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> count (0 before the first <code><a class="el" href="classFramePacer.html#a421cf42767c2e195f4243964d0b94f1f" title="Paces one frame and returns the result.">pace()</a></code>). </dd></dl>
 
 </div>
 </div>
@@ -587,7 +587,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Resets the pacer with an explicit origin. </p>
-<p>Sets the origin to <code>originNs</code> in the clock's time domain. <a class="el" href="classFrame.html" title="A media frame containing images, audio, compressed packets, and metadata.">Frame</a> N's deadline is <code>originNs + cumulativeTicks(1e9, N)</code>.</p>
+<p>Sets the origin to <code>originNs</code> in the clock's time domain. <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> N's deadline is <code>originNs + cumulativeTicks(1e9, N)</code>.</p>
 <p>Use this for phase-aligned operation (e.g. ST 2110 where frame boundaries must align to specific PTP times).</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -705,7 +705,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classFramePacer.html">FramePacer</a></li>
-    <li class="footer">Generated on 2026-04-16 05:30:02 from commit 7eadf34 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
   </ul>
 </div>
 </body>

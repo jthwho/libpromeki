@@ -197,7 +197,7 @@ Public Attributes</h2></td></tr>
 <div class="line">                                 <a class="code hl_enumvalue" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39a242744ea06c5d2680399014299d27878">MediaPacket::ParameterSet</a>));</div>
 <div class="ttc" id="aclassMediaPacket_html"><div class="ttname"><a href="classMediaPacket.html">MediaPacket</a></div><div class="ttdoc">Encoded bitstream access unit produced by a VideoEncoder or consumed by a VideoDecoder.</div><div class="ttdef"><b>Definition</b> mediapacket.h:84</div></div>
 <div class="ttc" id="aclassMediaPacket_html_a6d228cbf2421239a345b8ce28dfc8c39a242744ea06c5d2680399014299d27878"><div class="ttname"><a href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39a242744ea06c5d2680399014299d27878">MediaPacket::ParameterSet</a></div><div class="ttdeci">@ ParameterSet</div><div class="ttdoc">Packet carries only parameter sets (SPS / PPS / VPS / etc.).</div><div class="ttdef"><b>Definition</b> mediapacket.h:109</div></div>
-<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafa5ee8334d39e47fc8d9c55bbf2e4a1216"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa5ee8334d39e47fc8d9c55bbf2e4a1216">PixelDesc::H264</a></div><div class="ttdeci">@ H264</div><div class="ttdoc">H.264 / AVC compressed video (avc1/avc3).</div><div class="ttdef"><b>Definition</b> pixeldesc.h:325</div></div>
+<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafa5ee8334d39e47fc8d9c55bbf2e4a1216"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa5ee8334d39e47fc8d9c55bbf2e4a1216">PixelDesc::H264</a></div><div class="ttdeci">@ H264</div><div class="ttdoc">H.264 / AVC compressed video (avc1/avc3).</div><div class="ttdef"><b>Definition</b> pixeldesc.h:326</div></div>
 <div class="ttc" id="astructAvcDecoderConfig_html_af306263811517a175f99b03f3573eb03"><div class="ttname"><a href="structAvcDecoderConfig.html#af306263811517a175f99b03f3573eb03">AvcDecoderConfig::parse</a></div><div class="ttdeci">static Error parse(const BufferView &amp;payload, AvcDecoderConfig &amp;out)</div><div class="ttdoc">Parse a serialized avcC payload (the bytes inside an avcC box, excluding the box header).</div></div>
 </div><!-- fragment --></dd></dl>
 <dl class="section user"><dt>Extended-profile fields not modeled</dt><dd>The record has additional fields (<code>chroma_format</code>, <code>bit_depth_luma_minus8</code>, <code>bit_depth_chroma_minus8</code>, SPS-Ext NALs) that appear only for <code>profile_idc</code> values 100, 110, 122, or 144. This implementation does not read or write them; they default to the standard 8-bit 4:2:0 interpretation when absent. A follow-up can add parsing for high-profile workflows when the codecs need them. </dd></dl>
@@ -353,7 +353,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structAvcDecoderConfig.html">AvcDecoderConfig</a></li>
-    <li class="footer">Generated on 2026-04-16 05:30:02 from commit 7eadf34 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
   </ul>
 </div>
 </body>

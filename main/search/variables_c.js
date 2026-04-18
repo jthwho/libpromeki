@@ -2,7 +2,7 @@ var searchData=
 [
   ['magenta_0',['Magenta',['../classColor.html#a7f0f5e5f4e3d9fb0d335109d15971f29',1,'Color']]],
   ['magic_1',['Magic',['../classDataStream.html#a5abc5f7b0e7207eeac16ee3211756285',1,'DataStream']]],
-  ['matrix_2',['matrix',['../structCSCPipeline_1_1Stage.html#a35700a9588fb59d76f2f6087a43c3736',1,'CSCPipeline::Stage']]],
+  ['matrix_2',['matrix',['../structCSCPipeline_1_1Stage.html#a35700a9588fb59d76f2f6087a43c3736',1,'CSCPipeline::Stage::matrix'],['../structColorModel_1_1H273.html#a92b8de18f25dab001fed6e4a4fdda596',1,'ColorModel::H273::matrix']]],
   ['matrixoffset_3',['matrixOffset',['../structCSCPipeline_1_1Stage.html#a6aa146aa448ab6c6c356ed03c767cf33',1,'CSCPipeline::Stage']]],
   ['matrixpreoffset_4',['matrixPreOffset',['../structCSCPipeline_1_1Stage.html#ab811739710447f0fd1882304de7b0a60',1,'CSCPipeline::Stage']]],
   ['max_5',['max',['../structBenchmarkReporter_1_1StepStats.html#a3401ea06457b493e121d42513fce18f9',1,'BenchmarkReporter::StepStats']]],

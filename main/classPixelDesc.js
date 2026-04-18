@@ -141,6 +141,7 @@ var classPixelDesc =
       [ "YUV10_DPX_B_Rec709", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafaeaece67c26c0d1faa7374d36a5e8e6d3", null ],
       [ "H264", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa5ee8334d39e47fc8d9c55bbf2e4a1216", null ],
       [ "HEVC", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa4a171b5dd0af777e03264653659a0258", null ],
+      [ "AV1", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafabea914aaa0bb0811e1ae07135374e3d0", null ],
       [ "ProRes_422_Proxy", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa4eb10a8e3a329a762bd24fc69c2b095e", null ],
       [ "ProRes_422_LT", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa880a822015374c738c606f067d990a00", null ],
       [ "ProRes_422", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa52f581c644e648fef5390481f931cb05", null ],
@@ -165,6 +166,8 @@ var classPixelDesc =
       [ "JPEG_XS_YUV12_420_Rec709", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa6594ba82e4c365798ab8c1cff4a4832c", null ],
       [ "JPEG_XS_RGB8_sRGB", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa95f731ef537694e2f41f4be4183bcc35", null ],
       [ "RGB8_Planar_sRGB", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa28b78e60c2efa5ac1a80bdde26bea677", null ],
+      [ "YUV8_444_Planar_Rec709", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafaa4a9c881bcdd0f6c9e12cd57e5e7113d", null ],
+      [ "YUV10_444_Planar_LE_Rec709", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafacdd89db9473df484d89b51c73c4598c9", null ],
       [ "UserDefined", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafad1f157e0770de6458974f043eb52b79c", null ]
     ] ],
     [ "PixelDesc", "classPixelDesc.html#a1a604806861a4bf14aac3805667679e0", null ],
@@ -190,5 +193,6 @@ var classPixelDesc =
     [ "pixelFormat", "classPixelDesc.html#a624006e84c35a32b3ff03be1b26f968a", null ],
     [ "planeCount", "classPixelDesc.html#af26c3799357776e7cdeb91dcef3504bc", null ],
     [ "planeSize", "classPixelDesc.html#a97754071a3b2973e307d9411191569f9", null ],
-    [ "videoCodec", "classPixelDesc.html#a4b1c5d6c7f378a9777bbba2700b41ea9", null ]
+    [ "videoCodec", "classPixelDesc.html#a4b1c5d6c7f378a9777bbba2700b41ea9", null ],
+    [ "videoRange", "classPixelDesc.html#a7c4e72a6fa453853f276d6bcbbbeba26", null ]
 ];

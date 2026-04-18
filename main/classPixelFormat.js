@@ -95,6 +95,8 @@ var classPixelFormat =
       [ "I_422_UYVY_3x16_LE", "classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda3a1e9b203bc793831f3aad6f7257b235", null ],
       [ "I_422_UYVY_3x16_BE", "classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4dedaf9d1fb7baad15a4117f715d9f619e656", null ],
       [ "P_444_3x8", "classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda204ec4bb75ca3e9699ea7704a15eb703", null ],
+      [ "P_444_3x10_LE", "classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda877aaeaa330528b22f843580b3a3b10f", null ],
+      [ "I_3x10_DPX_B", "classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda2bfb4623dd079a269aa79ab759ad5985", null ],
       [ "UserDefined", "classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda4f0fbe6edb23ddd49c7721c444b0bb10", null ]
     ] ],
     [ "Sampling", "classPixelFormat.html#a85ea5c79ba2eb68e0bf4613d9524612b", [

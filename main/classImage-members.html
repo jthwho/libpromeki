@@ -128,12 +128,14 @@ $(document).ready(function(){initNavTree('classImage.html',''); initResizable();
   <tr class="even"><td class="entry"><a class="el" href="classImage.html#a4a3f114fb1273a404797e57004b9be2d">makeString</a>(const String &amp;tmpl, Error *err=nullptr) const</td><td class="entry"><a class="el" href="classImage.html">Image</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classImage.html#a41648e00f1e62388c26b526afb817409">metadata</a>() const</td><td class="entry"><a class="el" href="classImage.html">Image</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classImage.html#ad1808461031b4813284ca41f38ae7e38">metadata</a>()</td><td class="entry"><a class="el" href="classImage.html">Image</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="classImage.html#a510ed5bb09ccb7896dfecf2c066e7f6c">pixelDesc</a>() const</td><td class="entry"><a class="el" href="classImage.html">Image</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classImage.html#a45f3cb17cda1d4247bff5cbaf7c84105">plane</a>(int index=0) const</td><td class="entry"><a class="el" href="classImage.html">Image</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="classImage.html#adc70674604363e20832ad93fd71f37cd">planes</a>() const</td><td class="entry"><a class="el" href="classImage.html">Image</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classImage.html#a38745cfc2762b9f0aeaaba861098b852">Ptr</a> typedef</td><td class="entry"><a class="el" href="classImage.html">Image</a></td><td class="entry"></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="classImage.html#a198b089768debdf038e39b6be082184f">PtrList</a> typedef</td><td class="entry"><a class="el" href="classImage.html">Image</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classImage.html#a2a4c83156dda4c457ba287d3ebc6c058">resolveTemplateKey</a>(const String &amp;key, const String &amp;spec) const</td><td class="entry"><a class="el" href="classImage.html">Image</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classImage.html#aed813848fdebb5874f9f29878cd7e5f1">packet</a>() const</td><td class="entry"><a class="el" href="classImage.html">Image</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classImage.html#a510ed5bb09ccb7896dfecf2c066e7f6c">pixelDesc</a>() const</td><td class="entry"><a class="el" href="classImage.html">Image</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classImage.html#a45f3cb17cda1d4247bff5cbaf7c84105">plane</a>(int index=0) const</td><td class="entry"><a class="el" href="classImage.html">Image</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classImage.html#adc70674604363e20832ad93fd71f37cd">planes</a>() const</td><td class="entry"><a class="el" href="classImage.html">Image</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classImage.html#a38745cfc2762b9f0aeaaba861098b852">Ptr</a> typedef</td><td class="entry"><a class="el" href="classImage.html">Image</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classImage.html#a198b089768debdf038e39b6be082184f">PtrList</a> typedef</td><td class="entry"><a class="el" href="classImage.html">Image</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classImage.html#a2a4c83156dda4c457ba287d3ebc6c058">resolveTemplateKey</a>(const String &amp;key, const String &amp;spec) const</td><td class="entry"><a class="el" href="classImage.html">Image</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classImage.html#a2c7dfff98641759859ead86064557f8d">setPacket</a>(MediaPacket::Ptr pkt)</td><td class="entry"><a class="el" href="classImage.html">Image</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classImage.html#a82a4a6f6f0e6d370bb1a81e4c55ce20f">size</a>() const</td><td class="entry"><a class="el" href="classImage.html">Image</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classImage.html#aa3c6a86a6e5f35499ae781710154cb33">width</a>() const</td><td class="entry"><a class="el" href="classImage.html">Image</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
 </table></div><!-- contents -->
@@ -142,7 +144,7 @@ $(document).ready(function(){initNavTree('classImage.html',''); initResizable();
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-16 05:30:02 from commit 7eadf34 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
   </ul>
 </div>
 </body>

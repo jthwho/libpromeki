@@ -223,7 +223,7 @@ Static Public Member Functions</h2></td></tr>
 <td class="markdownTableBodyNone">"23.976"   </td><td class="markdownTableBodyNone">24000/1001   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">23.97602397</a>...   </td></tr>
 </table>
 <p>The names "29.97" and "23.976" (sometimes written "23.98") are widespread in the industry but are not the actual frame rates &ndash; they are approximate shorthands. Using the floating-point value <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">29.97</a> instead of the rational 30000/1001 introduces a small but compounding error: over the course of a one-hour program, the accumulated drift amounts to approximately <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">3.6</a> frames (about 108 milliseconds at 30000/1001). In professional workflows involving timecode, edit decision lists, and long-form content, this drift causes frame-accurate synchronization to fail.</p>
-<p>By storing the frame rate as an exact rational, <a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> avoids this class of error entirely. <a class="el" href="classFrame.html" title="A media frame containing images, audio, compressed packets, and metadata.">Frame</a> interval calculations, timecode conversions, and duration computations remain exact regardless of program length.</p>
+<p>By storing the frame rate as an exact rational, <a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> avoids this class of error entirely. <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> interval calculations, timecode conversions, and duration computations remain exact regardless of program length.</p>
 <dl class="section user"><dt>Well-known rates</dt><dd></dd></dl>
 <p>The WellKnownRate enum identifies industry-standard frame rates so that code can branch on them without comparing rationals. When a <a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> is constructed from a rational that matches a well-known rate, the enum is set automatically.</p>
 <p>The <a class="el" href="classFrameRate.html#a172e85b22f5a6f3be7019111fc63282f" title="Parses a frame rate from a string.">fromString()</a> factory accepts both the approximate common names ("29.97", "23.976", "23.98") and exact fraction strings ("30000/1001"), always producing the correct rational internally. </p>
@@ -654,7 +654,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classFrameRate.html">FrameRate</a></li>
-    <li class="footer">Generated on 2026-04-16 05:30:02 from commit 7eadf34 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
   </ul>
 </div>
 </body>

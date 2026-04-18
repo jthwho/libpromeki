@@ -20,8 +20,10 @@ var classAudio =
     [ "maxSamples", "classAudio.html#ac108341b8923cec805d8a5bd926ed657", null ],
     [ "metadata", "classAudio.html#a4d444aebd87bc49e59eac89ef0441d16", null ],
     [ "metadata", "classAudio.html#a08645d1308d88192f68851fbd1d44d04", null ],
+    [ "packet", "classAudio.html#a2067dbdb24ad25991da81764635ff7bb", null ],
     [ "resize", "classAudio.html#abc2ac90f3453dd40c349fecfd37739fb", null ],
     [ "resolveTemplateKey", "classAudio.html#a9b07d569e5cbda89c25f2f44adf27038", null ],
     [ "samples", "classAudio.html#a0ec5c30a7e45cc01dc9eeffe033cd2e3", null ],
+    [ "setPacket", "classAudio.html#aeea98aa01c4dfc85ec01fe5c18eced06", null ],
     [ "zero", "classAudio.html#a07a3d3807c2d71f5ef1fa7be0c97d219", null ]
 ];

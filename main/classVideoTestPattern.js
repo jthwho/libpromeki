@@ -1,28 +1,6 @@
 var classVideoTestPattern =
 [
-    [ "BurnPosition", "classVideoTestPattern.html#a6fe2032ce077d97ee53aa5f1fadc4980", [
-      [ "BurnTopLeft", "classVideoTestPattern.html#a6fe2032ce077d97ee53aa5f1fadc4980a74d8ba96154fd69932d836723f6d02cb", null ],
-      [ "BurnTopCenter", "classVideoTestPattern.html#a6fe2032ce077d97ee53aa5f1fadc4980a2f7d4bbfda1739791dabd9f3c07ccc0f", null ],
-      [ "BurnTopRight", "classVideoTestPattern.html#a6fe2032ce077d97ee53aa5f1fadc4980a72a3e65119fc2ba5bf724cb60646b3a2", null ],
-      [ "BurnBottomLeft", "classVideoTestPattern.html#a6fe2032ce077d97ee53aa5f1fadc4980a23d2dc9287702861287235ed34afd521", null ],
-      [ "BurnBottomCenter", "classVideoTestPattern.html#a6fe2032ce077d97ee53aa5f1fadc4980a5dec69fc5d44f02bab2a2fd0394a769d", null ],
-      [ "BurnBottomRight", "classVideoTestPattern.html#a6fe2032ce077d97ee53aa5f1fadc4980a95667ca0db3c30c1578444388ecf0b0e", null ],
-      [ "BurnCenter", "classVideoTestPattern.html#a6fe2032ce077d97ee53aa5f1fadc4980aaf5ab0d366989a340db82f07a30feecc", null ]
-    ] ],
-    [ "Pattern", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61", [
-      [ "ColorBars", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61a6763945e7f229ff4d013976357cc2e9b", null ],
-      [ "ColorBars75", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61abd771e2e751893ee982a1e9340438219", null ],
-      [ "Ramp", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61acb8ab0e458c64f28c51c40cc82cee3f7", null ],
-      [ "Grid", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61a68f2329c71baa518bf6549fbef3f1ec7", null ],
-      [ "Crosshatch", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61a32180c76e6c92f489618922255831c9b", null ],
-      [ "Checkerboard", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61aaa23e6d4cd63f4d2d69964b5078ba376", null ],
-      [ "SolidColor", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61ac0d07ee96e703a975f6c514537840468", null ],
-      [ "White", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61aaae28edd8c10c35f4fdb9b47bdaa35e8", null ],
-      [ "Black", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61a7f050c27473581bb29a5633bef8c1130", null ],
-      [ "Noise", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61a621cfbb12ec1b70e763f0ffa63739163", null ],
-      [ "ZonePlate", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61afcc5a4c59492467ba55b49651607feab", null ],
-      [ "AvSync", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61a2a56cc7d6df77cb218bc6377dc1fd0c3", null ]
-    ] ],
+    [ "Pattern", "classVideoTestPattern.html#a5661dbf38c939394670995508068ab83", null ],
     [ "VideoTestPattern", "classVideoTestPattern.html#afe3332167e195dd2f5ba008b7542404c", null ],
     [ "~VideoTestPattern", "classVideoTestPattern.html#a9bbda456c5396bd2cd2ad270b5129419", null ],
     [ "applyBurn", "classVideoTestPattern.html#ac246e3ec850fe0f8880552fec18016ae", null ],

@@ -7,12 +7,13 @@ var searchData=
   ['videodeltamaxns_4',['videoDeltaMaxNs',['../structInspectorSnapshot.html#ad4d63b4693837dfde8f3b98bfa36fb45',1,'InspectorSnapshot']]],
   ['videodeltaminns_5',['videoDeltaMinNs',['../structInspectorSnapshot.html#a90c7846312725d6ae5eb4b14ef4124b1',1,'InspectorSnapshot']]],
   ['videodeltasamples_6',['videoDeltaSamples',['../structInspectorSnapshot.html#a2fd6c744db0327d1d667eb9bbbedc224',1,'InspectorSnapshot']]],
-  ['videotimestampdeltans_7',['videoTimestampDeltaNs',['../structInspectorEvent.html#aeee69377bd2d99b875b030fa9273e6ed',1,'InspectorEvent']]],
-  ['videotimestampdeltavalid_8',['videoTimestampDeltaValid',['../structInspectorEvent.html#a8b82229d361948994bd96d2fcab44d6b',1,'InspectorEvent']]],
-  ['videotimestampns_9',['videoTimestampNs',['../structInspectorEvent.html#ab2eb35f75bd549bd1f2d2dae1180b6e5',1,'InspectorEvent']]],
-  ['videotimestampvalid_10',['videoTimestampValid',['../structInspectorEvent.html#ac3a9bbd9c54a0c39d3e463c4d4e008e8',1,'InspectorEvent']]],
-  ['videotracks_11',['videoTracks',['../classMediaIOCommandOpen.html#a87a227be4768e01014c02b4dbd6e5a0d',1,'MediaIOCommandOpen']]],
-  ['view_12',['view',['../structH264Bitstream_1_1NalUnit.html#a48a796c26f37d21c3cf1ce6f541e36fb',1,'H264Bitstream::NalUnit']]],
-  ['vps_13',['vps',['../structHevcDecoderConfig.html#a967c27cdb25d304330180f1cb756abaf',1,'HevcDecoderConfig']]],
-  ['vsubsampling_14',['vSubsampling',['../structPixelFormat_1_1PlaneDesc.html#a046e78b3502daa8654486434ccab3f0a',1,'PixelFormat::PlaneDesc']]]
+  ['videorange_7',['videoRange',['../structPixelDesc_1_1Data.html#a6f3c9681922db9f611a9bf8e58573a4c',1,'PixelDesc::Data']]],
+  ['videotimestampdeltans_8',['videoTimestampDeltaNs',['../structInspectorEvent.html#aeee69377bd2d99b875b030fa9273e6ed',1,'InspectorEvent']]],
+  ['videotimestampdeltavalid_9',['videoTimestampDeltaValid',['../structInspectorEvent.html#a8b82229d361948994bd96d2fcab44d6b',1,'InspectorEvent']]],
+  ['videotimestampns_10',['videoTimestampNs',['../structInspectorEvent.html#ab2eb35f75bd549bd1f2d2dae1180b6e5',1,'InspectorEvent']]],
+  ['videotimestampvalid_11',['videoTimestampValid',['../structInspectorEvent.html#ac3a9bbd9c54a0c39d3e463c4d4e008e8',1,'InspectorEvent']]],
+  ['videotracks_12',['videoTracks',['../classMediaIOCommandOpen.html#a87a227be4768e01014c02b4dbd6e5a0d',1,'MediaIOCommandOpen']]],
+  ['view_13',['view',['../structH264Bitstream_1_1NalUnit.html#a48a796c26f37d21c3cf1ce6f541e36fb',1,'H264Bitstream::NalUnit']]],
+  ['vps_14',['vps',['../structHevcDecoderConfig.html#a967c27cdb25d304330180f1cb756abaf',1,'HevcDecoderConfig']]],
+  ['vsubsampling_15',['vSubsampling',['../structPixelFormat_1_1PlaneDesc.html#a046e78b3502daa8654486434ccab3f0a',1,'PixelFormat::PlaneDesc']]]
 ];

@@ -122,6 +122,9 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structColorModel_1_1Data.html">Data</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Immutable descriptor for a color model.  <a href="structColorModel_1_1Data.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structColorModel_1_1H273.html">H273</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.273</a> / ISO/IEC 23091-4 codepoint triplet describing a color space in codec VUI terms.  <a href="structColorModel_1_1H273.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
@@ -280,6 +283,9 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a3f45148480ca0fb880f89d6f08041ad9" id="r_a3f45148480ca0fb880f89d6f08041ad9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classColorModel.html">ColorModel</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classColorModel.html#a3f45148480ca0fb880f89d6f08041ad9">lookup</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classColorModel.html#a78d0c85b77a0cb9833bba73519bbc935">name</a>)</td></tr>
 <tr class="memdesc:a3f45148480ca0fb880f89d6f08041ad9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Looks up a well-known <a class="el" href="classColorModel.html" title="Single source of truth for a color model and its associated color space.">ColorModel</a> by name.  <br /></td></tr>
 <tr class="separator:a3f45148480ca0fb880f89d6f08041ad9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18da613bedc788c3898fb2f25a7e3ca1" id="r_a18da613bedc788c3898fb2f25a7e3ca1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="structColorModel_1_1H273.html">H273</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classColorModel.html#a18da613bedc788c3898fb2f25a7e3ca1">toH273</a> (<a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3ba">ID</a> <a class="el" href="classColorModel.html#a60ebed25793e3e582cbd14cff5e8f628">id</a>)</td></tr>
+<tr class="memdesc:a18da613bedc788c3898fb2f25a7e3ca1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.273</a> codepoint triplet for a well-known <a class="el" href="classColorModel.html" title="Single source of truth for a color model and its associated color space.">ColorModel</a> ID.  <br /></td></tr>
+<tr class="separator:a18da613bedc788c3898fb2f25a7e3ca1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Single source of truth for a color model and its associated color space. </p>
@@ -960,6 +966,36 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a18da613bedc788c3898fb2f25a7e3ca1" name="a18da613bedc788c3898fb2f25a7e3ca1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a18da613bedc788c3898fb2f25a7e3ca1">&#9670;&#160;</a></span>toH273()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="structColorModel_1_1H273.html">H273</a> ColorModel::toH273 </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3ba">ID</a>&#160;</td>
+          <td class="paramname"><em>id</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.273</a> codepoint triplet for a well-known <a class="el" href="classColorModel.html" title="Single source of truth for a color model and its associated color space.">ColorModel</a> ID. </p>
+<p>Covers the SDR models that libpromeki ships as well-known: sRGB / <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a> / <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.601</a> PAL / <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.601</a> NTSC / <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.2020</a> / DCI-P3 / Adobe RGB / ACES AP0 / ACES AP1, plus the YCbCr_* derivations. Linear variants map the transfer field to <code>8</code> (Linear); CIE XYZ / Lab / HSV / HSL return all-zeros.</p>
+<p>User-defined <a class="el" href="classColorModel.html" title="Single source of truth for a color model and its associated color space.">ColorModel</a> IDs are not recognised and fall through to the all-zero default; that's by design — the library-wide mapping can't know what a user's custom model is supposed to represent on the wire. </p>
+
+</div>
+</div>
 <a id="a6ebc6ceff4e5ad6e11349a6bca4ea5f9" name="a6ebc6ceff4e5ad6e11349a6bca4ea5f9"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6ebc6ceff4e5ad6e11349a6bca4ea5f9">&#9670;&#160;</a></span>toNative()</h2>
 
@@ -1089,7 +1125,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classColorModel.html">ColorModel</a></li>
-    <li class="footer">Generated on 2026-04-16 05:30:02 from commit 7eadf34 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
   </ul>
 </div>
 </body>

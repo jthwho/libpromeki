@@ -12,7 +12,9 @@ var group__wellknownenums =
     [ "ByteCountStyle", "classByteCountStyle.html", null ],
     [ "ImgSeqPathMode", "classImgSeqPathMode.html", null ],
     [ "TimecodePackFormat", "classTimecodePackFormat.html", null ],
-    [ "VideoScanMode", "classVideoScanMode.html", null ],
+    [ "VideoScanMode", "classVideoScanMode.html", [
+      [ "isInterlaced", "classVideoScanMode.html#ab093e16450b90f00b0a98660e02664c8", null ]
+    ] ],
     [ "MediaIODirection", "classMediaIODirection.html", null ],
     [ "AudioSourceHint", "classAudioSourceHint.html", null ],
     [ "V4l2PowerLineMode", "classV4l2PowerLineMode.html", null ],
@@ -23,6 +25,12 @@ var group__wellknownenums =
     [ "InspectorTest", "classInspectorTest.html", null ],
     [ "VideoRateControl", "classVideoRateControl.html", null ],
     [ "VideoEncoderPreset", "classVideoEncoderPreset.html", null ],
+    [ "VideoRange", "classVideoRange.html", null ],
+    [ "ColorPrimaries", "classColorPrimaries.html", null ],
+    [ "TransferCharacteristics", "classTransferCharacteristics.html", null ],
+    [ "MatrixCoefficients", "classMatrixCoefficients.html", null ],
+    [ "TransferCharacteristics::ARIB_STD_B67", "group__wellknownenums.html#ga2e3f866843838a0d646a14707222cd59", null ],
     [ "ByteCountStyle::Binary", "group__wellknownenums.html#ga9d2d3b34e2e3e410560df0546f7dc983", null ],
-    [ "ByteCountStyle::Metric", "group__wellknownenums.html#ga6d3dd14d60f115203c9061ab83edb892", null ]
+    [ "ByteCountStyle::Metric", "group__wellknownenums.html#ga6d3dd14d60f115203c9061ab83edb892", null ],
+    [ "TransferCharacteristics::SMPTE2084", "group__wellknownenums.html#ga8c5dddd5923da6100f4a55b76bc75c94", null ]
 ];

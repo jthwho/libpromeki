@@ -69,6 +69,7 @@ var hierarchy =
     [ "PixelDesc::CompSemantic", "structPixelDesc_1_1CompSemantic.html", null ],
     [ "AudioBlock::Config", "classAudioBlock_1_1Config.html", null ],
     [ "AudioGen::Config", "structAudioGen_1_1Config.html", null ],
+    [ "ContentLightLevel", "classContentLightLevel.html", null ],
     [ "FileFormatFactory< Product >::Context", "structFileFormatFactory_1_1Context.html", null ],
     [ "CrashHandler", "classCrashHandler.html", null ],
     [ "CRC< T >", "classCRC.html", null ],
@@ -118,6 +119,9 @@ var hierarchy =
       [ "TypedEnum< ClockEpoch >", "classTypedEnum.html", [
         [ "ClockEpoch", "classClockEpoch.html", null ]
       ] ],
+      [ "TypedEnum< ColorPrimaries >", "classTypedEnum.html", [
+        [ "ColorPrimaries", "classColorPrimaries.html", null ]
+      ] ],
       [ "TypedEnum< CscPath >", "classTypedEnum.html", [
         [ "CscPath", "classCscPath.html", null ]
       ] ],
@@ -129,6 +133,9 @@ var hierarchy =
       ] ],
       [ "TypedEnum< InspectorTest >", "classTypedEnum.html", [
         [ "InspectorTest", "classInspectorTest.html", null ]
+      ] ],
+      [ "TypedEnum< MatrixCoefficients >", "classTypedEnum.html", [
+        [ "MatrixCoefficients", "classMatrixCoefficients.html", null ]
       ] ],
       [ "TypedEnum< MediaIODirection >", "classTypedEnum.html", [
         [ "MediaIODirection", "classMediaIODirection.html", null ]
@@ -148,6 +155,9 @@ var hierarchy =
       [ "TypedEnum< TimecodePackFormat >", "classTypedEnum.html", [
         [ "TimecodePackFormat", "classTimecodePackFormat.html", null ]
       ] ],
+      [ "TypedEnum< TransferCharacteristics >", "classTypedEnum.html", [
+        [ "TransferCharacteristics", "classTransferCharacteristics.html", null ]
+      ] ],
       [ "TypedEnum< V4l2ExposureMode >", "classTypedEnum.html", [
         [ "V4l2ExposureMode", "classV4l2ExposureMode.html", null ]
       ] ],
@@ -159,6 +169,9 @@ var hierarchy =
       ] ],
       [ "TypedEnum< VideoPattern >", "classTypedEnum.html", [
         [ "VideoPattern", "classVideoPattern.html", null ]
+      ] ],
+      [ "TypedEnum< VideoRange >", "classTypedEnum.html", [
+        [ "VideoRange", "classVideoRange.html", null ]
       ] ],
       [ "TypedEnum< VideoRateControl >", "classTypedEnum.html", [
         [ "VideoRateControl", "classVideoRateControl.html", null ]
@@ -212,6 +225,7 @@ var hierarchy =
     [ "Future< void >", "classFuture_3_01void_01_4.html", null ],
     [ "MulticastReceiver::GroupEntry", "structMulticastReceiver_1_1GroupEntry.html", null ],
     [ "H264Bitstream", "classH264Bitstream.html", null ],
+    [ "ColorModel::H273", "structColorModel_1_1H273.html", null ],
     [ "HashMap< K, V >", "classHashMap.html", null ],
     [ "HashSet< T >", "classHashSet.html", null ],
     [ "HevcDecoderConfig", "structHevcDecoderConfig.html", null ],
@@ -254,6 +268,7 @@ var hierarchy =
     [ "List< CmdLineParser::Option >", "classList.html", null ],
     [ "List< CSCPipeline::Stage >", "classList.html", null ],
     [ "List< DecodedTimecode >", "classList.html", null ],
+    [ "List< double >", "classList.html", null ],
     [ "List< float >", "classList.html", null ],
     [ "List< FourCC >", "classList.html", null ],
     [ "List< GridItem >", "classList.html", null ],
@@ -313,6 +328,7 @@ var hierarchy =
     [ "Map< uint64_t, VariantImpl >", "classMap.html", null ],
     [ "Map< uint64_t, VariantSpec >", "classMap.html", null ],
     [ "Map< uintptr_t, Block >", "classMap.html", null ],
+    [ "MasteringDisplay", "classMasteringDisplay.html", null ],
     [ "Matrix< T, W, H >", "classMatrix.html", null ],
     [ "Matrix3x3", "classMatrix3x3.html", null ],
     [ "MediaDesc", "classMediaDesc.html", null ],
@@ -327,12 +343,16 @@ var hierarchy =
     ] ],
     [ "MediaIOTask", "classMediaIOTask.html", [
       [ "MediaIOTask_AudioFile", "classMediaIOTask__AudioFile.html", null ],
+      [ "MediaIOTask_Burn", "classMediaIOTask__Burn.html", null ],
+      [ "MediaIOTask_CSC", "classMediaIOTask__CSC.html", null ],
       [ "MediaIOTask_Converter", "classMediaIOTask__Converter.html", null ],
+      [ "MediaIOTask_FrameSync", "classMediaIOTask__FrameSync.html", null ],
       [ "MediaIOTask_ImageFile", "classMediaIOTask__ImageFile.html", null ],
       [ "MediaIOTask_Inspector", "classMediaIOTask__Inspector.html", null ],
       [ "MediaIOTask_QuickTime", "classMediaIOTask__QuickTime.html", null ],
       [ "MediaIOTask_RawBitstream", "classMediaIOTask__RawBitstream.html", null ],
       [ "MediaIOTask_Rtp", "classMediaIOTask__Rtp.html", null ],
+      [ "MediaIOTask_SRC", "classMediaIOTask__SRC.html", null ],
       [ "MediaIOTask_TPG", "classMediaIOTask__TPG.html", null ],
       [ "MediaIOTask_VideoDecoder", "classMediaIOTask__VideoDecoder.html", null ],
       [ "MediaIOTask_VideoEncoder", "classMediaIOTask__VideoEncoder.html", null ],
@@ -487,6 +507,7 @@ var hierarchy =
     [ "SharedPtr< Buffer >", "classSharedPtr.html", null ],
     [ "SharedPtr< Frame >", "classSharedPtr.html", null ],
     [ "SharedPtr< Image >", "classSharedPtr.html", null ],
+    [ "SharedPtr< MediaPacket >", "classSharedPtr.html", null ],
     [ "SharedPtr< PaintEngine::Impl, false >", "classSharedPtr.html", null ],
     [ "SharedPtr< QuickTime::Impl >", "classSharedPtr.html", null ],
     [ "SharedPtr< StringData >", "classSharedPtr.html", null ],
@@ -577,7 +598,7 @@ var hierarchy =
     ] ],
     [ "detail::VariantEnd", "structdetail_1_1VariantEnd.html", null ],
     [ "VariantImpl< Types >", "classVariantImpl.html", null ],
-    [ "VariantImpl< std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, Size2Du32, UUID, UMID, Timecode, Rational< int >, FrameRate, VideoFormat, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, VideoCodec, AudioCodec, Enum, EnumList, detail::VariantEnd >", "classVariantImpl.html", null ],
+    [ "VariantImpl< std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, Size2Du32, UUID, UMID, Timecode, Rational< int >, FrameRate, VideoFormat, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, VideoCodec, AudioCodec, Enum, EnumList, MasteringDisplay, ContentLightLevel, detail::VariantEnd >", "classVariantImpl.html", null ],
     [ "VariantSpec", "classVariantSpec.html", null ],
     [ "VideoCodec", "classVideoCodec.html", null ],
     [ "VideoDecoder", "classVideoDecoder.html", [

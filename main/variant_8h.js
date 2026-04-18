@@ -11,6 +11,6 @@ var variant_8h =
     [ "VariantImpl< Types >", "classVariantImpl.html", "classVariantImpl" ],
     [ "std::formatter< promeki::VariantImpl< Types... > >", "structstd_1_1formatter_3_01promeki_1_1VariantImpl_3_01Types_8_8_8_01_4_01_4.html", null ],
     [ "PROMEKI_VARIANT_TYPES_NETWORK", "group__util.html#gadd038fa9fc95b7e756cc1f175a180eb2", null ],
-    [ "Variant", "variant_8h.html#ae077aa859e1a402ba1914723d0108abf", null ],
+    [ "Variant", "variant_8h.html#ac36566cc2c5535bba736babd50c4894f", null ],
     [ "VariantList", "variant_8h.html#a237e2a78d81fec1b598585def4459f2a", null ]
 ];

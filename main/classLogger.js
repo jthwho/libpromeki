@@ -13,6 +13,7 @@ var classLogger =
     [ "Logger", "classLogger.html#abc41bfb031d896170c7675fa96a6b30c", null ],
     [ "~Logger", "classLogger.html#acb668a9e186a25fbaad2e4af6d1ed00a", null ],
     [ "consoleFormatter", "classLogger.html#afce10b7d1e38caa52bf569408968dfc8", null ],
+    [ "consoleLoggingEnabled", "classLogger.html#ab6e0f6b2096b32eff2712a2701f7d47c", null ],
     [ "fileFormatter", "classLogger.html#ad6a59581ba14ec1d3a8129d3bc6581b1", null ],
     [ "level", "classLogger.html#a39e0f0acc067c89f56c970ec521651a2", null ],
     [ "log", "classLogger.html#ae8988f1dec98d7b268dff3a963c3e070", null ],

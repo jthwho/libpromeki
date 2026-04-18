@@ -21,9 +21,11 @@ var group__proav =
       [ "maxSamples", "classAudio.html#ac108341b8923cec805d8a5bd926ed657", null ],
       [ "metadata", "classAudio.html#a4d444aebd87bc49e59eac89ef0441d16", null ],
       [ "metadata", "classAudio.html#a08645d1308d88192f68851fbd1d44d04", null ],
+      [ "packet", "classAudio.html#a2067dbdb24ad25991da81764635ff7bb", null ],
       [ "resize", "classAudio.html#abc2ac90f3453dd40c349fecfd37739fb", null ],
       [ "resolveTemplateKey", "classAudio.html#a9b07d569e5cbda89c25f2f44adf27038", null ],
       [ "samples", "classAudio.html#a0ec5c30a7e45cc01dc9eeffe033cd2e3", null ],
+      [ "setPacket", "classAudio.html#aeea98aa01c4dfc85ec01fe5c18eced06", null ],
       [ "zero", "classAudio.html#a07a3d3807c2d71f5ef1fa7be0c97d219", null ]
     ] ],
     [ "AudioBlock", "classAudioBlock.html", [
@@ -281,12 +283,15 @@ var group__proav =
       [ "create", "classAudioTestPattern.html#ad1592293e4d55f1a9302b2e75c5b526a", null ],
       [ "create", "classAudioTestPattern.html#ad667713bc364edff1cf3c7b48bfd64bb", null ],
       [ "desc", "classAudioTestPattern.html#add4b4395f9304b1babc7bcf896b69df6", null ],
+      [ "dialnormLevel", "classAudioTestPattern.html#a7ff3ffe036415e2723e50a464d80e019", null ],
       [ "dualToneFreq1", "classAudioTestPattern.html#a7d65c54a8466c322b7eeea6be22a3206", null ],
       [ "dualToneFreq2", "classAudioTestPattern.html#a60577c6f3d75a0ff7d51d256e2401293", null ],
       [ "dualToneRatio", "classAudioTestPattern.html#a65790ff6c494bb8906ea7adb5ba7b171", null ],
       [ "ltcLevel", "classAudioTestPattern.html#ac072503691b1f21d69a75eb0e1209724", null ],
       [ "noiseBufferSeconds", "classAudioTestPattern.html#a222052246eb7b0bd680bd21949696fb8", null ],
       [ "noiseSeed", "classAudioTestPattern.html#abefd2018733d488e01938fe1c8cb7bad", null ],
+      [ "polarityPulseHz", "classAudioTestPattern.html#a4c85430ac333f4745428716db0216f88", null ],
+      [ "polarityPulseWidthSec", "classAudioTestPattern.html#a2fa9059cbc199e361d695145d11ec739", null ],
       [ "render", "classAudioTestPattern.html#a043e89571242d90dde2aee442c2efc95", null ],
       [ "render", "classAudioTestPattern.html#a9bc7ab45acf4d29630ad807666f1f43c", null ],
       [ "setChannelIdBaseFreq", "classAudioTestPattern.html#af4112571dfb7cca2589594b831abbd66", null ],
@@ -295,14 +300,27 @@ var group__proav =
       [ "setChirpDurationSec", "classAudioTestPattern.html#ad631b80c264c73af88201a49cf758e73", null ],
       [ "setChirpEndFreq", "classAudioTestPattern.html#af24ac671afaf7f34a236a6a0f7dc75ef", null ],
       [ "setChirpStartFreq", "classAudioTestPattern.html#a5ce2c6d8400e99e1b84833111fe7b36b", null ],
+      [ "setDialnormLevel", "classAudioTestPattern.html#ad41f07a53a637bfadcc34bf21e797736", null ],
       [ "setDualToneFreq1", "classAudioTestPattern.html#a4fbc5445e3d48303d743160e59b1d1fb", null ],
       [ "setDualToneFreq2", "classAudioTestPattern.html#ad6ef6a267690b551d632c352b886277e", null ],
       [ "setDualToneRatio", "classAudioTestPattern.html#a2ce5778e22be5b43d8db4150b6a541ff", null ],
       [ "setLtcLevel", "classAudioTestPattern.html#a3d937def684b5433fa3a99d31cb5da05", null ],
       [ "setNoiseBufferSeconds", "classAudioTestPattern.html#a3511c9fd89208b69db8423049daa2f23", null ],
       [ "setNoiseSeed", "classAudioTestPattern.html#a25957ca3f460462c88b553dd9691983c", null ],
+      [ "setPolarityPulseHz", "classAudioTestPattern.html#a598278d021a8617b1cadbc69fe4d0f2e", null ],
+      [ "setPolarityPulseWidthSec", "classAudioTestPattern.html#abc30d965e1af0a8e1dec82b48a3ea318", null ],
+      [ "setSteppedToneFreqs", "classAudioTestPattern.html#a8cd8ab8eff9f0027be60d0a6c21df6f2", null ],
+      [ "setSteppedToneStepSec", "classAudioTestPattern.html#a7e0cb9095e69444be24d5122d72d83df", null ],
+      [ "setSweepDurationSec", "classAudioTestPattern.html#a0d67c705eb2fbb6780a1460adcfb7997", null ],
+      [ "setSweepEndFreq", "classAudioTestPattern.html#a7f8288858acb3ad8b0cfa6c921ed1510", null ],
+      [ "setSweepStartFreq", "classAudioTestPattern.html#a6643a48d396607c6124e46113041f3ee", null ],
       [ "setToneFrequency", "classAudioTestPattern.html#a8eb652cae2c8f893ce25c58f1929f70c", null ],
       [ "setToneLevel", "classAudioTestPattern.html#a62f018f43f8f02d824abf663c0fe036b", null ],
+      [ "steppedToneFreqs", "classAudioTestPattern.html#a6d156b64e7f0a891f963fd3f6668a4de", null ],
+      [ "steppedToneStepSec", "classAudioTestPattern.html#a8cf607cc53d57dc2dad88fdd031f7ce3", null ],
+      [ "sweepDurationSec", "classAudioTestPattern.html#a986444329af2310a6a82c5c73674eb4c", null ],
+      [ "sweepEndFreq", "classAudioTestPattern.html#a8585522e70d20d05ed508d4505181f5d", null ],
+      [ "sweepStartFreq", "classAudioTestPattern.html#aa6dbaf5227115e5741cecbc9c1a4d6f4", null ],
       [ "toneFrequency", "classAudioTestPattern.html#a670c1b8df8b480a962bf542976ab2653", null ],
       [ "toneLevel", "classAudioTestPattern.html#aa6d4925618164f1c5f2547ae1336b781", null ]
     ] ],
@@ -450,6 +468,8 @@ var group__proav =
       [ "audioList", "classFrame.html#acd463c7e5ee785d13334c3e079cb23a3", null ],
       [ "benchmark", "classFrame.html#abbaf21b52eeb26c889f520b9f654009d", null ],
       [ "benchmark", "classFrame.html#a6a74d626f104011cc6315eb56f75411e", null ],
+      [ "configUpdate", "classFrame.html#ae5989fe0491399710a61610ff1680af0", null ],
+      [ "configUpdate", "classFrame.html#acb804a3581dc400469e62ca1f75e12bc", null ],
       [ "imageList", "classFrame.html#a8d258b0e55414fc85257cb1784559db5", null ],
       [ "imageList", "classFrame.html#a8360d8a81a700a1b90cf6da71cd524e4", null ],
       [ "makeString", "classFrame.html#a5e1d873d5e8d99f87d89f4ccaeedee98", null ],
@@ -457,10 +477,9 @@ var group__proav =
       [ "mediaDesc", "classFrame.html#afb948d42ec82b719221b60a1ce25926f", null ],
       [ "metadata", "classFrame.html#a4ff149c36694dcda0da237da9d454d39", null ],
       [ "metadata", "classFrame.html#a3029bf6f68d261411f9510536c1994d2", null ],
-      [ "packetList", "classFrame.html#a071d7554c962bdee76144b6d686586c8", null ],
-      [ "packetList", "classFrame.html#a592ca6dbd3c595389c9870c983737a2a", null ],
       [ "resolveTemplateKey", "classFrame.html#abd2b409a1df6e780aea5eb9fcf83a7cd", null ],
       [ "setBenchmark", "classFrame.html#a6e5e34cd3fc8dca4b282c125b7bb1035", null ],
+      [ "setConfigUpdate", "classFrame.html#ab360c63e4255d03d24c242dcef4dee17", null ],
       [ "videoFormat", "classFrame.html#a5cd4e91eefa51727a9e709143888fe31", null ]
     ] ],
     [ "Image", "classImage.html", [
@@ -487,10 +506,12 @@ var group__proav =
       [ "makeString", "classImage.html#aaef7d633bb0a0147c6524c9399d32a2a", null ],
       [ "metadata", "classImage.html#ad1808461031b4813284ca41f38ae7e38", null ],
       [ "metadata", "classImage.html#a41648e00f1e62388c26b526afb817409", null ],
+      [ "packet", "classImage.html#aed813848fdebb5874f9f29878cd7e5f1", null ],
       [ "pixelDesc", "classImage.html#a510ed5bb09ccb7896dfecf2c066e7f6c", null ],
       [ "plane", "classImage.html#a45f3cb17cda1d4247bff5cbaf7c84105", null ],
       [ "planes", "classImage.html#adc70674604363e20832ad93fd71f37cd", null ],
       [ "resolveTemplateKey", "classImage.html#a2a4c83156dda4c457ba287d3ebc6c058", null ],
+      [ "setPacket", "classImage.html#a2c7dfff98641759859ead86064557f8d", null ],
       [ "size", "classImage.html#a82a4a6f6f0e6d370bb1a81e4c55ce20f", null ],
       [ "width", "classImage.html#aa3c6a86a6e5f35499ae781710154cb33", null ]
     ] ],
@@ -916,9 +937,23 @@ var group__proav =
       [ "MediaIOTask_AudioFile", "classMediaIOTask__AudioFile.html#a60af0a1cceb4782dfdd5c2f19cda6dc2", null ],
       [ "~MediaIOTask_AudioFile", "classMediaIOTask__AudioFile.html#ae8bb53b31c3564166bc58896db5b23d8", null ]
     ] ],
+    [ "MediaIOTask_Burn", "classMediaIOTask__Burn.html", [
+      [ "MediaIOTask_Burn", "classMediaIOTask__Burn.html#a438eb0c58b9cc3d458d7572dd0733476", null ],
+      [ "~MediaIOTask_Burn", "classMediaIOTask__Burn.html#a302151470ecd65c2ef98a267341cd990", null ]
+    ] ],
     [ "MediaIOTask_Converter", "classMediaIOTask__Converter.html", [
       [ "MediaIOTask_Converter", "classMediaIOTask__Converter.html#a99910812d10d62821b35b10dd4c28c0a", null ],
       [ "~MediaIOTask_Converter", "classMediaIOTask__Converter.html#a64ac1ca0aee81cd30cf3285b9e4330f1", null ]
+    ] ],
+    [ "MediaIOTask_CSC", "classMediaIOTask__CSC.html", [
+      [ "MediaIOTask_CSC", "classMediaIOTask__CSC.html#a770464ffa838c53e670ecf0c08b7502d", null ],
+      [ "~MediaIOTask_CSC", "classMediaIOTask__CSC.html#a4b434594214c84c927a5937b9ab3ee3e", null ]
+    ] ],
+    [ "MediaIOTask_FrameSync", "classMediaIOTask__FrameSync.html", [
+      [ "MediaIOTask_FrameSync", "classMediaIOTask__FrameSync.html#acd353faeacdc4dfcfafdf968c5926a69", null ],
+      [ "~MediaIOTask_FrameSync", "classMediaIOTask__FrameSync.html#a5278f627b356db9a382259be2e15c109", null ],
+      [ "frameSync", "classMediaIOTask__FrameSync.html#a6a1830e8ed20df2050dd7d28921c3f32", null ],
+      [ "setClock", "classMediaIOTask__FrameSync.html#a20e05624322192a3e73c41fcb3cdfa3b", null ]
     ] ],
     [ "MediaIOTask_ImageFile", "classMediaIOTask__ImageFile.html", [
       [ "MediaIOTask_ImageFile", "classMediaIOTask__ImageFile.html#af4f06377303c84c45c73803e88a07599", null ],
@@ -1010,6 +1045,10 @@ var group__proav =
       [ "MediaIOTask_Rtp", "classMediaIOTask__Rtp.html#ab0a648c5ac334f3f70e639b40df273cf", null ],
       [ "~MediaIOTask_Rtp", "classMediaIOTask__Rtp.html#a4c448ec8d31bf6119faec5c3573f4599", null ]
     ] ],
+    [ "MediaIOTask_SRC", "classMediaIOTask__SRC.html", [
+      [ "MediaIOTask_SRC", "classMediaIOTask__SRC.html#ab1b1b1c40ba9913cfd6d43b0024fdf0e", null ],
+      [ "~MediaIOTask_SRC", "classMediaIOTask__SRC.html#a340029f1ce1fa943062859f0958c8683", null ]
+    ] ],
     [ "MediaIOTask_TPG", "classMediaIOTask__TPG.html", [
       [ "MediaIOTask_TPG", "classMediaIOTask__TPG.html#a6955cc9d765068269016840aad424657", null ],
       [ "~MediaIOTask_TPG", "classMediaIOTask__TPG.html#a04b4ec2b556f537a0d2bc2bc9e65bcf0", null ]
@@ -1078,7 +1117,8 @@ var group__proav =
         [ "id", "structPixelDesc_1_1Data.html#a5a40d17198925ae278e33a8aa3821b6a", null ],
         [ "name", "structPixelDesc_1_1Data.html#abca3659af0aa604e02291d0197c807ef", null ],
         [ "pixelFormat", "structPixelDesc_1_1Data.html#ae2ab827f7c0081ea7e9711acf99777b2", null ],
-        [ "videoCodec", "structPixelDesc_1_1Data.html#a83418620c6f1ac5d2aaed1756354bc5e", null ]
+        [ "videoCodec", "structPixelDesc_1_1Data.html#a83418620c6f1ac5d2aaed1756354bc5e", null ],
+        [ "videoRange", "structPixelDesc_1_1Data.html#a6f3c9681922db9f611a9bf8e58573a4c", null ]
       ] ],
       [ "IDList", "classPixelDesc.html#a4861ac675060c888011bf3b38a76ffb9", null ],
       [ "ID", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faaf", [
@@ -1219,6 +1259,7 @@ var group__proav =
         [ "YUV10_DPX_B_Rec709", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafaeaece67c26c0d1faa7374d36a5e8e6d3", null ],
         [ "H264", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa5ee8334d39e47fc8d9c55bbf2e4a1216", null ],
         [ "HEVC", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa4a171b5dd0af777e03264653659a0258", null ],
+        [ "AV1", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafabea914aaa0bb0811e1ae07135374e3d0", null ],
         [ "ProRes_422_Proxy", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa4eb10a8e3a329a762bd24fc69c2b095e", null ],
         [ "ProRes_422_LT", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa880a822015374c738c606f067d990a00", null ],
         [ "ProRes_422", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa52f581c644e648fef5390481f931cb05", null ],
@@ -1243,6 +1284,8 @@ var group__proav =
         [ "JPEG_XS_YUV12_420_Rec709", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa6594ba82e4c365798ab8c1cff4a4832c", null ],
         [ "JPEG_XS_RGB8_sRGB", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa95f731ef537694e2f41f4be4183bcc35", null ],
         [ "RGB8_Planar_sRGB", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa28b78e60c2efa5ac1a80bdde26bea677", null ],
+        [ "YUV8_444_Planar_Rec709", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafaa4a9c881bcdd0f6c9e12cd57e5e7113d", null ],
+        [ "YUV10_444_Planar_LE_Rec709", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafacdd89db9473df484d89b51c73c4598c9", null ],
         [ "UserDefined", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafad1f157e0770de6458974f043eb52b79c", null ]
       ] ],
       [ "PixelDesc", "classPixelDesc.html#a1a604806861a4bf14aac3805667679e0", null ],
@@ -1268,7 +1311,8 @@ var group__proav =
       [ "pixelFormat", "classPixelDesc.html#a624006e84c35a32b3ff03be1b26f968a", null ],
       [ "planeCount", "classPixelDesc.html#af26c3799357776e7cdeb91dcef3504bc", null ],
       [ "planeSize", "classPixelDesc.html#a97754071a3b2973e307d9411191569f9", null ],
-      [ "videoCodec", "classPixelDesc.html#a4b1c5d6c7f378a9777bbba2700b41ea9", null ]
+      [ "videoCodec", "classPixelDesc.html#a4b1c5d6c7f378a9777bbba2700b41ea9", null ],
+      [ "videoRange", "classPixelDesc.html#a7c4e72a6fa453853f276d6bcbbbeba26", null ]
     ] ],
     [ "PixelFormat", "classPixelFormat.html", [
       [ "CompDesc", "structPixelFormat_1_1CompDesc.html", [
@@ -1390,6 +1434,8 @@ var group__proav =
         [ "I_422_UYVY_3x16_LE", "classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda3a1e9b203bc793831f3aad6f7257b235", null ],
         [ "I_422_UYVY_3x16_BE", "classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4dedaf9d1fb7baad15a4117f715d9f619e656", null ],
         [ "P_444_3x8", "classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda204ec4bb75ca3e9699ea7704a15eb703", null ],
+        [ "P_444_3x10_LE", "classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda877aaeaa330528b22f843580b3a3b10f", null ],
+        [ "I_3x10_DPX_B", "classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda2bfb4623dd079a269aa79ab759ad5985", null ],
         [ "UserDefined", "classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda4f0fbe6edb23ddd49c7721c444b0bb10", null ]
       ] ],
       [ "Sampling", "classPixelFormat.html#a85ea5c79ba2eb68e0bf4613d9524612b", [
@@ -1593,29 +1639,7 @@ var group__proav =
       [ "operator==", "classVideoCodec.html#ae5ec2be9928da8f33e9c5a4bfda9c015", null ]
     ] ],
     [ "VideoTestPattern", "classVideoTestPattern.html", [
-      [ "BurnPosition", "classVideoTestPattern.html#a6fe2032ce077d97ee53aa5f1fadc4980", [
-        [ "BurnTopLeft", "classVideoTestPattern.html#a6fe2032ce077d97ee53aa5f1fadc4980a74d8ba96154fd69932d836723f6d02cb", null ],
-        [ "BurnTopCenter", "classVideoTestPattern.html#a6fe2032ce077d97ee53aa5f1fadc4980a2f7d4bbfda1739791dabd9f3c07ccc0f", null ],
-        [ "BurnTopRight", "classVideoTestPattern.html#a6fe2032ce077d97ee53aa5f1fadc4980a72a3e65119fc2ba5bf724cb60646b3a2", null ],
-        [ "BurnBottomLeft", "classVideoTestPattern.html#a6fe2032ce077d97ee53aa5f1fadc4980a23d2dc9287702861287235ed34afd521", null ],
-        [ "BurnBottomCenter", "classVideoTestPattern.html#a6fe2032ce077d97ee53aa5f1fadc4980a5dec69fc5d44f02bab2a2fd0394a769d", null ],
-        [ "BurnBottomRight", "classVideoTestPattern.html#a6fe2032ce077d97ee53aa5f1fadc4980a95667ca0db3c30c1578444388ecf0b0e", null ],
-        [ "BurnCenter", "classVideoTestPattern.html#a6fe2032ce077d97ee53aa5f1fadc4980aaf5ab0d366989a340db82f07a30feecc", null ]
-      ] ],
-      [ "Pattern", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61", [
-        [ "ColorBars", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61a6763945e7f229ff4d013976357cc2e9b", null ],
-        [ "ColorBars75", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61abd771e2e751893ee982a1e9340438219", null ],
-        [ "Ramp", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61acb8ab0e458c64f28c51c40cc82cee3f7", null ],
-        [ "Grid", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61a68f2329c71baa518bf6549fbef3f1ec7", null ],
-        [ "Crosshatch", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61a32180c76e6c92f489618922255831c9b", null ],
-        [ "Checkerboard", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61aaa23e6d4cd63f4d2d69964b5078ba376", null ],
-        [ "SolidColor", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61ac0d07ee96e703a975f6c514537840468", null ],
-        [ "White", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61aaae28edd8c10c35f4fdb9b47bdaa35e8", null ],
-        [ "Black", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61a7f050c27473581bb29a5633bef8c1130", null ],
-        [ "Noise", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61a621cfbb12ec1b70e763f0ffa63739163", null ],
-        [ "ZonePlate", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61afcc5a4c59492467ba55b49651607feab", null ],
-        [ "AvSync", "classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61a2a56cc7d6df77cb218bc6377dc1fd0c3", null ]
-      ] ],
+      [ "Pattern", "classVideoTestPattern.html#a5661dbf38c939394670995508068ab83", null ],
       [ "VideoTestPattern", "classVideoTestPattern.html#afe3332167e195dd2f5ba008b7542404c", null ],
       [ "~VideoTestPattern", "classVideoTestPattern.html#a9bbda456c5396bd2cd2ad270b5129419", null ],
       [ "applyBurn", "classVideoTestPattern.html#ac246e3ec850fe0f8880552fec18016ae", null ],

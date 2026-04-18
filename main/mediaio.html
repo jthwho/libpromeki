@@ -104,6 +104,7 @@ $(document).ready(function(){initNavTree('mediaio.html',''); initResizable(); })
 <div class="contents">
 <div class="toc"><h3>Table of Contents</h3>
 <ul><li class="level1"><a href="#mediaio_backends">Available backends</a></li>
+<li class="level1"><a href="#mediaio_compressed">Compressed bitstream flow</a></li>
 <li class="level1"><a href="#mediaio_overview">Overview</a></li>
 <li class="level1"><a href="#mediaio_architecture">Architecture</a><ul><li class="level2"><a href="#mediaio_command_pattern">Command pattern</a></li>
 <li class="level2"><a href="#mediaio_strand">Strand-based serialization</a></li>
@@ -146,19 +147,38 @@ Available backends</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>TPG</code>   </td><td class="markdownTableBodyNone">source   </td><td class="markdownTableBodyNone">Synthetic test pattern generator — colour bars + audio (default AudioPattern::AvSync, which embeds LTC on the LTC channel + a click marker on the others) + timecode + a <a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a> data band stamped at the top of every frame.    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>Inspector</code>   </td><td class="markdownTableBodyNone">sink   </td><td class="markdownTableBodyNone"><a class="el" href="classFrame.html" title="A media frame containing images, audio, compressed packets, and metadata.">Frame</a> validator / monitor — decodes the TPG image data band, decodes audio LTC, reports A/V sync offset, tracks frame number / stream ID / TC continuity, and emits both per-frame events and a periodic summary log. See <a class="el" href="inspector.html">Inspector — Frame validation and monitoring</a> for the QA-oriented user guide.    </td></tr>
+<td class="markdownTableBodyNone"><code>Inspector</code>   </td><td class="markdownTableBodyNone">sink   </td><td class="markdownTableBodyNone"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> validator / monitor — decodes the TPG image data band, decodes audio LTC, reports A/V sync offset, tracks frame number / stream ID / TC continuity, and emits both per-frame events and a periodic summary log. See <a class="el" href="inspector.html">Inspector — Frame validation and monitoring</a> for the QA-oriented user guide.    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classImageFile.html" title="Media file loader and saver.">ImageFile</a></code>   </td><td class="markdownTableBodyNone">both   </td><td class="markdownTableBodyNone">Single image or numbered image sequence (DPX, Cineon, PNG, JPEG, TGA, SGI, PNM, raw YUV).    </td></tr>
+<td class="markdownTableBodyNone"><code><a class="el" href="classImageFile.html" title="Media file loader and saver.">ImageFile</a></code>   </td><td class="markdownTableBodyNone">both   </td><td class="markdownTableBodyNone">Single image or numbered image sequence (DPX, Cineon, PNG, JPEG, JPEG XS, TGA, SGI, PNM, raw YUV). Compressed formats (JPEG / JPEG XS) deliver the bitstream as <a class="el" href="classImage.html#aed813848fdebb5874f9f29878cd7e5f1">Image::packet</a> on the loaded compressed <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a>.    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code><a class="el" href="classAudioFile.html" title="Audio file reader and writer.">AudioFile</a></code>   </td><td class="markdownTableBodyNone">both   </td><td class="markdownTableBodyNone">Single audio file via libsndfile (WAV, FLAC, AIFF, ...).    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classQuickTime.html" title="QuickTime / ISO-BMFF container reader and writer.">QuickTime</a></code>   </td><td class="markdownTableBodyNone">both   </td><td class="markdownTableBodyNone"><a class="el" href="classQuickTime.html" title="QuickTime / ISO-BMFF container reader and writer.">QuickTime</a> / ISO-BMFF reader and writer (fragmented or moov-at-end layout).    </td></tr>
+<td class="markdownTableBodyNone"><code><a class="el" href="classQuickTime.html" title="QuickTime / ISO-BMFF container reader and writer.">QuickTime</a></code>   </td><td class="markdownTableBodyNone">both   </td><td class="markdownTableBodyNone"><a class="el" href="classQuickTime.html" title="QuickTime / ISO-BMFF container reader and writer.">QuickTime</a> / ISO-BMFF reader and writer (fragmented or moov-at-end layout); <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a> / HEVC samples are delivered as Annex-B bytes on <a class="el" href="classImage.html#aed813848fdebb5874f9f29878cd7e5f1">Image::packet</a> for compressed tracks.    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>Rtp</code>   </td><td class="markdownTableBodyNone">both   </td><td class="markdownTableBodyNone">RTP transport for video / audio / metadata streams (SDP-driven; SMPTE 2110 / AES67 friendly).    </td></tr>
+<td class="markdownTableBodyNone"><code>Rtp</code>   </td><td class="markdownTableBodyNone">both   </td><td class="markdownTableBodyNone">RTP transport for video / audio / metadata streams (SDP-driven; SMPTE 2110 / AES67 friendly). Compressed payloads ride on <a class="el" href="classImage.html#aed813848fdebb5874f9f29878cd7e5f1">Image::packet</a> so the downstream decoder stage can consume them directly.    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>Converter</code>   </td><td class="markdownTableBodyNone">both   </td><td class="markdownTableBodyNone">In-process pixel-format and audio-format converter that wraps a child read-side and a parent write-side.   </td></tr>
+<td class="markdownTableBodyNone"><code>V4L2</code>   </td><td class="markdownTableBodyNone">source   </td><td class="markdownTableBodyNone">Video4Linux2 capture device (webcams, capture cards exposing a V4L2 node).    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>Converter</code>   </td><td class="markdownTableBodyNone">transform   </td><td class="markdownTableBodyNone">In-process pixel-format converter that wraps a child read-side and a parent write-side.    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>CSC</code>   </td><td class="markdownTableBodyNone">transform   </td><td class="markdownTableBodyNone">Stand-alone colour-space / pixel-format converter stage.    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>SRC</code>   </td><td class="markdownTableBodyNone">transform   </td><td class="markdownTableBodyNone">Stand-alone audio sample-rate converter stage.    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>Burn</code>   </td><td class="markdownTableBodyNone">transform   </td><td class="markdownTableBodyNone">Burn-in overlay generator (text / timecode) for QA and review.    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code><a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a></code>   </td><td class="markdownTableBodyNone">transform   </td><td class="markdownTableBodyNone">Frame-rate sync / re-clock stage.    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code><a class="el" href="classVideoEncoder.html" title="Abstract base class for stateful video encoders.">VideoEncoder</a></code>   </td><td class="markdownTableBodyNone">transform   </td><td class="markdownTableBodyNone">Generic video-encoder stage that dispatches to the registered <a class="el" href="classVideoEncoder.html">VideoEncoder</a> backend for the configured MediaConfig::VideoCodec. Emits one compressed <a class="el" href="classImage.html">Image</a> per encoded access unit with its <a class="el" href="classImage.html#aed813848fdebb5874f9f29878cd7e5f1">Image::packet</a> populated.    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code><a class="el" href="classVideoDecoder.html" title="Abstract base class for stateful video decoders.">VideoDecoder</a></code>   </td><td class="markdownTableBodyNone">transform   </td><td class="markdownTableBodyNone">Generic video-decoder stage — consumes the <a class="el" href="classImage.html#aed813848fdebb5874f9f29878cd7e5f1">Image::packet</a> from each compressed input <a class="el" href="classImage.html">Image</a> and emits uncompressed <a class="el" href="classImage.html">Image</a> frames on the other side. Auto-detects the codec from the packet's <a class="el" href="classMediaPacket.html#a56035fad1d51bc0bd4a45ea341fdbea8">MediaPacket::pixelDesc</a> when MediaConfig::VideoCodec is unset.    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>RawBitstream</code>   </td><td class="markdownTableBodyNone">sink   </td><td class="markdownTableBodyNone">Writes every compressed <a class="el" href="classImage.html">Image's</a> attached <a class="el" href="classMediaPacket.html">MediaPacket</a> payload verbatim to a file — the elementary-stream mirror of the encoder output.   </td></tr>
 </table>
 <p>The TPG and Inspector are designed to be used together with no extra configuration: a default-config TPG produces everything the default-config Inspector knows how to verify (image data band, BCD timecode, LTC audio, A/V sync), so a smoke-test pipeline is just two factory calls plus a frame loop. See <a class="el" href="inspector.html">Inspector — Frame validation and monitoring</a> for the full walk-through.</p>
+<h1><a class="anchor" id="mediaio_compressed"></a>
+Compressed bitstream flow</h1>
+<p>Compressed essence rides through the pipeline as a compressed <a class="el" href="classImage.html">Image</a> (or <a class="el" href="classAudio.html">Audio</a>) carrying its encoded bytes on an attached <a class="el" href="classMediaPacket.html">MediaPacket</a> — <a class="el" href="classImage.html#aed813848fdebb5874f9f29878cd7e5f1">Image::packet</a> is the canonical location for the bitstream, PTS / DTS, and codec-level flags (keyframe, parameter-set, end-of-stream). There is no separate per-Frame packet list: producer stages (<a class="el" href="classVideoEncoder.html" title="Abstract base class for stateful video encoders.">VideoEncoder</a>, container demuxers, RTP readers, <a class="el" href="classImageFile.html" title="Media file loader and saver.">ImageFile</a> loaders) attach the packet to the <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> they emit, and consumer stages (<a class="el" href="classVideoDecoder.html" title="Abstract base class for stateful video decoders.">VideoDecoder</a>, RawBitstream, container muxers) read it off the compressed <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> they receive. plane 0 and the packet's <a class="el" href="classBufferView.html" title="Lightweight view into a region of a shared Buffer.">BufferView</a> share the same backing buffer when the producer was able to arrange zero copy, so the extra wrapping is free on the hot path.</p>
 <h1><a class="anchor" id="mediaio_overview"></a>
 Overview</h1>
 <p><a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> is split into two cooperating layers:</p>
@@ -553,7 +573,7 @@ Thread pool sizing</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-16 05:30:02 from commit 7eadf34 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
   </ul>
 </div>
 </body>

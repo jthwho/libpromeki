@@ -42,12 +42,11 @@ var searchData=
   ['grayscaletrue_39',['GrayscaleTrue',['../classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a050c96373a5448ac4f89e8aaaf5ea0be',1,'Terminal']]],
   ['green_40',['Green',['../classColor.html#a99d190056130b083fe716a721f0e2b74',1,'Color']]],
   ['grep_41',['Grep',['../classRegEx.html#af5874cb066c531b5adc390859c885041',1,'RegEx']]],
-  ['grid_42',['Grid',['../classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61a68f2329c71baa518bf6549fbef3f1ec7',1,'VideoTestPattern']]],
-  ['gridlayout_43',['GridLayout',['../classGridLayout.html',1,'']]],
-  ['group_44',['group',['../structMulticastReceiver_1_1GroupEntry.html#a1f5bdd13fd6cc470128a60842fcbb6aa',1,'MulticastReceiver::GroupEntry']]],
-  ['groupentry_45',['GroupEntry',['../structMulticastReceiver_1_1GroupEntry.html',1,'MulticastReceiver']]],
-  ['grouplist_46',['GroupList',['../classMulticastReceiver.html#a25807eb027d663ffeaa1d8c50ef0d7d5',1,'MulticastReceiver']]],
-  ['groups_47',['groups',['../classMulticastReceiver.html#a0edec448bc795d802cc874182f843e84',1,'MulticastReceiver']]],
-  ['guards_48',['guards',['../typeregistry.html#tr_disambiguation',1,'ID Disambiguation Guards'],['../md_CODING__STANDARDS.html#autotoc_md73',1,'ID Disambiguation Guards'],['../md_CODING__STANDARDS.html#autotoc_md39',1,'Include Guards']]],
-  ['guidelines_49',['Design Guidelines',['../typeregistry.html#tr_guidelines',1,'']]]
+  ['gridlayout_42',['GridLayout',['../classGridLayout.html',1,'']]],
+  ['group_43',['group',['../structMulticastReceiver_1_1GroupEntry.html#a1f5bdd13fd6cc470128a60842fcbb6aa',1,'MulticastReceiver::GroupEntry']]],
+  ['groupentry_44',['GroupEntry',['../structMulticastReceiver_1_1GroupEntry.html',1,'MulticastReceiver']]],
+  ['grouplist_45',['GroupList',['../classMulticastReceiver.html#a25807eb027d663ffeaa1d8c50ef0d7d5',1,'MulticastReceiver']]],
+  ['groups_46',['groups',['../classMulticastReceiver.html#a0edec448bc795d802cc874182f843e84',1,'MulticastReceiver']]],
+  ['guards_47',['guards',['../typeregistry.html#tr_disambiguation',1,'ID Disambiguation Guards'],['../md_CODING__STANDARDS.html#autotoc_md73',1,'ID Disambiguation Guards'],['../md_CODING__STANDARDS.html#autotoc_md39',1,'Include Guards']]],
+  ['guidelines_48',['Design Guidelines',['../typeregistry.html#tr_guidelines',1,'']]]
 ];

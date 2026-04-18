@@ -376,6 +376,22 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">Capacity</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32) .setDefault(<a class="el" href="classList.html">int32_t</a>(0)) .setMin(<a class="el" href="classList.html">int32_t</a>(0)) .setDescription(&quot;Internal <a class="el" href="classList.html">FIFO</a> capacity <a class="el" href="classList.html">in</a> frames.&quot;))</td></tr>
 <tr class="memdesc:ad93658701e5dfa359f28be80976569a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">int — internal FIFO capacity in frames. <br /></td></tr>
 <tr class="separator:ad93658701e5dfa359f28be80976569a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd4dee0f0e7d45f339e228a514ed1777" id="r_abd4dee0f0e7d45f339e228a514ed1777"><td class="memItemLeft" align="right" valign="top"><a id="abd4dee0f0e7d45f339e228a514ed1777" name="abd4dee0f0e7d45f339e228a514ed1777"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">OutputFrameRate</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeFrameRate) .setDefault(promeki::FrameRate()) .setDescription(&quot;FrameSync <a class="el" href="classList.html">output</a> frame <a class="el" href="classList.html">rate</a> &quot; &quot;(<a class="el" href="classList.html">invalid</a> = <a class="el" href="classList.html">inherit</a> from source).&quot;))</td></tr>
+<tr class="memdesc:abd4dee0f0e7d45f339e228a514ed1777"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> — output frame rate for the <a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a> task. When invalid (default), the output rate is inherited from <code>pendingMediaDesc</code> — <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">i.e</a>. the source rate passes through. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> to a valid <a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> to resync to a different cadence. <br /></td></tr>
+<tr class="separator:abd4dee0f0e7d45f339e228a514ed1777"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af04f9c77b76cff3ce4f4fb8b023cdea2" id="r_af04f9c77b76cff3ce4f4fb8b023cdea2"><td class="memItemLeft" align="right" valign="top"><a id="af04f9c77b76cff3ce4f4fb8b023cdea2" name="af04f9c77b76cff3ce4f4fb8b023cdea2"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">OutputAudioRate</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeFloat) .setDefault(0.0f) .setMin(0.0f) .setDescription(&quot;FrameSync <a class="el" href="classList.html">output</a> audio <a class="el" href="classList.html">sample</a> <a class="el" href="classList.html">rate</a> &quot; &quot;(0 = <a class="el" href="classList.html">inherit</a> from source).&quot;))</td></tr>
+<tr class="memdesc:af04f9c77b76cff3ce4f4fb8b023cdea2"><td class="mdescLeft">&#160;</td><td class="mdescRight">float — output audio sample rate for the <a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a> task. When zero (default), the sample rate is inherited from <code>pendingMediaDesc</code>. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> to a positive value to resample to a different rate. <br /></td></tr>
+<tr class="separator:af04f9c77b76cff3ce4f4fb8b023cdea2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52272c2d74e49f55b4c261783afed794" id="r_a52272c2d74e49f55b4c261783afed794"><td class="memItemLeft" align="right" valign="top"><a id="a52272c2d74e49f55b4c261783afed794" name="a52272c2d74e49f55b4c261783afed794"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">OutputAudioChannels</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32) .setDefault(<a class="el" href="classList.html">int32_t</a>(0)) .setMin(<a class="el" href="classList.html">int32_t</a>(0)) .setDescription(&quot;FrameSync <a class="el" href="classList.html">output</a> audio <a class="el" href="classList.html">channel</a> count &quot; &quot;(0 = <a class="el" href="classList.html">inherit</a> from source).&quot;))</td></tr>
+<tr class="memdesc:a52272c2d74e49f55b4c261783afed794"><td class="mdescLeft">&#160;</td><td class="mdescRight">int — output audio channel count for the <a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a> task. When zero (default), the channel count is inherited from <code>pendingMediaDesc</code>. <br /></td></tr>
+<tr class="separator:a52272c2d74e49f55b4c261783afed794"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a47c709449d5b99ff0ed1810e0df04290" id="r_a47c709449d5b99ff0ed1810e0df04290"><td class="memItemLeft" align="right" valign="top"><a id="a47c709449d5b99ff0ed1810e0df04290" name="a47c709449d5b99ff0ed1810e0df04290"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">InputQueueCapacity</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32) .setDefault(<a class="el" href="classList.html">int32_t</a>(8)) .setMin(<a class="el" href="classList.html">int32_t</a>(1)) .setDescription(&quot;FrameSync <a class="el" href="classList.html">input</a> <a class="el" href="classList.html">queue</a> <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">depth.&quot;</a>))</td></tr>
+<tr class="memdesc:a47c709449d5b99ff0ed1810e0df04290"><td class="mdescLeft">&#160;</td><td class="mdescRight">int — input queue depth for the <a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a> task. <br /></td></tr>
+<tr class="separator:a47c709449d5b99ff0ed1810e0df04290"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4da61ee35c7b799ef4ea67bf36ee6c4f" id="r_a4da61ee35c7b799ef4ea67bf36ee6c4f"><td class="memItemLeft" align="right" valign="top"><a id="a4da61ee35c7b799ef4ea67bf36ee6c4f" name="a4da61ee35c7b799ef4ea67bf36ee6c4f"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">JpegQuality</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32) .setDefault(<a class="el" href="classList.html">int32_t</a>(85)) .setRange(<a class="el" href="classList.html">int32_t</a>(1), <a class="el" href="classList.html">int32_t</a>(100)) .setDescription(&quot;JPEG quality 1-100.&quot;))</td></tr>
 <tr class="memdesc:a4da61ee35c7b799ef4ea67bf36ee6c4f"><td class="mdescLeft">&#160;</td><td class="mdescRight">int — JPEG quality 1-100 (codec default: 85). <br /></td></tr>
@@ -436,6 +452,53 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">VideoQp</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32) .setDefault(<a class="el" href="classList.html">int32_t</a>(23)) .setRange(<a class="el" href="classList.html">int32_t</a>(0), <a class="el" href="classList.html">int32_t</a>(51)) .setDescription(&quot;Constant <a class="el" href="classList.html">QP</a> <a class="el" href="classList.html">for</a> CQP <a class="el" href="classList.html">rate</a>-control mode.&quot;))</td></tr>
 <tr class="memdesc:a5bafe1ca5974e487fa176a7605066286"><td class="mdescLeft">&#160;</td><td class="mdescRight">int — constant quantization parameter used when VideoRcMode is <code>CQP</code>. Lower values = higher quality and higher bitrate. Typical range 18..40 for <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a> / HEVC. Codec default: 23. <br /></td></tr>
 <tr class="separator:a5bafe1ca5974e487fa176a7605066286"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1f626fbf81e186a1058532227b2346b0" id="r_a1f626fbf81e186a1058532227b2346b0"><td class="memItemLeft" align="right" valign="top"><a id="a1f626fbf81e186a1058532227b2346b0" name="a1f626fbf81e186a1058532227b2346b0"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">VideoSpatialAQ</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool) .setDefault(<a class="el" href="classList.html">false</a>) .setDescription(&quot;Enable <a class="el" href="classList.html">spatial</a> <a class="el" href="classList.html">adaptive</a> <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">quantization.&quot;</a>))</td></tr>
+<tr class="memdesc:a1f626fbf81e186a1058532227b2346b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — enable spatial adaptive quantization. <br /></td></tr>
+<tr class="separator:a1f626fbf81e186a1058532227b2346b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab8f270678c103b5ba87d01923a8ca125" id="r_ab8f270678c103b5ba87d01923a8ca125"><td class="memItemLeft" align="right" valign="top"><a id="ab8f270678c103b5ba87d01923a8ca125" name="ab8f270678c103b5ba87d01923a8ca125"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">VideoSpatialAQStrength</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32) .setDefault(<a class="el" href="classList.html">int32_t</a>(0)) .setRange(<a class="el" href="classList.html">int32_t</a>(0), <a class="el" href="classList.html">int32_t</a>(15)) .setDescription(&quot;Spatial <a class="el" href="classList.html">AQ</a> <a class="el" href="classList.html">strength</a> (1-15; 0 = <a class="el" href="classList.html">auto</a>).&quot;))</td></tr>
+<tr class="memdesc:ab8f270678c103b5ba87d01923a8ca125"><td class="mdescLeft">&#160;</td><td class="mdescRight">int — spatial AQ strength (1-15; 0 = auto). <br /></td></tr>
+<tr class="separator:ab8f270678c103b5ba87d01923a8ca125"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19fde835b79d7f98a1c024a190981e4c" id="r_a19fde835b79d7f98a1c024a190981e4c"><td class="memItemLeft" align="right" valign="top"><a id="a19fde835b79d7f98a1c024a190981e4c" name="a19fde835b79d7f98a1c024a190981e4c"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">VideoTemporalAQ</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool) .setDefault(<a class="el" href="classList.html">false</a>) .setDescription(&quot;Enable <a class="el" href="classList.html">temporal</a> <a class="el" href="classList.html">adaptive</a> <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">quantization.&quot;</a>))</td></tr>
+<tr class="memdesc:a19fde835b79d7f98a1c024a190981e4c"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — enable temporal adaptive quantization. <br /></td></tr>
+<tr class="separator:a19fde835b79d7f98a1c024a190981e4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af5c2c627958d648d855503241e0278ed" id="r_af5c2c627958d648d855503241e0278ed"><td class="memItemLeft" align="right" valign="top"><a id="af5c2c627958d648d855503241e0278ed" name="af5c2c627958d648d855503241e0278ed"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">VideoMultiPass</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32) .setDefault(<a class="el" href="classList.html">int32_t</a>(0)) .setRange(<a class="el" href="classList.html">int32_t</a>(0), <a class="el" href="classList.html">int32_t</a>(2)) .setDescription(&quot;Multi-<a class="el" href="classList.html">pass</a> mode &quot; &quot;(0=<a class="el" href="classList.html">disabled</a>, 1=<a class="el" href="classList.html">quarter</a>-<a class="el" href="classList.html">res</a>, 2=<a class="el" href="classList.html">full</a>-<a class="el" href="classList.html">res</a>).&quot;))</td></tr>
+<tr class="memdesc:af5c2c627958d648d855503241e0278ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">int — multi-pass encoding mode (0 = disabled, 1 = quarter-resolution, 2 = full-resolution). <br /></td></tr>
+<tr class="separator:af5c2c627958d648d855503241e0278ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a23ce3e09038509a208749b4b703f8b00" id="r_a23ce3e09038509a208749b4b703f8b00"><td class="memItemLeft" align="right" valign="top"><a id="a23ce3e09038509a208749b4b703f8b00" name="a23ce3e09038509a208749b4b703f8b00"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">VideoRepeatHeaders</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool) .setDefault(<a class="el" href="classList.html">false</a>) .setDescription(&quot;Emit <a class="el" href="classList.html">parameter</a> <a class="el" href="classList.html">sets</a> / <a class="el" href="classList.html">sequence</a> <a class="el" href="classList.html">headers</a> &quot; &quot;<a class="el" href="classList.html">with</a> <a class="el" href="classList.html">every</a> <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">IDR.&quot;</a>))</td></tr>
+<tr class="memdesc:a23ce3e09038509a208749b4b703f8b00"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — emit SPS/PPS (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a>), VPS/SPS/PPS (HEVC), or Sequence Header (AV1) with every IDR/key frame. <br /></td></tr>
+<tr class="separator:a23ce3e09038509a208749b4b703f8b00"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a195fd5c205317d0584577603ebe84923" id="r_a195fd5c205317d0584577603ebe84923"><td class="memItemLeft" align="right" valign="top"><a id="a195fd5c205317d0584577603ebe84923" name="a195fd5c205317d0584577603ebe84923"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">VideoTimecodeSEI</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool) .setDefault(<a class="el" href="classList.html">false</a>) .setDescription(&quot;Emit <a class="el" href="classList.html">SMPTE</a> timecode <a class="el" href="classList.html">SEI</a> &quot; &quot;(<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">H.264</a> <a class="el" href="classList.html">picture</a> <a class="el" href="classList.html">timing</a> / HEVC time code).&quot;))</td></tr>
+<tr class="memdesc:a195fd5c205317d0584577603ebe84923"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — emit SMPTE timecode via codec SEI. Carried in Picture Timing SEI (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a>) / Time Code SEI (HEVC); the per-frame value comes from Metadata::Timecode on the source <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a>. Frames without a valid <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> skip insertion for that picture. Ignored for AV1 (NVENC does not expose a timecode OBU path). <br /></td></tr>
+<tr class="separator:a195fd5c205317d0584577603ebe84923"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a507c12bf2bc1a527352bf93618408026" id="r_a507c12bf2bc1a527352bf93618408026"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a507c12bf2bc1a527352bf93618408026">PROMEKI_DECLARE_ID</a> (<a class="el" href="classList.html">VideoColorPrimaries</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeEnum) .setDefault(promeki::ColorPrimaries::Auto) .setEnumType(promeki::ColorPrimaries::Type) .setDescription(&quot;VUI color primaries &quot; &quot;(Auto = <a class="el" href="classList.html">derive</a> from <a class="el" href="classList.html">input</a>).&quot;))</td></tr>
+<tr class="memdesc:a507c12bf2bc1a527352bf93618408026"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classColorPrimaries.html">ColorPrimaries</a> — color primaries signalled in the VUI (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a>/HEVC) or color description (AV1). Numeric values per ISO/IEC 23091-4 / ITU-T <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.273</a>.  <br /></td></tr>
+<tr class="separator:a507c12bf2bc1a527352bf93618408026"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adcd4f69b3aa73307796f9b90d1a8698c" id="r_adcd4f69b3aa73307796f9b90d1a8698c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#adcd4f69b3aa73307796f9b90d1a8698c">PROMEKI_DECLARE_ID</a> (<a class="el" href="classList.html">VideoTransferCharacteristics</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeEnum) .setDefault(promeki::TransferCharacteristics::Auto) .setEnumType(promeki::TransferCharacteristics::Type) .setDescription(&quot;VUI transfer <a class="el" href="classList.html">characteristics</a> &quot; &quot;(Auto = <a class="el" href="classList.html">derive</a> from <a class="el" href="classList.html">input</a>).&quot;))</td></tr>
+<tr class="memdesc:adcd4f69b3aa73307796f9b90d1a8698c"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classTransferCharacteristics.html">TransferCharacteristics</a> — opto-electronic transfer function signalled in the VUI. Numeric values per ISO/IEC 23091-4 / ITU-T <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.273</a>.  <br /></td></tr>
+<tr class="separator:adcd4f69b3aa73307796f9b90d1a8698c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac06dcb3897df9db9df20854cc0512406" id="r_ac06dcb3897df9db9df20854cc0512406"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#ac06dcb3897df9db9df20854cc0512406">PROMEKI_DECLARE_ID</a> (<a class="el" href="classList.html">VideoMatrixCoefficients</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeEnum) .setDefault(promeki::MatrixCoefficients::Auto) .setEnumType(promeki::MatrixCoefficients::Type) .setDescription(&quot;VUI matrix <a class="el" href="classList.html">coefficients</a> &quot; &quot;(Auto = <a class="el" href="classList.html">derive</a> from <a class="el" href="classList.html">input</a>).&quot;))</td></tr>
+<tr class="memdesc:ac06dcb3897df9db9df20854cc0512406"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMatrixCoefficients.html">MatrixCoefficients</a> — Y'CbCr derivation matrix signalled in the VUI. Numeric values per ISO/IEC 23091-4 / ITU-T <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.273</a>.  <br /></td></tr>
+<tr class="separator:ac06dcb3897df9db9df20854cc0512406"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af98eb67466baea6d56d5ddcb7b4ed97e" id="r_af98eb67466baea6d56d5ddcb7b4ed97e"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#af98eb67466baea6d56d5ddcb7b4ed97e">PROMEKI_DECLARE_ID</a> (<a class="el" href="classVideoRange.html">VideoRange</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeEnum) .setDefault(promeki::VideoRange::Unknown) .setEnumType(promeki::VideoRange::Type) .setDescription(&quot;VUI <a class="el" href="classList.html">video</a> <a class="el" href="classList.html">range</a> &quot; &quot;(Unknown = <a class="el" href="classList.html">derive</a> from <a class="el" href="classList.html">input</a>).&quot;))</td></tr>
+<tr class="memdesc:af98eb67466baea6d56d5ddcb7b4ed97e"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classVideoRange.html">VideoRange</a> — studio/limited vs. full-range flag signalled in the VUI <code>videoFullRangeFlag</code> (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a>, HEVC) or AV1 <code>colorRange</code> field.  <br /></td></tr>
+<tr class="separator:af98eb67466baea6d56d5ddcb7b4ed97e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2857e8cd6666b3c0c45942e80d61f88f" id="r_a2857e8cd6666b3c0c45942e80d61f88f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a2857e8cd6666b3c0c45942e80d61f88f">PROMEKI_DECLARE_ID</a> (<a class="el" href="classVideoScanMode.html">VideoScanMode</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeEnum) .setDefault(promeki::VideoScanMode::Unknown) .setEnumType(promeki::VideoScanMode::Type) .setDescription(&quot;Raster <a class="el" href="classList.html">scan</a> mode &quot; &quot;(Unknown = <a class="el" href="classList.html">derive</a> from <a class="el" href="classList.html">input</a>).&quot;))</td></tr>
+<tr class="memdesc:a2857e8cd6666b3c0c45942e80d61f88f"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classVideoScanMode.html">VideoScanMode</a> — raster scan mode signalled through codec SEI (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a> Picture Timing / HEVC Picture Timing) and/or native interlaced coding.  <br /></td></tr>
+<tr class="separator:a2857e8cd6666b3c0c45942e80d61f88f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeb92a0928ee8299962b684abfa9b86bc" id="r_aeb92a0928ee8299962b684abfa9b86bc"><td class="memItemLeft" align="right" valign="top"><a id="aeb92a0928ee8299962b684abfa9b86bc" name="aeb92a0928ee8299962b684abfa9b86bc"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">HdrMasteringDisplay</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeMasteringDisplay) .setDescription(&quot;Stream-level <a class="el" href="classList.html">mastering</a> <a class="el" href="classList.html">display</a> metadata &quot; &quot;(<a class="el" href="classList.html">SMPTE</a> <a class="el" href="classList.html">ST</a> 2086).&quot;))</td></tr>
+<tr class="memdesc:aeb92a0928ee8299962b684abfa9b86bc"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMasteringDisplay.html">MasteringDisplay</a> — stream-level mastering display color volume (SMPTE ST 2086). When set, the encoder embeds this in every IDR (HEVC/AV1 SEI/OBU). Per-frame overrides via Metadata::MasteringDisplay on the source <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> take precedence. <br /></td></tr>
+<tr class="separator:aeb92a0928ee8299962b684abfa9b86bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a621ddabaf11abf473a0a80c6ff91b1b6" id="r_a621ddabaf11abf473a0a80c6ff91b1b6"><td class="memItemLeft" align="right" valign="top"><a id="a621ddabaf11abf473a0a80c6ff91b1b6" name="a621ddabaf11abf473a0a80c6ff91b1b6"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">HdrContentLightLevel</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeContentLightLevel) .setDescription(&quot;Stream-level <a class="el" href="classList.html">content</a> <a class="el" href="classList.html">light</a> level &quot; &quot;(<a class="el" href="classList.html">MaxCLL</a> / <a class="el" href="classList.html">MaxFALL</a>).&quot;))</td></tr>
+<tr class="memdesc:a621ddabaf11abf473a0a80c6ff91b1b6"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classContentLightLevel.html">ContentLightLevel</a> — stream-level content light level information (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">CTA-861.3</a>). When set, the encoder embeds this in every IDR (HEVC/AV1 SEI/OBU). <br /></td></tr>
+<tr class="separator:a621ddabaf11abf473a0a80c6ff91b1b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af59c650e19a4e0ba91442b77925a1f00" id="r_af59c650e19a4e0ba91442b77925a1f00"><td class="memItemLeft" align="right" valign="top"><a id="af59c650e19a4e0ba91442b77925a1f00" name="af59c650e19a4e0ba91442b77925a1f00"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classVideoCodec.html">VideoCodec</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeVideoCodec) .setDefault(promeki::VideoCodec()) .setDescription(&quot;Video codec <a class="el" href="classList.html">for</a> <a class="el" href="classList.html">the</a> <a class="el" href="classVideoEncoder.html">VideoEncoder</a> / &quot; &quot;<a class="el" href="classVideoDecoder.html">VideoDecoder</a> <a class="el" href="classList.html">backends</a> &quot; &quot;(e.g. \&quot;H264\&quot;, \&quot;HEVC\&quot;, \&quot;JPEG\&quot;).&quot;))</td></tr>
 <tr class="memdesc:af59c650e19a4e0ba91442b77925a1f00"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classVideoCodec.html">VideoCodec</a> — typed codec identity used by the generic video encoder / decoder <a class="el" href="classMediaIOTask.html">MediaIOTask</a> backends to look up the concrete <a class="el" href="classVideoEncoder.html">VideoEncoder</a> / <a class="el" href="classVideoDecoder.html">VideoDecoder</a> factory. Authored on the CLI as the codec's registered name (e.g. <code>"H264"</code>, <code>"HEVC"</code>, <code>"JPEG"</code>) and resolved through promeki::VideoCodec::lookup. Distinct from Type, which selects the <a class="el" href="classMediaIO.html">MediaIO</a> backend itself (e.g. <code>"VideoEncoder"</code> vs <code>"Converter"</code>). <br /></td></tr>
@@ -594,7 +657,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:af5fcda7aa9817daf4ab3881ee579c37c"><td class="mdescLeft">&#160;</td><td class="mdescRight">int — DSCP marking for the audio stream (default 34 / AF41). <br /></td></tr>
 <tr class="separator:af5fcda7aa9817daf4ab3881ee579c37c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0a501c2a193a00d50035fe8f4ce547cb" id="r_a0a501c2a193a00d50035fe8f4ce547cb"><td class="memItemLeft" align="right" valign="top"><a id="a0a501c2a193a00d50035fe8f4ce547cb" name="a0a501c2a193a00d50035fe8f4ce547cb"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">AudioRtpPacketTimeUs</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32) .setDefault(<a class="el" href="classList.html">int32_t</a>(1000)) .setMin(<a class="el" href="classList.html">int32_t</a>(1)) .setDescription(&quot;Audio <a class="el" href="classList.html">RTP</a> <a class="el" href="classList.html">packet</a> time <a class="el" href="classList.html">in</a> microseconds.&quot;))</td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">AudioRtpPacketTimeUs</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32) .setDefault(<a class="el" href="classList.html">int32_t</a>(1000)) .setMin(<a class="el" href="classList.html">int32_t</a>(1)) .setDescription(&quot;Audio <a class="el" href="classList.html">RTP</a> packet time <a class="el" href="classList.html">in</a> microseconds.&quot;))</td></tr>
 <tr class="memdesc:a0a501c2a193a00d50035fe8f4ce547cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">int — packet time in microseconds (AES67 default 1000). <br /></td></tr>
 <tr class="separator:a0a501c2a193a00d50035fe8f4ce547cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa9da2beb3740a94ce3c31fe28af6dad4" id="r_aa9da2beb3740a94ce3c31fe28af6dad4"><td class="memItemLeft" align="right" valign="top"><a id="aa9da2beb3740a94ce3c31fe28af6dad4" name="aa9da2beb3740a94ce3c31fe28af6dad4"></a>
@@ -698,7 +761,7 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>VariantDatabase</b> ()=<a class="el" href="classList.html">default</a></td></tr>
 <tr class="memdesc:a2112b5a8e5f62a239ff49362c825f69f inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an empty database with Warn validation. <br /></td></tr>
 <tr class="separator:a2112b5a8e5f62a239ff49362c825f69f inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae80394c786acc36b21e26cbd23f370c4 inherit pub_methods_classVariantDatabase" id="r_ae80394c786acc36b21e26cbd23f370c4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ae80394c786acc36b21e26cbd23f370c4">setFromJson</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
+<tr class="memitem:ae80394c786acc36b21e26cbd23f370c4 inherit pub_methods_classVariantDatabase" id="r_ae80394c786acc36b21e26cbd23f370c4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ae80394c786acc36b21e26cbd23f370c4">setFromJson</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#ac36566cc2c5535bba736babd50c4894f">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
 <tr class="memdesc:ae80394c786acc36b21e26cbd23f370c4 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets <code>id</code> to <code>value</code>, coercing JSON-serialized strings back to the spec's native type.  <br /></td></tr>
 <tr class="separator:ae80394c786acc36b21e26cbd23f370c4 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad2a390afff37f3a64ed81743395983d6 inherit pub_methods_classVariantDatabase" id="r_ad2a390afff37f3a64ed81743395983d6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ad2a390afff37f3a64ed81743395983d6">setValidation</a> (<a class="el" href="group__util.html#ga3e19f7ded49aac87704161e5d5b458db">SpecValidation</a> mode)</td></tr>
@@ -707,19 +770,19 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad16d3eb68ca2db5d1072f4573e01fca7 inherit pub_methods_classVariantDatabase" id="r_ad16d3eb68ca2db5d1072f4573e01fca7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__util.html#ga3e19f7ded49aac87704161e5d5b458db">SpecValidation</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ad16d3eb68ca2db5d1072f4573e01fca7">validation</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ad16d3eb68ca2db5d1072f4573e01fca7 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current validation mode.  <br /></td></tr>
 <tr class="separator:ad16d3eb68ca2db5d1072f4573e01fca7 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acc09774a54c4b14168cc55fc14c4ad19 inherit pub_methods_classVariantDatabase" id="r_acc09774a54c4b14168cc55fc14c4ad19"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#acc09774a54c4b14168cc55fc14c4ad19">set</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
+<tr class="memitem:acc09774a54c4b14168cc55fc14c4ad19 inherit pub_methods_classVariantDatabase" id="r_acc09774a54c4b14168cc55fc14c4ad19"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#acc09774a54c4b14168cc55fc14c4ad19">set</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#ac36566cc2c5535bba736babd50c4894f">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
 <tr class="memdesc:acc09774a54c4b14168cc55fc14c4ad19 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value for the given ID.  <br /></td></tr>
 <tr class="separator:acc09774a54c4b14168cc55fc14c4ad19 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a647e822cbd60b836b8cbe98179d8978a inherit pub_methods_classVariantDatabase" id="r_a647e822cbd60b836b8cbe98179d8978a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a647e822cbd60b836b8cbe98179d8978a">set</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id, <a class="el" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a> &amp;&amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
+<tr class="memitem:a647e822cbd60b836b8cbe98179d8978a inherit pub_methods_classVariantDatabase" id="r_a647e822cbd60b836b8cbe98179d8978a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a647e822cbd60b836b8cbe98179d8978a">set</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id, <a class="el" href="variant_8h.html#ac36566cc2c5535bba736babd50c4894f">Variant</a> &amp;&amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
 <tr class="memdesc:a647e822cbd60b836b8cbe98179d8978a inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value for the given ID (move overload).  <br /></td></tr>
 <tr class="separator:a647e822cbd60b836b8cbe98179d8978a inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae0b2922a7c5bd993e1d60929b132dcc0 inherit pub_methods_classVariantDatabase" id="r_ae0b2922a7c5bd993e1d60929b132dcc0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ae0b2922a7c5bd993e1d60929b132dcc0">setIfMissing</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
+<tr class="memitem:ae0b2922a7c5bd993e1d60929b132dcc0 inherit pub_methods_classVariantDatabase" id="r_ae0b2922a7c5bd993e1d60929b132dcc0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ae0b2922a7c5bd993e1d60929b132dcc0">setIfMissing</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#ac36566cc2c5535bba736babd50c4894f">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
 <tr class="memdesc:ae0b2922a7c5bd993e1d60929b132dcc0 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value only if no entry exists for <code>id</code>.  <br /></td></tr>
 <tr class="separator:ae0b2922a7c5bd993e1d60929b132dcc0 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9cb32301758b91d9b137e2c7c95676d4 inherit pub_methods_classVariantDatabase" id="r_a9cb32301758b91d9b137e2c7c95676d4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a9cb32301758b91d9b137e2c7c95676d4">setIfMissing</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id, <a class="el" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a> &amp;&amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
+<tr class="memitem:a9cb32301758b91d9b137e2c7c95676d4 inherit pub_methods_classVariantDatabase" id="r_a9cb32301758b91d9b137e2c7c95676d4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a9cb32301758b91d9b137e2c7c95676d4">setIfMissing</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id, <a class="el" href="variant_8h.html#ac36566cc2c5535bba736babd50c4894f">Variant</a> &amp;&amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
 <tr class="memdesc:a9cb32301758b91d9b137e2c7c95676d4 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move overload of <a class="el" href="classVariantDatabase.html#ae0b2922a7c5bd993e1d60929b132dcc0">setIfMissing</a>.  <br /></td></tr>
 <tr class="separator:a9cb32301758b91d9b137e2c7c95676d4 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a11a698992de8d4d830d83a78f6a6ece7 inherit pub_methods_classVariantDatabase" id="r_a11a698992de8d4d830d83a78f6a6ece7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a11a698992de8d4d830d83a78f6a6ece7">get</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a> &amp;defaultValue=<a class="el" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf">Variant</a>()) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a11a698992de8d4d830d83a78f6a6ece7 inherit pub_methods_classVariantDatabase" id="r_a11a698992de8d4d830d83a78f6a6ece7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="variant_8h.html#ac36566cc2c5535bba736babd50c4894f">Variant</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a11a698992de8d4d830d83a78f6a6ece7">get</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#ac36566cc2c5535bba736babd50c4894f">Variant</a> &amp;defaultValue=<a class="el" href="variant_8h.html#ac36566cc2c5535bba736babd50c4894f">Variant</a>()) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a11a698992de8d4d830d83a78f6a6ece7 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the value for the given ID.  <br /></td></tr>
 <tr class="separator:a11a698992de8d4d830d83a78f6a6ece7 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aba34c18fb083556f801a692fce34d76b inherit pub_methods_classVariantDatabase" id="r_aba34c18fb083556f801a692fce34d76b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">T</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#aba34c18fb083556f801a692fce34d76b">getAs</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">T</a> &amp;defaultValue=<a class="el" href="classList.html">T</a>{}, <a class="el" href="classError.html">Error</a> *<a class="el" href="classList.html">err</a>=<a class="el" href="classList.html">nullptr</a>) <a class="el" href="classList.html">const</a></td></tr>
@@ -834,7 +897,7 @@ Additional Inherited Members</h2></td></tr>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="aa4695c02b784a9111a77f4e1c4793179" name="aa4695c02b784a9111a77f4e1c4793179"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa4695c02b784a9111a77f4e1c4793179">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[1/5]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aa4695c02b784a9111a77f4e1c4793179">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[1/10]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -865,7 +928,7 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <a id="a4adff44f7c98060b85734c085c5c08db" name="a4adff44f7c98060b85734c085c5c08db"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4adff44f7c98060b85734c085c5c08db">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[2/5]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a4adff44f7c98060b85734c085c5c08db">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[2/10]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -905,7 +968,7 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <a id="a063fffb473c9e3d00c9304f103ff5797" name="a063fffb473c9e3d00c9304f103ff5797"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a063fffb473c9e3d00c9304f103ff5797">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[3/5]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a063fffb473c9e3d00c9304f103ff5797">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[3/10]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -939,7 +1002,7 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <a id="aae729fcb7f17fda2ed3576181a062e16" name="aae729fcb7f17fda2ed3576181a062e16"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aae729fcb7f17fda2ed3576181a062e16">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[4/5]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aae729fcb7f17fda2ed3576181a062e16">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[4/10]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -973,7 +1036,7 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <a id="a09cc5a8a80d0d0a88c02bd732503328a" name="a09cc5a8a80d0d0a88c02bd732503328a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a09cc5a8a80d0d0a88c02bd732503328a">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[5/5]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a09cc5a8a80d0d0a88c02bd732503328a">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[5/10]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1006,6 +1069,165 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a507c12bf2bc1a527352bf93618408026" name="a507c12bf2bc1a527352bf93618408026"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a507c12bf2bc1a527352bf93618408026">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[6/10]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">MediaConfig::PROMEKI_DECLARE_ID </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">VideoColorPrimaries</a>&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeEnum) .setDefault(promeki::ColorPrimaries::Auto) .setEnumType(promeki::ColorPrimaries::Type) .setDescription(&quot;VUI color primaries &quot; &quot;(Auto = <a class="el" href="classList.html">derive</a> from <a class="el" href="classList.html">input</a>).&quot;)&#160;</td>
+          <td class="paramname">&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p><a class="el" href="classColorPrimaries.html">ColorPrimaries</a> — color primaries signalled in the VUI (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a>/HEVC) or color description (AV1). Numeric values per ISO/IEC 23091-4 / ITU-T <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.273</a>. </p>
+<p>Default <code>Auto</code> lets the encoder derive the value from the first input frame's <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a> / <a class="el" href="classColorModel.html" title="Single source of truth for a color model and its associated color space.">ColorModel</a> (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a> → <code>BT709</code>, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.2020</a> → <code>BT2020</code>, sRGB → <code>BT709</code>, …). <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> <code>Unspecified</code> to suppress the color-description block entirely, or pick a specific value to override. </p>
+
+</div>
+</div>
+<a id="ac06dcb3897df9db9df20854cc0512406" name="ac06dcb3897df9db9df20854cc0512406"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac06dcb3897df9db9df20854cc0512406">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[7/10]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">MediaConfig::PROMEKI_DECLARE_ID </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">VideoMatrixCoefficients</a>&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeEnum) .setDefault(promeki::MatrixCoefficients::Auto) .setEnumType(promeki::MatrixCoefficients::Type) .setDescription(&quot;VUI matrix <a class="el" href="classList.html">coefficients</a> &quot; &quot;(Auto = <a class="el" href="classList.html">derive</a> from <a class="el" href="classList.html">input</a>).&quot;)&#160;</td>
+          <td class="paramname">&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p><a class="el" href="classMatrixCoefficients.html">MatrixCoefficients</a> — Y'CbCr derivation matrix signalled in the VUI. Numeric values per ISO/IEC 23091-4 / ITU-T <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.273</a>. </p>
+<p>Default <code>Auto</code> derives from the input <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a>'s <a class="el" href="classColorModel.html" title="Single source of truth for a color model and its associated color space.">ColorModel</a> (RGB models → <code>RGB</code>, YCbCr_Rec709 → <code>BT709</code>, YCbCr_Rec2020 → <code>BT2020_NCL</code>, …). </p>
+
+</div>
+</div>
+<a id="af98eb67466baea6d56d5ddcb7b4ed97e" name="af98eb67466baea6d56d5ddcb7b4ed97e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af98eb67466baea6d56d5ddcb7b4ed97e">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[8/10]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">MediaConfig::PROMEKI_DECLARE_ID </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classVideoRange.html">VideoRange</a>&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeEnum) .setDefault(promeki::VideoRange::Unknown) .setEnumType(promeki::VideoRange::Type) .setDescription(&quot;VUI <a class="el" href="classList.html">video</a> <a class="el" href="classList.html">range</a> &quot; &quot;(Unknown = <a class="el" href="classList.html">derive</a> from <a class="el" href="classList.html">input</a>).&quot;)&#160;</td>
+          <td class="paramname">&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p><a class="el" href="classVideoRange.html">VideoRange</a> — studio/limited vs. full-range flag signalled in the VUI <code>videoFullRangeFlag</code> (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a>, HEVC) or AV1 <code>colorRange</code> field. </p>
+<p>Default <code>Unknown</code> means "derive from the first input
+frame's @ref PixelDesc::videoRange". Callers can force <code>Limited</code> or <code>Full</code> to override the PixelDesc-derived signalling (rarely useful, but covers formats whose on-wire representation disagrees with their source convention). </p>
+
+</div>
+</div>
+<a id="a2857e8cd6666b3c0c45942e80d61f88f" name="a2857e8cd6666b3c0c45942e80d61f88f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2857e8cd6666b3c0c45942e80d61f88f">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[9/10]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">MediaConfig::PROMEKI_DECLARE_ID </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classVideoScanMode.html">VideoScanMode</a>&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeEnum) .setDefault(promeki::VideoScanMode::Unknown) .setEnumType(promeki::VideoScanMode::Type) .setDescription(&quot;Raster <a class="el" href="classList.html">scan</a> mode &quot; &quot;(Unknown = <a class="el" href="classList.html">derive</a> from <a class="el" href="classList.html">input</a>).&quot;)&#160;</td>
+          <td class="paramname">&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p><a class="el" href="classVideoScanMode.html">VideoScanMode</a> — raster scan mode signalled through codec SEI (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a> Picture Timing / HEVC Picture Timing) and/or native interlaced coding. </p>
+<p>Default <code>Unknown</code> means "derive from the first input
+frame's @ref ImageDesc::videoScanMode; fall back to
+@c Progressive when that is also @c Unknown". When the resolved mode is interlaced the NVENC backend flips on <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a> <code>outputPictureTimingSEI</code> / HEVC <code>outputPictureTimingSEI</code> at session init so every decoded picture carries its <code>pic_struct</code>, and then maps <code>InterlacedEvenFirst</code> / <code>InterlacedOddFirst</code> to <code>NV_ENC_PIC_STRUCT_DISPLAY_FIELD_TOP_BOTTOM</code> / <code>_BOTTOM_TOP</code> in the per-picture <code>NV_ENC_TIME_CODE</code>.</p>
+<p>Per-frame overrides go through Metadata::VideoScanMode on the source <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a>, which lets a stream carry mixed scan modes if the source format allows it. AV1 does not expose interlaced signalling through NVENC, so interlaced requests to the AV1 codec warn-once and fall through as progressive. </p>
+
+</div>
+</div>
+<a id="adcd4f69b3aa73307796f9b90d1a8698c" name="adcd4f69b3aa73307796f9b90d1a8698c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adcd4f69b3aa73307796f9b90d1a8698c">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[10/10]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">MediaConfig::PROMEKI_DECLARE_ID </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">VideoTransferCharacteristics</a>&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeEnum) .setDefault(promeki::TransferCharacteristics::Auto) .setEnumType(promeki::TransferCharacteristics::Type) .setDescription(&quot;VUI transfer <a class="el" href="classList.html">characteristics</a> &quot; &quot;(Auto = <a class="el" href="classList.html">derive</a> from <a class="el" href="classList.html">input</a>).&quot;)&#160;</td>
+          <td class="paramname">&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p><a class="el" href="classTransferCharacteristics.html">TransferCharacteristics</a> — opto-electronic transfer function signalled in the VUI. Numeric values per ISO/IEC 23091-4 / ITU-T <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.273</a>. </p>
+<p>Default <code>Auto</code> derives the SDR curve matching the input primaries. Auto-derivation cannot pick HDR curves today — the library's <a class="el" href="classColorModel.html">ColorModel</a> doesn't distinguish PQ / HLG yet — so HDR callers must set <code>SMPTE2084</code> (HDR10) or <code>ARIB_STD_B67</code> (HLG) explicitly. </p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="mediaconfig_8h_source.html">mediaconfig.h</a></li>
 </ul>
@@ -1016,7 +1238,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaConfig.html">MediaConfig</a></li>
-    <li class="footer">Generated on 2026-04-16 05:30:02 from commit 7eadf34 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -156,7 +156,7 @@ Static Public Member Functions</h2></td></tr>
 <div class="ttc" id="aclassUnits_html_a3dc98d405062d39987caa76a0c5f96c4"><div class="ttname"><a href="classUnits.html#a3dc98d405062d39987caa76a0c5f96c4">Units::fromSampleCount</a></div><div class="ttdeci">static String fromSampleCount(uint64_t samples, uint32_t sampleRate, int precision=2)</div><div class="ttdoc">Formats a sample count as a time duration at a given sample rate.</div></div>
 <div class="ttc" id="aclassUnits_html_a568db889e52dded7a49c0337f087eaa2"><div class="ttname"><a href="classUnits.html#a568db889e52dded7a49c0337f087eaa2">Units::fromByteCount</a></div><div class="ttdeci">static String fromByteCount(uint64_t bytes, int maxDecimals=3)</div><div class="ttdoc">Formats a byte count with metric (1000-based) units.</div></div>
 <div class="ttc" id="aclassUnits_html_a70871fbaf757d32e3f1ffff7452c4563"><div class="ttname"><a href="classUnits.html#a70871fbaf757d32e3f1ffff7452c4563">Units::fromDurationNs</a></div><div class="ttdeci">static String fromDurationNs(double ns, int precision=2)</div><div class="ttdoc">Formats a duration given in nanoseconds.</div></div>
-<div class="ttc" id="agroup__wellknownenums_html_ga9d2d3b34e2e3e410560df0546f7dc983"><div class="ttname"><a href="group__wellknownenums.html#ga9d2d3b34e2e3e410560df0546f7dc983">ByteCountStyle::Binary</a></div><div class="ttdeci">static const ByteCountStyle Binary</div><div class="ttdoc">Powers of 1024 (KiB, MiB, ...).</div><div class="ttdef"><b>Definition</b> enums.h:521</div></div>
+<div class="ttc" id="agroup__wellknownenums_html_ga9d2d3b34e2e3e410560df0546f7dc983"><div class="ttname"><a href="group__wellknownenums.html#ga9d2d3b34e2e3e410560df0546f7dc983">ByteCountStyle::Binary</a></div><div class="ttdeci">static const ByteCountStyle Binary</div><div class="ttdoc">Powers of 1024 (KiB, MiB, ...).</div><div class="ttdef"><b>Definition</b> enums.h:594</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a0df35b9d6c35a9f9d7369f69dce9a63a" name="a0df35b9d6c35a9f9d7369f69dce9a63a"></a>
@@ -253,7 +253,7 @@ Static Public Member Functions</h2></td></tr>
 <p>Formats a byte count with an explicit <a class="el" href="classByteCountStyle.html">ByteCountStyle</a>. </p>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_function" href="classUnits.html#a568db889e52dded7a49c0337f087eaa2">Units::fromByteCount</a>(1048576, 3, <a class="code hl_variable" href="group__wellknownenums.html#ga9d2d3b34e2e3e410560df0546f7dc983">ByteCountStyle::Binary</a>); <span class="comment">// &quot;1 MiB&quot;</span></div>
 <div class="line"><a class="code hl_function" href="classUnits.html#a568db889e52dded7a49c0337f087eaa2">Units::fromByteCount</a>(1024,    3, <a class="code hl_variable" href="group__wellknownenums.html#ga6d3dd14d60f115203c9061ab83edb892">ByteCountStyle::Metric</a>); <span class="comment">// &quot;1.024 KB&quot;</span></div>
-<div class="ttc" id="agroup__wellknownenums_html_ga6d3dd14d60f115203c9061ab83edb892"><div class="ttname"><a href="group__wellknownenums.html#ga6d3dd14d60f115203c9061ab83edb892">ByteCountStyle::Metric</a></div><div class="ttdeci">static const ByteCountStyle Metric</div><div class="ttdoc">Powers of 1000 (KB, MB, ...).</div><div class="ttdef"><b>Definition</b> enums.h:520</div></div>
+<div class="ttc" id="agroup__wellknownenums_html_ga6d3dd14d60f115203c9061ab83edb892"><div class="ttname"><a href="group__wellknownenums.html#ga6d3dd14d60f115203c9061ab83edb892">ByteCountStyle::Metric</a></div><div class="ttdeci">static const ByteCountStyle Metric</div><div class="ttdoc">Powers of 1000 (KB, MB, ...).</div><div class="ttdef"><b>Definition</b> enums.h:593</div></div>
 </div><!-- fragment --></dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -643,7 +643,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classUnits.html">Units</a></li>
-    <li class="footer">Generated on 2026-04-16 05:30:02 from commit 7eadf34 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
   </ul>
 </div>
 </body>

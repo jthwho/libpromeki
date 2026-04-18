@@ -167,6 +167,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad1808461031b4813284ca41f38ae7e38" id="r_ad1808461031b4813284ca41f38ae7e38"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImage.html#ad1808461031b4813284ca41f38ae7e38">metadata</a> ()</td></tr>
 <tr class="memdesc:ad1808461031b4813284ca41f38ae7e38"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reference to the image metadata.  <br /></td></tr>
 <tr class="separator:ad1808461031b4813284ca41f38ae7e38"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aed813848fdebb5874f9f29878cd7e5f1" id="r_aed813848fdebb5874f9f29878cd7e5f1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">const</a> <a class="el" href="classMediaPacket.html#a0d042c1f6143d734c401c0de3927ddb0">MediaPacket::Ptr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImage.html#aed813848fdebb5874f9f29878cd7e5f1">packet</a> () <a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">const</a></td></tr>
+<tr class="memdesc:aed813848fdebb5874f9f29878cd7e5f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the compressed bitstream packet attached to this <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a>.  <br /></td></tr>
+<tr class="separator:aed813848fdebb5874f9f29878cd7e5f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c7dfff98641759859ead86064557f8d" id="r_a2c7dfff98641759859ead86064557f8d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImage.html#a2c7dfff98641759859ead86064557f8d">setPacket</a> (<a class="el" href="classMediaPacket.html#a0d042c1f6143d734c401c0de3927ddb0">MediaPacket::Ptr</a> <a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">pkt</a>)</td></tr>
+<tr class="memdesc:a2c7dfff98641759859ead86064557f8d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replaces the attached compressed-bitstream packet.  <br /></td></tr>
+<tr class="separator:a2c7dfff98641759859ead86064557f8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abf9283ed3c232c709afcd5dd22bd60f1" id="r_abf9283ed3c232c709afcd5dd22bd60f1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImage.html#abf9283ed3c232c709afcd5dd22bd60f1">lineStride</a> (int <a class="el" href="classImage.html#a45f3cb17cda1d4247bff5cbaf7c84105">plane</a>=0) <a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">const</a></td></tr>
 <tr class="memdesc:abf9283ed3c232c709afcd5dd22bd60f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the line stride in bytes for the given plane.  <br /></td></tr>
 <tr class="separator:abf9283ed3c232c709afcd5dd22bd60f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -225,17 +231,19 @@ Static Public Member Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Raster image with pixel description, planes, and metadata. </p>
 <p>Holds image pixel data organized into one or more memory planes according to the image's pixel description. Provides convenience accessors for dimensions, pixel format, and metadata, as well as pixel format conversion and paint engine creation. When shared ownership is needed, use <a class="el" href="classImage.html#a38745cfc2762b9f0aeaaba861098b852" title="Shared pointer type for Image.">Image::Ptr</a>.</p>
-<dl class="section user"><dt>Compressed images</dt><dd><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> also represents compressed (encoded) image data such as JPEG. A compressed image uses a compressed pixel description (e.g. <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa08aa1ad3b58839bccc68085bacee382e" title="JPEG-compressed 8-bit RGB, sRGB, full range.">PixelDesc::JPEG_RGB8_sRGB</a>) and stores the encoded bitstream in its single plane buffer. Use <a class="el" href="classImage.html#a9f382117be325c70968e980370094263" title="Returns true if this image uses a compressed pixel description.">isCompressed()</a> to test whether an image is compressed, <a class="el" href="classImage.html#a9b610a3cd7782ad7318d22a912021243" title="Returns the compressed data size in bytes.">compressedSize()</a> to get the encoded byte count, and <a class="el" href="classImage.html#a1940daf743c22020142daf837d76c8ca" title="Returns a raw data pointer for the given plane.">data()</a> to access the raw encoded bytes. The preferred way to create a compressed image is the <a class="el" href="classImage.html#ad8c8a9a259f95054f6622bcf992d40c5" title="Creates a compressed image from pre-encoded data.">fromCompressedData()</a> factory.</dd></dl>
+<dl class="section user"><dt>Compressed images</dt><dd><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> also represents compressed (encoded) image data such as JPEG, JPEG XS, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a>, or HEVC. A compressed <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> uses a compressed pixel description (e.g. <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa08aa1ad3b58839bccc68085bacee382e" title="JPEG-compressed 8-bit RGB, sRGB, full range.">PixelDesc::JPEG_RGB8_sRGB</a>) and stores the encoded bitstream in its single plane buffer. Use <a class="el" href="classImage.html#a9f382117be325c70968e980370094263" title="Returns true if this image uses a compressed pixel description.">isCompressed()</a> to test whether an <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> is compressed, <a class="el" href="classImage.html#a9b610a3cd7782ad7318d22a912021243" title="Returns the compressed data size in bytes.">compressedSize()</a> to get the encoded byte count, and <a class="el" href="classImage.html#a1940daf743c22020142daf837d76c8ca" title="Returns a raw data pointer for the given plane.">data()</a> to access the raw encoded bytes. The preferred way to create a compressed <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> is the <a class="el" href="classImage.html#ac25b226c9473e581b7a18a0b3cffda03" title="Creates an Image that adopts an existing Buffer::Ptr as plane 0.">fromBuffer()</a> or <a class="el" href="classImage.html#ad8c8a9a259f95054f6622bcf992d40c5" title="Creates a compressed image from pre-encoded data.">fromCompressedData()</a> factory.</dd></dl>
+<p>Compressed Images produced by pipeline stages (<a class="el" href="classVideoEncoder.html" title="Abstract base class for stateful video encoders.">VideoEncoder</a>, container demuxers, RTP readers, <a class="el" href="classImageFile.html" title="Media file loader and saver.">ImageFile</a> loaders) also carry an attached <a class="el" href="classMediaPacket.html">MediaPacket</a> accessible via <a class="el" href="classImage.html#aed813848fdebb5874f9f29878cd7e5f1" title="Returns the compressed bitstream packet attached to this Image.">packet()</a>. The packet holds the encoded bytes together with PTS/DTS and codec-level flags (keyframe, parameter-set, end-of-stream) that downstream consumers such as <a class="el" href="classVideoDecoder.html" title="Abstract base class for stateful video decoders.">VideoDecoder</a> read directly. plane(0) and the packet's <a class="el" href="classBufferView.html" title="Lightweight view into a region of a shared Buffer.">BufferView</a> share the same backing <a class="el" href="classBuffer.html">Buffer</a> when the producer arranged zero-copy. Uncompressed Images always have a null <a class="el" href="classImage.html#aed813848fdebb5874f9f29878cd7e5f1" title="Returns the compressed bitstream packet attached to this Image.">packet()</a>.</p>
 <dl class="section user"><dt>Example — creating a compressed image</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classImage.html">Image</a> <a class="code hl_typedef" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">jpeg</a> = <a class="code hl_function" href="classImage.html#ad8c8a9a259f95054f6622bcf992d40c5">Image::fromCompressedData</a>(<a class="code hl_typedef" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">jpegBytes</a>, <a class="code hl_typedef" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">jpegSize</a>,</div>
 <div class="line">                                       1920, 1080,</div>
 <div class="line">                                       <a class="code hl_enumvalue" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa08aa1ad3b58839bccc68085bacee382e">PixelDesc::JPEG_RGB8_sRGB</a>,</div>
 <div class="line">                                       <a class="code hl_typedef" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">srcImage</a>.metadata());</div>
 <div class="line"><a class="code hl_typedef" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">assert</a>(<a class="code hl_typedef" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">jpeg</a>.isCompressed());</div>
 <div class="line"><a class="code hl_typedef" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">assert</a>(<a class="code hl_typedef" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">jpeg</a>.compressedSize() == <a class="code hl_typedef" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">jpegSize</a>);</div>
-<div class="ttc" id="aclassImage_html"><div class="ttname"><a href="classImage.html">Image</a></div><div class="ttdoc">Raster image with pixel description, planes, and metadata.</div><div class="ttdef"><b>Definition</b> image.h:50</div></div>
+<div class="line"><span class="comment">// packet() is null here; ImageFile::load() populates it automatically.</span></div>
+<div class="ttc" id="aclassImage_html"><div class="ttname"><a href="classImage.html">Image</a></div><div class="ttdoc">Raster image with pixel description, planes, and metadata.</div><div class="ttdef"><b>Definition</b> image.h:62</div></div>
 <div class="ttc" id="aclassImage_html_ad8c8a9a259f95054f6622bcf992d40c5"><div class="ttname"><a href="classImage.html#ad8c8a9a259f95054f6622bcf992d40c5">Image::fromCompressedData</a></div><div class="ttdeci">static Image fromCompressedData(const void *data, size_t size, size_t width, size_t height, const PixelDesc &amp;pd, const Metadata &amp;metadata=Metadata())</div><div class="ttdoc">Creates a compressed image from pre-encoded data.</div></div>
-<div class="ttc" id="aclassImage_html_ae43a93b1c8ae60153e670caf42fd9fe8"><div class="ttname"><a href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">Image::List</a></div><div class="ttdeci">promeki::List&lt; Image &gt; List</div><div class="ttdoc">List of Image values.</div><div class="ttdef"><b>Definition</b> image.h:57</div></div>
-<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafa08aa1ad3b58839bccc68085bacee382e"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa08aa1ad3b58839bccc68085bacee382e">PixelDesc::JPEG_RGB8_sRGB</a></div><div class="ttdeci">@ JPEG_RGB8_sRGB</div><div class="ttdoc">JPEG-compressed 8-bit RGB, sRGB, full range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:153</div></div>
+<div class="ttc" id="aclassImage_html_ae43a93b1c8ae60153e670caf42fd9fe8"><div class="ttname"><a href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">Image::List</a></div><div class="ttdeci">promeki::List&lt; Image &gt; List</div><div class="ttdoc">List of Image values.</div><div class="ttdef"><b>Definition</b> image.h:69</div></div>
+<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafa08aa1ad3b58839bccc68085bacee382e"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa08aa1ad3b58839bccc68085bacee382e">PixelDesc::JPEG_RGB8_sRGB</a></div><div class="ttdeci">@ JPEG_RGB8_sRGB</div><div class="ttdoc">JPEG-compressed 8-bit RGB, sRGB, full range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:154</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a96b8f9e7236e49a70f8e487be611e9b4" name="a96b8f9e7236e49a70f8e487be611e9b4"></a>
@@ -949,7 +957,7 @@ template&lt;<a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classImage.html">Image</a> <a class="code hl_typedef" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">img</a>(1920, 1080, <a class="code hl_enumvalue" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00">PixelDesc::RGBA8_sRGB</a>);</div>
 <div class="line"><a class="code hl_class" href="classString.html">String</a> s = <a class="code hl_typedef" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">img</a>.makeString(<span class="stringliteral">&quot;{@Size} {@PixelDesc}&quot;</span>);</div>
 <div class="line"><span class="comment">// &quot;1920x1080 RGBA8_sRGB&quot;</span></div>
-<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00">PixelDesc::RGBA8_sRGB</a></div><div class="ttdeci">@ RGBA8_sRGB</div><div class="ttdoc">8-bit RGBA, sRGB, full range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:141</div></div>
+<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00">PixelDesc::RGBA8_sRGB</a></div><div class="ttdeci">@ RGBA8_sRGB</div><div class="ttdoc">8-bit RGBA, sRGB, full range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:142</div></div>
 <div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:56</div></div>
 </div><!-- fragment --></dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
@@ -1022,6 +1030,34 @@ template&lt;<a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe
 
 <p>Returns a const reference to the image metadata. </p>
 <dl class="section return"><dt>Returns</dt><dd>The metadata. </dd></dl>
+
+</div>
+</div>
+<a id="aed813848fdebb5874f9f29878cd7e5f1" name="aed813848fdebb5874f9f29878cd7e5f1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aed813848fdebb5874f9f29878cd7e5f1">&#9670;&#160;</a></span>packet()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">const</a> <a class="el" href="classMediaPacket.html#a0d042c1f6143d734c401c0de3927ddb0">MediaPacket::Ptr</a> &amp; Image::packet </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the compressed bitstream packet attached to this <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a>. </p>
+<p>Only populated for compressed Images (the essence lives in the packet's <a class="el" href="classBufferView.html" title="Lightweight view into a region of a shared Buffer.">BufferView</a>; plane(0) typically shares the same backing buffer). Null for uncompressed Images. The attached packet is the canonical location for the bitstream, PTS/DTS, and codec-level flags (keyframe, parameter-set, end-of-stream) that a downstream <a class="el" href="classVideoDecoder.html">VideoDecoder</a> consumes. </p>
 
 </div>
 </div>
@@ -1159,6 +1195,35 @@ template&lt;<a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe
 
 </div>
 </div>
+<a id="a2c7dfff98641759859ead86064557f8d" name="a2c7dfff98641759859ead86064557f8d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2c7dfff98641759859ead86064557f8d">&#9670;&#160;</a></span>setPacket()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">void</a> Image::setPacket </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classMediaPacket.html#a0d042c1f6143d734c401c0de3927ddb0">MediaPacket::Ptr</a>&#160;</td>
+          <td class="paramname"><em>pkt</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Replaces the attached compressed-bitstream packet. </p>
+<p>Producers (video encoders, RTP readers, container demuxers, <a class="el" href="classImageFile.html" title="Media file loader and saver.">ImageFile</a> loaders) attach a <a class="el" href="classMediaPacket.html" title="Encoded bitstream access unit produced by a VideoEncoder or consumed by a VideoDecoder.">MediaPacket</a> when the loaded <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> is compressed. Consumers (video decoders, raw-bitstream sinks, muxers) read this via <a class="el" href="classImage.html#aed813848fdebb5874f9f29878cd7e5f1">packet()</a>. Pass a null <a class="el" href="classMediaPacket.html#a0d042c1f6143d734c401c0de3927ddb0">MediaPacket::Ptr</a> to clear any attached packet. </p>
+
+</div>
+</div>
 <a id="a82a4a6f6f0e6d370bb1a81e4c55ce20f" name="a82a4a6f6f0e6d370bb1a81e4c55ce20f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a82a4a6f6f0e6d370bb1a81e4c55ce20f">&#9670;&#160;</a></span>size()</h2>
 
@@ -1225,7 +1290,7 @@ template&lt;<a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classImage.html">Image</a></li>
-    <li class="footer">Generated on 2026-04-16 05:30:02 from commit 7eadf34 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
   </ul>
 </div>
 </body>

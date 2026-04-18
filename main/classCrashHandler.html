@@ -125,6 +125,12 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:ac4b0f00d268bb709d61367cf72a6a886" id="r_ac4b0f00d268bb709d61367cf72a6a886"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCrashHandler.html#ac4b0f00d268bb709d61367cf72a6a886">writeTrace</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *<a class="el" href="classList.html">reason</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
 <tr class="memdesc:ac4b0f00d268bb709d61367cf72a6a886"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes a diagnostic trace report to a unique file.  <br /></td></tr>
 <tr class="separator:ac4b0f00d268bb709d61367cf72a6a886"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6de838bccc01a289bfb4306b8ae1a123" id="r_a6de838bccc01a289bfb4306b8ae1a123"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCrashHandler.html#a6de838bccc01a289bfb4306b8ae1a123">consoleTraceEnabled</a> ()</td></tr>
+<tr class="memdesc:a6de838bccc01a289bfb4306b8ae1a123"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns whether <a class="el" href="classCrashHandler.html#ac4b0f00d268bb709d61367cf72a6a886" title="Writes a diagnostic trace report to a unique file.">writeTrace()</a> echoes to stderr.  <br /></td></tr>
+<tr class="separator:a6de838bccc01a289bfb4306b8ae1a123"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7b624080d6e2103bc83f4e091d3e711d" id="r_a7b624080d6e2103bc83f4e091d3e711d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCrashHandler.html#a7b624080d6e2103bc83f4e091d3e711d">setConsoleTraceEnabled</a> (<a class="el" href="classList.html">bool</a> enabled)</td></tr>
+<tr class="memdesc:a7b624080d6e2103bc83f4e091d3e711d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enables or disables stderr output from <a class="el" href="classCrashHandler.html#ac4b0f00d268bb709d61367cf72a6a886" title="Writes a diagnostic trace report to a unique file.">writeTrace()</a>.  <br /></td></tr>
+<tr class="separator:a7b624080d6e2103bc83f4e091d3e711d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Installs signal handlers for fatal crash signals. </p>
@@ -155,6 +161,34 @@ Static Public Member Functions</h2></td></tr>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a6de838bccc01a289bfb4306b8ae1a123" name="a6de838bccc01a289bfb4306b8ae1a123"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6de838bccc01a289bfb4306b8ae1a123">&#9670;&#160;</a></span>consoleTraceEnabled()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">bool</a> CrashHandler::consoleTraceEnabled </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns whether <a class="el" href="classCrashHandler.html#ac4b0f00d268bb709d61367cf72a6a886" title="Writes a diagnostic trace report to a unique file.">writeTrace()</a> echoes to stderr. </p>
+<dl class="section return"><dt>Returns</dt><dd>true if console output is enabled (the default). </dd></dl>
+
+</div>
+</div>
 <a id="af403ee814cecb7911fbd0e61d4c0bd7d" name="af403ee814cecb7911fbd0e61d4c0bd7d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af403ee814cecb7911fbd0e61d4c0bd7d">&#9670;&#160;</a></span>install()</h2>
 
@@ -221,6 +255,41 @@ Static Public Member Functions</h2></td></tr>
 
 <p>Returns true if crash handlers are currently installed. </p>
 <dl class="section return"><dt>Returns</dt><dd>true if <a class="el" href="classCrashHandler.html#af403ee814cecb7911fbd0e61d4c0bd7d" title="Installs crash signal handlers.">install()</a> has been called without a matching <a class="el" href="classCrashHandler.html#a6dbc57ba03436501be877e90a62e57f1" title="Restores default signal dispositions.">uninstall()</a>. </dd></dl>
+
+</div>
+</div>
+<a id="a7b624080d6e2103bc83f4e091d3e711d" name="a7b624080d6e2103bc83f4e091d3e711d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7b624080d6e2103bc83f4e091d3e711d">&#9670;&#160;</a></span>setConsoleTraceEnabled()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a> CrashHandler::setConsoleTraceEnabled </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">bool</a>&#160;</td>
+          <td class="paramname"><em>enabled</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Enables or disables stderr output from <a class="el" href="classCrashHandler.html#ac4b0f00d268bb709d61367cf72a6a886" title="Writes a diagnostic trace report to a unique file.">writeTrace()</a>. </p>
+<p>When disabled, <a class="el" href="classCrashHandler.html#ac4b0f00d268bb709d61367cf72a6a886" title="Writes a diagnostic trace report to a unique file.">writeTrace()</a> still writes the trace to a log file but suppresses the stderr echo. Has no effect on the signal handler crash path, which always writes to stderr.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">enabled</td><td>true to echo traces to stderr, false to suppress. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -301,7 +370,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classCrashHandler.html">CrashHandler</a></li>
-    <li class="footer">Generated on 2026-04-16 05:30:02 from commit 7eadf34 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
   </ul>
 </div>
 </body>

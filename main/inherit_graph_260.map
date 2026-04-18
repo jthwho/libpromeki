@@ -1,3 +1,9 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$structPromiseError.html" title="Internal exception type used by Promise to propagate errors through std::future." alt="" coords="5,5,112,31"/>
+<area shape="rect" id="Node000000" title=" " alt="" coords="5,77,205,102"/>
+<area shape="rect" id="Node000001" href="$structstd_1_1formatter_3_01promeki_1_1Point_3_01T_00_01NumValues_01_4_01_4.html" title="std::formatter partial specialization for promeki::Point." alt="" coords="253,5,452,45"/>
+<area shape="poly" id="edge142_Node000000_Node000001" title=" " alt="" coords="168,70,274,43,275,48,170,76"/>
+<area shape="rect" id="Node000002" href="$structstd_1_1formatter_3_01promeki_1_1Rational_3_01T_01_4_01_4.html" title="std::formatter partial specialization for promeki::Rational." alt="" coords="262,69,443,109"/>
+<area shape="poly" id="edge143_Node000000_Node000002" title=" " alt="" coords="219,87,262,87,262,92,219,92"/>
+<area shape="rect" id="Node000003" href="$structstd_1_1formatter_3_01promeki_1_1Size2DTemplate_3_01T_01_4_01_4.html" title="std::formatter partial specialization for promeki::Size2DTemplate." alt="" coords="259,133,447,173"/>
+<area shape="poly" id="edge144_Node000000_Node000003" title=" " alt="" coords="170,103,275,131,274,136,168,108"/>
 </map>

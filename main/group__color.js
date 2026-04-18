@@ -101,6 +101,11 @@ var group__color =
         [ "type", "structColorModel_1_1Data.html#a2bac1789ecc4f6fa41ff68c1dd6d3750", null ],
         [ "xyzToRgb", "structColorModel_1_1Data.html#af215521984b04992e9e8e27194b11a19", null ]
       ] ],
+      [ "H273", "structColorModel_1_1H273.html", [
+        [ "matrix", "structColorModel_1_1H273.html#a92b8de18f25dab001fed6e4a4fdda596", null ],
+        [ "primaries", "structColorModel_1_1H273.html#a3c8de41271d17fe01d8c85226d6e1d4d", null ],
+        [ "transfer", "structColorModel_1_1H273.html#afdbf157890f93ba6a1b5213b985ee25d", null ]
+      ] ],
       [ "IDList", "classColorModel.html#a43f0a88ffbe2d73d36042f4f85b0572a", null ],
       [ "Primaries", "classColorModel.html#a8712f070c98fe6bb7e79d818b4ab4692", null ],
       [ "TransferFunc", "classColorModel.html#a4390ceaa108a6124d416c6d976a05ff6", null ],
@@ -164,6 +169,8 @@ var group__color =
       [ "type", "classColorModel.html#a64a08d15ce8f3257e3fb5746186af440", null ],
       [ "whitePoint", "classColorModel.html#a9675a6ff15b74310a4b8b32e963be73b", null ]
     ] ],
+    [ "ContentLightLevel", "classContentLightLevel.html", null ],
+    [ "MasteringDisplay", "classMasteringDisplay.html", null ],
     [ "XYZColor", "classXYZColor.html", [
       [ "DataType", "classXYZColor.html#a6bf6a45135bb8ff9e6d052f8d71976b1", null ],
       [ "XYZColor", "classXYZColor.html#ab2e27d69cfd18c3b7df40516f3abda12", null ],

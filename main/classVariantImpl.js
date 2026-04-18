@@ -33,7 +33,9 @@ var classVariantImpl =
       [ "TypeVideoCodec", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beaa6958fbf0d25c61f20a0b75e24cd2a74", null ],
       [ "TypeAudioCodec", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beaae84250f4a8d9045e14c7b4eb1732829", null ],
       [ "TypeEnum", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea2dc3aac74c412cdc14d408e9592d704c", null ],
-      [ "TypeEnumList", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea34b1ec2f84f9074aa6a1f9aac48c23d7", null ]
+      [ "TypeEnumList", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea34b1ec2f84f9074aa6a1f9aac48c23d7", null ],
+      [ "TypeMasteringDisplay", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea05bb5e0e23b06a589cd30179f6f9f104", null ],
+      [ "TypeContentLightLevel", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea7acc453d2785a0a138c93608b5b402be", null ]
     ] ],
     [ "VariantImpl", "classVariantImpl.html#a95a5de6be579c9c432a3d7c4e8e96868", null ],
     [ "VariantImpl", "classVariantImpl.html#a12812ac638c2da0ded51d7552a29edf3", null ],

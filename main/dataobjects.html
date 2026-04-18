@@ -149,7 +149,7 @@ Simple</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a class="el" href="classDuration.html">Duration</a>   </td><td class="markdownTableBodyNone">Time duration value    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><a class="el" href="classFrameRate.html">FrameRate</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classFrame.html" title="A media frame containing images, audio, compressed packets, and metadata.">Frame</a> rate descriptor    </td></tr>
+<td class="markdownTableBodyNone"><a class="el" href="classFrameRate.html">FrameRate</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> rate descriptor    </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a class="el" href="classAudioLevel.html">AudioLevel</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> level in dBFS    </td></tr>
 <tr class="markdownTableRowEven">
@@ -157,7 +157,11 @@ Simple</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a class="el" href="structInspectorSnapshot.html">InspectorSnapshot</a>   </td><td class="markdownTableBodyNone">Aggregate accumulator state from <a class="el" href="classMediaIOTask__Inspector.html">MediaIOTask_Inspector</a>    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><a class="el" href="structInspectorDiscontinuity.html">InspectorDiscontinuity</a>   </td><td class="markdownTableBodyNone">One detected discontinuity in the inspector's frame stream   </td></tr>
+<td class="markdownTableBodyNone"><a class="el" href="structInspectorDiscontinuity.html">InspectorDiscontinuity</a>   </td><td class="markdownTableBodyNone">One detected discontinuity in the inspector's frame stream    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><a class="el" href="classContentLightLevel.html">ContentLightLevel</a>   </td><td class="markdownTableBodyNone">HDR content light level (MaxCLL / MaxFALL, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">CTA-861.3</a>)    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><a class="el" href="classMasteringDisplay.html">MasteringDisplay</a>   </td><td class="markdownTableBodyNone">HDR mastering display color volume (SMPTE ST 2086)   </td></tr>
 </table>
 <h1><a class="anchor" id="shareable"></a>
 Shareable</h1>
@@ -207,12 +211,14 @@ Shareable</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a class="el" href="classArray.html">Array</a>   </td><td class="markdownTableBodyNone">Fixed-size array (std::array wrapper)    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><a class="el" href="classImage.html">Image</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> descriptor + pixel buffer planes    </td></tr>
+<td class="markdownTableBodyNone"><a class="el" href="classImage.html">Image</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> descriptor + pixel buffer planes (compressed images carry an attached <a class="el" href="classMediaPacket.html">MediaPacket</a>)    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><a class="el" href="classAudio.html">Audio</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> descriptor + sample buffer    </td></tr>
+<td class="markdownTableBodyNone"><a class="el" href="classAudio.html">Audio</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> descriptor + sample buffer (compressed audio carries an attached <a class="el" href="classMediaPacket.html">MediaPacket</a>)    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a class="el" href="classFrame.html">Frame</a>   </td><td class="markdownTableBodyNone">Container of images, audio, and metadata    </td></tr>
 <tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><a class="el" href="classMediaPacket.html">MediaPacket</a>   </td><td class="markdownTableBodyNone">Encoded bitstream access unit — attached to its owning <a class="el" href="classImage.html">Image</a> or <a class="el" href="classAudio.html">Audio</a>    </td></tr>
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a class="el" href="classEncodedDesc.html">EncodedDesc</a>   </td><td class="markdownTableBodyNone">Compressed/encoded media descriptor   </td></tr>
 </table>
 <h1><a class="anchor" id="dataobj_threading"></a>
@@ -270,13 +276,13 @@ Avoid: Mutex around data objects</h2>
 <dd>
 <a class="el" href="group__media.html">Media</a> — <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> for aligned memory storage. </dd>
 <dd>
-<a class="el" href="group__proav.html">ProAV Media</a> — <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a>, <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a>, <a class="el" href="classFrame.html" title="A media frame containing images, audio, compressed packets, and metadata.">Frame</a>, and format descriptors. </dd>
+<a class="el" href="group__proav.html">ProAV Media</a> — <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a>, <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a>, <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a>, and format descriptors. </dd>
 <dd>
 <a class="el" href="group__math.html">Math</a> — <a class="el" href="classPoint.html" title="N-dimensional point with arithmetic, interpolation, and serialization.">Point</a>, Size, <a class="el" href="classRect.html" title="2D rectangle defined by position and size.">Rect</a>, <a class="el" href="classRational.html" title="Rational number with numerator and denominator.">Rational</a>, and other <a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f" title="Returns the value from a Result.">value</a> types. </dd>
 <dd>
 <a class="el" href="group__time.html">Time</a> — <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a>, <a class="el" href="classTimeStamp.html" title="A monotonic timestamp based on std::chrono::steady_clock.">TimeStamp</a>, and <a class="el" href="classDuration.html" title="Time duration with nanosecond precision.">Duration</a>. </dd>
 <dd>
-<a class="el" href="group__util.html">Utilities</a> — <a class="el" href="variant_8h.html#ae077aa859e1a402ba1914723d0108abf" title="Concrete variant type instantiated with every type from PROMEKI_VARIANT_TYPES.">Variant</a>, <a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a>, <a class="el" href="classMetadata.html" title="Key-value metadata container using typed Variant values.">Metadata</a>, <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a>, and other helpers. </dd></dl>
+<a class="el" href="group__util.html">Utilities</a> — <a class="el" href="variant_8h.html#ac36566cc2c5535bba736babd50c4894f" title="Concrete variant type instantiated with every type from PROMEKI_VARIANT_TYPES.">Variant</a>, <a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a>, <a class="el" href="classMetadata.html" title="Key-value metadata container using typed Variant values.">Metadata</a>, <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a>, and other helpers. </dd></dl>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->
@@ -284,7 +290,7 @@ Avoid: Mutex around data objects</h2>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-16 05:30:02 from commit 7eadf34 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
   </ul>
 </div>
 </body>

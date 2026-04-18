@@ -159,6 +159,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a4d444aebd87bc49e59eac89ef0441d16" id="r_a4d444aebd87bc49e59eac89ef0441d16"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#a4d444aebd87bc49e59eac89ef0441d16">metadata</a> ()</td></tr>
 <tr class="memdesc:a4d444aebd87bc49e59eac89ef0441d16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reference to the audio metadata.  <br /></td></tr>
 <tr class="separator:a4d444aebd87bc49e59eac89ef0441d16"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2067dbdb24ad25991da81764635ff7bb" id="r_a2067dbdb24ad25991da81764635ff7bb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a> <a class="el" href="classMediaPacket.html#a0d042c1f6143d734c401c0de3927ddb0">MediaPacket::Ptr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#a2067dbdb24ad25991da81764635ff7bb">packet</a> () <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a></td></tr>
+<tr class="memdesc:a2067dbdb24ad25991da81764635ff7bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the compressed bitstream packet attached to this <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a>.  <br /></td></tr>
+<tr class="separator:a2067dbdb24ad25991da81764635ff7bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeea98aa01c4dfc85ec01fe5c18eced06" id="r_aeea98aa01c4dfc85ec01fe5c18eced06"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#aeea98aa01c4dfc85ec01fe5c18eced06">setPacket</a> (<a class="el" href="classMediaPacket.html#a0d042c1f6143d734c401c0de3927ddb0">MediaPacket::Ptr</a> <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">pkt</a>)</td></tr>
+<tr class="memdesc:aeea98aa01c4dfc85ec01fe5c18eced06"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replaces the attached compressed-bitstream packet.  <br /></td></tr>
+<tr class="separator:aeea98aa01c4dfc85ec01fe5c18eced06"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0ec5c30a7e45cc01dc9eeffe033cd2e3" id="r_a0ec5c30a7e45cc01dc9eeffe033cd2e3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#a0ec5c30a7e45cc01dc9eeffe033cd2e3">samples</a> () <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a></td></tr>
 <tr class="memdesc:a0ec5c30a7e45cc01dc9eeffe033cd2e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of samples, irrespective of the channel count.  <br /></td></tr>
 <tr class="separator:a0ec5c30a7e45cc01dc9eeffe033cd2e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -219,9 +225,9 @@ Static Public Member Functions</h2></td></tr>
 <div class="line"><span class="comment">// Shared ownership for pipeline passing</span></div>
 <div class="line"><a class="code hl_class" href="classSharedPtr.html">Audio::Ptr</a> <a class="code hl_typedef" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">shared</a> = Audio::Ptr::create(<a class="code hl_function" href="classAudio.html#af4c906c113ec44e511a595637482367c">desc</a>, 1024);</div>
 <div class="ttc" id="aclassAudioDesc_html"><div class="ttname"><a href="classAudioDesc.html">AudioDesc</a></div><div class="ttdoc">Describes an audio format including sample type, rate, and channel count.</div><div class="ttdef"><b>Definition</b> audiodesc.h:31</div></div>
-<div class="ttc" id="aclassAudio_html"><div class="ttname"><a href="classAudio.html">Audio</a></div><div class="ttdoc">Object to hold some number of audio samples.</div><div class="ttdef"><b>Definition</b> audio.h:47</div></div>
-<div class="ttc" id="aclassAudio_html_a7028fbb9df7a2d8b59cc5018940aeed2"><div class="ttname"><a href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">Audio::List</a></div><div class="ttdeci">promeki::List&lt; Audio &gt; List</div><div class="ttdoc">List of Audio values.</div><div class="ttdef"><b>Definition</b> audio.h:54</div></div>
-<div class="ttc" id="aclassAudio_html_af4c906c113ec44e511a595637482367c"><div class="ttname"><a href="classAudio.html#af4c906c113ec44e511a595637482367c">Audio::desc</a></div><div class="ttdeci">const AudioDesc &amp; desc() const</div><div class="ttdoc">Returns the AudioDesc that describes the audio contained in this object.</div><div class="ttdef"><b>Definition</b> audio.h:131</div></div>
+<div class="ttc" id="aclassAudio_html"><div class="ttname"><a href="classAudio.html">Audio</a></div><div class="ttdoc">Object to hold some number of audio samples.</div><div class="ttdef"><b>Definition</b> audio.h:48</div></div>
+<div class="ttc" id="aclassAudio_html_a7028fbb9df7a2d8b59cc5018940aeed2"><div class="ttname"><a href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">Audio::List</a></div><div class="ttdeci">promeki::List&lt; Audio &gt; List</div><div class="ttdoc">List of Audio values.</div><div class="ttdef"><b>Definition</b> audio.h:55</div></div>
+<div class="ttc" id="aclassAudio_html_af4c906c113ec44e511a595637482367c"><div class="ttname"><a href="classAudio.html#af4c906c113ec44e511a595637482367c">Audio::desc</a></div><div class="ttdeci">const AudioDesc &amp; desc() const</div><div class="ttdoc">Returns the AudioDesc that describes the audio contained in this object.</div><div class="ttdef"><b>Definition</b> audio.h:132</div></div>
 <div class="ttc" id="aclassSharedPtr_html"><div class="ttname"><a href="classSharedPtr.html">SharedPtr</a></div><div class="ttdoc">A smart pointer class with reference counting and optional copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> sharedptr.h:252</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
@@ -787,6 +793,34 @@ template&lt;<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed
 
 </div>
 </div>
+<a id="a2067dbdb24ad25991da81764635ff7bb" name="a2067dbdb24ad25991da81764635ff7bb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2067dbdb24ad25991da81764635ff7bb">&#9670;&#160;</a></span>packet()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a> <a class="el" href="classMediaPacket.html#a0d042c1f6143d734c401c0de3927ddb0">MediaPacket::Ptr</a> &amp; Audio::packet </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the compressed bitstream packet attached to this <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a>. </p>
+<p>Populated only for compressed audio (AAC, Opus, and other bitstream codecs) — the encoded bytes live in the attached packet, and this <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> object carries the descriptor / timing metadata. Null for uncompressed PCM audio. </p>
+
+</div>
+</div>
 <a id="abc2ac90f3453dd40c349fecfd37739fb" name="abc2ac90f3453dd40c349fecfd37739fb"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abc2ac90f3453dd40c349fecfd37739fb">&#9670;&#160;</a></span>resize()</h2>
 
@@ -888,6 +922,35 @@ template&lt;<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed
 
 </div>
 </div>
+<a id="aeea98aa01c4dfc85ec01fe5c18eced06" name="aeea98aa01c4dfc85ec01fe5c18eced06"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeea98aa01c4dfc85ec01fe5c18eced06">&#9670;&#160;</a></span>setPacket()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">void</a> Audio::setPacket </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classMediaPacket.html#a0d042c1f6143d734c401c0de3927ddb0">MediaPacket::Ptr</a>&#160;</td>
+          <td class="paramname"><em>pkt</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Replaces the attached compressed-bitstream packet. </p>
+<p>Pass a null <a class="el" href="classMediaPacket.html#a0d042c1f6143d734c401c0de3927ddb0">MediaPacket::Ptr</a> to clear. </p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="audio_8h_source.html">audio.h</a></li>
 </ul>
@@ -898,7 +961,7 @@ template&lt;<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudio.html">Audio</a></li>
-    <li class="footer">Generated on 2026-04-16 05:30:02 from commit 7eadf34 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
   </ul>
 </div>
 </body>

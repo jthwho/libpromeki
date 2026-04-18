@@ -220,7 +220,7 @@ Additional Inherited Members</h2></td></tr>
 <li><b>K</b> (1 bit): Packetization mode. 0 = codestream (this class), 1 = slice (followup).</li>
 <li><b>L</b> (1 bit): Last packet of the current packetization unit. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> on the final packet of each frame.</li>
 <li><b>I</b> (2 bits): Interlace info. 00 = progressive (this class).</li>
-<li><b>F</b> (5 bits): <a class="el" href="classFrame.html" title="A media frame containing images, audio, compressed packets, and metadata.">Frame</a> counter modulo 32. Incremented on every call to <a class="el" href="classRtpPayloadJpegXs.html#a0b561d5fed51c362e768d84a7c47a3a9">pack()</a>; identical across all packets of the same frame.</li>
+<li><b>F</b> (5 bits): <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> counter modulo 32. Incremented on every call to <a class="el" href="classRtpPayloadJpegXs.html#a0b561d5fed51c362e768d84a7c47a3a9">pack()</a>; identical across all packets of the same frame.</li>
 <li><b>SEP(11 bits)</b>: Slice/Extended-Packet counter. In codestream mode, this increments every time the P counter wraps from 2047 to 0 within a single frame.</li>
 <li><b>P</b> (11 bits): Packet counter within the current packetization unit. Starts at 0 for each new frame and wraps at 2048.</li>
 </ul>
@@ -267,8 +267,8 @@ Additional Inherited Members</h2></td></tr>
 <p>Constructs a JPEG XS payload handler. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">width</td><td><a class="el" href="classFrame.html" title="A media frame containing images, audio, compressed packets, and metadata.">Frame</a> width in pixels. </td></tr>
-    <tr><td class="paramname">height</td><td><a class="el" href="classFrame.html" title="A media frame containing images, audio, compressed packets, and metadata.">Frame</a> height in pixels. </td></tr>
+    <tr><td class="paramname">width</td><td><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> width in pixels. </td></tr>
+    <tr><td class="paramname">height</td><td><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> height in pixels. </td></tr>
     <tr><td class="paramname">payloadType</td><td>RTP payload type (dynamic, default 96). </td></tr>
   </table>
   </dd>
@@ -431,7 +431,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classRtpPayloadJpegXs.html">RtpPayloadJpegXs</a></li>
-    <li class="footer">Generated on 2026-04-16 05:30:02 from commit 7eadf34 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
   </ul>
 </div>
 </body>

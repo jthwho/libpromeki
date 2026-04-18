@@ -142,6 +142,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a000ebc4dc8a5db7a72af1044c0b93644" id="r_a000ebc4dc8a5db7a72af1044c0b93644"><td class="memItemLeft" align="right" valign="top"><a id="a000ebc4dc8a5db7a72af1044c0b93644" name="a000ebc4dc8a5db7a72af1044c0b93644"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_REGISTER_ENUM_TYPE</b> (&quot;VideoScanMode&quot;, 0, { &quot;Unknown&quot;, 0 }, { &quot;Progressive&quot;, 1 }, { &quot;Interlaced&quot;, 2 }, { &quot;InterlacedEvenFirst&quot;, 3 }, { &quot;InterlacedOddFirst&quot;, 4 }, { &quot;PsF&quot;, 5 })</td></tr>
 <tr class="separator:a000ebc4dc8a5db7a72af1044c0b93644"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab093e16450b90f00b0a98660e02664c8" id="r_ab093e16450b90f00b0a98660e02664c8"><td class="memItemLeft" align="right" valign="top"><a id="ab093e16450b90f00b0a98660e02664c8" name="ab093e16450b90f00b0a98660e02664c8"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isInterlaced</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ab093e16450b90f00b0a98660e02664c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if this scan mode represents an interlaced (two-field) raster — Interlaced, InterlacedEvenFirst, or InterlacedOddFirst. PsF is <em>not</em> considered interlaced by this helper: its wire format is interlaced but its content (and coded bitstream, when packed) is progressive. <br /></td></tr>
+<tr class="separator:ab093e16450b90f00b0a98660e02664c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classTypedEnum"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classTypedEnum')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classTypedEnum.html">TypedEnum&lt; VideoScanMode &gt;</a></td></tr>
 <tr class="memitem:a4456f276a370afa987e063f2705a6894 inherit pub_methods_classTypedEnum" id="r_a4456f276a370afa987e063f2705a6894"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTypedEnum.html#a4456f276a370afa987e063f2705a6894">TypedEnum</a> ()</td></tr>
 <tr class="memdesc:a4456f276a370afa987e063f2705a6894 inherit pub_methods_classTypedEnum"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default-constructs with the registered default value.  <br /></td></tr>
@@ -278,7 +282,7 @@ Additional Inherited Members</h2></td></tr>
 <li><code>Interlaced</code> — interlaced content with an unspecified field order. Used when the source flagged the stream as interlaced but didn't carry a reliable dominance indicator — common with legacy DV, some MXF variants, and raw SDI captures that lost the container-level flag.</li>
 <li><code>InterlacedEvenFirst</code> — interlaced with the even (top) field first in time (NTSC / 480i, 1080i50, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1080i59.94</a> per SMPTE 274M).</li>
 <li><code>InterlacedOddFirst</code> — interlaced with the odd (bottom) field first in time (PAL / 576i legacy, some consumer DV variants).</li>
-<li><code>PsF</code> — Progressive segmented <a class="el" href="classFrame.html" title="A media frame containing images, audio, compressed packets, and metadata.">Frame</a>: a progressive image carried as two fields over an interlaced transport (common for 24p / 25p / 30p material on HD-SDI at <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1080psf23.98</a>, 1080psf24, 1080psf25, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1080psf29.97</a>). For display purposes it behaves as progressive, but the wire format is two-field. </li>
+<li><code>PsF</code> — Progressive segmented <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a>: a progressive image carried as two fields over an interlaced transport (common for 24p / 25p / 30p material on HD-SDI at <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1080psf23.98</a>, 1080psf24, 1080psf25, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1080psf29.97</a>). For display purposes it behaves as progressive, but the wire format is two-field. </li>
 </ul>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="enums_8h_source.html">enums.h</a></li>
@@ -290,7 +294,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classVideoScanMode.html">VideoScanMode</a></li>
-    <li class="footer">Generated on 2026-04-16 05:30:02 from commit 7eadf34 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
   </ul>
 </div>
 </body>

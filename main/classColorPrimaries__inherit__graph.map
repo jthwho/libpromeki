@@ -1,0 +1,7 @@
+<map id="ColorPrimaries" name="ColorPrimaries">
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for VUI / container color primaries." alt="" coords="57,152,176,177"/>
+<area shape="rect" id="Node000002" href="$classTypedEnum.html" title=" " alt="" coords="5,79,228,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,118,119,152,114,152,114,118"/>
+<area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="87,5,146,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="119,44,119,79,114,79,114,44"/>
+</map>

@@ -226,6 +226,9 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:aa1f92d9b38d8df12dd699d8463f2f56a" id="r_aa1f92d9b38d8df12dd699d8463f2f56a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVideoCodec.html">VideoCodec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#aa1f92d9b38d8df12dd699d8463f2f56a">lookup</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classVideoCodec.html#a597f740cf04497f4bc1df65508a11d79">name</a>)</td></tr>
 <tr class="memdesc:aa1f92d9b38d8df12dd699d8463f2f56a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Looks up a codec by its registered name.  <br /></td></tr>
 <tr class="separator:aa1f92d9b38d8df12dd699d8463f2f56a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a22154f4816e2e7d96bd75f6d2963f7b8" id="r_a22154f4816e2e7d96bd75f6d2963f7b8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVideoCodec.html">VideoCodec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#a22154f4816e2e7d96bd75f6d2963f7b8">fromPixelDesc</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;<a class="el" href="classList.html">pd</a>)</td></tr>
+<tr class="memdesc:a22154f4816e2e7d96bd75f6d2963f7b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finds the codec whose <a class="el" href="classVideoCodec.html#ade010cc2b86711df7f74aa216342991a">compressedPixelDescs</a> list contains <code>pd</code>.  <br /></td></tr>
+<tr class="separator:a22154f4816e2e7d96bd75f6d2963f7b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>First-class identifier for a video / still-image codec family. </p>
@@ -254,10 +257,10 @@ Static Public Member Functions</h2></td></tr>
 <div class="line">        <a class="code hl_class" href="classList.html">printf</a>(<span class="stringliteral">&quot;%s — %s\n&quot;</span>, <a class="code hl_class" href="classList.html">vc</a>.name().cstr(), <a class="code hl_class" href="classList.html">vc</a>.description().cstr());</div>
 <div class="line">}</div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassVideoCodec_html"><div class="ttname"><a href="classVideoCodec.html">VideoCodec</a></div><div class="ttdoc">First-class identifier for a video / still-image codec family.</div><div class="ttdef"><b>Definition</b> videocodec.h:80</div></div>
+<div class="ttc" id="aclassVideoCodec_html"><div class="ttname"><a href="classVideoCodec.html">VideoCodec</a></div><div class="ttdoc">First-class identifier for a video / still-image codec family.</div><div class="ttdef"><b>Definition</b> videocodec.h:81</div></div>
 <div class="ttc" id="aclassVideoCodec_html_aa1f92d9b38d8df12dd699d8463f2f56a"><div class="ttname"><a href="classVideoCodec.html#aa1f92d9b38d8df12dd699d8463f2f56a">VideoCodec::lookup</a></div><div class="ttdeci">static VideoCodec lookup(const String &amp;name)</div><div class="ttdoc">Looks up a codec by its registered name.</div></div>
 <div class="ttc" id="aclassVideoCodec_html_af4357a36493df9baa4fbbf61521af7aa"><div class="ttname"><a href="classVideoCodec.html#af4357a36493df9baa4fbbf61521af7aa">VideoCodec::registeredIDs</a></div><div class="ttdeci">static IDList registeredIDs()</div><div class="ttdoc">Returns the list of every registered codec's ID.</div></div>
-<div class="ttc" id="aclassVideoCodec_html_af5d21a83ef1d943e8ad2d3e9b041b5dca48919d6ed222bf6aed61e664ac1e3350"><div class="ttname"><a href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca48919d6ed222bf6aed61e664ac1e3350">VideoCodec::H264</a></div><div class="ttdeci">@ H264</div><div class="ttdoc">H.264 / MPEG-4 AVC.</div><div class="ttdef"><b>Definition</b> videocodec.h:91</div></div>
+<div class="ttc" id="aclassVideoCodec_html_af5d21a83ef1d943e8ad2d3e9b041b5dca48919d6ed222bf6aed61e664ac1e3350"><div class="ttname"><a href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca48919d6ed222bf6aed61e664ac1e3350">VideoCodec::H264</a></div><div class="ttdeci">@ H264</div><div class="ttdoc">H.264 / MPEG-4 AVC.</div><div class="ttdef"><b>Definition</b> videocodec.h:92</div></div>
 <div class="ttc" id="aclassVideoEncoder_html"><div class="ttname"><a href="classVideoEncoder.html">VideoEncoder</a></div><div class="ttdoc">Abstract base class for stateful video encoders.</div><div class="ttdef"><b>Definition</b> codec.h:204</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
@@ -428,6 +431,41 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a22154f4816e2e7d96bd75f6d2963f7b8" name="a22154f4816e2e7d96bd75f6d2963f7b8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a22154f4816e2e7d96bd75f6d2963f7b8">&#9670;&#160;</a></span>fromPixelDesc()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classVideoCodec.html">VideoCodec</a> VideoCodec::fromPixelDesc </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;&#160;</td>
+          <td class="paramname"><em>pd</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Finds the codec whose <a class="el" href="classVideoCodec.html#ade010cc2b86711df7f74aa216342991a">compressedPixelDescs</a> list contains <code>pd</code>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">pd</td><td>A compressed <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a> (e.g. <code><a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa5ee8334d39e47fc8d9c55bbf2e4a1216" title="H.264 / AVC compressed video (avc1/avc3).">PixelDesc::H264</a></code>). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The matching codec, or an invalid codec if no registered codec claims <code>pd</code>. </dd></dl>
+
+</div>
+</div>
 <a id="aa1f92d9b38d8df12dd699d8463f2f56a" name="aa1f92d9b38d8df12dd699d8463f2f56a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa1f92d9b38d8df12dd699d8463f2f56a">&#9670;&#160;</a></span>lookup()</h2>
 
@@ -564,7 +602,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classVideoCodec.html">VideoCodec</a></li>
-    <li class="footer">Generated on 2026-04-16 05:30:02 from commit 7eadf34 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
   </ul>
 </div>
 </body>

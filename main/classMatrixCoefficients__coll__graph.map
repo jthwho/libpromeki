@@ -1,0 +1,8 @@
+<map id="MatrixCoefficients" name="MatrixCoefficients">
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for VUI / container matrix coefficients (luma&#45;chroma derivation from the RGB pri..." alt="" coords="58,223,199,248"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="164,216,186,213,206,215,220,222,226,235,218,250,200,257,176,257,151,251,152,246,177,251,199,251,215,246,221,235,216,226,204,220,186,219,165,221"/>
+<area shape="rect" id="Node000002" href="$classTypedEnum.html" title=" " alt="" coords="5,80,252,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="131,119,131,222,126,222,126,119"/>
+<area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="99,5,158,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="131,45,131,80,126,80,126,45"/>
+</map>

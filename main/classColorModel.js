@@ -2,6 +2,7 @@ var classColorModel =
 [
     [ "CompInfo", "structColorModel_1_1CompInfo.html", "structColorModel_1_1CompInfo" ],
     [ "Data", "structColorModel_1_1Data.html", "structColorModel_1_1Data" ],
+    [ "H273", "structColorModel_1_1H273.html", "structColorModel_1_1H273" ],
     [ "IDList", "classColorModel.html#a43f0a88ffbe2d73d36042f4f85b0572a", null ],
     [ "Primaries", "classColorModel.html#a8712f070c98fe6bb7e79d818b4ab4692", null ],
     [ "TransferFunc", "classColorModel.html#a4390ceaa108a6124d416c6d976a05ff6", null ],

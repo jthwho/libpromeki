@@ -313,13 +313,13 @@ Quick Start</h2>
 <div class="line"><span class="keyword">using namespace </span>promeki;</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Create colors in different models</span></div>
-<div class="line"><a class="code hl_class" href="classColor.html">Color</a> <a class="code hl_class" href="classList.html">red</a>   = <a class="code hl_variable" href="classColor.html#ade25ce437fd74a7b08fee1583b329c8e">Color::Red</a>;                           <span class="comment">// Named sRGB constant</span></div>
-<div class="line"><a class="code hl_class" href="classColor.html">Color</a> <a class="code hl_class" href="classList.html">green</a> = <a class="code hl_function" href="classColor.html#a428417bf0b16e05e90ebf6c1a71ad2db">Color::hsv</a>(120.0f / 360.0f, 1.0f, 1.0f); <span class="comment">// HSV green</span></div>
+<div class="line"><a class="code hl_class" href="classColor.html">Color</a> red   = <a class="code hl_variable" href="classColor.html#ade25ce437fd74a7b08fee1583b329c8e">Color::Red</a>;                           <span class="comment">// Named sRGB constant</span></div>
+<div class="line"><a class="code hl_class" href="classColor.html">Color</a> green = <a class="code hl_function" href="classColor.html#a428417bf0b16e05e90ebf6c1a71ad2db">Color::hsv</a>(120.0f / 360.0f, 1.0f, 1.0f); <span class="comment">// HSV green</span></div>
 <div class="line"><a class="code hl_class" href="classColor.html">Color</a> <a class="code hl_class" href="classList.html">gray</a>  = <a class="code hl_function" href="classColor.html#a2b623cd7875ea63a9504255e70508188">Color::lab</a>(0.5f, 128.0f/255.0f, 128.0f/255.0f); <span class="comment">// 50% Lab gray</span></div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Convert between models</span></div>
-<div class="line"><a class="code hl_class" href="classColor.html">Color</a> <a class="code hl_class" href="classList.html">hsvRed</a> = <a class="code hl_class" href="classList.html">red</a>.toHSV();</div>
-<div class="line"><a class="code hl_class" href="classColor.html">Color</a> <a class="code hl_class" href="classList.html">labRed</a> = <a class="code hl_class" href="classList.html">red</a>.toLab();</div>
+<div class="line"><a class="code hl_class" href="classColor.html">Color</a> <a class="code hl_class" href="classList.html">hsvRed</a> = red.<a class="code hl_function" href="classColor.html#adc2d1b9d4f8066fe2d63098d1852ae35">toHSV</a>();</div>
+<div class="line"><a class="code hl_class" href="classColor.html">Color</a> <a class="code hl_class" href="classList.html">labRed</a> = red.<a class="code hl_function" href="classColor.html#af3c27f93476c46a757ea9997a00f3a55">toLab</a>();</div>
 <div class="line"><a class="code hl_class" href="classColor.html">Color</a> back   = <a class="code hl_class" href="classList.html">labRed</a>.toRGB();   <span class="comment">// roundtrip back to sRGB</span></div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Access components</span></div>
@@ -327,21 +327,28 @@ Quick Start</h2>
 <div class="line"><span class="keywordtype">float</span> <a class="code hl_class" href="classList.html">hueDegrees</a> = <a class="code hl_class" href="classList.html">hsvRed</a>.toNative(0); <span class="comment">// native 0-360</span></div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Get 8-bit sRGB for display (auto-converts if needed)</span></div>
-<div class="line"><a class="code hl_class" href="classList.html">uint8_t</a> r = <a class="code hl_class" href="classList.html">green</a>.r8();  <span class="comment">// converts HSV -&gt; sRGB -&gt; 0-255</span></div>
+<div class="line"><a class="code hl_class" href="classList.html">uint8_t</a> r = green.<a class="code hl_function" href="classColor.html#aa45fc3db25b5c24292ffa9afb7e92841">r8</a>();  <span class="comment">// converts HSV -&gt; sRGB -&gt; 0-255</span></div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Serialize losslessly</span></div>
-<div class="line"><a class="code hl_class" href="classString.html">String</a> s = <a class="code hl_class" href="classList.html">red</a>.toString();                <span class="comment">// &quot;sRGB(1,0,0,1)&quot;</span></div>
+<div class="line"><a class="code hl_class" href="classString.html">String</a> s = red.<a class="code hl_function" href="classColor.html#a6e3bdfaea506286b903fa5724606357a">toString</a>();                <span class="comment">// &quot;sRGB(1,0,0,1)&quot;</span></div>
 <div class="line"><a class="code hl_class" href="classColor.html">Color</a> <a class="code hl_class" href="classList.html">parsed</a> = <a class="code hl_function" href="classColor.html#ac5717c109b931c65a7d54b725537807e">Color::fromString</a>(s);      <span class="comment">// roundtrips perfectly</span></div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Color operations</span></div>
-<div class="line"><a class="code hl_class" href="classColor.html">Color</a> mid = <a class="code hl_class" href="classList.html">red</a>.lerp(<a class="code hl_class" href="classList.html">green</a>, 0.5);         <span class="comment">// interpolate</span></div>
-<div class="line"><a class="code hl_class" href="classColor.html">Color</a> comp = <a class="code hl_class" href="classList.html">red</a>.complementary();          <span class="comment">// cyan</span></div>
-<div class="line"><span class="keywordtype">double</span> <a class="code hl_class" href="classList.html">lum</a> = <a class="code hl_class" href="classList.html">red</a>.luminance();              <span class="comment">// perceptual brightness</span></div>
+<div class="line"><a class="code hl_class" href="classColor.html">Color</a> mid = red.<a class="code hl_function" href="classColor.html#a5f1f86d0426a2e888b0213b9122cebd9">lerp</a>(green, 0.5);         <span class="comment">// interpolate</span></div>
+<div class="line"><a class="code hl_class" href="classColor.html">Color</a> comp = red.<a class="code hl_function" href="classColor.html#a5f582be2e18ba3ce840d77583e7b4287">complementary</a>();          <span class="comment">// cyan</span></div>
+<div class="line"><span class="keywordtype">double</span> <a class="code hl_class" href="classList.html">lum</a> = red.<a class="code hl_function" href="classColor.html#a719b87353985f115af7392fdc2bd6086">luminance</a>();              <span class="comment">// perceptual brightness</span></div>
 <div class="ttc" id="aclassColor_html"><div class="ttname"><a href="classColor.html">Color</a></div><div class="ttdoc">A color value in any supported color model.</div><div class="ttdef"><b>Definition</b> color.h:97</div></div>
 <div class="ttc" id="aclassColor_html_a2b623cd7875ea63a9504255e70508188"><div class="ttname"><a href="classColor.html#a2b623cd7875ea63a9504255e70508188">Color::lab</a></div><div class="ttdeci">static Color lab(float l, float a, float b, float alpha=1.0f)</div><div class="ttdoc">Creates a CIE L*a*b* color (normalized components).</div><div class="ttdef"><b>Definition</b> color.h:180</div></div>
 <div class="ttc" id="aclassColor_html_a428417bf0b16e05e90ebf6c1a71ad2db"><div class="ttname"><a href="classColor.html#a428417bf0b16e05e90ebf6c1a71ad2db">Color::hsv</a></div><div class="ttdeci">static Color hsv(float h, float s, float v, float a=1.0f)</div><div class="ttdoc">Creates an HSV color (relative to sRGB). H is normalized 0-1.</div><div class="ttdef"><b>Definition</b> color.h:155</div></div>
+<div class="ttc" id="aclassColor_html_a5f1f86d0426a2e888b0213b9122cebd9"><div class="ttname"><a href="classColor.html#a5f1f86d0426a2e888b0213b9122cebd9">Color::lerp</a></div><div class="ttdeci">Color lerp(const Color &amp;other, double t) const</div><div class="ttdoc">Linearly interpolates between this color and another.</div></div>
+<div class="ttc" id="aclassColor_html_a5f582be2e18ba3ce840d77583e7b4287"><div class="ttname"><a href="classColor.html#a5f582be2e18ba3ce840d77583e7b4287">Color::complementary</a></div><div class="ttdeci">Color complementary() const</div><div class="ttdoc">Returns the complementary color (hue rotated 180 degrees).</div></div>
+<div class="ttc" id="aclassColor_html_a6e3bdfaea506286b903fa5724606357a"><div class="ttname"><a href="classColor.html#a6e3bdfaea506286b903fa5724606357a">Color::toString</a></div><div class="ttdeci">String toString(StringFormat fmt=ModelFormat, AlphaMode alpha=AlphaAuto) const</div><div class="ttdoc">Converts this color to a string representation.</div></div>
+<div class="ttc" id="aclassColor_html_a719b87353985f115af7392fdc2bd6086"><div class="ttname"><a href="classColor.html#a719b87353985f115af7392fdc2bd6086">Color::luminance</a></div><div class="ttdeci">double luminance() const</div><div class="ttdoc">Returns the perceptual luminance (0.0 to 1.0).</div></div>
+<div class="ttc" id="aclassColor_html_aa45fc3db25b5c24292ffa9afb7e92841"><div class="ttname"><a href="classColor.html#aa45fc3db25b5c24292ffa9afb7e92841">Color::r8</a></div><div class="ttdeci">uint8_t r8() const</div><div class="ttdoc">Returns the red component as a uint8_t (0-255) in sRGB.</div></div>
 <div class="ttc" id="aclassColor_html_ac5717c109b931c65a7d54b725537807e"><div class="ttname"><a href="classColor.html#ac5717c109b931c65a7d54b725537807e">Color::fromString</a></div><div class="ttdeci">static Color fromString(const String &amp;str)</div><div class="ttdoc">Creates a Color from a string representation.</div></div>
+<div class="ttc" id="aclassColor_html_adc2d1b9d4f8066fe2d63098d1852ae35"><div class="ttname"><a href="classColor.html#adc2d1b9d4f8066fe2d63098d1852ae35">Color::toHSV</a></div><div class="ttdeci">Color toHSV() const</div><div class="ttdoc">Converts to HSV (sRGB-based).</div></div>
 <div class="ttc" id="aclassColor_html_ade25ce437fd74a7b08fee1583b329c8e"><div class="ttname"><a href="classColor.html#ade25ce437fd74a7b08fee1583b329c8e">Color::Red</a></div><div class="ttdeci">static const Color Red</div><div class="ttdoc">Opaque red (255, 0, 0).</div><div class="ttdef"><b>Definition</b> color.h:470</div></div>
+<div class="ttc" id="aclassColor_html_af3c27f93476c46a757ea9997a00f3a55"><div class="ttname"><a href="classColor.html#af3c27f93476c46a757ea9997a00f3a55">Color::toLab</a></div><div class="ttdeci">Color toLab() const</div><div class="ttdoc">Converts to CIE L*a*b*.</div></div>
 <div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:56</div></div>
 <div class="ttc" id="acolor_8h_html"><div class="ttname"><a href="color_8h.html">color.h</a></div></div>
 </div><!-- fragment --><h1><a class="anchor" id="cs_further"></a>
@@ -363,7 +370,7 @@ Further Reading</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-16 05:30:02 from commit 7eadf34 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
   </ul>
 </div>
 </body>
