@@ -48,7 +48,7 @@ TEST_CASE("MediaIOTask_VideoDecoder: backend is registered under \"VideoDecoder\
                 if(f.name == "VideoDecoder") { fd = &f; break; }
         }
         REQUIRE(fd != nullptr);
-        CHECK(fd->canInputAndOutput);
+        CHECK(fd->canBeTransform);
 }
 
 TEST_CASE("MediaIOTask_VideoDecoder: open without VideoCodec defers to auto-detect") {
@@ -59,9 +59,9 @@ TEST_CASE("MediaIOTask_VideoDecoder: open without VideoCodec defers to auto-dete
         MediaDesc srcDesc;
         srcDesc.imageList().pushToBack(
                 ImageDesc(Size2Du32(8, 4), PixelDesc(PixelDesc::H264)));
-        io->setMediaDesc(srcDesc);
+        io->setExpectedDesc(srcDesc);
 
-        Error err = io->open(MediaIO::InputAndOutput);
+        Error err = io->open(MediaIO::Transform);
         CHECK(!err.isError());
         io->close();
         delete io;
@@ -79,8 +79,8 @@ TEST_CASE("MediaIOTask_VideoDecoder: encoder → decoder round-trip via passthro
         MediaDesc srcDesc;
         srcDesc.imageList().pushToBack(
                 ImageDesc(Size2Du32(kW, kH), PixelDesc(PixelDesc::RGB8_sRGB)));
-        enc->setMediaDesc(srcDesc);
-        REQUIRE(enc->open(MediaIO::InputAndOutput) == Error::Ok);
+        enc->setExpectedDesc(srcDesc);
+        REQUIRE(enc->open(MediaIO::Transform) == Error::Ok);
 
         // Push an input image through the encoder and retrieve the
         // compressed Frame on the other side.
@@ -108,8 +108,8 @@ TEST_CASE("MediaIOTask_VideoDecoder: encoder → decoder round-trip via passthro
         MediaIO *dec = MediaIO::create(decCfg);
         REQUIRE(dec != nullptr);
         MediaDesc encDesc = enc->mediaDesc();
-        dec->setMediaDesc(encDesc);
-        REQUIRE(dec->open(MediaIO::InputAndOutput) == Error::Ok);
+        dec->setExpectedDesc(encDesc);
+        REQUIRE(dec->open(MediaIO::Transform) == Error::Ok);
 
         REQUIRE(dec->writeFrame(encodedFrame, true) == Error::Ok);
 
@@ -194,8 +194,8 @@ TEST_CASE("MediaIOTask_VideoDecoder: decodes a JPEG XS file via Image::packet") 
                 srcDesc.imageList().pushToBack(
                         ImageDesc(Size2Du32(kW, kH),
                                   PixelDesc(PixelDesc::JPEG_XS_YUV8_422_Rec709)));
-                dec->setMediaDesc(srcDesc);
-                REQUIRE(dec->open(MediaIO::InputAndOutput) == Error::Ok);
+                dec->setExpectedDesc(srcDesc);
+                REQUIRE(dec->open(MediaIO::Transform) == Error::Ok);
 
                 REQUIRE(dec->writeFrame(inFrame, true) == Error::Ok);
 

@@ -538,7 +538,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                         "in Dir::temp()."));
 
                 // ============================================================
-                // Converter (MediaIOTask_Converter)
+                // CSC (MediaIOTask_CSC)
                 // ============================================================
 
                 /// @brief PixelDesc — target pixel description for the converter
@@ -949,6 +949,27 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                 .setDescription("VUI video range "
                                                 "(Unknown = derive from input)."));
 
+                /// @brief Enum @ref ChromaSubsampling — preferred chroma
+                /// sampling for a video encoder's accepted input.
+                ///
+                /// Governs which of the backend's @c supportedInputs the
+                /// pipeline planner advertises as the encoder's preferred
+                /// input format.  The CSC then converts the upstream
+                /// format down / across to match.  Defaults to @c YUV420
+                /// — the lingua franca of H.264 / HEVC / AV1 decoders —
+                /// so an RGB or 4:4:4 source routed into an encoder
+                /// lands on a 4:2:0 bitstream (H.264 Main / High profile,
+                /// HEVC Main) by default.  Callers that need a higher-
+                /// quality chroma path pin @c YUV422 or @c YUV444
+                /// explicitly.
+                PROMEKI_DECLARE_ID(VideoChromaSubsampling,
+                        VariantSpec().setType(Variant::TypeEnum)
+                                .setDefault(ChromaSubsampling::YUV420)
+                                .setEnumType(ChromaSubsampling::Type)
+                                .setDescription("Preferred encoder input "
+                                                "chroma subsampling (default "
+                                                "4:2:0)."));
+
                 /// @brief @ref VideoScanMode — raster scan mode signalled
                 /// through codec SEI (H.264 Picture Timing / HEVC Picture
                 /// Timing) and/or native interlaced coding.
@@ -1004,7 +1025,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                 /// @c "HEVC", @c "JPEG") and resolved through
                 /// @ref promeki::VideoCodec::lookup.  Distinct from
                 /// @ref Type, which selects the @ref MediaIO backend
-                /// itself (e.g. @c "VideoEncoder" vs @c "Converter").
+                /// itself (e.g. @c "VideoEncoder" vs @c "CSC").
                 PROMEKI_DECLARE_ID(VideoCodec,
                         VariantSpec().setType(Variant::TypeVideoCodec)
                                 .setDefault(promeki::VideoCodec())

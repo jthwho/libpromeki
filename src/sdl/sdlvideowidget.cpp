@@ -196,49 +196,27 @@ bool SDLVideoWidget::uploadCurrentImage() {
 
         const PixelDesc &srcPd = _currentImage.pixelDesc();
 
-        // Fast path: directly-mappable uncompressed SDL format —
-        // upload as-is with no CSC.  Compressed formats and
-        // uncompressed formats SDL cannot ingest directly fall
-        // through to the Image::convert() fallback below.
-        if(!srcPd.isCompressed()) {
-                uint32_t sdlFmt = mapPixelDesc(srcPd);
-                if(sdlFmt != 0) {
-                        _framesFastPath++;
-                        ensureTexture(_currentImage.width(),
-                                      _currentImage.height(), sdlFmt,
-                                      mapColorspace(srcPd));
-                        if(_texture == nullptr) return false;
-                        uploadImage(_currentImage, sdlFmt);
-                        return true;
-                }
-        }
-
-        // Fallback: run the image through Image::convert() into
-        // RGBA8_sRGB, which every backend can display.  The
-        // CSCPipeline is pulled from the library-wide cache, so
-        // repeated frames of the same format don't pay compile()
-        // cost.  This handles YUV, linear float, DPX, v210,
-        // non-host-endian and 10/12-bit formats, and any
-        // user-registered PixelDesc the CSC pipeline knows how to
-        // convert.  It also handles compressed formats by
-        // dispatching to the registered ImageCodec (JPEG, JPEG XS,
-        // etc.) — the decode happens inside convert() so the widget
-        // stays codec-agnostic.  For RTP playback the SDLPlayerTask
-        // decodes ahead of us on its strand thread, so this branch
-        // only runs when callers push a compressed image directly
-        // into the widget outside the MediaIO path.
-        Image converted = _currentImage.convert(
-                PixelDesc(PixelDesc::RGBA8_sRGB), _currentImage.metadata());
-        if(!converted.isValid()) {
-                promekiErr("SDLVideoWidget: convert from '%s' to RGBA8_sRGB failed",
+        // The widget now relies on the planner-inserted CSC stage
+        // upstream to deliver an SDL-native PixelDesc — no inline
+        // CSC fallback here.  This moves all colour conversion work
+        // off the render thread and onto the CSC stage's strand,
+        // and matches what @ref SDLPlayerTask::proposeInput
+        // advertises to the planner.
+        const uint32_t sdlFmt = mapPixelDesc(srcPd);
+        if(sdlFmt == 0) {
+                promekiErr("SDLVideoWidget: PixelDesc '%s' is not SDL-native; "
+                           "the upstream pipeline is supposed to bridge it via "
+                           "a planner-inserted CSC stage.  Frame dropped.",
                            srcPd.name().cstr());
                 return false;
         }
 
-        uint32_t rgba8Fmt = mapPixelDesc(PixelDesc(PixelDesc::RGBA8_sRGB));
-        ensureTexture(converted.width(), converted.height(), rgba8Fmt, 0);
+        _framesFastPath++;
+        ensureTexture(_currentImage.width(),
+                      _currentImage.height(), sdlFmt,
+                      mapColorspace(srcPd));
         if(_texture == nullptr) return false;
-        uploadImage(converted, rgba8Fmt);
+        uploadImage(_currentImage, sdlFmt);
         return true;
 }
 

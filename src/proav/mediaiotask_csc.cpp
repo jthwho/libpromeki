@@ -6,12 +6,14 @@
  */
 
 #include <promeki/mediaiotask_csc.h>
+#include <promeki/cscregistry.h>
 #include <promeki/image.h>
 #include <promeki/audio.h>
 #include <promeki/frame.h>
 #include <promeki/imagedesc.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaconfig.h>
+#include <promeki/mediaiodescription.h>
 #include <promeki/metadata.h>
 #include <promeki/logger.h>
 
@@ -19,34 +21,162 @@ PROMEKI_NAMESPACE_BEGIN
 
 PROMEKI_REGISTER_MEDIAIO(MediaIOTask_CSC)
 
+namespace {
+
+// Returns a coarse "chroma resolution rank" for sorting — bigger
+// number = more chroma samples per pixel = higher fidelity.  Used to
+// detect lossy chroma subsampling between two PixelFormats.
+//
+// 4:2:0 and 4:1:1 both carry one chroma sample per four luma samples,
+// but distribute it differently (4:2:0 halves both axes; 4:1:1 keeps
+// full vertical but quarters horizontal).  They get distinct ranks
+// so the planner doesn't treat a 4:2:0 → 4:1:1 crossover as free: it
+// isn't (the chroma grid is rewritten), and NV12-style 4:2:0 is the
+// far more common hardware-friendly layout, so 4:2:0 outranks 4:1:1.
+int chromaRank(PixelFormat::Sampling s) {
+        switch(s) {
+                case PixelFormat::Sampling444: return 4;
+                case PixelFormat::Sampling422: return 2;
+                case PixelFormat::Sampling420: return 1;
+                case PixelFormat::Sampling411: return 0;
+                case PixelFormat::SamplingUndefined: default: return 4;
+        }
+}
+
+// Quality cost for a CSC bridge from @p from to @p to.  Bands follow
+// the unitless scale in docs/devplan/proav_pipeline_planner.md and
+// FormatDesc::BridgeFunc; smaller = higher quality.
+//
+// Two effects combine:
+//
+//   - Penalties for lossy reductions (bit-depth loss, chroma down-
+//     sampling) push the cost up so the planner avoids these paths
+//     when a higher-quality alternative exists.
+//   - A "fast-path bonus" subtracts a fixed amount when a
+//     hand-tuned SIMD kernel exists in CSCRegistry, so the planner
+//     prefers the conversions that run at full SIMD throughput.
+//
+// The bonus is capped to never make a lossy conversion cheaper than
+// a same-bit-depth one — quality dominates speed by design.
+int cscBridgeCost(const PixelDesc &from, const PixelDesc &to) {
+        if(from == to) return 0;
+
+        // Base cost for any CSC hop — the conversion is precision-
+        // preserving when the target has at least the source's
+        // bit-depth and chroma sampling.  Penalties below add to
+        // this whenever a lossy reduction is implied.
+        int cost = 50;
+
+        // Bit-depth penalty.  Compare component[0] (luma / red) bits;
+        // any reduction adds 100 per lost bit (e.g. 10-bit → 8-bit
+        // pays 200, 12-bit → 8-bit pays 400).  The penalty is large
+        // enough that the planner picks a same-depth path even if
+        // the alternative needs a chroma resample.
+        const int fromBits = from.pixelFormat().compCount() > 0
+                ? static_cast<int>(from.pixelFormat().compDesc(0).bits) : 0;
+        const int toBits   = to.pixelFormat().compCount() > 0
+                ? static_cast<int>(to.pixelFormat().compDesc(0).bits)   : 0;
+        if(toBits > 0 && fromBits > 0 && toBits < fromBits) {
+                cost += 100 * (fromBits - toBits);
+        }
+
+        // Chroma-subsampling penalty — going from finer to coarser
+        // chroma loses information (e.g. 4:4:4 → 4:2:0 pays 150).
+        const int fromChroma = chromaRank(from.pixelFormat().sampling());
+        const int toChroma   = chromaRank(to.pixelFormat().sampling());
+        if(toChroma < fromChroma) {
+                cost += 75 * (fromChroma - toChroma);
+        }
+
+        // Fast-path bonus — when a hand-tuned SIMD kernel exists for
+        // this pair, knock 25 off the cost.  Cap so we never go
+        // negative or cancel a quality penalty: same-bit-depth
+        // colour-space hop with a fast path lands at 25 (vs 50 for
+        // a generic-pipeline hop), but a lossy 10→8 hop with a fast
+        // path stays well above any same-depth alternative.
+        if(CSCRegistry::lookupFastPath(from, to) != nullptr) {
+                cost -= 25;
+                if(cost < 1) cost = 1;
+        }
+
+        return cost;
+}
+
+bool cscBridge(const MediaDesc &from,
+               const MediaDesc &to,
+               MediaIO::Config *outConfig,
+               int *outCost) {
+        // CSC bridges only the video side, and only between
+        // uncompressed pixel descriptions.  Anything compressed on
+        // either end goes to VideoEncoder / VideoDecoder.
+        if(from.imageList().isEmpty() || to.imageList().isEmpty()) return false;
+        const PixelDesc &fromPd = from.imageList()[0].pixelDesc();
+        const PixelDesc &toPd   = to.imageList()[0].pixelDesc();
+        if(!fromPd.isValid() || !toPd.isValid())   return false;
+        if(fromPd.isCompressed() || toPd.isCompressed()) return false;
+
+        // Source raster must already match the sink raster — CSC
+        // does not scale.  Source frame rate must match too — that
+        // is FrameSync's job.
+        if(from.imageList()[0].size() != to.imageList()[0].size()) return false;
+        if(from.frameRate() != to.frameRate()) return false;
+
+        // Audio must already match.  CSC is pixel-only and ignores
+        // the audio plane on pass-through; if audio differs the
+        // planner needs a different (or compound) bridge, so decline
+        // here rather than silently drop the audio mismatch.
+        if(from.audioList().size() != to.audioList().size()) return false;
+        const size_t audioCount = from.audioList().size();
+        for(size_t i = 0; i < audioCount; ++i) {
+                const AudioDesc &a = from.audioList()[i];
+                const AudioDesc &b = to.audioList()[i];
+                if(a.sampleRate() != b.sampleRate()) return false;
+                if(a.channels()   != b.channels())   return false;
+                if(a.dataType()   != b.dataType())   return false;
+        }
+
+        // No work to do — let the planner skip inserting a CSC.
+        if(fromPd == toPd) return false;
+
+        if(outConfig != nullptr) {
+                *outConfig = MediaIO::defaultConfig("CSC");
+                outConfig->set(MediaConfig::OutputPixelDesc, toPd);
+        }
+        if(outCost != nullptr) {
+                *outCost = cscBridgeCost(fromPd, toPd);
+        }
+        return true;
+}
+
+} // namespace
+
 MediaIO::FormatDesc MediaIOTask_CSC::formatDesc() {
-        return {
-                "CSC",
-                "Color space converter (uncompressed pixel format conversion)",
-                {},
-                false,  // canOutput
-                false,  // canInput
-                true,   // canInputAndOutput
-                []() -> MediaIOTask * {
-                        return new MediaIOTask_CSC();
-                },
-                []() -> MediaIO::Config::SpecMap {
-                        MediaIO::Config::SpecMap specs;
-                        auto s = [&specs](MediaConfig::ID id, const Variant &def) {
-                                const VariantSpec *gs = MediaConfig::spec(id);
-                                specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
-                        };
-                        s(MediaConfig::OutputPixelDesc, PixelDesc());
-                        s(MediaConfig::Capacity, int32_t(4));
-                        return specs;
-                }
+        MediaIO::FormatDesc d;
+        d.name              = "CSC";
+        d.description       = "Color space converter (uncompressed pixel format conversion)";
+        d.canBeSource       = false;
+        d.canBeSink         = false;
+        d.canBeTransform    = true;
+        d.create            = []() -> MediaIOTask * { return new MediaIOTask_CSC(); };
+        d.configSpecs       = []() -> MediaIO::Config::SpecMap {
+                MediaIO::Config::SpecMap specs;
+                auto s = [&specs](MediaConfig::ID id, const Variant &def) {
+                        const VariantSpec *gs = MediaConfig::spec(id);
+                        specs.insert(id, gs ? VariantSpec(*gs).setDefault(def)
+                                            : VariantSpec().setDefault(def));
+                };
+                s(MediaConfig::OutputPixelDesc, PixelDesc());
+                s(MediaConfig::Capacity, int32_t(4));
+                return specs;
         };
+        d.bridge            = cscBridge;
+        return d;
 }
 
 MediaIOTask_CSC::~MediaIOTask_CSC() = default;
 
 Error MediaIOTask_CSC::executeCmd(MediaIOCommandOpen &cmd) {
-        if(cmd.mode != MediaIO::InputAndOutput) {
+        if(cmd.mode != MediaIO::Transform) {
                 promekiErr("MediaIOTask_CSC: only InputAndOutput mode is supported");
                 return Error::NotSupported;
         }
@@ -212,6 +342,61 @@ Error MediaIOTask_CSC::executeCmd(MediaIOCommandStats &cmd) {
 
 int MediaIOTask_CSC::pendingOutput() const {
         return static_cast<int>(_outputQueue.size());
+}
+
+// ---- Phase 1 introspection / negotiation overrides ----
+
+Error MediaIOTask_CSC::describe(MediaIODescription *out) const {
+        if(out == nullptr) return Error::Invalid;
+
+        // CSC accepts any uncompressed video MediaDesc as input.
+        // The acceptable list stays empty as a "no constraint"
+        // signal; consumers walk producibleFormats for the
+        // configured target pixel desc when one is set.
+
+        if(_outputPixelDescSet) {
+                MediaDesc preferred;
+                preferred.imageList().pushToBack(
+                        ImageDesc(Size2Du32(0, 0), _outputPixelDesc));
+                out->setPreferredFormat(preferred);
+                out->producibleFormats().pushToBack(preferred);
+        }
+        return Error::Ok;
+}
+
+Error MediaIOTask_CSC::proposeInput(const MediaDesc &offered,
+                                    MediaDesc *preferred) const {
+        if(preferred == nullptr) return Error::Invalid;
+
+        // CSC handles uncompressed video only; reject anything
+        // compressed.  The planner will route compressed inputs
+        // through a VideoDecoder bridge instead.
+        for(const auto &img : offered.imageList()) {
+                if(img.pixelDesc().isCompressed()) {
+                        return Error::NotSupported;
+                }
+        }
+
+        // CSC accepts any uncompressed shape as-is — it will run
+        // the configured Image::convert on each frame.  The output
+        // shape is governed by OutputPixelDesc, not the input.
+        *preferred = offered;
+        return Error::Ok;
+}
+
+Error MediaIOTask_CSC::proposeOutput(const MediaDesc &requested,
+                                     MediaDesc *achievable) const {
+        if(achievable == nullptr) return Error::Invalid;
+
+        // CSC's output shape is fully determined by the input shape
+        // plus its OutputPixelDesc config (and any other Output*
+        // overrides the planner may have set).  Whatever the
+        // planner asks for, what we'll actually produce is what
+        // applyOutputOverrides yields — relay that back.
+        const MediaIO *io = mediaIo();
+        const MediaConfig &cfg = (io != nullptr) ? io->config() : MediaConfig();
+        *achievable = applyOutputOverrides(requested, cfg);
+        return Error::Ok;
 }
 
 PROMEKI_NAMESPACE_END

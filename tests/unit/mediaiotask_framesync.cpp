@@ -67,9 +67,9 @@ TEST_CASE("MediaIOTask_FrameSync_Registry") {
         bool found = false;
         for(const auto &desc : formats) {
                 if(desc.name == "FrameSync") {
-                        CHECK_FALSE(desc.canOutput);
-                        CHECK_FALSE(desc.canInput);
-                        CHECK(desc.canInputAndOutput);
+                        CHECK_FALSE(desc.canBeSource);
+                        CHECK_FALSE(desc.canBeSink);
+                        CHECK(desc.canBeTransform);
                         CHECK(desc.extensions.isEmpty());
                         found = true;
                         break;
@@ -95,9 +95,9 @@ TEST_CASE("MediaIOTask_FrameSync_RejectsReaderMode") {
         pending.setFrameRate(FrameRate(FrameRate::FPS_24));
         pending.imageList().pushToBack(
                 ImageDesc(Size2Du32(320, 240), PixelDesc(PixelDesc::RGB8_sRGB)));
-        io->setMediaDesc(pending);
+        io->setExpectedDesc(pending);
 
-        CHECK(io->open(MediaIO::Output).isError());
+        CHECK(io->open(MediaIO::Source).isError());
         delete io;
 }
 
@@ -105,7 +105,7 @@ TEST_CASE("MediaIOTask_FrameSync_RequiresFrameRate") {
         MediaIO::Config cfg = MediaIO::defaultConfig("FrameSync");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        CHECK(io->open(MediaIO::InputAndOutput).isError());
+        CHECK(io->open(MediaIO::Transform).isError());
         delete io;
 }
 
@@ -118,9 +118,9 @@ TEST_CASE("MediaIOTask_FrameSync_AcceptsReadWriteMode") {
         pending.setFrameRate(FrameRate(FrameRate::FPS_24));
         pending.imageList().pushToBack(
                 ImageDesc(Size2Du32(320, 240), PixelDesc(PixelDesc::RGB8_sRGB)));
-        io->setMediaDesc(pending);
+        io->setExpectedDesc(pending);
 
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
         CHECK(io->isOpen());
         io->close();
         delete io;
@@ -135,9 +135,9 @@ TEST_CASE("MediaIOTask_FrameSync_InheritsSourceFrameRate") {
         pending.setFrameRate(FrameRate(FrameRate::FPS_24));
         pending.imageList().pushToBack(
                 ImageDesc(Size2Du32(320, 240), PixelDesc(PixelDesc::RGB8_sRGB)));
-        io->setMediaDesc(pending);
+        io->setExpectedDesc(pending);
 
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
         CHECK(io->mediaDesc().frameRate() == FrameRate(FrameRate::FPS_24));
 
         io->close();
@@ -155,9 +155,9 @@ TEST_CASE("MediaIOTask_FrameSync_OutputFrameRateOverride") {
         pending.setFrameRate(FrameRate(FrameRate::FPS_24));
         pending.imageList().pushToBack(
                 ImageDesc(Size2Du32(320, 240), PixelDesc(PixelDesc::RGB8_sRGB)));
-        io->setMediaDesc(pending);
+        io->setExpectedDesc(pending);
 
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
         CHECK(io->mediaDesc().frameRate() == FrameRate(FrameRate::FPS_60));
 
         io->close();
@@ -175,9 +175,9 @@ TEST_CASE("MediaIOTask_FrameSync_InheritsSourceAudioDesc") {
                 ImageDesc(Size2Du32(320, 240), PixelDesc(PixelDesc::RGB8_sRGB)));
         pending.audioList().pushToBack(
                 AudioDesc(AudioDesc::PCMI_Float32LE, 48000.0f, 2));
-        io->setMediaDesc(pending);
+        io->setExpectedDesc(pending);
 
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
         REQUIRE(io->mediaDesc().audioList().size() == 1);
         CHECK(io->mediaDesc().audioList()[0].sampleRate() == 48000.0f);
         CHECK(io->mediaDesc().audioList()[0].channels() == 2);
@@ -198,9 +198,9 @@ TEST_CASE("MediaIOTask_FrameSync_OutputAudioRateOverride") {
         pending.setFrameRate(FrameRate(FrameRate::FPS_24));
         pending.audioList().pushToBack(
                 AudioDesc(AudioDesc::PCMI_Float32LE, 48000.0f, 2));
-        io->setMediaDesc(pending);
+        io->setExpectedDesc(pending);
 
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
         REQUIRE(io->mediaDesc().audioList().size() == 1);
         CHECK(io->mediaDesc().audioList()[0].sampleRate() == 96000.0f);
         CHECK(io->mediaDesc().audioList()[0].channels() == 2);
@@ -221,9 +221,9 @@ TEST_CASE("MediaIOTask_FrameSync_OutputAudioChannelsOverride") {
         pending.setFrameRate(FrameRate(FrameRate::FPS_24));
         pending.audioList().pushToBack(
                 AudioDesc(AudioDesc::PCMI_Float32LE, 48000.0f, 2));
-        io->setMediaDesc(pending);
+        io->setExpectedDesc(pending);
 
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
         REQUIRE(io->mediaDesc().audioList().size() == 1);
         CHECK(io->mediaDesc().audioList()[0].sampleRate() == 48000.0f);
         CHECK(io->mediaDesc().audioList()[0].channels() == 8);
@@ -243,9 +243,9 @@ TEST_CASE("MediaIOTask_FrameSync_OutputAudioDataTypeOverride") {
         pending.setFrameRate(FrameRate(FrameRate::FPS_24));
         pending.audioList().pushToBack(
                 AudioDesc(AudioDesc::PCMI_Float32LE, 48000.0f, 2));
-        io->setMediaDesc(pending);
+        io->setExpectedDesc(pending);
 
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
         REQUIRE(io->mediaDesc().audioList().size() == 1);
         CHECK(io->mediaDesc().audioList()[0].dataType() == AudioDesc::PCMI_S16LE);
         CHECK(io->mediaDesc().audioList()[0].sampleRate() == 48000.0f);
@@ -269,9 +269,9 @@ TEST_CASE("MediaIOTask_FrameSync_SyntheticClockRoundTrip") {
                 ImageDesc(Size2Du32(320, 240), PixelDesc(PixelDesc::RGB8_sRGB)));
         pending.audioList().pushToBack(
                 AudioDesc(AudioDesc::PCMI_Float32LE, 48000.0f, 2));
-        io->setMediaDesc(pending);
+        io->setExpectedDesc(pending);
 
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         for(int i = 0; i < 3; ++i) {
                 int64_t tsNs = static_cast<int64_t>(i) * framePeriodNs;
@@ -306,9 +306,9 @@ TEST_CASE("MediaIOTask_FrameSync_Stats") {
                 ImageDesc(Size2Du32(320, 240), PixelDesc(PixelDesc::RGB8_sRGB)));
         pending.audioList().pushToBack(
                 AudioDesc(AudioDesc::PCMI_Float32LE, 48000.0f, 2));
-        io->setMediaDesc(pending);
+        io->setExpectedDesc(pending);
 
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         for(int i = 0; i < 2; ++i) {
                 int64_t tsNs = static_cast<int64_t>(i) * framePeriodNs;

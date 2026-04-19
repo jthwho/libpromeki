@@ -5,6 +5,8 @@
  * See LICENSE file in the project root folder.
  */
 
+#include <climits>
+#include <cstdlib>
 #include <cstring>
 #include <promeki/mediaiotask_videoencoder.h>
 #include <promeki/mediaconfig.h>
@@ -14,6 +16,7 @@
 #include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/mediadesc.h>
+#include <promeki/mediaiodescription.h>
 #include <promeki/mediapacket.h>
 #include <promeki/metadata.h>
 #include <promeki/pixeldesc.h>
@@ -23,69 +26,105 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+PROMEKI_DEBUG(MediaIOTask_VideoEncoder)
+
 PROMEKI_REGISTER_MEDIAIO(MediaIOTask_VideoEncoder)
 
+namespace {
+
+// Bridge: VideoEncoder bridges uncompressed → compressed.  The
+// planner inserts it whenever a downstream sink demands a compressed
+// PixelDesc that an upstream uncompressed source can supply.
+bool videoEncoderBridge(const MediaDesc &from,
+                        const MediaDesc &to,
+                        MediaIO::Config *outConfig,
+                        int *outCost) {
+        if(from.imageList().isEmpty() || to.imageList().isEmpty()) return false;
+        const PixelDesc &fromPd = from.imageList()[0].pixelDesc();
+        const PixelDesc &toPd   = to.imageList()[0].pixelDesc();
+        if(!fromPd.isValid() || !toPd.isValid()) return false;
+        if(fromPd.isCompressed())                return false;
+        if(!toPd.isCompressed())                 return false;
+
+        const VideoCodec codec = VideoCodec::fromPixelDesc(toPd);
+        if(!codec.isValid())   return false;
+        if(!codec.canEncode()) return false;
+
+        if(outConfig != nullptr) {
+                *outConfig = MediaIO::defaultConfig("VideoEncoder");
+                outConfig->set(MediaConfig::VideoCodec, codec);
+        }
+        if(outCost != nullptr) {
+                // Encoding is lossy by construction.  Sit in the
+                // "heavily lossy" band so the planner avoids it
+                // unless the sink really needs the compressed form.
+                *outCost = 5000;
+        }
+        return true;
+}
+
+} // namespace
+
 MediaIO::FormatDesc MediaIOTask_VideoEncoder::formatDesc() {
-        return {
-                "VideoEncoder",
-                "Generic video encoder stage (picks a VideoEncoder via VideoCodec)",
-                {},     // No file extensions — this is a transform filter
-                false,  // canOutput
-                false,  // canInput
-                true,   // canInputAndOutput
-                []() -> MediaIOTask * {
-                        return new MediaIOTask_VideoEncoder();
-                },
-                []() -> MediaIO::Config::SpecMap {
-                        MediaIO::Config::SpecMap specs;
-                        // Inherit the library-wide spec for each key so
-                        // descriptions, types, ranges, and enum types
-                        // stay consistent across every backend that
-                        // references them.  Local defaults only override
-                        // when we want a backend-specific preferred
-                        // value different from the MediaConfig library
-                        // default.
-                        auto s = [&specs](MediaConfig::ID id) {
-                                const VariantSpec *gs = MediaConfig::spec(id);
-                                if(gs) specs.insert(id, *gs);
-                        };
-                        auto sWithDefault =
-                                [&specs](MediaConfig::ID id, const Variant &def) {
-                                const VariantSpec *gs = MediaConfig::spec(id);
-                                specs.insert(id, gs
-                                        ? VariantSpec(*gs).setDefault(def)
-                                        : VariantSpec().setDefault(def));
-                        };
-                        s(MediaConfig::VideoCodec);
-                        s(MediaConfig::FrameRate);
-                        s(MediaConfig::BitrateKbps);
-                        s(MediaConfig::MaxBitrateKbps);
-                        s(MediaConfig::VideoRcMode);
-                        s(MediaConfig::GopLength);
-                        s(MediaConfig::IdrInterval);
-                        s(MediaConfig::BFrames);
-                        s(MediaConfig::LookaheadFrames);
-                        s(MediaConfig::VideoPreset);
-                        s(MediaConfig::VideoProfile);
-                        s(MediaConfig::VideoLevel);
-                        s(MediaConfig::VideoQp);
-                        s(MediaConfig::VideoSpatialAQ);
-                        s(MediaConfig::VideoSpatialAQStrength);
-                        s(MediaConfig::VideoTemporalAQ);
-                        s(MediaConfig::VideoMultiPass);
-                        s(MediaConfig::VideoRepeatHeaders);
-                        s(MediaConfig::VideoTimecodeSEI);
-                        s(MediaConfig::VideoColorPrimaries);
-                        s(MediaConfig::VideoTransferCharacteristics);
-                        s(MediaConfig::VideoMatrixCoefficients);
-                        s(MediaConfig::VideoRange);
-                        s(MediaConfig::VideoScanMode);
-                        s(MediaConfig::HdrMasteringDisplay);
-                        s(MediaConfig::HdrContentLightLevel);
-                        sWithDefault(MediaConfig::Capacity, int32_t(8));
-                        return specs;
-                }
+        MediaIO::FormatDesc d;
+        d.name              = "VideoEncoder";
+        d.description       = "Generic video encoder stage (picks a VideoEncoder via VideoCodec)";
+        d.canBeSource       = false;
+        d.canBeSink         = false;
+        d.canBeTransform    = true;
+        d.create            = []() -> MediaIOTask * { return new MediaIOTask_VideoEncoder(); };
+        d.configSpecs       = []() -> MediaIO::Config::SpecMap {
+                MediaIO::Config::SpecMap specs;
+                // Inherit the library-wide spec for each key so
+                // descriptions, types, ranges, and enum types
+                // stay consistent across every backend that
+                // references them.  Local defaults only override
+                // when we want a backend-specific preferred
+                // value different from the MediaConfig library
+                // default.
+                auto s = [&specs](MediaConfig::ID id) {
+                        const VariantSpec *gs = MediaConfig::spec(id);
+                        if(gs) specs.insert(id, *gs);
+                };
+                auto sWithDefault =
+                        [&specs](MediaConfig::ID id, const Variant &def) {
+                        const VariantSpec *gs = MediaConfig::spec(id);
+                        specs.insert(id, gs
+                                ? VariantSpec(*gs).setDefault(def)
+                                : VariantSpec().setDefault(def));
+                };
+                s(MediaConfig::VideoCodec);
+                s(MediaConfig::FrameRate);
+                s(MediaConfig::BitrateKbps);
+                s(MediaConfig::MaxBitrateKbps);
+                s(MediaConfig::VideoRcMode);
+                s(MediaConfig::GopLength);
+                s(MediaConfig::IdrInterval);
+                s(MediaConfig::BFrames);
+                s(MediaConfig::LookaheadFrames);
+                s(MediaConfig::VideoPreset);
+                s(MediaConfig::VideoProfile);
+                s(MediaConfig::VideoLevel);
+                s(MediaConfig::VideoQp);
+                s(MediaConfig::VideoSpatialAQ);
+                s(MediaConfig::VideoSpatialAQStrength);
+                s(MediaConfig::VideoTemporalAQ);
+                s(MediaConfig::VideoMultiPass);
+                s(MediaConfig::VideoRepeatHeaders);
+                s(MediaConfig::VideoTimecodeSEI);
+                s(MediaConfig::VideoColorPrimaries);
+                s(MediaConfig::VideoTransferCharacteristics);
+                s(MediaConfig::VideoMatrixCoefficients);
+                s(MediaConfig::VideoRange);
+                s(MediaConfig::VideoChromaSubsampling);
+                s(MediaConfig::VideoScanMode);
+                s(MediaConfig::HdrMasteringDisplay);
+                s(MediaConfig::HdrContentLightLevel);
+                sWithDefault(MediaConfig::Capacity, int32_t(8));
+                return specs;
         };
+        d.bridge            = videoEncoderBridge;
+        return d;
 }
 
 MediaIOTask_VideoEncoder::~MediaIOTask_VideoEncoder() {
@@ -93,7 +132,7 @@ MediaIOTask_VideoEncoder::~MediaIOTask_VideoEncoder() {
 }
 
 Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandOpen &cmd) {
-        if(cmd.mode != MediaIO::InputAndOutput) {
+        if(cmd.mode != MediaIO::Transform) {
                 promekiErr("MediaIOTask_VideoEncoder: only InputAndOutput mode is supported");
                 return Error::NotSupported;
         }
@@ -393,6 +432,189 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandStats &cmd) {
 
 int MediaIOTask_VideoEncoder::pendingOutput() const {
         return static_cast<int>(_outputQueue.size());
+}
+
+// ---- Phase 1 introspection / negotiation overrides ----
+
+Error MediaIOTask_VideoEncoder::describe(MediaIODescription *out) const {
+        if(out == nullptr) return Error::Invalid;
+
+        // When a codec has been pinned via config, advertise it as
+        // the producible compressed shape.  The acceptable side
+        // stays empty as a "any uncompressed video" signal.
+        if(_codec.isValid()) {
+                for(int pdId : _codec.compressedPixelDescs()) {
+                        MediaDesc produced;
+                        produced.imageList().pushToBack(
+                                ImageDesc(Size2Du32(0, 0),
+                                          PixelDesc(static_cast<PixelDesc::ID>(pdId))));
+                        out->producibleFormats().pushToBack(produced);
+                }
+                if(!out->producibleFormats().isEmpty()) {
+                        out->setPreferredFormat(out->producibleFormats()[0]);
+                }
+        }
+        return Error::Ok;
+}
+
+Error MediaIOTask_VideoEncoder::proposeInput(const MediaDesc &offered,
+                                             MediaDesc *preferred) const {
+        if(preferred == nullptr) return Error::Invalid;
+        if(offered.imageList().isEmpty()) return Error::NotSupported;
+
+        // VideoEncoder consumes uncompressed video only.
+        const PixelDesc &pd = offered.imageList()[0].pixelDesc();
+        if(!pd.isValid())     return Error::NotSupported;
+        if(pd.isCompressed()) return Error::NotSupported;
+
+        // Resolve the codec — either pinned by an earlier open(), or
+        // read straight off the stage config during planning (the
+        // planner constructs the stage via MediaIO::create but does
+        // not open it, so _codec is still invalid at this point).
+        VideoCodec codec = _codec;
+        if(!codec.isValid() && mediaIo() != nullptr) {
+                codec = mediaIo()->config().getAs<VideoCodec>(MediaConfig::VideoCodec);
+        }
+
+        // Without a codec we can't know which inputs the concrete
+        // encoder will accept.  Fall back to passthrough; the planner
+        // will fail later at open time rather than insert a bogus
+        // bridge now.
+        if(!codec.isValid() || !codec.canEncode()) {
+                *preferred = offered;
+                return Error::Ok;
+        }
+
+        // Query the backend's supported input list.  If a session is
+        // already live (stage opened) we use it; otherwise we pull the
+        // list from the codec registry so the planner never has to
+        // instantiate an encoder (and touch its GPU / libjpeg /
+        // SVT-JPEG-XS setup) just to introspect supported inputs.
+        List<int> supported;
+        if(_encoder != nullptr) {
+                supported = _encoder->supportedInputs();
+        } else {
+                supported = codec.encoderSupportedInputs();
+        }
+
+        // Empty list means "accepts any uncompressed input" per the
+        // VideoEncoder::supportedInputs contract.
+        if(supported.isEmpty()) {
+                *preferred = offered;
+                return Error::Ok;
+        }
+
+        // Which chroma does the caller want the CSC to land on?  The
+        // config default is 4:2:0 so an RGB or 4:4:4 source routed into
+        // an encoder picks the universally-decodable format unless the
+        // user opts in to higher-quality chroma with VideoChromaSubsampling.
+        ChromaSubsampling wantChroma = ChromaSubsampling::YUV420;
+        if(mediaIo() != nullptr) {
+                const Enum raw = mediaIo()->config().getAs<Enum>(
+                        MediaConfig::VideoChromaSubsampling);
+                if(raw.type() == ChromaSubsampling::Type) {
+                        wantChroma = ChromaSubsampling(raw.value());
+                }
+        }
+
+        auto chromaToSampling = [](ChromaSubsampling c) {
+                if(c == ChromaSubsampling::YUV444) return PixelFormat::Sampling444;
+                if(c == ChromaSubsampling::YUV422) return PixelFormat::Sampling422;
+                return PixelFormat::Sampling420;
+        };
+        const PixelFormat::Sampling wantSampling = chromaToSampling(wantChroma);
+
+        const int offeredBits = pd.pixelFormat().compCount() > 0
+                ? static_cast<int>(pd.pixelFormat().compDesc(0).bits) : 0;
+
+        // Offered format already satisfies the requested chroma and is
+        // on the supported list — no negotiation needed.
+        const int offeredId = static_cast<int>(pd.id());
+        if(pd.pixelFormat().sampling() == wantSampling) {
+                for(size_t i = 0; i < supported.size(); ++i) {
+                        if(supported[i] == offeredId) {
+                                *preferred = offered;
+                                return Error::Ok;
+                        }
+                }
+        }
+
+        // Pick the best-matching supported format to advertise so the
+        // planner splices in a CSC.  Preference order:
+        //   1. Requested chroma AND same bit-depth as source.
+        //   2. Requested chroma (any bit-depth, prefers closer depth).
+        //   3. Same bit-depth as source (any chroma).
+        //   4. First entry (final fallback — every encoder lists at
+        //      least one format).
+        int bestId        = supported[0];
+        int bestTier      = 4;
+        int bestBitsDelta = INT_MAX;
+        for(size_t i = 0; i < supported.size(); ++i) {
+                const PixelDesc cand(static_cast<PixelDesc::ID>(supported[i]));
+                if(!cand.isValid()) continue;
+                const int candBits = cand.pixelFormat().compCount() > 0
+                        ? static_cast<int>(cand.pixelFormat().compDesc(0).bits) : 0;
+                const bool sameChroma = (cand.pixelFormat().sampling() == wantSampling);
+                const bool sameBits   = (offeredBits > 0 && candBits == offeredBits);
+
+                int tier = 4;
+                if(sameChroma && sameBits) tier = 1;
+                else if(sameChroma)        tier = 2;
+                else if(sameBits)          tier = 3;
+
+                const int bitsDelta = (offeredBits > 0 && candBits > 0)
+                        ? std::abs(candBits - offeredBits)
+                        : INT_MAX;
+
+                if(tier < bestTier ||
+                   (tier == bestTier && bitsDelta < bestBitsDelta)) {
+                        bestTier      = tier;
+                        bestId        = supported[i];
+                        bestBitsDelta = bitsDelta;
+                }
+        }
+
+        MediaDesc out = offered;
+        ImageDesc::List &imgs = out.imageList();
+        const PixelDesc pick(static_cast<PixelDesc::ID>(bestId));
+        for(size_t i = 0; i < imgs.size(); ++i) {
+                imgs[i].setPixelDesc(pick);
+        }
+        *preferred = out;
+        return Error::Ok;
+}
+
+Error MediaIOTask_VideoEncoder::proposeOutput(const MediaDesc &requested,
+                                              MediaDesc *achievable) const {
+        if(achievable == nullptr) return Error::Invalid;
+
+        // Resolve the codec from a live session when open, or from
+        // the stage config during planning (the same fallback used
+        // by proposeInput above).
+        VideoCodec codec = _codec;
+        if(!codec.isValid() && mediaIo() != nullptr) {
+                codec = mediaIo()->config().getAs<VideoCodec>(MediaConfig::VideoCodec);
+        }
+        if(!codec.isValid() || codec.compressedPixelDescs().isEmpty()) {
+                // Codec not yet known — defer; the planner has to
+                // pin it before the encoder can answer.
+                return Error::NotSupported;
+        }
+
+        // The encoder produces a compressed PixelDesc whose codec
+        // matches the configured VideoCodec.  Start from the
+        // requested input shape (raster + frame rate flow through),
+        // then replace the pixel desc with the codec's compressed
+        // form.
+        MediaDesc out = requested;
+        const PixelDesc compressed(
+                static_cast<PixelDesc::ID>(codec.compressedPixelDescs()[0]));
+        ImageDesc::List &imgs = out.imageList();
+        for(size_t i = 0; i < imgs.size(); ++i) {
+                imgs[i].setPixelDesc(compressed);
+        }
+        *achievable = out;
+        return Error::Ok;
 }
 
 PROMEKI_NAMESPACE_END

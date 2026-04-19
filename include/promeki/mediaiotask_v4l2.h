@@ -114,7 +114,7 @@ PROMEKI_NAMESPACE_BEGIN
  * cfg.set(MediaConfig::V4l2DevicePath, String("/dev/video0"));
  * cfg.set(MediaConfig::V4l2AudioDevice, String("hw:1,0"));
  * MediaIO *io = MediaIO::create(cfg);
- * io->open(MediaIO::Output);
+ * io->open(MediaIO::Source);
  * Frame::Ptr frame;
  * io->readFrame(frame);
  * io->close();
@@ -151,6 +151,18 @@ class MediaIOTask_V4L2 : public MediaIOTask {
                 Error executeCmd(MediaIOCommandClose &cmd) override;
                 Error executeCmd(MediaIOCommandRead &cmd) override;
                 Error executeCmd(MediaIOCommandStats &cmd) override;
+
+                // describe() / proposeOutput overrides intentionally
+                // omitted for v1: the V4L2 device-mode enumeration
+                // path lives in v4l2QueryDevice and is already exposed
+                // through @ref MediaIO::queryDevice (used by
+                // @c mediaplay @c --probe).  A future revision will
+                // surface it here so the planner can pick a device
+                // mode without paying the cost of opening the
+                // capture pipeline.  Today the planner's
+                // open()/close() fallback handles V4L2 sources
+                // correctly — at the cost of one ALSA + V4L2 open
+                // cycle during planning.
 
                 // -- V4L2 helpers --
                 Error openVideo(const MediaIO::Config &cfg);

@@ -18,6 +18,7 @@
 #include <promeki/enums.h>
 #include <promeki/imagedataencoder.h>
 #include <promeki/logger.h>
+#include <promeki/mediaiodescription.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -28,9 +29,9 @@ MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
                 "TPG",
                 "Video/audio/timecode test pattern generator",
                 {},     // No file extensions — this is a generator
-                true,   // canOutput
-                false,  // canInput
-                false,  // canInputAndOutput
+                true,   // canBeSource
+                false,  // canBeSink
+                false,  // canBeTransform
                 []() -> MediaIOTask * {
                         return new MediaIOTask_TPG();
                 },
@@ -128,7 +129,7 @@ MediaIOTask_TPG::~MediaIOTask_TPG() {
 }
 
 Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
-        if(cmd.mode != MediaIO::Output) return Error::NotSupported;
+        if(cmd.mode != MediaIO::Source) return Error::NotSupported;
 
         const MediaIO::Config &cfg = cmd.config;
 
@@ -477,6 +478,77 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandRead &cmd) {
         cmd.frame = std::move(frame);
         cmd.currentFrame = _frameCount;
         stampWorkEnd();
+        return Error::Ok;
+}
+
+// ---- Phase 3 introspection / negotiation overrides ----
+
+MediaDesc MediaIOTask_TPG::producedFromConfig(const MediaIO::Config &cfg) const {
+        // Layer the user's config on top of TPG's spec defaults so
+        // describe() / proposeOutput report a meaningful shape even
+        // when a caller built the MediaIO with just `Type=TPG` and
+        // no other keys.  The factory does not auto-merge defaults,
+        // so we do it here.
+        MediaIO::Config merged = MediaIO::defaultConfig("TPG");
+        cfg.forEach([&merged](MediaConfig::ID id, const Variant &val) {
+                merged.set(id, val);
+        });
+
+        MediaDesc md;
+        const VideoFormat vfmt = merged.getAs<VideoFormat>(MediaConfig::VideoFormat);
+        if(vfmt.isValid()) {
+                md.setFrameRate(vfmt.frameRate());
+                if(merged.getAs<bool>(MediaConfig::VideoEnabled, true)) {
+                        const PixelDesc pd = merged.getAs<PixelDesc>(
+                                MediaConfig::VideoPixelFormat,
+                                PixelDesc(PixelDesc::RGB8_sRGB));
+                        ImageDesc img(vfmt.raster().width(), vfmt.raster().height(),
+                                      pd.id());
+                        img.setVideoScanMode(vfmt.videoScanMode());
+                        md.imageList().pushToBack(img);
+                }
+        }
+        if(merged.getAs<bool>(MediaConfig::AudioEnabled, true)) {
+                AudioDesc ad;
+                ad.setSampleRate(merged.getAs<float>(MediaConfig::AudioRate, 48000.0f));
+                ad.setChannels(static_cast<unsigned int>(
+                        merged.getAs<int>(MediaConfig::AudioChannels, 2)));
+                ad.setDataType(AudioDesc::PCMI_Float32LE);
+                md.audioList().pushToBack(ad);
+        }
+        return md;
+}
+
+Error MediaIOTask_TPG::describe(MediaIODescription *out) const {
+        if(out == nullptr) return Error::Invalid;
+        const MediaIO *io = mediaIo();
+        const MediaIO::Config &cfg = (io != nullptr) ? io->config() : MediaConfig();
+        const MediaDesc preferred = producedFromConfig(cfg);
+        if(preferred.isValid()) {
+                out->setPreferredFormat(preferred);
+                out->producibleFormats().pushToBack(preferred);
+        }
+        out->setFrameCount(MediaIODescription::FrameCountInfinite);
+        return Error::Ok;
+}
+
+Error MediaIOTask_TPG::proposeOutput(const MediaDesc &requested,
+                                     MediaDesc *achievable) const {
+        // TPG can synthesise at any reasonable shape.  The planner
+        // can ask for an alternative pixel format / raster / frame
+        // rate via @p requested; we accept any uncompressed
+        // PixelDesc and any valid frame rate.  (When the planner
+        // doesn't ask for anything specific it falls back to
+        // describe().preferredFormat.)
+        if(achievable == nullptr) return Error::Invalid;
+        if(!requested.isValid()) return Error::NotSupported;
+        for(const auto &img : requested.imageList()) {
+                if(img.pixelDesc().isCompressed()) {
+                        // TPG produces uncompressed frames only.
+                        return Error::NotSupported;
+                }
+        }
+        *achievable = requested;
         return Error::Ok;
 }
 

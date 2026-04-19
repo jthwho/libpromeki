@@ -274,6 +274,8 @@ class ImageFileIO_SGI : public ImageFileIO {
                         _canLoad = true;
                         _canSave = true;
                         _name = "SGI";
+                        _description = "Silicon Graphics SGI image sequence";
+                        _extensions = { "sgi", "rgb" };
                 }
                 Error load(ImageFile &imageFile, const MediaConfig &config) const override;
                 Error save(ImageFile &imageFile, const MediaConfig &config) const override;

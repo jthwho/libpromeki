@@ -54,9 +54,9 @@ TEST_CASE("MediaIOTask_SRC_Registry") {
         bool found = false;
         for(const auto &desc : formats) {
                 if(desc.name == "SRC") {
-                        CHECK_FALSE(desc.canOutput);
-                        CHECK_FALSE(desc.canInput);
-                        CHECK(desc.canInputAndOutput);
+                        CHECK_FALSE(desc.canBeSource);
+                        CHECK_FALSE(desc.canBeSink);
+                        CHECK(desc.canBeTransform);
                         CHECK(desc.extensions.isEmpty());
                         found = true;
                         break;
@@ -80,7 +80,7 @@ TEST_CASE("MediaIOTask_SRC_RejectsReaderMode") {
         MediaIO::Config cfg = MediaIO::defaultConfig("SRC");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        CHECK(io->open(MediaIO::Output).isError());
+        CHECK(io->open(MediaIO::Source).isError());
         delete io;
 }
 
@@ -88,7 +88,7 @@ TEST_CASE("MediaIOTask_SRC_AcceptsReadWriteMode") {
         MediaIO::Config cfg = MediaIO::defaultConfig("SRC");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
         CHECK(io->isOpen());
         io->close();
         delete io;
@@ -98,7 +98,7 @@ TEST_CASE("MediaIOTask_SRC_AudioPassThrough") {
         MediaIO::Config cfg = MediaIO::defaultConfig("SRC");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         Frame::Ptr in = makeAudioFrame(AudioDesc::PCMI_Float32LE, 48000.0f, 2, 1024);
         CHECK(io->writeFrame(in).isOk());
@@ -121,7 +121,7 @@ TEST_CASE("MediaIOTask_SRC_AudioFormatConversion") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         Frame::Ptr in = makeAudioFrame(AudioDesc::PCMI_Float32LE, 48000.0f, 2, 1024);
         CHECK(io->writeFrame(in).isOk());
@@ -146,7 +146,7 @@ TEST_CASE("MediaIOTask_SRC_VideoPassesThrough") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         Frame::Ptr in = makeVideoAudioFrame(16, 16, PixelDesc::RGB8_sRGB,
                                             AudioDesc::PCMI_Float32LE,
@@ -171,7 +171,7 @@ TEST_CASE("MediaIOTask_SRC_UnknownAudioDataTypeRejected") {
                 String("NotARealFormat"));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        CHECK(io->open(MediaIO::InputAndOutput).isError());
+        CHECK(io->open(MediaIO::Transform).isError());
         delete io;
 }
 
@@ -187,9 +187,9 @@ TEST_CASE("MediaIOTask_SRC_OutputMediaDesc") {
         pending.setFrameRate(FrameRate(FrameRate::FPS_29_97));
         pending.audioList().pushToBack(
                 AudioDesc(AudioDesc::PCMI_Float32LE, 48000.0f, 2));
-        io->setMediaDesc(pending);
+        io->setExpectedDesc(pending);
 
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         MediaDesc vd = io->mediaDesc();
         REQUIRE(vd.audioList().size() == 1);
@@ -207,7 +207,7 @@ TEST_CASE("MediaIOTask_SRC_Stats") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         Frame::Ptr f = makeAudioFrame(AudioDesc::PCMI_Float32LE, 48000.0f, 2, 1024);
         CHECK(io->writeFrame(f).isOk());
@@ -226,7 +226,7 @@ TEST_CASE("MediaIOTask_SRC_ReadEmptyQueueTryAgain") {
         MediaIO::Config cfg = MediaIO::defaultConfig("SRC");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         Frame::Ptr out;
         CHECK(io->readFrame(out, false) == Error::TryAgain);

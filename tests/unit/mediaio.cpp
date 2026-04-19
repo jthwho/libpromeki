@@ -9,7 +9,6 @@
 #include <promeki/mediaio.h>
 #include <promeki/mediaiotask_tpg.h>
 #include <promeki/mediaiotask_imagefile.h>
-#include <promeki/mediaiotask_converter.h>
 #include <promeki/image.h>
 #include <promeki/audio.h>
 #include <promeki/frame.h>
@@ -35,8 +34,8 @@ TEST_CASE("MediaIO_RegistryContainsTPG") {
         bool found = false;
         for(const auto &desc : formats) {
                 if(desc.name == "TPG") {
-                        CHECK(desc.canOutput);
-                        CHECK_FALSE(desc.canInput);
+                        CHECK(desc.canBeSource);
+                        CHECK_FALSE(desc.canBeSink);
                         CHECK(desc.extensions.isEmpty());
                         found = true;
                 }
@@ -188,7 +187,7 @@ TEST_CASE("MediaIO_DefaultConfigTPG") {
         // Should be usable for creation straight from the defaults.
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
         CHECK(io->mediaDesc().isValid());
 
         Frame::Ptr frame;
@@ -231,7 +230,7 @@ TEST_CASE("MediaIO_Introspection_ReadPrefetchCounts") {
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         CHECK(io->pendingWrites() == 0);
 
@@ -255,11 +254,11 @@ TEST_CASE("MediaIO_Introspection_ReadPrefetchCounts") {
 }
 
 TEST_CASE("MediaIO_Introspection_PendingWritesDrainAfterClose") {
-        MediaIO::Config cfg = MediaIO::defaultConfig("Converter");
+        MediaIO::Config cfg = MediaIO::defaultConfig("CSC");
         cfg.set(MediaConfig::Capacity, 4);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         // Submit several blocking writes — each one runs to completion
         // before writeFrame() returns, so pendingWrites() is 0 again
@@ -288,7 +287,7 @@ TEST_CASE("MediaIO_Introspection_FrameAvailableMatchesReadyReads") {
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         // frameAvailable() and readyReads() > 0 must always agree.
         for(int i = 0; i < 5; i++) {
@@ -319,10 +318,10 @@ TEST_CASE("MediaIO_TPG_FullGeneration") {
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
 
-        Error err = io->open(MediaIO::Output);
+        Error err = io->open(MediaIO::Source);
         CHECK(err.isOk());
         CHECK(io->isOpen());
-        CHECK(io->mode() == MediaIO::Output);
+        CHECK(io->mode() == MediaIO::Source);
 
         // Check MediaDesc
         MediaDesc vd = io->mediaDesc();
@@ -380,7 +379,7 @@ TEST_CASE("MediaIO_TPG_VideoOnly") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         MediaDesc vd = io->mediaDesc();
         CHECK(vd.imageList().size() == 1);
@@ -410,7 +409,7 @@ TEST_CASE("MediaIO_TPG_AudioOnly") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         MediaDesc vd = io->mediaDesc();
         CHECK(vd.imageList().size() == 0);
@@ -441,7 +440,7 @@ TEST_CASE("MediaIO_TPG_AudioCadence_29_97_48k") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         size_t total = 0;
         for(int i = 0; i < 5; i++) {
@@ -472,7 +471,7 @@ TEST_CASE("MediaIO_TPG_AudioCadence_30_48k_isConstant") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         for(int i = 0; i < 10; i++) {
                 Frame::Ptr frame;
@@ -499,7 +498,7 @@ TEST_CASE("MediaIO_TPG_TimecodeOnly") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         Frame::Ptr frame;
         CHECK(io->readFrame(frame).isOk());
@@ -523,7 +522,7 @@ TEST_CASE("MediaIO_TPG_WriterNotSupported") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        CHECK(io->open(MediaIO::Input) == Error::NotSupported);
+        CHECK(io->open(MediaIO::Sink) == Error::NotSupported);
         delete io;
 }
 
@@ -535,7 +534,7 @@ TEST_CASE("MediaIO_TPG_NothingEnabledFails") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        CHECK(io->open(MediaIO::Output) == Error::InvalidArgument);
+        CHECK(io->open(MediaIO::Source) == Error::InvalidArgument);
         delete io;
 }
 
@@ -548,7 +547,7 @@ TEST_CASE("MediaIO_TPG_InvalidPatternFails") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        CHECK(io->open(MediaIO::Output) == Error::InvalidArgument);
+        CHECK(io->open(MediaIO::Source) == Error::InvalidArgument);
         delete io;
 }
 
@@ -574,8 +573,8 @@ TEST_CASE("MediaIO_TPG_DoubleOpenFails") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
-        CHECK(io->open(MediaIO::Output) == Error::AlreadyOpen);
+        REQUIRE(io->open(MediaIO::Source).isOk());
+        CHECK(io->open(MediaIO::Source) == Error::AlreadyOpen);
         io->close();
         delete io;
 }
@@ -592,7 +591,7 @@ TEST_CASE("MediaIO_TPG_NoSeek") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         CHECK_FALSE(io->canSeek());
         CHECK(io->seekToFrame(0) == Error::IllegalSeek);
@@ -616,7 +615,7 @@ TEST_CASE("MediaIO_TPG_Motion") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         // Read two frames — they should differ due to motion
         Frame::Ptr frame1, frame2;
@@ -655,8 +654,8 @@ TEST_CASE("MediaIO_ImageFile_RegistryContainsBackend") {
         bool found = false;
         for(const auto &desc : formats) {
                 if(desc.name == "ImageFile") {
-                        CHECK(desc.canOutput);
-                        CHECK(desc.canInput);
+                        CHECK(desc.canBeSource);
+                        CHECK(desc.canBeSink);
                         CHECK_FALSE(desc.extensions.isEmpty());
                         bool hasDpx = false, hasTga = false, hasSgi = false;
                         for(const auto &e : desc.extensions) {
@@ -677,7 +676,7 @@ TEST_CASE("MediaIO_ImageFile_CreateForFileReadByExtension") {
         MediaIO *io = MediaIO::createForFileRead("/tmp/promeki_nonexistent_test.dpx");
         CHECK(io != nullptr);
         if(io) {
-                CHECK(io->open(MediaIO::Output).isError());
+                CHECK(io->open(MediaIO::Source).isError());
                 delete io;
         }
 }
@@ -719,7 +718,7 @@ TEST_CASE("MediaIO_ImageFile_DefaultFrameRateOnRead") {
                 wf.modify()->imageList().pushToBack(Image::Ptr::create(src));
                 MediaIO *io = MediaIO::createForFileWrite(fn);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 CHECK(io->writeFrame(wf).isOk());
                 io->close();
                 delete io;
@@ -727,7 +726,7 @@ TEST_CASE("MediaIO_ImageFile_DefaultFrameRateOnRead") {
         {
                 MediaIO *io = MediaIO::createForFileRead(fn);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 CHECK(io->frameRate() == MediaIOTask_ImageFile::DefaultFrameRate);
                 CHECK(io->mediaDesc().frameRate() == MediaIOTask_ImageFile::DefaultFrameRate);
                 io->close();
@@ -747,7 +746,7 @@ TEST_CASE("MediaIO_ImageFile_ConfigFrameRateOverride") {
                 wf.modify()->imageList().pushToBack(Image::Ptr::create(src));
                 MediaIO *io = MediaIO::createForFileWrite(fn);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 CHECK(io->writeFrame(wf).isOk());
                 io->close();
                 delete io;
@@ -759,7 +758,7 @@ TEST_CASE("MediaIO_ImageFile_ConfigFrameRateOverride") {
                 cfg.set(MediaConfig::FrameRate, wanted);
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 CHECK(io->frameRate() == wanted);
                 CHECK(io->mediaDesc().frameRate() == wanted);
                 io->close();
@@ -780,7 +779,7 @@ TEST_CASE("MediaIO_ImageFile_DPXRoundTrip") {
                 wf.modify()->imageList().pushToBack(Image::Ptr::create(src));
                 MediaIO *io = MediaIO::createForFileWrite(fn);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 CHECK(io->writeFrame(wf).isOk());
                 io->close();
                 delete io;
@@ -788,7 +787,7 @@ TEST_CASE("MediaIO_ImageFile_DPXRoundTrip") {
         {
                 MediaIO *io = MediaIO::createForFileRead(fn);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 MediaDesc vd = io->mediaDesc();
                 CHECK(vd.imageList().size() == 1);
                 CHECK(vd.imageList()[0].size().width() == w);
@@ -826,7 +825,7 @@ TEST_CASE("MediaIO_ImageFile_TGARoundTrip") {
                 wf.modify()->imageList().pushToBack(Image::Ptr::create(src));
                 MediaIO *io = MediaIO::createForFileWrite(fn);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 CHECK(io->writeFrame(wf).isOk());
                 io->close();
                 delete io;
@@ -834,7 +833,7 @@ TEST_CASE("MediaIO_ImageFile_TGARoundTrip") {
         {
                 MediaIO *io = MediaIO::createForFileRead(fn);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 Frame::Ptr rf;
                 CHECK(io->readFrame(rf).isOk());
                 REQUIRE(rf->imageList().size() == 1);
@@ -856,7 +855,7 @@ TEST_CASE("MediaIO_ImageFile_StepControl") {
                 wf.modify()->imageList().pushToBack(Image::Ptr::create(src));
                 MediaIO *io = MediaIO::createForFileWrite(fn);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 io->writeFrame(wf);
                 io->close();
                 delete io;
@@ -864,7 +863,7 @@ TEST_CASE("MediaIO_ImageFile_StepControl") {
         {
                 MediaIO *io = MediaIO::createForFileRead(fn);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 // Default step is 0 — no seeking, re-reads indefinitely
                 CHECK(io->step() == 0);
                 CHECK_FALSE(io->canSeek());
@@ -902,7 +901,7 @@ TEST_CASE("MediaIO_ImageFile_ProbeDetectsFormat") {
                 wf.modify()->imageList().pushToBack(Image::Ptr::create(src));
                 MediaIO *io = MediaIO::createForFileWrite(fn);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 io->writeFrame(wf);
                 io->close();
                 delete io;
@@ -932,7 +931,7 @@ TEST_CASE("MediaIO_BaseClass_FrameRateAccessor") {
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
         CHECK(io->frameRate() == FrameRate(FrameRate::FPS_24));
         io->close();
         delete io;
@@ -947,7 +946,7 @@ TEST_CASE("MediaIO_BaseClass_AudioDescAccessor") {
         cfg.set(MediaConfig::AudioChannels, 4);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
         AudioDesc ad = io->audioDesc();
         CHECK(ad.isValid());
         CHECK(ad.sampleRate() == 48000.0f);
@@ -964,7 +963,7 @@ TEST_CASE("MediaIO_BaseClass_AudioDescEmpty") {
         // No audio enabled
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
         AudioDesc ad = io->audioDesc();
         CHECK_FALSE(ad.isValid());
         io->close();
@@ -983,7 +982,7 @@ TEST_CASE("MediaIO_TPG_StepZeroHoldsTimecode") {
         cfg.set(MediaConfig::TimecodeStart, "01:00:00:00");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         io->setStep(0);
         Frame::Ptr f1, f2;
@@ -1006,7 +1005,7 @@ TEST_CASE("MediaIO_TPG_StepForwardAdvancesTimecode") {
         cfg.set(MediaConfig::TimecodeStart, "01:00:00:00");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         // step=2: each read advances timecode by 2 frames
         io->setStep(2);
@@ -1034,7 +1033,7 @@ TEST_CASE("MediaIO_TPG_PrefetchDepth_DefaultIsTaskValue") {
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
         CHECK(io->prefetchDepth() == 1);
         io->close();
         delete io;
@@ -1050,7 +1049,7 @@ TEST_CASE("MediaIO_TPG_PrefetchDepth_UserOverride") {
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         io->setPrefetchDepth(4);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
         CHECK(io->prefetchDepth() == 4);
 
         // Read several frames — should still work with depth > 1.
@@ -1090,7 +1089,7 @@ TEST_CASE("MediaIO_TPG_DefaultSeekMode_IsExact") {
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
         CHECK(io->defaultSeekMode() == MediaIO::SeekExact);
         io->close();
         delete io;
@@ -1113,7 +1112,7 @@ TEST_CASE("MediaIO_AudioFile_SeekDefault_ResolvesToExact") {
                 cfg.set(MediaConfig::AudioChannels, (unsigned int)desc.channels());
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 AudioTestPattern atp(desc);
                 { EnumList __m = EnumList::forType<AudioPattern>(); for(size_t __c = 0; __c < desc.channels(); ++__c) __m.append(AudioPattern::Silence); atp.setChannelModes(__m); }
                 atp.configure();
@@ -1132,7 +1131,7 @@ TEST_CASE("MediaIO_AudioFile_SeekDefault_ResolvesToExact") {
                 cfg.set(MediaConfig::FrameRate, fps);
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 CHECK(io->defaultSeekMode() == MediaIO::SeekExact);
                 // Default seek (no mode arg) should hit the exact frame.
                 CHECK(io->seekToFrame(5).isOk());
@@ -1165,7 +1164,7 @@ TEST_CASE("MediaIO_TrackSelection_PreOpenOnly") {
         CHECK(io->setVideoTracks(v).isOk());
         CHECK(io->setAudioTracks(a).isOk());
 
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         // Post-open setters return AlreadyOpen.
         CHECK(io->setVideoTracks(v) == Error::AlreadyOpen);
@@ -1186,7 +1185,7 @@ TEST_CASE("MediaIO_TPG_FrameAvailable_AfterRead") {
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
         // Initially nothing in the queue.
         CHECK_FALSE(io->frameAvailable());
         // After a blocking read, the prefetched next frame should be in
@@ -1211,7 +1210,7 @@ TEST_CASE("MediaIO_TPG_ReopenSameInstance") {
         // Multiple open/read/close cycles on the same MediaIO instance
         // exercise backend state reset.
         for(int cycle = 0; cycle < 3; cycle++) {
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 CHECK(io->isOpen());
                 CHECK(io->mediaDesc().isValid());
                 Frame::Ptr frame;
@@ -1236,7 +1235,7 @@ TEST_CASE("MediaIO_SendParams_DefaultIsNotSupported") {
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
         MediaIOParams params;
         Error err = io->sendParams("AnythingAtAll", params);
         CHECK(err == Error::NotSupported);
@@ -1290,7 +1289,7 @@ TEST_CASE("MediaIO_Stats_DefaultPopulatesStandardKeys") {
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
         MediaIOStats s = io->stats();
         CHECK_FALSE(s.isEmpty());
         CHECK(s.getAs<int64_t>(MediaIOStats::FramesDropped, -1) == 0);
@@ -1332,7 +1331,7 @@ TEST_CASE("MediaIO_ImageFile_EOFLatchesAfterFirstEOF") {
                 wf.modify()->imageList().pushToBack(Image::Ptr::create(src));
                 MediaIO *io = MediaIO::createForFileWrite(fn);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 io->writeFrame(wf);
                 io->close();
                 delete io;
@@ -1340,7 +1339,7 @@ TEST_CASE("MediaIO_ImageFile_EOFLatchesAfterFirstEOF") {
         {
                 MediaIO *io = MediaIO::createForFileRead(fn);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 io->setStep(1);  // override the default step=0 so EOF triggers
                 Frame::Ptr f1;
                 CHECK(io->readFrame(f1).isOk());          // first read OK
@@ -1353,7 +1352,7 @@ TEST_CASE("MediaIO_ImageFile_EOFLatchesAfterFirstEOF") {
                 CHECK(io->readFrame(f4) == Error::EndOfFile);
                 // Reopen resets the latch.
                 io->close();
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 io->setStep(1);
                 Frame::Ptr f5;
                 CHECK(io->readFrame(f5).isOk());
@@ -1379,7 +1378,7 @@ TEST_CASE("MediaIO_AudioFile_EOFLatchClearedBySeek") {
                 cfg.set(MediaConfig::AudioChannels, (unsigned int)desc.channels());
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 AudioTestPattern atp(desc);
                 { EnumList __m = EnumList::forType<AudioPattern>(); for(size_t __c = 0; __c < desc.channels(); ++__c) __m.append(AudioPattern::Silence); atp.setChannelModes(__m); }
                 atp.configure();
@@ -1399,7 +1398,7 @@ TEST_CASE("MediaIO_AudioFile_EOFLatchClearedBySeek") {
                 cfg.set(MediaConfig::FrameRate, fps);
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 Frame::Ptr frame;
                 int reads = 0;
                 while(io->readFrame(frame).isOk()) reads++;
@@ -1446,7 +1445,7 @@ TEST_CASE("MediaIO_TPG_CancelPendingDropsReadResults") {
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         // Kick off several non-blocking reads.  Each is a no-op for the
         // caller (returns TryAgain) but queues a task on the strand.
@@ -1494,7 +1493,7 @@ TEST_CASE("MediaIO_Close_SyncEmitsClosedSignal") {
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         std::atomic<int> closedCount{0};
         std::atomic<int> closedErr{-1};
@@ -1518,7 +1517,7 @@ TEST_CASE("MediaIO_Close_AsyncReturnsImmediatelyAndEmitsClosed") {
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         std::atomic<int> closedCount{0};
         io->closedSignal.connect([&](Error) {
@@ -1549,7 +1548,7 @@ TEST_CASE("MediaIO_Close_DoubleCloseWhileClosingReturnsNotOpen") {
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         std::atomic<int> closedCount{0};
         io->closedSignal.connect([&](Error) { closedCount.fetch_add(1); });
@@ -1577,7 +1576,7 @@ TEST_CASE("MediaIO_Close_AsyncEmitsSyntheticEOS") {
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         // Drain one real read so prefetch is settled, then close async.
         Frame::Ptr realFrame;
@@ -1618,7 +1617,7 @@ TEST_CASE("MediaIO_Close_AsyncDeliversAllPendingReadsBeforeEOS") {
         REQUIRE(io != nullptr);
         // Deep prefetch so several reads are in flight when close runs.
         io->setPrefetchDepth(4);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         // Kick off prefetch by doing one non-blocking read.
         {
@@ -1657,11 +1656,11 @@ TEST_CASE("MediaIO_Close_AsyncDeliversAllPendingReadsBeforeEOS") {
 TEST_CASE("MediaIO_Close_AsyncRejectsNewWrites") {
         // writeFrame() during an async close must return NotOpen
         // without queueing any new work behind the finalize task.
-        MediaIO::Config cfg = MediaIO::defaultConfig("Converter");
+        MediaIO::Config cfg = MediaIO::defaultConfig("CSC");
         cfg.set(MediaConfig::Capacity, 4);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         Image img(8, 8, PixelDesc(PixelDesc::RGB8_sRGB));
         img.fill(0);
@@ -1694,7 +1693,7 @@ TEST_CASE("MediaIO_Close_ReopenAfterAsyncStartsClean") {
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         std::atomic<int> closedCount{0};
         io->closedSignal.connect([&](Error) { closedCount.fetch_add(1); });
@@ -1706,7 +1705,7 @@ TEST_CASE("MediaIO_Close_ReopenAfterAsyncStartsClean") {
 
         // Reopen without draining the EOS from the queue.  open()
         // must clear it so the first read returns a real frame.
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
         Frame::Ptr f;
         Error e = io->readFrame(f);
         CHECK(e.isOk());
@@ -1729,7 +1728,7 @@ TEST_CASE("MediaIO_ImageFile_FrameCountAfterClose") {
                 wf.modify()->imageList().pushToBack(Image::Ptr::create(src));
                 MediaIO *io = MediaIO::createForFileWrite(fn);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 io->writeFrame(wf);
                 io->close();
                 delete io;
@@ -1737,7 +1736,7 @@ TEST_CASE("MediaIO_ImageFile_FrameCountAfterClose") {
         {
                 MediaIO *io = MediaIO::createForFileRead(fn);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 CHECK(io->frameCount() == 1);
                 io->close();
                 CHECK(io->frameCount() == 0);
@@ -1784,7 +1783,7 @@ static FilePath makeImageSequenceDir(const String &subdir,
 
                 MediaIO *io = MediaIO::createForFileWrite(fp.toString());
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 Frame::Ptr wf = Frame::Ptr::create();
                 wf.modify()->imageList().pushToBack(Image::Ptr::create(src));
                 REQUIRE(io->writeFrame(wf).isOk());
@@ -1802,7 +1801,7 @@ TEST_CASE("MediaIO_ImageSequence_ReadBasic") {
 
         MediaIO *io = MediaIO::createForFileRead(mask);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         CHECK(io->canSeek());
         CHECK(io->frameCount() == 5);
@@ -1831,7 +1830,7 @@ TEST_CASE("MediaIO_ImageSequence_ReadPrintfMask") {
 
         MediaIO *io = MediaIO::createForFileRead(mask);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         CHECK(io->frameCount() == 5);
         CHECK(io->canSeek());
@@ -1853,7 +1852,7 @@ TEST_CASE("MediaIO_ImageSequence_HeadTailDetection") {
 
         MediaIO *io = MediaIO::createForFileRead(mask);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
         CHECK(io->frameCount() == 6);
         io->close();
         delete io;
@@ -1868,7 +1867,7 @@ TEST_CASE("MediaIO_ImageSequence_Seek") {
 
         MediaIO *io = MediaIO::createForFileRead(mask);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
         REQUIRE(io->canSeek());
         CHECK(io->frameCount() == 10);
 
@@ -1894,7 +1893,7 @@ TEST_CASE("MediaIO_ImageSequence_Reverse") {
 
         MediaIO *io = MediaIO::createForFileRead(mask);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         // Seek to the last frame then play in reverse.
         CHECK(io->seekToFrame(4).isOk());
@@ -1926,7 +1925,7 @@ TEST_CASE("MediaIO_ImageSequence_WriteBasic") {
 
         MediaIO *io = MediaIO::createForFileWrite(mask);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Input).isOk());
+        REQUIRE(io->open(MediaIO::Sink).isOk());
 
         for(int i = 0; i < 4; i++) {
                 Image img(8, 8, PixelDesc::RGB8_sRGB);
@@ -1966,7 +1965,7 @@ TEST_CASE("MediaIO_ImageSequence_WriteCustomHead") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Input).isOk());
+        REQUIRE(io->open(MediaIO::Sink).isOk());
 
         for(int i = 0; i < 3; i++) {
                 Image img(8, 8, PixelDesc::RGB8_sRGB);
@@ -1998,7 +1997,7 @@ TEST_CASE("MediaIO_ImageSequence_RoundTrip") {
         {
                 MediaIO *io = MediaIO::createForFileWrite(mask);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 for(int i = 0; i < 6; i++) {
                         Image img(16, 8, PixelDesc::RGB8_sRGB);
                         REQUIRE(img.isValid());
@@ -2012,7 +2011,7 @@ TEST_CASE("MediaIO_ImageSequence_RoundTrip") {
         {
                 MediaIO *io = MediaIO::createForFileRead(mask);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 CHECK(io->frameCount() == 6);
                 for(int i = 0; i < 6; i++) {
                         Frame::Ptr f;
@@ -2050,7 +2049,7 @@ TEST_CASE("MediaIO_ImageSequence_AudioRoundTrip") {
         {
                 MediaIO *io = MediaIO::createForFileWrite(mask);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 for(int i = 0; i < 4; i++) {
                         Image img(16, 8, PixelDesc::RGB8_sRGB);
                         REQUIRE(img.isValid());
@@ -2067,7 +2066,7 @@ TEST_CASE("MediaIO_ImageSequence_AudioRoundTrip") {
         {
                 MediaIO *io = MediaIO::createForFileRead(mask);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 CHECK(io->frameCount() == 4);
 
                 // The MediaDesc should report one audio track and the
@@ -2113,7 +2112,7 @@ TEST_CASE("MediaIO_ImageSequence_ImgSeqSidecarRead") {
 
         MediaIO *io = MediaIO::createForFileRead(sidecar.toString());
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
 
         CHECK(io->frameCount() == 3);
         // Sidecar supplied the frame rate, so it's a "file" source.
@@ -2144,7 +2143,7 @@ TEST_CASE("MediaIO_ImageSequence_ImgSeqSidecarAutoDetectRange") {
 
         MediaIO *io = MediaIO::createForFileRead(sidecar.toString());
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
         CHECK(io->frameCount() == 4);  // 5,6,7,8
         io->close();
         delete io;
@@ -2175,9 +2174,9 @@ TEST_CASE("MediaIO_ImageSequence_AutoSidecarWrite") {
                 md.setFrameRate(fps);
                 md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
                         PixelDesc(PixelDesc::RGB8_sRGB)));
-                io->setMediaDesc(md);
+                io->setExpectedDesc(md);
 
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 for(int i = 0; i < 4; i++) {
                         Image img(16, 8, PixelDesc::RGB8_sRGB);
                         Frame::Ptr wf = Frame::Ptr::create();
@@ -2230,9 +2229,9 @@ TEST_CASE("MediaIO_ImageSequence_AutoSidecarRead") {
                 md.setFrameRate(fps);
                 md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
                         PixelDesc(PixelDesc::RGB8_sRGB)));
-                io->setMediaDesc(md);
+                io->setExpectedDesc(md);
 
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 for(int i = 0; i < 3; i++) {
                         Image img(16, 8, PixelDesc::RGB8_sRGB);
                         Frame::Ptr wf = Frame::Ptr::create();
@@ -2247,7 +2246,7 @@ TEST_CASE("MediaIO_ImageSequence_AutoSidecarRead") {
         {
                 MediaIO *io = MediaIO::createForFileRead(mask);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 CHECK(io->frameCount() == 3);
                 CHECK(io->frameRate() == fps);
                 // Frame rate came from the auto-discovered sidecar.
@@ -2276,7 +2275,7 @@ TEST_CASE("MediaIO_ImageSequence_AutoSidecarDisabled") {
                 cfg.set(MediaConfig::SaveImgSeqEnabled, false);
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
 
                 for(int i = 0; i < 2; i++) {
                         Image img(8, 8, PixelDesc::RGB8_sRGB);
@@ -2304,7 +2303,7 @@ TEST_CASE("MediaIO_ImageSequence_FrameRateSourceConfigFromDefault") {
 
         MediaIO *io = MediaIO::createForFileRead(mask);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
         const Metadata &md = io->metadata();
         CHECK(md.getAs<String>(Metadata::FrameRateSource) == "config");
         CHECK(io->frameRate() == MediaIOTask_ImageFile::DefaultFrameRate);
@@ -2325,7 +2324,7 @@ TEST_CASE("MediaIO_ImageSequence_FrameRateSourceConfig") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Output).isOk());
+        REQUIRE(io->open(MediaIO::Source).isOk());
         CHECK(io->frameRate() == FrameRate(FrameRate::FPS_29_97));
         const Metadata &md = io->metadata();
         CHECK(md.getAs<String>(Metadata::FrameRateSource) == "config");
@@ -2346,7 +2345,7 @@ TEST_CASE("MediaIO_ImageFile_SingleFileStillReportsFrameRateSource") {
                 wf.modify()->imageList().pushToBack(Image::Ptr::create(src));
                 MediaIO *io = MediaIO::createForFileWrite(fn);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 io->writeFrame(wf);
                 io->close();
                 delete io;
@@ -2354,7 +2353,7 @@ TEST_CASE("MediaIO_ImageFile_SingleFileStillReportsFrameRateSource") {
         {
                 MediaIO *io = MediaIO::createForFileRead(fn);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 const Metadata &md = io->metadata();
                 CHECK(md.contains(Metadata::FrameRateSource));
                 // No sidecar — the rate came from the config entry
@@ -2384,7 +2383,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarMissingFiles") {
 
         MediaIO *io = MediaIO::createForFileRead(sidecar.toString());
         REQUIRE(io != nullptr);
-        Error err = io->open(MediaIO::Output);
+        Error err = io->open(MediaIO::Source);
         CHECK(err.isError());
         delete io;
 
@@ -2403,7 +2402,7 @@ TEST_CASE("MediaIO_ImageSequence_MaskNoMatch") {
         String mask = (dir / "nothing_####.dpx").toString();
         MediaIO *io = MediaIO::createForFileRead(mask);
         REQUIRE(io != nullptr);
-        CHECK(io->open(MediaIO::Output).isError());
+        CHECK(io->open(MediaIO::Source).isError());
         delete io;
 
         Dir(dir).removeRecursively();
@@ -2420,7 +2419,7 @@ TEST_CASE("MediaIO_ImageFile_SingleFileUnchanged") {
                 wf.modify()->imageList().pushToBack(Image::Ptr::create(src));
                 MediaIO *io = MediaIO::createForFileWrite(fn);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 io->writeFrame(wf);
                 io->close();
                 delete io;
@@ -2428,7 +2427,7 @@ TEST_CASE("MediaIO_ImageFile_SingleFileUnchanged") {
         {
                 MediaIO *io = MediaIO::createForFileRead(fn);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 CHECK_FALSE(io->canSeek());
                 CHECK(io->frameCount() == 1);
                 CHECK(io->step() == 0);  // single-file default step
@@ -2457,7 +2456,7 @@ TEST_CASE("MediaIO_ImageSequence_WriterCreatesDirectory") {
 
         MediaIO *io = MediaIO::createForFileWrite(mask);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Input).isOk());
+        REQUIRE(io->open(MediaIO::Sink).isOk());
 
         CHECK(Dir(dir).exists());
 
@@ -2488,8 +2487,8 @@ TEST_CASE("MediaIO_AudioFile_RegistryContainsBackend") {
         bool found = false;
         for(const auto &desc : formats) {
                 if(desc.name == "AudioFile") {
-                        CHECK(desc.canOutput);
-                        CHECK(desc.canInput);
+                        CHECK(desc.canBeSource);
+                        CHECK(desc.canBeSink);
                         found = true;
                 }
         }
@@ -2512,7 +2511,7 @@ TEST_CASE("MediaIO_AudioFile_WAVRoundTrip") {
                 cfg.set(MediaConfig::AudioChannels, (unsigned int)desc.channels());
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 AudioTestPattern atp(desc);
                 { EnumList __m = EnumList::forType<AudioPattern>(); for(size_t __c = 0; __c < desc.channels(); ++__c) __m.append(AudioPattern::Tone); atp.setChannelModes(__m); }
                 atp.setToneFrequency(1000.0);
@@ -2534,7 +2533,7 @@ TEST_CASE("MediaIO_AudioFile_WAVRoundTrip") {
                 cfg.set(MediaConfig::FrameRate, fps);
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 MediaDesc vd = io->mediaDesc();
                 CHECK(vd.imageList().isEmpty());
                 CHECK(vd.audioList().size() == 1);
@@ -2568,7 +2567,7 @@ TEST_CASE("MediaIO_AudioFile_Seeking") {
                 cfg.set(MediaConfig::AudioChannels, (unsigned int)desc.channels());
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 AudioTestPattern atp(desc);
                 { EnumList __m = EnumList::forType<AudioPattern>(); for(size_t __c = 0; __c < desc.channels(); ++__c) __m.append(AudioPattern::Silence); atp.setChannelModes(__m); }
                 atp.configure();
@@ -2587,7 +2586,7 @@ TEST_CASE("MediaIO_AudioFile_Seeking") {
                 cfg.set(MediaConfig::FrameRate, fps);
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 CHECK(io->canSeek());
                 CHECK(io->frameCount() == 20);
                 CHECK(io->seekToFrame(10).isOk());
@@ -2609,7 +2608,7 @@ TEST_CASE("MediaIO_AudioFile_MissingFrameRateFails") {
         cfg.set(MediaConfig::Filename, "/tmp/dummy.wav");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        CHECK(io->open(MediaIO::Output) == Error::InvalidArgument);
+        CHECK(io->open(MediaIO::Source) == Error::InvalidArgument);
         delete io;
 }
 
@@ -2641,7 +2640,7 @@ TEST_CASE("MediaIO_AudioFile_FrameCountAfterClose") {
                 cfg.set(MediaConfig::AudioChannels, (unsigned int)desc.channels());
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 AudioTestPattern atp(desc);
                 { EnumList __m = EnumList::forType<AudioPattern>(); for(size_t __c = 0; __c < desc.channels(); ++__c) __m.append(AudioPattern::Silence); atp.setChannelModes(__m); }
                 atp.configure();
@@ -2663,7 +2662,7 @@ TEST_CASE("MediaIO_AudioFile_FrameCountAfterClose") {
                 cfg.set(MediaConfig::FrameRate, fps);
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 CHECK(io->frameCount() == 5);
                 io->close();
                 CHECK(io->frameCount() == 0);
@@ -2689,7 +2688,7 @@ TEST_CASE("MediaIO_AudioFile_StepZeroReReads") {
                 cfg.set(MediaConfig::AudioChannels, (unsigned int)desc.channels());
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 AudioTestPattern atp(desc);
                 { EnumList __m = EnumList::forType<AudioPattern>(); for(size_t __c = 0; __c < desc.channels(); ++__c) __m.append(AudioPattern::Silence); atp.setChannelModes(__m); }
                 atp.configure();
@@ -2710,7 +2709,7 @@ TEST_CASE("MediaIO_AudioFile_StepZeroReReads") {
                 cfg.set(MediaConfig::FrameRate, fps);
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 io->setStep(0);
                 // Read 3 times — should all succeed at frame 0
                 for(int i = 0; i < 3; i++) {
@@ -2742,7 +2741,7 @@ TEST_CASE("MediaIO_AudioFile_WriterCannotSeek") {
         cfg.set(MediaConfig::AudioChannels, (unsigned int)desc.channels());
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Input).isOk());
+        REQUIRE(io->open(MediaIO::Sink).isOk());
         CHECK_FALSE(io->canSeek());
         CHECK(io->seekToFrame(0) == Error::IllegalSeek);
         io->close();
@@ -2785,13 +2784,13 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioWriteAndRead") {
                 md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
                         PixelDesc(PixelDesc::RGB8_sRGB)));
                 md.audioList().pushToBack(adesc);
-                io->setMediaDesc(md);
+                io->setExpectedDesc(md);
 
                 Metadata meta;
                 meta.set(Metadata::Timecode, startTc);
-                io->setMetadata(meta);
+                io->setExpectedMetadata(meta);
 
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
 
                 // The MediaDesc should report audio
                 CHECK(io->mediaDesc().audioList().size() == 1);
@@ -2821,7 +2820,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioWriteAndRead") {
                 rcfg.set(MediaConfig::FrameRate, fps);
                 MediaIO *io = MediaIO::create(rcfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 CHECK(io->frameCount() == 4);
 
                 // AudioDesc should be populated from the sidecar.
@@ -2859,7 +2858,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioWriteAndRead") {
                 cfg.set(MediaConfig::FrameRate, fps);
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
 
                 Metadata meta = io->metadata();
                 CHECK(meta.contains(Metadata::Timecode));
@@ -2901,9 +2900,9 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioDisabled") {
         md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
                 PixelDesc(PixelDesc::RGB8_sRGB)));
         md.audioList().pushToBack(adesc);
-        io->setMediaDesc(md);
+        io->setExpectedDesc(md);
 
-        REQUIRE(io->open(MediaIO::Input).isOk());
+        REQUIRE(io->open(MediaIO::Sink).isOk());
 
         // No audio should be reported when sidecar is disabled.
         CHECK(io->mediaDesc().audioList().isEmpty());
@@ -2938,7 +2937,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioNoAudio") {
 
         MediaIO *io = MediaIO::createForFileWrite(mask);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Input).isOk());
+        REQUIRE(io->open(MediaIO::Sink).isOk());
 
         for(int i = 0; i < 2; i++) {
                 Image img(16, 8, PixelDesc::RGB8_sRGB);
@@ -2980,9 +2979,9 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioPathOverride") {
         md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
                 PixelDesc(PixelDesc::RGB8_sRGB)));
         md.audioList().pushToBack(adesc);
-        io->setMediaDesc(md);
+        io->setExpectedDesc(md);
 
-        REQUIRE(io->open(MediaIO::Input).isOk());
+        REQUIRE(io->open(MediaIO::Sink).isOk());
 
         Image img(16, 8, PixelDesc::RGB8_sRGB);
         Audio audio(adesc, samplesPerFrame);
@@ -3006,7 +3005,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioPathOverride") {
 
                 MediaIO *rio = MediaIO::create(rcfg);
                 REQUIRE(rio != nullptr);
-                REQUIRE(rio->open(MediaIO::Output).isOk());
+                REQUIRE(rio->open(MediaIO::Source).isOk());
                 CHECK(rio->audioDesc().isValid());
                 CHECK(rio->audioDesc().sampleRate() == 48000.0f);
                 rio->close();
@@ -3047,9 +3046,9 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioImgSeqField") {
                 md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
                         PixelDesc(PixelDesc::RGB8_sRGB)));
                 md.audioList().pushToBack(adesc);
-                io->setMediaDesc(md);
+                io->setExpectedDesc(md);
 
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
 
                 for(int i = 0; i < 3; i++) {
                         Image img(16, 8, PixelDesc::RGB8_sRGB);
@@ -3075,7 +3074,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioImgSeqField") {
         {
                 MediaIO *io = MediaIO::createForFileRead(sidecarPath);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 CHECK(io->frameCount() == 3);
                 CHECK(io->audioDesc().isValid());
                 CHECK(io->audioDesc().sampleRate() == 48000.0f);
@@ -3118,9 +3117,9 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioSeek") {
                 md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
                         PixelDesc(PixelDesc::RGB8_sRGB)));
                 md.audioList().pushToBack(adesc);
-                io->setMediaDesc(md);
+                io->setExpectedDesc(md);
 
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
 
                 for(int i = 0; i < 8; i++) {
                         Image img(16, 8, PixelDesc::RGB8_sRGB);
@@ -3146,7 +3145,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioSeek") {
                 rcfg.set(MediaConfig::FrameRate, fps);
                 MediaIO *io = MediaIO::create(rcfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 CHECK(io->frameCount() == 8);
 
                 CHECK(io->seekToFrame(4).isOk());
@@ -3194,9 +3193,9 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioReadDisabled") {
                 md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
                         PixelDesc(PixelDesc::RGB8_sRGB)));
                 md.audioList().pushToBack(adesc);
-                io->setMediaDesc(md);
+                io->setExpectedDesc(md);
 
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 Image img(16, 8, PixelDesc::RGB8_sRGB);
                 Audio audio(adesc, samplesPerFrame);
                 Frame::Ptr wf = Frame::Ptr::create();
@@ -3217,7 +3216,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioReadDisabled") {
 
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
 
                 // No audio descriptor should be reported.
                 CHECK(io->mediaDesc().audioList().isEmpty());
@@ -3259,9 +3258,9 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioSourceHint") {
                 md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
                         PixelDesc(PixelDesc::RGB8_sRGB)));
                 md.audioList().pushToBack(adesc);
-                io->setMediaDesc(md);
+                io->setExpectedDesc(md);
 
-                REQUIRE(io->open(MediaIO::Input).isOk());
+                REQUIRE(io->open(MediaIO::Sink).isOk());
                 for(int i = 0; i < 3; i++) {
                         Image img(16, 8, PixelDesc::RGB8_sRGB);
                         Audio audio(adesc, samplesPerFrame);
@@ -3284,7 +3283,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioSourceHint") {
                 cfg.set(MediaConfig::FrameRate, fps);
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 CHECK(io->audioDesc().isValid());
                 CHECK(io->audioDesc().sampleRate() == 48000.0f);
 
@@ -3306,7 +3305,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioSourceHint") {
                 cfg.set(MediaConfig::AudioSource, AudioSourceHint::Embedded);
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
                 CHECK(io->audioDesc().isValid());
 
                 // The embedded audio from DPX should be used.  Its
@@ -3330,7 +3329,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioSourceHint") {
                 {
                         MediaIO *io = MediaIO::createForFileWrite(pngMask);
                         REQUIRE(io != nullptr);
-                        REQUIRE(io->open(MediaIO::Input).isOk());
+                        REQUIRE(io->open(MediaIO::Sink).isOk());
                         for(int i = 0; i < 3; i++) {
                                 Image img(16, 8, PixelDesc::RGB8_sRGB);
                                 Frame::Ptr wf = Frame::Ptr::create();
@@ -3349,7 +3348,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioSourceHint") {
                 cfg.set(MediaConfig::AudioSource, AudioSourceHint::Embedded);
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Output).isOk());
+                REQUIRE(io->open(MediaIO::Source).isOk());
 
                 // Sidecar fallback — audio should be available.
                 CHECK(io->audioDesc().isValid());

@@ -973,13 +973,13 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/mediaio.h
         include/promeki/mediapipeline.h
         include/promeki/mediapipelineconfig.h
+        include/promeki/mediapipelineplanner.h
         include/promeki/mediapipelinestats.h
         include/promeki/pipelinestats.h
         include/promeki/mediapacket.h
         include/promeki/mediaiotask.h
         include/promeki/nvencvideoencoder.h
         include/promeki/nvdecvideodecoder.h
-        include/promeki/mediaiotask_converter.h
         include/promeki/mediaiotask_csc.h
         include/promeki/mediaiotask_src.h
         include/promeki/mediaiotask_burn.h
@@ -994,6 +994,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/paintengine.h
         include/promeki/quicktime.h
         include/promeki/mediadesc.h
+        include/promeki/mediaiodescription.h
         include/promeki/videotestpattern.h
     )
     list(APPEND PROMEKI_SOURCES
@@ -1029,13 +1030,14 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/ltcdecoder.cpp
         src/proav/ltcencoder.cpp
         src/proav/mediaio.cpp
+        src/proav/mediaiodescription.cpp
         src/proav/mediapipeline.cpp
         src/proav/mediapipelineconfig.cpp
+        src/proav/mediapipelineplanner.cpp
         src/proav/mediapipelinestats.cpp
         src/proav/pipelinestats.cpp
         src/proav/mediapacket.cpp
         src/proav/mediaiotask.cpp
-        src/proav/mediaiotask_converter.cpp
         src/proav/mediaiotask_csc.cpp
         src/proav/mediaiotask_src.cpp
         src/proav/mediaiotask_burn.cpp
@@ -1749,13 +1751,17 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/ltcencoder.cpp
             tests/unit/mediadesc.cpp
             tests/unit/mediaio.cpp
+            tests/unit/mediaiodescription.cpp
+            tests/unit/mediaio_bridges.cpp
             tests/unit/mediaio_identifiers.cpp
+            tests/unit/mediaio_negotiation.cpp
+            tests/unit/mediaiotask_overrides.cpp
             tests/unit/mediapacket.cpp
             tests/unit/mediaio_stats.cpp
             tests/unit/mediapipelineconfig.cpp
+            tests/unit/mediapipelineplanner.cpp
             tests/unit/mediapipelinestats.cpp
             tests/unit/mediapipeline.cpp
-            tests/unit/mediaiotask_converter.cpp
             tests/unit/mediaiotask_csc.cpp
             tests/unit/mediaiotask_src.cpp
             tests/unit/mediaiotask_burn.cpp

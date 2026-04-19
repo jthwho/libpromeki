@@ -112,6 +112,9 @@ class ImageFileIO_JpegXS : public ImageFileIO {
                         _canLoad = true;
                         _canSave = true;
                         _name    = "JPEG XS";
+                        _description = "JPEG XS (ISO/IEC 21122) image sequence";
+                        _extensions = { "jxs" };
+                        _mediaIoName = "ImgSeqJpegXS";
                 }
 
                 Error load(ImageFile &imageFile, const MediaConfig &config) const override;

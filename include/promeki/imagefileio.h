@@ -8,7 +8,9 @@
 #pragma once
 
 #include <promeki/namespace.h>
+#include <promeki/list.h>
 #include <promeki/string.h>
+#include <promeki/stringlist.h>
 #include <promeki/mediaconfig.h>
 
 /**
@@ -35,6 +37,9 @@ class ImageFile;
  */
 class ImageFileIO {
         public:
+                /** @brief List of registered ImageFileIO backend IDs. */
+                using IDList = List<int>;
+
                 /**
                  * @brief Registers an ImageFileIO backend in the global registry.
                  * @param object Pointer to the backend to register. Ownership is taken.
@@ -48,6 +53,20 @@ class ImageFileIO {
                  * @return A pointer to the matching backend, or nullptr if not found.
                  */
                 static const ImageFileIO *lookup(int id);
+
+                /**
+                 * @brief Returns every registered backend ID in registration order.
+                 *
+                 * Used by callers that need to enumerate all known image
+                 * formats — e.g. the MediaIO layer wires up one
+                 * @ref MediaIO::FormatDesc per backend ID.  Iterates the
+                 * live registry, so calling this before every backend
+                 * has registered (mid-static-init) returns a partial
+                 * list; normal runtime use sees the complete set.
+                 *
+                 * @return A list of all registered backend IDs.
+                 */
+                static IDList registeredIDs();
 
                 /** @brief Default constructor. */
                 ImageFileIO() = default;
@@ -96,6 +115,52 @@ class ImageFileIO {
                 }
 
                 /**
+                 * @brief Returns a short human-readable description of the backend.
+                 *
+                 * Drives the @c description field on the MediaIO
+                 * FormatDesc; populated by the backend's constructor
+                 * via the @c _description protected member.
+                 *
+                 * @return The backend description (may be empty).
+                 */
+                String description() const {
+                        return _description;
+                }
+
+                /**
+                 * @brief Returns the lowercase file extensions this backend handles.
+                 *
+                 * A single backend may claim multiple extensions that
+                 * are treated as the same format by the decoder/encoder
+                 * (e.g. SGI claims both @c "sgi" and @c "rgb"; PNM
+                 * claims @c "pnm", @c "ppm", and @c "pgm").  Always
+                 * returned in lowercase.
+                 *
+                 * @return The list of extensions claimed by the backend.
+                 */
+                const StringList &extensions() const {
+                        return _extensions;
+                }
+
+                /**
+                 * @brief Returns the preferred backend name for MediaIO registration.
+                 *
+                 * The MediaIO registry exposes one
+                 * @ref MediaIO::FormatDesc per @ref ImageFileIO
+                 * backend; each backend carries the string used to
+                 * identify it there (@c "ImgSeqDPX", @c "ImgSeqPNG",
+                 * @c "ImgSeqCineon", ...).  Defaults to
+                 * @c "ImgSeq" + @ref name() when the backend's
+                 * constructor doesn't override it.
+                 *
+                 * @return The backend's MediaIO name.
+                 */
+                String mediaIoName() const {
+                        if(!_mediaIoName.isEmpty()) return _mediaIoName;
+                        return String("ImgSeq") + _name;
+                }
+
+                /**
                  * @brief Loads an image from a file into the given ImageFile.
                  * @param imageFile The ImageFile to populate with the loaded image data.
                  * @param config    Optional configuration hints (e.g. headerless
@@ -126,6 +191,9 @@ class ImageFileIO {
                 bool            _canLoad = false; ///< @brief Whether loading is supported.
                 bool            _canSave = false; ///< @brief Whether saving is supported.
                 String          _name;            ///< @brief Human-readable format name.
+                String          _description;    ///< @brief One-line human-readable description.
+                StringList      _extensions;     ///< @brief Lowercase extensions claimed by this backend.
+                String          _mediaIoName;    ///< @brief Override for @ref mediaIoName() (empty = default).
 
 };
 

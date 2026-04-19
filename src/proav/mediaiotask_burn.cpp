@@ -24,9 +24,9 @@ MediaIO::FormatDesc MediaIOTask_Burn::formatDesc() {
                 "Burn",
                 "Text burn-in overlay on video frames",
                 {},
-                false,  // canOutput
-                false,  // canInput
-                true,   // canInputAndOutput
+                false,  // canBeSource
+                false,  // canBeSink
+                true,   // canBeTransform
                 []() -> MediaIOTask * {
                         return new MediaIOTask_Burn();
                 },
@@ -53,7 +53,7 @@ MediaIO::FormatDesc MediaIOTask_Burn::formatDesc() {
 MediaIOTask_Burn::~MediaIOTask_Burn() = default;
 
 Error MediaIOTask_Burn::executeCmd(MediaIOCommandOpen &cmd) {
-        if(cmd.mode != MediaIO::InputAndOutput) {
+        if(cmd.mode != MediaIO::Transform) {
                 promekiErr("MediaIOTask_Burn: only InputAndOutput mode is supported");
                 return Error::NotSupported;
         }

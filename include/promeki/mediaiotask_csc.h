@@ -31,7 +31,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par Mode support
  *
- * Only @c MediaIO::InputAndOutput is supported.
+ * Only @c MediaIO::Transform is supported.
  *
  * @par Back-pressure
  *
@@ -63,7 +63,7 @@ PROMEKI_NAMESPACE_BEGIN
  * cfg.set(MediaConfig::OutputPixelDesc,
  *         PixelDesc(PixelDesc::RGBA8_sRGB));
  * MediaIO *io = MediaIO::create(cfg);
- * io->open(MediaIO::InputAndOutput);
+ * io->open(MediaIO::Transform);
  * io->writeFrame(inputFrame);
  * Frame::Ptr outputFrame;
  * io->readFrame(outputFrame);
@@ -95,6 +95,12 @@ class MediaIOTask_CSC : public MediaIOTask {
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 Error executeCmd(MediaIOCommandStats &cmd) override;
                 int pendingOutput() const override;
+
+                Error describe(MediaIODescription *out) const override;
+                Error proposeInput(const MediaDesc &offered,
+                                   MediaDesc *preferred) const override;
+                Error proposeOutput(const MediaDesc &requested,
+                                    MediaDesc *achievable) const override;
 
                 Error convertImage(const Image &input, Image &output);
                 Error convertFrame(const Frame::Ptr &input, Frame::Ptr &output);

@@ -31,7 +31,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @c -d foo.h264 through this backend without requiring the caller
  * to say @c RawBitstream explicitly.
  *
- * Only sink mode (@c MediaIO::Input) is supported in this first
+ * Only sink mode (@c MediaIO::Sink) is supported in this first
  * iteration — reading an elementary-stream file back into
  * @ref MediaPacket "MediaPackets" requires a codec-specific NAL-unit
  * parser that belongs with the decoder work.
@@ -49,7 +49,7 @@ PROMEKI_NAMESPACE_BEGIN
  * cfg.set(MediaConfig::Type,     "RawBitstream");
  * cfg.set(MediaConfig::Filename, "/tmp/out.h264");
  * MediaIO *sink = MediaIO::create(cfg);
- * sink->open(MediaIO::Input);
+ * sink->open(MediaIO::Sink);
  * @endcode
  */
 class MediaIOTask_RawBitstream : public MediaIOTask {

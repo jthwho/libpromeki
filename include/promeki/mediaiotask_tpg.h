@@ -96,7 +96,7 @@ PROMEKI_NAMESPACE_BEGIN
  * // form is enough for a ready-to-use TPG source.
  * MediaIO::Config cfg = MediaIO::defaultConfig("TPG");
  * MediaIO *io = MediaIO::create(cfg);
- * io->open(MediaIO::Output);
+ * io->open(MediaIO::Source);
  * Frame::Ptr frame;
  * io->readFrame(frame);
  * io->close();
@@ -126,6 +126,16 @@ class MediaIOTask_TPG : public MediaIOTask {
                 Error executeCmd(MediaIOCommandOpen &cmd) override;
                 Error executeCmd(MediaIOCommandClose &cmd) override;
                 Error executeCmd(MediaIOCommandRead &cmd) override;
+
+                Error describe(MediaIODescription *out) const override;
+                Error proposeOutput(const MediaDesc &requested,
+                                    MediaDesc *achievable) const override;
+
+                // Helper that derives the MediaDesc the generator would
+                // emit given its current MediaConfig — used by both
+                // describe() and proposeOutput so the planner sees a
+                // consistent view of "what TPG produces".
+                MediaDesc producedFromConfig(const MediaIO::Config &cfg) const;
 
                 // Video state
                 VideoTestPattern        _videoPattern;

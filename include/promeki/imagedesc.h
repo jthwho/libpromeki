@@ -40,6 +40,12 @@ class ImageDesc {
                 /** @brief Shared pointer type for ImageDesc. */
                 using Ptr = SharedPtr<ImageDesc>;
 
+                /** @brief List of ImageDesc values. */
+                using List = promeki::List<ImageDesc>;
+
+                /** @brief List of shared ImageDesc pointers. */
+                using PtrList = promeki::List<Ptr>;
+
                 /** @brief Constructs an invalid (default) image description. */
                 ImageDesc() { }
 
@@ -329,6 +335,37 @@ class ImageDesc {
                 /** @brief Implicit conversion to String via toString(). */
                 operator String() const {
                         return toString();
+                }
+
+                /** @brief Returns true if every member of both descriptors is equal. */
+                bool operator==(const ImageDesc &other) const {
+                        return formatEquals(other)
+                            && _metadata      == other._metadata;
+                }
+
+                /** @brief Returns true if any member differs. */
+                bool operator!=(const ImageDesc &other) const { return !(*this == other); }
+
+                /**
+                 * @brief Compares structural image fields, ignoring @ref metadata.
+                 *
+                 * Covers size, line padding / alignment, scan mode, and
+                 * pixel description — every field that influences the
+                 * byte layout or colour interpretation of the image.
+                 * Metadata (colour tags, creator fields, user data) is
+                 * deliberately excluded so negotiation between stages
+                 * can compare "are these the same shape" without being
+                 * derailed by cosmetic metadata differences.
+                 *
+                 * @param other The ImageDesc to compare against.
+                 * @return true if every structural field matches.
+                 */
+                bool formatEquals(const ImageDesc &other) const {
+                        return _size          == other._size
+                            && _linePad       == other._linePad
+                            && _lineAlign     == other._lineAlign
+                            && _videoScanMode == other._videoScanMode
+                            && _pixelDesc     == other._pixelDesc;
                 }
 
         private:

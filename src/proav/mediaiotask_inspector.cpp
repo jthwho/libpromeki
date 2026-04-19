@@ -109,9 +109,9 @@ MediaIO::FormatDesc MediaIOTask_Inspector::formatDesc() {
                 "Inspector",
                 "Inspect / validate frames flowing through a pipeline (sink-only).",
                 {},     // No file extensions — pure sink.
-                false,  // canOutput
-                true,   // canInput
-                false,  // canInputAndOutput
+                false,  // canBeSource
+                true,   // canBeSink
+                false,  // canBeTransform
                 []() -> MediaIOTask * {
                         return new MediaIOTask_Inspector();
                 },
@@ -198,7 +198,7 @@ void MediaIOTask_Inspector::resetState() {
 }
 
 Error MediaIOTask_Inspector::executeCmd(MediaIOCommandOpen &cmd) {
-        if(cmd.mode != MediaIO::Input) return Error::NotSupported;
+        if(cmd.mode != MediaIO::Sink) return Error::NotSupported;
 
         const MediaIO::Config &cfg = cmd.config;
 

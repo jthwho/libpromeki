@@ -80,9 +80,9 @@ void listMediaIOBackendsAndExit() {
         fprintf(stdout, "Registered MediaIO backends:\n");
         for(const auto &desc : MediaIO::registeredFormats()) {
                 String caps;
-                if(desc.canInput) caps += "I";
-                if(desc.canOutput) caps += "O";
-                if(desc.canInputAndOutput && caps.isEmpty()) caps = "IO";
+                if(desc.canBeSink) caps += "I";
+                if(desc.canBeSource) caps += "O";
+                if(desc.canBeTransform && caps.isEmpty()) caps = "IO";
                 fprintf(stdout, "  %-16s [%-3s]  %s\n",
                         desc.name.cstr(), caps.cstr(), desc.description.cstr());
         }
@@ -388,7 +388,7 @@ MediaIO *buildSource(const StageSpec &spec) {
                 return nullptr;
         }
         if(!applyStage.metadata.isEmpty()) {
-                io->setMetadata(applyStage.metadata);
+                io->setExpectedMetadata(applyStage.metadata);
         }
         return io;
 }
@@ -420,7 +420,7 @@ MediaIO *buildIntermediateStage(const StageSpec &spec) {
                 return nullptr;
         }
         if(!applyStage.metadata.isEmpty()) {
-                io->setMetadata(applyStage.metadata);
+                io->setExpectedMetadata(applyStage.metadata);
         }
         return io;
 }
@@ -483,8 +483,8 @@ MediaIO *buildFileSink(const StageSpec &spec,
         }
         io->setConfig(applyStage.config);
 
-        io->setMediaDesc(srcDesc);
-        if(srcAudioDesc.isValid()) io->setAudioDesc(srcAudioDesc);
+        io->setExpectedDesc(srcDesc);
+        if(srcAudioDesc.isValid()) io->setExpectedAudioDesc(srcAudioDesc);
 
         // Metadata precedence: start from the upstream's metadata so
         // the sink inherits everything the source produced, then
@@ -498,7 +498,7 @@ MediaIO *buildFileSink(const StageSpec &spec,
         if(!applyStage.metadata.isEmpty()) {
                 merged.merge(applyStage.metadata);
         }
-        if(!merged.isEmpty()) io->setMetadata(merged);
+        if(!merged.isEmpty()) io->setExpectedMetadata(merged);
         return io;
 }
 

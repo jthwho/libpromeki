@@ -148,7 +148,7 @@
  * per-instance @ref Strand executor that moves frames between
  * stages.  Concrete backends include @ref MediaIOTask_TPG,
  * @ref MediaIOTask_ImageFile, @ref MediaIOTask_AudioFile,
- * @ref MediaIOTask_QuickTime, and @ref MediaIOTask_Converter.
+ * @ref MediaIOTask_QuickTime, and @ref MediaIOTask_CSC.
  */
 
 /**

@@ -210,7 +210,7 @@ struct FrameBridge::Impl {
                 planeSizes.clear();
                 imageBytesTotal = 0;
                 if(!mediaDesc.isValid()) return Error::Invalid;
-                const MediaDesc::ImageDescList &imgs = mediaDesc.imageList();
+                const ImageDesc::List &imgs = mediaDesc.imageList();
                 if(imgs.size() != 1) {
                         // MVP restriction: exactly one image per frame.
                         return Error::NotSupported;

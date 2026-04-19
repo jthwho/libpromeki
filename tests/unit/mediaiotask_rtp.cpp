@@ -113,9 +113,9 @@ TEST_CASE("MediaIOTask_Rtp_Registry") {
         bool found = false;
         for(const auto &desc : formats) {
                 if(desc.name == "Rtp") {
-                        CHECK(desc.canOutput);
-                        CHECK(desc.canInput);
-                        CHECK_FALSE(desc.canInputAndOutput);
+                        CHECK(desc.canBeSource);
+                        CHECK(desc.canBeSink);
+                        CHECK_FALSE(desc.canBeTransform);
                         // The Rtp backend advertises "sdp" so
                         // `mediaplay -i foo.sdp` hits the extension
                         // fast-path in MediaIO::createForFileRead.
@@ -157,7 +157,7 @@ TEST_CASE("MediaIOTask_Rtp_ReaderNoStreamsFails") {
         MediaIO::Config cfg = MediaIO::defaultConfig("Rtp");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        CHECK(io->open(MediaIO::Output).isError());
+        CHECK(io->open(MediaIO::Source).isError());
         delete io;
 }
 
@@ -165,7 +165,7 @@ TEST_CASE("MediaIOTask_Rtp_RejectsReadWriteMode") {
         MediaIO::Config cfg = MediaIO::defaultConfig("Rtp");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        CHECK(io->open(MediaIO::InputAndOutput).isError());
+        CHECK(io->open(MediaIO::Transform).isError());
         delete io;
 }
 
@@ -183,9 +183,9 @@ TEST_CASE("MediaIOTask_Rtp_NoActiveStreamsFails") {
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.imageList().pushToBack(
                 ImageDesc(Size2Du32(16, 16), PixelDesc(PixelDesc::RGB8_sRGB)));
-        io->setMediaDesc(md);
+        io->setExpectedDesc(md);
 
-        CHECK(io->open(MediaIO::Input).isError());
+        CHECK(io->open(MediaIO::Sink).isError());
         delete io;
 }
 
@@ -220,9 +220,9 @@ TEST_CASE("MediaIOTask_Rtp_VideoLoopbackSingleFrame") {
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.imageList().pushToBack(
                 ImageDesc(Size2Du32(W, H), PixelDesc(PixelDesc::RGB8_sRGB)));
-        io->setMediaDesc(md);
+        io->setExpectedDesc(md);
 
-        REQUIRE(io->open(MediaIO::Input).isOk());
+        REQUIRE(io->open(MediaIO::Sink).isOk());
 
         Frame::Ptr frame = makeTinyRgbFrame(W, H, 0xAB);
         CHECK(io->writeFrame(frame).isOk());
@@ -282,8 +282,8 @@ TEST_CASE("MediaIOTask_Rtp_JpegXsLoopbackSingleFrame") {
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
                 PixelDesc(PixelDesc::JPEG_XS_YUV10_422_Rec709)));
-        io->setMediaDesc(md);
-        REQUIRE(io->open(MediaIO::Input).isOk());
+        io->setExpectedDesc(md);
+        REQUIRE(io->open(MediaIO::Sink).isOk());
 
         // Build a fake JPEG XS bitstream small enough to fit in a
         // single RTP packet after the 4-byte RFC 9134 header.
@@ -354,8 +354,8 @@ TEST_CASE("MediaIOTask_Rtp_JpegXsSdpFormat") {
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.imageList().pushToBack(ImageDesc(Size2Du32(1920, 1080),
                 PixelDesc(PixelDesc::JPEG_XS_YUV10_422_Rec709)));
-        io->setMediaDesc(md);
-        REQUIRE(io->open(MediaIO::Input).isOk());
+        io->setExpectedDesc(md);
+        REQUIRE(io->open(MediaIO::Sink).isOk());
 
         MediaIOParams in;
         MediaIOParams out;
@@ -399,8 +399,8 @@ TEST_CASE("MediaIOTask_Rtp_JpegXsMultiPacketFragmentation") {
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
                 PixelDesc(PixelDesc::JPEG_XS_YUV8_422_Rec709)));
-        io->setMediaDesc(md);
-        REQUIRE(io->open(MediaIO::Input).isOk());
+        io->setExpectedDesc(md);
+        REQUIRE(io->open(MediaIO::Sink).isOk());
 
         // 6000 bytes → 6 packets at 1200-byte MTU (minus 4-byte header
         // and RTP header, so effectively 1184 per packet).
@@ -471,9 +471,9 @@ TEST_CASE("MediaIOTask_Rtp_AudioLoopbackS16") {
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.audioList().pushToBack(
                 AudioDesc(AudioDesc::PCMI_S16LE, 48000.0f, 2));
-        io->setMediaDesc(md);
+        io->setExpectedDesc(md);
 
-        REQUIRE(io->open(MediaIO::Input).isOk());
+        REQUIRE(io->open(MediaIO::Sink).isOk());
 
         // 1600 stereo samples = one video frame of audio at 48 kHz /
         // 30 fps.  With the default 1ms AES67 packet time that drains
@@ -525,7 +525,7 @@ TEST_CASE("MediaIOTask_Rtp_AudioLoopbackS16") {
 TEST_CASE("MediaIOTask_Rtp_AudioAcceptsFloat32") {
         // The AudioBuffer inside the backend converts on-the-fly, so
         // a Float32LE source (TPG default) should flow into an L16
-        // RTP stream without an upstream Converter stage.
+        // RTP stream without an upstream SRC stage.
         UdpSocket rx;
         uint16_t port = bindReceiver(rx);
 
@@ -541,9 +541,9 @@ TEST_CASE("MediaIOTask_Rtp_AudioAcceptsFloat32") {
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.audioList().pushToBack(
                 AudioDesc(AudioDesc::PCMI_Float32LE, 48000.0f, 2));
-        io->setMediaDesc(md);
+        io->setExpectedDesc(md);
 
-        REQUIRE(io->open(MediaIO::Input).isOk());
+        REQUIRE(io->open(MediaIO::Sink).isOk());
 
         // 1600 Float32 samples → becomes 33 L16 RTP packets on the wire.
         Frame::Ptr frame;
@@ -588,9 +588,9 @@ TEST_CASE("MediaIOTask_Rtp_AudioNoDriftAcrossFrames") {
         md.setFrameRate(FrameRate(FrameRate::FPS_29_97));
         md.audioList().pushToBack(
                 AudioDesc(AudioDesc::PCMI_S16LE, 48000.0f, 2));
-        io->setMediaDesc(md);
+        io->setExpectedDesc(md);
 
-        REQUIRE(io->open(MediaIO::Input).isOk());
+        REQUIRE(io->open(MediaIO::Sink).isOk());
 
         // NTSC 48 kHz cadence: 1602, 1601, 1602, 1601, 1602 (sums
         // to 8008 over 5 video frames).  This exercises the
@@ -663,8 +663,8 @@ TEST_CASE("MediaIOTask_Rtp_MetadataJsonLoopback") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        io->setMediaDesc(md);
-        REQUIRE(io->open(MediaIO::Input).isOk());
+        io->setExpectedDesc(md);
+        REQUIRE(io->open(MediaIO::Sink).isOk());
 
         // Build a frame with a metadata payload.
         Frame::Ptr frame = Frame::Ptr::create();
@@ -714,8 +714,8 @@ TEST_CASE("MediaIOTask_Rtp_SaveSdpToFile") {
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.imageList().pushToBack(
                 ImageDesc(Size2Du32(320, 240), PixelDesc(PixelDesc::RGB8_sRGB)));
-        io->setMediaDesc(md);
-        REQUIRE(io->open(MediaIO::Input).isOk());
+        io->setExpectedDesc(md);
+        REQUIRE(io->open(MediaIO::Sink).isOk());
 
         // SDP file exists and is non-empty.
         File f(sdpPath);
@@ -763,8 +763,8 @@ TEST_CASE("MediaIOTask_Rtp_AdjacentPortsNoCollision") {
                 ImageDesc(Size2Du32(320, 240), PixelDesc(PixelDesc::RGB8_sRGB)));
         md.audioList().pushToBack(
                 AudioDesc(AudioDesc::PCMI_S16LE, 48000.0f, 2));
-        io->setMediaDesc(md);
-        REQUIRE(io->open(MediaIO::Input).isOk());
+        io->setExpectedDesc(md);
+        REQUIRE(io->open(MediaIO::Sink).isOk());
 
         MediaIOParams in;
         MediaIOParams out;
@@ -802,8 +802,8 @@ TEST_CASE("MediaIOTask_Rtp_GetSdpParams") {
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.imageList().pushToBack(
                 ImageDesc(Size2Du32(160, 120), PixelDesc(PixelDesc::RGB8_sRGB)));
-        io->setMediaDesc(md);
-        REQUIRE(io->open(MediaIO::Input).isOk());
+        io->setExpectedDesc(md);
+        REQUIRE(io->open(MediaIO::Sink).isOk());
 
         MediaIOParams in;
         MediaIOParams out;
@@ -851,8 +851,8 @@ TEST_CASE("MediaIOTask_Rtp_Reader_JpegXs_Loopback") {
         rxMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         rxMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
                 PixelDesc(PixelDesc::JPEG_XS_YUV10_422_Rec709)));
-        rx->setMediaDesc(rxMd);
-        REQUIRE(rx->open(MediaIO::Output).isOk());
+        rx->setExpectedDesc(rxMd);
+        REQUIRE(rx->open(MediaIO::Source).isOk());
 
         // Writer.
         MediaIO::Config txCfg = MediaIO::defaultConfig("Rtp");
@@ -866,8 +866,8 @@ TEST_CASE("MediaIOTask_Rtp_Reader_JpegXs_Loopback") {
         txMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         txMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
                 PixelDesc(PixelDesc::JPEG_XS_YUV10_422_Rec709)));
-        tx->setMediaDesc(txMd);
-        REQUIRE(tx->open(MediaIO::Input).isOk());
+        tx->setExpectedDesc(txMd);
+        REQUIRE(tx->open(MediaIO::Sink).isOk());
 
         // Give the reader thread a moment to settle into its loop.
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -940,8 +940,8 @@ TEST_CASE("MediaIOTask_Rtp_Reader_RawVideo_Loopback") {
         rxMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         rxMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
                 PixelDesc(PixelDesc::RGB8_sRGB)));
-        rx->setMediaDesc(rxMd);
-        REQUIRE(rx->open(MediaIO::Output).isOk());
+        rx->setExpectedDesc(rxMd);
+        REQUIRE(rx->open(MediaIO::Source).isOk());
 
         // Writer.
         MediaIO::Config txCfg = MediaIO::defaultConfig("Rtp");
@@ -953,8 +953,8 @@ TEST_CASE("MediaIOTask_Rtp_Reader_RawVideo_Loopback") {
         txMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         txMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
                 PixelDesc(PixelDesc::RGB8_sRGB)));
-        tx->setMediaDesc(txMd);
-        REQUIRE(tx->open(MediaIO::Input).isOk());
+        tx->setExpectedDesc(txMd);
+        REQUIRE(tx->open(MediaIO::Sink).isOk());
 
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
@@ -1006,8 +1006,8 @@ TEST_CASE("MediaIOTask_Rtp_Reader_L16Audio_Loopback") {
         rxMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         rxMd.audioList().pushToBack(
                 AudioDesc(AudioDesc::PCMI_S16BE, RATE, CH));
-        rx->setMediaDesc(rxMd);
-        REQUIRE(rx->open(MediaIO::Output).isOk());
+        rx->setExpectedDesc(rxMd);
+        REQUIRE(rx->open(MediaIO::Source).isOk());
 
         // Writer.
         MediaIO::Config txCfg = MediaIO::defaultConfig("Rtp");
@@ -1019,8 +1019,8 @@ TEST_CASE("MediaIOTask_Rtp_Reader_L16Audio_Loopback") {
         txMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         txMd.audioList().pushToBack(
                 AudioDesc(AudioDesc::PCMI_S16LE, RATE, CH));
-        tx->setMediaDesc(txMd);
-        REQUIRE(tx->open(MediaIO::Input).isOk());
+        tx->setExpectedDesc(txMd);
+        REQUIRE(tx->open(MediaIO::Sink).isOk());
 
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
@@ -1064,7 +1064,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_JsonMetadata_Loopback") {
         rxCfg.set(MediaConfig::RtpPacingMode, RtpPacingMode::None);
         MediaIO *rx = MediaIO::create(rxCfg);
         REQUIRE(rx != nullptr);
-        REQUIRE(rx->open(MediaIO::Output).isOk());
+        REQUIRE(rx->open(MediaIO::Source).isOk());
 
         // Writer.
         MediaIO::Config txCfg = MediaIO::defaultConfig("Rtp");
@@ -1073,7 +1073,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_JsonMetadata_Loopback") {
         txCfg.set(MediaConfig::RtpPacingMode, RtpPacingMode::None);
         MediaIO *tx = MediaIO::create(txCfg);
         REQUIRE(tx != nullptr);
-        REQUIRE(tx->open(MediaIO::Input).isOk());
+        REQUIRE(tx->open(MediaIO::Sink).isOk());
 
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
@@ -1116,8 +1116,8 @@ TEST_CASE("MediaIOTask_Rtp_Reader_Multicast_RawVideo") {
         rxMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         rxMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
                 PixelDesc(PixelDesc::RGB8_sRGB)));
-        rx->setMediaDesc(rxMd);
-        REQUIRE(rx->open(MediaIO::Output).isOk());
+        rx->setExpectedDesc(rxMd);
+        REQUIRE(rx->open(MediaIO::Source).isOk());
 
         // Writer — same destination group; multicast loopback is
         // enabled automatically in openStream() when any stream
@@ -1131,8 +1131,8 @@ TEST_CASE("MediaIOTask_Rtp_Reader_Multicast_RawVideo") {
         txMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         txMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
                 PixelDesc(PixelDesc::RGB8_sRGB)));
-        tx->setMediaDesc(txMd);
-        REQUIRE(tx->open(MediaIO::Input).isOk());
+        tx->setExpectedDesc(txMd);
+        REQUIRE(tx->open(MediaIO::Sink).isOk());
 
         // Give the multicast plumbing a moment to settle.
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -1189,8 +1189,8 @@ TEST_CASE("MediaIOTask_Rtp_Reader_CreateForFileRead_Sdp") {
         txMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         txMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
                 PixelDesc(PixelDesc::RGB8_sRGB)));
-        tx->setMediaDesc(txMd);
-        REQUIRE(tx->open(MediaIO::Input).isOk());
+        tx->setExpectedDesc(txMd);
+        REQUIRE(tx->open(MediaIO::Sink).isOk());
 
         // Reader comes up via createForFileRead — simulates
         // `mediaplay -i foo.sdp` with no explicit backend name.
@@ -1206,8 +1206,8 @@ TEST_CASE("MediaIOTask_Rtp_Reader_CreateForFileRead_Sdp") {
         rxMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         rxMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
                 PixelDesc(PixelDesc::RGB8_sRGB)));
-        rx->setMediaDesc(rxMd);
-        REQUIRE(rx->open(MediaIO::Output).isOk());
+        rx->setExpectedDesc(rxMd);
+        REQUIRE(rx->open(MediaIO::Source).isOk());
 
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
         Frame::Ptr txFrame = makeTinyRgbFrame(W, H, 0x7E);
@@ -1265,7 +1265,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_SdpSessionDirect") {
         rxCfg.set(MediaConfig::RtpPacingMode, RtpPacingMode::None);
         MediaIO *rx = MediaIO::create(rxCfg);
         REQUIRE(rx != nullptr);
-        REQUIRE(rx->open(MediaIO::Output).isOk());
+        REQUIRE(rx->open(MediaIO::Source).isOk());
 
         // Writer on the matching destination.
         MediaIO::Config txCfg = MediaIO::defaultConfig("Rtp");
@@ -1277,8 +1277,8 @@ TEST_CASE("MediaIOTask_Rtp_Reader_SdpSessionDirect") {
         txMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         txMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
                 PixelDesc(PixelDesc::JPEG_XS_YUV10_422_Rec709)));
-        tx->setMediaDesc(txMd);
-        REQUIRE(tx->open(MediaIO::Input).isOk());
+        tx->setExpectedDesc(txMd);
+        REQUIRE(tx->open(MediaIO::Sink).isOk());
 
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
@@ -1336,8 +1336,8 @@ TEST_CASE("MediaIOTask_Rtp_Reader_SdpOnly_JpegXs") {
         txMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         txMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
                 PixelDesc(PixelDesc::JPEG_XS_YUV10_422_Rec709)));
-        tx->setMediaDesc(txMd);
-        REQUIRE(tx->open(MediaIO::Input).isOk());
+        tx->setExpectedDesc(txMd);
+        REQUIRE(tx->open(MediaIO::Sink).isOk());
 
         // Reader — only the SDP, nothing else.
         MediaIO::Config rxCfg = MediaIO::defaultConfig("Rtp");
@@ -1346,7 +1346,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_SdpOnly_JpegXs") {
         MediaIO *rx = MediaIO::create(rxCfg);
         REQUIRE(rx != nullptr);
         // No setMediaDesc — loadSdp should populate everything.
-        REQUIRE(rx->open(MediaIO::Output).isOk());
+        REQUIRE(rx->open(MediaIO::Source).isOk());
 
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
@@ -1425,8 +1425,8 @@ TEST_CASE("MediaIOTask_Rtp_Reader_Mjpeg_Loopback") {
         rxMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         rxMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
                 PixelDesc(PixelDesc::JPEG_YUV8_422_Rec601_Full)));
-        rx->setMediaDesc(rxMd);
-        REQUIRE(rx->open(MediaIO::Output).isOk());
+        rx->setExpectedDesc(rxMd);
+        REQUIRE(rx->open(MediaIO::Source).isOk());
 
         // Writer.
         MediaIO::Config txCfg = MediaIO::defaultConfig("Rtp");
@@ -1438,8 +1438,8 @@ TEST_CASE("MediaIOTask_Rtp_Reader_Mjpeg_Loopback") {
         txMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         txMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
                 PixelDesc(PixelDesc::JPEG_YUV8_422_Rec601_Full)));
-        tx->setMediaDesc(txMd);
-        REQUIRE(tx->open(MediaIO::Input).isOk());
+        tx->setExpectedDesc(txMd);
+        REQUIRE(tx->open(MediaIO::Sink).isOk());
 
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
@@ -1507,8 +1507,8 @@ TEST_CASE("MediaIOTask_Rtp_Reader_LoadSdp_RawVideo") {
         txMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         txMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
                 PixelDesc(PixelDesc::RGB8_sRGB)));
-        tx->setMediaDesc(txMd);
-        REQUIRE(tx->open(MediaIO::Input).isOk());
+        tx->setExpectedDesc(txMd);
+        REQUIRE(tx->open(MediaIO::Sink).isOk());
 
         // Verify the SDP file has non-zero content before handing
         // it to the reader — catches writer-side misconfig.
@@ -1533,8 +1533,8 @@ TEST_CASE("MediaIOTask_Rtp_Reader_LoadSdp_RawVideo") {
         rxMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         rxMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
                 PixelDesc(PixelDesc::RGB8_sRGB)));
-        rx->setMediaDesc(rxMd);
-        REQUIRE(rx->open(MediaIO::Output).isOk());
+        rx->setExpectedDesc(rxMd);
+        REQUIRE(rx->open(MediaIO::Source).isOk());
 
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
 

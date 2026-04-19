@@ -44,9 +44,9 @@ TEST_CASE("MediaIOTask_VideoEncoder: backend is registered under \"VideoEncoder\
                 if(f.name == "VideoEncoder") { fd = &f; break; }
         }
         REQUIRE(fd != nullptr);
-        CHECK(fd->canInputAndOutput);
-        CHECK_FALSE(fd->canInput);
-        CHECK_FALSE(fd->canOutput);
+        CHECK(fd->canBeTransform);
+        CHECK_FALSE(fd->canBeSink);
+        CHECK_FALSE(fd->canBeSource);
 }
 
 TEST_CASE("MediaIOTask_VideoEncoder: open requires VideoCodec") {
@@ -57,10 +57,10 @@ TEST_CASE("MediaIOTask_VideoEncoder: open requires VideoCodec") {
         MediaDesc srcDesc;
         srcDesc.imageList().pushToBack(
                 ImageDesc(Size2Du32(8, 4), PixelDesc(PixelDesc::RGB8_sRGB)));
-        io->setMediaDesc(srcDesc);
+        io->setExpectedDesc(srcDesc);
 
         // VideoCodec empty in cfg => open must fail.
-        Error err = io->open(MediaIO::InputAndOutput);
+        Error err = io->open(MediaIO::Transform);
         CHECK(err.isError());
         delete io;
 }
@@ -74,9 +74,9 @@ TEST_CASE("MediaIOTask_VideoEncoder: open rejects a codec without an encoder fac
         MediaDesc srcDesc;
         srcDesc.imageList().pushToBack(
                 ImageDesc(Size2Du32(8, 4), PixelDesc(PixelDesc::RGB8_sRGB)));
-        io->setMediaDesc(srcDesc);
+        io->setExpectedDesc(srcDesc);
 
-        Error err = io->open(MediaIO::InputAndOutput);
+        Error err = io->open(MediaIO::Transform);
         CHECK(err == Error::NotSupported);
         delete io;
 }
@@ -92,9 +92,9 @@ TEST_CASE("MediaIOTask_VideoEncoder: write -> read emits a packet via passthroug
         MediaDesc srcDesc;
         srcDesc.imageList().pushToBack(
                 ImageDesc(Size2Du32(kW, kH), PixelDesc(PixelDesc::RGB8_sRGB)));
-        io->setMediaDesc(srcDesc);
+        io->setExpectedDesc(srcDesc);
 
-        REQUIRE(io->open(MediaIO::InputAndOutput) == Error::Ok);
+        REQUIRE(io->open(MediaIO::Transform) == Error::Ok);
 
         // Output MediaDesc should have substituted the encoder's
         // output PixelDesc (the passthrough codec pins it to H264).
@@ -137,8 +137,8 @@ TEST_CASE("MediaIOTask_VideoEncoder: empty output queue returns TryAgain before 
         MediaDesc srcDesc;
         srcDesc.imageList().pushToBack(
                 ImageDesc(Size2Du32(8, 4), PixelDesc(PixelDesc::RGB8_sRGB)));
-        io->setMediaDesc(srcDesc);
-        REQUIRE(io->open(MediaIO::InputAndOutput) == Error::Ok);
+        io->setExpectedDesc(srcDesc);
+        REQUIRE(io->open(MediaIO::Transform) == Error::Ok);
 
         // Non-blocking read before any write — queue is empty, should
         // report TryAgain so the pipeline can wait for more input.

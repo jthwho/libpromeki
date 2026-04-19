@@ -388,7 +388,12 @@ static PixelDesc::ID dpxPixelDesc(const DPXHeader *hdr, bool bigEndian) {
         return PixelDesc::Invalid;
 }
 
-static void setDPXImageElement(DPXHeader *hdr, PixelDesc::ID pdId) {
+// Returns true when @p pdId was recognized and the element was
+// populated.  Unknown formats leave the element untouched (header
+// memset'd to 0xFF by dpxInit) and the caller must refuse the save —
+// otherwise we'd emit a file whose header claims desc=255/bitdepth=255
+// and no reader would be able to decode it.
+static bool setDPXImageElement(DPXHeader *hdr, PixelDesc::ID pdId) {
         auto &elm = hdr->imgelm[0];
         elm.endoflinepadding = 0;
         elm.endofimagepadding = 0;
@@ -396,38 +401,39 @@ static void setDPXImageElement(DPXHeader *hdr, PixelDesc::ID pdId) {
                 case PixelDesc::RGB8_sRGB:
                         elm.desc = 50; elm.bitdepth = 8; elm.packing = 1;
                         hdr->tvinfo.blackcode = 0.0f; hdr->tvinfo.whitecode = 255.0f;
-                        break;
+                        return true;
                 case PixelDesc::RGBA8_sRGB:
                         elm.desc = 51; elm.bitdepth = 8; elm.packing = 1;
                         hdr->tvinfo.blackcode = 0.0f; hdr->tvinfo.whitecode = 255.0f;
-                        break;
+                        return true;
                 case PixelDesc::ARGB8_sRGB:
                         elm.desc = 51; elm.bitdepth = 8; elm.packing = 1;
                         hdr->tvinfo.blackcode = 0.0f; hdr->tvinfo.whitecode = 255.0f;
-                        break;
+                        return true;
                 case PixelDesc::YUV8_Rec709:
                         elm.desc = 100; elm.bitdepth = 8; elm.packing = 1;
                         hdr->tvinfo.blackcode = 16.0f; hdr->tvinfo.whitecode = 235.0f;
-                        break;
+                        return true;
                 case PixelDesc::RGB10_DPX_sRGB:
                 case PixelDesc::RGB10_DPX_LE_sRGB:
                         elm.desc = 50; elm.bitdepth = 10; elm.packing = 1;
                         hdr->tvinfo.blackcode = 0.0f; hdr->tvinfo.whitecode = 1023.0f;
-                        break;
+                        return true;
                 case PixelDesc::YUV10_DPX_Rec709:
                         elm.desc = 100; elm.bitdepth = 10; elm.packing = 1;
                         hdr->tvinfo.blackcode = 64.0f; hdr->tvinfo.whitecode = 940.0f;
-                        break;
+                        return true;
                 case PixelDesc::YUV10_DPX_B_Rec709:
                         elm.desc = 100; elm.bitdepth = 10; elm.packing = 2;
                         hdr->tvinfo.blackcode = 64.0f; hdr->tvinfo.whitecode = 940.0f;
-                        break;
+                        return true;
                 case PixelDesc::RGB16_BE_sRGB:
                         elm.desc = 50; elm.bitdepth = 16; elm.packing = 1;
                         hdr->tvinfo.blackcode = 0.0f; hdr->tvinfo.whitecode = 65535.0f;
-                        break;
+                        return true;
                 default: break;
         }
+        return false;
 }
 
 static void setDPXTransferCharacteristic(DPXHeader *hdr) {
@@ -733,6 +739,8 @@ class ImageFileIO_DPX : public ImageFileIO {
                         _canLoad = true;
                         _canSave = true;
                         _name = "DPX";
+                        _description = "DPX (SMPTE 268M) image sequence";
+                        _extensions = { "dpx" };
                 }
                 Error load(ImageFile &imageFile, const MediaConfig &config) const override;
                 Error save(ImageFile &imageFile, const MediaConfig &config) const override;
@@ -933,7 +941,12 @@ Error ImageFileIO_DPX::save(ImageFile &imageFile, const MediaConfig &config) con
         hdr->imgelm[0].encoding = 0;
         hdr->imgelm[0].offset = static_cast<uint32_t>(headerSize);
 
-        setDPXImageElement(hdr, pdId);
+        if(!setDPXImageElement(hdr, pdId)) {
+                promekiErr("DPX save '%s': pixel format '%s' is not supported "
+                           "by this writer",
+                           filename.cstr(), image.pixelDesc().name().cstr());
+                return Error::PixelFormatNotSupported;
+        }
         setDPXTransferCharacteristic(hdr);
         fillHeaderFromMetadata(hdr, meta, filename);
 

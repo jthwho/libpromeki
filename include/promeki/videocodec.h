@@ -134,6 +134,16 @@ class VideoCodec {
                         List<int>       compressedPixelDescs;
                         EncoderFactory  createEncoder;      ///< Factory for VideoEncoder sessions; null = encode not supported.
                         DecoderFactory  createDecoder;      ///< Factory for VideoDecoder sessions; null = decode not supported.
+                        /**
+                         * @brief Uncompressed @ref PixelDesc IDs the encoder accepts.
+                         *
+                         * Parallel to @ref VideoEncoder::supportedInputs, but
+                         * exposed at the codec level so planners can query
+                         * without instantiating an encoder session.  Empty
+                         * when the codec has no registered encoder or when
+                         * the backend accepts any uncompressed input.
+                         */
+                        List<int>       encoderSupportedInputs;
                 };
 
                 /**
@@ -214,6 +224,20 @@ class VideoCodec {
 
                 /** @brief Returns true when this codec has a registered encoder factory. */
                 bool canEncode() const { return d->createEncoder != nullptr; }
+
+                /**
+                 * @brief Returns the list of uncompressed @ref PixelDesc IDs the encoder accepts.
+                 *
+                 * Mirrors @ref VideoEncoder::supportedInputs without
+                 * requiring an encoder instance — safe to call from
+                 * the planner during plan() without side effects.
+                 * Empty when the backend accepts any uncompressed input
+                 * (matches the @ref VideoEncoder::supportedInputs contract)
+                 * or when encode is not supported.
+                 */
+                const List<int> &encoderSupportedInputs() const {
+                        return d->encoderSupportedInputs;
+                }
 
                 /** @brief Returns true when this codec has a registered decoder factory. */
                 bool canDecode() const { return d->createDecoder != nullptr; }

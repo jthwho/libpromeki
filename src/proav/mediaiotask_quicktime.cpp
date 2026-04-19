@@ -8,19 +8,24 @@
 #include <cstdint>
 #include <cstring>
 #include <promeki/mediaiotask_quicktime.h>
+#include <promeki/colormodel.h>
 #include <promeki/enums.h>
 #include <promeki/h264bitstream.h>
 #include <promeki/hevcbitstream.h>
+#include <promeki/imagedesc.h>
 #include <promeki/iodevice.h>
 #include <promeki/image.h>
 #include <promeki/frame.h>
 #include <promeki/audio.h>
+#include <promeki/mediadesc.h>
 #include <promeki/mediapacket.h>
 #include <promeki/metadata.h>
 #include <promeki/timecode.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+PROMEKI_DEBUG(MediaIOTask_QuickTime)
 
 PROMEKI_REGISTER_MEDIAIO(MediaIOTask_QuickTime)
 
@@ -111,9 +116,9 @@ MediaIO::FormatDesc MediaIOTask_QuickTime::formatDesc() {
                 "QuickTime",
                 "QuickTime / ISO-BMFF container files (.mov, .mp4, .m4v)",
                 {"mov", "qt", "mp4", "m4v"},
-                true,    // canOutput
-                true,    // canInput
-                false,   // canInputAndOutput
+                true,    // canBeSource
+                true,    // canBeSink
+                false,   // canBeTransform
                 []() -> MediaIOTask * {
                         return new MediaIOTask_QuickTime();
                 },
@@ -185,7 +190,7 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandOpen &cmd) {
         }
         _mode = cmd.mode;
 
-        if(cmd.mode == MediaIO::Output) {
+        if(cmd.mode == MediaIO::Source) {
                 _qt = QuickTime::createReader(_filename);
                 Error err = _qt.open();
                 if(err.isError()) {
@@ -359,7 +364,7 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandOpen &cmd) {
 }
 
 Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandClose & /*cmd*/) {
-        if(_mode == MediaIO::Input && _qt.isOpen()) {
+        if(_mode == MediaIO::Sink && _qt.isOpen()) {
                 // Drain any tail audio remaining in the FIFO before finalize.
                 drainWriterAudio(/*flush=*/true);
                 Error err = _qt.finalize();
@@ -410,21 +415,49 @@ Error MediaIOTask_QuickTime::readVideoFrame(uint64_t frameIndex, Frame::Ptr &out
         // raw RGB end up as raster Images via Image(ImageDesc).
         Frame::Ptr frame = Frame::Ptr::create();
 
-        // Zero-copy Image construction: adopt the sample Buffer::Ptr
-        // directly as plane 0. Works for both compressed codecs and
-        // single-plane uncompressed formats (2vuy, v210, packed RGB).
-        // Multi-plane (planar YUV) formats would need a separate path
-        // — none of the currently-supported QuickTime video codecs hit
-        // that case.
-        Image img = Image::fromBuffer(s.data, vt.size().width(), vt.size().height(),
-                                      vt.pixelDesc(), vt.metadata());
+        // Image construction varies by layout:
+        //   - Compressed codecs and single-plane uncompressed formats
+        //     (2vuy, v210, packed RGB) adopt the sample Buffer::Ptr
+        //     directly as plane 0 — zero-copy.
+        //   - Multi-plane uncompressed formats (planar / semi-planar
+        //     YUV) need one Buffer per plane.  The container delivers
+        //     the sample as one contiguous blob, so we allocate a
+        //     proper Image and memcpy the plane slices out of the
+        //     sample buffer.  planeSize() gives each slice's size and
+        //     they're packed back-to-back with no per-plane padding
+        //     in QuickTime uncompressed tracks.
+        const PixelDesc &samplePd = vt.pixelDesc();
+        const size_t sampleWidth  = vt.size().width();
+        const size_t sampleHeight = vt.size().height();
+        Image img;
+        if(!samplePd.isCompressed() && samplePd.planeCount() > 1) {
+                ImageDesc idesc(sampleWidth, sampleHeight, samplePd);
+                idesc.metadata() = vt.metadata();
+                img = Image(idesc);
+                if(img.isValid()) {
+                        const uint8_t *src =
+                                static_cast<const uint8_t *>(s.data->data());
+                        size_t off = 0;
+                        for(int p = 0; p < samplePd.planeCount(); ++p) {
+                                size_t psz = samplePd.planeSize(p, idesc);
+                                if(off + psz > s.data->size()) {
+                                        img = Image();
+                                        break;
+                                }
+                                std::memcpy(img.data(p), src + off, psz);
+                                off += psz;
+                        }
+                }
+        } else {
+                img = Image::fromBuffer(s.data, sampleWidth, sampleHeight,
+                                        samplePd, vt.metadata());
+        }
         if(!img.isValid()) {
                 promekiWarn("MediaIOTask_QuickTime: failed to wrap video sample %llu as Image",
                             static_cast<unsigned long long>(frameIndex));
                 return Error::DecodeFailed;
         }
         Image::Ptr imgPtr = Image::Ptr::create(img);
-        frame.modify()->imageList().pushToBack(imgPtr);
 
         // For H.264 / HEVC tracks, also attach a MediaPacket to the
         // Image carrying the sample re-framed as an Annex-B byte
@@ -434,7 +467,11 @@ Error MediaIOTask_QuickTime::readVideoFrame(uint64_t frameIndex, Frame::Ptr &out
         // live only in the @c avcC / @c hvcC configuration record —
         // convert here, and prepend the parameter sets in front of
         // every keyframe so the decoder can be initialised from any
-        // seek point.
+        // seek point.  Must happen BEFORE pushing into the Frame's
+        // imageList — SharedPtr::modify() does copy-on-write, so
+        // mutating through imgPtr after the list already holds a
+        // reference detaches a copy and leaves the list's Image
+        // without the packet.
         const bool isH264 = (vt.pixelDesc().id() == PixelDesc::H264);
         const bool isHEVC = (vt.pixelDesc().id() == PixelDesc::HEVC);
         if((isH264 || isHEVC) && vt.codecConfig().isValid()) {
@@ -483,7 +520,26 @@ Error MediaIOTask_QuickTime::readVideoFrame(uint64_t frameIndex, Frame::Ptr &out
                         if(s.keyframe) pkt.modify()->addFlag(MediaPacket::Keyframe);
                         imgPtr.modify()->setPacket(std::move(pkt));
                 }
+        } else if(samplePd.isCompressed() && !imgPtr->packet().isValid()) {
+                // Non-AVC/HEVC compressed codecs (JPEG, JPEG XS, ProRes,
+                // AV1, ...) keep their container sample bytes unchanged
+                // — no AVCC→Annex-B re-framing, no parameter-set
+                // injection.  Wrap plane(0) (which already holds the
+                // whole compressed sample) as a zero-copy MediaPacket
+                // so a downstream @ref VideoDecoder stage can consume
+                // it.  Same pattern @ref ImageFile uses for on-disk
+                // intraframe formats.
+                const Buffer::Ptr &plane = imgPtr->plane(0);
+                if(plane.isValid() && plane->size() > 0) {
+                        auto pkt = MediaPacket::Ptr::create(plane, samplePd);
+                        if(s.keyframe) pkt.modify()->addFlag(MediaPacket::Keyframe);
+                        imgPtr.modify()->setPacket(std::move(pkt));
+                }
         }
+
+        // Attach after setPacket so the Frame's imageList sees the
+        // fully-populated Image (see CoW note above).
+        frame.modify()->imageList().pushToBack(imgPtr);
 
         // Frame metadata: timecode (anchor + frame offset), frame number,
         // keyframe flag.
@@ -522,7 +578,7 @@ Error MediaIOTask_QuickTime::readAudioSlice(uint64_t startSample, size_t samples
 }
 
 Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandRead &cmd) {
-        if(_mode != MediaIO::Output) return Error::NotOpen;
+        if(_mode != MediaIO::Source) return Error::NotOpen;
         stampWorkBegin();
 
         if(_currentFrame < 0 || _currentFrame >= _frameCount) {
@@ -699,7 +755,7 @@ Error MediaIOTask_QuickTime::drainWriterAudio(bool flush) {
 }
 
 Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandWrite &cmd) {
-        if(_mode != MediaIO::Input) return Error::NotOpen;
+        if(_mode != MediaIO::Sink) return Error::NotOpen;
         if(!cmd.frame.isValid()) return Error::InvalidArgument;
         stampWorkBegin();
         const Frame &frame = *cmd.frame;
@@ -752,15 +808,45 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandWrite &cmd) {
                 s.keyframe = pkt.isKeyframe();
         } else {
                 // Pull the encoded bytes from plane(0). For compressed images
-                // this is the raw codec payload; for uncompressed images it's
-                // the pixel bytes.
-                Buffer::Ptr plane = img.plane(0);
-                if(!plane.isValid() || plane->size() == 0) {
-                        promekiWarn("MediaIOTask_QuickTime: image plane is empty");
-                        stampWorkEnd();
-                        return Error::InvalidArgument;
+                // this is the raw codec payload; for single-plane uncompressed
+                // images (packed YUV, packed RGB) it's the pixel bytes.
+                // Multi-plane uncompressed images (planar / semi-planar YUV)
+                // need each plane concatenated back-to-back into a single
+                // contiguous sample because QuickTime's uncompressed sample
+                // entries carry exactly one mdat payload per frame.
+                const PixelDesc &imgPd = img.pixelDesc();
+                const int pc = imgPd.planeCount();
+                if(!imgPd.isCompressed() && pc > 1) {
+                        size_t total = 0;
+                        for(int p = 0; p < pc; ++p) {
+                                Buffer::Ptr pb = img.plane(p);
+                                if(!pb.isValid()) {
+                                        promekiWarn("MediaIOTask_QuickTime: plane %d missing on multi-plane image",
+                                                    p);
+                                        stampWorkEnd();
+                                        return Error::InvalidArgument;
+                                }
+                                total += pb->size();
+                        }
+                        Buffer concat(total);
+                        size_t off = 0;
+                        for(int p = 0; p < pc; ++p) {
+                                Buffer::Ptr pb = img.plane(p);
+                                std::memcpy(static_cast<uint8_t *>(concat.data()) + off,
+                                            pb->data(), pb->size());
+                                off += pb->size();
+                        }
+                        concat.setSize(total);
+                        s.data = Buffer::Ptr::create(std::move(concat));
+                } else {
+                        Buffer::Ptr plane = img.plane(0);
+                        if(!plane.isValid() || plane->size() == 0) {
+                                promekiWarn("MediaIOTask_QuickTime: image plane is empty");
+                                stampWorkEnd();
+                                return Error::InvalidArgument;
+                        }
+                        s.data = plane;
                 }
-                s.data = plane;
                 if(frame.metadata().contains(Metadata::FrameKeyframe)) {
                         s.keyframe = frame.metadata().get(Metadata::FrameKeyframe).get<bool>();
                 }
@@ -812,13 +898,158 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandWrite &cmd) {
 // ----------------------------------------------------------------------------
 
 Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandSeek &cmd) {
-        if(_mode != MediaIO::Output) return Error::IllegalSeek;
+        if(_mode != MediaIO::Source) return Error::IllegalSeek;
         if(_videoTrackIndex < 0) return Error::IllegalSeek;
         int64_t target = cmd.frameNumber;
         if(target < 0) target = 0;
         if(target >= _frameCount) target = _frameCount - 1;
         _currentFrame = target;
         cmd.currentFrame = _currentFrame;
+        return Error::Ok;
+}
+
+// ---- Phase 3 introspection / negotiation overrides ----
+//
+// QuickTime's writer is permissive at the @c writeSample byte level
+// — it copies whatever the upstream stage hands it under the
+// configured FourCC — but only a subset of those FourCCs are
+// understood by real-world QuickTime / ISO-BMFF readers.  The
+// supported set below is curated against (a) what shipped writer
+// code paths actually do (avcC/hvcC extraction for H.264/HEVC,
+// ProRes / JPEG / JPEG XS sample-entry boxes) and (b) which
+// uncompressed FourCCs the dominant QT decoders (Apple AVFoundation,
+// FFmpeg's mov demuxer) interpret correctly:
+//
+//   - Compressed: H.264, HEVC, AV1, all ProRes flavours, MJPEG,
+//     JPEG XS.
+//   - Uncompressed RGB: "raw " (RGB8), "RGBA" (RGBA8).
+//   - Uncompressed YUV 4:2:2 8-bit: YUYV ("YUY2"), UYVY ("2vuy").
+//   - Uncompressed YUV 4:2:2 10-bit packed: "v210".
+//   - Uncompressed YUV planar: I422 ("yuv2"-class), I420 ("yv12"-class).
+//   - Uncompressed YUV semi-planar: NV12, NV16.
+//
+// NV21 deliberately omitted — it has a fourcc registered in our
+// PixelDesc DB but no QuickTime reader interprets it.  Same for
+// 10-bit planar / semi-planar YUV variants beyond v210.
+
+bool MediaIOTask_QuickTime::isSupportedPixelDesc(const PixelDesc &pd) {
+        if(!pd.isValid()) return false;
+        switch(pd.id()) {
+                // Compressed video that the writer either passes
+                // through verbatim or post-processes (avcC/hvcC).
+                case PixelDesc::H264:
+                case PixelDesc::HEVC:
+                case PixelDesc::AV1:
+                // JPEG (MJPEG in a QuickTime container) — every
+                // variant the JpegImageCodec produces is byte-for-
+                // byte compatible with the "mjpg"/"JPEG" sample
+                // entry, so the planner can route any of them
+                // straight through the writer without re-encoding.
+                case PixelDesc::JPEG_RGB8_sRGB:
+                case PixelDesc::JPEG_RGBA8_sRGB:
+                case PixelDesc::JPEG_YUV8_422_Rec709:
+                case PixelDesc::JPEG_YUV8_420_Rec709:
+                case PixelDesc::JPEG_YUV8_422_Rec601:
+                case PixelDesc::JPEG_YUV8_420_Rec601:
+                case PixelDesc::JPEG_YUV8_422_Rec709_Full:
+                case PixelDesc::JPEG_YUV8_420_Rec709_Full:
+                case PixelDesc::JPEG_YUV8_422_Rec601_Full:
+                case PixelDesc::JPEG_YUV8_420_Rec601_Full:
+                // JPEG XS is deliberately NOT listed here: the writer
+                // can produce a "jxsv" sample entry but the reader has
+                // no complementary container path wired up yet, so any
+                // round-trip through a .mov would fail on the read
+                // side (see project_mediaio notes on JPEG XS).  When
+                // the reader catches up, add the JPEG_XS_* variants
+                // here so the planner stops routing them through an
+                // encoder bridge.
+                case PixelDesc::ProRes_422_Proxy:
+                case PixelDesc::ProRes_422_LT:
+                case PixelDesc::ProRes_422:
+                case PixelDesc::ProRes_422_HQ:
+                case PixelDesc::ProRes_4444:
+                case PixelDesc::ProRes_4444_XQ:
+                // Uncompressed RGB.
+                case PixelDesc::RGB8_sRGB:
+                case PixelDesc::RGBA8_sRGB:
+                // Uncompressed YUV 4:2:2 8-bit packed.
+                case PixelDesc::YUV8_422_Rec709:
+                case PixelDesc::YUV8_422_Rec601:
+                case PixelDesc::YUV8_422_UYVY_Rec709:
+                case PixelDesc::YUV8_422_UYVY_Rec601:
+                // Uncompressed YUV 4:2:2 10-bit packed (v210).
+                case PixelDesc::YUV10_422_v210_Rec709:
+                // Uncompressed YUV 4:2:2 planar 8-bit (I422).
+                case PixelDesc::YUV8_422_Planar_Rec709:
+                // Uncompressed YUV 4:2:0 planar 8-bit (I420).
+                case PixelDesc::YUV8_420_Planar_Rec709:
+                case PixelDesc::YUV8_420_Planar_Rec601:
+                // Uncompressed YUV 4:2:0 / 4:2:2 semi-planar 8-bit.
+                case PixelDesc::YUV8_420_SemiPlanar_Rec709:
+                case PixelDesc::YUV8_420_SemiPlanar_Rec601:
+                case PixelDesc::YUV8_422_SemiPlanar_Rec709:
+                        return true;
+                default:
+                        return false;
+        }
+}
+
+PixelDesc MediaIOTask_QuickTime::pickSupportedPixelDesc(const PixelDesc &offered) {
+        if(isSupportedPixelDesc(offered)) return offered;
+
+        // Compressed-but-unsupported sources need to be transcoded —
+        // hand off to the planner via VideoEncoder.  Indicate the
+        // canonical mp4 codec.
+        if(offered.isCompressed()) return PixelDesc(PixelDesc::H264);
+
+        const bool offerYuv = offered.isValid()
+                && offered.colorModel().type() == ColorModel::TypeYCbCr;
+        const int  offerBits = (offered.isValid()
+                && offered.pixelFormat().compCount() > 0)
+                ? static_cast<int>(offered.pixelFormat().compDesc(0).bits)
+                : 8;
+
+        if(offerYuv) {
+                // YUV source: pick the closest supported YUV form by
+                // chroma subsampling and bit depth.
+                const auto sampling = offered.pixelFormat().sampling();
+                if(offerBits >= 10 && sampling != PixelFormat::Sampling420) {
+                        return PixelDesc(PixelDesc::YUV10_422_v210_Rec709);
+                }
+                if(sampling == PixelFormat::Sampling420) {
+                        return PixelDesc(PixelDesc::YUV8_420_SemiPlanar_Rec709);
+                }
+                return PixelDesc(PixelDesc::YUV8_422_Rec709);
+        }
+        // RGB source — match alpha presence; QT supports 8-bit RGB
+        // and RGBA only.
+        return PixelDesc(PixelDesc::RGBA8_sRGB);
+}
+
+Error MediaIOTask_QuickTime::proposeInput(const MediaDesc &offered,
+                                          MediaDesc *preferred) const {
+        if(preferred == nullptr) return Error::Invalid;
+        if(offered.imageList().isEmpty()) {
+                // Audio-only frame — let the AudioFile-equivalent
+                // PCM path accept whatever; QT writer handles a wide
+                // PCM set already.
+                *preferred = offered;
+                return Error::Ok;
+        }
+
+        const PixelDesc &offeredPd = offered.imageList()[0].pixelDesc();
+        const PixelDesc target = pickSupportedPixelDesc(offeredPd);
+        if(target == offeredPd) {
+                *preferred = offered;
+                return Error::Ok;
+        }
+
+        MediaDesc want = offered;
+        ImageDesc img(offered.imageList()[0].size(), target);
+        img.setVideoScanMode(offered.imageList()[0].videoScanMode());
+        want.imageList().clear();
+        want.imageList().pushToBack(img);
+        *preferred = want;
         return Error::Ok;
 }
 

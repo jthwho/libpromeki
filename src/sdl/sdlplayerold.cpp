@@ -42,7 +42,7 @@ SDLPlayerOldTask::~SDLPlayerOldTask() {
 }
 
 Error SDLPlayerOldTask::executeCmd(MediaIOCommandOpen &cmd) {
-        if(cmd.mode != MediaIO::Input) {
+        if(cmd.mode != MediaIO::Sink) {
                 promekiErr("SDLPlayerOldTask: only Writer mode is supported");
                 return Error::NotSupported;
         }

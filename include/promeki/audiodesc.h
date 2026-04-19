@@ -34,6 +34,12 @@ class AudioDesc {
                 /** @brief Shared pointer type for AudioDesc. */
                 using Ptr = SharedPtr<AudioDesc>;
 
+                /** @brief List of AudioDesc values. */
+                using List = promeki::List<AudioDesc>;
+
+                /** @brief List of shared AudioDesc pointers. */
+                using PtrList = promeki::List<Ptr>;
+
                 /** @brief Minimum value of a signed 24-bit integer. */
                 static const int32_t MinS24 = -8388608;
                 /** @brief Maximum value of a signed 24-bit integer. */
@@ -475,11 +481,20 @@ class AudioDesc {
 
                 /**
                  * @brief Sets the data type.
+                 *
+                 * Also refreshes the cached @c Format pointer so
+                 * @ref toString, @ref bytesPerSample, @ref isPlanar,
+                 * and the StructDatabase-driven helpers stay in sync
+                 * with @p val.  Without this, @c toString would keep
+                 * reporting the previously-cached format name even
+                 * after @ref setDataType.
+                 *
                  * @param val The new DataType value.
                  */
                 void setDataType(DataType val) {
                         _dataType = val;
-                        return;
+                        _format = lookupFormat(val);
+                        if(_format == nullptr) _format = lookupFormat(Invalid);
                 }
 
                 /**

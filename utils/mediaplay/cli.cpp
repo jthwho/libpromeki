@@ -82,14 +82,14 @@ void printBackendConfigHelp() {
         //
         // Order is Input-first so a backend that supports both (but
         // not simultaneously) reads as `IO` — the same string a pure
-        // converter (canInputAndOutput only) displays, so the badge
+        // transform (canBeTransform only) displays, so the badge
         // stays consistent regardless of how the backend decomposes
         // its modes.
         for(const auto &desc : MediaIO::registeredFormats()) {
                 String caps;
-                if(desc.canInput) caps += "I";
-                if(desc.canOutput) caps += "O";
-                if(desc.canInputAndOutput && caps.isEmpty()) caps = "IO";
+                if(desc.canBeSink) caps += "I";
+                if(desc.canBeSource) caps += "O";
+                if(desc.canBeTransform && caps.isEmpty()) caps = "IO";
                 MediaIO::Config::SpecMap specs = desc.configSpecs
                         ? desc.configSpecs() : MediaIO::Config::SpecMap();
                 dumpBackend(desc.name, caps, desc.description, specs);
@@ -104,13 +104,14 @@ void usage() {
         fprintf(stderr,
                 "Usage: mediaplay [OPTIONS]\n"
                 "\n"
-                "Pumps media frames from one MediaIO source, through an optional\n"
-                "Converter stage, out to one or more MediaIO sinks.  Every stage\n"
-                "is configured via generic Key:Value options whose values are\n"
-                "parsed against the backend's default config.  Pacing is\n"
-                "implicit: if an SDL destination is present it drives the\n"
-                "pipeline at video rate (audio-led clock), otherwise frames\n"
-                "flow as fast as the file sinks can consume them.\n"
+                "Pumps media frames from one MediaIO source, through zero or more\n"
+                "intermediate transform stages (CSC, SRC, VideoEncoder, etc.), out\n"
+                "to one or more MediaIO sinks.  Every stage is configured via\n"
+                "generic Key:Value options whose values are parsed against the\n"
+                "backend's default config.  Pacing is implicit: if an SDL\n"
+                "destination is present it drives the pipeline at video rate\n"
+                "(audio-led clock), otherwise frames flow as fast as the file\n"
+                "sinks can consume them.\n"
                 "\n"
                 "Backend badges in the schema below show which direction each\n"
                 "backend supports:\n"
@@ -131,10 +132,11 @@ void usage() {
                 "                            Repeatable.\n"
                 "  -c, --convert <NAME>      Insert an intermediate MediaIO\n"
                 "                            stage (backend name, e.g.\n"
-                "                            Converter / VideoEncoder /\n"
-                "                            VideoDecoder).  Repeatable —\n"
-                "                            stages are chained in the\n"
-                "                            order given.\n"
+                "                            CSC / VideoEncoder /\n"
+                "                            VideoDecoder / FrameSync /\n"
+                "                            SRC).  Repeatable — stages\n"
+                "                            are chained in the order\n"
+                "                            given.\n"
                 "  --cc <K:V>                Set one config key on the\n"
                 "                            most recently declared -c.\n"
                 "                            Repeatable.\n"
@@ -175,7 +177,7 @@ void usage() {
                 "                            Prints a BytesPerSecond /\n"
                 "                            FramesPerSecond / FramesDropped /\n"
                 "                            AverageLatencyMs summary for every\n"
-                "                            stage (source, converter, sinks)\n"
+                "                            stage (source, transform, sinks)\n"
                 "                            once per second by default.  Auto-\n"
                 "                            enables EnableBenchmark on every\n"
                 "                            stage so latency keys populate.\n"
@@ -202,6 +204,20 @@ void usage() {
                 "                            aggregate snapshot at shutdown.\n"
                 "                            Implicitly turns on the stats\n"
                 "                            collector (default 1s interval).\n"
+                "\n"
+                "Planner:\n"
+                "  --no-autoplan             Disable automatic bridge insertion\n"
+                "                            (CSC, decoder, FrameSync, SRC, encoder)\n"
+                "                            before pipeline build.  Default behaviour\n"
+                "                            runs MediaPipelinePlanner; this flag forces\n"
+                "                            a strict, fully-resolved input config.\n"
+                "  --plan                    Run the planner against the resolved CLI\n"
+                "                            config, print the resulting stages and\n"
+                "                            routes to stdout, and exit without opening\n"
+                "                            anything.\n"
+                "  --describe                Instantiate every stage, call\n"
+                "                            MediaIO::describe on each, dump the\n"
+                "                            summary, and exit.\n"
                 "\n"
                 "Misc:\n"
                 "  -h, --help                Show this help text and the schema.\n");
@@ -259,8 +275,8 @@ bool parseOptions(int argc, char **argv, Options &opts) {
 
                 {'c', "convert",
                  "Insert an intermediate MediaIO stage (backend name, e.g. "
-                 "Converter / VideoEncoder / VideoDecoder).  Repeatable — "
-                 "stages are chained in the order given.",
+                 "CSC / VideoEncoder / VideoDecoder / FrameSync / SRC).  "
+                 "Repeatable — stages are chained in the order given.",
                  CmdLineParser::OptionStringCallback([&](const String &s) {
                          if(s == "list") listMediaIOBackendsAndExit();
                          StageSpec sp;
@@ -272,32 +288,32 @@ bool parseOptions(int argc, char **argv, Options &opts) {
                          // diagnostic is uniform with -s / -d when
                          // the name is unknown.
                          classifyStageArg(s, sp);
-                         opts.converters.pushToBack(sp);
-                         opts.lastConverter = opts.converters.size() - 1;
-                         opts.lastScope     = Options::ScopeConverter;
+                         opts.transforms.pushToBack(sp);
+                         opts.lastTransform = opts.transforms.size() - 1;
+                         opts.lastScope     = Options::ScopeTransform;
                          return 0;
                  })},
                 {0, "cc",
                  "Set config on the most recently declared -c (Key:Value), repeatable",
                  CmdLineParser::OptionStringCallback([&](const String &s) {
-                         if(opts.converters.isEmpty()) {
+                         if(opts.transforms.isEmpty()) {
                                  fprintf(stderr,
                                          "Error: --cc must follow at least one -c/--convert\n");
                                  return 1;
                          }
-                         opts.converters[opts.lastConverter]
+                         opts.transforms[opts.lastTransform]
                                  .rawKeyValues.pushToBack(s);
                          return 0;
                  })},
                 {0, "cm",
                  "Set metadata on the most recently declared -c (Key:Value), repeatable",
                  CmdLineParser::OptionStringCallback([&](const String &s) {
-                         if(opts.converters.isEmpty()) {
+                         if(opts.transforms.isEmpty()) {
                                  fprintf(stderr,
                                          "Error: --cm must follow at least one -c/--convert\n");
                                  return 1;
                          }
-                         opts.converters[opts.lastConverter]
+                         opts.transforms[opts.lastTransform]
                                  .rawMetaKeyValues.pushToBack(s);
                          return 0;
                  })},
@@ -387,6 +403,28 @@ bool parseOptions(int argc, char **argv, Options &opts) {
                  "Query and print the source device's supported formats, then exit",
                  CmdLineParser::OptionCallback([&]() {
                          opts.probe = true;
+                         return 0;
+                 })},
+                {0, "no-autoplan",
+                 "Disable automatic bridge insertion (CSC, decoder, frame sync, etc.) "
+                 "before pipeline build.  Default behaviour runs MediaPipelinePlanner "
+                 "automatically; this flag forces a fully-resolved input config.",
+                 CmdLineParser::OptionCallback([&]() {
+                         opts.autoplan = false;
+                         return 0;
+                 })},
+                {0, "plan",
+                 "Run the planner on the resolved config, print the result to stdout, "
+                 "and exit without opening anything",
+                 CmdLineParser::OptionCallback([&]() {
+                         opts.planOnly = true;
+                         return 0;
+                 })},
+                {0, "describe",
+                 "Instantiate every stage, call MediaIO::describe on each, print the "
+                 "summary, and exit",
+                 CmdLineParser::OptionCallback([&]() {
+                         opts.describeOnly = true;
                          return 0;
                  })},
 

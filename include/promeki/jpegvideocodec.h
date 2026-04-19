@@ -54,6 +54,17 @@ class JpegVideoEncoder : public VideoEncoder {
                 PixelDesc outputPixelDesc() const override;
                 List<int> supportedInputs() const override;
 
+                /**
+                 * @brief Static view of the encoder's @ref supportedInputs list.
+                 *
+                 * Returned verbatim by the virtual @ref supportedInputs
+                 * override.  Exposed statically so the
+                 * @ref VideoCodec registry can populate
+                 * @ref VideoCodec::Data::encoderSupportedInputs without
+                 * allocating an encoder instance.
+                 */
+                static List<int> supportedInputList();
+
                 void configure(const MediaConfig &config) override;
                 Error submitFrame(const Image &frame,
                                   const MediaTimeStamp &pts = MediaTimeStamp()) override;

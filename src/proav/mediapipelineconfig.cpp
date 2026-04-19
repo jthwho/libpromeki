@@ -12,6 +12,7 @@
 #include <promeki/list.h>
 #include <promeki/logger.h>
 #include <promeki/map.h>
+#include <promeki/mediapipelineplanner.h>
 #include <promeki/set.h>
 #include <promeki/variantspec.h>
 
@@ -36,19 +37,19 @@ bool MediaPipelineConfig::Stage::operator==(const Stage &other) const {
 
 String MediaPipelineConfig::modeName(MediaIO::Mode mode) {
         switch(mode) {
-                case MediaIO::Output:         return String("Output");
-                case MediaIO::Input:          return String("Input");
-                case MediaIO::InputAndOutput: return String("InputAndOutput");
+                case MediaIO::Source:    return String("Source");
+                case MediaIO::Sink:      return String("Sink");
+                case MediaIO::Transform: return String("Transform");
                 case MediaIO::NotOpen:
-                default:                      return String("NotOpen");
+                default:                 return String("NotOpen");
         }
 }
 
 MediaIO::Mode MediaPipelineConfig::modeFromName(const String &name, Error *err) {
         if(err) *err = Error::Ok;
-        if(name == "Output")         return MediaIO::Output;
-        if(name == "Input")          return MediaIO::Input;
-        if(name == "InputAndOutput") return MediaIO::InputAndOutput;
+        if(name == "Source")    return MediaIO::Source;
+        if(name == "Sink")      return MediaIO::Sink;
+        if(name == "Transform") return MediaIO::Transform;
         if(name == "NotOpen" || name.isEmpty()) return MediaIO::NotOpen;
         if(err) *err = Error::Invalid;
         return MediaIO::NotOpen;
@@ -328,6 +329,28 @@ bool hasCycleDfs(const String &node,
 
 } // namespace
 
+// ============================================================================
+// Planner-driven helpers
+// ============================================================================
+//
+// Both helpers are thin wrappers around MediaPipelinePlanner.  They
+// live here so callers can ask a config to resolve itself without
+// having to know the planner type — same shape as JsonObject's static
+// parse() factory wraps the underlying nlohmann::json call.
+
+bool MediaPipelineConfig::isResolved(String *diagnostic) const {
+        return MediaPipelinePlanner::isResolved(*this, diagnostic);
+}
+
+MediaPipelineConfig MediaPipelineConfig::resolved(Error *err,
+                                                  String *diagnostic) const {
+        MediaPipelineConfig out;
+        Error perr = MediaPipelinePlanner::plan(*this, &out, {}, diagnostic);
+        if(err != nullptr) *err = perr;
+        if(perr.isError()) return MediaPipelineConfig();
+        return out;
+}
+
 Error MediaPipelineConfig::validate() const {
         if(_stages.isEmpty()) {
                 promekiWarn("MediaPipelineConfig::validate: pipeline has no stages.");
@@ -353,9 +376,9 @@ Error MediaPipelineConfig::validate() const {
                                    s.name.cstr());
                         return Error::InvalidArgument;
                 }
-                if(s.mode != MediaIO::Output
-                   && s.mode != MediaIO::Input
-                   && s.mode != MediaIO::InputAndOutput) {
+                if(s.mode != MediaIO::Source
+                   && s.mode != MediaIO::Sink
+                   && s.mode != MediaIO::Transform) {
                         promekiErr("MediaPipelineConfig::validate: stage '%s' has invalid mode.",
                                    s.name.cstr());
                         return Error::InvalidArgument;

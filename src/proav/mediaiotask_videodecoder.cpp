@@ -12,6 +12,7 @@
 #include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/mediadesc.h>
+#include <promeki/mediaiodescription.h>
 #include <promeki/metadata.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/mediapacket.h>
@@ -21,47 +22,83 @@ PROMEKI_NAMESPACE_BEGIN
 
 PROMEKI_REGISTER_MEDIAIO(MediaIOTask_VideoDecoder)
 
+namespace {
+
+// Bridge: VideoDecoder bridges compressed → uncompressed.  The
+// planner inserts it whenever a downstream stage cannot accept the
+// upstream's compressed PixelDesc.
+bool videoDecoderBridge(const MediaDesc &from,
+                        const MediaDesc &to,
+                        MediaIO::Config *outConfig,
+                        int *outCost) {
+        if(from.imageList().isEmpty() || to.imageList().isEmpty()) return false;
+        const PixelDesc &fromPd = from.imageList()[0].pixelDesc();
+        const PixelDesc &toPd   = to.imageList()[0].pixelDesc();
+        if(!fromPd.isValid() || !toPd.isValid()) return false;
+        if(!fromPd.isCompressed())               return false;
+        if(toPd.isCompressed())                  return false;
+
+        const VideoCodec codec = VideoCodec::fromPixelDesc(fromPd);
+        if(!codec.isValid())   return false;
+        if(!codec.canDecode()) return false;
+
+        if(outConfig != nullptr) {
+                *outConfig = MediaIO::defaultConfig("VideoDecoder");
+                outConfig->set(MediaConfig::VideoCodec, codec);
+                outConfig->set(MediaConfig::OutputPixelDesc, toPd);
+        }
+        if(outCost != nullptr) {
+                // Decoding to the bitstream's reference representation
+                // is lossless — only the optional CSC inside the
+                // decoder (when toPd differs from the codec's native
+                // output) costs.  Treat it as a fixed precision-
+                // preserving hop.
+                *outCost = 20;
+        }
+        return true;
+}
+
+} // namespace
+
 MediaIO::FormatDesc MediaIOTask_VideoDecoder::formatDesc() {
-        return {
-                "VideoDecoder",
-                "Generic video decoder stage (picks a VideoDecoder via VideoCodec)",
-                {},     // No file extensions — this is a transform filter
-                false,  // canOutput
-                false,  // canInput
-                true,   // canInputAndOutput
-                []() -> MediaIOTask * {
-                        return new MediaIOTask_VideoDecoder();
-                },
-                []() -> MediaIO::Config::SpecMap {
-                        MediaIO::Config::SpecMap specs;
-                        auto s = [&specs](MediaConfig::ID id) {
-                                const VariantSpec *gs = MediaConfig::spec(id);
-                                if(gs) specs.insert(id, *gs);
-                        };
-                        auto sWithDefault =
-                                [&specs](MediaConfig::ID id, const Variant &def) {
-                                const VariantSpec *gs = MediaConfig::spec(id);
-                                specs.insert(id, gs
-                                        ? VariantSpec(*gs).setDefault(def)
-                                        : VariantSpec().setDefault(def));
-                        };
-                        s(MediaConfig::VideoCodec);
-                        s(MediaConfig::OutputPixelDesc);
-                        // VUI color-description overrides.  Default Auto /
-                        // Unknown means the decoder uses whatever the
-                        // bitstream signalled.  Explicit values let the
-                        // caller force a tag on a mistagged stream — the
-                        // decoder stamps them verbatim on the output
-                        // Image's Metadata instead of the bitstream
-                        // value.
-                        s(MediaConfig::VideoColorPrimaries);
-                        s(MediaConfig::VideoTransferCharacteristics);
-                        s(MediaConfig::VideoMatrixCoefficients);
-                        s(MediaConfig::VideoRange);
-                        sWithDefault(MediaConfig::Capacity, int32_t(8));
-                        return specs;
-                }
+        MediaIO::FormatDesc d;
+        d.name              = "VideoDecoder";
+        d.description       = "Generic video decoder stage (picks a VideoDecoder via VideoCodec)";
+        d.canBeSource       = false;
+        d.canBeSink         = false;
+        d.canBeTransform    = true;
+        d.create            = []() -> MediaIOTask * { return new MediaIOTask_VideoDecoder(); };
+        d.configSpecs       = []() -> MediaIO::Config::SpecMap {
+                MediaIO::Config::SpecMap specs;
+                auto s = [&specs](MediaConfig::ID id) {
+                        const VariantSpec *gs = MediaConfig::spec(id);
+                        if(gs) specs.insert(id, *gs);
+                };
+                auto sWithDefault =
+                        [&specs](MediaConfig::ID id, const Variant &def) {
+                        const VariantSpec *gs = MediaConfig::spec(id);
+                        specs.insert(id, gs
+                                ? VariantSpec(*gs).setDefault(def)
+                                : VariantSpec().setDefault(def));
+                };
+                s(MediaConfig::VideoCodec);
+                s(MediaConfig::OutputPixelDesc);
+                // VUI color-description overrides.  Default Auto /
+                // Unknown means the decoder uses whatever the
+                // bitstream signalled.  Explicit values let the
+                // caller force a tag on a mistagged stream — the
+                // decoder stamps them verbatim on the output
+                // Image's Metadata instead of the bitstream
+                // value.
+                s(MediaConfig::VideoColorPrimaries);
+                s(MediaConfig::VideoTransferCharacteristics);
+                s(MediaConfig::VideoMatrixCoefficients);
+                s(MediaConfig::VideoRange);
+                sWithDefault(MediaConfig::Capacity, int32_t(8));
+                return specs;
         };
+        d.bridge            = videoDecoderBridge;
+        return d;
 }
 
 MediaIOTask_VideoDecoder::~MediaIOTask_VideoDecoder() {
@@ -103,7 +140,7 @@ Error MediaIOTask_VideoDecoder::createDecoder(const VideoCodec &codec) {
 }
 
 Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandOpen &cmd) {
-        if(cmd.mode != MediaIO::InputAndOutput) {
+        if(cmd.mode != MediaIO::Transform) {
                 promekiErr("MediaIOTask_VideoDecoder: only InputAndOutput mode is supported");
                 return Error::NotSupported;
         }
@@ -314,6 +351,71 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandStats &cmd) {
 
 int MediaIOTask_VideoDecoder::pendingOutput() const {
         return static_cast<int>(_outputQueue.size());
+}
+
+// ---- Phase 1 introspection / negotiation overrides ----
+
+Error MediaIOTask_VideoDecoder::describe(MediaIODescription *out) const {
+        if(out == nullptr) return Error::Invalid;
+
+        // If the planner / caller has already pinned a codec via
+        // config, advertise every compressed PixelDesc that codec
+        // covers as an acceptable input shape.
+        if(_codec.isValid()) {
+                for(int pdId : _codec.compressedPixelDescs()) {
+                        MediaDesc accepted;
+                        accepted.imageList().pushToBack(
+                                ImageDesc(Size2Du32(0, 0),
+                                          PixelDesc(static_cast<PixelDesc::ID>(pdId))));
+                        out->acceptableFormats().pushToBack(accepted);
+                }
+        }
+        if(_outputPixelDescSet) {
+                MediaDesc produced;
+                produced.imageList().pushToBack(
+                        ImageDesc(Size2Du32(0, 0), _outputPixelDesc));
+                out->producibleFormats().pushToBack(produced);
+                out->setPreferredFormat(produced);
+        }
+        return Error::Ok;
+}
+
+Error MediaIOTask_VideoDecoder::proposeInput(const MediaDesc &offered,
+                                             MediaDesc *preferred) const {
+        if(preferred == nullptr) return Error::Invalid;
+        if(offered.imageList().isEmpty()) return Error::NotSupported;
+
+        // VideoDecoder consumes compressed video only.
+        const PixelDesc &pd = offered.imageList()[0].pixelDesc();
+        if(!pd.isCompressed()) return Error::NotSupported;
+
+        // If a codec has been pinned, the offered codec must match.
+        if(_codec.isValid()) {
+                const VideoCodec offeredCodec = VideoCodec::fromPixelDesc(pd);
+                if(offeredCodec != _codec) return Error::NotSupported;
+        } else {
+                // Codec auto-detect mode: any compressed PixelDesc
+                // whose codec the registry can decode is acceptable.
+                const VideoCodec offeredCodec = VideoCodec::fromPixelDesc(pd);
+                if(!offeredCodec.isValid() || !offeredCodec.canDecode()) {
+                        return Error::NotSupported;
+                }
+        }
+        *preferred = offered;
+        return Error::Ok;
+}
+
+Error MediaIOTask_VideoDecoder::proposeOutput(const MediaDesc &requested,
+                                              MediaDesc *achievable) const {
+        if(achievable == nullptr) return Error::Invalid;
+        const MediaIO *io = mediaIo();
+        const MediaConfig &cfg = (io != nullptr) ? io->config() : MediaConfig();
+        // Compute the uncompressed output by applying the
+        // configured Output* overrides.  When OutputPixelDesc is
+        // unset the decoder produces its native uncompressed shape
+        // (which the requested input would already imply).
+        *achievable = applyOutputOverrides(requested, cfg);
+        return Error::Ok;
 }
 
 PROMEKI_NAMESPACE_END

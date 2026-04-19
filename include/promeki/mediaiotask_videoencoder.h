@@ -37,7 +37,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par Mode support
  *
- * Only @c MediaIO::InputAndOutput is supported — the backend has no
+ * Only @c MediaIO::Transform is supported — the backend has no
  * independent source or sink of its own.
  *
  * @par First-cut limitations
@@ -84,8 +84,8 @@ PROMEKI_NAMESPACE_BEGIN
  * cfg.set(MediaConfig::BitrateKbps,   8000);
  * cfg.set(MediaConfig::VideoPreset,   VideoEncoderPreset::LowLatency);
  * MediaIO *enc = MediaIO::create(cfg);
- * enc->setMediaDesc(upstreamDesc);
- * enc->open(MediaIO::InputAndOutput);
+ * enc->setExpectedDesc(upstreamDesc);
+ * enc->open(MediaIO::Transform);
  * enc->writeFrame(nv12Frame);
  * Frame::Ptr encoded;
  * enc->readFrame(encoded);
@@ -115,6 +115,12 @@ class MediaIOTask_VideoEncoder : public MediaIOTask {
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 Error executeCmd(MediaIOCommandStats &cmd) override;
                 int pendingOutput() const override;
+
+                Error describe(MediaIODescription *out) const override;
+                Error proposeInput(const MediaDesc &offered,
+                                   MediaDesc *preferred) const override;
+                Error proposeOutput(const MediaDesc &requested,
+                                    MediaDesc *achievable) const override;
 
                 // Drains the underlying encoder's ready packets into
                 // per-packet output frames, appending each to

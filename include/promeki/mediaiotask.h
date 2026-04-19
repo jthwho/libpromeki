@@ -13,6 +13,9 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+class MediaIODescription;
+class MediaDesc;
+
 /**
  * @brief Backend interface for media I/O.
  * @ingroup proav
@@ -71,6 +74,45 @@ class MediaIOTask {
                 MediaIOTask &operator=(const MediaIOTask &) = delete;
                 MediaIOTask(MediaIOTask &&) = delete;
                 MediaIOTask &operator=(MediaIOTask &&) = delete;
+
+                /**
+                 * @brief Applies the standard @c Output* overrides from
+                 *        @p config to @p input, returning the resulting
+                 *        @ref MediaDesc.
+                 *
+                 * Every transform backend (CSC, FrameSync, SRC,
+                 * VideoEncoder, VideoDecoder) consumes the same family
+                 * of @ref MediaConfig keys to express "given this input
+                 * shape, produce this output":
+                 *
+                 *  - @ref MediaConfig::OutputPixelDesc      — replaces the
+                 *    @ref ImageDesc::pixelDesc of every video image.
+                 *  - @ref MediaConfig::OutputFrameRate      — replaces
+                 *    @ref MediaDesc::frameRate.
+                 *  - @ref MediaConfig::OutputAudioRate      — replaces
+                 *    @ref AudioDesc::sampleRate on every audio entry.
+                 *  - @ref MediaConfig::OutputAudioChannels  — replaces
+                 *    @ref AudioDesc::channels on every audio entry.
+                 *  - @ref MediaConfig::OutputAudioDataType  — replaces
+                 *    @ref AudioDesc::dataType on every audio entry.
+                 *
+                 * Keys at their default (invalid PixelDesc, invalid
+                 * FrameRate, zero audio rate / channels, invalid Enum)
+                 * mean "inherit from input" — the corresponding field
+                 * passes through unchanged.
+                 *
+                 * The pipeline planner uses this helper to compute
+                 * what shape a configured transform will produce
+                 * without instantiating it.  Backend authors call it
+                 * from @ref MediaIOTask::proposeOutput / @ref MediaIOTask::describe so every
+                 * transform answers the planner uniformly.
+                 *
+                 * @param input  The MediaDesc the transform will consume.
+                 * @param config The transform's MediaConfig (read-only).
+                 * @return The MediaDesc the transform will produce.
+                 */
+                static MediaDesc applyOutputOverrides(const MediaDesc &input,
+                                                     const MediaConfig &config);
 
         protected:
                 // ---- Live-telemetry helpers ----
@@ -275,6 +317,91 @@ class MediaIOTask {
                  * @return Buffered frame count (≥ 0).
                  */
                 virtual int pendingOutput() const;
+
+                /**
+                 * @brief Populates @p out with backend-specific
+                 *        introspection details.
+                 *
+                 * MediaIO calls this from @ref MediaIO::describe after
+                 * filling in identity (backend name, instance name,
+                 * UUID, role flags) from @ref MediaIO::FormatDesc and any
+                 * cached state.  The task supplements with format
+                 * landscape (@c producibleFormats / @c acceptableFormats /
+                 * @c preferredFormat), pre-open capabilities
+                 * (@c canSeek, @c frameCount, @c frameRate,
+                 * @c containerMetadata) probed from the underlying
+                 * resource, and a probe diagnostic on failure.
+                 *
+                 * Synchronous and cheap by contract — backends should
+                 * use the most efficient probe available (file header
+                 * peek, OS device-enum, config-driven derivation).
+                 * Default: no-op (fields previously populated by
+                 * MediaIO are left untouched).
+                 *
+                 * @param out Pre-populated description to supplement.
+                 * @return @c Error::Ok on success, or a probe error.
+                 *         The probe error is also stamped into
+                 *         @p out's @c probeStatus.
+                 */
+                virtual Error describe(MediaIODescription *out) const;
+
+                /**
+                 * @brief Reports what this task wants to receive given
+                 *        an offered MediaDesc.
+                 *
+                 * MediaIO's pipeline planner calls this on every sink
+                 * and transform to determine whether the upstream
+                 * source's MediaDesc is directly consumable.  Three
+                 * outcomes:
+                 *  - @c Error::Ok with @c *preferred == @p offered
+                 *    means accept-as-is.
+                 *  - @c Error::Ok with @c *preferred != @p offered
+                 *    means the planner should bridge from @p offered
+                 *    to @c *preferred before delivering.
+                 *  - @c Error::NotSupported means the task cannot
+                 *    consume @p offered at all.
+                 *
+                 * Default implementation accepts anything (transparent
+                 * passthrough).  Sinks and transforms with format
+                 * constraints override.
+                 *
+                 * @param offered   The MediaDesc the planner would route in.
+                 * @param preferred Receives the desc the task actually wants.
+                 * @return @c Error::Ok or @c Error::NotSupported.
+                 */
+                virtual Error proposeInput(const MediaDesc &offered,
+                                           MediaDesc *preferred) const;
+
+                /**
+                 * @brief Reports what this task can produce given a
+                 *        requested MediaDesc.
+                 *
+                 * MediaIO's pipeline planner calls this on sources
+                 * and transforms to see whether the source can be
+                 * re-configured to produce a sink's preferred shape
+                 * directly (cheaper than inserting a bridge).  Three
+                 * outcomes:
+                 *  - @c Error::Ok with @c *achievable == @p requested
+                 *    means the source will produce exactly that.
+                 *  - @c Error::Ok with @c *achievable != @p requested
+                 *    means the source will produce something close —
+                 *    the planner can compare and decide whether to
+                 *    accept or bridge.
+                 *  - @c Error::NotSupported means the source has no
+                 *    flexibility — the planner should ignore the
+                 *    request and bridge from the current output.
+                 *
+                 * Default implementation ignores @p requested and
+                 * returns @c Error::NotSupported — most sources
+                 * produce what they produce.  Configurable sources
+                 * (TPG, V4L2) override.
+                 *
+                 * @param requested  The MediaDesc the planner would prefer.
+                 * @param achievable Receives the desc the task can produce.
+                 * @return @c Error::Ok or @c Error::NotSupported.
+                 */
+                virtual Error proposeOutput(const MediaDesc &requested,
+                                            MediaDesc *achievable) const;
 };
 
 PROMEKI_NAMESPACE_END

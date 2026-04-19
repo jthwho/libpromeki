@@ -37,7 +37,7 @@ PixelDesc JpegXsVideoEncoder::outputPixelDesc() const {
         return PixelDesc(PixelDesc::JPEG_XS_YUV10_422_Rec709);
 }
 
-List<int> JpegXsVideoEncoder::supportedInputs() const {
+List<int> JpegXsVideoEncoder::supportedInputList() {
         return {
                 static_cast<int>(PixelDesc::YUV8_422_Rec709),
                 static_cast<int>(PixelDesc::YUV10_422_Rec709),
@@ -47,6 +47,10 @@ List<int> JpegXsVideoEncoder::supportedInputs() const {
                 static_cast<int>(PixelDesc::YUV12_420_Planar_LE_Rec709),
                 static_cast<int>(PixelDesc::RGB8_sRGB),
         };
+}
+
+List<int> JpegXsVideoEncoder::supportedInputs() const {
+        return supportedInputList();
 }
 
 void JpegXsVideoEncoder::configure(const MediaConfig &config) {
@@ -221,6 +225,7 @@ struct JpegXsVideoCodecRegistrar {
                         VideoCodec::Data d = *base.data();
                         d.createEncoder = []() -> VideoEncoder * { return new JpegXsVideoEncoder(); };
                         d.createDecoder = []() -> VideoDecoder * { return new JpegXsVideoDecoder(); };
+                        d.encoderSupportedInputs = JpegXsVideoEncoder::supportedInputList();
                         VideoCodec::registerData(std::move(d));
                 }
         }

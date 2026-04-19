@@ -6,6 +6,7 @@
  */
 
 #include <promeki/mediaio.h>
+#include <promeki/mediaiodescription.h>
 #include <promeki/mediaiotask.h>
 #include <promeki/threadpool.h>
 #include <promeki/file.h>
@@ -96,7 +97,7 @@ static const MediaIO::FormatDesc *findFormatForFileRead(const String &filename) 
 
         // Pass 0: path-based probe (device nodes like /dev/video0)
         for(const auto &desc : list) {
-                if(!desc.canOutput) continue;
+                if(!desc.canBeSource) continue;
                 if(desc.canHandlePath && desc.canHandlePath(filename)) return &desc;
         }
 
@@ -104,7 +105,7 @@ static const MediaIO::FormatDesc *findFormatForFileRead(const String &filename) 
         String ext = extractExtension(filename);
         if(!ext.isEmpty()) {
                 for(const auto &desc : list) {
-                        if(!desc.canOutput) continue;
+                        if(!desc.canBeSource) continue;
                         for(const auto &e : desc.extensions) {
                                 if(ext == e) return &desc;
                         }
@@ -116,7 +117,7 @@ static const MediaIO::FormatDesc *findFormatForFileRead(const String &filename) 
         if(probeFile.open(IODevice::ReadOnly).isError()) return nullptr;
         const MediaIO::FormatDesc *result = nullptr;
         for(const auto &desc : list) {
-                if(!desc.canOutput) continue;
+                if(!desc.canBeSource) continue;
                 if(!desc.canHandleDevice) continue;
                 probeFile.seek(0);
                 if(desc.canHandleDevice(&probeFile)) {
@@ -250,7 +251,7 @@ MediaIO *MediaIO::createForFileRead(const String &filename, ObjectBase *parent) 
                 promekiWarn("MediaIO::createForFileRead: no backend for '%s'", filename.cstr());
                 return nullptr;
         }
-        if(!desc->canOutput) {
+        if(!desc->canBeSource) {
                 promekiWarn("MediaIO::createForFileRead: '%s' does not support reading", desc->name.cstr());
                 return nullptr;
         }
@@ -275,7 +276,7 @@ MediaIO *MediaIO::createForFileWrite(const String &filename, ObjectBase *parent)
                 promekiWarn("MediaIO::createForFileWrite: no backend for '%s'", filename.cstr());
                 return nullptr;
         }
-        if(!desc->canInput) {
+        if(!desc->canBeSink) {
                 promekiWarn("MediaIO::createForFileWrite: '%s' does not support writing", desc->name.cstr());
                 return nullptr;
         }
@@ -472,7 +473,7 @@ void MediaIO::populateStandardStats(MediaIOStats &stats) const {
                 // strand directly and has no equivalent step, so we
                 // only pair this stamp when the MediaIO is accepting
                 // frames.
-                if(_mode == Input || _mode == InputAndOutput) {
+                if(_mode == Sink || _mode == Transform) {
                         addPair(_idStampEnqueue,   _idStampDequeue);
                 }
                 addPair(_idStampDequeue,   _idStampTaskBegin);
@@ -733,7 +734,7 @@ void MediaIO::submitReadCommand() {
                         // A successful read drained the task's output
                         // FIFO by one slot, which raises writesAccepted
                         // for stages with an internal output queue
-                        // (Converter, VideoEncoder, VideoDecoder, ...).
+                        // (CSC, VideoEncoder, VideoDecoder, ...).
                         // Without this emit, upstreams that bailed with
                         // writer-full would never be re-kicked: after
                         // all pending writes complete, frameWanted's
@@ -784,7 +785,7 @@ Error MediaIO::open(Mode mode) {
         // the free-standing pending metadata and the media descriptor's
         // own metadata, so writer backends see the same information
         // regardless of which path they read from.
-        if(mode == Output || mode == InputAndOutput) {
+        if(mode == Source || mode == Transform) {
                 _pendingMetadata.applyMediaIOWriteDefaults();
                 _pendingMediaDesc.metadata().applyMediaIOWriteDefaults();
         }
@@ -918,22 +919,98 @@ Error MediaIO::close(bool block) {
 // Pre-open setters
 // ============================================================================
 
-Error MediaIO::setMediaDesc(const MediaDesc &desc) {
+Error MediaIO::setExpectedDesc(const MediaDesc &desc) {
         if(isOpen()) return Error::AlreadyOpen;
         _pendingMediaDesc = desc;
         return Error::Ok;
 }
 
-Error MediaIO::setAudioDesc(const AudioDesc &desc) {
+Error MediaIO::setExpectedAudioDesc(const AudioDesc &desc) {
         if(isOpen()) return Error::AlreadyOpen;
         _pendingAudioDesc = desc;
         return Error::Ok;
 }
 
-Error MediaIO::setMetadata(const Metadata &meta) {
+Error MediaIO::setExpectedMetadata(const Metadata &meta) {
         if(isOpen()) return Error::AlreadyOpen;
         _pendingMetadata = meta;
         return Error::Ok;
+}
+
+// ============================================================================
+// Introspection / negotiation
+// ============================================================================
+//
+// describe() pre-fills everything MediaIO already knows (backend
+// identity from FormatDesc, instance identity, cached state) and
+// then asks the task to supplement format-specific fields.  The
+// proposeInput / proposeOutput wrappers are thin forwarders so
+// callers can negotiate without touching the task layer.
+
+Error MediaIO::describe(MediaIODescription *out) const {
+        if(out == nullptr) return Error::Invalid;
+        *out = MediaIODescription();
+
+        // Backend identity / role flags from the registered FormatDesc.
+        // The Type config key is set by every create / createForFile*
+        // path, so it is always present once the MediaIO has a task.
+        const String typeName = _config.contains(MediaConfig::Type)
+                ? _config.getAs<String>(MediaConfig::Type)
+                : String();
+        if(!typeName.isEmpty()) {
+                const FormatDesc *desc = findFormatByName(typeName);
+                if(desc != nullptr) {
+                        out->setBackendName(desc->name);
+                        out->setBackendDescription(desc->description);
+                        out->setCanBeSource(desc->canBeSource);
+                        out->setCanBeSink(desc->canBeSink);
+                        out->setCanBeTransform(desc->canBeTransform);
+                }
+        }
+
+        // Instance identity (always populated, even pre-task).
+        out->setName(_name);
+        out->setUuid(_uuid);
+        out->setLocalId(_localId);
+
+        // Cached state — only meaningful while open.  Pre-open
+        // backends will fill these via their describe() probe.
+        if(isOpen()) {
+                out->setCanSeek(_canSeek);
+                out->setFrameCount(_frameCount);
+                out->setFrameRate(_frameRate);
+                out->setContainerMetadata(_metadata);
+                if(_mediaDesc.isValid()) {
+                        out->setPreferredFormat(_mediaDesc);
+                }
+        }
+
+        // Backend supplement.  Tasks fill in producibleFormats /
+        // acceptableFormats and any pre-open probe results.
+        if(_task != nullptr) {
+                Error err = _task->describe(out);
+                if(err.isError()) {
+                        out->setProbeStatus(err);
+                        return err;
+                }
+        }
+        return Error::Ok;
+}
+
+Error MediaIO::proposeInput(const MediaDesc &offered, MediaDesc *preferred) const {
+        if(_task == nullptr) {
+                if(preferred != nullptr) *preferred = MediaDesc();
+                return Error::NotSupported;
+        }
+        return _task->proposeInput(offered, preferred);
+}
+
+Error MediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const {
+        if(_task == nullptr) {
+                if(achievable != nullptr) *achievable = MediaDesc();
+                return Error::NotSupported;
+        }
+        return _task->proposeOutput(requested, achievable);
 }
 
 Error MediaIO::setVideoTracks(const List<int> &tracks) {
@@ -999,7 +1076,7 @@ Error MediaIO::readFrame(Frame::Ptr &frame, bool block) {
                 // caller is consuming the backend's output, so the
                 // backend must have been opened in Output (source) or
                 // InputAndOutput mode.
-                if(_mode != Output && _mode != InputAndOutput) return Error::NotSupported;
+                if(_mode != Source && _mode != Transform) return Error::NotSupported;
                 // Once EOF has been hit, every subsequent read returns
                 // EOF without going down to the backend.  Cleared on
                 // seek/close.
@@ -1025,7 +1102,7 @@ Error MediaIO::readFrame(Frame::Ptr &frame, bool block) {
                 // @ref resetClosedState).  The mode check covers the
                 // not-open case without a separate @ref isOpen call.
                 if(!_closing && !_atEnd &&
-                   (_mode == Output || _mode == InputAndOutput)) {
+                   (_mode == Source || _mode == Transform)) {
                         while(_pendingReadCount.value() < _prefetchDepth) {
                                 submitReadCommand();
                         }
@@ -1135,7 +1212,7 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
         // writeFrame() pushes a frame into the MediaIO — the caller is
         // feeding the backend, so the backend must have been opened in
         // Input (sink) or InputAndOutput mode.
-        if(_mode != Input && _mode != InputAndOutput) return Error::NotSupported;
+        if(_mode != Sink && _mode != Transform) return Error::NotSupported;
 
         // Non-blocking capacity gate.  Per the documented contract,
         // non-blocking writeFrame only queues when @ref writesAccepted

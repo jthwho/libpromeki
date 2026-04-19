@@ -23,28 +23,28 @@ namespace mediaplay {
  * @brief All options collected from the command line.
  *
  * `source` is the single pipeline source (`-s`); `sinks` is the
- * fan-out list of pipeline sinks (`-d`); `converters` is the list
+ * fan-out list of pipeline sinks (`-d`); `transforms` is the list
  * of intermediate stages (`-c NAME`), in pipeline order.  The
  * `-c` flag is repeatable so a pipeline can chain, e.g.,
- * @c "-c Converter -c VideoEncoder -c VideoDecoder".  Each
- * subsequent @c --cc / @c --cm attaches to the most recent @c -c.
+ * @c "-c CSC -c VideoEncoder -c VideoDecoder".  Each subsequent
+ * @c --cc / @c --cm attaches to the most recent @c -c.
  */
 struct Options {
         StageSpec                       source;
-        promeki::List<StageSpec>        converters;   ///< Intermediate stages, in order.
+        promeki::List<StageSpec>        transforms;   ///< Intermediate stages, in order.
         promeki::List<StageSpec>        sinks;
 
         // State used while parsing --sc / --dc / --cc / --cm — the
         // parser needs to know which stage a stray `--*c` or `--*m`
-        // attaches to.  `lastConverter` / `lastSink` index into
-        // `converters` / `sinks` respectively.
+        // attaches to.  `lastTransform` / `lastSink` index into
+        // `transforms` / `sinks` respectively.
         enum StageScope {
                 ScopeSource = 0,
-                ScopeConverter,
+                ScopeTransform,
                 ScopeSink
         };
         StageScope                      lastScope      = ScopeSource;
-        size_t                          lastConverter  = 0;
+        size_t                          lastTransform  = 0;
         size_t                          lastSink       = 0;
 
         // Framework-level (non-stage) flags
@@ -65,6 +65,35 @@ struct Options {
         bool                            memStats    = false;    ///< Dump MemSpace::Stats for every registered memory space on shutdown.
         double                          statsInterval = 0.0;    ///< Seconds between live-telemetry prints (0 = off).
         bool                            probe       = false;    ///< Query and print device capabilities, then exit.
+
+        /**
+         * @brief When true (default), the pipeline config is run
+         *        through @ref MediaPipelinePlanner before
+         *        @ref MediaPipeline::build instantiates anything.
+         *        Bridging stages (CSC, decoder, frame-rate sync,
+         *        etc.) are spliced in automatically.  Disable with
+         *        @c --no-autoplan to require a fully-resolved
+         *        config — useful for regression scripts that want
+         *        the planner out of the loop.
+         */
+        bool                            autoplan    = true;
+
+        /**
+         * @brief When true, run the planner against the input
+         *        config, print the resolved config to stdout, and
+         *        exit without touching the pipeline.  No frames flow.
+         */
+        bool                            planOnly    = false;
+
+        /**
+         * @brief When true, instantiate every stage declared in the
+         *        config, call @ref MediaIO::describe on each,
+         *        print the summary to stdout, and exit.  No frames
+         *        flow.  Useful for "what does this source / sink
+         *        look like?" introspection without standing up the
+         *        whole pipeline.
+         */
+        bool                            describeOnly = false;
 
         /**
          * @brief When set, build the pipeline config from the CLI

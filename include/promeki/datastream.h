@@ -243,7 +243,10 @@ class DataStream {
 
                         // HDR color metadata ------------------------------------
                         TypeMasteringDisplay    = 0x40, ///< @brief MasteringDisplay (SMPTE ST 2086): 10 tagged doubles
-                        TypeContentLightLevel   = 0x41  ///< @brief ContentLightLevel (CTA-861.3): two tagged uint32
+                        TypeContentLightLevel   = 0x41, ///< @brief ContentLightLevel (CTA-861.3): two tagged uint32
+
+                        // MediaIO introspection ---------------------------------
+                        TypeMediaIODescription  = 0x42  ///< @brief MediaIODescription (identity + role + format landscape + capabilities)
                 };
 
                 /** @brief Current wire format version. */

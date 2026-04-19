@@ -247,6 +247,8 @@ class ImageFileIO_Cineon : public ImageFileIO {
                         _canLoad = true;
                         _canSave = false;
                         _name = "Cineon";
+                        _description = "Kodak Cineon 4.5 image sequence (load only)";
+                        _extensions = { "cin" };
                 }
                 Error load(ImageFile &imageFile, const MediaConfig &config) const override;
 };

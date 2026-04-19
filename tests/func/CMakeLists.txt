@@ -53,6 +53,7 @@ endif()
 # on Linux builds that have it enabled).
 add_subdirectory(framesync)
 add_subdirectory(paintengine)
+add_subdirectory(roundtrip)
 
 if(PROMEKI_ENABLE_NVENC)
     add_subdirectory(nvenc)

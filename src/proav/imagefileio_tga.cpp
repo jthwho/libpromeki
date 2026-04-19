@@ -54,6 +54,8 @@ class ImageFileIO_TGA : public ImageFileIO {
                         _canLoad = true;
                         _canSave = true;
                         _name = "TGA";
+                        _description = "Truevision TGA image sequence";
+                        _extensions = { "tga" };
                 }
                 Error load(ImageFile &imageFile, const MediaConfig &config) const override;
                 Error save(ImageFile &imageFile, const MediaConfig &config) const override;

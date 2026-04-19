@@ -39,8 +39,10 @@
 #include <promeki/mediaconfig.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaio.h>
+#include <promeki/mediaiodescription.h>
 #include <promeki/mediapipeline.h>
 #include <promeki/mediapipelineconfig.h>
+#include <promeki/mediapipelineplanner.h>
 #include <promeki/mediapipelinestats.h>
 #include <promeki/memspace.h>
 #include <promeki/metadata.h>
@@ -139,7 +141,7 @@ Error buildConfigFromOptions(const Options &opts, MediaPipelineConfig &out) {
         MediaPipelineConfig cfg;
 
         MediaPipelineConfig::Stage srcStage;
-        Error se = resolveStagePlan(opts.source, MediaIO::Output,
+        Error se = resolveStagePlan(opts.source, MediaIO::Source,
                                     String("source"),
                                     String("--sc[") + opts.source.type + "]",
                                     srcStage);
@@ -147,13 +149,13 @@ Error buildConfigFromOptions(const Options &opts, MediaPipelineConfig &out) {
         cfg.addStage(srcStage);
         String prevName = "source";
 
-        for(size_t i = 0; i < opts.converters.size(); ++i) {
+        for(size_t i = 0; i < opts.transforms.size(); ++i) {
                 const String name = String("stage") +
                         String::number(static_cast<int64_t>(i));
                 MediaPipelineConfig::Stage s;
-                Error e = resolveStagePlan(opts.converters[i],
-                        MediaIO::InputAndOutput, name,
-                        String("--cc[") + opts.converters[i].type + "]",
+                Error e = resolveStagePlan(opts.transforms[i],
+                        MediaIO::Transform, name,
+                        String("--cc[") + opts.transforms[i].type + "]",
                         s);
                 if(e.isError()) return e;
                 cfg.addStage(s);
@@ -166,7 +168,7 @@ Error buildConfigFromOptions(const Options &opts, MediaPipelineConfig &out) {
                         String::number(static_cast<int64_t>(i));
                 MediaPipelineConfig::Stage s;
                 Error e = resolveStagePlan(opts.sinks[i],
-                        MediaIO::Input, name,
+                        MediaIO::Sink, name,
                         String("--dc[") + opts.sinks[i].type + "]",
                         s);
                 if(e.isError()) return e;
@@ -323,6 +325,126 @@ int main(int argc, char **argv) {
 
         const bool statsEnabled = (opts.statsInterval > 0.0);
 
+        // The --plan / --describe flags below need access to any
+        // injected SDL stages so the planner can call describe() /
+        // proposeInput on the live SDLPlayerTask instance instead of
+        // failing to build a stand-in from the registry.  Build the
+        // SDL UI now (lazily — only when the config actually mentions
+        // an SDL stage) so both early-exit paths and the normal
+        // build path see the same injected map.
+        SdlUi ui;
+        List<MediaIO *> injectedSdl;
+        promeki::Map<String, MediaIO *> injectedMap;
+        for(size_t i = 0; i < pipelineCfg.stages().size(); ++i) {
+                const MediaPipelineConfig::Stage &s = pipelineCfg.stages()[i];
+                if(s.type != kStageSdl) continue;
+                MediaIO *player = createSdlStage(s, ui, statsEnabled);
+                if(player == nullptr) {
+                        for(auto *io : injectedSdl) delete io;
+                        delete ui.audioOutput;
+                        delete ui.window;
+                        return 1;
+                }
+                injectedSdl.pushToBack(player);
+                injectedMap.insert(s.name, player);
+        }
+
+        // Cleanup helper for the --plan / --describe early-exit paths
+        // — they don't transfer ownership to a MediaPipeline so they
+        // have to delete the injected stages themselves.
+        auto cleanupInjected = [&]() {
+                for(auto *io : injectedSdl) delete io;
+                injectedSdl.clear();
+                injectedMap.clear();
+                delete ui.audioOutput;
+                ui.audioOutput = nullptr;
+                delete ui.window;
+                ui.window = nullptr;
+        };
+
+        // ---- --plan: run the planner and print the resolved config ----
+        // Useful for "would this CLI invocation work?" pre-flight
+        // checks without committing to actually opening anything.
+        if(opts.planOnly) {
+                MediaPipelineConfig planned;
+                String diag;
+                Error perr = MediaPipelinePlanner::plan(
+                        pipelineCfg, &planned, injectedMap, {}, &diag);
+                if(perr.isError()) {
+                        fprintf(stderr, "Error: planning failed: %s\n",
+                                perr.desc().cstr());
+                        if(!diag.isEmpty()) {
+                                const StringList lines =
+                                        diag.split(std::string("\n"));
+                                for(size_t i = 0; i < lines.size(); ++i) {
+                                        fprintf(stderr, "  %s\n", lines[i].cstr());
+                                }
+                        }
+                        cleanupInjected();
+                        return 1;
+                }
+                fprintf(stdout, "Planner inserted %zu bridge stage(s).\n",
+                        planned.stages().size() - pipelineCfg.stages().size());
+                const StringList desc = planned.describe();
+                for(size_t i = 0; i < desc.size(); ++i) {
+                        fprintf(stdout, "%s\n", desc[i].cstr());
+                }
+                cleanupInjected();
+                return 0;
+        }
+
+        // ---- --describe: dump describe() for every stage ----
+        // Walks the input config (no planning) and prints each
+        // stage's describe() summary.  Uses the injected SDL stage
+        // if one exists for the name; otherwise instantiates from
+        // the registry.
+        if(opts.describeOnly) {
+                int exitCode = 0;
+                for(size_t i = 0; i < pipelineCfg.stages().size(); ++i) {
+                        const MediaPipelineConfig::Stage &s = pipelineCfg.stages()[i];
+                        MediaIO *io = nullptr;
+                        bool ownsIo = false;
+                        auto injIt = injectedMap.find(s.name);
+                        if(injIt != injectedMap.end()) {
+                                io = injIt->second;
+                        } else {
+                                MediaConfig mcfg = s.config;
+                                if(!s.type.isEmpty()) mcfg.set(MediaConfig::Type, s.type);
+                                if(!s.path.isEmpty()) mcfg.set(MediaConfig::Filename, s.path);
+                                io = (!s.type.isEmpty())
+                                        ? MediaIO::create(mcfg)
+                                        : (s.mode == MediaIO::Source
+                                                ? MediaIO::createForFileRead(s.path)
+                                                : MediaIO::createForFileWrite(s.path));
+                                ownsIo = (io != nullptr);
+                        }
+                        if(io == nullptr) {
+                                fprintf(stderr, "[%s] failed to instantiate.\n",
+                                        s.name.cstr());
+                                exitCode = 1;
+                                continue;
+                        }
+                        MediaIODescription d;
+                        Error derr = io->describe(&d);
+                        if(derr.isError()) {
+                                fprintf(stderr, "[%s] describe() failed: %s\n",
+                                        s.name.cstr(), derr.desc().cstr());
+                                exitCode = 1;
+                        }
+                        const StringList lines = d.summary();
+                        for(size_t j = 0; j < lines.size(); ++j) {
+                                fprintf(stdout, "%s\n", lines[j].cstr());
+                        }
+                        fprintf(stdout, "\n");
+                        if(ownsIo) {
+                                if(io->isOpen()) (void)io->close();
+                                delete io;
+                        }
+                }
+                cleanupInjected();
+                return exitCode;
+        }
+
         // --- Stats writer (optional JSONL file) ---
         // Owned by main; lives for the duration of app.exec() + final
         // shutdown snapshot.  Opened before the stats thread starts so
@@ -352,30 +474,31 @@ int main(int argc, char **argv) {
                 }
         }
 
-        // --- Pre-build SDL UI + inject SDL stages ---
-        SdlUi ui;
-        List<MediaIO *> injectedSdl;
+        // --- Inject the SDL stages we built earlier into the pipeline ---
+        // The actual UI / SDLPlayer instances are created above (so
+        // --plan and --describe see them too); here we just hand
+        // them to the pipeline by name.
         MediaPipeline pipeline;
-
-        for(size_t i = 0; i < pipelineCfg.stages().size(); ++i) {
-                const MediaPipelineConfig::Stage &s = pipelineCfg.stages()[i];
-                if(s.type != kStageSdl) continue;
-                MediaIO *player = createSdlStage(s, ui, statsEnabled);
-                if(player == nullptr) {
-                        for(auto *io : injectedSdl) delete io;
-                        delete ui.audioOutput;
-                        delete ui.window;
-                        return 1;
-                }
-                (void)pipeline.injectStage(s.name, player);
-                injectedSdl.pushToBack(player);
+        for(auto it = injectedMap.begin(); it != injectedMap.end(); ++it) {
+                (void)pipeline.injectStage(it->first, it->second);
         }
 
         // --- Build + open + start ---
-        Error berr = pipeline.build(pipelineCfg);
+        // The planner runs by default (autoplan=true) — bridges
+        // like CSC, decoder, FrameSync get spliced in automatically.
+        // Disable with --no-autoplan when you want a strict
+        // fully-resolved config (e.g. regression scripts).
+        Error berr = pipeline.build(pipelineCfg, opts.autoplan);
         if(berr.isError()) {
-                fprintf(stderr, "Error: pipeline build failed: %s\n",
-                        berr.desc().cstr());
+                // The planner emits a multi-line diagnostic via
+                // promekiErr inside MediaPipeline::build, so the
+                // detailed "why" is already in the log by the time
+                // we get here.  The fprintf below just gives the
+                // user a single concise summary on stderr.
+                fprintf(stderr, "Error: pipeline build failed: %s%s\n",
+                        berr.desc().cstr(),
+                        opts.autoplan ? " (planner enabled — see logs above for details)"
+                                       : "");
                 for(auto *io : injectedSdl) delete io;
                 delete ui.audioOutput;
                 delete ui.window;

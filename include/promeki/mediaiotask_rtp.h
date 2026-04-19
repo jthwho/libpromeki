@@ -74,7 +74,7 @@ class Thread;
  *   audio clock never drifts across writeFrame boundaries or
  *   fractional video frame rates.  Sample rate and channel count
  *   must match between input and output — upstream rate / layout
- *   conversion belongs in @ref MediaIOTask_Converter.  L24 and
+ *   conversion belongs in @ref MediaIOTask_CSC.  L24 and
  *   ST 2110-30 pgroup handling are deferred to a follow-up.
  * - **Data** — per-frame @ref Metadata as JSON via
  *   @ref RtpPayloadJson (default), with
@@ -89,7 +89,7 @@ class Thread;
  *
  * @par Mode support
  *
- * Both @c MediaIO::Input and @c MediaIO::Output are supported.
+ * Both @c MediaIO::Sink and @c MediaIO::Source are supported.
  * In reader mode, each configured stream opens its own
  * @ref UdpSocketTransport bound to the port in the corresponding
  * @c *RtpDestination key, joins the multicast group if the
@@ -119,7 +119,7 @@ class Thread;
  * stream pushes frames with only @c audioList populated; a data
  * stream pushes frames with only @c metadata populated.  Consumers
  * that need synchronised video-plus-audio frames should drive a
- * downstream @ref MediaIOTask_Converter or their own aggregator
+ * downstream @ref MediaIOTask_CSC or their own aggregator
  * over the resulting interleaved stream.
  *
  * @par Pacing
@@ -283,8 +283,8 @@ class Thread;
  * cfg.set(MediaConfig::RtpSaveSdpPath, String("/tmp/stream.sdp"));
  *
  * MediaIO *io = MediaIO::create(cfg);
- * io->setMediaDesc(mediaDesc);
- * io->open(MediaIO::Input);
+ * io->setExpectedDesc(mediaDesc);
+ * io->open(MediaIO::Sink);
  * io->writeFrame(frame);
  * io->close();
  * delete io;
@@ -339,6 +339,18 @@ class MediaIOTask_Rtp : public MediaIOTask {
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 Error executeCmd(MediaIOCommandParams &cmd) override;
                 Error executeCmd(MediaIOCommandStats &cmd) override;
+
+                // describe() / proposeInput overrides intentionally
+                // omitted for v1: each RFC 9134 / RFC 2435 / RFC 4175
+                // payload type has its own accepted-shape constraints
+                // (e.g. JPEG payload = 8-bit YUV422 only; raw payload
+                // = configurable subsampling / bit depth; L16 audio =
+                // 16-bit BE PCM at fixed channel counts).  Encoding
+                // those rules per-payload is its own follow-up — for
+                // now the planner's open() fallback inspects the SDP
+                // (when configured) to learn the live shape, and
+                // bridges insert as needed via the configured payload
+                // type's own runtime checks.
 
                 /**
                  * @brief Per-stream RTP state.

@@ -1463,12 +1463,16 @@ PixelDesc NvencVideoEncoder::outputPixelDesc() const {
         return _impl->outputPixelDesc();
 }
 
-List<int> NvencVideoEncoder::supportedInputs() const {
+List<int> NvencVideoEncoder::supportedInputList() {
         List<int> ret;
         for(const auto &e : kFormatTable) {
                 ret.pushToBack(static_cast<int>(e.pixelDescId));
         }
         return ret;
+}
+
+List<int> NvencVideoEncoder::supportedInputs() const {
+        return supportedInputList();
 }
 
 void NvencVideoEncoder::configure(const MediaConfig &config) {
@@ -1538,19 +1542,23 @@ struct NvencRegistrar {
                 VideoEncoder::registerEncoder("HEVC", hevcFactory);
                 VideoEncoder::registerEncoder("AV1",  av1Factory);
 
+                const List<int> nvencInputs = NvencVideoEncoder::supportedInputList();
                 if(VideoCodec h264(VideoCodec::H264); h264.isValid()) {
                         VideoCodec::Data d = *h264.data();
                         d.createEncoder = h264Factory;
+                        d.encoderSupportedInputs = nvencInputs;
                         VideoCodec::registerData(std::move(d));
                 }
                 if(VideoCodec hevc(VideoCodec::HEVC); hevc.isValid()) {
                         VideoCodec::Data d = *hevc.data();
                         d.createEncoder = hevcFactory;
+                        d.encoderSupportedInputs = nvencInputs;
                         VideoCodec::registerData(std::move(d));
                 }
                 if(VideoCodec av1(VideoCodec::AV1); av1.isValid()) {
                         VideoCodec::Data d = *av1.data();
                         d.createEncoder = av1Factory;
+                        d.encoderSupportedInputs = nvencInputs;
                         VideoCodec::registerData(std::move(d));
                 }
         }

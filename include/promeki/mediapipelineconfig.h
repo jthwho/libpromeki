@@ -58,7 +58,7 @@ class MediaPipelineConfig {
                  * @brief Declarative description of one @ref MediaIO stage.
                  *
                  * A stage is either a registered backend (identified by
-                 * @ref type — e.g. @c "TPG", @c "Converter") or an opaque
+                 * @ref type — e.g. @c "TPG", @c "CSC") or an opaque
                  * filesystem path (identified by @ref path with @ref type
                  * empty) that is resolved at build time via
                  * @ref MediaIO::createForFileRead /
@@ -73,7 +73,7 @@ class MediaPipelineConfig {
                         String          type;
                         /** @brief Filesystem path for file-based stages. */
                         String          path;
-                        /** @brief Direction: @ref MediaIO::Output, @c Input, or @c InputAndOutput. */
+                        /** @brief Direction: @ref MediaIO::Source, @c Sink, or @c Transform. */
                         MediaIO::Mode   mode = MediaIO::NotOpen;
                         /** @brief Per-stage configuration. */
                         MediaConfig     config;
@@ -187,6 +187,41 @@ class MediaPipelineConfig {
                 // ------------------------------------------------------------
                 // Operations
                 // ------------------------------------------------------------
+
+                /**
+                 * @brief Returns true when every route is already format-
+                 *        compatible (no bridge insertion required).
+                 *
+                 * Thin wrapper around @ref MediaPipelinePlanner::isResolved.
+                 * Useful as a pre-flight check before
+                 * @ref MediaPipeline::build to decide whether the
+                 * planner needs to run at all.
+                 *
+                 * @param diagnostic Optional output describing the
+                 *                   first gapped route on a false return.
+                 * @return @c true when no bridge is required.
+                 */
+                bool isResolved(String *diagnostic = nullptr) const;
+
+                /**
+                 * @brief Returns a fully-resolved copy of this config.
+                 *
+                 * Thin wrapper around @ref MediaPipelinePlanner::plan
+                 * — splices in the bridging stages required to make
+                 * every route directly format-compatible.  See
+                 * @ref MediaPipelinePlanner for the algorithm and
+                 * the @c Policy semantics.
+                 *
+                 * @param err Optional error output (set to
+                 *            @ref Error::NotSupported when no bridge
+                 *            chain exists for some route).
+                 * @param diagnostic Optional human-readable error detail
+                 *                   on failure.
+                 * @return The resolved config on success, or an empty
+                 *         config when planning failed.
+                 */
+                MediaPipelineConfig resolved(Error *err = nullptr,
+                                             String *diagnostic = nullptr) const;
 
                 /**
                  * @brief Validates the config for use by @ref MediaPipeline::build.

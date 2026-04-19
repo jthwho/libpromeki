@@ -134,7 +134,7 @@ BenchmarkCase::Function buildPipelineCase(PipelineSpec spec) {
                 tpgCfg.set(MediaConfig::VideoFormat, VideoFormat(Size2Du32(spec.width, spec.height), FrameRate(FrameRate::FPS_30)));
                 tpgCfg.set(MediaConfig::VideoPixelFormat, PixelDesc(spec.pd));
                 MediaIO *tpg = MediaIO::create(tpgCfg);
-                if(tpg == nullptr || tpg->open(MediaIO::Output).isError()) {
+                if(tpg == nullptr || tpg->open(MediaIO::Source).isError()) {
                         if(tpg != nullptr) delete tpg;
                         state.setCounter(String("invalid"), 1.0);
                         for(auto _ : state) (void)_;
@@ -147,7 +147,7 @@ BenchmarkCase::Function buildPipelineCase(PipelineSpec spec) {
                 MediaIO::Config insCfg = MediaIO::defaultConfig("Inspector");
                 insCfg.set(MediaConfig::InspectorLogIntervalSec, 0.0);
                 MediaIO *inspector = MediaIO::create(insCfg);
-                if(inspector == nullptr || inspector->open(MediaIO::Input).isError()) {
+                if(inspector == nullptr || inspector->open(MediaIO::Sink).isError()) {
                         if(inspector != nullptr) delete inspector;
                         tpg->close();
                         delete tpg;

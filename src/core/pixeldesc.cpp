@@ -1470,28 +1470,44 @@ static PixelDesc::Data makeYUV12_420_Planar_BE_Rec2020() {
 // Rec.601 YCbCr PixelDesc factory functions
 // ---------------------------------------------------------------------------
 
+// Rec.601 variants share on-disk FourCCs with their Rec.709
+// counterparts — the FourCC identifies the byte layout, and the
+// colour-matrix / range information is carried separately in the
+// container (e.g. QuickTime's @c colr atom).  Omitting the FourCC
+// here would make these descs undetectable through FourCC-based
+// writers (QuickTime's @c stsd, FFmpeg's mov demuxer, ...), so we
+// reuse the Rec.709 FourCC list verbatim.
+
 static PixelDesc::Data makeYUV8_422_Rec601() {
-        return makeYCbCrDescWithModel(PixelDesc::YUV8_422_Rec601,
+        auto d = makeYCbCrDescWithModel(PixelDesc::YUV8_422_Rec601,
                 "YUV8_422_Rec601", "8-bit YCbCr 4:2:2, Rec.601, limited range",
                 PixelFormat::I_422_3x8, ycbcrSem8, ColorModel::YCbCr_Rec601);
+        d.fourccList = { "YUY2", "YUYV" };
+        return d;
 }
 
 static PixelDesc::Data makeYUV8_422_UYVY_Rec601() {
-        return makeYCbCrDescWithModel(PixelDesc::YUV8_422_UYVY_Rec601,
+        auto d = makeYCbCrDescWithModel(PixelDesc::YUV8_422_UYVY_Rec601,
                 "YUV8_422_UYVY_Rec601", "8-bit YCbCr 4:2:2 UYVY, Rec.601, limited range",
                 PixelFormat::I_422_UYVY_3x8, ycbcrSem8, ColorModel::YCbCr_Rec601);
+        d.fourccList = { "2vuy", "UYVY" };
+        return d;
 }
 
 static PixelDesc::Data makeYUV8_420_Planar_Rec601() {
-        return makeYCbCrDescWithModel(PixelDesc::YUV8_420_Planar_Rec601,
+        auto d = makeYCbCrDescWithModel(PixelDesc::YUV8_420_Planar_Rec601,
                 "YUV8_420_Planar_Rec601", "8-bit YCbCr 4:2:0 planar, Rec.601, limited range",
                 PixelFormat::P_420_3x8, ycbcrSem8, ColorModel::YCbCr_Rec601);
+        d.fourccList = { "I420" };
+        return d;
 }
 
 static PixelDesc::Data makeYUV8_420_SemiPlanar_Rec601() {
-        return makeYCbCrDescWithModel(PixelDesc::YUV8_420_SemiPlanar_Rec601,
+        auto d = makeYCbCrDescWithModel(PixelDesc::YUV8_420_SemiPlanar_Rec601,
                 "YUV8_420_SemiPlanar_Rec601", "8-bit YCbCr 4:2:0 NV12, Rec.601, limited range",
                 PixelFormat::SP_420_8, ycbcrSem8, ColorModel::YCbCr_Rec601);
+        d.fourccList = { "NV12" };
+        return d;
 }
 
 // ---------------------------------------------------------------------------

@@ -40,7 +40,7 @@ PixelDesc JpegVideoEncoder::outputPixelDesc() const {
         return PixelDesc(PixelDesc::JPEG_RGB8_sRGB);
 }
 
-List<int> JpegVideoEncoder::supportedInputs() const {
+List<int> JpegVideoEncoder::supportedInputList() {
         // Mirror the input-format coverage classifyYCbCr / encodeXxx
         // paths in JpegImageCodec already implement.
         return {
@@ -60,6 +60,10 @@ List<int> JpegVideoEncoder::supportedInputs() const {
                 static_cast<int>(PixelDesc::YUV8_420_Planar_Rec709_Full),
                 static_cast<int>(PixelDesc::YUV8_420_Planar_Rec601_Full),
         };
+}
+
+List<int> JpegVideoEncoder::supportedInputs() const {
+        return supportedInputList();
 }
 
 void JpegVideoEncoder::configure(const MediaConfig &config) {
@@ -253,6 +257,7 @@ struct JpegVideoCodecRegistrar {
                         VideoCodec::Data d = *base.data();
                         d.createEncoder = []() -> VideoEncoder * { return new JpegVideoEncoder(); };
                         d.createDecoder = []() -> VideoDecoder * { return new JpegVideoDecoder(); };
+                        d.encoderSupportedInputs = JpegVideoEncoder::supportedInputList();
                         VideoCodec::registerData(std::move(d));
                 }
         }

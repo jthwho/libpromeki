@@ -106,6 +106,10 @@ class ImageFileIO_RawYUV : public ImageFileIO {
                         _canLoad = true;
                         _canSave = true;
                         _name = "RawYUV";
+                        _description = "Headerless raw YUV image sequence";
+                        _extensions = { "uyvy", "yuyv", "yuy2", "v210",
+                                        "i420", "nv12", "yuv420p",
+                                        "i422", "yuv422p", "yuv" };
                 }
 
                 Error load(ImageFile &imageFile, const MediaConfig &config) const override;

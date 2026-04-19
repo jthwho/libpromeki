@@ -37,7 +37,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par Mode support
  *
- * Only @c MediaIO::InputAndOutput is supported.
+ * Only @c MediaIO::Transform is supported.
  *
  * @par Back-pressure
  *
@@ -75,7 +75,7 @@ PROMEKI_NAMESPACE_BEGIN
  * cfg.set(MediaConfig::Type, "Burn");
  * cfg.set(MediaConfig::VideoBurnText, "{Timecode:smpte}");
  * MediaIO *io = MediaIO::create(cfg);
- * io->open(MediaIO::InputAndOutput);
+ * io->open(MediaIO::Transform);
  * io->writeFrame(inputFrame);
  * Frame::Ptr outputFrame;
  * io->readFrame(outputFrame);

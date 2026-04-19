@@ -88,7 +88,7 @@
  *     {
  *       "name": "source",
  *       "type": "TPG",
- *       "mode": "Output",
+ *       "mode": "Source",
  *       "config": {
  *         "VideoEnabled":    true,
  *         "VideoPattern":    "ColorBars",
@@ -100,20 +100,20 @@
  *     },
  *     {
  *       "name": "csc",
- *       "type": "Converter",
- *       "mode": "InputAndOutput",
+ *       "type": "CSC",
+ *       "mode": "Transform",
  *       "config": { "OutputPixelDesc": "RGBA8_sRGB" }
  *     },
  *     {
  *       "name": "display",
  *       "type": "SDLPlayer",
- *       "mode": "Input",
+ *       "mode": "Sink",
  *       "config": {}
  *     },
  *     {
  *       "name": "recorder",
  *       "type": "QuickTime",
- *       "mode": "Input",
+ *       "mode": "Sink",
  *       "config": { "Filename": "/tmp/out.mov" }
  *     }
  *   ],
@@ -130,7 +130,7 @@
  * @ref VariantDatabase::fromJson, so every spec documented in
  * @c include/promeki/mediaconfig.h is expressible.  The @c mode
  * string uses @ref MediaPipelineConfig::modeName — one of
- * @c "Output", @c "Input", @c "InputAndOutput", or @c "NotOpen".
+ * @c "Source", @c "Sink", @c "Transform", or @c "NotOpen".
  *
  * @section mediapipeline_topology Topology rules
  *
@@ -195,7 +195,7 @@
  *
  * @section mediapipeline_example Code walk-through
  *
- * Build and run a TPG → Converter → QuickTime pipeline from an
+ * Build and run a TPG → CSC → QuickTime pipeline from an
  * in-memory config:
  *
  * @code
@@ -204,14 +204,14 @@
  * MediaPipelineConfig::Stage src;
  * src.name = "src";
  * src.type = "TPG";
- * src.mode = MediaIO::Output;
+ * src.mode = MediaIO::Source;
  * src.config.set(MediaConfig::VideoEnabled, true);
  * cfg.addStage(src);
  *
  * MediaPipelineConfig::Stage csc;
  * csc.name = "csc";
- * csc.type = "Converter";
- * csc.mode = MediaIO::InputAndOutput;
+ * csc.type = "CSC";
+ * csc.mode = MediaIO::Transform;
  * csc.config.set(MediaConfig::OutputPixelDesc,
  *                PixelDesc(PixelDesc::RGBA8_sRGB));
  * cfg.addStage(csc);
@@ -219,7 +219,7 @@
  * MediaPipelineConfig::Stage sink;
  * sink.name = "mov";
  * sink.path = "/tmp/out.mov";           // file sink, type auto-detected
- * sink.mode = MediaIO::Input;
+ * sink.mode = MediaIO::Sink;
  * cfg.addStage(sink);
  *
  * cfg.addRoute("src", "csc");

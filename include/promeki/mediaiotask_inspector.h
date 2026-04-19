@@ -348,7 +348,7 @@ struct InspectorSnapshot {
  * cfg.set(MediaConfig::InspectorTests, tests);
  * io->setConfig(cfg);
  * io->adoptTask(insp);
- * io->open(MediaIO::Input);
+ * io->open(MediaIO::Sink);
  *
  * // Pump frames in:
  * io->writeFrame(frame);

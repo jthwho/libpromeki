@@ -11,9 +11,12 @@
 #include <promeki/sdl/sdlvideowidget.h>
 #include <promeki/sdl/sdlwindow.h>
 #include <promeki/clock.h>
+#include <promeki/colormodel.h>
 #include <promeki/frame.h>
+#include <promeki/imagedesc.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaconfig.h>
+#include <promeki/mediaiodescription.h>
 #include <promeki/logger.h>
 
 #include <SDL3/SDL.h>
@@ -59,7 +62,7 @@ SDLPlayerTask::~SDLPlayerTask() {
 }
 
 Error SDLPlayerTask::executeCmd(MediaIOCommandOpen &cmd) {
-        if(cmd.mode != MediaIO::Input) {
+        if(cmd.mode != MediaIO::Sink) {
                 promekiErr("SDLPlayerTask: only Writer mode is supported");
                 return Error::NotSupported;
         }
@@ -341,6 +344,119 @@ MediaIO *createSDLPlayer(SDLVideoWidget *video,
                 return nullptr;
         }
         return io;
+}
+
+// ---- Phase 3 introspection / negotiation overrides ----
+
+PixelDesc SDLPlayerTask::pickNativePixelDesc(const PixelDesc &offered) const {
+        // The mapPixelDesc table on SDLVideoWidget is the source of
+        // truth for what SDL can ingest directly.  We pick from that
+        // set the format closest to @p offered, preferring same
+        // colour family (YUV vs RGB) and same bit depth so the
+        // upstream CSC stage stays as cheap as possible.
+
+        const bool offerYuv = offered.isValid()
+                && offered.colorModel().type() == ColorModel::TypeYCbCr;
+        const int  offerBits = (offered.isValid()
+                && offered.pixelFormat().compCount() > 0)
+                ? static_cast<int>(offered.pixelFormat().compDesc(0).bits)
+                : 8;
+
+        if(offerYuv) {
+                // YUV source — keep it in YUV.  Pick the closest of
+                // the SDL-mappable YUV formats based on the offered
+                // chroma subsampling.
+                switch(offered.pixelFormat().sampling()) {
+                case PixelFormat::Sampling422:
+                        return PixelDesc(PixelDesc::YUV8_422_Rec709);
+                case PixelFormat::Sampling420:
+                case PixelFormat::Sampling411:
+                case PixelFormat::Sampling444:
+                case PixelFormat::SamplingUndefined:
+                default:
+                        // 4:4:4 isn't natively supported by SDL — drop
+                        // to 4:2:0 semi-planar, the production-typical
+                        // form.  4:2:0 stays 4:2:0, 4:1:1 also lands
+                        // here.
+                        return PixelDesc(PixelDesc::YUV8_420_SemiPlanar_Rec709);
+                }
+        }
+
+        // RGB source — match bit depth where possible.  SDL handles
+        // 8-bit RGBA universally; 16-bit RGBA only on a host whose
+        // endianness matches the LE/BE variant.
+        if(offerBits >= 16) {
+                return PixelDesc(PixelDesc::RGBA16_LE_sRGB);
+        }
+        return PixelDesc(PixelDesc::RGBA8_sRGB);
+}
+
+Error SDLPlayerTask::describe(MediaIODescription *out) const {
+        if(out == nullptr) return Error::Invalid;
+
+        // Advertise every PixelDesc the SDL widget natively maps so
+        // the planner can pick one that matches the source closely
+        // (no inline CSC happens inside SDLVideoWidget any more —
+        // an upstream CSC stage handles all conversion now).
+        const PixelDesc::ID nativeIds[] = {
+                PixelDesc::RGB8_sRGB,
+                PixelDesc::BGR8_sRGB,
+                PixelDesc::RGBA8_sRGB,
+                PixelDesc::BGRA8_sRGB,
+                PixelDesc::ARGB8_sRGB,
+                PixelDesc::ABGR8_sRGB,
+                PixelDesc::RGB16_LE_sRGB,
+                PixelDesc::BGR16_LE_sRGB,
+                PixelDesc::RGBA16_LE_sRGB,
+                PixelDesc::BGRA16_LE_sRGB,
+                PixelDesc::ARGB16_LE_sRGB,
+                PixelDesc::ABGR16_LE_sRGB,
+                PixelDesc::YUV8_422_Rec709,
+                PixelDesc::YUV8_422_UYVY_Rec709,
+                PixelDesc::YUV8_420_SemiPlanar_Rec709,
+                PixelDesc::YUV8_420_NV21_Rec709,
+                PixelDesc::YUV8_420_Planar_Rec709,
+        };
+        for(PixelDesc::ID id : nativeIds) {
+                MediaDesc accepted;
+                accepted.imageList().pushToBack(
+                        ImageDesc(Size2Du32(0, 0), PixelDesc(id)));
+                out->acceptableFormats().pushToBack(accepted);
+        }
+        return Error::Ok;
+}
+
+Error SDLPlayerTask::proposeInput(const MediaDesc &offered,
+                                  MediaDesc *preferred) const {
+        if(preferred == nullptr) return Error::Invalid;
+        if(offered.imageList().isEmpty()) {
+                // Audio-only frame (rare for SDL sink) — accept as-is.
+                *preferred = offered;
+                return Error::Ok;
+        }
+
+        const PixelDesc &offeredPd = offered.imageList()[0].pixelDesc();
+
+        // Compressed sources go through the planner-inserted
+        // VideoDecoder bridge; SDLPlayerTask only consumes uncompressed.
+        if(offeredPd.isCompressed()) {
+                MediaDesc want = offered;
+                want.imageList()[0].setPixelDesc(pickNativePixelDesc(offeredPd));
+                *preferred = want;
+                return Error::Ok;
+        }
+
+        // If the offered shape is already SDL-native we accept it
+        // verbatim — the planner doesn't need to insert a CSC.
+        if(SDLVideoWidget::mapPixelDesc(offeredPd) != 0) {
+                *preferred = offered;
+                return Error::Ok;
+        }
+
+        MediaDesc want = offered;
+        want.imageList()[0].setPixelDesc(pickNativePixelDesc(offeredPd));
+        *preferred = want;
+        return Error::Ok;
 }
 
 PROMEKI_NAMESPACE_END

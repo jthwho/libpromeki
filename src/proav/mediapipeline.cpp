@@ -8,6 +8,7 @@
 #include <promeki/mediapipeline.h>
 
 #include <promeki/logger.h>
+#include <promeki/mediapipelineplanner.h>
 #include <promeki/set.h>
 #include <promeki/timerevent.h>
 #include <promeki/util.h>
@@ -95,7 +96,7 @@ MediaIO *MediaPipeline::instantiateStage(const MediaPipelineConfig::Stage &s) {
                 if(!s.path.isEmpty()) cfg.set(MediaConfig::Filename, s.path);
                 io = MediaIO::create(cfg, this);
         } else if(!s.path.isEmpty()) {
-                if(s.mode == MediaIO::Output) {
+                if(s.mode == MediaIO::Source) {
                         io = MediaIO::createForFileRead(s.path, this);
                 } else {
                         io = MediaIO::createForFileWrite(s.path, this);
@@ -109,7 +110,7 @@ MediaIO *MediaPipeline::instantiateStage(const MediaPipelineConfig::Stage &s) {
                 }
         }
         if(io != nullptr && !s.metadata.isEmpty()) {
-                (void)io->setMetadata(s.metadata);
+                (void)io->setExpectedMetadata(s.metadata);
         }
         return io;
 }
@@ -157,23 +158,53 @@ Error MediaPipeline::injectStage(const String &name, MediaIO *io) {
         return Error::Ok;
 }
 
-Error MediaPipeline::build(const MediaPipelineConfig &config) {
+Error MediaPipeline::build(const MediaPipelineConfig &config, bool autoplan) {
         if(_state != State::Empty && _state != State::Closed) {
                 promekiErr("MediaPipeline::build: pipeline is not in Empty/Closed state.");
                 return Error::Busy;
         }
 
-        Error vErr = config.validate();
+        // Resolve via the planner first when requested.  Failures
+        // surface as the build's return value so callers don't have
+        // to thread a separate plan() step.  The planner's
+        // diagnostic is multi-line — splat each line so logs stay
+        // grep-friendly when something goes wrong.  Injected stages
+        // (SDL player, V4L2 device handles, ...) are passed through
+        // so the planner can call describe() / proposeInput on the
+        // live instance — without this it would fail to build a
+        // stand-in from the registry and either error out or miss
+        // the negotiation entirely.
+        const MediaPipelineConfig *effectiveConfig = &config;
+        MediaPipelineConfig planned;
+        if(autoplan) {
+                String planDiag;
+                Error perr = MediaPipelinePlanner::plan(
+                        config, &planned, _injected, {}, &planDiag);
+                if(perr.isError()) {
+                        promekiErr("MediaPipeline::build: planner failed (%s)",
+                                   perr.name().cstr());
+                        if(!planDiag.isEmpty()) {
+                                const StringList lines = planDiag.split(std::string("\n"));
+                                for(size_t i = 0; i < lines.size(); ++i) {
+                                        promekiErr("  %s", lines[i].cstr());
+                                }
+                        }
+                        return perr;
+                }
+                effectiveConfig = &planned;
+        }
+
+        Error vErr = effectiveConfig->validate();
         if(vErr.isError()) return vErr;
 
         // Fan-in check — for this first implementation a stage may have
         // at most one incoming route.  Fan-out is unrestricted.
         promeki::Map<String, int> inCount;
-        for(size_t i = 0; i < config.stages().size(); ++i) {
-                inCount.insert(config.stages()[i].name, 0);
+        for(size_t i = 0; i < effectiveConfig->stages().size(); ++i) {
+                inCount.insert(effectiveConfig->stages()[i].name, 0);
         }
-        for(size_t i = 0; i < config.routes().size(); ++i) {
-                inCount[config.routes()[i].to] += 1;
+        for(size_t i = 0; i < effectiveConfig->routes().size(); ++i) {
+                inCount[effectiveConfig->routes()[i].to] += 1;
         }
         for(auto it = inCount.cbegin(); it != inCount.cend(); ++it) {
                 if(it->second > 1) {
@@ -184,7 +215,7 @@ Error MediaPipeline::build(const MediaPipelineConfig &config) {
                 }
         }
 
-        _config = config;
+        _config = *effectiveConfig;
 
         // Instantiate every stage.  Injected stages short-circuit the
         // backend factory so externally-owned MediaIOs (SDL, V4L2
@@ -242,13 +273,13 @@ Error MediaPipeline::open() {
         // sees its upstream's freshly-resolved MediaDesc / AudioDesc /
         // Metadata.  For every stage that has an incoming route (i.e.
         // isn't a pure source), copy the upstream's live descriptors
-        // onto it with setMediaDesc / setAudioDesc / setMetadata before
-        // opening — many backends (QuickTime writer, ImageFile,
-        // AudioFile, Converter) rely on the pre-open descriptor to
-        // configure themselves.  Pipeline-level per-stage metadata
-        // from @ref MediaPipelineConfig::Stage::metadata is merged on
-        // top of the inherited metadata so the user's overrides always
-        // win over the upstream defaults.
+        // onto it via setExpectedDesc / setExpectedAudioDesc /
+        // setExpectedMetadata before opening — many backends
+        // (QuickTime writer, ImageFile, AudioFile, CSC) rely on the
+        // pre-open descriptor to configure themselves.  Pipeline-level
+        // per-stage metadata from @ref MediaPipelineConfig::Stage::metadata
+        // is merged on top of the inherited metadata so the user's
+        // overrides always win over the upstream defaults.
         //
         // Build a quick from-lookup for the "who feeds me?" query; the
         // @c build step already rejects fan-in so every non-source
@@ -270,19 +301,19 @@ Error MediaPipeline::open() {
                 if(upIt != upstreamOf.end()) {
                         MediaIO *up = _stages[upIt->second];
                         if(up != nullptr && up->isOpen()) {
-                                (void)io->setMediaDesc(up->mediaDesc());
+                                (void)io->setExpectedDesc(up->mediaDesc());
                                 const AudioDesc &ad = up->audioDesc();
-                                if(ad.isValid()) (void)io->setAudioDesc(ad);
+                                if(ad.isValid()) (void)io->setExpectedAudioDesc(ad);
                                 Metadata merged = up->metadata();
                                 if(!spec->metadata.isEmpty()) {
                                         merged.merge(spec->metadata);
                                 }
-                                if(!merged.isEmpty()) (void)io->setMetadata(merged);
+                                if(!merged.isEmpty()) (void)io->setExpectedMetadata(merged);
                         } else if(!spec->metadata.isEmpty()) {
-                                (void)io->setMetadata(spec->metadata);
+                                (void)io->setExpectedMetadata(spec->metadata);
                         }
                 } else if(!spec->metadata.isEmpty()) {
-                        (void)io->setMetadata(spec->metadata);
+                        (void)io->setExpectedMetadata(spec->metadata);
                 }
 
                 Error err = io->open(spec->mode);

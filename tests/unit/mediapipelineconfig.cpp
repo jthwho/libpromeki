@@ -13,6 +13,7 @@
 #include <promeki/bufferiodevice.h>
 #include <promeki/datastream.h>
 #include <promeki/dir.h>
+#include <promeki/filepath.h>
 #include <promeki/size2d.h>
 #include <promeki/videoformat.h>
 
@@ -20,7 +21,7 @@ using namespace promeki;
 
 namespace {
 
-// Builds a small, well-formed config: TPG -> Converter -> file sink.
+// Builds a small, well-formed config: TPG -> CSC -> file sink.
 MediaPipelineConfig makeSample() {
         MediaPipelineConfig cfg;
 
@@ -31,21 +32,27 @@ MediaPipelineConfig makeSample() {
         MediaPipelineConfig::Stage src;
         src.name = "src";
         src.type = "TPG";
-        src.mode = MediaIO::Output;
+        src.mode = MediaIO::Source;
         src.config.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
         src.config.set(MediaConfig::VideoEnabled, true);
         cfg.addStage(src);
 
         MediaPipelineConfig::Stage csc;
         csc.name = "csc";
-        csc.type = "Converter";
-        csc.mode = MediaIO::InputAndOutput;
+        csc.type = "CSC";
+        csc.mode = MediaIO::Transform;
         cfg.addStage(csc);
 
         MediaPipelineConfig::Stage sink;
         sink.name = "sink";
-        sink.path = "/tmp/mediapipelineconfig_sample.dpx";
-        sink.mode = MediaIO::Input;
+        // Scratch path — the config is never actually opened, we
+        // just need a well-formed filename with a recognised
+        // extension for validate() / round-trip checks.  Use
+        // Dir::temp() rather than hard-coding /tmp to honour the
+        // project-wide scratch-location override.
+        sink.path = (Dir::temp().path()
+                / "mediapipelineconfig_sample.dpx").toString();
+        sink.mode = MediaIO::Sink;
         cfg.addStage(sink);
 
         cfg.addRoute("src", "csc");
@@ -56,17 +63,17 @@ MediaPipelineConfig makeSample() {
 } // namespace
 
 TEST_CASE("MediaPipelineConfig_ModeNameRoundTrip") {
-        CHECK(MediaPipelineConfig::modeName(MediaIO::Output) == "Output");
-        CHECK(MediaPipelineConfig::modeName(MediaIO::Input) == "Input");
-        CHECK(MediaPipelineConfig::modeName(MediaIO::InputAndOutput) == "InputAndOutput");
+        CHECK(MediaPipelineConfig::modeName(MediaIO::Source) == "Source");
+        CHECK(MediaPipelineConfig::modeName(MediaIO::Sink) == "Sink");
+        CHECK(MediaPipelineConfig::modeName(MediaIO::Transform) == "Transform");
         CHECK(MediaPipelineConfig::modeName(MediaIO::NotOpen) == "NotOpen");
 
         Error err;
-        CHECK(MediaPipelineConfig::modeFromName("Output", &err) == MediaIO::Output);
+        CHECK(MediaPipelineConfig::modeFromName("Source", &err) == MediaIO::Source);
         CHECK(err.isOk());
-        CHECK(MediaPipelineConfig::modeFromName("Input", &err) == MediaIO::Input);
+        CHECK(MediaPipelineConfig::modeFromName("Sink", &err) == MediaIO::Sink);
         CHECK(err.isOk());
-        CHECK(MediaPipelineConfig::modeFromName("InputAndOutput", &err) == MediaIO::InputAndOutput);
+        CHECK(MediaPipelineConfig::modeFromName("Transform", &err) == MediaIO::Transform);
         CHECK(err.isOk());
         CHECK(MediaPipelineConfig::modeFromName("NotOpen", &err) == MediaIO::NotOpen);
         CHECK(err.isOk());
@@ -88,8 +95,8 @@ TEST_CASE("MediaPipelineConfig_Accessors") {
 
         const MediaPipelineConfig::Stage *s = cfg.findStage("csc");
         REQUIRE(s != nullptr);
-        CHECK(s->type == "Converter");
-        CHECK(s->mode == MediaIO::InputAndOutput);
+        CHECK(s->type == "CSC");
+        CHECK(s->mode == MediaIO::Transform);
 
         StringList names = cfg.stageNames();
         REQUIRE(names.size() == 3);
@@ -113,7 +120,7 @@ TEST_CASE("MediaPipelineConfig_Validate_DuplicateName") {
         MediaPipelineConfig::Stage dup;
         dup.name = "src"; // duplicate
         dup.type = "TPG";
-        dup.mode = MediaIO::Output;
+        dup.mode = MediaIO::Source;
         cfg.addStage(dup);
         CHECK(cfg.validate() == Error::InvalidArgument);
 }
@@ -142,7 +149,7 @@ TEST_CASE("MediaPipelineConfig_Validate_OrphanStage") {
         MediaPipelineConfig::Stage orphan;
         orphan.name = "orphan";
         orphan.type = "TPG";
-        orphan.mode = MediaIO::Output;
+        orphan.mode = MediaIO::Source;
         cfg.addStage(orphan);
         CHECK(cfg.validate() == Error::InvalidArgument);
 }
@@ -151,7 +158,7 @@ TEST_CASE("MediaPipelineConfig_Validate_MissingTypeAndPath") {
         MediaPipelineConfig cfg;
         MediaPipelineConfig::Stage bad;
         bad.name = "only";
-        bad.mode = MediaIO::Output;
+        bad.mode = MediaIO::Source;
         cfg.addStage(bad);
         CHECK(cfg.validate() == Error::InvalidArgument);
 }
@@ -243,10 +250,10 @@ TEST_CASE("MediaPipelineConfig_Describe_NotEmpty") {
 
 TEST_CASE("MediaPipelineConfig_StageRouteEquality") {
         MediaPipelineConfig::Stage a;
-        a.name = "n"; a.type = "TPG"; a.mode = MediaIO::Output;
+        a.name = "n"; a.type = "TPG"; a.mode = MediaIO::Source;
         MediaPipelineConfig::Stage b = a;
         CHECK(a == b);
-        b.mode = MediaIO::Input;
+        b.mode = MediaIO::Sink;
         CHECK(a != b);
 
         MediaPipelineConfig::Route r1{"x", "y", "", ""};

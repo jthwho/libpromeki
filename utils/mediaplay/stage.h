@@ -229,7 +229,7 @@ promeki::MediaIO *buildFileSink(const StageSpec &spec,
  * at @c build() time.
  *
  * @param rawSpec     CLI-parsed stage spec (type / path / rawKeyValues).
- * @param mode        Desired open mode (@ref MediaIO::Output /
+ * @param mode        Desired open mode (@ref MediaIO::Source /
  *                    @c Input / @c InputAndOutput).
  * @param stageName   Unique stage name for route targeting and errors.
  * @param scopeLabel  Label for @ref applyStageConfig diagnostics

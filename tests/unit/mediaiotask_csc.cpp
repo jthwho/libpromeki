@@ -58,9 +58,9 @@ TEST_CASE("MediaIOTask_CSC_Registry") {
         bool found = false;
         for(const auto &desc : formats) {
                 if(desc.name == "CSC") {
-                        CHECK_FALSE(desc.canOutput);
-                        CHECK_FALSE(desc.canInput);
-                        CHECK(desc.canInputAndOutput);
+                        CHECK_FALSE(desc.canBeSource);
+                        CHECK_FALSE(desc.canBeSink);
+                        CHECK(desc.canBeTransform);
                         CHECK(desc.extensions.isEmpty());
                         found = true;
                         break;
@@ -80,7 +80,7 @@ TEST_CASE("MediaIOTask_CSC_RejectsReaderMode") {
         MediaIO::Config cfg = MediaIO::defaultConfig("CSC");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        CHECK(io->open(MediaIO::Output).isError());
+        CHECK(io->open(MediaIO::Source).isError());
         CHECK_FALSE(io->isOpen());
         delete io;
 }
@@ -89,9 +89,9 @@ TEST_CASE("MediaIOTask_CSC_AcceptsReadWriteMode") {
         MediaIO::Config cfg = MediaIO::defaultConfig("CSC");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
         CHECK(io->isOpen());
-        CHECK(io->mode() == MediaIO::InputAndOutput);
+        CHECK(io->mode() == MediaIO::Transform);
         io->close();
         delete io;
 }
@@ -100,7 +100,7 @@ TEST_CASE("MediaIOTask_CSC_PassThroughVideo") {
         MediaIO::Config cfg = MediaIO::defaultConfig("CSC");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         Frame::Ptr in = makeRgbFrame(16, 16, PixelDesc::RGB8_sRGB, 0x42);
         CHECK(io->writeFrame(in).isOk());
@@ -119,7 +119,7 @@ TEST_CASE("MediaIOTask_CSC_Rgb8ToRgba8") {
         MediaIO::Config cfg = cscConfig(PixelDesc(PixelDesc::RGBA8_sRGB));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         Frame::Ptr in = makeRgbFrame(32, 32, PixelDesc::RGB8_sRGB, 0x10);
         CHECK(io->writeFrame(in).isOk());
@@ -140,7 +140,7 @@ TEST_CASE("MediaIOTask_CSC_AudioPassesThrough") {
         MediaIO::Config cfg = cscConfig(PixelDesc(PixelDesc::RGBA8_sRGB));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         Frame::Ptr in = makeVideoAudioFrame(16, 16, PixelDesc::RGB8_sRGB,
                                             AudioDesc::PCMI_Float32LE,
@@ -169,9 +169,9 @@ TEST_CASE("MediaIOTask_CSC_OutputMediaDesc") {
         pending.setFrameRate(FrameRate(FrameRate::FPS_29_97));
         pending.imageList().pushToBack(
                 ImageDesc(Size2Du32(640, 480), PixelDesc(PixelDesc::RGB8_sRGB)));
-        io->setMediaDesc(pending);
+        io->setExpectedDesc(pending);
 
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         MediaDesc vd = io->mediaDesc();
         REQUIRE(vd.imageList().size() == 1);
@@ -187,7 +187,7 @@ TEST_CASE("MediaIOTask_CSC_RejectsCompressedTarget") {
         MediaIO::Config cfg = cscConfig(PixelDesc(PixelDesc::JPEG_RGB8_sRGB));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         Frame::Ptr in = makeRgbFrame(64, 48, PixelDesc::RGB8_sRGB, 0x80);
         io->writeFrame(in);
@@ -204,7 +204,7 @@ TEST_CASE("MediaIOTask_CSC_Stats") {
         MediaIO::Config cfg = cscConfig(PixelDesc(PixelDesc::RGBA8_sRGB));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         Frame::Ptr f = makeRgbFrame(16, 16, PixelDesc::RGB8_sRGB, 0x55);
         CHECK(io->writeFrame(f).isOk());
@@ -223,7 +223,7 @@ TEST_CASE("MediaIOTask_CSC_ReadEmptyQueueTryAgain") {
         MediaIO::Config cfg = cscConfig(PixelDesc(PixelDesc::RGBA8_sRGB));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         Frame::Ptr out;
         CHECK(io->readFrame(out, false) == Error::TryAgain);

@@ -36,11 +36,11 @@ class MediaDesc {
         /** @brief Shared pointer type for MediaDesc. */
         using Ptr = SharedPtr<MediaDesc>;
 
-        /** @brief List of ImageDesc values describing each image layer. */
-        using ImageDescList = List<ImageDesc>;
+        /** @brief List of MediaDesc values. */
+        using List = promeki::List<MediaDesc>;
 
-        /** @brief List of AudioDesc values describing each audio channel group. */
-        using AudioDescList = List<AudioDesc>;
+        /** @brief List of shared MediaDesc pointers. */
+        using PtrList = promeki::List<Ptr>;
 
         /** @brief Constructs a default (invalid) media description. */
         MediaDesc() = default;
@@ -96,9 +96,9 @@ class MediaDesc {
         void setFrameRate(const FrameRate &val) { _frameRate = val; }
 
         /** @brief Returns a const reference to the list of image descriptions. */
-        const ImageDescList &imageList() const { return _imageList; }
+        const ImageDesc::List &imageList() const { return _imageList; }
         /** @brief Returns a mutable reference to the list of image descriptions. */
-        ImageDescList &imageList() { return _imageList; }
+        ImageDesc::List &imageList() { return _imageList; }
 
         /**
          * @brief Returns the VideoFormat for the image at @p index.
@@ -119,19 +119,58 @@ class MediaDesc {
         }
 
         /** @brief Returns a const reference to the list of audio descriptions. */
-        const AudioDescList &audioList() const { return _audioList; }
+        const AudioDesc::List &audioList() const { return _audioList; }
         /** @brief Returns a mutable reference to the list of audio descriptions. */
-        AudioDescList &audioList() { return _audioList; }
+        AudioDesc::List &audioList() { return _audioList; }
 
         /** @brief Returns a const reference to the metadata. */
         const Metadata &metadata() const { return _metadata; }
         /** @brief Returns a mutable reference to the metadata. */
         Metadata &metadata() { return _metadata; }
 
+        /** @brief Returns true if every member of both descriptors is equal. */
+        bool operator==(const MediaDesc &other) const {
+                return _frameRate == other._frameRate
+                    && _imageList == other._imageList
+                    && _audioList == other._audioList
+                    && _metadata  == other._metadata;
+        }
+
+        /** @brief Returns true if any member differs. */
+        bool operator!=(const MediaDesc &other) const { return !(*this == other); }
+
+        /**
+         * @brief Compares structural media fields, ignoring metadata on
+         *        the MediaDesc itself and on every ImageDesc / AudioDesc.
+         *
+         * Returns true when frame rate, image-list structure (per
+         * @ref ImageDesc::formatEquals), and audio-list structure (per
+         * @ref AudioDesc::formatEquals) all match.  Used by the
+         * pipeline planner so routes are compared on the shape that
+         * actually matters for format compatibility rather than on
+         * cosmetic metadata (colour tags, creator fields, user data)
+         * that one side may carry and the other may not.
+         *
+         * @param other The MediaDesc to compare against.
+         * @return true if every structural field matches.
+         */
+        bool formatEquals(const MediaDesc &other) const {
+                if(_frameRate != other._frameRate) return false;
+                if(_imageList.size() != other._imageList.size()) return false;
+                if(_audioList.size() != other._audioList.size()) return false;
+                for(size_t i = 0; i < _imageList.size(); ++i) {
+                        if(!_imageList[i].formatEquals(other._imageList[i])) return false;
+                }
+                for(size_t i = 0; i < _audioList.size(); ++i) {
+                        if(!_audioList[i].formatEquals(other._audioList[i])) return false;
+                }
+                return true;
+        }
+
     private:
         FrameRate           _frameRate;
-        ImageDescList       _imageList;
-        AudioDescList       _audioList;
+        ImageDesc::List     _imageList;
+        AudioDesc::List     _audioList;
         Metadata            _metadata;
 };
 
@@ -159,8 +198,8 @@ inline DataStream &operator<<(DataStream &stream, const MediaDesc &desc) {
 inline DataStream &operator>>(DataStream &stream, MediaDesc &desc) {
         if(!stream.readTag(DataStream::TypeMediaDesc)) { desc = MediaDesc(); return stream; }
         FrameRate fr;
-        MediaDesc::ImageDescList imgs;
-        MediaDesc::AudioDescList auds;
+        ImageDesc::List imgs;
+        AudioDesc::List auds;
         Metadata meta;
         stream >> fr >> imgs >> auds >> meta;
         if(stream.status() != DataStream::Ok) { desc = MediaDesc(); return stream; }

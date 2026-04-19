@@ -22,9 +22,9 @@ MediaIO::FormatDesc MediaIOTask_RawBitstream::formatDesc() {
                 "RawBitstream",
                 "Raw elementary-stream sink (H.264 / HEVC Annex-B — writes packet payloads verbatim)",
                 {"h264", "h265", "hevc", "bit"},
-                false,  // canOutput (reading needs a NAL parser; follow-up)
-                true,   // canInput — this is a sink
-                false,  // canInputAndOutput
+                false,  // canBeSource (reading needs a NAL parser; follow-up)
+                true,   // canBeSink — this is a sink
+                false,  // canBeTransform
                 []() -> MediaIOTask * {
                         return new MediaIOTask_RawBitstream();
                 },
@@ -42,7 +42,7 @@ MediaIOTask_RawBitstream::~MediaIOTask_RawBitstream() {
 }
 
 Error MediaIOTask_RawBitstream::executeCmd(MediaIOCommandOpen &cmd) {
-        if(cmd.mode != MediaIO::Input) {
+        if(cmd.mode != MediaIO::Sink) {
                 promekiErr("MediaIOTask_RawBitstream: only sink mode is supported "
                            "(mediaplay open-as-source for raw elementary streams "
                            "needs a codec-aware NAL parser, added later)");

@@ -543,9 +543,9 @@ MediaIO::FormatDesc MediaIOTask_V4L2::formatDesc() {
                 "V4L2",
                 "V4L2 video capture with optional ALSA audio (Linux)",
                 {},     // No file extensions — device source
-                true,   // canOutput
-                false,  // canInput
-                false,  // canInputAndOutput
+                true,   // canBeSource
+                false,  // canBeSink
+                false,  // canBeTransform
                 []() -> MediaIOTask * {
                         return new MediaIOTask_V4L2();
                 },
@@ -1293,7 +1293,7 @@ void MediaIOTask_V4L2::audioCaptureLoop() {
 // ============================================================================
 
 Error MediaIOTask_V4L2::executeCmd(MediaIOCommandOpen &cmd) {
-        if(cmd.mode != MediaIO::Output) return Error::NotSupported;
+        if(cmd.mode != MediaIO::Source) return Error::NotSupported;
 
         const MediaIO::Config &cfg = cmd.config;
 

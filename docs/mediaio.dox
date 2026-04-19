@@ -27,8 +27,7 @@
  * | @c QuickTime       | both           | QuickTime / ISO-BMFF reader and writer (fragmented or moov-at-end layout); H.264 / HEVC samples are delivered as Annex-B bytes on @ref Image::packet for compressed tracks. |
  * | @c Rtp             | both           | RTP transport for video / audio / metadata streams (SDP-driven; SMPTE 2110 / AES67 friendly).  Compressed payloads ride on @ref Image::packet so the downstream decoder stage can consume them directly. |
  * | @c V4L2            | source         | Video4Linux2 capture device (webcams, capture cards exposing a V4L2 node).                               |
- * | @c Converter       | transform      | In-process pixel-format converter that wraps a child read-side and a parent write-side.                  |
- * | @c CSC             | transform      | Stand-alone colour-space / pixel-format converter stage.                                                 |
+ * | @c CSC             | transform      | Colour-space / pixel-format converter stage (replaces the deprecated @c Converter).                      |
  * | @c SRC             | transform      | Stand-alone audio sample-rate converter stage.                                                           |
  * | @c Burn            | transform      | Burn-in overlay generator (text / timecode) for QA and review.                                           |
  * | @c FrameSync       | transform      | Frame-rate sync / re-clock stage.                                                                        |
@@ -181,11 +180,11 @@
  * @subsection mediaio_lifecycle Open / close lifecycle
  *
  * @code
- * io->setMediaDesc(myMediaDesc);     // optional, pre-open setters
- * io->setMetadata(myMetadata);
+ * io->setExpectedDesc(myMediaDesc);  // optional, pre-open setters
+ * io->setExpectedMetadata(myMetadata);
  * io->setVideoTracks({0});           // optional track selection
  *
- * Error err = io->open(MediaIO::Output);
+ * Error err = io->open(MediaIO::Source);
  * if(err.isError()) { ... }
  *
  * // ... read/write frames ...
@@ -210,8 +209,8 @@
  * @subsection mediaio_write Writing frames
  *
  * @code
- * io->setMediaDesc(myDesc);
- * io->open(MediaIO::Input);
+ * io->setExpectedDesc(myDesc);
+ * io->open(MediaIO::Sink);
  * io->writeFrame(frame);                     // blocking
  * io->writeFrame(frame, false);              // fire-and-forget
  * io->close();

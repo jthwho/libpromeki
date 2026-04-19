@@ -73,9 +73,9 @@ TEST_CASE("MediaIOTask_FrameBridge: registered in MediaIO factory") {
         bool found = false;
         for(const auto &d : MediaIO::registeredFormats()) {
                 if(d.name == "FrameBridge") {
-                        CHECK(d.canInput);
-                        CHECK(d.canOutput);
-                        CHECK_FALSE(d.canInputAndOutput);
+                        CHECK(d.canBeSink);
+                        CHECK(d.canBeSource);
+                        CHECK_FALSE(d.canBeTransform);
                         CHECK(d.extensions.isEmpty());
                         found = true;
                         break;
@@ -94,9 +94,9 @@ TEST_CASE("MediaIOTask_FrameBridge: input-mode open creates output bridge") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        io->setMediaDesc(makeMediaDesc());
-        io->setAudioDesc(makeAudioDesc());
-        REQUIRE(io->open(MediaIO::Input).isOk());
+        io->setExpectedDesc(makeMediaDesc());
+        io->setExpectedAudioDesc(makeAudioDesc());
+        REQUIRE(io->open(MediaIO::Sink).isOk());
         CHECK(io->mediaDesc().isValid());
         CHECK(io->audioDesc().channels() == 2);
         CHECK(io->frameCount() == MediaIO::FrameCountInfinite);
@@ -117,9 +117,9 @@ TEST_CASE("MediaIOTask_FrameBridge: round-trip frame through MediaIO") {
         pubCfg.set(MediaConfig::FrameBridgeName, name);
         MediaIO *pub = MediaIO::create(pubCfg);
         REQUIRE(pub != nullptr);
-        pub->setMediaDesc(makeMediaDesc());
-        pub->setAudioDesc(makeAudioDesc());
-        REQUIRE(pub->open(MediaIO::Input).isOk());
+        pub->setExpectedDesc(makeMediaDesc());
+        pub->setExpectedAudioDesc(makeAudioDesc());
+        REQUIRE(pub->open(MediaIO::Sink).isOk());
 
         // Consumer side: MediaIO opened in Output mode — caller reads,
         // we pull from the bridge.  Use no-sync so the pumping-driver
@@ -136,7 +136,7 @@ TEST_CASE("MediaIOTask_FrameBridge: round-trip frame through MediaIO") {
         std::atomic<bool> subDone{false};
         Error subOpenErr;
         std::thread subOpener([&]() {
-                subOpenErr = sub->open(MediaIO::Output);
+                subOpenErr = sub->open(MediaIO::Source);
                 subDone.store(true);
         });
 
@@ -192,7 +192,7 @@ TEST_CASE("MediaIOTask_FrameBridge: open without FrameBridgeName fails") {
         MediaIO::Config cfg = MediaIO::defaultConfig("FrameBridge");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        Error err = io->open(MediaIO::Input);
+        Error err = io->open(MediaIO::Sink);
         CHECK(err == Error::InvalidArgument);
         delete io;
 }

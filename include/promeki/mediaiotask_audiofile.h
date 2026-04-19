@@ -55,6 +55,17 @@ class MediaIOTask_AudioFile : public MediaIOTask {
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 Error executeCmd(MediaIOCommandSeek &cmd) override;
 
+                Error proposeInput(const MediaDesc &offered,
+                                   MediaDesc *preferred) const override;
+
+                // Returns the AudioDesc::DataType libsndfile prefers
+                // for @p filename's extension, picking the closest
+                // form to @p source so the inserted SRC bridge does
+                // not drop bit depth (e.g. 24-bit source stays 24-bit
+                // through a BWF write).
+                AudioDesc::DataType preferredWriterDataType(
+                        const String &filename, AudioDesc::DataType source) const;
+
                 AudioFile       _audioFile;
                 FrameRate       _frameRate;
                 AudioDesc       _audioDesc;

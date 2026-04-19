@@ -750,43 +750,39 @@ inline const VideoScanMode VideoScanMode::PsF                 { 5 };
 /**
  * @brief Well-known Enum type for MediaIO open direction.
  *
- * Describes the role a @ref MediaIO instance plays in its pipeline
- * from the backend's own perspective:
+ * Describes the role a @ref MediaIO instance plays in its pipeline:
  *
- * - @c Input          — the @ref MediaIO @em accepts frames from
- *                       the caller (it is a sink — e.g. a file
- *                       writer, a display, an RTP sender).
- * - @c Output         — the @ref MediaIO @em provides frames to
- *                       the caller (it is a source — e.g. a file
- *                       reader, a capture card, a test pattern
- *                       generator).
- * - @c InputAndOutput — the @ref MediaIO both consumes and emits
- *                       frames in the same instance (a converter
- *                       or passthrough filter).
+ * - @c Source    — the @ref MediaIO @em provides frames to the
+ *                  caller (e.g. a file reader, a capture card, a
+ *                  test pattern generator).
+ * - @c Sink      — the @ref MediaIO @em accepts frames from the
+ *                  caller (e.g. a file writer, a display, an
+ *                  RTP sender).
+ * - @c Transform — the @ref MediaIO both consumes and emits frames
+ *                  in the same instance (a converter, mixer, or
+ *                  passthrough filter).
  *
- * Note that the mediaplay CLI's @c -i / @c -o flags are named for
- * the @em pipeline's input and output, which is the opposite
- * perspective: @c -i wires a source backend into the pipeline (so
- * it expects a backend registered with @ref Output support), and
- * @c -o wires a sink backend (expects @ref Input support).
+ * The mediaplay CLI's @c -i / @c -o flags are named for the
+ * @em pipeline's input and output: @c -i wires a @ref Source backend
+ * into the pipeline and @c -o wires a @ref Sink backend.
  */
 class MediaIODirection : public TypedEnum<MediaIODirection> {
         public:
                 PROMEKI_REGISTER_ENUM_TYPE("MediaIODirection", 0,
-                                { "Output",         0 },
-                                { "Input",          1 },
-                                { "InputAndOutput", 2 });  // default: Output (source)
+                                { "Source",    0 },
+                                { "Sink",      1 },
+                                { "Transform", 2 });  // default: Source
 
                 using TypedEnum<MediaIODirection>::TypedEnum;
 
-                static const MediaIODirection Output;
-                static const MediaIODirection Input;
-                static const MediaIODirection InputAndOutput;
+                static const MediaIODirection Source;
+                static const MediaIODirection Sink;
+                static const MediaIODirection Transform;
 };
 
-inline const MediaIODirection MediaIODirection::Output         { 0 };
-inline const MediaIODirection MediaIODirection::Input          { 1 };
-inline const MediaIODirection MediaIODirection::InputAndOutput { 2 };
+inline const MediaIODirection MediaIODirection::Source    { 0 };
+inline const MediaIODirection MediaIODirection::Sink      { 1 };
+inline const MediaIODirection MediaIODirection::Transform { 2 };
 
 /**
  * @brief Preferred audio source for image-sequence readers.

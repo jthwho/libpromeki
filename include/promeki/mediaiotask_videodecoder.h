@@ -43,7 +43,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par Mode support
  *
- * Only @c MediaIO::InputAndOutput is supported.
+ * Only @c MediaIO::Transform is supported.
  *
  * @par Config keys
  *
@@ -60,8 +60,8 @@ PROMEKI_NAMESPACE_BEGIN
  * cfg.set(MediaConfig::VideoCodec,     "H264");
  * cfg.set(MediaConfig::OutputPixelDesc, PixelDesc(PixelDesc::YUV8_420_SemiPlanar_Rec709));
  * MediaIO *dec = MediaIO::create(cfg);
- * dec->setMediaDesc(compressedDesc);
- * dec->open(MediaIO::InputAndOutput);
+ * dec->setExpectedDesc(compressedDesc);
+ * dec->open(MediaIO::Transform);
  * dec->writeFrame(packetFrame);
  * Frame::Ptr decoded;
  * dec->readFrame(decoded);
@@ -73,8 +73,8 @@ PROMEKI_NAMESPACE_BEGIN
  * MediaIO::Config cfg;
  * cfg.set(MediaConfig::Type, "VideoDecoder");
  * MediaIO *dec = MediaIO::create(cfg);
- * dec->setMediaDesc(compressedDesc);
- * dec->open(MediaIO::InputAndOutput);
+ * dec->setExpectedDesc(compressedDesc);
+ * dec->open(MediaIO::Transform);
  * dec->writeFrame(packetFrame);   // codec resolved here
  * Frame::Ptr decoded;
  * dec->readFrame(decoded);
@@ -102,6 +102,12 @@ class MediaIOTask_VideoDecoder : public MediaIOTask {
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 Error executeCmd(MediaIOCommandStats &cmd) override;
                 int pendingOutput() const override;
+
+                Error describe(MediaIODescription *out) const override;
+                Error proposeInput(const MediaDesc &offered,
+                                   MediaDesc *preferred) const override;
+                Error proposeOutput(const MediaDesc &requested,
+                                    MediaDesc *achievable) const override;
 
                 // Drains every currently-available image out of the
                 // underlying decoder and pushes one Frame per image

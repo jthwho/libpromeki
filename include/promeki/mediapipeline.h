@@ -93,10 +93,22 @@ class MediaPipeline : public ObjectBase {
                  * Pre-condition: the pipeline is @ref State::Empty or
                  * @ref State::Closed.
                  *
-                 * @param config The declarative pipeline description.
-                 * @return @c Error::Ok, or the validation error.
+                 * When @p autoplan is @c true the config is first
+                 * passed through @ref MediaPipelinePlanner::plan so
+                 * any missing bridging stages (CSC, decoder, frame
+                 * sync, etc.) are spliced in automatically.  Default
+                 * @c false preserves the existing strict behaviour
+                 * — callers who want explicit pipelines do not pay
+                 * for planner overhead.
+                 *
+                 * @param config   The declarative pipeline description.
+                 * @param autoplan When @c true, run the planner before
+                 *                 instantiation.
+                 * @return @c Error::Ok, or the first error encountered
+                 *         (validation, planning, or instantiation).
                  */
-                Error build(const MediaPipelineConfig &config);
+                Error build(const MediaPipelineConfig &config,
+                            bool autoplan = false);
 
                 /**
                  * @brief Registers an externally-constructed MediaIO for a

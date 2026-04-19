@@ -25,7 +25,7 @@ PROMEKI_NAMESPACE_BEGIN
  * decoder presentation surface is always NV12 in 8-bit (10-bit
  * P010 support is a follow-up); callers that want a different
  * uncompressed target should run the decoder's output through an
- * @ref MediaIOTask_Converter.
+ * @ref MediaIOTask_CSC.
  *
  * @par Runtime requirements
  * Like @ref NvencVideoEncoder, this backend is lazily bound.  The

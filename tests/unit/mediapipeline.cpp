@@ -24,15 +24,16 @@ using namespace promeki;
 namespace {
 
 // Builds a pipeline config that doesn't touch the filesystem:
-// TPG → Converter (pass-through RGBA output).  Exercises the DAG
-// plumbing without needing a real output sink.
-MediaPipelineConfig makeTpgToConverter() {
+// TPG → CSC (pixel-format conversion stage configured as a
+// terminating transform).  Exercises the DAG plumbing without
+// needing a real output sink.
+MediaPipelineConfig makeTpgToCsc() {
         MediaPipelineConfig cfg;
 
         MediaPipelineConfig::Stage src;
         src.name = "src";
         src.type = "TPG";
-        src.mode = MediaIO::Output;
+        src.mode = MediaIO::Source;
         src.config.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
         src.config.set(MediaConfig::VideoEnabled, true);
         src.config.set(MediaConfig::AudioEnabled, false);
@@ -40,8 +41,8 @@ MediaPipelineConfig makeTpgToConverter() {
 
         MediaPipelineConfig::Stage csc;
         csc.name = "csc";
-        csc.type = "Converter";
-        csc.mode = MediaIO::InputAndOutput;
+        csc.type = "CSC";
+        csc.mode = MediaIO::Transform;
         cfg.addStage(csc);
 
         cfg.addRoute("src", "csc");
@@ -68,11 +69,11 @@ TEST_CASE("MediaPipeline_BuildRejectsInvalidConfig") {
 
 TEST_CASE("MediaPipeline_BuildRejectsFanIn") {
         EventLoop loop;
-        MediaPipelineConfig cfg = makeTpgToConverter();
+        MediaPipelineConfig cfg = makeTpgToCsc();
         MediaPipelineConfig::Stage extraSrc;
         extraSrc.name = "src2";
         extraSrc.type = "TPG";
-        extraSrc.mode = MediaIO::Output;
+        extraSrc.mode = MediaIO::Source;
         cfg.addStage(extraSrc);
         cfg.addRoute("src2", "csc"); // csc now has two incoming routes
 
@@ -83,7 +84,7 @@ TEST_CASE("MediaPipeline_BuildRejectsFanIn") {
 TEST_CASE("MediaPipeline_BuildSucceedsAndInstantiatesStages") {
         EventLoop loop;
         MediaPipeline p;
-        MediaPipelineConfig cfg = makeTpgToConverter();
+        MediaPipelineConfig cfg = makeTpgToCsc();
         REQUIRE(p.build(cfg).isOk());
         CHECK(p.state() == MediaPipeline::State::Built);
 
@@ -100,7 +101,7 @@ TEST_CASE("MediaPipeline_BuildSucceedsAndInstantiatesStages") {
 TEST_CASE("MediaPipeline_OpenAndClose") {
         EventLoop loop;
         MediaPipeline p;
-        REQUIRE(p.build(makeTpgToConverter()).isOk());
+        REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
         CHECK(p.state() == MediaPipeline::State::Open);
         CHECK(p.stage("src")->isOpen());
@@ -113,7 +114,7 @@ TEST_CASE("MediaPipeline_OpenAndClose") {
 TEST_CASE("MediaPipeline_StatsAfterOpen") {
         EventLoop loop;
         MediaPipeline p;
-        REQUIRE(p.build(makeTpgToConverter()).isOk());
+        REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
 
         MediaPipelineStats snapshot = p.stats();
@@ -128,7 +129,7 @@ TEST_CASE("MediaPipeline_StatsAfterOpen") {
 TEST_CASE("MediaPipeline_DescribeIncludesLiveState") {
         EventLoop loop;
         MediaPipeline p;
-        REQUIRE(p.build(makeTpgToConverter()).isOk());
+        REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
 
         StringList lines = p.describe();
@@ -144,7 +145,7 @@ TEST_CASE("MediaPipeline_DescribeIncludesLiveState") {
 
 TEST_CASE("MediaPipeline_BuildFromJsonRoundTrip") {
         EventLoop loop;
-        MediaPipelineConfig orig = makeTpgToConverter();
+        MediaPipelineConfig orig = makeTpgToCsc();
         JsonObject j = orig.toJson();
         Error err;
         MediaPipelineConfig round = MediaPipelineConfig::fromJson(j, &err);
@@ -161,7 +162,7 @@ TEST_CASE("MediaPipeline_BuildFromJsonRoundTrip") {
 TEST_CASE("MediaPipeline_StatsContainPipelineBucket") {
         EventLoop loop;
         MediaPipeline p;
-        REQUIRE(p.build(makeTpgToConverter()).isOk());
+        REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
 
         MediaPipelineStats snap = p.stats();
@@ -182,7 +183,7 @@ TEST_CASE("MediaPipeline_StatsContainPipelineBucket") {
 TEST_CASE("MediaPipeline_FramesProducedCounterAdvances") {
         EventLoop loop;
         MediaPipeline p;
-        REQUIRE(p.build(makeTpgToConverter()).isOk());
+        REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
         REQUIRE(p.start().isOk());
 
@@ -214,7 +215,7 @@ TEST_CASE("MediaPipeline_FramesProducedCounterAdvances") {
 TEST_CASE("MediaPipeline_StartDrainsFramesThroughChain") {
         EventLoop loop;
         MediaPipeline p;
-        REQUIRE(p.build(makeTpgToConverter()).isOk());
+        REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
         REQUIRE(p.start().isOk());
         CHECK(p.state() == MediaPipeline::State::Running);
@@ -233,7 +234,7 @@ TEST_CASE("MediaPipeline_StartDrainsFramesThroughChain") {
 TEST_CASE("MediaPipeline_CloseFromBuiltStateIsSafe") {
         EventLoop loop;
         MediaPipeline p;
-        REQUIRE(p.build(makeTpgToConverter()).isOk());
+        REQUIRE(p.build(makeTpgToCsc()).isOk());
         // No open / start — close should still tear things down cleanly.
         CHECK(p.close().isOk());
         CHECK(p.state() == MediaPipeline::State::Closed);
@@ -242,12 +243,12 @@ TEST_CASE("MediaPipeline_CloseFromBuiltStateIsSafe") {
 TEST_CASE("MediaPipeline_InjectStageSkipsFactory") {
         EventLoop loop;
 
-        // Build a stand-alone Converter that we'll inject under a
+        // Build a stand-alone CSC that we'll inject under a
         // fabricated "External" type name — without injection the
         // factory would fail because "External" is not a registered
         // backend.
-        MediaIO::Config cfg = MediaIO::defaultConfig("Converter");
-        cfg.set(MediaConfig::Type, String("Converter"));
+        MediaIO::Config cfg = MediaIO::defaultConfig("CSC");
+        cfg.set(MediaConfig::Type, String("CSC"));
         MediaIO *external = MediaIO::create(cfg);
         REQUIRE(external != nullptr);
 
@@ -255,7 +256,7 @@ TEST_CASE("MediaPipeline_InjectStageSkipsFactory") {
         MediaPipelineConfig::Stage src;
         src.name = "src";
         src.type = "TPG";
-        src.mode = MediaIO::Output;
+        src.mode = MediaIO::Source;
         src.config.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
         src.config.set(MediaConfig::VideoEnabled, true);
         src.config.set(MediaConfig::AudioEnabled, false);
@@ -264,7 +265,7 @@ TEST_CASE("MediaPipeline_InjectStageSkipsFactory") {
         MediaPipelineConfig::Stage ext;
         ext.name = "xtr";
         ext.type = "External"; // not registered — must be injected
-        ext.mode = MediaIO::InputAndOutput;
+        ext.mode = MediaIO::Transform;
         mpc.addStage(ext);
 
         mpc.addRoute("src", "xtr");
@@ -305,7 +306,7 @@ bool pumpUntil(EventLoop &loop, Pred pred, int64_t timeoutMs = 2000) {
 TEST_CASE("MediaPipeline_CloseAsyncEmitsClosedSignal") {
         EventLoop loop;
         MediaPipeline p;
-        REQUIRE(p.build(makeTpgToConverter()).isOk());
+        REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
         REQUIRE(p.start().isOk());
 
@@ -334,7 +335,7 @@ TEST_CASE("MediaPipeline_CloseSyncPumpsEventsFromOwnEventLoop") {
         // cross-thread closedSignal dispatches actually run.
         EventLoop loop;
         MediaPipeline p;
-        REQUIRE(p.build(makeTpgToConverter()).isOk());
+        REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
         REQUIRE(p.start().isOk());
 
@@ -358,7 +359,7 @@ TEST_CASE("MediaPipeline_CloseFinishedFiresAtEndOfCascade") {
         // every stage has emitted its own closedSignal.
         EventLoop loop;
         MediaPipeline p;
-        REQUIRE(p.build(makeTpgToConverter()).isOk());
+        REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
         REQUIRE(p.start().isOk());
 
@@ -388,7 +389,7 @@ TEST_CASE("MediaPipeline_CloseFinishedFiresAtEndOfCascade") {
 TEST_CASE("MediaPipeline_DoubleCloseRejected") {
         EventLoop loop;
         MediaPipeline p;
-        REQUIRE(p.build(makeTpgToConverter()).isOk());
+        REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
         REQUIRE(p.start().isOk());
 
@@ -415,7 +416,7 @@ TEST_CASE("MediaPipeline_CloseOnBuiltStateCascadesWithoutDrain") {
         // must finalize synchronously via the alreadyClosed path.
         EventLoop loop;
         MediaPipeline p;
-        REQUIRE(p.build(makeTpgToConverter()).isOk());
+        REQUIRE(p.build(makeTpgToCsc()).isOk());
 
         std::atomic<int> closedCount{0};
         p.closedSignal.connect([&closedCount](Error) {
@@ -440,7 +441,7 @@ TEST_CASE("MediaPipeline_CloseFromRunningEmitsNoSpuriousError") {
         // that the full async close cycle emits zero pipeline errors.
         EventLoop loop;
         MediaPipeline p;
-        REQUIRE(p.build(makeTpgToConverter()).isOk());
+        REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
         REQUIRE(p.start().isOk());
 
@@ -466,7 +467,7 @@ TEST_CASE("MediaPipeline_CloseFromRunningEmitsNoSpuriousError") {
 TEST_CASE("MediaPipeline_CloseOnClosedStateIsNoOp") {
         EventLoop loop;
         MediaPipeline p;
-        REQUIRE(p.build(makeTpgToConverter()).isOk());
+        REQUIRE(p.build(makeTpgToCsc()).isOk());
         CHECK(p.close().isOk());
         CHECK(p.state() == MediaPipeline::State::Closed);
 

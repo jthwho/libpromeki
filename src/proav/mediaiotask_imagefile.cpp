@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <promeki/mediaiotask_imagefile.h>
 #include <promeki/audio.h>
+#include <promeki/colormodel.h>
 #include <promeki/imagefileio.h>
 #include <promeki/iodevice.h>
 #include <promeki/image.h>
@@ -24,7 +25,19 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-PROMEKI_REGISTER_MEDIAIO(MediaIOTask_ImageFile)
+// Registration is driven entirely off the @ref ImageFileIO registry:
+// every ImageFileIO subclass that hits @c PROMEKI_REGISTER_IMAGEFILEIO
+// triggers a matching @ref MediaIO::registerFormat call via
+// @ref MediaIOTask_ImageFile::buildFormatDescFor below.  The two
+// registries stay in lock-step without any hard-coded per-format
+// table here — a new ImageFileIO backend picks up a MediaIO
+// presence for free the moment it supplies @c _extensions and
+// @c _canLoad / @c _canSave in its constructor.
+//
+// A legacy @c "ImageFile" umbrella alias is additionally registered
+// for backwards compatibility with existing unit tests and external
+// callers that refer to the backend by that single name.  See
+// @ref registerImageFileUmbrella below.
 
 // ============================================================================
 // Frame-rate source tags (values for Metadata::FrameRateSource)
@@ -43,37 +56,13 @@ static const char *const kFrameRateSourceConfig  = "config";
 // ============================================================================
 // Extension-to-ImageFile::ID mapping
 // ============================================================================
-
-struct ExtMap {
-        const char *ext;
-        int         id;
-};
-
-static const ExtMap extMap[] = {
-        { "dpx",     ImageFile::DPX },
-        { "cin",     ImageFile::Cineon },
-        { "tga",     ImageFile::TGA },
-        { "sgi",     ImageFile::SGI },
-        { "rgb",     ImageFile::SGI },
-        { "pnm",     ImageFile::PNM },
-        { "ppm",     ImageFile::PNM },
-        { "pgm",     ImageFile::PNM },
-        { "png",     ImageFile::PNG },
-        { "jpg",     ImageFile::JPEG },
-        { "JPEG",    ImageFile::JPEG },
-        { "jfif",    ImageFile::JPEG },
-        { "jxs",     ImageFile::JpegXS },
-        { "uyvy",    ImageFile::RawYUV },
-        { "yuyv",    ImageFile::RawYUV },
-        { "yuy2",    ImageFile::RawYUV },
-        { "v210",    ImageFile::RawYUV },
-        { "i420",    ImageFile::RawYUV },
-        { "nv12",    ImageFile::RawYUV },
-        { "yuv420p", ImageFile::RawYUV },
-        { "i422",    ImageFile::RawYUV },
-        { "yuv422p", ImageFile::RawYUV },
-        { "yuv",     ImageFile::RawYUV },
-};
+//
+// The per-format extension list lives on each @ref ImageFileIO
+// backend (populated by its constructor).  The helpers below walk
+// the @ref ImageFileIO registry to resolve an extension to its
+// backend ID — no hard-coded table — so a new backend only has to
+// ship its @c _extensions in its constructor to be visible to both
+// the MediaIO format registry and the sequence-open path here.
 
 // The .imgseq sidecar is recognized as its own extension but does not
 // map to any ImageFile::ID — the backend looks inside the sidecar to
@@ -89,8 +78,12 @@ static String extensionOf(const String &filename) {
 static int imageFileIDFromExtension(const String &filename) {
         String ext = extensionOf(filename);
         if(ext.isEmpty()) return ImageFile::Invalid;
-        for(const auto &m : extMap) {
-                if(ext == m.ext) return m.id;
+        for(int id : ImageFileIO::registeredIDs()) {
+                const ImageFileIO *io = ImageFileIO::lookup(id);
+                if(io == nullptr || !io->isValid()) continue;
+                for(const auto &e : io->extensions()) {
+                        if(e == ext) return id;
+                }
         }
         return ImageFile::Invalid;
 }
@@ -215,106 +208,150 @@ static bool probeImageDevice(IODevice *device) {
 // FormatDesc
 // ============================================================================
 
+// Flattens every registered ImageFileIO backend's extension list
+// into a single StringList plus the .imgseq sidecar extension.
+// Used by the legacy @c "ImageFile" umbrella FormatDesc so it
+// claims every extension any registered backend could handle.
 static StringList buildExtensions() {
         StringList exts;
-        for(const auto &m : extMap) {
-                bool dup = false;
-                for(const auto &e : exts) {
-                        if(e == m.ext) { dup = true; break; }
+        for(int id : ImageFileIO::registeredIDs()) {
+                const ImageFileIO *io = ImageFileIO::lookup(id);
+                if(io == nullptr || !io->isValid()) continue;
+                for(const auto &e : io->extensions()) {
+                        bool dup = false;
+                        for(const auto &seen : exts) {
+                                if(seen == e) { dup = true; break; }
+                        }
+                        if(!dup) exts.pushToBack(e);
                 }
-                if(!dup) exts.pushToBack(m.ext);
         }
-        exts.pushToBack(kImgSeqExtension);
+        exts.pushToBack(String(kImgSeqExtension));
         return exts;
 }
 
-MediaIO::FormatDesc MediaIOTask_ImageFile::formatDesc() {
-        return {
-                "ImageFile",
-                "Single-image files and image sequences (DPX, Cineon, TGA, SGI, PNM, PNG, JPEG, JPEG XS, RawYUV, .imgseq)",
-                buildExtensions(),
-                true,   // canOutput
-                true,   // canInput
-                false,  // canInputAndOutput
-                []() -> MediaIOTask * {
-                        return new MediaIOTask_ImageFile();
-                },
-                []() -> MediaIO::Config::SpecMap {
-                        MediaIO::Config::SpecMap specs;
-                        auto s = [&specs](MediaConfig::ID id, const Variant &def) {
-                                const VariantSpec *gs = MediaConfig::spec(id);
-                                specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
-                        };
-                        // 0 == ImageFile::Invalid — the Open handler
-                        // treats this as "infer the backend from the
-                        // filename extension or the content probe".
-                        s(MediaConfig::ImageFileID, int32_t(0));
-                        // Empty size hint: only used by headerless
-                        // formats (RawYUV) that can't derive the
-                        // geometry from the file itself.
-                        s(MediaConfig::VideoSize, Size2Du32());
-                        s(MediaConfig::VideoPixelFormat, PixelDesc());
-                        s(MediaConfig::FrameRate, DefaultFrameRate);
-                        s(MediaConfig::SequenceHead, int32_t(DefaultSequenceHead));
-                        s(MediaConfig::SaveImgSeqEnabled, true);
-                        s(MediaConfig::SaveImgSeqPath, String());
-                        s(MediaConfig::SaveImgSeqPathMode, ImgSeqPathMode::Relative);
-                        s(MediaConfig::SidecarAudioEnabled, true);
-                        s(MediaConfig::SidecarAudioPath, String());
-                        s(MediaConfig::AudioSource, AudioSourceHint::Sidecar);
-                        return specs;
-                },
-                []() -> Metadata {
-                        // Image file formats consume different subsets
-                        // of the Metadata namespace: DPX honors the
-                        // biggest set (file info + film info + TV
-                        // info), PNG honors Gamma, Cineon honors most
-                        // of the DPX film set minus project/copyright,
-                        // etc.  The union is small enough that
-                        // advertising it in one place is simpler than
-                        // a per-format schema.
-                        Metadata m;
-                        // Common (write-to-DPX-header) fields.
-                        m.set(Metadata::FileOrigName, String());
-                        m.set(Metadata::Date,         String());
-                        m.set(Metadata::Software,     String());
-                        m.set(Metadata::Project,      String());
-                        m.set(Metadata::Copyright,    String());
-                        m.set(Metadata::Reel,         String());
-                        m.set(Metadata::Timecode,     Timecode());
-                        m.set(Metadata::Gamma,        double(0.0));
-                        m.set(Metadata::FrameRate,    double(0.0));
-                        // Film information block.
-                        m.set(Metadata::FilmMfgID,    String());
-                        m.set(Metadata::FilmType,     String());
-                        m.set(Metadata::FilmOffset,   String());
-                        m.set(Metadata::FilmPrefix,   String());
-                        m.set(Metadata::FilmCount,    String());
-                        m.set(Metadata::FilmFormat,   String());
-                        m.set(Metadata::FilmSeqPos,   int(0));
-                        m.set(Metadata::FilmSeqLen,   int(0));
-                        m.set(Metadata::FilmHoldCount,int(1));
-                        m.set(Metadata::FilmShutter,  double(0.0));
-                        m.set(Metadata::FilmFrameID,  String());
-                        m.set(Metadata::FilmSlate,    String());
-                        // TV / image element block.
-                        m.set(Metadata::FieldID,                int(0));
-                        m.set(Metadata::TransferCharacteristic, int(0));
-                        m.set(Metadata::Colorimetric,           int(0));
-                        m.set(Metadata::Orientation,            int(0));
-                        // Sidecar audio (BWF) metadata forwarded to
-                        // the sidecar audio file when present.
-                        m.set(Metadata::EnableBWF,              false);
-                        m.set(Metadata::Description,            String());
-                        m.set(Metadata::Originator,             String());
-                        m.set(Metadata::OriginatorReference,    String());
-                        m.set(Metadata::OriginationDateTime,    String());
-                        m.set(Metadata::CodingHistory,          String());
-                        m.set(Metadata::UMID,                   String());
-                        return m;
-                },
-                probeImageDevice
+// Shared config specs used by every per-format ImageFile backend.
+// Every backend (ImgSeqDPX, ImgSeqPNG, ...) routes through the same
+// @ref MediaIOTask_ImageFile implementation, which infers the
+// concrete @ref ImageFile::ID from the caller-supplied filename at
+// open time.  The config schema is therefore identical across all
+// variants — only @ref FormatDesc::extensions, @ref FormatDesc::name,
+// and the load / save role flags differ.
+static MediaIO::Config::SpecMap imageFileConfigSpecs() {
+        MediaIO::Config::SpecMap specs;
+        auto s = [&specs](MediaConfig::ID id, const Variant &def) {
+                const VariantSpec *gs = MediaConfig::spec(id);
+                specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
         };
+        // 0 == ImageFile::Invalid — the Open handler
+        // treats this as "infer the backend from the
+        // filename extension or the content probe".
+        s(MediaConfig::ImageFileID, int32_t(0));
+        // Empty size hint: only used by headerless
+        // formats (RawYUV) that can't derive the
+        // geometry from the file itself.
+        s(MediaConfig::VideoSize, Size2Du32());
+        s(MediaConfig::VideoPixelFormat, PixelDesc());
+        s(MediaConfig::FrameRate, MediaIOTask_ImageFile::DefaultFrameRate);
+        s(MediaConfig::SequenceHead,
+          int32_t(MediaIOTask_ImageFile::DefaultSequenceHead));
+        s(MediaConfig::SaveImgSeqEnabled, true);
+        s(MediaConfig::SaveImgSeqPath, String());
+        s(MediaConfig::SaveImgSeqPathMode, ImgSeqPathMode::Relative);
+        s(MediaConfig::SidecarAudioEnabled, true);
+        s(MediaConfig::SidecarAudioPath, String());
+        s(MediaConfig::AudioSource, AudioSourceHint::Sidecar);
+        return specs;
+}
+
+// Honored-metadata schema.  Each ImageFile backend consumes a
+// different subset (DPX honors the biggest set — file info + film
+// info + TV info; PNG honors @c Gamma; Cineon honors most of the
+// DPX film set minus project/copyright) but the union fits in one
+// place and keeps the per-format descriptors short.
+static Metadata imageFileDefaultMetadata() {
+        Metadata m;
+        // Common (write-to-DPX-header) fields.
+        m.set(Metadata::FileOrigName, String());
+        m.set(Metadata::Date,         String());
+        m.set(Metadata::Software,     String());
+        m.set(Metadata::Project,      String());
+        m.set(Metadata::Copyright,    String());
+        m.set(Metadata::Reel,         String());
+        m.set(Metadata::Timecode,     Timecode());
+        m.set(Metadata::Gamma,        double(0.0));
+        m.set(Metadata::FrameRate,    double(0.0));
+        // Film information block.
+        m.set(Metadata::FilmMfgID,    String());
+        m.set(Metadata::FilmType,     String());
+        m.set(Metadata::FilmOffset,   String());
+        m.set(Metadata::FilmPrefix,   String());
+        m.set(Metadata::FilmCount,    String());
+        m.set(Metadata::FilmFormat,   String());
+        m.set(Metadata::FilmSeqPos,   int(0));
+        m.set(Metadata::FilmSeqLen,   int(0));
+        m.set(Metadata::FilmHoldCount,int(1));
+        m.set(Metadata::FilmShutter,  double(0.0));
+        m.set(Metadata::FilmFrameID,  String());
+        m.set(Metadata::FilmSlate,    String());
+        // TV / image element block.
+        m.set(Metadata::FieldID,                int(0));
+        m.set(Metadata::TransferCharacteristic, int(0));
+        m.set(Metadata::Colorimetric,           int(0));
+        m.set(Metadata::Orientation,            int(0));
+        // Sidecar audio (BWF) metadata forwarded to
+        // the sidecar audio file when present.
+        m.set(Metadata::EnableBWF,              false);
+        m.set(Metadata::Description,            String());
+        m.set(Metadata::Originator,             String());
+        m.set(Metadata::OriginatorReference,    String());
+        m.set(Metadata::OriginationDateTime,    String());
+        m.set(Metadata::CodingHistory,          String());
+        m.set(Metadata::UMID,                   String());
+        return m;
+}
+
+static MediaIO::FormatDesc buildFormatDesc(const String &name,
+                                           const String &description,
+                                           StringList extensions,
+                                           bool canBeSource,
+                                           bool canBeSink) {
+        MediaIO::FormatDesc fd;
+        fd.name            = name;
+        fd.description     = description;
+        fd.extensions      = std::move(extensions);
+        fd.canBeSource     = canBeSource;
+        fd.canBeSink       = canBeSink;
+        fd.canBeTransform  = false;
+        fd.create          = []() -> MediaIOTask * { return new MediaIOTask_ImageFile(); };
+        fd.configSpecs     = &imageFileConfigSpecs;
+        fd.defaultMetadata = &imageFileDefaultMetadata;
+        fd.canHandleDevice = &probeImageDevice;
+        return fd;
+}
+
+MediaIO::FormatDesc MediaIOTask_ImageFile::buildFormatDescFor(const ImageFileIO *io) {
+        if(io == nullptr || !io->isValid()) return MediaIO::FormatDesc();
+        StringList exts = io->extensions();
+        // The .imgseq sidecar is handled by this same task but is
+        // not specific to any one backend — it gets its own
+        // registration below (see @ref registerImageFileUmbrella),
+        // so per-backend FormatDescs never claim it.
+        return buildFormatDesc(io->mediaIoName(), io->description(),
+                               std::move(exts),
+                               /*canBeSource*/ io->canLoad(),
+                               /*canBeSink*/   io->canSave());
+}
+
+MediaIO::FormatDesc MediaIOTask_ImageFile::formatDesc() {
+        // Backwards-compatible accessor — returns the legacy umbrella
+        // entry so callers that stored a @ref MediaIO::FormatDesc
+        // before the per-format split keep seeing the same shape.
+        // New code should prefer @ref MediaIO::registeredFormats and
+        // filter on @c name.startsWith("ImgSeq").
+        return buildFormatDesc(String("ImageFile"),
+                String("Single-image files and image sequences (DPX, Cineon, TGA, SGI, "
+                       "PNM, PNG, JPEG, JPEG XS, RawYUV, .imgseq)"),
+                buildExtensions(), true, true);
 }
 
 // ============================================================================
@@ -349,7 +386,7 @@ Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandOpen &cmd) {
         if(!fps.isValid()) fps = DefaultFrameRate;
         String frSource = kFrameRateSourceConfig;
 
-        if(cmd.mode == MediaIO::Input && cmd.pendingMediaDesc.frameRate().isValid()) {
+        if(cmd.mode == MediaIO::Sink && cmd.pendingMediaDesc.frameRate().isValid()) {
                 fps = cmd.pendingMediaDesc.frameRate();
                 frSource = kFrameRateSourceFile;
         }
@@ -417,18 +454,18 @@ Error MediaIOTask_ImageFile::openSingle(MediaIOCommandOpen &cmd,
                 promekiErr("MediaIOTask_ImageFile: no ImageFileIO backend for ID %d", _imageFileID);
                 return Error::NotSupported;
         }
-        if(cmd.mode == MediaIO::Output && !io->canLoad()) {
+        if(cmd.mode == MediaIO::Source && !io->canLoad()) {
                 promekiErr("MediaIOTask_ImageFile: backend '%s' does not support loading",
                         io->name().cstr());
                 return Error::NotSupported;
         }
-        if(cmd.mode == MediaIO::Input && !io->canSave()) {
+        if(cmd.mode == MediaIO::Sink && !io->canSave()) {
                 promekiErr("MediaIOTask_ImageFile: backend '%s' does not support saving",
                         io->name().cstr());
                 return Error::NotSupported;
         }
 
-        if(cmd.mode == MediaIO::Output) {
+        if(cmd.mode == MediaIO::Source) {
                 ImageFile imgFile(_imageFileID);
                 imgFile.setFilename(_filename);
 
@@ -640,12 +677,12 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                 promekiErr("MediaIOTask_ImageFile: no ImageFileIO backend for ID %d", _imageFileID);
                 return Error::NotSupported;
         }
-        if(cmd.mode == MediaIO::Output && !io->canLoad()) {
+        if(cmd.mode == MediaIO::Source && !io->canLoad()) {
                 promekiErr("MediaIOTask_ImageFile: backend '%s' does not support loading",
                         io->name().cstr());
                 return Error::NotSupported;
         }
-        if(cmd.mode == MediaIO::Input && !io->canSave()) {
+        if(cmd.mode == MediaIO::Sink && !io->canSave()) {
                 promekiErr("MediaIOTask_ImageFile: backend '%s' does not support saving",
                         io->name().cstr());
                 return Error::NotSupported;
@@ -659,7 +696,7 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                 frSource = kFrameRateSourceFile;
         }
 
-        if(cmd.mode == MediaIO::Output) {
+        if(cmd.mode == MediaIO::Source) {
                 // Detect head/tail from disk if we don't have them yet.
                 if(head < 0 || tail < 0 || tail < head) {
                         bool haveAny = false;
@@ -944,7 +981,7 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                 }
         }
 
-        cmd.canSeek = (cmd.mode == MediaIO::Output);
+        cmd.canSeek = (cmd.mode == MediaIO::Source);
         cmd.defaultStep = 1;  // sequences advance one frame at a time
         return Error::Ok;
 }
@@ -1020,7 +1057,7 @@ Error MediaIOTask_ImageFile::writeImgSeqSidecar() {
 
 Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandClose &cmd) {
         // Write the .imgseq sidecar before resetting state (writer + sequence only).
-        if(_mode == MediaIO::Input && _sequenceMode) {
+        if(_mode == MediaIO::Sink && _sequenceMode) {
                 writeImgSeqSidecar();
         }
 
@@ -1243,7 +1280,7 @@ Error MediaIOTask_ImageFile::writeSequence(MediaIOCommandWrite &cmd) {
 }
 
 Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandSeek &cmd) {
-        if(!_sequenceMode || _mode != MediaIO::Output) {
+        if(!_sequenceMode || _mode != MediaIO::Source) {
                 return Error::IllegalSeek;
         }
 
@@ -1271,5 +1308,167 @@ Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandSeek &cmd) {
         cmd.currentFrame = _seqIndex;
         return Error::Ok;
 }
+
+// ---- Phase 3 introspection / negotiation overrides ----
+
+namespace {
+
+// Returns the lowercase extension after the last '.' in @p path
+// (without the dot), or an empty String when there is no extension.
+String extractExt(const String &path) {
+        const size_t dot = path.rfind('.');
+        if(dot == String::npos || dot + 1 >= path.size()) return String();
+        return path.mid(dot + 1).toLower();
+}
+
+// Returns component[0] bits for an uncompressed PixelDesc, or 0 for
+// compressed / invalid PixelDescs.
+int componentBits(const PixelDesc &pd) {
+        if(!pd.isValid() || pd.isCompressed()) return 0;
+        if(pd.pixelFormat().compCount() == 0) return 0;
+        return static_cast<int>(pd.pixelFormat().compDesc(0).bits);
+}
+
+// True when the source's ColorModel family is YCbCr (luma + chroma-
+// difference) — used to pick a YUV-family writer target so the
+// inserted CSC stays inside the matching colour space when possible.
+// PixelFormat::sampling() alone can't answer this: RGB formats are
+// also Sampling444, so we have to look at the ColorModel::type
+// instead.
+bool isYuvSource(const PixelDesc &pd) {
+        if(!pd.isValid()) return false;
+        return pd.colorModel().type() == ColorModel::TypeYCbCr;
+}
+
+} // namespace
+
+PixelDesc MediaIOTask_ImageFile::preferredWriterPixelDesc(
+        const String &filename, const PixelDesc &source) const {
+        const String ext = extractExt(filename);
+        if(ext.isEmpty()) return PixelDesc();
+
+        const int srcBits = componentBits(source);
+
+        // ---- DPX / CIN ----
+        // DPX is the workhorse VFX-grade still — accept any RGB(A)
+        // bit depth from 8 to 16; default to 10-bit DPX since that
+        // is the overwhelmingly common production form.  Match the
+        // source bit depth where possible so the planner doesn't
+        // drop precision unnecessarily.  The writer only emits BE
+        // 16-bit today, so we advertise that variant; 12-bit has no
+        // writer support yet and falls through to 10-bit DPX.
+        if(ext == "dpx" || ext == "cin") {
+                if(srcBits >= 16) return PixelDesc(PixelDesc::RGB16_BE_sRGB);
+                if(srcBits >= 10) return PixelDesc(PixelDesc::RGB10_DPX_sRGB);
+                if(srcBits >= 8)  return PixelDesc(PixelDesc::RGBA8_sRGB);
+                return PixelDesc(PixelDesc::RGB10_DPX_sRGB);
+        }
+
+        // ---- JPEG / JPG ----
+        // Baseline JPEG is 8-bit YUV (or RGB).  Pick the family
+        // closest to the source so the inserted CSC stays cheap.
+        if(ext == "jpg" || ext == "jpeg" || ext == "jfif") {
+                return isYuvSource(source)
+                        ? PixelDesc(PixelDesc::YUV8_422_Planar_Rec709)
+                        : PixelDesc(PixelDesc::RGBA8_sRGB);
+        }
+
+        // ---- PNG ----
+        // libspng round-trips 8-bit and 16-bit RGBA.
+        if(ext == "png") {
+                if(srcBits >= 16) return PixelDesc(PixelDesc::RGBA16_LE_sRGB);
+                return PixelDesc(PixelDesc::RGBA8_sRGB);
+        }
+
+        // ---- TGA ----
+        // 8-bit RGB(A) only.
+        if(ext == "tga") return PixelDesc(PixelDesc::RGBA8_sRGB);
+
+        // ---- SGI ----
+        // 8 or 16-bit RGB(A).  SGI stores 16-bit channels big-endian on
+        // disk, so we ask the pipeline for a BE-ordered input and let
+        // the writer copy the bytes through unchanged.
+        if(ext == "sgi" || ext == "rgb" || ext == "rgba" || ext == "bw") {
+                if(srcBits >= 16) return PixelDesc(PixelDesc::RGBA16_BE_sRGB);
+                return PixelDesc(PixelDesc::RGBA8_sRGB);
+        }
+
+        // ---- PNM family ----
+        // 8 or 16-bit RGB.  PNM 16-bit is big-endian on disk per the
+        // Netpbm specification, matching what our writer produces.
+        if(ext == "pnm" || ext == "ppm" || ext == "pgm" || ext == "pbm") {
+                if(srcBits >= 16) return PixelDesc(PixelDesc::RGB16_BE_sRGB);
+                return PixelDesc(PixelDesc::RGB8_sRGB);
+        }
+
+        // For unknown extensions return invalid — the proposeInput
+        // override then accepts whatever was offered.
+        return PixelDesc();
+}
+
+Error MediaIOTask_ImageFile::proposeInput(const MediaDesc &offered,
+                                          MediaDesc *preferred) const {
+        if(preferred == nullptr) return Error::Invalid;
+        if(offered.imageList().isEmpty()) {
+                *preferred = offered;
+                return Error::Ok;
+        }
+
+        const MediaIO *io = mediaIo();
+        const MediaIO::Config &cfg = (io != nullptr) ? io->config()
+                                                     : MediaIO::Config();
+        const String filename = cfg.contains(MediaConfig::Filename)
+                ? cfg.getAs<String>(MediaConfig::Filename) : String();
+
+        const PixelDesc &offeredPd = offered.imageList()[0].pixelDesc();
+        const PixelDesc target = preferredWriterPixelDesc(filename, offeredPd);
+
+        if(!target.isValid() || target == offeredPd) {
+                *preferred = offered;
+                return Error::Ok;
+        }
+
+        MediaDesc want = offered;
+        ImageDesc img(offered.imageList()[0].size(), target);
+        img.setVideoScanMode(offered.imageList()[0].videoScanMode());
+        want.imageList().clear();
+        want.imageList().pushToBack(img);
+        *preferred = want;
+        return Error::Ok;
+}
+
+namespace {
+
+// Static initialiser that registers the legacy @c "ImageFile"
+// umbrella entry and the @c "ImgSeq" sidecar entry.  Per-backend
+// @c "ImgSeqXxx" entries are registered from
+// @ref ImageFileIO::registerImageFileIO (see imagefileio.cpp) —
+// that co-registration keeps the MediaIO and ImageFileIO registries
+// in lockstep without cross-TU static-init ordering hazards.
+int registerImageFileUmbrella() {
+        // Legacy umbrella — matches every extension any registered
+        // ImageFileIO could claim.  Retained for backwards
+        // compatibility; new code should walk @ref MediaIO::registeredFormats
+        // and pick up the per-backend entries.
+        MediaIO::registerFormat(buildFormatDesc(String("ImageFile"),
+                String("Single-image files and image sequences (DPX, Cineon, TGA, SGI, "
+                       "PNM, PNG, JPEG, JPEG XS, RawYUV, .imgseq)"),
+                buildExtensions(), true, true));
+
+        // .imgseq sidecar — dispatches to whichever image format the
+        // JSON body references.  Advertised as source + sink so both
+        // reading and writing a sidecar-backed sequence works.
+        StringList seqExts;
+        seqExts.pushToBack(String(kImgSeqExtension));
+        MediaIO::registerFormat(buildFormatDesc(String("ImgSeq"),
+                String("ImgSeq JSON sidecar (points at an underlying image format)"),
+                std::move(seqExts), true, true));
+        return 0;
+}
+
+[[maybe_unused]] static int __promeki_imagefile_umbrella_registered =
+        registerImageFileUmbrella();
+
+} // namespace
 
 PROMEKI_NAMESPACE_END

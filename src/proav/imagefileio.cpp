@@ -8,6 +8,8 @@
 #include <promeki/imagefileio.h>
 #include <promeki/error.h>
 #include <promeki/map.h>
+#include <promeki/mediaio.h>
+#include <promeki/mediaiotask_imagefile.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -35,6 +37,19 @@ int ImageFileIO::registerImageFileIO(ImageFileIO *p) {
         int ret = map.size();
         map[p->id()] = p;
         promekiDebug("Registered ImageFileIO %d '%s'", p->id(), p->name().cstr());
+
+        // Piggy-back a MediaIO FormatDesc registration onto every
+        // ImageFileIO registration so the MediaIO registry exposes
+        // one entry per backend (@c "ImgSeqDPX", @c "ImgSeqPNG", …)
+        // with the correct per-format extensions and canBeSource /
+        // canBeSink flags.  Skipping backends whose constructor did
+        // not set any extensions keeps us from emitting empty
+        // FormatDescs for future ImageFileIO subclasses that are
+        // driven by explicit ID only.
+        if(!p->extensions().isEmpty()) {
+                MediaIO::registerFormat(
+                        MediaIOTask_ImageFile::buildFormatDescFor(p));
+        }
         return ret;
 }
 
@@ -42,6 +57,15 @@ const ImageFileIO *ImageFileIO::lookup(int id) {
         ImageFileIOMap &map = imageFileIOMap();
         auto it = map.find(id);
         return it == map.end() ? &imageFileIOInvalid() : it->second;
+}
+
+ImageFileIO::IDList ImageFileIO::registeredIDs() {
+        ImageFileIOMap &map = imageFileIOMap();
+        IDList out;
+        for(auto it = map.cbegin(); it != map.cend(); ++it) {
+                out.pushToBack(it->first);
+        }
+        return out;
 }
 
 Error ImageFileIO::load(ImageFile &imageFile, const MediaConfig &config) const {

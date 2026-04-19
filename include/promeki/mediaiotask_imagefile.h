@@ -23,6 +23,8 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+class ImageFileIO;
+
 /**
  * @brief MediaIOTask backend for image files and image sequences.
  * @ingroup proav
@@ -121,9 +123,35 @@ class MediaIOTask_ImageFile : public MediaIOTask {
 
                 /**
                  * @brief Returns the format descriptor for this backend.
+                 *
+                 * Legacy accessor that returns the @c "ImageFile"
+                 * umbrella entry — it covers every extension any
+                 * @ref ImageFileIO advertises.  New code should walk
+                 * @ref MediaIO::registeredFormats and pick up the
+                 * per-backend @c ImgSeqXxx entries, which carry
+                 * accurate per-format capability flags (e.g. Cineon's
+                 * @c canBeSink=false).
+                 *
                  * @return A FormatDesc covering all supported image file extensions.
                  */
                 static MediaIO::FormatDesc formatDesc();
+
+                /**
+                 * @brief Builds a @ref MediaIO::FormatDesc for a single @ref ImageFileIO backend.
+                 *
+                 * Driven by @p io 's own @c extensions(), @c canLoad(),
+                 * @c canSave(), and @c mediaIoName() accessors — no
+                 * hard-coded per-format table.  Called by
+                 * @ref ImageFileIO::registerImageFileIO to piggy-back
+                 * a MediaIO registration onto every ImageFileIO
+                 * backend registration, which keeps the two registries
+                 * in sync without suffering from static-init ordering
+                 * across translation units.
+                 *
+                 * @param io The backend to describe.  Must be non-null.
+                 * @return A populated @ref MediaIO::FormatDesc.
+                 */
+                static MediaIO::FormatDesc buildFormatDescFor(const ImageFileIO *io);
 
                 /** @brief Constructs a MediaIOTask_ImageFile. */
                 MediaIOTask_ImageFile() = default;
@@ -137,6 +165,20 @@ class MediaIOTask_ImageFile : public MediaIOTask {
                 Error executeCmd(MediaIOCommandRead &cmd) override;
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 Error executeCmd(MediaIOCommandSeek &cmd) override;
+
+                Error proposeInput(const MediaDesc &offered,
+                                   MediaDesc *preferred) const override;
+
+                // Maps the extension in @p filename to the preferred
+                // writer PixelDesc for that format, taking the
+                // source's bit depth into account so we don't drop
+                // precision unnecessarily (e.g. 10-bit source ->
+                // 10-bit DPX, not 8-bit).  Returns an invalid
+                // PixelDesc when no extension-specific preference
+                // applies; the proposeInput override then accepts
+                // whatever was offered.
+                PixelDesc preferredWriterPixelDesc(const String &filename,
+                                                   const PixelDesc &source) const;
 
                 Error openSingle(MediaIOCommandOpen &cmd, MediaDesc &mediaDesc,
                                  const String &frSource);

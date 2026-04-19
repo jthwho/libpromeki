@@ -52,6 +52,7 @@ PROMEKI_NAMESPACE_BEGIN
 class IODevice;
 class ThreadPool;
 class MediaIOTask;
+class MediaIODescription;
 class BenchmarkReporter;
 
 // ============================================================================
@@ -62,18 +63,17 @@ class BenchmarkReporter;
 /**
  * @brief Open direction for a media resource.
  *
- * @c Input and @c Output describe the role of the @ref MediaIO
- * itself, not the pipeline around it:
- *  - @c MediaIO_Input  — the backend @em accepts frames from the
- *                        caller (it is a sink).
- *  - @c MediaIO_Output — the backend @em provides frames to the
- *                        caller (it is a source).
+ * Names describe the role of the @ref MediaIO itself in the pipeline:
+ *  - @c MediaIO_Source    — the backend @em provides frames to the caller.
+ *  - @c MediaIO_Sink      — the backend @em accepts frames from the caller.
+ *  - @c MediaIO_Transform — the backend does both (consumes and emits in
+ *                           the same instance, e.g. CSC, FrameSync).
  */
 enum MediaIOMode {
         MediaIO_NotOpen = 0,        ///< @brief Resource is not open.
-        MediaIO_Output,             ///< @brief Open as an output — provides frames to the caller (source).
-        MediaIO_Input,              ///< @brief Open as an input — accepts frames from the caller (sink).
-        MediaIO_InputAndOutput      ///< @brief Open as both — consumes and emits frames in the same instance.
+        MediaIO_Source,             ///< @brief Open as a source — provides frames to the caller.
+        MediaIO_Sink,               ///< @brief Open as a sink — accepts frames from the caller.
+        MediaIO_Transform           ///< @brief Open as both — consumes and emits frames in the same instance.
 };
 
 /**
@@ -487,10 +487,10 @@ class MediaIO : public ObjectBase {
                 /** @brief Open direction (alias for MediaIOMode). */
                 using Mode = MediaIOMode;
 
-                static constexpr Mode NotOpen        = MediaIO_NotOpen;
-                static constexpr Mode Output         = MediaIO_Output;          ///< @brief Backend provides frames (source).
-                static constexpr Mode Input          = MediaIO_Input;           ///< @brief Backend accepts frames (sink).
-                static constexpr Mode InputAndOutput = MediaIO_InputAndOutput;  ///< @brief Backend does both (converter / passthrough).
+                static constexpr Mode NotOpen   = MediaIO_NotOpen;
+                static constexpr Mode Source    = MediaIO_Source;     ///< @brief Backend provides frames to the caller.
+                static constexpr Mode Sink      = MediaIO_Sink;       ///< @brief Backend accepts frames from the caller.
+                static constexpr Mode Transform = MediaIO_Transform;  ///< @brief Backend does both (consumer + emitter).
 
                 /** @brief Seek mode (alias for MediaIOSeekMode). */
                 using SeekMode = MediaIOSeekMode;
@@ -611,12 +611,52 @@ class MediaIO : public ObjectBase {
                          */
                         using PrintDeviceInfoFunc = std::function<void(const Config &config)>;
 
+                        /**
+                         * @brief Optional bridge declaration for transform backends.
+                         *
+                         * When set, this backend declares that an
+                         * instance of itself can convert from one
+                         * @ref MediaDesc shape to another.  The
+                         * pipeline planner uses this to automatically
+                         * insert bridging stages (CSC, decoder,
+                         * frame-rate sync, etc.) when a route's source
+                         * and sink are not directly format-compatible.
+                         *
+                         * The callback returns @c true if the bridge
+                         * is applicable, in which case it must:
+                         *   - Populate @p outConfig with the
+                         *     @ref MediaConfig the planner should use
+                         *     when instantiating the bridge stage
+                         *     (e.g. set @c OutputPixelDesc on a CSC
+                         *     bridge).
+                         *   - Set @p outCost to the unitless quality
+                         *     cost of the conversion (lower = higher
+                         *     quality).  The planner uses costs to
+                         *     pick among multiple valid bridges.
+                         *
+                         * Cost bands (unitless):
+                         *   - 0           identity / no-op
+                         *   - 1–10        metadata-only transform
+                         *   - 10–100      lossless precision-preserving
+                         *   - 100–1000    bounded-error lossy
+                         *   - 1000–10000  heavily lossy (re-encode)
+                         *   - > 10000     last resort
+                         *
+                         * Backends that are not transforms (sources,
+                         * sinks, pure passthroughs) leave this null.
+                         */
+                        using BridgeFunc = std::function<
+                                bool(const MediaDesc &from,
+                                     const MediaDesc &to,
+                                     Config *outConfig,
+                                     int *outCost)>;
+
                         String              name;            ///< @brief Backend name (e.g. "MXF", "VideoDevice").
                         String              description;     ///< @brief Human-readable description.
                         StringList          extensions;      ///< @brief Supported file extensions (no dots).
-                        bool                canOutput;         ///< @brief Whether the backend can provide frames (source mode).
-                        bool                canInput;          ///< @brief Whether the backend can accept frames (sink mode).
-                        bool                canInputAndOutput; ///< @brief Whether the backend supports combined Input+Output mode.
+                        bool                canBeSource;     ///< @brief Whether the backend can act as a source (provides frames).
+                        bool                canBeSink;       ///< @brief Whether the backend can act as a sink (accepts frames).
+                        bool                canBeTransform;  ///< @brief Whether the backend can act as a transform (in + out).
                         CreateFunc          create;          ///< @brief Backend factory.
                         ConfigSpecFunc      configSpecs;     ///< @brief Backend config specs provider.
                         DefaultMetadataFunc defaultMetadata; ///< @brief Honored metadata schema (may be null).
@@ -625,6 +665,7 @@ class MediaIO : public ObjectBase {
                         CanHandlePathFunc   canHandlePath;   ///< @brief Path-based probe.
                         QueryFunc           queryDevice;     ///< @brief Device capability query.
                         PrintDeviceInfoFunc printDeviceInfo; ///< @brief Device-info printer.
+                        BridgeFunc          bridge;          ///< @brief Format-bridge declaration (planner-driven; may be null).
                 };
 
                 using FormatDescList = List<FormatDesc>;
@@ -1205,30 +1246,125 @@ class MediaIO : public ObjectBase {
                 const Metadata &metadata() const { return _metadata; }
 
                 /**
-                 * @brief Sets the media description for writing.
+                 * @brief Sets the expected media description.
                  *
-                 * Stored locally and passed to the task in the next CmdOpen.
+                 * Stored locally and passed to the task in the next
+                 * @c CmdOpen as @c pendingMediaDesc.  For sinks (writers)
+                 * this declares the shape the caller intends to write;
+                 * for sources it is a hint.  The pipeline planner reads
+                 * this back via @ref expectedDesc when choosing bridges.
                  *
-                 * @param desc The media description.
+                 * @param desc The expected media description.
                  * @return Error::Ok on success, or AlreadyOpen if open.
                  */
-                Error setMediaDesc(const MediaDesc &desc);
+                Error setExpectedDesc(const MediaDesc &desc);
 
                 /**
-                 * @brief Sets the audio description for writing.
+                 * @brief Returns the expected media description (pre-open hint).
                  *
-                 * @param desc The audio description.
-                 * @return Error::Ok on success, or AlreadyOpen if open.
+                 * Empty / invalid until @ref setExpectedDesc has been
+                 * called.  Cleared by @ref close.
                  */
-                Error setAudioDesc(const AudioDesc &desc);
+                const MediaDesc &expectedDesc() const { return _pendingMediaDesc; }
 
                 /**
-                 * @brief Sets the container-level metadata for writing.
+                 * @brief Sets the expected audio description.
                  *
-                 * @param meta The metadata.
+                 * Stored locally and passed to the task in the next
+                 * @c CmdOpen as @c pendingAudioDesc.  Same role as
+                 * @ref setExpectedDesc for the audio side.
+                 *
+                 * @param desc The expected audio description.
                  * @return Error::Ok on success, or AlreadyOpen if open.
                  */
-                Error setMetadata(const Metadata &meta);
+                Error setExpectedAudioDesc(const AudioDesc &desc);
+
+                /**
+                 * @brief Returns the expected audio description (pre-open hint).
+                 */
+                const AudioDesc &expectedAudioDesc() const { return _pendingAudioDesc; }
+
+                /**
+                 * @brief Sets the expected container-level metadata.
+                 *
+                 * Stored locally and merged into the open command's
+                 * @c pendingMetadata along with any backend-applied
+                 * write defaults.
+                 *
+                 * @param meta The expected metadata.
+                 * @return Error::Ok on success, or AlreadyOpen if open.
+                 */
+                Error setExpectedMetadata(const Metadata &meta);
+
+                /**
+                 * @brief Returns the expected container metadata (pre-open hint).
+                 */
+                const Metadata &expectedMetadata() const { return _pendingMetadata; }
+
+                // ---- Introspection / negotiation ----
+
+                /**
+                 * @brief Populates @p out with a snapshot of this
+                 *        MediaIO's identity, role, and format landscape.
+                 *
+                 * The wrapper fills in:
+                 *  - Backend identity (name, description) from the
+                 *    registered @ref FormatDesc.
+                 *  - Role flags (canBeSource / canBeSink /
+                 *    canBeTransform) from the same @ref FormatDesc.
+                 *  - Instance identity (@c name, @c uuid, @c localId)
+                 *    from this MediaIO.
+                 *  - Cached @c canSeek, @c frameCount, @c frameRate,
+                 *    @c containerMetadata if open.
+                 *
+                 * Then dispatches to the backend's @ref MediaIOTask::describe
+                 * to add format-specific fields (@c producibleFormats,
+                 * @c acceptableFormats, @c preferredFormat) and any
+                 * pre-open probe results.
+                 *
+                 * Synchronous; safe to call any time (pre-open, while
+                 * open, after close).  Cheap when open (cached state
+                 * is reused) and as cheap as the backend's probe
+                 * implementation otherwise.
+                 *
+                 * @param out The description to populate (overwritten).
+                 * @return @c Error::Ok on success, or the probe error
+                 *         from the backend (also stamped into
+                 *         @p out's @c probeStatus field).
+                 */
+                Error describe(MediaIODescription *out) const;
+
+                /**
+                 * @brief Asks the backend whether it can directly
+                 *        consume @p offered, and what it would
+                 *        prefer instead if not.
+                 *
+                 * Forwards to @ref MediaIOTask::proposeInput.  See
+                 * that virtual for the three-way return semantics.
+                 * The wrapper exists so callers can negotiate without
+                 * dealing with the task layer directly.
+                 *
+                 * @param offered   The MediaDesc the planner would route in.
+                 * @param preferred Receives the desc the backend wants.
+                 * @return @c Error::Ok or @c Error::NotSupported.
+                 */
+                Error proposeInput(const MediaDesc &offered,
+                                   MediaDesc *preferred) const;
+
+                /**
+                 * @brief Asks the backend whether it can produce
+                 *        @p requested directly, and what it would
+                 *        actually produce if not.
+                 *
+                 * Forwards to @ref MediaIOTask::proposeOutput.  See
+                 * that virtual for the three-way return semantics.
+                 *
+                 * @param requested  The MediaDesc the planner would prefer.
+                 * @param achievable Receives the desc the backend can produce.
+                 * @return @c Error::Ok or @c Error::NotSupported.
+                 */
+                Error proposeOutput(const MediaDesc &requested,
+                                    MediaDesc *achievable) const;
 
                 // ---- Frame I/O ----
 

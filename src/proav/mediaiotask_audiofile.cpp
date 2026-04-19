@@ -55,9 +55,9 @@ MediaIO::FormatDesc MediaIOTask_AudioFile::formatDesc() {
                 "AudioFile",
                 "Audio file formats via libsndfile (WAV, BWF, AIFF, OGG)",
                 {"wav", "bwf", "aiff", "aif", "ogg"},
-                true,   // canOutput
-                true,   // canInput
-                false,  // canInputAndOutput
+                true,   // canBeSource
+                true,   // canBeSink
+                false,  // canBeTransform
                 []() -> MediaIOTask * {
                         return new MediaIOTask_AudioFile();
                 },
@@ -130,7 +130,7 @@ Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandOpen &cmd) {
         _mode = cmd.mode;
         MediaDesc mediaDesc;
 
-        if(cmd.mode == MediaIO::Output) {
+        if(cmd.mode == MediaIO::Source) {
                 _audioFile = AudioFile::createReader(filename);
                 if(!_audioFile.isValid()) {
                         promekiErr("MediaIOTask_AudioFile: failed to create reader for '%s'",
@@ -226,7 +226,7 @@ Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandOpen &cmd) {
         cmd.mediaDesc = mediaDesc;
         cmd.audioDesc = _audioDesc;
         cmd.frameRate = _frameRate;
-        if(cmd.mode == MediaIO::Input) {
+        if(cmd.mode == MediaIO::Sink) {
                 // Surface the merged AudioDesc metadata (caller values
                 // plus MediaIO write defaults) as the container
                 // metadata so MediaIO can cache it and clients can
@@ -289,12 +289,96 @@ Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandWrite &cmd) {
 }
 
 Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandSeek &cmd) {
-        if(_mode != MediaIO::Output) return Error::IllegalSeek;
+        if(_mode != MediaIO::Source) return Error::IllegalSeek;
         size_t targetSample = cmd.frameNumber * _samplesPerFrame;
         Error err = _audioFile.seekToSample(targetSample);
         if(err.isError()) return err;
         _currentFrame = cmd.frameNumber;
         cmd.currentFrame = _currentFrame;
+        return Error::Ok;
+}
+
+// ---- Phase 3 introspection / negotiation overrides ----
+
+namespace {
+
+String extractAudioExt(const String &path) {
+        const size_t dot = path.rfind('.');
+        if(dot == String::npos || dot + 1 >= path.size()) return String();
+        return path.mid(dot + 1).toLower();
+}
+
+} // namespace
+
+AudioDesc::DataType MediaIOTask_AudioFile::preferredWriterDataType(
+        const String &filename, AudioDesc::DataType source) const {
+        const String ext = extractAudioExt(filename);
+        if(ext.isEmpty()) return AudioDesc::Invalid;
+
+        // OGG / Opus / Vorbis are float-pipeline codecs — keep float
+        // unconditionally so libsndfile doesn't have to round-trip
+        // through int internally.
+        if(ext == "ogg" || ext == "oga" || ext == "opus") {
+                return AudioDesc::PCMI_Float32LE;
+        }
+
+        // WAV / BWF / AIFF / FLAC / W64 / RF64: integer-friendly
+        // PCM containers.  Pass through the source's data type when
+        // libsndfile can store it directly; otherwise fall back to
+        // 24-bit signed little-endian (the production-typical form).
+        if(ext == "wav" || ext == "bwf" || ext == "aiff" || ext == "aif"
+           || ext == "flac" || ext == "w64" || ext == "rf64") {
+                switch(source) {
+                        case AudioDesc::PCMI_S16LE:
+                        case AudioDesc::PCMI_S16BE:
+                        case AudioDesc::PCMI_S24LE:
+                        case AudioDesc::PCMI_S24BE:
+                        case AudioDesc::PCMI_S32LE:
+                        case AudioDesc::PCMI_S32BE:
+                        case AudioDesc::PCMI_Float32LE:
+                        case AudioDesc::PCMI_Float32BE:
+                                return source;       // pass-through
+                        default:
+                                return AudioDesc::PCMI_S24LE;
+                }
+        }
+
+        // Unknown extension — let the default propose nothing.
+        return AudioDesc::Invalid;
+}
+
+Error MediaIOTask_AudioFile::proposeInput(const MediaDesc &offered,
+                                          MediaDesc *preferred) const {
+        if(preferred == nullptr) return Error::Invalid;
+        if(offered.audioList().isEmpty()) {
+                *preferred = offered;
+                return Error::Ok;
+        }
+
+        const MediaIO *io = mediaIo();
+        const MediaIO::Config &cfg = (io != nullptr) ? io->config()
+                                                     : MediaIO::Config();
+        const String filename = cfg.contains(MediaConfig::Filename)
+                ? cfg.getAs<String>(MediaConfig::Filename) : String();
+
+        MediaDesc want = offered;
+        bool anyChanged = false;
+        for(size_t i = 0; i < want.audioList().size(); ++i) {
+                AudioDesc &ad = want.audioList()[i];
+                const AudioDesc::DataType target =
+                        preferredWriterDataType(filename, ad.dataType());
+                if(target == AudioDesc::Invalid) continue;
+                if(target == ad.dataType()) continue;
+                ad.setDataType(target);
+                anyChanged = true;
+        }
+
+        if(!anyChanged) {
+                *preferred = offered;
+                return Error::Ok;
+        }
+
+        *preferred = want;
         return Error::Ok;
 }
 

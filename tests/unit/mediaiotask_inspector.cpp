@@ -66,7 +66,7 @@ void buildRig(InspectorRig &rig, uint32_t streamId,
         }
         rig.tpg = MediaIO::create(tpgCfg);
         REQUIRE(rig.tpg != nullptr);
-        REQUIRE(rig.tpg->open(MediaIO::Output).isOk());
+        REQUIRE(rig.tpg->open(MediaIO::Source).isOk());
 
         // Sink: Inspector with the default ("full checks") config.
         // We construct the task directly + adoptTask so we can
@@ -80,7 +80,7 @@ void buildRig(InspectorRig &rig, uint32_t streamId,
         insCfg.set(MediaConfig::InspectorLogIntervalSec, 0.0);  // disable periodic log in tests
         rig.inspectorIo->setConfig(insCfg);
         REQUIRE(rig.inspectorIo->adoptTask(rig.inspector).isOk());
-        REQUIRE(rig.inspectorIo->open(MediaIO::Input).isOk());
+        REQUIRE(rig.inspectorIo->open(MediaIO::Sink).isOk());
 }
 
 void pumpFrames(InspectorRig &rig, int frameCount) {
@@ -323,7 +323,7 @@ TEST_CASE("Inspector periodic log fires when interval elapses") {
         MediaIO::Config insCfg = MediaIO::defaultConfig("Inspector");
         insCfg.set(MediaConfig::InspectorLogIntervalSec, 0.01);  // 10 ms
         rig.inspectorIo->setConfig(insCfg);
-        REQUIRE(rig.inspectorIo->open(MediaIO::Input).isOk());
+        REQUIRE(rig.inspectorIo->open(MediaIO::Sink).isOk());
 
         for(int i = 0; i < 10; i++) {
                 Frame::Ptr frame;

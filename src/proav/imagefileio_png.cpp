@@ -140,6 +140,8 @@ class ImageFileIO_PNG : public ImageFileIO {
                         _canLoad = true;
                         _canSave = true;
                         _name = "PNG";
+                        _description = "PNG image sequence";
+                        _extensions = { "png" };
                 }
 
                 Error load(ImageFile &imageFile, const MediaConfig &config) const override;

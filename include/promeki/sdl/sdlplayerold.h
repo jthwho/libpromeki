@@ -69,7 +69,7 @@ class SDLAudioOutput;
  * thread only ever sees an already-decoded image ready for
  * texture upload.  This means a receiver like
  * @c mediaplay @c -i @c foo.sdp @c -o @c SDL just works for any
- * format the codec layer can decode, with no Converter stage
+ * format the codec layer can decode, with no CSC stage
  * needed in front of the SDL sink.
  *
  * If a decode fails (missing codec, malformed bitstream) the
@@ -92,9 +92,9 @@ class SDLAudioOutput;
  *
  * @code
  * MediaIO *player = createSDLPlayerOld(&videoWidget, &audioOutput);
- * player->setMediaDesc(sourceMediaIO->mediaDesc());
- * player->setAudioDesc(sourceMediaIO->audioDesc());
- * player->open(MediaIO::Input);
+ * player->setExpectedDesc(sourceMediaIO->mediaDesc());
+ * player->setExpectedAudioDesc(sourceMediaIO->audioDesc());
+ * player->open(MediaIO::Sink);
  * @endcode
  *
  * @par Teardown ordering
@@ -222,7 +222,7 @@ class SDLPlayerOldTask : public MediaIOTask {
  * Creates an SDLPlayerOldTask with the supplied widget/audio pointers
  * and adopts it into a newly allocated MediaIO.  The returned MediaIO
  * is not yet open; the caller must set the source MediaDesc (and
- * optionally an AudioDesc) and then call @c open(MediaIO::Input).
+ * optionally an AudioDesc) and then call @c open(MediaIO::Sink).
  *
  * The returned MediaIO owns the task and deletes it on destruction.
  * Ownership of @p video and @p audio stays with the caller — they

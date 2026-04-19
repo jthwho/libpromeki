@@ -48,6 +48,15 @@ class JpegXsVideoEncoder : public VideoEncoder {
                 PixelDesc outputPixelDesc() const override;
                 List<int> supportedInputs() const override;
 
+                /**
+                 * @brief Static view of the encoder's @ref supportedInputs list.
+                 *
+                 * Exposed for the @ref VideoCodec registry so planners
+                 * can query supported inputs without instantiating an
+                 * encoder session.
+                 */
+                static List<int> supportedInputList();
+
                 void configure(const MediaConfig &config) override;
                 Error submitFrame(const Image &frame,
                                   const MediaTimeStamp &pts = MediaTimeStamp()) override;

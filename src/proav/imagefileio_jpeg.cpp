@@ -124,6 +124,8 @@ class ImageFileIO_JPEG : public ImageFileIO {
                         _canLoad = true;
                         _canSave = true;
                         _name    = "JPEG";
+                        _description = "JPEG / JFIF image sequence";
+                        _extensions = { "jpg", "jpeg", "jfif" };
                 }
 
                 Error load(ImageFile &imageFile, const MediaConfig &config) const override;

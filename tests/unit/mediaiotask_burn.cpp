@@ -51,9 +51,9 @@ TEST_CASE("MediaIOTask_Burn_Registry") {
         bool found = false;
         for(const auto &desc : formats) {
                 if(desc.name == "Burn") {
-                        CHECK_FALSE(desc.canOutput);
-                        CHECK_FALSE(desc.canInput);
-                        CHECK(desc.canInputAndOutput);
+                        CHECK_FALSE(desc.canBeSource);
+                        CHECK_FALSE(desc.canBeSink);
+                        CHECK(desc.canBeTransform);
                         CHECK(desc.extensions.isEmpty());
                         found = true;
                         break;
@@ -75,7 +75,7 @@ TEST_CASE("MediaIOTask_Burn_RejectsReaderMode") {
         MediaIO::Config cfg = MediaIO::defaultConfig("Burn");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        CHECK(io->open(MediaIO::Output).isError());
+        CHECK(io->open(MediaIO::Source).isError());
         delete io;
 }
 
@@ -83,7 +83,7 @@ TEST_CASE("MediaIOTask_Burn_AcceptsReadWriteMode") {
         MediaIO::Config cfg = MediaIO::defaultConfig("Burn");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
         CHECK(io->isOpen());
         io->close();
         delete io;
@@ -95,7 +95,7 @@ TEST_CASE("MediaIOTask_Burn_AppliesBurn") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         Timecode tc(Timecode::NDF24, 1, 0, 0, 0);
         Frame::Ptr in = makeRgbFrameWithTc(320, 240, PixelDesc::RGB8_sRGB, tc);
@@ -119,7 +119,7 @@ TEST_CASE("MediaIOTask_Burn_PassThroughWhenDisabled") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         Frame::Ptr in = makeRgbFrame(64, 48, PixelDesc::RGB8_sRGB);
         CHECK(io->writeFrame(in).isOk());
@@ -140,7 +140,7 @@ TEST_CASE("MediaIOTask_Burn_AudioPassesThrough") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         Frame::Ptr in = Frame::Ptr::create();
         AudioDesc adesc(AudioDesc::PCMI_Float32LE, 48000.0f, 2);
@@ -165,7 +165,7 @@ TEST_CASE("MediaIOTask_Burn_Stats") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         Frame::Ptr f = makeRgbFrame(16, 16, PixelDesc::RGB8_sRGB);
         CHECK(io->writeFrame(f).isOk());
@@ -184,7 +184,7 @@ TEST_CASE("MediaIOTask_Burn_ReadEmptyQueueTryAgain") {
         MediaIO::Config cfg = MediaIO::defaultConfig("Burn");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+        REQUIRE(io->open(MediaIO::Transform).isOk());
 
         Frame::Ptr out;
         CHECK(io->readFrame(out, false) == Error::TryAgain);

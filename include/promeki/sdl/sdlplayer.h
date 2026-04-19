@@ -106,6 +106,20 @@ class SDLPlayerTask : public MediaIOTask {
                 Error executeCmd(MediaIOCommandClose &cmd) override;
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
 
+                Error describe(MediaIODescription *out) const override;
+                Error proposeInput(const MediaDesc &offered,
+                                   MediaDesc *preferred) const override;
+
+                // Picks the best SDL-native PixelDesc for an offered
+                // image — the format closest to @p offered that
+                // SDLVideoWidget::mapPixelDesc returns a non-zero
+                // SDL pixel format for.  This is what the planner
+                // uses to know "given source X, which native format
+                // should the upstream CSC convert to?"  Returns
+                // @ref PixelDesc::RGBA8_sRGB as the universal
+                // fallback when no closer match is available.
+                PixelDesc pickNativePixelDesc(const PixelDesc &offered) const;
+
                 void pullLoop();
                 void wakeMainThread();
 

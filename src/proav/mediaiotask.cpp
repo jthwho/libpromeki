@@ -7,6 +7,14 @@
 
 #include <promeki/mediaiotask.h>
 
+#include <promeki/audiodesc.h>
+#include <promeki/enums.h>
+#include <promeki/imagedesc.h>
+#include <promeki/mediaconfig.h>
+#include <promeki/mediadesc.h>
+#include <promeki/mediaiodescription.h>
+#include <promeki/pixeldesc.h>
+
 PROMEKI_NAMESPACE_BEGIN
 
 MediaIOTask::~MediaIOTask() = default;
@@ -51,6 +59,106 @@ void MediaIOTask::cancelBlockingWork() {
 
 int MediaIOTask::pendingOutput() const {
         return 0;
+}
+
+Error MediaIOTask::describe(MediaIODescription *out) const {
+        // Default: leave the description as MediaIO populated it.
+        // Backends override to fill in producibleFormats /
+        // acceptableFormats / preferredFormat / capability fields
+        // probed from the underlying resource.
+        (void)out;
+        return Error::Ok;
+}
+
+Error MediaIOTask::proposeInput(const MediaDesc &offered,
+                                MediaDesc *preferred) const {
+        // Default: accept whatever is offered (transparent
+        // passthrough).  Sinks and transforms with format constraints
+        // override to either narrow or refuse.
+        if(preferred != nullptr) *preferred = offered;
+        return Error::Ok;
+}
+
+Error MediaIOTask::proposeOutput(const MediaDesc &requested,
+                                 MediaDesc *achievable) const {
+        // Default: most sources produce what they produce — flag
+        // NotSupported and let the planner bridge from the current
+        // output.  Configurable sources (TPG, V4L2) override.
+        (void)requested;
+        if(achievable != nullptr) *achievable = MediaDesc();
+        return Error::NotSupported;
+}
+
+MediaDesc MediaIOTask::applyOutputOverrides(const MediaDesc &input,
+                                            const MediaConfig &config) {
+        MediaDesc out = input;
+
+        // ---- Video: OutputPixelDesc ----
+        // A valid PixelDesc replaces the pixel format on every image
+        // layer.  An invalid (default-constructed) PixelDesc means
+        // "inherit from input" — leave the per-image pixelDesc alone.
+        if(config.contains(MediaConfig::OutputPixelDesc)) {
+                const PixelDesc target = config.getAs<PixelDesc>(MediaConfig::OutputPixelDesc);
+                if(target.isValid()) {
+                        ImageDesc::List &imgs = out.imageList();
+                        for(size_t i = 0; i < imgs.size(); ++i) {
+                                imgs[i].setPixelDesc(target);
+                        }
+                }
+        }
+
+        // ---- Video: OutputFrameRate ----
+        if(config.contains(MediaConfig::OutputFrameRate)) {
+                const FrameRate fr = config.getAs<FrameRate>(MediaConfig::OutputFrameRate);
+                if(fr.isValid()) out.setFrameRate(fr);
+        }
+
+        // ---- Audio: OutputAudioRate (Hz) ----
+        // Zero (default) means "inherit from input".
+        if(config.contains(MediaConfig::OutputAudioRate)) {
+                const float hz = config.getAs<float>(MediaConfig::OutputAudioRate);
+                if(hz > 0.0f) {
+                        AudioDesc::List &auds = out.audioList();
+                        for(size_t i = 0; i < auds.size(); ++i) {
+                                auds[i].setSampleRate(hz);
+                        }
+                }
+        }
+
+        // ---- Audio: OutputAudioChannels ----
+        // Zero (default) means "inherit from input".
+        if(config.contains(MediaConfig::OutputAudioChannels)) {
+                const int ch = config.getAs<int>(MediaConfig::OutputAudioChannels);
+                if(ch > 0) {
+                        AudioDesc::List &auds = out.audioList();
+                        for(size_t i = 0; i < auds.size(); ++i) {
+                                auds[i].setChannels(static_cast<unsigned int>(ch));
+                        }
+                }
+        }
+
+        // ---- Audio: OutputAudioDataType ----
+        // Invalid (default) means "inherit from input".  The key is
+        // typed as a TypeEnum bound to AudioDataType::Type so the
+        // value lives as an Enum and we project it back through the
+        // AudioDataType wrapper to get the corresponding
+        // AudioDesc::DataType.
+        if(config.contains(MediaConfig::OutputAudioDataType)) {
+                Error enumErr;
+                Enum adtEnum = config.get(MediaConfig::OutputAudioDataType)
+                        .asEnum(AudioDataType::Type, &enumErr);
+                if(enumErr.isOk()) {
+                        const auto dt = static_cast<AudioDesc::DataType>(adtEnum.value());
+                        if(dt != AudioDesc::Invalid) {
+                                AudioDesc::List &auds = out.audioList();
+                                for(size_t i = 0; i < auds.size(); ++i) {
+                                        auds[i].setDataType(dt);
+                                }
+                        }
+                }
+        }
+
+        return out;
 }
 
 // ---- Live-telemetry helper forwarders ----

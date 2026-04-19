@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
         }
         configureSource(source, opts);
 
-        Error err = source->open(MediaIO::Output);
+        Error err = source->open(MediaIO::Source);
         if(err.isError()) {
                 std::fprintf(stderr, "Source open failed: %s\n",
                              err.name().cstr());

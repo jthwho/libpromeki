@@ -24,9 +24,9 @@ MediaIO::FormatDesc MediaIOTask_FrameBridge::formatDesc() {
                 "FrameBridge",
                 "Cross-process shared-memory frame transport",
                 {},      // No file extensions
-                true,    // canOutput — reads from bridge (consumer of the bridge)
-                true,    // canInput  — writes to bridge  (producer into the bridge)
-                false,   // canInputAndOutput
+                true,    // canBeSource — reads from bridge (consumer of the bridge)
+                true,    // canBeSink  — writes to bridge  (producer into the bridge)
+                false,   // canBeTransform
                 []() -> MediaIOTask * {
                         return new MediaIOTask_FrameBridge();
                 },
@@ -77,7 +77,7 @@ Error MediaIOTask_FrameBridge::executeCmd(MediaIOCommandOpen &cmd) {
         // the bridge is opened in Output mode.  Output means "this task
         // produces frames" — the caller reads, so we open the bridge
         // as Input and pull from a remote publisher.
-        if(cmd.mode == MediaIO_Input) {
+        if(cmd.mode == MediaIO_Sink) {
                 // Caller writes into us → we publish to the bridge.
                 _isOutput = true;
                 FrameBridge::Config bcfg;
@@ -111,7 +111,7 @@ Error MediaIOTask_FrameBridge::executeCmd(MediaIOCommandOpen &cmd) {
                 cmd.canSeek = false;
                 cmd.frameCount = MediaIO::FrameCountInfinite;
                 return Error::Ok;
-        } else if(cmd.mode == MediaIO_Output) {
+        } else if(cmd.mode == MediaIO_Source) {
                 // Caller reads from us → we consume from the bridge.
                 _isOutput = false;
                 const bool sync = cfg.getAs<bool>(

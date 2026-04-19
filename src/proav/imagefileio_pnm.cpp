@@ -96,6 +96,8 @@ class ImageFileIO_PNM : public ImageFileIO {
                         _canLoad = true;
                         _canSave = true;
                         _name = "PNM";
+                        _description = "Netpbm PNM/PPM/PGM image sequence";
+                        _extensions = { "pnm", "ppm", "pgm" };
                 }
                 Error load(ImageFile &imageFile, const MediaConfig &config) const override;
                 Error save(ImageFile &imageFile, const MediaConfig &config) const override;

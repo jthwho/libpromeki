@@ -127,9 +127,9 @@ MediaIO::FormatDesc MediaIOTask_Rtp::formatDesc() {
                          // extension-based factory still uses this
                          // list so `-i foo.sdp` in mediaplay picks
                          // the Rtp backend automatically.
-                true,   // canOutput
-                true,   // canInput
-                false,  // canInputAndOutput
+                true,   // canBeSource
+                true,   // canBeSink
+                false,  // canBeTransform
                 []() -> MediaIOTask * {
                         return new MediaIOTask_Rtp();
                 },
@@ -759,7 +759,7 @@ Error MediaIOTask_Rtp::configureAudioStream(const MediaIO::Config &cfg,
         // storage format on push, so the backend accepts whatever
         // the pipeline hands it provided the sample rate and channel
         // count already match.  Rate / channel conversion still
-        // belongs to an upstream Converter stage.
+        // belongs to an upstream CSC stage.
         AudioDesc storageDesc(AudioDesc::PCMI_S16BE, ad.sampleRate(), ad.channels());
         if(!storageDesc.isValid()) {
                 promekiErr("MediaIOTask_Rtp: could not build L16 storage descriptor (%.1f Hz, %u ch)",
@@ -1550,12 +1550,12 @@ void MediaIOTask_Rtp::pushReaderFrame(Frame::Ptr frame) {
 // ----- Command dispatch -----
 
 Error MediaIOTask_Rtp::executeCmd(MediaIOCommandOpen &cmd) {
-        if(cmd.mode != MediaIO::Input && cmd.mode != MediaIO::Output) {
+        if(cmd.mode != MediaIO::Sink && cmd.mode != MediaIO::Source) {
                 promekiErr("MediaIOTask_Rtp: only Reader and Writer modes are supported");
                 return Error::NotSupported;
         }
 
-        _readerMode = (cmd.mode == MediaIO::Output);
+        _readerMode = (cmd.mode == MediaIO::Source);
         MediaIO::Config cfg = cmd.config;
 
         // Transport-global parameters.
@@ -1820,7 +1820,7 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandOpen &cmd) {
         // For the reader, synthesise the outbound MediaDesc from
         // the resolved per-stream descriptors so downstream
         // consumers (mediaplay's --in stage reporter, a follow-up
-        // Converter stage, etc.) see the shape the reader is
+        // CSC stage, etc.) see the shape the reader is
         // actually emitting — not the empty one the caller passed
         // in before SDP / config-key fallback ran.
         MediaDesc resolved = cmd.pendingMediaDesc;
