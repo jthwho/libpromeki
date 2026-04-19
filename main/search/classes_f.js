@@ -19,12 +19,13 @@ var searchData=
   ['point_3c_20int32_5ft_2c_202_20_3e_16',['Point&lt; int32_t, 2 &gt;',['../classPoint.html',1,'']]],
   ['point_3c_20t_2c_202_20_3e_17',['Point&lt; T, 2 &gt;',['../classPoint.html',1,'']]],
   ['point_3c_20t_2c_20n_20_3e_18',['Point&lt; T, N &gt;',['../classPoint.html',1,'']]],
-  ['priorityqueue_19',['PriorityQueue',['../classPriorityQueue.html',1,'']]],
-  ['prioritysocket_20',['PrioritySocket',['../classPrioritySocket.html',1,'']]],
-  ['process_21',['Process',['../classProcess.html',1,'']]],
-  ['promise_22',['Promise',['../classPromise.html',1,'']]],
-  ['promise_3c_20error_20_3e_23',['Promise&lt; Error &gt;',['../classPromise.html',1,'']]],
-  ['promise_3c_20void_20_3e_24',['Promise&lt; void &gt;',['../classPromise_3_01void_01_4.html',1,'']]],
-  ['promiseerror_25',['PromiseError',['../structPromiseError.html',1,'']]],
-  ['pullresult_26',['PullResult',['../structFrameSync_1_1PullResult.html',1,'FrameSync']]]
+  ['policy_19',['Policy',['../structMediaPipelinePlanner_1_1Policy.html',1,'MediaPipelinePlanner']]],
+  ['priorityqueue_20',['PriorityQueue',['../classPriorityQueue.html',1,'']]],
+  ['prioritysocket_21',['PrioritySocket',['../classPrioritySocket.html',1,'']]],
+  ['process_22',['Process',['../classProcess.html',1,'']]],
+  ['promise_23',['Promise',['../classPromise.html',1,'']]],
+  ['promise_3c_20error_20_3e_24',['Promise&lt; Error &gt;',['../classPromise.html',1,'']]],
+  ['promise_3c_20void_20_3e_25',['Promise&lt; void &gt;',['../classPromise_3_01void_01_4.html',1,'']]],
+  ['promiseerror_26',['PromiseError',['../structPromiseError.html',1,'']]],
+  ['pullresult_27',['PullResult',['../structFrameSync_1_1PullResult.html',1,'FrameSync']]]
 ];

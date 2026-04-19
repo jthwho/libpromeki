@@ -116,9 +116,17 @@ $(document).ready(function(){initNavTree('classImageDesc.html',''); initResizabl
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
 <tr class="memitem:ad783f089e7476a66b79dc80c73e0287a" id="r_ad783f089e7476a66b79dc80c73e0287a"><td class="memItemLeft" align="right" valign="top"><a id="ad783f089e7476a66b79dc80c73e0287a" name="ad783f089e7476a66b79dc80c73e0287a"></a>
-<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Ptr</b> = <a class="el" href="classSharedPtr.html">SharedPtr</a>&lt; <a class="el" href="classImageDesc.html">ImageDesc</a> &gt;</td></tr>
+<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Ptr</b> = <a class="el" href="classSharedPtr.html">SharedPtr</a>&lt; <a class="el" href="classImageDesc.html">ImageDesc</a> &gt;</td></tr>
 <tr class="memdesc:ad783f089e7476a66b79dc80c73e0287a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shared pointer type for <a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a>. <br /></td></tr>
 <tr class="separator:ad783f089e7476a66b79dc80c73e0287a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab4af7933e0697ea11308ec23cfa0e4cb" id="r_ab4af7933e0697ea11308ec23cfa0e4cb"><td class="memItemLeft" align="right" valign="top"><a id="ab4af7933e0697ea11308ec23cfa0e4cb" name="ab4af7933e0697ea11308ec23cfa0e4cb"></a>
+<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>List</b> = promeki::List&lt; <a class="el" href="classImageDesc.html">ImageDesc</a> &gt;</td></tr>
+<tr class="memdesc:ab4af7933e0697ea11308ec23cfa0e4cb"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of <a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a> values. <br /></td></tr>
+<tr class="separator:ab4af7933e0697ea11308ec23cfa0e4cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2a36116424d09d8116e5122237ec0d6e" id="r_a2a36116424d09d8116e5122237ec0d6e"><td class="memItemLeft" align="right" valign="top"><a id="a2a36116424d09d8116e5122237ec0d6e" name="a2a36116424d09d8116e5122237ec0d6e"></a>
+<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>PtrList</b> = promeki::List&lt; <a class="el" href="classImageDesc.html#ad783f089e7476a66b79dc80c73e0287a">Ptr</a> &gt;</td></tr>
+<tr class="memdesc:a2a36116424d09d8116e5122237ec0d6e"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of shared <a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a> pointers. <br /></td></tr>
+<tr class="separator:a2a36116424d09d8116e5122237ec0d6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -126,88 +134,99 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>ImageDesc</b> ()</td></tr>
 <tr class="memdesc:a0c5fd17eb1dec3cbeddc823fc9284d34"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an invalid (default) image description. <br /></td></tr>
 <tr class="separator:a0c5fd17eb1dec3cbeddc823fc9284d34"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a52f4b5c301584e29afd13aa3a3987de9" id="r_a52f4b5c301584e29afd13aa3a3987de9"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a52f4b5c301584e29afd13aa3a3987de9">ImageDesc</a> (<a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;<a class="el" href="classList.html">sz</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;<a class="el" href="classList.html">pd</a>)</td></tr>
+<tr class="memitem:a52f4b5c301584e29afd13aa3a3987de9" id="r_a52f4b5c301584e29afd13aa3a3987de9"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a52f4b5c301584e29afd13aa3a3987de9">ImageDesc</a> (<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">sz</a>, <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">pd</a>)</td></tr>
 <tr class="memdesc:a52f4b5c301584e29afd13aa3a3987de9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an image description from a size and pixel description.  <br /></td></tr>
 <tr class="separator:a52f4b5c301584e29afd13aa3a3987de9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1e92fa0940e22d4ca09e986458c1824d" id="r_a1e92fa0940e22d4ca09e986458c1824d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a1e92fa0940e22d4ca09e986458c1824d">ImageDesc</a> (<a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">w</a>, <a class="el" href="classList.html">size_t</a> h, <a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;<a class="el" href="classList.html">pd</a>)</td></tr>
+<tr class="memitem:a1e92fa0940e22d4ca09e986458c1824d" id="r_a1e92fa0940e22d4ca09e986458c1824d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a1e92fa0940e22d4ca09e986458c1824d">ImageDesc</a> (<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">size_t</a> <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">w</a>, <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">size_t</a> h, <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">pd</a>)</td></tr>
 <tr class="memdesc:a1e92fa0940e22d4ca09e986458c1824d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an image description from width, height, and pixel description.  <br /></td></tr>
 <tr class="separator:a1e92fa0940e22d4ca09e986458c1824d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7aa8196008eb99acec3eeea25ddeac99" id="r_a7aa8196008eb99acec3eeea25ddeac99"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSdpMediaDescription.html">SdpMediaDescription</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a7aa8196008eb99acec3eeea25ddeac99">toSdp</a> (<a class="el" href="classList.html">uint8_t</a> payloadType) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a7aa8196008eb99acec3eeea25ddeac99" id="r_a7aa8196008eb99acec3eeea25ddeac99"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSdpMediaDescription.html">SdpMediaDescription</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a7aa8196008eb99acec3eeea25ddeac99">toSdp</a> (<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">uint8_t</a> payloadType) <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a></td></tr>
 <tr class="memdesc:a7aa8196008eb99acec3eeea25ddeac99"><td class="mdescLeft">&#160;</td><td class="mdescRight">Builds an SDP media description from this <a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a>.  <br /></td></tr>
 <tr class="separator:a7aa8196008eb99acec3eeea25ddeac99"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a75c5e0d29a69ad572d23776a46345b21" id="r_a75c5e0d29a69ad572d23776a46345b21"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a75c5e0d29a69ad572d23776a46345b21">isValid</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a75c5e0d29a69ad572d23776a46345b21" id="r_a75c5e0d29a69ad572d23776a46345b21"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a75c5e0d29a69ad572d23776a46345b21">isValid</a> () <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a></td></tr>
 <tr class="memdesc:a75c5e0d29a69ad572d23776a46345b21"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if this image description has valid dimensions and pixel description.  <br /></td></tr>
 <tr class="separator:a75c5e0d29a69ad572d23776a46345b21"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8fd13b343836d8b7465a6da4ae3ecd2e" id="r_a8fd13b343836d8b7465a6da4ae3ecd2e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a8fd13b343836d8b7465a6da4ae3ecd2e">pixelDesc</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a8fd13b343836d8b7465a6da4ae3ecd2e" id="r_a8fd13b343836d8b7465a6da4ae3ecd2e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a8fd13b343836d8b7465a6da4ae3ecd2e">pixelDesc</a> () <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a></td></tr>
 <tr class="memdesc:a8fd13b343836d8b7465a6da4ae3ecd2e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the pixel description.  <br /></td></tr>
 <tr class="separator:a8fd13b343836d8b7465a6da4ae3ecd2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad4c05a0297e5a84b51dd871ca6616ecf" id="r_ad4c05a0297e5a84b51dd871ca6616ecf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#ad4c05a0297e5a84b51dd871ca6616ecf">setPixelDesc</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;<a class="el" href="classList.html">pd</a>)</td></tr>
+<tr class="memitem:ad4c05a0297e5a84b51dd871ca6616ecf" id="r_ad4c05a0297e5a84b51dd871ca6616ecf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#ad4c05a0297e5a84b51dd871ca6616ecf">setPixelDesc</a> (<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">pd</a>)</td></tr>
 <tr class="memdesc:ad4c05a0297e5a84b51dd871ca6616ecf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the pixel description.  <br /></td></tr>
 <tr class="separator:ad4c05a0297e5a84b51dd871ca6616ecf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa6a9779872d4e539ed58795bb28c12c9" id="r_aa6a9779872d4e539ed58795bb28c12c9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classPixelFormat.html">PixelFormat</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#aa6a9779872d4e539ed58795bb28c12c9">pixelFormat</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:aa6a9779872d4e539ed58795bb28c12c9" id="r_aa6a9779872d4e539ed58795bb28c12c9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classPixelFormat.html">PixelFormat</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#aa6a9779872d4e539ed58795bb28c12c9">pixelFormat</a> () <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a></td></tr>
 <tr class="memdesc:aa6a9779872d4e539ed58795bb28c12c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the pixel format (memory layout) from the pixel description.  <br /></td></tr>
 <tr class="separator:aa6a9779872d4e539ed58795bb28c12c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0e401dabf0c124c565aef27db15fe4bd" id="r_a0e401dabf0c124c565aef27db15fe4bd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classColorModel.html">ColorModel</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a0e401dabf0c124c565aef27db15fe4bd">colorModel</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a0e401dabf0c124c565aef27db15fe4bd" id="r_a0e401dabf0c124c565aef27db15fe4bd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classColorModel.html">ColorModel</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a0e401dabf0c124c565aef27db15fe4bd">colorModel</a> () <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a></td></tr>
 <tr class="memdesc:a0e401dabf0c124c565aef27db15fe4bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the color model from the pixel description.  <br /></td></tr>
 <tr class="separator:a0e401dabf0c124c565aef27db15fe4bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a991e9888c52686ece1125c2c4a5a56cd" id="r_a991e9888c52686ece1125c2c4a5a56cd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a991e9888c52686ece1125c2c4a5a56cd">size</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a991e9888c52686ece1125c2c4a5a56cd" id="r_a991e9888c52686ece1125c2c4a5a56cd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a991e9888c52686ece1125c2c4a5a56cd">size</a> () <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a></td></tr>
 <tr class="memdesc:a991e9888c52686ece1125c2c4a5a56cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the image dimensions.  <br /></td></tr>
 <tr class="separator:a991e9888c52686ece1125c2c4a5a56cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aefe38b35b63e2b157571465ff70b75bd" id="r_aefe38b35b63e2b157571465ff70b75bd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#aefe38b35b63e2b157571465ff70b75bd">width</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:aefe38b35b63e2b157571465ff70b75bd" id="r_aefe38b35b63e2b157571465ff70b75bd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#aefe38b35b63e2b157571465ff70b75bd">width</a> () <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a></td></tr>
 <tr class="memdesc:aefe38b35b63e2b157571465ff70b75bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the image width in pixels.  <br /></td></tr>
 <tr class="separator:aefe38b35b63e2b157571465ff70b75bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a595176f6845585e958af1812a93d21d1" id="r_a595176f6845585e958af1812a93d21d1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a595176f6845585e958af1812a93d21d1">height</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a595176f6845585e958af1812a93d21d1" id="r_a595176f6845585e958af1812a93d21d1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a595176f6845585e958af1812a93d21d1">height</a> () <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a></td></tr>
 <tr class="memdesc:a595176f6845585e958af1812a93d21d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the image height in pixels.  <br /></td></tr>
 <tr class="separator:a595176f6845585e958af1812a93d21d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3797103cf7d70f63b5082b49e144692a" id="r_a3797103cf7d70f63b5082b49e144692a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a3797103cf7d70f63b5082b49e144692a">setSize</a> (<a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
+<tr class="memitem:a3797103cf7d70f63b5082b49e144692a" id="r_a3797103cf7d70f63b5082b49e144692a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a3797103cf7d70f63b5082b49e144692a">setSize</a> (<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">val</a>)</td></tr>
 <tr class="memdesc:a3797103cf7d70f63b5082b49e144692a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the image dimensions.  <br /></td></tr>
 <tr class="separator:a3797103cf7d70f63b5082b49e144692a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab7c04a3d184312f65943bd07ee799cd8" id="r_ab7c04a3d184312f65943bd07ee799cd8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#ab7c04a3d184312f65943bd07ee799cd8">setSize</a> (int <a class="el" href="classImageDesc.html#aefe38b35b63e2b157571465ff70b75bd">width</a>, int <a class="el" href="classImageDesc.html#a595176f6845585e958af1812a93d21d1">height</a>)</td></tr>
+<tr class="memitem:ab7c04a3d184312f65943bd07ee799cd8" id="r_ab7c04a3d184312f65943bd07ee799cd8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#ab7c04a3d184312f65943bd07ee799cd8">setSize</a> (int <a class="el" href="classImageDesc.html#aefe38b35b63e2b157571465ff70b75bd">width</a>, int <a class="el" href="classImageDesc.html#a595176f6845585e958af1812a93d21d1">height</a>)</td></tr>
 <tr class="memdesc:ab7c04a3d184312f65943bd07ee799cd8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the image dimensions from width and height values.  <br /></td></tr>
 <tr class="separator:ab7c04a3d184312f65943bd07ee799cd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad95611a6f599daf285cbf4d5035e6495" id="r_ad95611a6f599daf285cbf4d5035e6495"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#ad95611a6f599daf285cbf4d5035e6495">linePad</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:ad95611a6f599daf285cbf4d5035e6495" id="r_ad95611a6f599daf285cbf4d5035e6495"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#ad95611a6f599daf285cbf4d5035e6495">linePad</a> () <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a></td></tr>
 <tr class="memdesc:ad95611a6f599daf285cbf4d5035e6495"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of padding bytes appended to each scanline.  <br /></td></tr>
 <tr class="separator:ad95611a6f599daf285cbf4d5035e6495"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9b2408bb4c93c4c2e1be90e97252af58" id="r_a9b2408bb4c93c4c2e1be90e97252af58"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a9b2408bb4c93c4c2e1be90e97252af58">setLinePad</a> (<a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">val</a>)</td></tr>
+<tr class="memitem:a9b2408bb4c93c4c2e1be90e97252af58" id="r_a9b2408bb4c93c4c2e1be90e97252af58"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a9b2408bb4c93c4c2e1be90e97252af58">setLinePad</a> (<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">size_t</a> <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">val</a>)</td></tr>
 <tr class="memdesc:a9b2408bb4c93c4c2e1be90e97252af58"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the number of padding bytes appended to each scanline.  <br /></td></tr>
 <tr class="separator:a9b2408bb4c93c4c2e1be90e97252af58"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6d2eb3160c87fda340202a5c964b344c" id="r_a6d2eb3160c87fda340202a5c964b344c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a6d2eb3160c87fda340202a5c964b344c">lineAlign</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a6d2eb3160c87fda340202a5c964b344c" id="r_a6d2eb3160c87fda340202a5c964b344c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a6d2eb3160c87fda340202a5c964b344c">lineAlign</a> () <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a></td></tr>
 <tr class="memdesc:a6d2eb3160c87fda340202a5c964b344c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the scanline alignment requirement in bytes.  <br /></td></tr>
 <tr class="separator:a6d2eb3160c87fda340202a5c964b344c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3901aaefead0c0858a81bb922fd17056" id="r_a3901aaefead0c0858a81bb922fd17056"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a3901aaefead0c0858a81bb922fd17056">setLineAlign</a> (<a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">val</a>)</td></tr>
+<tr class="memitem:a3901aaefead0c0858a81bb922fd17056" id="r_a3901aaefead0c0858a81bb922fd17056"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a3901aaefead0c0858a81bb922fd17056">setLineAlign</a> (<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">size_t</a> <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">val</a>)</td></tr>
 <tr class="memdesc:a3901aaefead0c0858a81bb922fd17056"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the scanline alignment requirement.  <br /></td></tr>
 <tr class="separator:a3901aaefead0c0858a81bb922fd17056"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adf46599e9450e411d295e7d41983ad27" id="r_adf46599e9450e411d295e7d41983ad27"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classVideoScanMode.html">VideoScanMode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#adf46599e9450e411d295e7d41983ad27">videoScanMode</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:adf46599e9450e411d295e7d41983ad27" id="r_adf46599e9450e411d295e7d41983ad27"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classVideoScanMode.html">VideoScanMode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#adf46599e9450e411d295e7d41983ad27">videoScanMode</a> () <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a></td></tr>
 <tr class="memdesc:adf46599e9450e411d295e7d41983ad27"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the video scan mode.  <br /></td></tr>
 <tr class="separator:adf46599e9450e411d295e7d41983ad27"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5cf3cc738fed88254e543943657a6f64" id="r_a5cf3cc738fed88254e543943657a6f64"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a5cf3cc738fed88254e543943657a6f64">setVideoScanMode</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classVideoScanMode.html">VideoScanMode</a> &amp;mode)</td></tr>
+<tr class="memitem:a5cf3cc738fed88254e543943657a6f64" id="r_a5cf3cc738fed88254e543943657a6f64"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a5cf3cc738fed88254e543943657a6f64">setVideoScanMode</a> (<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classVideoScanMode.html">VideoScanMode</a> &amp;mode)</td></tr>
 <tr class="memdesc:a5cf3cc738fed88254e543943657a6f64"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the scan mode.  <br /></td></tr>
 <tr class="separator:a5cf3cc738fed88254e543943657a6f64"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a805a901251772c07f2c9309d016e1e56" id="r_a805a901251772c07f2c9309d016e1e56"><td class="memItemLeft" align="right" valign="top"><a id="a805a901251772c07f2c9309d016e1e56" name="a805a901251772c07f2c9309d016e1e56"></a>
-<a class="el" href="classList.html">const</a> <a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>metadata</b> () <a class="el" href="classList.html">const</a></td></tr>
+<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>metadata</b> () <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a></td></tr>
 <tr class="memdesc:a805a901251772c07f2c9309d016e1e56"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const reference to the metadata. <br /></td></tr>
 <tr class="separator:a805a901251772c07f2c9309d016e1e56"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a153333d8168a97cb918a369633972451" id="r_a153333d8168a97cb918a369633972451"><td class="memItemLeft" align="right" valign="top"><a id="a153333d8168a97cb918a369633972451" name="a153333d8168a97cb918a369633972451"></a>
 <a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>metadata</b> ()</td></tr>
 <tr class="memdesc:a153333d8168a97cb918a369633972451"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reference to the metadata. <br /></td></tr>
 <tr class="separator:a153333d8168a97cb918a369633972451"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9c38bec67c83d4467de672784ecad88c" id="r_a9c38bec67c83d4467de672784ecad88c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a9c38bec67c83d4467de672784ecad88c">planeCount</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a9c38bec67c83d4467de672784ecad88c" id="r_a9c38bec67c83d4467de672784ecad88c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a9c38bec67c83d4467de672784ecad88c">planeCount</a> () <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a></td></tr>
 <tr class="memdesc:a9c38bec67c83d4467de672784ecad88c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of image planes defined by the pixel format.  <br /></td></tr>
 <tr class="separator:a9c38bec67c83d4467de672784ecad88c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0ebdb8f56904ceb7fbf0ab049f623e5c" id="r_a0ebdb8f56904ceb7fbf0ab049f623e5c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a0ebdb8f56904ceb7fbf0ab049f623e5c">toString</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a0ebdb8f56904ceb7fbf0ab049f623e5c" id="r_a0ebdb8f56904ceb7fbf0ab049f623e5c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a0ebdb8f56904ceb7fbf0ab049f623e5c">toString</a> () <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a></td></tr>
 <tr class="memdesc:a0ebdb8f56904ceb7fbf0ab049f623e5c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a human-readable string representation of this image description.  <br /></td></tr>
 <tr class="separator:a0ebdb8f56904ceb7fbf0ab049f623e5c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a16d70daa9b940db09aa1f64bfc0a110e" id="r_a16d70daa9b940db09aa1f64bfc0a110e"><td class="memItemLeft" align="right" valign="top"><a id="a16d70daa9b940db09aa1f64bfc0a110e" name="a16d70daa9b940db09aa1f64bfc0a110e"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>operator String</b> () <a class="el" href="classList.html">const</a></td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>operator String</b> () <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a></td></tr>
 <tr class="memdesc:a16d70daa9b940db09aa1f64bfc0a110e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implicit conversion to <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> via <a class="el" href="classImageDesc.html#a0ebdb8f56904ceb7fbf0ab049f623e5c" title="Returns a human-readable string representation of this image description.">toString()</a>. <br /></td></tr>
 <tr class="separator:a16d70daa9b940db09aa1f64bfc0a110e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac1d5b4311bd1e8a9d0b2a28655fc69bc" id="r_ac1d5b4311bd1e8a9d0b2a28655fc69bc"><td class="memItemLeft" align="right" valign="top"><a id="ac1d5b4311bd1e8a9d0b2a28655fc69bc" name="ac1d5b4311bd1e8a9d0b2a28655fc69bc"></a>
+<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator==</b> (<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classImageDesc.html">ImageDesc</a> &amp;<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">other</a>) <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a></td></tr>
+<tr class="memdesc:ac1d5b4311bd1e8a9d0b2a28655fc69bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if every member of both descriptors is equal. <br /></td></tr>
+<tr class="separator:ac1d5b4311bd1e8a9d0b2a28655fc69bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b4dec69aa34e451b9a1a6b17042db39" id="r_a9b4dec69aa34e451b9a1a6b17042db39"><td class="memItemLeft" align="right" valign="top"><a id="a9b4dec69aa34e451b9a1a6b17042db39" name="a9b4dec69aa34e451b9a1a6b17042db39"></a>
+<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator!=</b> (<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classImageDesc.html">ImageDesc</a> &amp;<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">other</a>) <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a></td></tr>
+<tr class="memdesc:a9b4dec69aa34e451b9a1a6b17042db39"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if any member differs. <br /></td></tr>
+<tr class="separator:a9b4dec69aa34e451b9a1a6b17042db39"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a185179bffd02924e8578ad13a872b461" id="r_a185179bffd02924e8578ad13a872b461"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a185179bffd02924e8578ad13a872b461">formatEquals</a> (<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classImageDesc.html">ImageDesc</a> &amp;<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">other</a>) <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a></td></tr>
+<tr class="memdesc:a185179bffd02924e8578ad13a872b461"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compares structural image fields, ignoring <a class="el" href="classImageDesc.html#a805a901251772c07f2c9309d016e1e56">metadata</a>.  <br /></td></tr>
+<tr class="separator:a185179bffd02924e8578ad13a872b461"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a993657bc4406c5eef0b92b7f89d550d7" id="r_a993657bc4406c5eef0b92b7f89d550d7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classImageDesc.html">ImageDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a993657bc4406c5eef0b92b7f89d550d7">fromSdp</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classSdpMediaDescription.html">SdpMediaDescription</a> &amp;<a class="el" href="classList.html">md</a>)</td></tr>
+<tr class="memitem:a993657bc4406c5eef0b92b7f89d550d7" id="r_a993657bc4406c5eef0b92b7f89d550d7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">static</a> <a class="el" href="classImageDesc.html">ImageDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a993657bc4406c5eef0b92b7f89d550d7">fromSdp</a> (<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classSdpMediaDescription.html">SdpMediaDescription</a> &amp;<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">md</a>)</td></tr>
 <tr class="memdesc:a993657bc4406c5eef0b92b7f89d550d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Derives an <a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a> from an SDP media description.  <br /></td></tr>
 <tr class="separator:a993657bc4406c5eef0b92b7f89d550d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aab518e43202b9c321183c0c46d8766e2" id="r_aab518e43202b9c321183c0c46d8766e2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faaf">PixelDesc::ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#aab518e43202b9c321183c0c46d8766e2">jpegPixelDescFromSdp</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">colorimetry</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">range</a>, <a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">is420</a>, <a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">isRgb</a>)</td></tr>
+<tr class="memitem:aab518e43202b9c321183c0c46d8766e2" id="r_aab518e43202b9c321183c0c46d8766e2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">static</a> <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faaf">PixelDesc::ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#aab518e43202b9c321183c0c46d8766e2">jpegPixelDescFromSdp</a> (<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">colorimetry</a>, <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">range</a>, <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">bool</a> <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">is420</a>, <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">bool</a> <a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">isRgb</a>)</td></tr>
 <tr class="memdesc:aab518e43202b9c321183c0c46d8766e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resolves a JPEG <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a> from ST 2110-20 colorimetry and RANGE parameters plus subsampling.  <br /></td></tr>
 <tr class="separator:aab518e43202b9c321183c0c46d8766e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -215,10 +234,10 @@ Static Public Member Functions</h2></td></tr>
 <div class="textblock"><p>Describes the format and layout of a single image. </p>
 <p><a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a> encapsulates image dimensions (Size2Du32), pixel description, line padding and alignment, interlace mode, and associated metadata. It is used by <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> and <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> to define the properties of image data.</p>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classImageDesc.html">ImageDesc</a> desc(1920, 1080, <a class="code hl_enumvalue" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00">PixelDesc::RGBA8_sRGB</a>);</div>
-<div class="line"><span class="keywordtype">size_t</span> <a class="code hl_class" href="classList.html">stride</a> = desc.pixelDesc().lineStride(0, desc);</div>
+<div class="line"><span class="keywordtype">size_t</span> <a class="code hl_typedef" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">stride</a> = desc.pixelDesc().lineStride(0, desc);</div>
 <div class="line"><span class="keywordtype">int</span> planes = desc.planeCount();</div>
 <div class="ttc" id="aclassImageDesc_html"><div class="ttname"><a href="classImageDesc.html">ImageDesc</a></div><div class="ttdoc">Describes the format and layout of a single image.</div><div class="ttdef"><b>Definition</b> imagedesc.h:37</div></div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="ttc" id="aclassImageDesc_html_ab4af7933e0697ea11308ec23cfa0e4cb"><div class="ttname"><a href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">ImageDesc::List</a></div><div class="ttdeci">promeki::List&lt; ImageDesc &gt; List</div><div class="ttdoc">List of ImageDesc values.</div><div class="ttdef"><b>Definition</b> imagedesc.h:44</div></div>
 <div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00">PixelDesc::RGBA8_sRGB</a></div><div class="ttdeci">@ RGBA8_sRGB</div><div class="ttdoc">8-bit RGBA, sRGB, full range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:142</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
@@ -234,13 +253,13 @@ Static Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname">ImageDesc::ImageDesc </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;&#160;</td>
           <td class="paramname"><em>sz</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;&#160;</td>
           <td class="paramname"><em>pd</em>&#160;</td>
         </tr>
         <tr>
@@ -279,19 +298,19 @@ Static Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname">ImageDesc::ImageDesc </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">size_t</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">size_t</a>&#160;</td>
           <td class="paramname"><em>w</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">size_t</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">size_t</a>&#160;</td>
           <td class="paramname"><em>h</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;&#160;</td>
           <td class="paramname"><em>pd</em>&#160;</td>
         </tr>
         <tr>
@@ -330,7 +349,7 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classColorModel.html">ColorModel</a> &amp; ImageDesc::colorModel </td>
+          <td class="memname"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classColorModel.html">ColorModel</a> &amp; ImageDesc::colorModel </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -348,6 +367,42 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a185179bffd02924e8578ad13a872b461" name="a185179bffd02924e8578ad13a872b461"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a185179bffd02924e8578ad13a872b461">&#9670;&#160;</a></span>formatEquals()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">bool</a> ImageDesc::formatEquals </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classImageDesc.html">ImageDesc</a> &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Compares structural image fields, ignoring <a class="el" href="classImageDesc.html#a805a901251772c07f2c9309d016e1e56">metadata</a>. </p>
+<p>Covers size, line padding / alignment, scan mode, and pixel description — every field that influences the byte layout or colour interpretation of the image. <a class="el" href="classMetadata.html" title="Key-value metadata container using typed Variant values.">Metadata</a> (colour tags, creator fields, user data) is deliberately excluded so negotiation between stages can compare "are these the same shape" without being derailed by cosmetic metadata differences.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">other</td><td>The <a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a> to compare against. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if every structural field matches. </dd></dl>
+
+</div>
+</div>
 <a id="a993657bc4406c5eef0b92b7f89d550d7" name="a993657bc4406c5eef0b92b7f89d550d7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a993657bc4406c5eef0b92b7f89d550d7">&#9670;&#160;</a></span>fromSdp()</h2>
 
@@ -358,9 +413,9 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classImageDesc.html">ImageDesc</a> ImageDesc::fromSdp </td>
+          <td class="memname"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">static</a> <a class="el" href="classImageDesc.html">ImageDesc</a> ImageDesc::fromSdp </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classSdpMediaDescription.html">SdpMediaDescription</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classSdpMediaDescription.html">SdpMediaDescription</a> &amp;&#160;</td>
           <td class="paramname"><em>md</em></td><td>)</td>
           <td></td>
         </tr>
@@ -400,7 +455,7 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">size_t</a> ImageDesc::height </td>
+          <td class="memname"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">size_t</a> ImageDesc::height </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -428,7 +483,7 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">bool</a> ImageDesc::isValid </td>
+          <td class="memname"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">bool</a> ImageDesc::isValid </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -456,27 +511,27 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faaf">PixelDesc::ID</a> ImageDesc::jpegPixelDescFromSdp </td>
+          <td class="memname"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">static</a> <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faaf">PixelDesc::ID</a> ImageDesc::jpegPixelDescFromSdp </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
           <td class="paramname"><em>colorimetry</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
           <td class="paramname"><em>range</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">bool</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">bool</a>&#160;</td>
           <td class="paramname"><em>is420</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">bool</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">bool</a>&#160;</td>
           <td class="paramname"><em>isRgb</em>&#160;</td>
         </tr>
         <tr>
@@ -517,7 +572,7 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">size_t</a> ImageDesc::lineAlign </td>
+          <td class="memname"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">size_t</a> ImageDesc::lineAlign </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -545,7 +600,7 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">size_t</a> ImageDesc::linePad </td>
+          <td class="memname"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">size_t</a> ImageDesc::linePad </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -573,7 +628,7 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp; ImageDesc::pixelDesc </td>
+          <td class="memname"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp; ImageDesc::pixelDesc </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -601,7 +656,7 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classPixelFormat.html">PixelFormat</a> &amp; ImageDesc::pixelFormat </td>
+          <td class="memname"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classPixelFormat.html">PixelFormat</a> &amp; ImageDesc::pixelFormat </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -657,9 +712,9 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> ImageDesc::setLineAlign </td>
+          <td class="memname"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">void</a> ImageDesc::setLineAlign </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">size_t</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">size_t</a>&#160;</td>
           <td class="paramname"><em>val</em></td><td>)</td>
           <td></td>
         </tr>
@@ -691,9 +746,9 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> ImageDesc::setLinePad </td>
+          <td class="memname"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">void</a> ImageDesc::setLinePad </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">size_t</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">size_t</a>&#160;</td>
           <td class="paramname"><em>val</em></td><td>)</td>
           <td></td>
         </tr>
@@ -725,9 +780,9 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> ImageDesc::setPixelDesc </td>
+          <td class="memname"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">void</a> ImageDesc::setPixelDesc </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;&#160;</td>
           <td class="paramname"><em>pd</em></td><td>)</td>
           <td></td>
         </tr>
@@ -759,9 +814,9 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> ImageDesc::setSize </td>
+          <td class="memname"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">void</a> ImageDesc::setSize </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;&#160;</td>
           <td class="paramname"><em>val</em></td><td>)</td>
           <td></td>
         </tr>
@@ -793,7 +848,7 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> ImageDesc::setSize </td>
+          <td class="memname"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">void</a> ImageDesc::setSize </td>
           <td>(</td>
           <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>width</em>, </td>
@@ -838,9 +893,9 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> ImageDesc::setVideoScanMode </td>
+          <td class="memname"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">void</a> ImageDesc::setVideoScanMode </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classVideoScanMode.html">VideoScanMode</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="classVideoScanMode.html">VideoScanMode</a> &amp;&#160;</td>
           <td class="paramname"><em>mode</em></td><td>)</td>
           <td></td>
         </tr>
@@ -872,7 +927,7 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp; ImageDesc::size </td>
+          <td class="memname"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp; ImageDesc::size </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -899,7 +954,7 @@ Static Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname"><a class="el" href="classSdpMediaDescription.html">SdpMediaDescription</a> ImageDesc::toSdp </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">uint8_t</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">uint8_t</a>&#160;</td>
           <td class="paramname"><em>payloadType</em></td><td>)</td>
           <td> const</td>
         </tr>
@@ -991,7 +1046,7 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">size_t</a> ImageDesc::width </td>
+          <td class="memname"><a class="el" href="classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb">size_t</a> ImageDesc::width </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -1019,7 +1074,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classImageDesc.html">ImageDesc</a></li>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

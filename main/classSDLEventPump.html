@@ -119,9 +119,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aff0cf049a37ce247fa6a456a555fd405" id="r_aff0cf049a37ce247fa6a456a555fd405"><td class="memItemLeft" align="right" valign="top"><a id="aff0cf049a37ce247fa6a456a555fd405" name="aff0cf049a37ce247fa6a456a555fd405"></a>
 <a class="el" href="classSDLEventPump.html">SDLEventPump</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classSDLEventPump.html">SDLEventPump</a> &amp;)=<a class="el" href="classList.html">delete</a></td></tr>
 <tr class="separator:aff0cf049a37ce247fa6a456a555fd405"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a48f3bd83fa1ab1f76fd6f8a53e10ab67" id="r_a48f3bd83fa1ab1f76fd6f8a53e10ab67"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLEventPump.html#a48f3bd83fa1ab1f76fd6f8a53e10ab67">pumpEvents</a> (<a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">blocking</a>=<a class="el" href="classList.html">false</a>)</td></tr>
-<tr class="memdesc:a48f3bd83fa1ab1f76fd6f8a53e10ab67"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pumps SDL events and dispatches them.  <br /></td></tr>
-<tr class="separator:a48f3bd83fa1ab1f76fd6f8a53e10ab67"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0613620a0494409137c75265b3289bc6" id="r_a0613620a0494409137c75265b3289bc6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLEventPump.html#a0613620a0494409137c75265b3289bc6">pumpEvents</a> ()</td></tr>
+<tr class="memdesc:a0613620a0494409137c75265b3289bc6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drains all pending SDL events and dispatches them.  <br /></td></tr>
+<tr class="separator:a0613620a0494409137c75265b3289bc6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad6798c4d2516d7febeb7fdc687c61f7e" id="r_ad6798c4d2516d7febeb7fdc687c61f7e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLEventPump.html#ad6798c4d2516d7febeb7fdc687c61f7e">registerWindow</a> (<a class="el" href="classSDLWindow.html">SDLWindow</a> *<a class="el" href="classList.html">window</a>)</td></tr>
 <tr class="memdesc:ad6798c4d2516d7febeb7fdc687c61f7e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers a window for event routing.  <br /></td></tr>
 <tr class="separator:ad6798c4d2516d7febeb7fdc687c61f7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -135,11 +135,7 @@ Public Member Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Pumps SDL events into the promeki event system. </p>
 <p>Translates SDL events into promeki <a class="el" href="classKeyEvent.html" title="Event delivered when a key is pressed or released.">KeyEvent</a>, <a class="el" href="classMouseEvent.html" title="Event delivered for mouse input.">MouseEvent</a>, and window lifecycle calls on the appropriate <a class="el" href="classSDLWindow.html" title="Top-level SDL window that serves as a root Widget.">SDLWindow</a>. Windows register themselves with the pump so that events can be routed by SDL window ID.</p>
-<p>Supports two modes:</p><ul>
-<li><b>Non-blocking</b> (default): drains all pending events via SDL_PollEvent and returns immediately.</li>
-<li><b>Blocking</b>: waits for the first event via SDL_WaitEvent, processes it, then drains any remaining pending events. This avoids busy-waiting in the main loop.</li>
-</ul>
-<p>This is not an <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> — it is infrastructure owned by <a class="el" href="classSDLApplication.html" title="Application class for SDL-based programs.">SDLApplication</a> (similar to <a class="el" href="classTuiScreen.html" title="Double-buffered character cell grid for TUI rendering.">TuiScreen</a> or <a class="el" href="classTuiInputParser.html" title="State machine for parsing terminal escape sequences into events.">TuiInputParser</a>). </p>
+<p>This is not an <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> — it is infrastructure owned by <a class="el" href="classSdlSubsystem.html" title="SDL subsystem installed alongside an Application.">SdlSubsystem</a> (similar to <a class="el" href="classTuiScreen.html" title="Double-buffered character cell grid for TUI rendering.">TuiScreen</a> or <a class="el" href="classTuiInputParser.html" title="State machine for parsing terminal escape sequences into events.">TuiInputParser</a>). </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a0215a6001de4c8d41f80e3f6f1a218db" name="a0215a6001de4c8d41f80e3f6f1a218db"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0215a6001de4c8d41f80e3f6f1a218db">&#9670;&#160;</a></span>findWindow()</h2>
@@ -168,8 +164,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a48f3bd83fa1ab1f76fd6f8a53e10ab67" name="a48f3bd83fa1ab1f76fd6f8a53e10ab67"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a48f3bd83fa1ab1f76fd6f8a53e10ab67">&#9670;&#160;</a></span>pumpEvents()</h2>
+<a id="a0613620a0494409137c75265b3289bc6" name="a0613620a0494409137c75265b3289bc6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0613620a0494409137c75265b3289bc6">&#9670;&#160;</a></span>pumpEvents()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -177,20 +173,14 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname"><a class="el" href="classList.html">void</a> SDLEventPump::pumpEvents </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">bool</a>&#160;</td>
-          <td class="paramname"><em>blocking</em> = <code><a class="el" href="classList.html">false</a></code></td><td>)</td>
+          <td class="paramname"></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Pumps SDL events and dispatches them. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">blocking</td><td>If true, blocks until at least one event is available (via SDL_WaitEvent), then drains all remaining events. If false (default), polls all pending events and returns immediately. </td></tr>
-  </table>
-  </dd>
-</dl>
+<p>Drains all pending SDL events and dispatches them. </p>
+<p>Non-blocking: calls <code>SDL_PollEvent</code> in a loop until the SDL queue is empty. <a class="el" href="classSdlSubsystem.html" title="SDL subsystem installed alongside an Application.">SdlSubsystem</a> invokes this from the <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> IoSource callback that fires when <code>SDL_AddEventWatch</code> signals that new events have arrived. </p>
 
 </div>
 </div>
@@ -256,7 +246,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classSDLEventPump.html">SDLEventPump</a></li>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

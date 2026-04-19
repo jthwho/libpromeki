@@ -27,6 +27,6 @@ var searchData=
   ['getuint_24',['getuint',['../classJsonObject.html#a5f78bc5474faf0d95e01eeec568605a1',1,'JsonObject::getUInt()'],['../classJsonArray.html#a914056fcc53e42925e66a149cf47d0d8',1,'JsonArray::getUInt()']]],
   ['global_25',['global',['../classRandom.html#a0543016b80f333ade4769ce022937775',1,'Random']]],
   ['gmpercussion_26',['gmPercussion',['../classMidiNoteNames.html#a8733a11bd004d68fd532a47812ebfe7f',1,'MidiNoteNames']]],
-  ['grabmouse_27',['grabMouse',['../classTuiApplication.html#a07b6736b52630f2870d5bd4006957d8c',1,'TuiApplication']]],
+  ['grabmouse_27',['grabMouse',['../classTuiSubsystem.html#a82feca864ec6a6bf1a0e928971de298c',1,'TuiSubsystem']]],
   ['groups_28',['groups',['../classMulticastReceiver.html#a0edec448bc795d802cc874182f843e84',1,'MulticastReceiver']]]
 ];

@@ -101,6 +101,7 @@ $(document).ready(function(){initNavTree('classApplication.html',''); initResiza
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classApplication-members.html">List of all members</a>  </div>
@@ -112,19 +113,13 @@ $(document).ready(function(){initNavTree('classApplication.html',''); initResiza
  <a href="classApplication.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="application_8h_source.html">application.h</a>&gt;</code></p>
-<div class="dynheader">
-Inheritance diagram for Application:</div>
-<div class="dyncontent">
-<div class="center"><img src="classApplication__inherit__graph.png" border="0" usemap="#aApplication_inherit__map" alt="Inheritance graph"/></div>
-<map name="aApplication_inherit__map" id="aApplication_inherit__map">
-<area shape="rect" title="Application&#45;wide state for the promeki library." alt="" coords="89,5,184,31"/>
-<area shape="rect" href="classSDLApplication.html" title="Application class for SDL&#45;based programs." alt="" coords="5,79,127,104"/>
-<area shape="poly" title=" " alt="" coords="117,43,79,80,76,77,113,39"/>
-<area shape="rect" href="classTuiApplication.html" title="Application class for TUI programs." alt="" coords="151,79,264,104"/>
-<area shape="poly" title=" " alt="" coords="160,39,198,77,194,80,156,43"/>
-</map>
-<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a7ed368ed0156d29e6582f6f7786620d9" id="r_a7ed368ed0156d29e6582f6f7786620d9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#a7ed368ed0156d29e6582f6f7786620d9">QuitRequestHandler</a> = std::function&lt; <a class="el" href="classList.html">bool</a>(int <a class="el" href="classApplication.html#ac2b799c01a3e63ae2efc44e8152fc724">exitCode</a>)&gt;</td></tr>
+<tr class="memdesc:a7ed368ed0156d29e6582f6f7786620d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handler signature for <a class="el" href="classApplication.html#a80e39e9b64a027fc13c6c541cff968fb">setQuitRequestHandler</a>.  <br /></td></tr>
+<tr class="separator:a7ed368ed0156d29e6582f6f7786620d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a758ec0591237b4b7204ee8d87a26f834" id="r_a758ec0591237b4b7204ee8d87a26f834"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#a758ec0591237b4b7204ee8d87a26f834">Application</a> (int <a class="el" href="classList.html">argc</a>, <a class="el" href="classList.html">char</a> **<a class="el" href="classList.html">argv</a>)</td></tr>
@@ -146,6 +141,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aa909176412a911bcedb36005049c7bcf" id="r_aa909176412a911bcedb36005049c7bcf"><td class="memItemLeft" align="right" valign="top"><a id="aa909176412a911bcedb36005049c7bcf" name="aa909176412a911bcedb36005049c7bcf"></a>
 <a class="el" href="classApplication.html">Application</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classApplication.html">Application</a> &amp;&amp;)=<a class="el" href="classList.html">delete</a></td></tr>
 <tr class="separator:aa909176412a911bcedb36005049c7bcf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a33bf2325ad043310bf5a448022b94840" id="r_a33bf2325ad043310bf5a448022b94840"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#a33bf2325ad043310bf5a448022b94840">exec</a> ()</td></tr>
+<tr class="memdesc:a33bf2325ad043310bf5a448022b94840"><td class="mdescLeft">&#160;</td><td class="mdescRight">Runs the main event loop until <a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa" title="Requests the application to quit.">quit()</a> is called.  <br /></td></tr>
+<tr class="separator:a33bf2325ad043310bf5a448022b94840"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -206,6 +204,9 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a208db3379cddeea6924b8b3c3f9f10aa" id="r_a208db3379cddeea6924b8b3c3f9f10aa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa">quit</a> (int <a class="el" href="classApplication.html#ac2b799c01a3e63ae2efc44e8152fc724">exitCode</a>=0)</td></tr>
 <tr class="memdesc:a208db3379cddeea6924b8b3c3f9f10aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Requests the application to quit.  <br /></td></tr>
 <tr class="separator:a208db3379cddeea6924b8b3c3f9f10aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a80e39e9b64a027fc13c6c541cff968fb" id="r_a80e39e9b64a027fc13c6c541cff968fb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#a80e39e9b64a027fc13c6c541cff968fb">setQuitRequestHandler</a> (<a class="el" href="classApplication.html#a7ed368ed0156d29e6582f6f7786620d9">QuitRequestHandler</a> <a class="el" href="classList.html">handler</a>)</td></tr>
+<tr class="memdesc:a80e39e9b64a027fc13c6c541cff968fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Installs a handler invoked on every <a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa">quit</a> call.  <br /></td></tr>
+<tr class="separator:a80e39e9b64a027fc13c6c541cff968fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad0d8eefe80b02d2ece0d41e5a863cb4e" id="r_ad0d8eefe80b02d2ece0d41e5a863cb4e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#ad0d8eefe80b02d2ece0d41e5a863cb4e">shouldQuit</a> ()</td></tr>
 <tr class="memdesc:ad0d8eefe80b02d2ece0d41e5a863cb4e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if <a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa" title="Requests the application to quit.">quit()</a> has been called.  <br /></td></tr>
 <tr class="separator:ad0d8eefe80b02d2ece0d41e5a863cb4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -222,11 +223,29 @@ Static Public Member Functions</h2></td></tr>
 <div class="line">        <a class="code hl_function" href="classApplication.html#a9dc152f89baef986e9129e3efdf9f7db">Application::setAppName</a>(<span class="stringliteral">&quot;myapp&quot;</span>);</div>
 <div class="line">        <span class="comment">// ...</span></div>
 <div class="line">}</div>
-<div class="ttc" id="aclassApplication_html"><div class="ttname"><a href="classApplication.html">Application</a></div><div class="ttdoc">Application-wide state for the promeki library.</div><div class="ttdef"><b>Definition</b> application.h:47</div></div>
+<div class="ttc" id="aclassApplication_html"><div class="ttname"><a href="classApplication.html">Application</a></div><div class="ttdoc">Application-wide state for the promeki library.</div><div class="ttdef"><b>Definition</b> application.h:49</div></div>
 <div class="ttc" id="aclassApplication_html_a9dc152f89baef986e9129e3efdf9f7db"><div class="ttname"><a href="classApplication.html#a9dc152f89baef986e9129e3efdf9f7db">Application::setAppName</a></div><div class="ttdeci">static void setAppName(const String &amp;name)</div><div class="ttdoc">Sets the application name used for UUID v3/v5 generation.</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 </div><!-- fragment --><p>If no instance is created, the static accessors operate on default-constructed internal state. </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+</div><h2 class="groupheader">Member Typedef Documentation</h2>
+<a id="a7ed368ed0156d29e6582f6f7786620d9" name="a7ed368ed0156d29e6582f6f7786620d9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7ed368ed0156d29e6582f6f7786620d9">&#9670;&#160;</a></span>QuitRequestHandler</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="classApplication.html#a7ed368ed0156d29e6582f6f7786620d9">Application::QuitRequestHandler</a> =  std::function&lt;<a class="el" href="classList.html">bool</a>(int <a class="el" href="classApplication.html#ac2b799c01a3e63ae2efc44e8152fc724">exitCode</a>)&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Handler signature for <a class="el" href="classApplication.html#a80e39e9b64a027fc13c6c541cff968fb">setQuitRequestHandler</a>. </p>
+<p>Receives the requested exit code. Return <code>true</code> to intercept the quit (the handler will call <a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa">quit</a> again, or some equivalent, once async shutdown completes) and <code>false</code> to fall through to the default quit behaviour. </p>
+
+</div>
+</div>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a758ec0591237b4b7204ee8d87a26f834" name="a758ec0591237b4b7204ee8d87a26f834"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a758ec0591237b4b7204ee8d87a26f834">&#9670;&#160;</a></span>Application()</h2>
 
@@ -376,6 +395,27 @@ Static Public Member Functions</h2></td></tr>
 
 <p>Returns the command-line arguments. </p>
 <dl class="section return"><dt>Returns</dt><dd>The arguments passed to the constructor, or an empty list if no instance was created. </dd></dl>
+
+</div>
+</div>
+<a id="a33bf2325ad043310bf5a448022b94840" name="a33bf2325ad043310bf5a448022b94840"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a33bf2325ad043310bf5a448022b94840">&#9670;&#160;</a></span>exec()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int Application::exec </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Runs the main event loop until <a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa" title="Requests the application to quit.">quit()</a> is called. </p>
+<p>Thin wrapper around <code><a class="el" href="classApplication.html#a91441b3fc11ca0e6b342a11a247b60cd" title="Returns the EventLoop for the main thread.">mainEventLoop()</a>-&gt;<a class="el" href="classApplication.html#a33bf2325ad043310bf5a448022b94840" title="Runs the main event loop until quit() is called.">exec()</a></code>. The <a class="el" href="classApplication.html" title="Application-wide state for the promeki library.">Application</a>'s own <a class="el" href="classEventLoop.html">EventLoop</a> is constructed with the <a class="el" href="classApplication.html" title="Application-wide state for the promeki library.">Application</a> itself; any <code>Subsystem</code> objects (SDL, TUI, ...) installed before this call have registered their I/O sources on that loop, so <code><a class="el" href="classApplication.html#a33bf2325ad043310bf5a448022b94840" title="Runs the main event loop until quit() is called.">exec()</a></code> blocks until one of them or a posted <a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa">quit()</a> causes the loop to exit.</p>
+<dl class="section return"><dt>Returns</dt><dd>The exit code passed to <a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa">quit</a> (or the exit code passed to <code><a class="el" href="classEventLoop.html#a9e126989d057c302e18f20061f93deb5" title="Signals the event loop to exit with the given return code.">EventLoop::quit()</a></code> directly). </dd></dl>
 
 </div>
 </div>
@@ -576,9 +616,10 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Requests the application to quit. </p>
+<p>If a <a class="el" href="classApplication.html#a7ed368ed0156d29e6582f6f7786620d9">QuitRequestHandler</a> has been installed via <a class="el" href="classApplication.html#a80e39e9b64a027fc13c6c541cff968fb">setQuitRequestHandler</a>, it is invoked first. When the handler returns <code>true</code>, it has accepted responsibility for eventually driving the actual quit itself (typically after some async shutdown completes) and this call neither sets <a class="el" href="classApplication.html#ad0d8eefe80b02d2ece0d41e5a863cb4e">shouldQuit</a> nor wakes the main <a class="el" href="classEventLoop.html">EventLoop</a>. When the handler returns <code>false</code>, or no handler is installed, the call proceeds with the default quit behaviour: the exit-code and <a class="el" href="classApplication.html#ad0d8eefe80b02d2ece0d41e5a863cb4e">shouldQuit</a> flag are set and the main <a class="el" href="classEventLoop.html">EventLoop</a> is poked so any blocked <a class="el" href="classEventLoop.html#aff91014422ad30a80aa3a2fcc96b423e">EventLoop::exec</a> unwinds.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">exitCode</td><td>The exit code (retrievable via <a class="el" href="classApplication.html#ac2b799c01a3e63ae2efc44e8152fc724" title="Returns the exit code set by quit().">exitCode()</a>). </td></tr>
+    <tr><td class="paramname">exitCode</td><td>The exit code (retrievable via <a class="el" href="classApplication.html#ac2b799c01a3e63ae2efc44e8152fc724">exitCode</a>). </td></tr>
   </table>
   </dd>
 </dl>
@@ -686,6 +727,42 @@ Static Public Member Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">uuid</td><td>The namespace <a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a> to use. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a80e39e9b64a027fc13c6c541cff968fb" name="a80e39e9b64a027fc13c6c541cff968fb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a80e39e9b64a027fc13c6c541cff968fb">&#9670;&#160;</a></span>setQuitRequestHandler()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a> Application::setQuitRequestHandler </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classApplication.html#a7ed368ed0156d29e6582f6f7786620d9">QuitRequestHandler</a>&#160;</td>
+          <td class="paramname"><em>handler</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Installs a handler invoked on every <a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa">quit</a> call. </p>
+<p>Use this to defer the actual event-loop teardown until an async shutdown has completed — for example, running <a class="el" href="classMediaPipeline.html#a43817d314f804c00eb6102b4ec138ed0">MediaPipeline::close</a> with <code>block=false</code> and re-invoking <a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa">quit</a> from the pipeline's <code>closedSignal</code>. Pass an empty function to clear the handler.</p>
+<p>Only one handler may be installed at a time; a second call replaces the first. The handler runs on the calling thread of the <a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa">quit</a> invocation (typically the signal-delivery thread), so it must be thread-safe — the canonical pattern is to post work to the main <a class="el" href="classEventLoop.html">EventLoop</a> from inside the handler rather than doing it inline.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">handler</td><td>The handler (or an empty function to clear). </td></tr>
   </table>
   </dd>
 </dl>
@@ -911,7 +988,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classApplication.html">Application</a></li>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

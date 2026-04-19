@@ -467,7 +467,7 @@ How to Implement (Shareable Classes)</h2>
 <div class="line">        <span class="keyword">public</span>:</div>
 <div class="line">                <span class="keyword">using </span><a class="code hl_typedef" href="classAudioDesc.html#a12c38d68a765340588c5b19ae43ee023">Ptr</a> = <a class="code hl_class" href="classList.html">SharedPtr&lt;AudioDesc&gt;</a>;</div>
 <div class="line">                <span class="keyword">using </span><a class="code hl_class" href="classList.html">List</a> = promeki::List&lt;AudioDesc&gt;;</div>
-<div class="line">                <span class="keyword">using </span>PtrList = promeki::List&lt;Ptr&gt;;</div>
+<div class="line">                <span class="keyword">using </span><a class="code hl_typedef" href="classAudioDesc.html#addd7d5467392b279d693eff02f0af5e0">PtrList</a> = promeki::List&lt;Ptr&gt;;</div>
 <div class="line">                <span class="comment">// ... public API ...</span></div>
 <div class="line"> </div>
 <div class="line">        <span class="keyword">private</span>:</div>
@@ -477,6 +477,7 @@ How to Implement (Shareable Classes)</h2>
 <div class="line">};</div>
 <div class="ttc" id="aclassAudioDesc_html"><div class="ttname"><a href="classAudioDesc.html">AudioDesc</a></div><div class="ttdoc">Describes an audio format including sample type, rate, and channel count.</div><div class="ttdef"><b>Definition</b> audiodesc.h:31</div></div>
 <div class="ttc" id="aclassAudioDesc_html_a12c38d68a765340588c5b19ae43ee023"><div class="ttname"><a href="classAudioDesc.html#a12c38d68a765340588c5b19ae43ee023">AudioDesc::Ptr</a></div><div class="ttdeci">SharedPtr&lt; AudioDesc &gt; Ptr</div><div class="ttdoc">Shared pointer type for AudioDesc.</div><div class="ttdef"><b>Definition</b> audiodesc.h:35</div></div>
+<div class="ttc" id="aclassAudioDesc_html_addd7d5467392b279d693eff02f0af5e0"><div class="ttname"><a href="classAudioDesc.html#addd7d5467392b279d693eff02f0af5e0">AudioDesc::PtrList</a></div><div class="ttdeci">promeki::List&lt; Ptr &gt; PtrList</div><div class="ttdoc">List of shared AudioDesc pointers.</div><div class="ttdef"><b>Definition</b> audiodesc.h:41</div></div>
 </div><!-- fragment --><p>No internal <code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a>&lt;Data&gt;</code>, no <code>d-&gt;field</code> / <code>d.modify()-&gt;field</code> pattern. Just direct member access. When shared ownership is needed, callers use <code><a class="el" href="classAudioDesc.html#a12c38d68a765340588c5b19ae43ee023" title="Shared pointer type for AudioDesc.">AudioDesc::Ptr</a></code>.</p>
 <hr  />
 <h1><a class="anchor" id="autotoc_md60"></a>
@@ -628,7 +629,7 @@ Function Signatures</h2>
 <div class="line"><span class="comment">// Only use generic Enum when the function genuinely accepts any enum</span></div>
 <div class="line"><span class="comment">// (serialization, equality, generic lookup helpers)</span></div>
 <div class="line"><a class="code hl_class" href="classDataStream.html">DataStream</a> &amp;<a class="code hl_function" href="audiodesc_8h.html#a58ee4887cc6f000368ebfd15426208f2">operator&lt;&lt;</a>(<span class="keyword">const</span> <a class="code hl_class" href="classEnum.html">Enum</a> &amp;<a class="code hl_class" href="classList.html">e</a>);</div>
-<div class="ttc" id="aaudiodesc_8h_html_a58ee4887cc6f000368ebfd15426208f2"><div class="ttname"><a href="audiodesc_8h.html#a58ee4887cc6f000368ebfd15426208f2">operator&lt;&lt;</a></div><div class="ttdeci">DataStream &amp; operator&lt;&lt;(DataStream &amp;stream, const AudioDesc &amp;desc)</div><div class="ttdoc">Writes an AudioDesc as tag + dataType + sampleRate + channels + metadata.</div><div class="ttdef"><b>Definition</b> audiodesc.h:566</div></div>
+<div class="ttc" id="aaudiodesc_8h_html_a58ee4887cc6f000368ebfd15426208f2"><div class="ttname"><a href="audiodesc_8h.html#a58ee4887cc6f000368ebfd15426208f2">operator&lt;&lt;</a></div><div class="ttdeci">DataStream &amp; operator&lt;&lt;(DataStream &amp;stream, const AudioDesc &amp;desc)</div><div class="ttdoc">Writes an AudioDesc as tag + dataType + sampleRate + channels + metadata.</div><div class="ttdef"><b>Definition</b> audiodesc.h:581</div></div>
 <div class="ttc" id="aclassByteCountStyle_html"><div class="ttname"><a href="classByteCountStyle.html">ByteCountStyle</a></div><div class="ttdoc">Well-known Enum type for human-readable byte-count formatting.</div><div class="ttdef"><b>Definition</b> enums.h:581</div></div>
 <div class="ttc" id="aclassDataStream_html"><div class="ttname"><a href="classDataStream.html">DataStream</a></div><div class="ttdoc">Binary stream for structured, portable serialization.</div><div class="ttdef"><b>Definition</b> datastream.h:153</div></div>
 <div class="ttc" id="aclassEnum_html"><div class="ttname"><a href="classEnum.html">Enum</a></div><div class="ttdoc">Runtime-typed enumeration value carrying a registered type and integer.</div><div class="ttdef"><b>Definition</b> enum.h:107</div></div>
@@ -672,7 +673,7 @@ TextStream</h2>
 <div class="line"> </div>
 <div class="line"><a class="code hl_class" href="classTextStream.html">TextStream</a> &amp;<a class="code hl_function" href="audiodesc_8h.html#a58ee4887cc6f000368ebfd15426208f2">operator&lt;&lt;</a>(<a class="code hl_class" href="classTextStream.html">TextStream</a> &amp;stream, <span class="keyword">const</span> <a class="code hl_class" href="classList.html">MyClass</a> &amp;<a class="code hl_class" href="classList.html">val</a>);</div>
 <div class="line"><a class="code hl_class" href="classTextStream.html">TextStream</a> &amp;<a class="code hl_function" href="audiodesc_8h.html#a93172015d81d29c21201f32bf7dcbcf7">operator&gt;&gt;</a>(<a class="code hl_class" href="classTextStream.html">TextStream</a> &amp;stream, <a class="code hl_class" href="classList.html">MyClass</a> &amp;<a class="code hl_class" href="classList.html">val</a>);</div>
-<div class="ttc" id="aaudiodesc_8h_html_a93172015d81d29c21201f32bf7dcbcf7"><div class="ttname"><a href="audiodesc_8h.html#a93172015d81d29c21201f32bf7dcbcf7">operator&gt;&gt;</a></div><div class="ttdeci">DataStream &amp; operator&gt;&gt;(DataStream &amp;stream, AudioDesc &amp;desc)</div><div class="ttdoc">Reads an AudioDesc from its tagged wire format.</div><div class="ttdef"><b>Definition</b> audiodesc.h:581</div></div>
+<div class="ttc" id="aaudiodesc_8h_html_a93172015d81d29c21201f32bf7dcbcf7"><div class="ttname"><a href="audiodesc_8h.html#a93172015d81d29c21201f32bf7dcbcf7">operator&gt;&gt;</a></div><div class="ttdeci">DataStream &amp; operator&gt;&gt;(DataStream &amp;stream, AudioDesc &amp;desc)</div><div class="ttdoc">Reads an AudioDesc from its tagged wire format.</div><div class="ttdef"><b>Definition</b> audiodesc.h:596</div></div>
 <div class="ttc" id="aclassTextStream_html"><div class="ttname"><a href="classTextStream.html">TextStream</a></div><div class="ttdoc">Formatted text I/O with encoding awareness.</div><div class="ttdef"><b>Definition</b> textstream.h:54</div></div>
 </div><!-- fragment --><p>The <code>operator&lt;&lt;</code> should produce a human-readable representation consistent with <code>toString()</code>. The <code>operator&gt;&gt;</code> should parse the same format when round-tripping makes sense; omit it when it doesn't (e.g., complex summary formats).</p>
 <h2><a class="anchor" id="autotoc_md87"></a>
@@ -856,7 +857,7 @@ Miscellaneous</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

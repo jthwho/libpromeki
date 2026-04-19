@@ -21,7 +21,7 @@ var searchData=
   ['hasmin_18',['hasMin',['../classVariantSpec.html#a5c358a3da008db791a1e84728c86c623',1,'VariantSpec']]],
   ['hasname_19',['hasName',['../classMidiNoteNames.html#a83efb7a939a215db52cbe99c05692e9b',1,'MidiNoteNames']]],
   ['haspaintengine_20',['hasPaintEngine',['../classPixelDesc.html#a7926a8322df8a21b32752a8f35beb9ec',1,'PixelDesc']]],
-  ['haspendingconnections_21',['hasPendingConnections',['../classTcpServer.html#ae76e1c9a2ddb80fddff5ce905543e4c4',1,'TcpServer']]],
+  ['haspendingconnections_21',['haspendingconnections',['../classTcpServer.html#ae76e1c9a2ddb80fddff5ce905543e4c4',1,'TcpServer::hasPendingConnections()'],['../classLocalServer.html#a14a13995d28a5da95ca920429d2eceba',1,'LocalServer::hasPendingConnections()']]],
   ['haspendingdatagrams_22',['hasPendingDatagrams',['../classUdpSocket.html#aeab9244817662235c7f6bb4f04290070',1,'UdpSocket']]],
   ['hasrange_23',['hasRange',['../classVariantSpec.html#a8f7335327a3d981dcd303cad12a0bdb5',1,'VariantSpec']]],
   ['hasstage_24',['hasStage',['../classMediaPipelineConfig.html#af9890df6b7b96db8f8959a29d9dbf0ee',1,'MediaPipelineConfig']]],

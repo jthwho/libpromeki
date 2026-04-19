@@ -169,6 +169,9 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:aa86a5841e3682c108faecc277d40b4d5" id="r_aa86a5841e3682c108faecc277d40b4d5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classDir.html">Dir</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDir.html#aa86a5841e3682c108faecc277d40b4d5">temp</a> ()</td></tr>
 <tr class="memdesc:aa86a5841e3682c108faecc277d40b4d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a <a class="el" href="classDir.html" title="Provides directory operations using std::filesystem.">Dir</a> for the library's temp directory.  <br /></td></tr>
 <tr class="separator:aa86a5841e3682c108faecc277d40b4d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f0e723dec98b452cc9b42ed82cf54a5" id="r_a8f0e723dec98b452cc9b42ed82cf54a5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classDir.html">Dir</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDir.html#a8f0e723dec98b452cc9b42ed82cf54a5">ipc</a> ()</td></tr>
+<tr class="memdesc:a8f0e723dec98b452cc9b42ed82cf54a5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a <a class="el" href="classDir.html" title="Provides directory operations using std::filesystem.">Dir</a> for the library's IPC directory.  <br /></td></tr>
+<tr class="separator:a8f0e723dec98b452cc9b42ed82cf54a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a597f1bcf366f89cc2c1b1a14d3d74f9e" id="r_a597f1bcf366f89cc2c1b1a14d3d74f9e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDir.html#a597f1bcf366f89cc2c1b1a14d3d74f9e">setCurrent</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classFilePath.html">FilePath</a> &amp;<a class="el" href="classDir.html#a504887ed69c9a02ce20676fefe76c4a4">path</a>)</td></tr>
 <tr class="memdesc:a597f1bcf366f89cc2c1b1a14d3d74f9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the current working directory.  <br /></td></tr>
 <tr class="separator:a597f1bcf366f89cc2c1b1a14d3d74f9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -412,6 +415,40 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a8f0e723dec98b452cc9b42ed82cf54a5" name="a8f0e723dec98b452cc9b42ed82cf54a5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8f0e723dec98b452cc9b42ed82cf54a5">&#9670;&#160;</a></span>ipc()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classDir.html">Dir</a> Dir::ipc </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns a <a class="el" href="classDir.html" title="Provides directory operations using std::filesystem.">Dir</a> for the library's IPC directory. </p>
+<p>The IPC directory is where cross-process primitives — shared memory regions, local-socket files, lock files, etc. — live by convention. Use this rather than hard-coding paths so IPC traffic can be moved in one place via LibraryOptions::IpcDir.</p>
+<p>Resolves in this order:</p><ol type="1">
+<li>LibraryOptions::IpcDir — non-empty override (set programmatically or via the <code>PROMEKI_OPT_IpcDir</code> env var).</li>
+<li>On Linux: <code>/dev/shm/promeki</code> — tmpfs-backed, fast, and well suited to both <code>shm_open</code> objects and path-named <code>AF_UNIX</code> sockets. The <code>promeki</code> sub-directory is <em>not</em> auto-created; callers that need it should <a class="el" href="classDir.html#a7699463ee6296caf632cce0fff36e7f4">mkpath</a> the returned <a class="el" href="classDir.html">Dir</a>.</li>
+<li>Other platforms: the result of <a class="el" href="classDir.html#aa86a5841e3682c108faecc277d40b4d5">Dir::temp</a>.</li>
+</ol>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classDir.html" title="Provides directory operations using std::filesystem.">Dir</a> wrapping the effective IPC directory. </dd></dl>
+
+</div>
+</div>
 <a id="a741b3afab46335973607bfa934978f43" name="a741b3afab46335973607bfa934978f43"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a741b3afab46335973607bfa934978f43">&#9670;&#160;</a></span>isEmpty()</h2>
 
@@ -643,7 +680,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classDir.html">Dir</a></li>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

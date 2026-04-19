@@ -21,9 +21,10 @@ var searchData=
   ['formatter_3c_20promeki_3a_3avideoformat_20_3e_18',['formatter&lt; promeki::VideoFormat &gt;',['../structstd_1_1formatter_3_01promeki_1_1VideoFormat_01_4.html',1,'std']]],
   ['fourcc_19',['FourCC',['../classFourCC.html',1,'']]],
   ['frame_20',['Frame',['../classFrame.html',1,'']]],
-  ['framepacer_21',['FramePacer',['../classFramePacer.html',1,'']]],
-  ['framerate_22',['FrameRate',['../classFrameRate.html',1,'']]],
-  ['framesync_23',['FrameSync',['../classFrameSync.html',1,'']]],
-  ['future_24',['Future',['../classFuture.html',1,'']]],
-  ['future_3c_20void_20_3e_25',['Future&lt; void &gt;',['../classFuture_3_01void_01_4.html',1,'']]]
+  ['framebridge_21',['FrameBridge',['../classFrameBridge.html',1,'']]],
+  ['framepacer_22',['FramePacer',['../classFramePacer.html',1,'']]],
+  ['framerate_23',['FrameRate',['../classFrameRate.html',1,'']]],
+  ['framesync_24',['FrameSync',['../classFrameSync.html',1,'']]],
+  ['future_25',['Future',['../classFuture.html',1,'']]],
+  ['future_3c_20void_20_3e_26',['Future&lt; void &gt;',['../classFuture_3_01void_01_4.html',1,'']]]
 ];

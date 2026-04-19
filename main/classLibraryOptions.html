@@ -170,6 +170,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a50d75d62f1ff9a5a705f1aa7528384d2" id="r_a50d75d62f1ff9a5a705f1aa7528384d2"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLibraryOptions.html#a50d75d62f1ff9a5a705f1aa7528384d2">PROMEKI_DECLARE_ID</a> (<a class="el" href="classList.html">TempDir</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString) .setDefault(<a class="el" href="classString.html">String</a>()) .setDescription(&quot;Override <a class="el" href="classList.html">for</a> <a class="el" href="classDir.html#aa86a5841e3682c108faecc277d40b4d5">Dir::temp</a>() (<a class="el" href="classList.html">empty</a> = <a class="el" href="classList.html">OS</a> <a class="el" href="classList.html">default</a>).&quot;))</td></tr>
 <tr class="memdesc:a50d75d62f1ff9a5a705f1aa7528384d2"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> — override for the path returned by <a class="el" href="classDir.html#aa86a5841e3682c108faecc277d40b4d5">Dir::temp</a> (empty = use the OS default, which is <code>std::filesystem::temp_directory_path</code> — typically <code>/tmp</code> on Linux, <code>TEMP%</code> on Windows).  <br /></td></tr>
 <tr class="separator:a50d75d62f1ff9a5a705f1aa7528384d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae7b296a328da184456a1f7656e624a2c" id="r_ae7b296a328da184456a1f7656e624a2c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLibraryOptions.html#ae7b296a328da184456a1f7656e624a2c">PROMEKI_DECLARE_ID</a> (<a class="el" href="classList.html">IpcDir</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString) .setDefault(<a class="el" href="classString.html">String</a>()) .setDescription(&quot;Override <a class="el" href="classList.html">for</a> <a class="el" href="classDir.html#a8f0e723dec98b452cc9b42ed82cf54a5">Dir::ipc</a>() (<a class="el" href="classList.html">empty</a> = <a class="el" href="classList.html">platform</a> <a class="el" href="classList.html">default</a>).&quot;))</td></tr>
+<tr class="memdesc:ae7b296a328da184456a1f7656e624a2c"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> — override for the path returned by <a class="el" href="classDir.html#a8f0e723dec98b452cc9b42ed82cf54a5">Dir::ipc</a> (empty = platform default, which is <code>/dev/shm/promeki</code> on Linux — a tmpfs location well suited to both shared-memory objects and named <code>AF_UNIX</code> sockets — and <a class="el" href="classDir.html#aa86a5841e3682c108faecc277d40b4d5">Dir::temp</a> elsewhere).  <br /></td></tr>
+<tr class="separator:ae7b296a328da184456a1f7656e624a2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:add6cb4934665b46ec1e73f03bbc319bd" id="r_add6cb4934665b46ec1e73f03bbc319bd"><td class="memItemLeft" align="right" valign="top"><a id="add6cb4934665b46ec1e73f03bbc319bd" name="add6cb4934665b46ec1e73f03bbc319bd"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">TerminationSignalHandler</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool) .setDefault(<a class="el" href="classList.html">true</a>) .setDescription(&quot;Install <a class="el" href="classList.html">termination</a> signal <a class="el" href="classList.html">handlers</a> (<a class="el" href="classList.html">Ctrl</a>-<a class="el" href="classList.html">C</a>/kill).&quot;))</td></tr>
 <tr class="memdesc:add6cb4934665b46ec1e73f03bbc319bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — install termination signal handlers (SIGINT/SIGTERM/SIGHUP/SIGQUIT on POSIX, CTRL_C_EVENT/CTRL_BREAK_EVENT/... on Windows). Default <code>true</code>. When enabled, the <a class="el" href="classApplication.html">Application</a> constructor wires a dedicated signal-waiting thread that turns those signals into <a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa">Application::quit</a> calls plus a wake-up posted to the main <a class="el" href="classEventLoop.html">EventLoop</a>. <br /></td></tr>
@@ -358,8 +361,53 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="ae7b296a328da184456a1f7656e624a2c" name="ae7b296a328da184456a1f7656e624a2c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae7b296a328da184456a1f7656e624a2c">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">LibraryOptions::PROMEKI_DECLARE_ID </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">IpcDir</a>&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString) .setDefault(<a class="el" href="classString.html">String</a>()) .setDescription(&quot;Override <a class="el" href="classList.html">for</a> <a class="el" href="classDir.html#a8f0e723dec98b452cc9b42ed82cf54a5">Dir::ipc</a>() (<a class="el" href="classList.html">empty</a> = <a class="el" href="classList.html">platform</a> <a class="el" href="classList.html">default</a>).&quot;)&#160;</td>
+          <td class="paramname">&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> — override for the path returned by <a class="el" href="classDir.html#a8f0e723dec98b452cc9b42ed82cf54a5">Dir::ipc</a> (empty = platform default, which is <code>/dev/shm/promeki</code> on Linux — a tmpfs location well suited to both shared-memory objects and named <code>AF_UNIX</code> sockets — and <a class="el" href="classDir.html#aa86a5841e3682c108faecc277d40b4d5">Dir::temp</a> elsewhere). </p>
+<p>The IPC directory is where cross-process primitives (shared memory regions, local-socket files, lock files) live. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> this option to pin the path for every IPC-consuming feature in the library in one place. Common use cases:</p>
+<ul>
+<li>Move IPC traffic off a read-only or restricted <code>/dev/shm</code> onto a writable partition.</li>
+<li>Isolate test runs by pointing at a per-test directory.</li>
+<li>Align with a site's /run layout for cross-user IPC: create a group-owned directory at deployment time and point every process at it.</li>
+</ul>
+<p><a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> via code:</p>
+<div class="fragment"><div class="line"><a class="code hl_function" href="classLibraryOptions.html#aefa2e033a8c07bc49e854d060a5aab1b">LibraryOptions::instance</a>().<a class="code hl_function" href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">set</a>(</div>
+<div class="line">    LibraryOptions::IpcDir,</div>
+<div class="line">    <a class="code hl_class" href="classString.html">String</a>(<span class="stringliteral">&quot;/run/promeki/ipc&quot;</span>));</div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:56</div></div>
+</div><!-- fragment --><p>...or via the environment:</p>
+<div class="fragment"><div class="line"><span class="keyword">export</span> <a class="code hl_class" href="classList.html">PROMEKI_OPT_IpcDir</a>=/run/promeki/ipc</div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+</div><!-- fragment --><p>The override is returned verbatim — the directory is not auto-created. Callers that require the directory to exist should <a class="el" href="classDir.html#a7699463ee6296caf632cce0fff36e7f4">Dir::mkpath</a> the result themselves. </p>
+
+</div>
+</div>
 <a id="a50d75d62f1ff9a5a705f1aa7528384d2" name="a50d75d62f1ff9a5a705f1aa7528384d2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a50d75d62f1ff9a5a705f1aa7528384d2">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a50d75d62f1ff9a5a705f1aa7528384d2">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -389,10 +437,8 @@ Static Public Member Functions</h2></td></tr>
 <div class="fragment"><div class="line"><a class="code hl_function" href="classLibraryOptions.html#aefa2e033a8c07bc49e854d060a5aab1b">LibraryOptions::instance</a>().<a class="code hl_function" href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">set</a>(</div>
 <div class="line">    LibraryOptions::TempDir,</div>
 <div class="line">    <a class="code hl_class" href="classString.html">String</a>(<span class="stringliteral">&quot;/mnt/data/tmp/promeki&quot;</span>));</div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:56</div></div>
 </div><!-- fragment --><p>...or via the environment:</p>
 <div class="fragment"><div class="line"><span class="keyword">export</span> <a class="code hl_class" href="classList.html">PROMEKI_OPT_TempDir</a>=/<a class="code hl_class" href="classList.html">mnt</a>/data/<a class="code hl_class" href="classList.html">tmp</a>/promeki</div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 </div><!-- fragment --><p>The override is returned verbatim — the directory is not auto-created. Callers that require the directory to exist should <a class="el" href="classDir.html#a7699463ee6296caf632cce0fff36e7f4">Dir::mkpath</a> the result themselves. </p>
 
 </div>
@@ -407,7 +453,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classLibraryOptions.html">LibraryOptions</a></li>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

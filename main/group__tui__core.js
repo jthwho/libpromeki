@@ -1,27 +1,5 @@
 var group__tui__core =
 [
-    [ "TuiApplication", "classTuiApplication.html", [
-      [ "TuiApplication", "classTuiApplication.html#a8b4e14e98e3504dd846ce8c7224099a4", null ],
-      [ "~TuiApplication", "classTuiApplication.html#a45daa8fba9fe885851ee6505519b4705", null ],
-      [ "colorMode", "classTuiApplication.html#a28ed888b97d5222e6faa2bf99571f59a", null ],
-      [ "exec", "classTuiApplication.html#a7915497f82dacecc1840afdb565effd3", null ],
-      [ "focusNext", "classTuiApplication.html#a5861dc89e2c45ffcdff32c1024a4dce4", null ],
-      [ "focusWidget", "classTuiApplication.html#a12b67f63dd40135c3133a352f3cbb957", null ],
-      [ "grabMouse", "classTuiApplication.html#a07b6736b52630f2870d5bd4006957d8c", null ],
-      [ "markNeedsRepaint", "classTuiApplication.html#a278194102b9bfca8713efbd0f3c76147", null ],
-      [ "palette", "classTuiApplication.html#af335eb32601d98fadb775a1dac3bc15a", null ],
-      [ "palette", "classTuiApplication.html#aec485838ac3d4115d42a36969d307efe", null ],
-      [ "quit", "classTuiApplication.html#a79e9e47ebfd992adee8e4e4e488d6faf", null ],
-      [ "releaseMouse", "classTuiApplication.html#a2325b78dee2225524a73d970d047b0c5", null ],
-      [ "rootWidget", "classTuiApplication.html#af41de22895b35efcdc4e55f20bb6064e", null ],
-      [ "screen", "classTuiApplication.html#ab7a5b40047eb4de037daf07dd4e71dd6", null ],
-      [ "setColorMode", "classTuiApplication.html#aedd0e260f8a000795d19e05393930102", null ],
-      [ "setFocusWidget", "classTuiApplication.html#ae7c2cdb04ba56870109e6a2509ec98e2", null ],
-      [ "setPalette", "classTuiApplication.html#aad7d357e349c28a6da643502f4bc5dc1", null ],
-      [ "setRootWidget", "classTuiApplication.html#a23d4c3b59e357530d28b8cb127cd46ef", null ],
-      [ "terminal", "classTuiApplication.html#a087c6046f9f344affde07f534bec4d78", null ],
-      [ "updateAll", "classTuiApplication.html#afea82b68f6050da42d09234e3714974f", null ]
-    ] ],
     [ "TuiInputParser", "classTuiInputParser.html", [
       [ "ParsedEvent", "structTuiInputParser_1_1ParsedEvent.html", [
         [ "mouseButtons", "structTuiInputParser_1_1ParsedEvent.html#a7cd715ca42a080de7ee2bef24bc53e35", null ]
@@ -113,6 +91,26 @@ var group__tui__core =
       [ "setAttrs", "classTuiStyle.html#ac3da4d99396b543f4d0af1f3dc51978e", null ],
       [ "setBackground", "classTuiStyle.html#a2269152fc0c7f53bb2d3bf6337d433b2", null ],
       [ "setForeground", "classTuiStyle.html#a03a0e04d196f9eb28f250ecb6c493061", null ]
+    ] ],
+    [ "TuiSubsystem", "classTuiSubsystem.html", [
+      [ "TuiSubsystem", "classTuiSubsystem.html#a424e6e4241d8608545355b8468fe65f9", null ],
+      [ "~TuiSubsystem", "classTuiSubsystem.html#a9411ffd4669be7766150d978bde5cf81", null ],
+      [ "colorMode", "classTuiSubsystem.html#ab85172a6ed3cfc2df459342f1b8e7217", null ],
+      [ "focusNext", "classTuiSubsystem.html#aa02b4c0ca2defa8bf33d9978d0fad74e", null ],
+      [ "focusWidget", "classTuiSubsystem.html#a9aa916769cd0f886241bc6ba494b60db", null ],
+      [ "grabMouse", "classTuiSubsystem.html#a82feca864ec6a6bf1a0e928971de298c", null ],
+      [ "markNeedsRepaint", "classTuiSubsystem.html#a11f9623b16f5a78b463023f77869cd70", null ],
+      [ "palette", "classTuiSubsystem.html#a200ace3a0a4de727c1107cb46da1bb65", null ],
+      [ "palette", "classTuiSubsystem.html#ab6ab9a6395a3f3acfd933a06f80a191b", null ],
+      [ "releaseMouse", "classTuiSubsystem.html#a4894c8e71db538052455acd38b63541a", null ],
+      [ "rootWidget", "classTuiSubsystem.html#a3521b7a47571d7a0e9faecdf5c0fd960", null ],
+      [ "screen", "classTuiSubsystem.html#a7b44fbb82542516eb0c82d664064eaa3", null ],
+      [ "setColorMode", "classTuiSubsystem.html#a2d6f116de2c0ee781a2dbe9abc7197bc", null ],
+      [ "setFocusWidget", "classTuiSubsystem.html#ae2996af7c361c0f0e8b471674607fa27", null ],
+      [ "setPalette", "classTuiSubsystem.html#af632555455cb5575bb7ab0da173e74be", null ],
+      [ "setRootWidget", "classTuiSubsystem.html#a77a2f97d6cc13aa72724cbda421aeb74", null ],
+      [ "terminal", "classTuiSubsystem.html#a6a06f98375a8acec163713b030e6dc0a", null ],
+      [ "updateAll", "classTuiSubsystem.html#a40e7e944b782393d6e88a2a50c83450f", null ]
     ] ],
     [ "TuiWidget", "classTuiWidget.html", [
       [ "TuiWidget", "classTuiWidget.html#a5e42aa0784a97894dce841beb12b5e8e", null ],

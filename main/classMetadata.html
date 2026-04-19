@@ -273,6 +273,9 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeMediaTimeStamp) .setDefault(promeki::MediaTimeStamp()) .setDescription(&quot;Clock-domain-<a class="el" href="classList.html">aware</a> timestamp <a class="el" href="classList.html">for</a> media <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">timing.&quot;</a>))</td></tr>
 <tr class="memdesc:ac1c9ad556bc6bed0721721e8584bc249"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clock-domain-aware timestamp for media timing. <br /></td></tr>
 <tr class="separator:ac1c9ad556bc6bed0721721e8584bc249"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50d5380637e810618ac86f0b6b5730c2" id="r_a50d5380637e810618ac86f0b6b5730c2"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a50d5380637e810618ac86f0b6b5730c2">PROMEKI_DECLARE_ID</a> (<a class="el" href="classList.html">FrameBridgeTimeStamp</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeMediaTimeStamp) .setDefault(promeki::MediaTimeStamp()) .setDescription(&quot;FrameBridge <a class="el" href="classList.html">publish</a> timestamp (SystemMonotonic).&quot;))</td></tr>
+<tr class="memdesc:a50d5380637e810618ac86f0b6b5730c2"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFrameBridge.html" title="Cross-process frame transport over shared memory + local sockets.">FrameBridge</a> publish timestamp for this frame.  <br /></td></tr>
+<tr class="separator:a50d5380637e810618ac86f0b6b5730c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2f3f23133d826559a7f03a257e6dfa7b" id="r_a2f3f23133d826559a7f03a257e6dfa7b"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a2f3f23133d826559a7f03a257e6dfa7b">PROMEKI_DECLARE_ID</a> (<a class="el" href="classList.html">RtpTimestamp</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeU32) .setDefault(<a class="el" href="classList.html">uint32_t</a>(0)) .setDescription(&quot;RTP timestamp from <a class="el" href="classList.html">the</a> packet <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">header.&quot;</a>))</td></tr>
 <tr class="memdesc:a2f3f23133d826559a7f03a257e6dfa7b"><td class="mdescLeft">&#160;</td><td class="mdescRight">RTP timestamp from the packet header (uint32_t).  <br /></td></tr>
 <tr class="separator:a2f3f23133d826559a7f03a257e6dfa7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -715,7 +718,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="ade696870d6c1a3460a25371a616290d3" name="ade696870d6c1a3460a25371a616290d3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ade696870d6c1a3460a25371a616290d3">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[1/4]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ade696870d6c1a3460a25371a616290d3">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[1/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -745,8 +748,39 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a50d5380637e810618ac86f0b6b5730c2" name="a50d5380637e810618ac86f0b6b5730c2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a50d5380637e810618ac86f0b6b5730c2">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[2/5]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Metadata::PROMEKI_DECLARE_ID </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">FrameBridgeTimeStamp</a>&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeMediaTimeStamp) .setDefault(promeki::MediaTimeStamp()) .setDescription(&quot;FrameBridge <a class="el" href="classList.html">publish</a> timestamp (SystemMonotonic).&quot;)&#160;</td>
+          <td class="paramname">&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p><a class="el" href="classFrameBridge.html" title="Cross-process frame transport over shared memory + local sockets.">FrameBridge</a> publish timestamp for this frame. </p>
+<p>The moment the publisher placed this frame in the <a class="el" href="classFrameBridge.html">FrameBridge</a> output queue, expressed in the <a class="el" href="classClockDomain.html#a96decb3f982b51a87f9ea1ad895b65a7">ClockDomain::SystemMonotonic</a> domain. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> by <a class="el" href="classMediaIOTask__FrameBridge.html">MediaIOTask_FrameBridge</a> on every consumer-side frame so downstream stages can measure cross-process transport latency and correlate with other <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> fields. </p>
+
+</div>
+</div>
 <a id="ae1260a748fefec50e1d60f51c7baa8d8" name="ae1260a748fefec50e1d60f51c7baa8d8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae1260a748fefec50e1d60f51c7baa8d8">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[2/4]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1260a748fefec50e1d60f51c7baa8d8">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[3/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -777,7 +811,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="a2f3f23133d826559a7f03a257e6dfa7b" name="a2f3f23133d826559a7f03a257e6dfa7b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2f3f23133d826559a7f03a257e6dfa7b">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[3/4]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a2f3f23133d826559a7f03a257e6dfa7b">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[4/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -808,7 +842,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="ab694155f6292e23d4129efd3490cfe0b" name="ab694155f6292e23d4129efd3490cfe0b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab694155f6292e23d4129efd3490cfe0b">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[4/4]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ab694155f6292e23d4129efd3490cfe0b">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[5/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -883,7 +917,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMetadata.html">Metadata</a></li>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

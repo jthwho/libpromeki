@@ -100,6 +100,7 @@ $(document).ready(function(){initNavTree('classSignalHandler.html',''); initResi
 
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classSignalHandler-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">SignalHandler Class Reference<div class="ingroups"><a class="el" href="group__util.html">Utilities</a></div></div></div>
@@ -111,6 +112,13 @@ $(document).ready(function(){initNavTree('classSignalHandler.html',''); initResi
 
 <p><code>#include &lt;<a class="el" href="signalhandler_8h_source.html">signalhandler.h</a>&gt;</code></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a6281b5300b08c3ebb26b04148eb0096d" id="r_a6281b5300b08c3ebb26b04148eb0096d"><td class="memItemLeft" align="right" valign="top"><a id="a6281b5300b08c3ebb26b04148eb0096d" name="a6281b5300b08c3ebb26b04148eb0096d"></a>
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Callback</b> = std::function&lt; <a class="el" href="classList.html">void</a>(int <a class="el" href="classList.html">signo</a>)&gt;</td></tr>
+<tr class="memdesc:a6281b5300b08c3ebb26b04148eb0096d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback type for <a class="el" href="classSignalHandler.html#a0a455b917d31fd6fdaf1525ccd8c382f">subscribe</a>. <br /></td></tr>
+<tr class="separator:a6281b5300b08c3ebb26b04148eb0096d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:aef28abb1aeb6121afcd3fbf059c0afde" id="r_aef28abb1aeb6121afcd3fbf059c0afde"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSignalHandler.html#aef28abb1aeb6121afcd3fbf059c0afde">install</a> ()</td></tr>
@@ -122,6 +130,12 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:aa7af877f5480fadf3af0a7a0f4353ae1" id="r_aa7af877f5480fadf3af0a7a0f4353ae1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSignalHandler.html#aa7af877f5480fadf3af0a7a0f4353ae1">isInstalled</a> ()</td></tr>
 <tr class="memdesc:aa7af877f5480fadf3af0a7a0f4353ae1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the signal handler is currently installed.  <br /></td></tr>
 <tr class="separator:aa7af877f5480fadf3af0a7a0f4353ae1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0a455b917d31fd6fdaf1525ccd8c382f" id="r_a0a455b917d31fd6fdaf1525ccd8c382f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSignalHandler.html#a0a455b917d31fd6fdaf1525ccd8c382f">subscribe</a> (int <a class="el" href="classList.html">signo</a>, <a class="el" href="classSignalHandler.html#a6281b5300b08c3ebb26b04148eb0096d">Callback</a> cb)</td></tr>
+<tr class="memdesc:a0a455b917d31fd6fdaf1525ccd8c382f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Subscribes a callback for a non-termination signal.  <br /></td></tr>
+<tr class="separator:a0a455b917d31fd6fdaf1525ccd8c382f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a862874429ac512be8c3948739a67eda3" id="r_a862874429ac512be8c3948739a67eda3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSignalHandler.html#a862874429ac512be8c3948739a67eda3">unsubscribe</a> (int handle)</td></tr>
+<tr class="memdesc:a862874429ac512be8c3948739a67eda3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes a subscription previously installed via <a class="el" href="classSignalHandler.html#a0a455b917d31fd6fdaf1525ccd8c382f">subscribe</a>.  <br /></td></tr>
+<tr class="separator:a862874429ac512be8c3948739a67eda3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Installs handlers for termination signals (Ctrl-C, kill, etc.). </p>
@@ -144,7 +158,7 @@ Static Public Member Functions</h2></td></tr>
 <div class="line"><a class="code hl_function" href="classSignalHandler.html#aef28abb1aeb6121afcd3fbf059c0afde">SignalHandler::install</a>();</div>
 <div class="line"><span class="comment">// ...</span></div>
 <div class="line"><a class="code hl_function" href="classSignalHandler.html#a8e0f661a7a2b755624e76af1f644fe6b">SignalHandler::uninstall</a>();</div>
-<div class="ttc" id="aclassApplication_html"><div class="ttname"><a href="classApplication.html">Application</a></div><div class="ttdoc">Application-wide state for the promeki library.</div><div class="ttdef"><b>Definition</b> application.h:47</div></div>
+<div class="ttc" id="aclassApplication_html"><div class="ttname"><a href="classApplication.html">Application</a></div><div class="ttdoc">Application-wide state for the promeki library.</div><div class="ttdef"><b>Definition</b> application.h:49</div></div>
 <div class="ttc" id="aclassApplication_html_a91441b3fc11ca0e6b342a11a247b60cd"><div class="ttname"><a href="classApplication.html#a91441b3fc11ca0e6b342a11a247b60cd">Application::mainEventLoop</a></div><div class="ttdeci">static EventLoop * mainEventLoop()</div><div class="ttdoc">Returns the EventLoop for the main thread.</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassSignalHandler_html_a8e0f661a7a2b755624e76af1f644fe6b"><div class="ttname"><a href="classSignalHandler.html#a8e0f661a7a2b755624e76af1f644fe6b">SignalHandler::uninstall</a></div><div class="ttdeci">static void uninstall()</div><div class="ttdoc">Uninstalls the termination signal handlers.</div></div>
@@ -212,6 +226,55 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a0a455b917d31fd6fdaf1525ccd8c382f" name="a0a455b917d31fd6fdaf1525ccd8c382f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0a455b917d31fd6fdaf1525ccd8c382f">&#9670;&#160;</a></span>subscribe()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> int SignalHandler::subscribe </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>signo</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classSignalHandler.html#a6281b5300b08c3ebb26b04148eb0096d">Callback</a>&#160;</td>
+          <td class="paramname"><em>cb</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Subscribes a callback for a non-termination signal. </p>
+<p>Lets other subsystems (e.g. <a class="el" href="classTuiSubsystem.html" title="TUI subsystem installed alongside an Application.">TuiSubsystem</a> for SIGWINCH) route signals through the single <a class="el" href="classSignalHandler.html">SignalHandler</a> self-pipe watcher thread instead of installing their own <code>sigaction</code> hooks. The callback runs on the watcher thread in normal context — it may take locks, allocate, and post onto event loops.</p>
+<p>On first subscription for <code>signo</code> the <code>sigaction</code> hook is installed; the hook stays registered until <a class="el" href="classSignalHandler.html#a8e0f661a7a2b755624e76af1f644fe6b">uninstall</a>. Multiple subscribers for the same signal are dispatched in subscription order.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">signo</td><td>The signal number (must not be one of the reserved termination signals — <code>SIGINT</code> / <code>SIGTERM</code> / <code>SIGHUP</code> / <code>SIGQUIT</code>). </td></tr>
+    <tr><td class="paramname">cb</td><td>Callback invoked with <code>signo</code> each time the signal arrives. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Handle <code>&gt;=</code> 0 on success; <code>-1</code> if <code>signo</code> is reserved, <code>cb</code> is empty, the handler is not installed, or the <code>sigaction</code> call failed.</dd></dl>
+<dl class="section note"><dt>Note</dt><dd>Subscribers installed before <a class="el" href="classSignalHandler.html#aef28abb1aeb6121afcd3fbf059c0afde">install</a> are rejected — install the handler first. <a class="el" href="classApplication.html">Application</a> constructs with the handler already installed, which is the expected subscription entry point. </dd></dl>
+
+</div>
+</div>
 <a id="a8e0f661a7a2b755624e76af1f644fe6b" name="a8e0f661a7a2b755624e76af1f644fe6b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8e0f661a7a2b755624e76af1f644fe6b">&#9670;&#160;</a></span>uninstall()</h2>
 
@@ -242,6 +305,41 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a862874429ac512be8c3948739a67eda3" name="a862874429ac512be8c3948739a67eda3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a862874429ac512be8c3948739a67eda3">&#9670;&#160;</a></span>unsubscribe()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a> SignalHandler::unsubscribe </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>handle</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Removes a subscription previously installed via <a class="el" href="classSignalHandler.html#a0a455b917d31fd6fdaf1525ccd8c382f">subscribe</a>. </p>
+<p>Idempotent: unknown handles are silently ignored. The underlying <code>sigaction</code> hook stays installed for the life of this <a class="el" href="classSignalHandler.html">SignalHandler</a> install — a stray signal arriving for a signal with no live subscribers is drained and dropped.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">handle</td><td>The handle returned by <a class="el" href="classSignalHandler.html#a0a455b917d31fd6fdaf1525ccd8c382f">subscribe</a>. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="signalhandler_8h_source.html">signalhandler.h</a></li>
 </ul>
@@ -252,7 +350,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classSignalHandler.html">SignalHandler</a></li>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

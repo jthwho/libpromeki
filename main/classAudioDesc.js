@@ -1,7 +1,9 @@
 var classAudioDesc =
 [
     [ "Format", "structAudioDesc_1_1Format.html", "structAudioDesc_1_1Format" ],
+    [ "List", "classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9", null ],
     [ "Ptr", "classAudioDesc.html#a12c38d68a765340588c5b19ae43ee023", null ],
+    [ "PtrList", "classAudioDesc.html#addd7d5467392b279d693eff02f0af5e0", null ],
     [ "DataType", "classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4", [
       [ "Invalid", "classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4abb1a07faad8eede4edad63bcef33d8ce", null ],
       [ "PCMI_Float32LE", "classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4a7d72b1c5a1148b99f731cb58399d56e2", null ],

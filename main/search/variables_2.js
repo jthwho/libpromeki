@@ -14,11 +14,12 @@ var searchData=
   ['bitwidth_11',['bitWidth',['../structImageDataDecoder_1_1DecodedItem.html#a1d7ad70a61b5ebd497d0da7a2c62acd8',1,'ImageDataDecoder::DecodedItem']]],
   ['black_12',['Black',['../classColor.html#abfda8f6d25cb1b8ddbf029624bf879dd',1,'Color']]],
   ['blue_13',['Blue',['../classColor.html#a662b7359238c900518fa4a5595c3b2d5',1,'Color']]],
-  ['bucketcount_14',['BucketCount',['../classHistogram.html#a3e8f7e9865ec68e8a6039034681bc26f',1,'Histogram']]],
-  ['bufferalign_15',['BufferAlign',['../classCSCContext.html#a5bbb8ca1a68d591f4b44dea873814a39',1,'CSCContext']]],
-  ['buffercount_16',['BufferCount',['../classCSCContext.html#a48258b3c0b253825bcb42e6fe010e679',1,'CSCContext']]],
-  ['byteoffset_17',['byteOffset',['../structPixelFormat_1_1CompDesc.html#aeeb42db2533d5ccd8f4f08148b92091b',1,'PixelFormat::CompDesc']]],
-  ['bytesperblock_18',['bytesperblock',['../structCSCPipeline_1_1Stage.html#a5ee6919a4748aa9817a415326294352c',1,'CSCPipeline::Stage::bytesPerBlock'],['../structPixelFormat_1_1Data.html#a109116d35ea10928b055cba775a1d29f',1,'PixelFormat::Data::bytesPerBlock']]],
-  ['bytespersample_19',['bytespersample',['../structAudioDesc_1_1Format.html#af133ca4e1a0352333f30f2d87354bcec',1,'AudioDesc::Format::bytesPerSample'],['../structPixelFormat_1_1PlaneDesc.html#a11a8635a9ba6e3265899d2392d170a79',1,'PixelFormat::PlaneDesc::bytesPerSample']]],
-  ['bytespersecond_20',['bytesPerSecond',['../classBenchmarkResult.html#aff0948dfc5b60cffffd2717705e4125f',1,'BenchmarkResult']]]
+  ['bridge_14',['bridge',['../structMediaIO_1_1FormatDesc.html#a9ccaa0a3dc78045bcec0c9d0380df06c',1,'MediaIO::FormatDesc']]],
+  ['bucketcount_15',['BucketCount',['../classHistogram.html#a3e8f7e9865ec68e8a6039034681bc26f',1,'Histogram']]],
+  ['bufferalign_16',['BufferAlign',['../classCSCContext.html#a5bbb8ca1a68d591f4b44dea873814a39',1,'CSCContext']]],
+  ['buffercount_17',['BufferCount',['../classCSCContext.html#a48258b3c0b253825bcb42e6fe010e679',1,'CSCContext']]],
+  ['byteoffset_18',['byteOffset',['../structPixelFormat_1_1CompDesc.html#aeeb42db2533d5ccd8f4f08148b92091b',1,'PixelFormat::CompDesc']]],
+  ['bytesperblock_19',['bytesperblock',['../structCSCPipeline_1_1Stage.html#a5ee6919a4748aa9817a415326294352c',1,'CSCPipeline::Stage::bytesPerBlock'],['../structPixelFormat_1_1Data.html#a109116d35ea10928b055cba775a1d29f',1,'PixelFormat::Data::bytesPerBlock']]],
+  ['bytespersample_20',['bytespersample',['../structAudioDesc_1_1Format.html#af133ca4e1a0352333f30f2d87354bcec',1,'AudioDesc::Format::bytesPerSample'],['../structPixelFormat_1_1PlaneDesc.html#a11a8635a9ba6e3265899d2392d170a79',1,'PixelFormat::PlaneDesc::bytesPerSample']]],
+  ['bytespersecond_21',['bytesPerSecond',['../classBenchmarkResult.html#aff0948dfc5b60cffffd2717705e4125f',1,'BenchmarkResult']]]
 ];

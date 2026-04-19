@@ -100,6 +100,7 @@ $(document).ready(function(){initNavTree('classImageFileIO.html',''); initResiza
 
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pro-attribs">Protected Attributes</a> &#124;
@@ -117,12 +118,23 @@ Collaboration diagram for ImageFileIO:</div>
 <div class="dyncontent">
 <div class="center"><img src="classImageFileIO__coll__graph.png" border="0" usemap="#aImageFileIO_coll__map" alt="Collaboration graph"/></div>
 <map name="aImageFileIO_coll__map" id="aImageFileIO_coll__map">
-<area shape="rect" title="Abstract backend for image file format I/O." alt="" coords="5,93,105,119"/>
-<area shape="rect" href="classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="25,5,85,31"/>
-<area shape="poly" title=" " alt="" coords="58,45,58,93,53,93,53,45"/>
+<area shape="rect" title="Abstract backend for image file format I/O." alt="" coords="51,197,151,223"/>
+<area shape="rect" href="classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,80,65,105"/>
+<area shape="poly" title=" " alt="" coords="32,119,31,146,39,172,51,185,67,195,64,200,48,189,34,175,26,147,27,119"/>
+<area shape="rect" href="classStringList.html" title="Manages a list of strings." alt="" coords="125,80,207,105"/>
+<area shape="poly" title=" " alt="" coords="162,120,153,147,139,175,117,199,113,195,134,172,148,145,157,118"/>
+<area shape="rect" href="classList.html" title=" " alt="" coords="109,5,223,31"/>
+<area shape="poly" title=" " alt="" coords="169,45,169,80,163,80,163,45"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:ad8da007cef5bf93d4326fedf24b25b1e" id="r_ad8da007cef5bf93d4326fedf24b25b1e"><td class="memItemLeft" align="right" valign="top"><a id="ad8da007cef5bf93d4326fedf24b25b1e" name="ad8da007cef5bf93d4326fedf24b25b1e"></a>
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>IDList</b> = <a class="el" href="classList.html">List</a>&lt; int &gt;</td></tr>
+<tr class="memdesc:ad8da007cef5bf93d4326fedf24b25b1e"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of registered <a class="el" href="classImageFileIO.html" title="Abstract backend for image file format I/O.">ImageFileIO</a> backend IDs. <br /></td></tr>
+<tr class="separator:ad8da007cef5bf93d4326fedf24b25b1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a7c7c735591fac052bb9c5307ef14125f" id="r_a7c7c735591fac052bb9c5307ef14125f"><td class="memItemLeft" align="right" valign="top"><a id="a7c7c735591fac052bb9c5307ef14125f" name="a7c7c735591fac052bb9c5307ef14125f"></a>
@@ -148,6 +160,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a27a41c66620908cc41ed451b4c8eca53" id="r_a27a41c66620908cc41ed451b4c8eca53"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFileIO.html#a27a41c66620908cc41ed451b4c8eca53">name</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a27a41c66620908cc41ed451b4c8eca53"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the human-readable name of this backend.  <br /></td></tr>
 <tr class="separator:a27a41c66620908cc41ed451b4c8eca53"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3cde7f60278435b5be9b1260617f381f" id="r_a3cde7f60278435b5be9b1260617f381f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFileIO.html#a3cde7f60278435b5be9b1260617f381f">description</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a3cde7f60278435b5be9b1260617f381f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a short human-readable description of the backend.  <br /></td></tr>
+<tr class="separator:a3cde7f60278435b5be9b1260617f381f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0e0db695c9885cfbcda0e99147dc0185" id="r_a0e0db695c9885cfbcda0e99147dc0185"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classStringList.html">StringList</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFileIO.html#a0e0db695c9885cfbcda0e99147dc0185">extensions</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a0e0db695c9885cfbcda0e99147dc0185"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the lowercase file extensions this backend handles.  <br /></td></tr>
+<tr class="separator:a0e0db695c9885cfbcda0e99147dc0185"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d70fd90d2a317393848778e3fb27f0e" id="r_a7d70fd90d2a317393848778e3fb27f0e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFileIO.html#a7d70fd90d2a317393848778e3fb27f0e">mediaIoName</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a7d70fd90d2a317393848778e3fb27f0e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the preferred backend name for <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> registration.  <br /></td></tr>
+<tr class="separator:a7d70fd90d2a317393848778e3fb27f0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5ded3b7f032cef0fdc012da737fa6342" id="r_a5ded3b7f032cef0fdc012da737fa6342"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFileIO.html#a5ded3b7f032cef0fdc012da737fa6342">load</a> (<a class="el" href="classImageFile.html">ImageFile</a> &amp;<a class="el" href="classList.html">imageFile</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classMediaConfig.html">MediaConfig</a> &amp;config=<a class="el" href="classMediaConfig.html">MediaConfig</a>()) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a5ded3b7f032cef0fdc012da737fa6342"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads an image from a file into the given <a class="el" href="classImageFile.html" title="Media file loader and saver.">ImageFile</a>.  <br /></td></tr>
 <tr class="separator:a5ded3b7f032cef0fdc012da737fa6342"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -163,6 +184,9 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:af4118aa6733b199a3aff6e5fe837dd06" id="r_af4118aa6733b199a3aff6e5fe837dd06"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classImageFileIO.html">ImageFileIO</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFileIO.html#af4118aa6733b199a3aff6e5fe837dd06">lookup</a> (int <a class="el" href="classImageFileIO.html#a8cc24c93ba44b010c261c998189b48ad">id</a>)</td></tr>
 <tr class="memdesc:af4118aa6733b199a3aff6e5fe837dd06"><td class="mdescLeft">&#160;</td><td class="mdescRight">Looks up a registered backend by format ID.  <br /></td></tr>
 <tr class="separator:af4118aa6733b199a3aff6e5fe837dd06"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e9d08462e542a499c3d1360b538faa8" id="r_a5e9d08462e542a499c3d1360b538faa8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classImageFileIO.html#ad8da007cef5bf93d4326fedf24b25b1e">IDList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFileIO.html#a5e9d08462e542a499c3d1360b538faa8">registeredIDs</a> ()</td></tr>
+<tr class="memdesc:a5e9d08462e542a499c3d1360b538faa8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns every registered backend ID in registration order.  <br /></td></tr>
+<tr class="separator:a5e9d08462e542a499c3d1360b538faa8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-attribs" name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
@@ -182,6 +206,18 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_id</b> = 0</td></tr>
 <a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><b>_name</b></td></tr>
 <tr class="memdesc:ae92ccf6c98b57e38d66878b71f9fd36a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Human-readable format name. <br /></td></tr>
 <tr class="separator:ae92ccf6c98b57e38d66878b71f9fd36a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8a4b46ffdc855f5332bbf8d64dc4a98d" id="r_a8a4b46ffdc855f5332bbf8d64dc4a98d"><td class="memItemLeft" align="right" valign="top"><a id="a8a4b46ffdc855f5332bbf8d64dc4a98d" name="a8a4b46ffdc855f5332bbf8d64dc4a98d"></a>
+<a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><b>_description</b></td></tr>
+<tr class="memdesc:a8a4b46ffdc855f5332bbf8d64dc4a98d"><td class="mdescLeft">&#160;</td><td class="mdescRight">One-line human-readable description. <br /></td></tr>
+<tr class="separator:a8a4b46ffdc855f5332bbf8d64dc4a98d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef5ea96620a9bbe387f642e2c7fd4581" id="r_aef5ea96620a9bbe387f642e2c7fd4581"><td class="memItemLeft" align="right" valign="top"><a id="aef5ea96620a9bbe387f642e2c7fd4581" name="aef5ea96620a9bbe387f642e2c7fd4581"></a>
+<a class="el" href="classStringList.html">StringList</a>&#160;</td><td class="memItemRight" valign="bottom"><b>_extensions</b></td></tr>
+<tr class="memdesc:aef5ea96620a9bbe387f642e2c7fd4581"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lowercase extensions claimed by this backend. <br /></td></tr>
+<tr class="separator:aef5ea96620a9bbe387f642e2c7fd4581"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d2b852f1a9bc98342c607b6a648b082" id="r_a6d2b852f1a9bc98342c607b6a648b082"><td class="memItemLeft" align="right" valign="top"><a id="a6d2b852f1a9bc98342c607b6a648b082" name="a6d2b852f1a9bc98342c607b6a648b082"></a>
+<a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><b>_mediaIoName</b></td></tr>
+<tr class="memdesc:a6d2b852f1a9bc98342c607b6a648b082"><td class="mdescLeft">&#160;</td><td class="mdescRight">Override for <a class="el" href="classImageFileIO.html#a7d70fd90d2a317393848778e3fb27f0e">mediaIoName()</a> (empty = default). <br /></td></tr>
+<tr class="separator:a6d2b852f1a9bc98342c607b6a648b082"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Abstract backend for image file format I/O. </p>
@@ -240,6 +276,64 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_id</b> = 0</td></tr>
 
 <p>Returns true if this backend supports saving images. </p>
 <dl class="section return"><dt>Returns</dt><dd>true if saving is supported. </dd></dl>
+
+</div>
+</div>
+<a id="a3cde7f60278435b5be9b1260617f381f" name="a3cde7f60278435b5be9b1260617f381f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3cde7f60278435b5be9b1260617f381f">&#9670;&#160;</a></span>description()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classString.html">String</a> ImageFileIO::description </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns a short human-readable description of the backend. </p>
+<p>Drives the <code>description</code> field on the <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> FormatDesc; populated by the backend's constructor via the <code>_description</code> protected member.</p>
+<dl class="section return"><dt>Returns</dt><dd>The backend description (may be empty). </dd></dl>
+
+</div>
+</div>
+<a id="a0e0db695c9885cfbcda0e99147dc0185" name="a0e0db695c9885cfbcda0e99147dc0185"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0e0db695c9885cfbcda0e99147dc0185">&#9670;&#160;</a></span>extensions()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classStringList.html">StringList</a> &amp; ImageFileIO::extensions </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the lowercase file extensions this backend handles. </p>
+<p>A single backend may claim multiple extensions that are treated as the same format by the decoder/encoder (e.g. SGI claims both <code>"sgi"</code> and <code>"rgb"</code>; PNM claims <code>"pnm"</code>, <code>"ppm"</code>, and <code>"pgm"</code>). Always returned in lowercase.</p>
+<dl class="section return"><dt>Returns</dt><dd>The list of extensions claimed by the backend. </dd></dl>
 
 </div>
 </div>
@@ -380,6 +474,35 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_id</b> = 0</td></tr>
 
 </div>
 </div>
+<a id="a7d70fd90d2a317393848778e3fb27f0e" name="a7d70fd90d2a317393848778e3fb27f0e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7d70fd90d2a317393848778e3fb27f0e">&#9670;&#160;</a></span>mediaIoName()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classString.html">String</a> ImageFileIO::mediaIoName </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the preferred backend name for <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> registration. </p>
+<p>The <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> registry exposes one <a class="el" href="structMediaIO_1_1FormatDesc.html">MediaIO::FormatDesc</a> per <a class="el" href="classImageFileIO.html">ImageFileIO</a> backend; each backend carries the string used to identify it there (<code>"ImgSeqDPX"</code>, <code>"ImgSeqPNG"</code>, <code>"ImgSeqCineon"</code>, ...). Defaults to <code>"ImgSeq"</code> + <a class="el" href="classImageFileIO.html#a27a41c66620908cc41ed451b4c8eca53">name()</a> when the backend's constructor doesn't override it.</p>
+<dl class="section return"><dt>Returns</dt><dd>The backend's <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> name. </dd></dl>
+
+</div>
+</div>
 <a id="a27a41c66620908cc41ed451b4c8eca53" name="a27a41c66620908cc41ed451b4c8eca53"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a27a41c66620908cc41ed451b4c8eca53">&#9670;&#160;</a></span>name()</h2>
 
@@ -405,6 +528,35 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_id</b> = 0</td></tr>
 
 <p>Returns the human-readable name of this backend. </p>
 <dl class="section return"><dt>Returns</dt><dd>The backend name as a <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>. </dd></dl>
+
+</div>
+</div>
+<a id="a5e9d08462e542a499c3d1360b538faa8" name="a5e9d08462e542a499c3d1360b538faa8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5e9d08462e542a499c3d1360b538faa8">&#9670;&#160;</a></span>registeredIDs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classImageFileIO.html#ad8da007cef5bf93d4326fedf24b25b1e">IDList</a> ImageFileIO::registeredIDs </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns every registered backend ID in registration order. </p>
+<p>Used by callers that need to enumerate all known image formats — e.g. the <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> layer wires up one <a class="el" href="structMediaIO_1_1FormatDesc.html">MediaIO::FormatDesc</a> per backend ID. Iterates the live registry, so calling this before every backend has registered (mid-static-init) returns a partial list; normal runtime use sees the complete set.</p>
+<dl class="section return"><dt>Returns</dt><dd>A list of all registered backend IDs. </dd></dl>
 
 </div>
 </div>
@@ -499,7 +651,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_id</b> = 0</td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classImageFileIO.html">ImageFileIO</a></li>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -235,10 +235,10 @@ What Happens in Release Builds?</h2>
 * </pre><h2><a class="anchor" id="debug_promekidebug_benchmarks"></a>
 Benchmarking with PROMEKI_BENCHMARK</h2>
 <p>Two companion macros let you time sections of code, gated on the same per-module enable flag:</p>
-<div class="fragment"><div class="line"><span class="keywordtype">void</span> MyClass::processFrame(<span class="keyword">const</span> <a class="code hl_class" href="classFrame.html">Frame</a> &amp;frame) {</div>
-<div class="line">        PROMEKI_BENCHMARK_BEGIN(processFrame)</div>
+<div class="fragment"><div class="line"><span class="keywordtype">void</span> <a class="code hl_function" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">MyClass::processFrame</a>(<span class="keyword">const</span> <a class="code hl_class" href="classFrame.html">Frame</a> &amp;frame) {</div>
+<div class="line">        PROMEKI_BENCHMARK_BEGIN(<a class="code hl_class" href="classList.html">processFrame</a>)</div>
 <div class="line">        <span class="comment">// ... expensive work ...</span></div>
-<div class="line">        PROMEKI_BENCHMARK_END(processFrame)</div>
+<div class="line">        PROMEKI_BENCHMARK_END(<a class="code hl_class" href="classList.html">processFrame</a>)</div>
 <div class="line">        <span class="comment">// prints: &quot;[MyClass] processFrame took 0.003217000 sec&quot;</span></div>
 <div class="line">}</div>
 <div class="ttc" id="aclassFrame_html"><div class="ttname"><a href="classFrame.html">Frame</a></div><div class="ttdoc">A media frame containing images, audio, and metadata.</div><div class="ttdef"><b>Definition</b> frame.h:44</div></div>
@@ -278,7 +278,7 @@ Automatic Installation via Application</h2>
 <div class="line">        <span class="keywordflow">return</span> <a class="code hl_class" href="classList.html">app</a>.exec();</div>
 <div class="line">}</div>
 <div class="ttc" id="aapplication_8h_html"><div class="ttname"><a href="application_8h.html">application.h</a></div></div>
-<div class="ttc" id="aclassApplication_html"><div class="ttname"><a href="classApplication.html">Application</a></div><div class="ttdoc">Application-wide state for the promeki library.</div><div class="ttdef"><b>Definition</b> application.h:47</div></div>
+<div class="ttc" id="aclassApplication_html"><div class="ttname"><a href="classApplication.html">Application</a></div><div class="ttdoc">Application-wide state for the promeki library.</div><div class="ttdef"><b>Definition</b> application.h:49</div></div>
 </div><!-- fragment --><p>The <a class="el" href="classApplication.html">Application</a> constructor checks LibraryOptions::CrashHandler (default <code>true</code>). To disable it, set the option before constructing <a class="el" href="classApplication.html" title="Application-wide state for the promeki library.">Application</a> or via the environment:</p>
 <div class="fragment"><div class="line"><span class="comment">// Programmatically</span></div>
 <div class="line"><a class="code hl_function" href="classLibraryOptions.html#aefa2e033a8c07bc49e854d060a5aab1b">LibraryOptions::instance</a>().<a class="code hl_function" href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">set</a>(LibraryOptions::CrashHandler, <span class="keyword">false</span>);</div>
@@ -394,7 +394,7 @@ Typical Debugging Workflow</h2>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

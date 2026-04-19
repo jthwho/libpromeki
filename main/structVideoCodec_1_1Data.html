@@ -154,6 +154,9 @@ Public Attributes</h2></td></tr>
 <a class="el" href="classVideoCodec.html#a4ea3cd4bb3c561497bd7f446606ed12a">DecoderFactory</a>&#160;</td><td class="memItemRight" valign="bottom"><b>createDecoder</b></td></tr>
 <tr class="memdesc:af3dc6e1229eba4a1ee9c2550601d963d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Factory for <a class="el" href="classVideoDecoder.html" title="Abstract base class for stateful video decoders.">VideoDecoder</a> sessions; null = decode not supported. <br /></td></tr>
 <tr class="separator:af3dc6e1229eba4a1ee9c2550601d963d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7ce0c2feebd0a5f4eb4a866400440a90" id="r_a7ce0c2feebd0a5f4eb4a866400440a90"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">List</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structVideoCodec_1_1Data.html#a7ce0c2feebd0a5f4eb4a866400440a90">encoderSupportedInputs</a></td></tr>
+<tr class="memdesc:a7ce0c2feebd0a5f4eb4a866400440a90"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uncompressed <a class="el" href="classPixelDesc.html">PixelDesc</a> IDs the encoder accepts.  <br /></td></tr>
+<tr class="separator:a7ce0c2feebd0a5f4eb4a866400440a90"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Immutable descriptor for a video codec. </p>
@@ -176,6 +179,23 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a7ce0c2feebd0a5f4eb4a866400440a90" name="a7ce0c2feebd0a5f4eb4a866400440a90"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7ce0c2feebd0a5f4eb4a866400440a90">&#9670;&#160;</a></span>encoderSupportedInputs</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">List</a>&lt;int&gt; VideoCodec::Data::encoderSupportedInputs</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Uncompressed <a class="el" href="classPixelDesc.html">PixelDesc</a> IDs the encoder accepts. </p>
+<p>Parallel to <a class="el" href="classVideoEncoder.html#a2bd3da8445225cb50ed7665dec93b425">VideoEncoder::supportedInputs</a>, but exposed at the codec level so planners can query without instantiating an encoder session. Empty when the codec has no registered encoder or when the backend accepts any uncompressed input. </p>
+
+</div>
+</div>
 <hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="videocodec_8h_source.html">videocodec.h</a></li>
 </ul>
@@ -186,7 +206,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classVideoCodec.html">VideoCodec</a></li><li class="navelem"><a class="el" href="structVideoCodec_1_1Data.html">Data</a></li>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

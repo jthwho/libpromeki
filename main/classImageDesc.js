@@ -1,10 +1,13 @@
 var classImageDesc =
 [
+    [ "List", "classImageDesc.html#ab4af7933e0697ea11308ec23cfa0e4cb", null ],
     [ "Ptr", "classImageDesc.html#ad783f089e7476a66b79dc80c73e0287a", null ],
+    [ "PtrList", "classImageDesc.html#a2a36116424d09d8116e5122237ec0d6e", null ],
     [ "ImageDesc", "classImageDesc.html#a0c5fd17eb1dec3cbeddc823fc9284d34", null ],
     [ "ImageDesc", "classImageDesc.html#a52f4b5c301584e29afd13aa3a3987de9", null ],
     [ "ImageDesc", "classImageDesc.html#a1e92fa0940e22d4ca09e986458c1824d", null ],
     [ "colorModel", "classImageDesc.html#a0e401dabf0c124c565aef27db15fe4bd", null ],
+    [ "formatEquals", "classImageDesc.html#a185179bffd02924e8578ad13a872b461", null ],
     [ "height", "classImageDesc.html#a595176f6845585e958af1812a93d21d1", null ],
     [ "isValid", "classImageDesc.html#a75c5e0d29a69ad572d23776a46345b21", null ],
     [ "lineAlign", "classImageDesc.html#a6d2eb3160c87fda340202a5c964b344c", null ],
@@ -12,6 +15,8 @@ var classImageDesc =
     [ "metadata", "classImageDesc.html#a153333d8168a97cb918a369633972451", null ],
     [ "metadata", "classImageDesc.html#a805a901251772c07f2c9309d016e1e56", null ],
     [ "operator String", "classImageDesc.html#a16d70daa9b940db09aa1f64bfc0a110e", null ],
+    [ "operator!=", "classImageDesc.html#a9b4dec69aa34e451b9a1a6b17042db39", null ],
+    [ "operator==", "classImageDesc.html#ac1d5b4311bd1e8a9d0b2a28655fc69bc", null ],
     [ "pixelDesc", "classImageDesc.html#a8fd13b343836d8b7465a6da4ae3ecd2e", null ],
     [ "pixelFormat", "classImageDesc.html#aa6a9779872d4e539ed58795bb28c12c9", null ],
     [ "planeCount", "classImageDesc.html#a9c38bec67c83d4467de672784ecad88c", null ],

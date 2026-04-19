@@ -8,5 +8,6 @@ var searchData=
   ['generaltierflag_5',['generalTierFlag',['../structHevcDecoderConfig.html#a8caf54e1ed5dde76396bc32953381432',1,'HevcDecoderConfig']]],
   ['green_6',['Green',['../classColor.html#a99d190056130b083fe716a721f0e2b74',1,'Color']]],
   ['grep_7',['Grep',['../classRegEx.html#af5874cb066c531b5adc390859c885041',1,'RegEx']]],
-  ['group_8',['group',['../structMulticastReceiver_1_1GroupEntry.html#a1f5bdd13fd6cc470128a60842fcbb6aa',1,'MulticastReceiver::GroupEntry']]]
+  ['group_8',['group',['../structMulticastReceiver_1_1GroupEntry.html#a1f5bdd13fd6cc470128a60842fcbb6aa',1,'MulticastReceiver::GroupEntry']]],
+  ['groupname_9',['groupName',['../structFrameBridge_1_1Config.html#a051cb637cd8ae180df7e935c0dd14094',1,'FrameBridge::Config']]]
 ];

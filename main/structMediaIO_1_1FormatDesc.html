@@ -153,6 +153,9 @@ Public Types</h2></td></tr>
 <tr class="memitem:aa338f9de74f324830d6141b057e0a343" id="r_aa338f9de74f324830d6141b057e0a343"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMediaIO_1_1FormatDesc.html#aa338f9de74f324830d6141b057e0a343">PrintDeviceInfoFunc</a> = std::function&lt; <a class="el" href="classList.html">void</a>(<a class="el" href="classList.html">const</a> <a class="el" href="classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade">Config</a> &amp;<a class="el" href="classMediaIO.html#afd4dfa37eca8c62bb3bc6a3fb43bb0d9">config</a>)&gt;</td></tr>
 <tr class="memdesc:aa338f9de74f324830d6141b057e0a343"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optional device-info printer.  <br /></td></tr>
 <tr class="separator:aa338f9de74f324830d6141b057e0a343"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a020dad6e31213909fdabdba0efa56e2e" id="r_a020dad6e31213909fdabdba0efa56e2e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMediaIO_1_1FormatDesc.html#a020dad6e31213909fdabdba0efa56e2e">BridgeFunc</a> = std::function&lt; <a class="el" href="classList.html">bool</a>(<a class="el" href="classList.html">const</a> <a class="el" href="classMediaDesc.html">MediaDesc</a> &amp;from, <a class="el" href="classList.html">const</a> <a class="el" href="classMediaDesc.html">MediaDesc</a> &amp;to, <a class="el" href="classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade">Config</a> *<a class="el" href="classList.html">outConfig</a>, int *<a class="el" href="classList.html">outCost</a>)&gt;</td></tr>
+<tr class="memdesc:a020dad6e31213909fdabdba0efa56e2e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optional bridge declaration for transform backends.  <br /></td></tr>
+<tr class="separator:a020dad6e31213909fdabdba0efa56e2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -168,18 +171,18 @@ Public Attributes</h2></td></tr>
 <a class="el" href="classStringList.html">StringList</a>&#160;</td><td class="memItemRight" valign="bottom"><b>extensions</b></td></tr>
 <tr class="memdesc:a3a4e3a7d574e1195b535b9f13e583aaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Supported file extensions (no dots). <br /></td></tr>
 <tr class="separator:a3a4e3a7d574e1195b535b9f13e583aaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0fddb44661a7e54ff529a1d8febe9a02" id="r_a0fddb44661a7e54ff529a1d8febe9a02"><td class="memItemLeft" align="right" valign="top"><a id="a0fddb44661a7e54ff529a1d8febe9a02" name="a0fddb44661a7e54ff529a1d8febe9a02"></a>
-<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>canOutput</b></td></tr>
-<tr class="memdesc:a0fddb44661a7e54ff529a1d8febe9a02"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether the backend can provide frames (source mode). <br /></td></tr>
-<tr class="separator:a0fddb44661a7e54ff529a1d8febe9a02"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aae7cc36c2f62f617e022823820f3844c" id="r_aae7cc36c2f62f617e022823820f3844c"><td class="memItemLeft" align="right" valign="top"><a id="aae7cc36c2f62f617e022823820f3844c" name="aae7cc36c2f62f617e022823820f3844c"></a>
-<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>canInput</b></td></tr>
-<tr class="memdesc:aae7cc36c2f62f617e022823820f3844c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether the backend can accept frames (sink mode). <br /></td></tr>
-<tr class="separator:aae7cc36c2f62f617e022823820f3844c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2837b066a3c3143ad5789e49fe63b55d" id="r_a2837b066a3c3143ad5789e49fe63b55d"><td class="memItemLeft" align="right" valign="top"><a id="a2837b066a3c3143ad5789e49fe63b55d" name="a2837b066a3c3143ad5789e49fe63b55d"></a>
-<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>canInputAndOutput</b></td></tr>
-<tr class="memdesc:a2837b066a3c3143ad5789e49fe63b55d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether the backend supports combined Input+Output mode. <br /></td></tr>
-<tr class="separator:a2837b066a3c3143ad5789e49fe63b55d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae460e82536a21fb89a1a9c3062a0e423" id="r_ae460e82536a21fb89a1a9c3062a0e423"><td class="memItemLeft" align="right" valign="top"><a id="ae460e82536a21fb89a1a9c3062a0e423" name="ae460e82536a21fb89a1a9c3062a0e423"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>canBeSource</b></td></tr>
+<tr class="memdesc:ae460e82536a21fb89a1a9c3062a0e423"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether the backend can act as a source (provides frames). <br /></td></tr>
+<tr class="separator:ae460e82536a21fb89a1a9c3062a0e423"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aed6bdae65e139ba21bf986d70061447c" id="r_aed6bdae65e139ba21bf986d70061447c"><td class="memItemLeft" align="right" valign="top"><a id="aed6bdae65e139ba21bf986d70061447c" name="aed6bdae65e139ba21bf986d70061447c"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>canBeSink</b></td></tr>
+<tr class="memdesc:aed6bdae65e139ba21bf986d70061447c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether the backend can act as a sink (accepts frames). <br /></td></tr>
+<tr class="separator:aed6bdae65e139ba21bf986d70061447c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adf582ad3e85f8e9f59c9eaca7e25ce48" id="r_adf582ad3e85f8e9f59c9eaca7e25ce48"><td class="memItemLeft" align="right" valign="top"><a id="adf582ad3e85f8e9f59c9eaca7e25ce48" name="adf582ad3e85f8e9f59c9eaca7e25ce48"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>canBeTransform</b></td></tr>
+<tr class="memdesc:adf582ad3e85f8e9f59c9eaca7e25ce48"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether the backend can act as a transform (in + out). <br /></td></tr>
+<tr class="separator:adf582ad3e85f8e9f59c9eaca7e25ce48"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af6eff6b05d298393e15a22e0f742c295" id="r_af6eff6b05d298393e15a22e0f742c295"><td class="memItemLeft" align="right" valign="top"><a id="af6eff6b05d298393e15a22e0f742c295" name="af6eff6b05d298393e15a22e0f742c295"></a>
 <a class="el" href="structMediaIO_1_1FormatDesc.html#a040ef25827914e55c2e8209c77033a33">CreateFunc</a>&#160;</td><td class="memItemRight" valign="bottom"><b>create</b></td></tr>
 <tr class="memdesc:af6eff6b05d298393e15a22e0f742c295"><td class="mdescLeft">&#160;</td><td class="mdescRight">Backend factory. <br /></td></tr>
@@ -212,10 +215,44 @@ Public Attributes</h2></td></tr>
 <a class="el" href="structMediaIO_1_1FormatDesc.html#aa338f9de74f324830d6141b057e0a343">PrintDeviceInfoFunc</a>&#160;</td><td class="memItemRight" valign="bottom"><b>printDeviceInfo</b></td></tr>
 <tr class="memdesc:a777e7032562afbf4fb040df2692dcb9b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Device-info printer. <br /></td></tr>
 <tr class="separator:a777e7032562afbf4fb040df2692dcb9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9ccaa0a3dc78045bcec0c9d0380df06c" id="r_a9ccaa0a3dc78045bcec0c9d0380df06c"><td class="memItemLeft" align="right" valign="top"><a id="a9ccaa0a3dc78045bcec0c9d0380df06c" name="a9ccaa0a3dc78045bcec0c9d0380df06c"></a>
+<a class="el" href="structMediaIO_1_1FormatDesc.html#a020dad6e31213909fdabdba0efa56e2e">BridgeFunc</a>&#160;</td><td class="memItemRight" valign="bottom"><b>bridge</b></td></tr>
+<tr class="memdesc:a9ccaa0a3dc78045bcec0c9d0380df06c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Format-bridge declaration (planner-driven; may be null). <br /></td></tr>
+<tr class="separator:a9ccaa0a3dc78045bcec0c9d0380df06c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Describes a registered media I/O backend. </p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
+<a id="a020dad6e31213909fdabdba0efa56e2e" name="a020dad6e31213909fdabdba0efa56e2e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a020dad6e31213909fdabdba0efa56e2e">&#9670;&#160;</a></span>BridgeFunc</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="structMediaIO_1_1FormatDesc.html#a020dad6e31213909fdabdba0efa56e2e">MediaIO::FormatDesc::BridgeFunc</a> =  std::function&lt; <a class="el" href="classList.html">bool</a>(<a class="el" href="classList.html">const</a> <a class="el" href="classMediaDesc.html">MediaDesc</a> &amp;from, <a class="el" href="classList.html">const</a> <a class="el" href="classMediaDesc.html">MediaDesc</a> &amp;to, <a class="el" href="classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade">Config</a> *<a class="el" href="classList.html">outConfig</a>, int *<a class="el" href="classList.html">outCost</a>)&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Optional bridge declaration for transform backends. </p>
+<p>When set, this backend declares that an instance of itself can convert from one <a class="el" href="classMediaDesc.html">MediaDesc</a> shape to another. The pipeline planner uses this to automatically insert bridging stages (CSC, decoder, frame-rate sync, etc.) when a route's source and sink are not directly format-compatible.</p>
+<p>The callback returns <code>true</code> if the bridge is applicable, in which case it must:</p><ul>
+<li>Populate <code>outConfig</code> with the <a class="el" href="classMediaConfig.html">MediaConfig</a> the planner should use when instantiating the bridge stage (e.g. set <code>OutputPixelDesc</code> on a CSC bridge).</li>
+<li><a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> <code>outCost</code> to the unitless quality cost of the conversion (lower = higher quality). The planner uses costs to pick among multiple valid bridges.</li>
+</ul>
+<p>Cost bands (unitless):</p><ul>
+<li>0 identity / no-op</li>
+<li>1–10 metadata-only transform</li>
+<li>10–100 lossless precision-preserving</li>
+<li>100–1000 bounded-error lossy</li>
+<li>1000–10000 heavily lossy (re-encode)</li>
+<li>&gt; 10000 last resort</li>
+</ul>
+<p>Backends that are not transforms (sources, sinks, pure passthroughs) leave this null. </p>
+
+</div>
+</div>
 <a id="a97cf0ce9d167f002aa303adaa59c0329" name="a97cf0ce9d167f002aa303adaa59c0329"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a97cf0ce9d167f002aa303adaa59c0329">&#9670;&#160;</a></span>CanHandlePathFunc</h2>
 
@@ -372,7 +409,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIO.html">MediaIO</a></li><li class="navelem"><a class="el" href="structMediaIO_1_1FormatDesc.html">FormatDesc</a></li>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

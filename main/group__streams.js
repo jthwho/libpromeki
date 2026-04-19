@@ -62,7 +62,10 @@ var group__streams =
         [ "TypeMediaPipelineRoute", "classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369ae57e0dc7cbfde8ed7588c65f9991306f", null ],
         [ "TypeMediaPipelineConfig", "classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a5bb736c5d923aa7cea07951f6a2d850f", null ],
         [ "TypeMediaPipelineStats", "classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a703c02e6228ffb16ad816d6ff444c2f2", null ],
-        [ "TypeVideoFormat", "classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369aa61bbac5c7aa3eadfc68378b986b3337", null ]
+        [ "TypeVideoFormat", "classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369aa61bbac5c7aa3eadfc68378b986b3337", null ],
+        [ "TypeMasteringDisplay", "classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369ad3aa06287978366dfb60b0c9bf2ef251", null ],
+        [ "TypeContentLightLevel", "classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369ac4278b97a88eb02fefeafe69656f51cf", null ],
+        [ "TypeMediaIODescription", "classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a45fa5d4178f4e99b5bbd693a551d2abe", null ]
       ] ],
       [ "DataStream", "classDataStream.html#a031c1cb50817d1530452c4feae207fcb", null ],
       [ "~DataStream", "classDataStream.html#acb58db98cafee8eca367437c9bd9a46e", null ],

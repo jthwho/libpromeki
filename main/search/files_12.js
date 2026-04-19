@@ -11,5 +11,6 @@ var searchData=
   ['timecode_2eh_8',['timecode.h',['../timecode_8h.html',1,'']]],
   ['timecodegenerator_2eh_9',['timecodegenerator.h',['../timecodegenerator_8h.html',1,'']]],
   ['timerevent_2eh_10',['timerevent.h',['../timerevent_8h.html',1,'']]],
-  ['timestamp_2eh_11',['timestamp.h',['../timestamp_8h.html',1,'']]]
+  ['timestamp_2eh_11',['timestamp.h',['../timestamp_8h.html',1,'']]],
+  ['tuisubsystem_2eh_12',['tuisubsystem.h',['../tuisubsystem_8h.html',1,'']]]
 ];

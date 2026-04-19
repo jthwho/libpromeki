@@ -4,5 +4,5 @@ var searchData=
   ['querydevice_1',['queryDevice',['../classMediaIO.html#a562bcd543622c1bd6e9ad0a68b4dde5e',1,'MediaIO']]],
   ['queuedbytes_2',['queuedBytes',['../classSDLAudioOutput.html#a6f1235b456eb389a7eeb85abf495d9ff',1,'SDLAudioOutput']]],
   ['quicktime_3',['quicktime',['../classQuickTime.html#ae3f663058b6fcff8e13adc5c42867c3f',1,'QuickTime::QuickTime()'],['../classQuickTime.html#a6cd6abffb7b30c81e4c0c50bd27f0155',1,'QuickTime::QuickTime(Impl *impl)']]],
-  ['quit_4',['quit',['../classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa',1,'Application::quit()'],['../classEventLoop.html#a9e126989d057c302e18f20061f93deb5',1,'EventLoop::quit()'],['../classSDLApplication.html#a917e4aa49a4b17d72831e2cee9857292',1,'SDLApplication::quit()'],['../classThread.html#a9ceed5ebb61769c94e5929871b0af3bc',1,'Thread::quit()'],['../classTuiApplication.html#a79e9e47ebfd992adee8e4e4e488d6faf',1,'TuiApplication::quit()']]]
+  ['quit_4',['quit',['../classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa',1,'Application::quit()'],['../classEventLoop.html#a9e126989d057c302e18f20061f93deb5',1,'EventLoop::quit()'],['../classThread.html#a9ceed5ebb61769c94e5929871b0af3bc',1,'Thread::quit()']]]
 ];

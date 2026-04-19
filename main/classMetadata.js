@@ -36,6 +36,7 @@ var classMetadata =
     [ "PROMEKI_DECLARE_ID", "classMetadata.html#affed4d210bd578c8b8f447345aa833f6", null ],
     [ "PROMEKI_DECLARE_ID", "classMetadata.html#a7f617a948ce377871bb77d6035890bac", null ],
     [ "PROMEKI_DECLARE_ID", "classMetadata.html#a8fb7d12d1e55355d9402bca1fcdeb97c", null ],
+    [ "PROMEKI_DECLARE_ID", "classMetadata.html#a50d5380637e810618ac86f0b6b5730c2", null ],
     [ "PROMEKI_DECLARE_ID", "classMetadata.html#a7b81d8cc9483e120d8b4611940d22d6e", null ],
     [ "PROMEKI_DECLARE_ID", "classMetadata.html#a85c6ce09ec0c2a23472889bbfd67cbb2", null ],
     [ "PROMEKI_DECLARE_ID", "classMetadata.html#a2f4468cdc18f1061ab66cc125315614a", null ],

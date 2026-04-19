@@ -1,6 +1,5 @@
 var dir_53b52c957e3055cfb134304189fa5299 =
 [
-    [ "application.h", "tui_2application_8h.html", null ],
     [ "button.h", "button_8h.html", null ],
     [ "checkbox.h", "checkbox_8h.html", null ],
     [ "frame.h", "tui_2frame_8h.html", null ],
@@ -20,5 +19,6 @@ var dir_53b52c957e3055cfb134304189fa5299 =
     [ "style.h", "style_8h.html", "style_8h" ],
     [ "tabwidget.h", "tabwidget_8h.html", null ],
     [ "textarea.h", "textarea_8h.html", null ],
+    [ "tuisubsystem.h", "tuisubsystem_8h.html", null ],
     [ "widget.h", "tui_2widget_8h.html", null ]
 ];

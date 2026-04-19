@@ -18,7 +18,7 @@ var searchData=
   ['compiledstring_15',['CompiledString',['../classCompiledString.html',1,'']]],
   ['compinfo_16',['CompInfo',['../structColorModel_1_1CompInfo.html',1,'ColorModel']]],
   ['compsemantic_17',['CompSemantic',['../structPixelDesc_1_1CompSemantic.html',1,'PixelDesc']]],
-  ['config_18',['config',['../classAudioBlock_1_1Config.html',1,'AudioBlock::Config'],['../structAudioGen_1_1Config.html',1,'AudioGen::Config']]],
+  ['config_18',['config',['../classAudioBlock_1_1Config.html',1,'AudioBlock::Config'],['../structAudioGen_1_1Config.html',1,'AudioGen::Config'],['../structFrameBridge_1_1Config.html',1,'FrameBridge::Config']]],
   ['contentlightlevel_19',['ContentLightLevel',['../classContentLightLevel.html',1,'']]],
   ['context_20',['Context',['../structFileFormatFactory_1_1Context.html',1,'FileFormatFactory']]],
   ['crashhandler_21',['CrashHandler',['../classCrashHandler.html',1,'']]],

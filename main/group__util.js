@@ -270,7 +270,9 @@ var group__util =
         [ "DeviceError", "classError.html#ab5980e13b879db253df802b0950d1708af55d0efc5264924861e4aab9d83d9cac", null ],
         [ "DeviceNotFound", "classError.html#ab5980e13b879db253df802b0950d1708abfafed1687967630c6ead7ae486c06d3", null ],
         [ "FormatMismatch", "classError.html#ab5980e13b879db253df802b0950d1708a7e5b3da50016db37eaa13051d0ae32bf", null ],
-        [ "FontUnavailable", "classError.html#ab5980e13b879db253df802b0950d1708a860bb07c791353ea49a5c70a3cbd4ebc", null ]
+        [ "FontUnavailable", "classError.html#ab5980e13b879db253df802b0950d1708a860bb07c791353ea49a5c70a3cbd4ebc", null ],
+        [ "BrokenPipe", "classError.html#ab5980e13b879db253df802b0950d1708a001c622365338bdf6d05e4ed46744d99", null ],
+        [ "ConnectionReset", "classError.html#ab5980e13b879db253df802b0950d1708afdfdd90b202ec76534905cdf1692ac49", null ]
       ] ],
       [ "Error", "classError.html#a83eaa8db2a6c22d6aff5758eea236a6e", null ],
       [ "~Error", "classError.html#a1a45d42a3a035d510333cdfeb36a0e93", null ],
@@ -388,6 +390,7 @@ var group__util =
       [ "PROMEKI_DECLARE_ID", "classLibraryOptions.html#aa330ab66bdf17308777bbce26cf77f48", null ],
       [ "PROMEKI_DECLARE_ID", "classLibraryOptions.html#a1628fb7a566b5a63b710e73c98c3aa87", null ],
       [ "PROMEKI_DECLARE_ID", "classLibraryOptions.html#a93c6ca7217a061b59ee4f582ee88095c", null ],
+      [ "PROMEKI_DECLARE_ID", "classLibraryOptions.html#ae7b296a328da184456a1f7656e624a2c", null ],
       [ "PROMEKI_DECLARE_ID", "classLibraryOptions.html#a759f62e86e83e392d2d389b41fd3a127", null ],
       [ "PROMEKI_DECLARE_ID", "classLibraryOptions.html#a50d75d62f1ff9a5a705f1aa7528384d2", null ],
       [ "PROMEKI_DECLARE_ID", "classLibraryOptions.html#add6cb4934665b46ec1e73f03bbc319bd", null ]
@@ -563,6 +566,7 @@ var group__util =
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#affed4d210bd578c8b8f447345aa833f6", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a7f617a948ce377871bb77d6035890bac", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a8fb7d12d1e55355d9402bca1fcdeb97c", null ],
+      [ "PROMEKI_DECLARE_ID", "classMetadata.html#a50d5380637e810618ac86f0b6b5730c2", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a7b81d8cc9483e120d8b4611940d22d6e", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a85c6ce09ec0c2a23472889bbfd67cbb2", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a2f4468cdc18f1061ab66cc125315614a", null ],
@@ -698,7 +702,29 @@ var group__util =
       [ "randomInt64", "classRandom.html#a95fc7c64406684d9bd25cc959a1e4427", null ],
       [ "seed", "classRandom.html#a9a4652192b86aca94823e26a1fea372d", null ]
     ] ],
-    [ "SignalHandler", "classSignalHandler.html", null ],
+    [ "SharedMemory", "classSharedMemory.html", [
+      [ "Access", "classSharedMemory.html#a32ba795e3fd4a13cdc03400ab6675404", [
+        [ "ReadOnly", "classSharedMemory.html#a32ba795e3fd4a13cdc03400ab6675404ad9dd4ce6e487538bebaf0403f4c3ac5a", null ],
+        [ "ReadWrite", "classSharedMemory.html#a32ba795e3fd4a13cdc03400ab6675404a613b9967df665ce6865dbfdc416ae97b", null ]
+      ] ],
+      [ "SharedMemory", "classSharedMemory.html#ad4cee9385b663fa8bc396e934ca9b50e", null ],
+      [ "~SharedMemory", "classSharedMemory.html#adc56751ce1b30224689e71cd3b6c09be", null ],
+      [ "SharedMemory", "classSharedMemory.html#ac53654b24f538bfb508f3ec5839bcf7b", null ],
+      [ "access", "classSharedMemory.html#abf649a55e46c0aaac73242fcb9097957", null ],
+      [ "close", "classSharedMemory.html#a6aec4b09eacada717bdf0b969f605e14", null ],
+      [ "create", "classSharedMemory.html#abf2439400a3d3baad2ed726e81dcc13b", null ],
+      [ "data", "classSharedMemory.html#ae84de09fe8f7c8b4d64e1157b6c1c389", null ],
+      [ "data", "classSharedMemory.html#aff7ececf99041b427ed66d750b8599fd", null ],
+      [ "isOwner", "classSharedMemory.html#ad10ccd36c0ebe4dd6b62b6e761df9cb4", null ],
+      [ "isValid", "classSharedMemory.html#ade4d351501e0811d37cbf2b75997b1f7", null ],
+      [ "name", "classSharedMemory.html#aa582e5ae635ab551f6fb156cacdb6b5f", null ],
+      [ "open", "classSharedMemory.html#a10a66b3a75e1904972a8ebbf2b6f826c", null ],
+      [ "operator=", "classSharedMemory.html#ad780072f2493827d177fdfa5b5647820", null ],
+      [ "size", "classSharedMemory.html#a9bdf07b5c452b7f5cf65cc870667e8cd", null ]
+    ] ],
+    [ "SignalHandler", "classSignalHandler.html", [
+      [ "Callback", "classSignalHandler.html#a6281b5300b08c3ebb26b04148eb0096d", null ]
+    ] ],
     [ "StatsAccumulator", "classStatsAccumulator.html", [
       [ "StatsAccumulator", "classStatsAccumulator.html#a9ae43fcc6b3984ce6bb9f6cf123ee86f", null ],
       [ "add", "classStatsAccumulator.html#a703bd495be5bdcd67f0ec8d80a8a4f25", null ],

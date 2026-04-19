@@ -1,11 +1,11 @@
 var searchData=
 [
   ['callback_0',['callback',['../classCmdLineParser_1_1Option.html#a60b2fd6572c0b9c734056de456cebedc',1,'CmdLineParser::Option']]],
-  ['canhandledevice_1',['canHandleDevice',['../structMediaIO_1_1FormatDesc.html#a8cb05daaef47af69482f1e5c30a244b9',1,'MediaIO::FormatDesc']]],
-  ['canhandlepath_2',['canHandlePath',['../structMediaIO_1_1FormatDesc.html#a30a6c3a2ce1bdbb1743e8cd7d839e08a',1,'MediaIO::FormatDesc']]],
-  ['caninput_3',['canInput',['../structMediaIO_1_1FormatDesc.html#aae7cc36c2f62f617e022823820f3844c',1,'MediaIO::FormatDesc']]],
-  ['caninputandoutput_4',['canInputAndOutput',['../structMediaIO_1_1FormatDesc.html#a2837b066a3c3143ad5789e49fe63b55d',1,'MediaIO::FormatDesc']]],
-  ['canoutput_5',['canOutput',['../structMediaIO_1_1FormatDesc.html#a0fddb44661a7e54ff529a1d8febe9a02',1,'MediaIO::FormatDesc']]],
+  ['canbesink_1',['canBeSink',['../structMediaIO_1_1FormatDesc.html#aed6bdae65e139ba21bf986d70061447c',1,'MediaIO::FormatDesc']]],
+  ['canbesource_2',['canBeSource',['../structMediaIO_1_1FormatDesc.html#ae460e82536a21fb89a1a9c3062a0e423',1,'MediaIO::FormatDesc']]],
+  ['canbetransform_3',['canBeTransform',['../structMediaIO_1_1FormatDesc.html#adf582ad3e85f8e9f59c9eaca7e25ce48',1,'MediaIO::FormatDesc']]],
+  ['canhandledevice_4',['canHandleDevice',['../structMediaIO_1_1FormatDesc.html#a8cb05daaef47af69482f1e5c30a244b9',1,'MediaIO::FormatDesc']]],
+  ['canhandlepath_5',['canHandlePath',['../structMediaIO_1_1FormatDesc.html#a30a6c3a2ce1bdbb1743e8cd7d839e08a',1,'MediaIO::FormatDesc']]],
   ['ch_6',['ch',['../structTuiCell.html#a2e82015cc83b4d80c78af4dd1e04e251',1,'TuiCell']]],
   ['channels_7',['channels',['../structSdpMediaDescription_1_1RtpMap.html#aeaa290a32155fa44f66baa38ee50e26b',1,'SdpMediaDescription::RtpMap']]],
   ['checkpointresyncs_8',['checkpointResyncs',['../structSDLAudioClock_1_1Stats.html#a08ee6b3783c81e26259b89ae1d15ebbb',1,'SDLAudioClock::Stats']]],

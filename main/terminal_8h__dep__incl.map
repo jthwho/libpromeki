@@ -1,10 +1,10 @@
 <map id="include/promeki/terminal.h" name="include/promeki/terminal.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="36,5,235,31"/>
-<area shape="rect" id="Node000002" href="$tui_2application_8h.html" title=" " alt="" coords="5,167,153,207"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,44,108,80,94,126,85,167,80,166,89,125,104,78,120,41"/>
-<area shape="rect" id="Node000003" href="$screen_8h.html" title=" " alt="" coords="117,79,265,119"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="154,40,180,77,176,80,149,43"/>
-<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="157,129,106,169,103,164,154,125"/>
-<area shape="rect" id="Node000004" href="$painter_8h.html" title=" " alt="" coords="177,167,325,207"/>
-<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="215,128,240,165,236,168,210,131"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="96,5,295,31"/>
+<area shape="rect" id="Node000002" href="$screen_8h.html" title=" " alt="" coords="65,79,213,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="181,43,155,80,151,77,177,40"/>
+<area shape="rect" id="Node000004" href="$tuisubsystem_8h.html" title=" " alt="" coords="177,167,325,207"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="211,41,228,78,242,125,251,166,246,167,237,126,224,80,207,44"/>
+<area shape="rect" id="Node000003" href="$painter_8h.html" title=" " alt="" coords="5,167,153,207"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="120,131,95,168,90,165,116,128"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="177,125,228,164,225,169,174,129"/>
 </map>

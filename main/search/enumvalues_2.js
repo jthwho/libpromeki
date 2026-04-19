@@ -18,13 +18,14 @@ var searchData=
   ['color256_15',['Color256',['../classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6aa71b9ba48782ffc36c230c670ae908e8',1,'Terminal']]],
   ['connected_16',['Connected',['../classAbstractSocket.html#af30ebd5460722ac138372160d81b939caf8d26e684ec82f944f7e0ac93e190664',1,'AbstractSocket']]],
   ['connecting_17',['Connecting',['../classAbstractSocket.html#af30ebd5460722ac138372160d81b939ca0c49879fb70e997ae09df5a8eb3f8d52',1,'AbstractSocket']]],
-  ['conversionfailed_18',['ConversionFailed',['../classError.html#ab5980e13b879db253df802b0950d1708aebb73a9aa26ca370a067f365c42f2e52',1,'Error']]],
-  ['corrupt_19',['Corrupt',['../classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39a0772c5bc4099a915b3640d5c821d008c',1,'MediaPacket']]],
-  ['corruptdata_20',['CorruptData',['../classError.html#ab5980e13b879db253df802b0950d1708ac27bcb6eb0536b89f16339118db69110',1,'Error']]],
-  ['create_21',['Create',['../classFile.html#aad4a83201b3528a66eab5ad4f9cf1513a9f9012b13652cd115b7e41427531ca3d',1,'File']]],
-  ['crossdevicelink_22',['CrossDeviceLink',['../classError.html#ab5980e13b879db253df802b0950d1708a768a6cc7bc05238da6b259ed14fcdebc',1,'Error']]],
-  ['csvformat_23',['CSVFormat',['../classColor.html#a96af432bfa4a82d9c30f787fb1e5a066a94d06e9297e7684d72d9936c30cc3aab',1,'Color']]],
-  ['cudadevice_24',['CudaDevice',['../classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6edae02cbf1cdcf21f0e3333440f28226d16',1,'MemSpace']]],
-  ['cudahost_25',['CudaHost',['../classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6eda5e57eb8409be7632f7bb3ac024cfb7c8',1,'MemSpace']]],
-  ['cyan_26',['Cyan',['../classAnsiStream.html#a338b08f6aae49641c1f62523260304dcab4d4b2c1dd491db5539a8c6a12df18ac',1,'AnsiStream']]]
+  ['connectionreset_18',['ConnectionReset',['../classError.html#ab5980e13b879db253df802b0950d1708afdfdd90b202ec76534905cdf1692ac49',1,'Error']]],
+  ['conversionfailed_19',['ConversionFailed',['../classError.html#ab5980e13b879db253df802b0950d1708aebb73a9aa26ca370a067f365c42f2e52',1,'Error']]],
+  ['corrupt_20',['Corrupt',['../classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39a0772c5bc4099a915b3640d5c821d008c',1,'MediaPacket']]],
+  ['corruptdata_21',['CorruptData',['../classError.html#ab5980e13b879db253df802b0950d1708ac27bcb6eb0536b89f16339118db69110',1,'Error']]],
+  ['create_22',['Create',['../classFile.html#aad4a83201b3528a66eab5ad4f9cf1513a9f9012b13652cd115b7e41427531ca3d',1,'File']]],
+  ['crossdevicelink_23',['CrossDeviceLink',['../classError.html#ab5980e13b879db253df802b0950d1708a768a6cc7bc05238da6b259ed14fcdebc',1,'Error']]],
+  ['csvformat_24',['CSVFormat',['../classColor.html#a96af432bfa4a82d9c30f787fb1e5a066a94d06e9297e7684d72d9936c30cc3aab',1,'Color']]],
+  ['cudadevice_25',['CudaDevice',['../classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6edae02cbf1cdcf21f0e3333440f28226d16',1,'MemSpace']]],
+  ['cudahost_26',['CudaHost',['../classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6eda5e57eb8409be7632f7bb3ac024cfb7c8',1,'MemSpace']]],
+  ['cyan_27',['Cyan',['../classAnsiStream.html#a338b08f6aae49641c1f62523260304dcab4d4b2c1dd491db5539a8c6a12df18ac',1,'AnsiStream']]]
 ];

@@ -189,6 +189,9 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>canEncode</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ad23ab65be10033eac314bc83c720ea48"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when this codec has a registered encoder factory. <br /></td></tr>
 <tr class="separator:ad23ab65be10033eac314bc83c720ea48"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d2e4a95f049e022364873463c8baac2" id="r_a8d2e4a95f049e022364873463c8baac2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classList.html">List</a>&lt; int &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#a8d2e4a95f049e022364873463c8baac2">encoderSupportedInputs</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a8d2e4a95f049e022364873463c8baac2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of uncompressed <a class="el" href="classPixelDesc.html">PixelDesc</a> IDs the encoder accepts.  <br /></td></tr>
+<tr class="separator:a8d2e4a95f049e022364873463c8baac2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5e1441f143e81ceab7b1e0076e1f8bda" id="r_a5e1441f143e81ceab7b1e0076e1f8bda"><td class="memItemLeft" align="right" valign="top"><a id="a5e1441f143e81ceab7b1e0076e1f8bda" name="a5e1441f143e81ceab7b1e0076e1f8bda"></a>
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>canDecode</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a5e1441f143e81ceab7b1e0076e1f8bda"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when this codec has a registered decoder factory. <br /></td></tr>
@@ -431,6 +434,34 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a8d2e4a95f049e022364873463c8baac2" name="a8d2e4a95f049e022364873463c8baac2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8d2e4a95f049e022364873463c8baac2">&#9670;&#160;</a></span>encoderSupportedInputs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classList.html">List</a>&lt; int &gt; &amp; VideoCodec::encoderSupportedInputs </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the list of uncompressed <a class="el" href="classPixelDesc.html">PixelDesc</a> IDs the encoder accepts. </p>
+<p>Mirrors <a class="el" href="classVideoEncoder.html#a2bd3da8445225cb50ed7665dec93b425">VideoEncoder::supportedInputs</a> without requiring an encoder instance — safe to call from the planner during plan() without side effects. Empty when the backend accepts any uncompressed input (matches the <a class="el" href="classVideoEncoder.html#a2bd3da8445225cb50ed7665dec93b425">VideoEncoder::supportedInputs</a> contract) or when encode is not supported. </p>
+
+</div>
+</div>
 <a id="a22154f4816e2e7d96bd75f6d2963f7b8" name="a22154f4816e2e7d96bd75f6d2963f7b8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a22154f4816e2e7d96bd75f6d2963f7b8">&#9670;&#160;</a></span>fromPixelDesc()</h2>
 
@@ -602,7 +633,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classVideoCodec.html">VideoCodec</a></li>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

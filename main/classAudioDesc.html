@@ -150,9 +150,17 @@ Public Types</h2></td></tr>
 <tr class="memdesc:aa6d81606b4d829f7579af9f6803750b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enumeration of supported audio sample data types.  <a href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">More...</a><br /></td></tr>
 <tr class="separator:aa6d81606b4d829f7579af9f6803750b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a12c38d68a765340588c5b19ae43ee023" id="r_a12c38d68a765340588c5b19ae43ee023"><td class="memItemLeft" align="right" valign="top"><a id="a12c38d68a765340588c5b19ae43ee023" name="a12c38d68a765340588c5b19ae43ee023"></a>
-<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Ptr</b> = <a class="el" href="classSharedPtr.html">SharedPtr</a>&lt; <a class="el" href="classAudioDesc.html">AudioDesc</a> &gt;</td></tr>
+<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Ptr</b> = <a class="el" href="classSharedPtr.html">SharedPtr</a>&lt; <a class="el" href="classAudioDesc.html">AudioDesc</a> &gt;</td></tr>
 <tr class="memdesc:a12c38d68a765340588c5b19ae43ee023"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shared pointer type for <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a>. <br /></td></tr>
 <tr class="separator:a12c38d68a765340588c5b19ae43ee023"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a23a000bc02ee59a4a67e3a88b20c80a9" id="r_a23a000bc02ee59a4a67e3a88b20c80a9"><td class="memItemLeft" align="right" valign="top"><a id="a23a000bc02ee59a4a67e3a88b20c80a9" name="a23a000bc02ee59a4a67e3a88b20c80a9"></a>
+<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>List</b> = promeki::List&lt; <a class="el" href="classAudioDesc.html">AudioDesc</a> &gt;</td></tr>
+<tr class="memdesc:a23a000bc02ee59a4a67e3a88b20c80a9"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a> values. <br /></td></tr>
+<tr class="separator:a23a000bc02ee59a4a67e3a88b20c80a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:addd7d5467392b279d693eff02f0af5e0" id="r_addd7d5467392b279d693eff02f0af5e0"><td class="memItemLeft" align="right" valign="top"><a id="addd7d5467392b279d693eff02f0af5e0" name="addd7d5467392b279d693eff02f0af5e0"></a>
+<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>PtrList</b> = promeki::List&lt; <a class="el" href="classAudioDesc.html#a12c38d68a765340588c5b19ae43ee023">Ptr</a> &gt;</td></tr>
+<tr class="memdesc:addd7d5467392b279d693eff02f0af5e0"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of shared <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a> pointers. <br /></td></tr>
+<tr class="separator:addd7d5467392b279d693eff02f0af5e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -160,153 +168,153 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>AudioDesc</b> ()</td></tr>
 <tr class="memdesc:a5275f5d780370d864e4e7b0b230e2aa5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an invalid (default) audio description. <br /></td></tr>
 <tr class="separator:a5275f5d780370d864e4e7b0b230e2aa5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a47187fb3d1bc7b520f6012e27d512ecc" id="r_a47187fb3d1bc7b520f6012e27d512ecc"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a47187fb3d1bc7b520f6012e27d512ecc">AudioDesc</a> (<a class="el" href="classList.html">float</a> <a class="el" href="classList.html">sr</a>, <a class="el" href="classList.html">unsigned</a> int ch)</td></tr>
+<tr class="memitem:a47187fb3d1bc7b520f6012e27d512ecc" id="r_a47187fb3d1bc7b520f6012e27d512ecc"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a47187fb3d1bc7b520f6012e27d512ecc">AudioDesc</a> (<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">sr</a>, <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">unsigned</a> int ch)</td></tr>
 <tr class="memdesc:a47187fb3d1bc7b520f6012e27d512ecc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an audio description with the native float format.  <br /></td></tr>
 <tr class="separator:a47187fb3d1bc7b520f6012e27d512ecc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0f82693f1d149cd4cdff716b898ee0f0" id="r_a0f82693f1d149cd4cdff716b898ee0f0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a0f82693f1d149cd4cdff716b898ee0f0">AudioDesc</a> (<a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">DataType</a> <a class="el" href="classList.html">dt</a>, <a class="el" href="classList.html">float</a> <a class="el" href="classList.html">sr</a>, <a class="el" href="classList.html">unsigned</a> int ch)</td></tr>
+<tr class="memitem:a0f82693f1d149cd4cdff716b898ee0f0" id="r_a0f82693f1d149cd4cdff716b898ee0f0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a0f82693f1d149cd4cdff716b898ee0f0">AudioDesc</a> (<a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">DataType</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">dt</a>, <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">sr</a>, <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">unsigned</a> int ch)</td></tr>
 <tr class="memdesc:a0f82693f1d149cd4cdff716b898ee0f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an audio description with the specified data type, sample rate, and channels.  <br /></td></tr>
 <tr class="separator:a0f82693f1d149cd4cdff716b898ee0f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab18d9b72c5be9490dd33d25403d55f50" id="r_ab18d9b72c5be9490dd33d25403d55f50"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSdpMediaDescription.html">SdpMediaDescription</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#ab18d9b72c5be9490dd33d25403d55f50">toSdp</a> (<a class="el" href="classList.html">uint8_t</a> payloadType) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:ab18d9b72c5be9490dd33d25403d55f50" id="r_ab18d9b72c5be9490dd33d25403d55f50"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSdpMediaDescription.html">SdpMediaDescription</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#ab18d9b72c5be9490dd33d25403d55f50">toSdp</a> (<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">uint8_t</a> payloadType) <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a></td></tr>
 <tr class="memdesc:ab18d9b72c5be9490dd33d25403d55f50"><td class="mdescLeft">&#160;</td><td class="mdescRight">Builds an SDP media description from this <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a>.  <br /></td></tr>
 <tr class="separator:ab18d9b72c5be9490dd33d25403d55f50"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6f30788b4198573e07bbe7cb50e63aa2" id="r_a6f30788b4198573e07bbe7cb50e63aa2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a6f30788b4198573e07bbe7cb50e63aa2">formatEquals</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a6f30788b4198573e07bbe7cb50e63aa2" id="r_a6f30788b4198573e07bbe7cb50e63aa2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a6f30788b4198573e07bbe7cb50e63aa2">formatEquals</a> (<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">other</a>) <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a></td></tr>
 <tr class="memdesc:a6f30788b4198573e07bbe7cb50e63aa2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if both audio descriptions have equal format (type, rate, channels).  <br /></td></tr>
 <tr class="separator:a6f30788b4198573e07bbe7cb50e63aa2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4748613d1123df20087b6a9b0e44b25f" id="r_a4748613d1123df20087b6a9b0e44b25f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a4748613d1123df20087b6a9b0e44b25f">operator==</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a4748613d1123df20087b6a9b0e44b25f" id="r_a4748613d1123df20087b6a9b0e44b25f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a4748613d1123df20087b6a9b0e44b25f">operator==</a> (<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">other</a>) <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a></td></tr>
 <tr class="memdesc:a4748613d1123df20087b6a9b0e44b25f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if both audio descriptions are fully equal, including metadata.  <br /></td></tr>
 <tr class="separator:a4748613d1123df20087b6a9b0e44b25f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac0f5aeaef11ed389c117b0c174ecc905" id="r_ac0f5aeaef11ed389c117b0c174ecc905"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#ac0f5aeaef11ed389c117b0c174ecc905">isValid</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:ac0f5aeaef11ed389c117b0c174ecc905" id="r_ac0f5aeaef11ed389c117b0c174ecc905"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#ac0f5aeaef11ed389c117b0c174ecc905">isValid</a> () <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a></td></tr>
 <tr class="memdesc:ac0f5aeaef11ed389c117b0c174ecc905"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if this audio description is valid.  <br /></td></tr>
 <tr class="separator:ac0f5aeaef11ed389c117b0c174ecc905"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab627ec31647826dda77b727aad03fe54" id="r_ab627ec31647826dda77b727aad03fe54"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#ab627ec31647826dda77b727aad03fe54">isCompressed</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:ab627ec31647826dda77b727aad03fe54" id="r_ab627ec31647826dda77b727aad03fe54"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#ab627ec31647826dda77b727aad03fe54">isCompressed</a> () <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a></td></tr>
 <tr class="memdesc:ab627ec31647826dda77b727aad03fe54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if this description identifies a compressed audio codec (as opposed to raw PCM).  <br /></td></tr>
 <tr class="separator:ab627ec31647826dda77b727aad03fe54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae562a951eb019b6e0d9284f4bd1d425f" id="r_ae562a951eb019b6e0d9284f4bd1d425f"><td class="memItemLeft" align="right" valign="top"><a id="ae562a951eb019b6e0d9284f4bd1d425f" name="ae562a951eb019b6e0d9284f4bd1d425f"></a>
-<a class="el" href="classFourCC.html">FourCC</a>&#160;</td><td class="memItemRight" valign="bottom"><b>codecFourCC</b> () <a class="el" href="classList.html">const</a></td></tr>
+<a class="el" href="classFourCC.html">FourCC</a>&#160;</td><td class="memItemRight" valign="bottom"><b>codecFourCC</b> () <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a></td></tr>
 <tr class="memdesc:ae562a951eb019b6e0d9284f4bd1d425f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the four-character code identifying the compressed codec, or an all-zero <a class="el" href="classFourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a> for PCM audio. <br /></td></tr>
 <tr class="separator:ae562a951eb019b6e0d9284f4bd1d425f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8b04f88e7700990b1230558ec5f6ed17" id="r_a8b04f88e7700990b1230558ec5f6ed17"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a8b04f88e7700990b1230558ec5f6ed17">setCodecFourCC</a> (<a class="el" href="classFourCC.html">FourCC</a> code)</td></tr>
+<tr class="memitem:a8b04f88e7700990b1230558ec5f6ed17" id="r_a8b04f88e7700990b1230558ec5f6ed17"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a8b04f88e7700990b1230558ec5f6ed17">setCodecFourCC</a> (<a class="el" href="classFourCC.html">FourCC</a> code)</td></tr>
 <tr class="memdesc:a8b04f88e7700990b1230558ec5f6ed17"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the compressed codec <a class="el" href="classFourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a>.  <br /></td></tr>
 <tr class="separator:a8b04f88e7700990b1230558ec5f6ed17"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac9768a6e021bda041de148a1add6ddf3" id="r_ac9768a6e021bda041de148a1add6ddf3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#ac9768a6e021bda041de148a1add6ddf3">isNative</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:ac9768a6e021bda041de148a1add6ddf3" id="r_ac9768a6e021bda041de148a1add6ddf3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#ac9768a6e021bda041de148a1add6ddf3">isNative</a> () <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a></td></tr>
 <tr class="memdesc:ac9768a6e021bda041de148a1add6ddf3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the data type is the platform's native float format.  <br /></td></tr>
 <tr class="separator:ac9768a6e021bda041de148a1add6ddf3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad04bfe1f04c616f7bafc2071fa9ee5eb" id="r_ad04bfe1f04c616f7bafc2071fa9ee5eb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html">AudioDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#ad04bfe1f04c616f7bafc2071fa9ee5eb">workingDesc</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:ad04bfe1f04c616f7bafc2071fa9ee5eb" id="r_ad04bfe1f04c616f7bafc2071fa9ee5eb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html">AudioDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#ad04bfe1f04c616f7bafc2071fa9ee5eb">workingDesc</a> () <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a></td></tr>
 <tr class="memdesc:ad04bfe1f04c616f7bafc2071fa9ee5eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a new <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a> with the same sample rate and channels but using the native float format.  <br /></td></tr>
 <tr class="separator:ad04bfe1f04c616f7bafc2071fa9ee5eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a39a3326dbbe81cbb3951e3f31beff7df" id="r_a39a3326dbbe81cbb3951e3f31beff7df"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a39a3326dbbe81cbb3951e3f31beff7df">toString</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a39a3326dbbe81cbb3951e3f31beff7df" id="r_a39a3326dbbe81cbb3951e3f31beff7df"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a39a3326dbbe81cbb3951e3f31beff7df">toString</a> () <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a></td></tr>
 <tr class="memdesc:a39a3326dbbe81cbb3951e3f31beff7df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a human-readable string representation of this audio description.  <br /></td></tr>
 <tr class="separator:a39a3326dbbe81cbb3951e3f31beff7df"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab14f6e70fe47ab39420796247f5ecbdf" id="r_ab14f6e70fe47ab39420796247f5ecbdf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classJsonObject.html">JsonObject</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#ab14f6e70fe47ab39420796247f5ecbdf">toJson</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:ab14f6e70fe47ab39420796247f5ecbdf" id="r_ab14f6e70fe47ab39420796247f5ecbdf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classJsonObject.html">JsonObject</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#ab14f6e70fe47ab39420796247f5ecbdf">toJson</a> () <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a></td></tr>
 <tr class="memdesc:ab14f6e70fe47ab39420796247f5ecbdf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Serializes this audio description to a JSON object.  <br /></td></tr>
 <tr class="separator:ab14f6e70fe47ab39420796247f5ecbdf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a32c198911f37bb6caed55d5d5e357853" id="r_a32c198911f37bb6caed55d5d5e357853"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a32c198911f37bb6caed55d5d5e357853">bytesPerSample</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a32c198911f37bb6caed55d5d5e357853" id="r_a32c198911f37bb6caed55d5d5e357853"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a32c198911f37bb6caed55d5d5e357853">bytesPerSample</a> () <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a></td></tr>
 <tr class="memdesc:a32c198911f37bb6caed55d5d5e357853"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of bytes per single sample.  <br /></td></tr>
 <tr class="separator:a32c198911f37bb6caed55d5d5e357853"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abb0b952fedcf67639b5de33908c5bfb4" id="r_abb0b952fedcf67639b5de33908c5bfb4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#abb0b952fedcf67639b5de33908c5bfb4">bytesPerSampleStride</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:abb0b952fedcf67639b5de33908c5bfb4" id="r_abb0b952fedcf67639b5de33908c5bfb4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#abb0b952fedcf67639b5de33908c5bfb4">bytesPerSampleStride</a> () <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a></td></tr>
 <tr class="memdesc:abb0b952fedcf67639b5de33908c5bfb4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the byte stride between consecutive samples of the same channel.  <br /></td></tr>
 <tr class="separator:abb0b952fedcf67639b5de33908c5bfb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a91212a5f88c931d39684b176f4f197f6" id="r_a91212a5f88c931d39684b176f4f197f6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a91212a5f88c931d39684b176f4f197f6">channelBufferOffset</a> (<a class="el" href="classList.html">unsigned</a> int <a class="el" href="classList.html">chan</a>, <a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">bufferSamples</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a91212a5f88c931d39684b176f4f197f6" id="r_a91212a5f88c931d39684b176f4f197f6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a91212a5f88c931d39684b176f4f197f6">channelBufferOffset</a> (<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">unsigned</a> int <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">chan</a>, <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">size_t</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">bufferSamples</a>) <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a></td></tr>
 <tr class="memdesc:a91212a5f88c931d39684b176f4f197f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the byte offset to a specific channel within a sample buffer.  <br /></td></tr>
 <tr class="separator:a91212a5f88c931d39684b176f4f197f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3f4486efd3ceda5d12df5d987d564aba" id="r_a3f4486efd3ceda5d12df5d987d564aba"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a3f4486efd3ceda5d12df5d987d564aba">bufferSize</a> (<a class="el" href="classList.html">size_t</a> samples) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a3f4486efd3ceda5d12df5d987d564aba" id="r_a3f4486efd3ceda5d12df5d987d564aba"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a3f4486efd3ceda5d12df5d987d564aba">bufferSize</a> (<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">size_t</a> samples) <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a></td></tr>
 <tr class="memdesc:a3f4486efd3ceda5d12df5d987d564aba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the total buffer size in bytes needed to store the given number of samples.  <br /></td></tr>
 <tr class="separator:a3f4486efd3ceda5d12df5d987d564aba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aed77bd03c20f0e1b332243412bc6cb76" id="r_aed77bd03c20f0e1b332243412bc6cb76"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">DataType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#aed77bd03c20f0e1b332243412bc6cb76">dataType</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:aed77bd03c20f0e1b332243412bc6cb76" id="r_aed77bd03c20f0e1b332243412bc6cb76"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">DataType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#aed77bd03c20f0e1b332243412bc6cb76">dataType</a> () <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a></td></tr>
 <tr class="memdesc:aed77bd03c20f0e1b332243412bc6cb76"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the data type of this audio description.  <br /></td></tr>
 <tr class="separator:aed77bd03c20f0e1b332243412bc6cb76"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9c3dadfc95cc99c53fd46be2cc1e3de9" id="r_a9c3dadfc95cc99c53fd46be2cc1e3de9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a9c3dadfc95cc99c53fd46be2cc1e3de9">dataTypeName</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a9c3dadfc95cc99c53fd46be2cc1e3de9" id="r_a9c3dadfc95cc99c53fd46be2cc1e3de9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a9c3dadfc95cc99c53fd46be2cc1e3de9">dataTypeName</a> () <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a></td></tr>
 <tr class="memdesc:a9c3dadfc95cc99c53fd46be2cc1e3de9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the short name of the data type (e.g. "PCMI_S16LE").  <br /></td></tr>
 <tr class="separator:a9c3dadfc95cc99c53fd46be2cc1e3de9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a331dc642a6ebce45a2cc3edbe654b039" id="r_a331dc642a6ebce45a2cc3edbe654b039"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a331dc642a6ebce45a2cc3edbe654b039">setDataType</a> (<a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">DataType</a> <a class="el" href="classList.html">val</a>)</td></tr>
+<tr class="memitem:a331dc642a6ebce45a2cc3edbe654b039" id="r_a331dc642a6ebce45a2cc3edbe654b039"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a331dc642a6ebce45a2cc3edbe654b039">setDataType</a> (<a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">DataType</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">val</a>)</td></tr>
 <tr class="memdesc:a331dc642a6ebce45a2cc3edbe654b039"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the data type.  <br /></td></tr>
 <tr class="separator:a331dc642a6ebce45a2cc3edbe654b039"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a76e846fe714813ae7d9255818012aa95" id="r_a76e846fe714813ae7d9255818012aa95"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">float</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a76e846fe714813ae7d9255818012aa95">sampleRate</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a76e846fe714813ae7d9255818012aa95" id="r_a76e846fe714813ae7d9255818012aa95"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a76e846fe714813ae7d9255818012aa95">sampleRate</a> () <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a></td></tr>
 <tr class="memdesc:a76e846fe714813ae7d9255818012aa95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the sample rate in Hz.  <br /></td></tr>
 <tr class="separator:a76e846fe714813ae7d9255818012aa95"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a31b0bf94438907b125f7fba03183fdc0" id="r_a31b0bf94438907b125f7fba03183fdc0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a31b0bf94438907b125f7fba03183fdc0">setSampleRate</a> (<a class="el" href="classList.html">float</a> <a class="el" href="classList.html">val</a>)</td></tr>
+<tr class="memitem:a31b0bf94438907b125f7fba03183fdc0" id="r_a31b0bf94438907b125f7fba03183fdc0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a31b0bf94438907b125f7fba03183fdc0">setSampleRate</a> (<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">val</a>)</td></tr>
 <tr class="memdesc:a31b0bf94438907b125f7fba03183fdc0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the sample rate.  <br /></td></tr>
 <tr class="separator:a31b0bf94438907b125f7fba03183fdc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a28ace60e735420592c1cc45eede92700" id="r_a28ace60e735420592c1cc45eede92700"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">unsigned</a> int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a28ace60e735420592c1cc45eede92700">channels</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a28ace60e735420592c1cc45eede92700" id="r_a28ace60e735420592c1cc45eede92700"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">unsigned</a> int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a28ace60e735420592c1cc45eede92700">channels</a> () <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a></td></tr>
 <tr class="memdesc:a28ace60e735420592c1cc45eede92700"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of audio channels.  <br /></td></tr>
 <tr class="separator:a28ace60e735420592c1cc45eede92700"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a30edca55f5859fb88cc6256ffbce3543" id="r_a30edca55f5859fb88cc6256ffbce3543"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a30edca55f5859fb88cc6256ffbce3543">setChannels</a> (<a class="el" href="classList.html">unsigned</a> int <a class="el" href="classList.html">val</a>)</td></tr>
+<tr class="memitem:a30edca55f5859fb88cc6256ffbce3543" id="r_a30edca55f5859fb88cc6256ffbce3543"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a30edca55f5859fb88cc6256ffbce3543">setChannels</a> (<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">unsigned</a> int <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">val</a>)</td></tr>
 <tr class="memdesc:a30edca55f5859fb88cc6256ffbce3543"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the number of audio channels.  <br /></td></tr>
 <tr class="separator:a30edca55f5859fb88cc6256ffbce3543"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a11fae05da86474c87f58d712032d6409" id="r_a11fae05da86474c87f58d712032d6409"><td class="memItemLeft" align="right" valign="top"><a id="a11fae05da86474c87f58d712032d6409" name="a11fae05da86474c87f58d712032d6409"></a>
-<a class="el" href="classList.html">const</a> <a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>metadata</b> () <a class="el" href="classList.html">const</a></td></tr>
+<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>metadata</b> () <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a></td></tr>
 <tr class="memdesc:a11fae05da86474c87f58d712032d6409"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const reference to the metadata. <br /></td></tr>
 <tr class="separator:a11fae05da86474c87f58d712032d6409"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afe5d5fdda9cf22642631123d392f9f6d" id="r_afe5d5fdda9cf22642631123d392f9f6d"><td class="memItemLeft" align="right" valign="top"><a id="afe5d5fdda9cf22642631123d392f9f6d" name="afe5d5fdda9cf22642631123d392f9f6d"></a>
 <a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>metadata</b> ()</td></tr>
 <tr class="memdesc:afe5d5fdda9cf22642631123d392f9f6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reference to the metadata. <br /></td></tr>
 <tr class="separator:afe5d5fdda9cf22642631123d392f9f6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a05766200e90d56c804aa82756da80198" id="r_a05766200e90d56c804aa82756da80198"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a05766200e90d56c804aa82756da80198">samplesToFloat</a> (<a class="el" href="classList.html">float</a> *<a class="el" href="classList.html">out</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">uint8_t</a> *<a class="el" href="classList.html">in</a>, <a class="el" href="classList.html">size_t</a> samples) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a05766200e90d56c804aa82756da80198" id="r_a05766200e90d56c804aa82756da80198"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a05766200e90d56c804aa82756da80198">samplesToFloat</a> (<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a> *<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">out</a>, <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">uint8_t</a> *<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">in</a>, <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">size_t</a> samples) <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a></td></tr>
 <tr class="memdesc:a05766200e90d56c804aa82756da80198"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts samples from this description's format to normalized floats.  <br /></td></tr>
 <tr class="separator:a05766200e90d56c804aa82756da80198"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4d906fdd0d437c1310d196c18a143bc1" id="r_a4d906fdd0d437c1310d196c18a143bc1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a4d906fdd0d437c1310d196c18a143bc1">floatToSamples</a> (<a class="el" href="classList.html">uint8_t</a> *<a class="el" href="classList.html">out</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">float</a> *<a class="el" href="classList.html">in</a>, <a class="el" href="classList.html">size_t</a> samples) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a4d906fdd0d437c1310d196c18a143bc1" id="r_a4d906fdd0d437c1310d196c18a143bc1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a4d906fdd0d437c1310d196c18a143bc1">floatToSamples</a> (<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">uint8_t</a> *<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">out</a>, <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a> *<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">in</a>, <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">size_t</a> samples) <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a></td></tr>
 <tr class="memdesc:a4d906fdd0d437c1310d196c18a143bc1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts normalized floats to samples in this description's format.  <br /></td></tr>
 <tr class="separator:a4d906fdd0d437c1310d196c18a143bc1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a80c89f16eb57e133ca1deb9472c8bfef" id="r_a80c89f16eb57e133ca1deb9472c8bfef"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">IntegerType</a> , <a class="el" href="classList.html">IntegerType</a> Min, <a class="el" href="classList.html">IntegerType</a> Max&gt; </td></tr>
-<tr class="memitem:a80c89f16eb57e133ca1deb9472c8bfef"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">float</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a80c89f16eb57e133ca1deb9472c8bfef">integerToFloat</a> (<a class="el" href="classList.html">IntegerType</a> <a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
+<tr class="memitem:a80c89f16eb57e133ca1deb9472c8bfef" id="r_a80c89f16eb57e133ca1deb9472c8bfef"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">typename</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> , <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> Min, <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> Max&gt; </td></tr>
+<tr class="memitem:a80c89f16eb57e133ca1deb9472c8bfef"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a80c89f16eb57e133ca1deb9472c8bfef">integerToFloat</a> (<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> <a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
 <tr class="memdesc:a80c89f16eb57e133ca1deb9472c8bfef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts an integer sample value to a normalized float in [-1, 1].  <br /></td></tr>
 <tr class="separator:a80c89f16eb57e133ca1deb9472c8bfef"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4ca8c164ea3d71ec7b37ca1ddedfbed1" id="r_a4ca8c164ea3d71ec7b37ca1ddedfbed1"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">IntegerType</a> &gt; </td></tr>
-<tr class="memitem:a4ca8c164ea3d71ec7b37ca1ddedfbed1"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">float</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a4ca8c164ea3d71ec7b37ca1ddedfbed1">integerToFloat</a> (<a class="el" href="classList.html">IntegerType</a> <a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
+<tr class="memitem:a4ca8c164ea3d71ec7b37ca1ddedfbed1" id="r_a4ca8c164ea3d71ec7b37ca1ddedfbed1"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">typename</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> &gt; </td></tr>
+<tr class="memitem:a4ca8c164ea3d71ec7b37ca1ddedfbed1"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a4ca8c164ea3d71ec7b37ca1ddedfbed1">integerToFloat</a> (<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> <a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
 <tr class="memdesc:a4ca8c164ea3d71ec7b37ca1ddedfbed1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts an integer sample value to a normalized float using the type's full range.  <br /></td></tr>
 <tr class="separator:a4ca8c164ea3d71ec7b37ca1ddedfbed1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a271108fd3150ccb0d1768518d9c128b3" id="r_a271108fd3150ccb0d1768518d9c128b3"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">IntegerType</a> , <a class="el" href="classList.html">IntegerType</a> Min, <a class="el" href="classList.html">IntegerType</a> Max&gt; </td></tr>
-<tr class="memitem:a271108fd3150ccb0d1768518d9c128b3"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">IntegerType</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a271108fd3150ccb0d1768518d9c128b3">floatToInteger</a> (<a class="el" href="classList.html">float</a> <a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
+<tr class="memitem:a271108fd3150ccb0d1768518d9c128b3" id="r_a271108fd3150ccb0d1768518d9c128b3"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">typename</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> , <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> Min, <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> Max&gt; </td></tr>
+<tr class="memitem:a271108fd3150ccb0d1768518d9c128b3"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a271108fd3150ccb0d1768518d9c128b3">floatToInteger</a> (<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a> <a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
 <tr class="memdesc:a271108fd3150ccb0d1768518d9c128b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a normalized float in [-1, 1] to an integer sample value.  <br /></td></tr>
 <tr class="separator:a271108fd3150ccb0d1768518d9c128b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a78c6522730c02b63ffe06ac6473727a3" id="r_a78c6522730c02b63ffe06ac6473727a3"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">IntegerType</a> &gt; </td></tr>
-<tr class="memitem:a78c6522730c02b63ffe06ac6473727a3"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">IntegerType</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a78c6522730c02b63ffe06ac6473727a3">floatToInteger</a> (<a class="el" href="classList.html">float</a> <a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
+<tr class="memitem:a78c6522730c02b63ffe06ac6473727a3" id="r_a78c6522730c02b63ffe06ac6473727a3"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">typename</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> &gt; </td></tr>
+<tr class="memitem:a78c6522730c02b63ffe06ac6473727a3"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a78c6522730c02b63ffe06ac6473727a3">floatToInteger</a> (<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a> <a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
 <tr class="memdesc:a78c6522730c02b63ffe06ac6473727a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a normalized float to an integer sample using the type's full range.  <br /></td></tr>
 <tr class="separator:a78c6522730c02b63ffe06ac6473727a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a80d8388afb702622da588bba7562cf7f" id="r_a80d8388afb702622da588bba7562cf7f"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">IntegerType</a> , <a class="el" href="classList.html">bool</a> InputIsBigEndian&gt; </td></tr>
-<tr class="memitem:a80d8388afb702622da588bba7562cf7f"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a80d8388afb702622da588bba7562cf7f">samplesToFloat</a> (<a class="el" href="classList.html">float</a> *<a class="el" href="classList.html">out</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">uint8_t</a> *<a class="el" href="classList.html">inbuf</a>, <a class="el" href="classList.html">size_t</a> samples)</td></tr>
+<tr class="memitem:a80d8388afb702622da588bba7562cf7f" id="r_a80d8388afb702622da588bba7562cf7f"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">typename</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> , <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">bool</a> InputIsBigEndian&gt; </td></tr>
+<tr class="memitem:a80d8388afb702622da588bba7562cf7f"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a80d8388afb702622da588bba7562cf7f">samplesToFloat</a> (<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a> *<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">out</a>, <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">uint8_t</a> *<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">inbuf</a>, <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">size_t</a> samples)</td></tr>
 <tr class="memdesc:a80d8388afb702622da588bba7562cf7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a buffer of integer samples to normalized floats.  <br /></td></tr>
 <tr class="separator:a80d8388afb702622da588bba7562cf7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abeb53598981a079183c93928b30256ed" id="r_abeb53598981a079183c93928b30256ed"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">IntegerType</a> , <a class="el" href="classList.html">bool</a> OutputIsBigEndian&gt; </td></tr>
-<tr class="memitem:abeb53598981a079183c93928b30256ed"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#abeb53598981a079183c93928b30256ed">floatToSamples</a> (<a class="el" href="classList.html">uint8_t</a> *<a class="el" href="classList.html">outbuf</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">float</a> *<a class="el" href="classList.html">in</a>, <a class="el" href="classList.html">size_t</a> samples)</td></tr>
+<tr class="memitem:abeb53598981a079183c93928b30256ed" id="r_abeb53598981a079183c93928b30256ed"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">typename</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> , <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">bool</a> OutputIsBigEndian&gt; </td></tr>
+<tr class="memitem:abeb53598981a079183c93928b30256ed"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#abeb53598981a079183c93928b30256ed">floatToSamples</a> (<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">uint8_t</a> *<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">outbuf</a>, <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a> *<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">in</a>, <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">size_t</a> samples)</td></tr>
 <tr class="memdesc:abeb53598981a079183c93928b30256ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a buffer of normalized floats to integer samples.  <br /></td></tr>
 <tr class="separator:abeb53598981a079183c93928b30256ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a80ce6dd2a4f39ed363c666eb4fd3750a" id="r_a80ce6dd2a4f39ed363c666eb4fd3750a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="structAudioDesc_1_1Format.html">Format</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a80ce6dd2a4f39ed363c666eb4fd3750a">lookupFormat</a> (int id)</td></tr>
+<tr class="memitem:a80ce6dd2a4f39ed363c666eb4fd3750a" id="r_a80ce6dd2a4f39ed363c666eb4fd3750a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="structAudioDesc_1_1Format.html">Format</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a80ce6dd2a4f39ed363c666eb4fd3750a">lookupFormat</a> (int id)</td></tr>
 <tr class="memdesc:a80ce6dd2a4f39ed363c666eb4fd3750a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Looks up a <a class="el" href="structAudioDesc_1_1Format.html" title="Descriptor for a specific audio sample format.">Format</a> descriptor by its DataType id.  <br /></td></tr>
 <tr class="separator:a80ce6dd2a4f39ed363c666eb4fd3750a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abe205f6720fd6198eacaf796c3c3db2e" id="r_abe205f6720fd6198eacaf796c3c3db2e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">DataType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#abe205f6720fd6198eacaf796c3c3db2e">stringToDataType</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
+<tr class="memitem:abe205f6720fd6198eacaf796c3c3db2e" id="r_abe205f6720fd6198eacaf796c3c3db2e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">DataType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#abe205f6720fd6198eacaf796c3c3db2e">stringToDataType</a> (<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">val</a>)</td></tr>
 <tr class="memdesc:abe205f6720fd6198eacaf796c3c3db2e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a string name to its corresponding DataType enum value.  <br /></td></tr>
 <tr class="separator:abe205f6720fd6198eacaf796c3c3db2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0d33275750109af335ca4bc2de006b75" id="r_a0d33275750109af335ca4bc2de006b75"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classAudioDesc.html">AudioDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a0d33275750109af335ca4bc2de006b75">fromJson</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classJsonObject.html">JsonObject</a> &amp;<a class="el" href="classList.html">json</a>, <a class="el" href="classError.html">Error</a> *<a class="el" href="classList.html">err</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
+<tr class="memitem:a0d33275750109af335ca4bc2de006b75" id="r_a0d33275750109af335ca4bc2de006b75"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html">AudioDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a0d33275750109af335ca4bc2de006b75">fromJson</a> (<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classJsonObject.html">JsonObject</a> &amp;<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">json</a>, <a class="el" href="classError.html">Error</a> *<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">err</a>=<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">nullptr</a>)</td></tr>
 <tr class="memdesc:a0d33275750109af335ca4bc2de006b75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a> from a JSON object.  <br /></td></tr>
 <tr class="separator:a0d33275750109af335ca4bc2de006b75"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a560400079ae4386b1f1a7e12b4ed65eb" id="r_a560400079ae4386b1f1a7e12b4ed65eb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classAudioDesc.html">AudioDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a560400079ae4386b1f1a7e12b4ed65eb">fromSdp</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classSdpMediaDescription.html">SdpMediaDescription</a> &amp;<a class="el" href="classList.html">md</a>)</td></tr>
+<tr class="memitem:a560400079ae4386b1f1a7e12b4ed65eb" id="r_a560400079ae4386b1f1a7e12b4ed65eb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html">AudioDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a560400079ae4386b1f1a7e12b4ed65eb">fromSdp</a> (<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classSdpMediaDescription.html">SdpMediaDescription</a> &amp;<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">md</a>)</td></tr>
 <tr class="memdesc:a560400079ae4386b1f1a7e12b4ed65eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Derives an <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a> from an SDP media description.  <br /></td></tr>
 <tr class="separator:a560400079ae4386b1f1a7e12b4ed65eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:a39d719985ad1ec4416d6004d95e1ca68" id="r_a39d719985ad1ec4416d6004d95e1ca68"><td class="memItemLeft" align="right" valign="top"><a id="a39d719985ad1ec4416d6004d95e1ca68" name="a39d719985ad1ec4416d6004d95e1ca68"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">int32_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>MinS24</b> = -8388608</td></tr>
+<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">int32_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>MinS24</b> = -8388608</td></tr>
 <tr class="memdesc:a39d719985ad1ec4416d6004d95e1ca68"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minimum value of a signed 24-bit integer. <br /></td></tr>
 <tr class="separator:a39d719985ad1ec4416d6004d95e1ca68"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af195b376da48d2d2ca152d7e0e0e2013" id="r_af195b376da48d2d2ca152d7e0e0e2013"><td class="memItemLeft" align="right" valign="top"><a id="af195b376da48d2d2ca152d7e0e0e2013" name="af195b376da48d2d2ca152d7e0e0e2013"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">int32_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>MaxS24</b> = 8388607</td></tr>
+<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">int32_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>MaxS24</b> = 8388607</td></tr>
 <tr class="memdesc:af195b376da48d2d2ca152d7e0e0e2013"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum value of a signed 24-bit integer. <br /></td></tr>
 <tr class="separator:af195b376da48d2d2ca152d7e0e0e2013"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5ff57815cd9ea4e811e44fc55f153860" id="r_a5ff57815cd9ea4e811e44fc55f153860"><td class="memItemLeft" align="right" valign="top"><a id="a5ff57815cd9ea4e811e44fc55f153860" name="a5ff57815cd9ea4e811e44fc55f153860"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">int32_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>MinU24</b> = 0</td></tr>
+<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">int32_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>MinU24</b> = 0</td></tr>
 <tr class="memdesc:a5ff57815cd9ea4e811e44fc55f153860"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minimum value of an unsigned 24-bit integer. <br /></td></tr>
 <tr class="separator:a5ff57815cd9ea4e811e44fc55f153860"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae7a8153dc6502a6ba5182060d1b3b975" id="r_ae7a8153dc6502a6ba5182060d1b3b975"><td class="memItemLeft" align="right" valign="top"><a id="ae7a8153dc6502a6ba5182060d1b3b975" name="ae7a8153dc6502a6ba5182060d1b3b975"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">int32_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>MaxU24</b> = 16777215</td></tr>
+<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">int32_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>MaxU24</b> = 16777215</td></tr>
 <tr class="memdesc:ae7a8153dc6502a6ba5182060d1b3b975"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum value of an unsigned 24-bit integer. <br /></td></tr>
 <tr class="separator:ae7a8153dc6502a6ba5182060d1b3b975"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4a8484fa1d21e315bcb0105b977d8c37" id="r_a4a8484fa1d21e315bcb0105b977d8c37"><td class="memItemLeft" align="right" valign="top"><a id="a4a8484fa1d21e315bcb0105b977d8c37" name="a4a8484fa1d21e315bcb0105b977d8c37"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">DataType</a>&#160;</td><td class="memItemRight" valign="bottom"><b>NativeType</b> = <a class="el" href="classSystem.html#abd0fb8cf49af7ec028f07acdc805b6bb">System::isLittleEndian</a>() ? <a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4a7d72b1c5a1148b99f731cb58399d56e2">PCMI_Float32LE</a> : <a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4a37fb049617f29ec96c2bc0ef5ba5cb16">PCMI_Float32BE</a></td></tr>
+<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">constexpr</a> <a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">DataType</a>&#160;</td><td class="memItemRight" valign="bottom"><b>NativeType</b> = <a class="el" href="classSystem.html#abd0fb8cf49af7ec028f07acdc805b6bb">System::isLittleEndian</a>() ? <a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4a7d72b1c5a1148b99f731cb58399d56e2">PCMI_Float32LE</a> : <a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4a37fb049617f29ec96c2bc0ef5ba5cb16">PCMI_Float32BE</a></td></tr>
 <tr class="memdesc:a4a8484fa1d21e315bcb0105b977d8c37"><td class="mdescLeft">&#160;</td><td class="mdescRight">The native float format for the current platform's endianness. <br /></td></tr>
 <tr class="separator:a4a8484fa1d21e315bcb0105b977d8c37"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -321,7 +329,7 @@ Static Public Attributes</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">enum</a> <a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">AudioDesc::DataType</a></td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">enum</a> <a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">AudioDesc::DataType</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -380,13 +388,13 @@ Static Public Attributes</h2></td></tr>
         <tr>
           <td class="memname">AudioDesc::AudioDesc </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">float</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a>&#160;</td>
           <td class="paramname"><em>sr</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">unsigned</a> int&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">unsigned</a> int&#160;</td>
           <td class="paramname"><em>ch</em>&#160;</td>
         </tr>
         <tr>
@@ -432,13 +440,13 @@ Static Public Attributes</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">float</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a>&#160;</td>
           <td class="paramname"><em>sr</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">unsigned</a> int&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">unsigned</a> int&#160;</td>
           <td class="paramname"><em>ch</em>&#160;</td>
         </tr>
         <tr>
@@ -478,9 +486,9 @@ Static Public Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">size_t</a> AudioDesc::bufferSize </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">size_t</a> AudioDesc::bufferSize </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">size_t</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">size_t</a>&#160;</td>
           <td class="paramname"><em>samples</em></td><td>)</td>
           <td> const</td>
         </tr>
@@ -513,7 +521,7 @@ Static Public Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">size_t</a> AudioDesc::bytesPerSample </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">size_t</a> AudioDesc::bytesPerSample </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -541,7 +549,7 @@ Static Public Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">size_t</a> AudioDesc::bytesPerSampleStride </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">size_t</a> AudioDesc::bytesPerSampleStride </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -570,15 +578,15 @@ Static Public Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">size_t</a> AudioDesc::channelBufferOffset </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">size_t</a> AudioDesc::channelBufferOffset </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">unsigned</a> int&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">unsigned</a> int&#160;</td>
           <td class="paramname"><em>chan</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">size_t</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">size_t</a>&#160;</td>
           <td class="paramname"><em>bufferSamples</em>&#160;</td>
         </tr>
         <tr>
@@ -617,7 +625,7 @@ Static Public Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">unsigned</a> int AudioDesc::channels </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">unsigned</a> int AudioDesc::channels </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -673,7 +681,7 @@ Static Public Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp; AudioDesc::dataTypeName </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classString.html">String</a> &amp; AudioDesc::dataTypeName </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -697,15 +705,15 @@ Static Public Attributes</h2></td></tr>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">IntegerType</a> , <a class="el" href="classList.html">IntegerType</a> Min, <a class="el" href="classList.html">IntegerType</a> Max&gt; </div>
+template&lt;<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">typename</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> , <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> Min, <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> Max&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">IntegerType</a> AudioDesc::floatToInteger </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> AudioDesc::floatToInteger </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">float</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a>&#160;</td>
           <td class="paramname"><em>value</em></td><td>)</td>
           <td></td>
         </tr>
@@ -743,15 +751,15 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">IntegerType</a> &gt; </div>
+template&lt;<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">typename</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">IntegerType</a> AudioDesc::floatToInteger </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> AudioDesc::floatToInteger </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">float</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a>&#160;</td>
           <td class="paramname"><em>value</em></td><td>)</td>
           <td></td>
         </tr>
@@ -790,21 +798,21 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> AudioDesc::floatToSamples </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">void</a> AudioDesc::floatToSamples </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">uint8_t</a> *&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">uint8_t</a> *&#160;</td>
           <td class="paramname"><em>out</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classList.html">float</a> *&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a> *&#160;</td>
           <td class="paramname"><em>in</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">size_t</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">size_t</a>&#160;</td>
           <td class="paramname"><em>samples</em>&#160;</td>
         </tr>
         <tr>
@@ -838,27 +846,27 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">IntegerType</a> , <a class="el" href="classList.html">bool</a> OutputIsBigEndian&gt; </div>
+template&lt;<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">typename</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> , <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">bool</a> OutputIsBigEndian&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a> AudioDesc::floatToSamples </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">void</a> AudioDesc::floatToSamples </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">uint8_t</a> *&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">uint8_t</a> *&#160;</td>
           <td class="paramname"><em>outbuf</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classList.html">float</a> *&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a> *&#160;</td>
           <td class="paramname"><em>in</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">size_t</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">size_t</a>&#160;</td>
           <td class="paramname"><em>samples</em>&#160;</td>
         </tr>
         <tr>
@@ -904,9 +912,9 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">bool</a> AudioDesc::formatEquals </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">bool</a> AudioDesc::formatEquals </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;&#160;</td>
           <td class="paramname"><em>other</em></td><td>)</td>
           <td> const</td>
         </tr>
@@ -939,16 +947,16 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> AudioDesc::fromJson </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> AudioDesc::fromJson </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classJsonObject.html">JsonObject</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classJsonObject.html">JsonObject</a> &amp;&#160;</td>
           <td class="paramname"><em>json</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="classError.html">Error</a> *&#160;</td>
-          <td class="paramname"><em>err</em> = <code><a class="el" href="classList.html">nullptr</a></code>&#160;</td>
+          <td class="paramname"><em>err</em> = <code><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">nullptr</a></code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -985,9 +993,9 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> AudioDesc::fromSdp </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> AudioDesc::fromSdp </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classSdpMediaDescription.html">SdpMediaDescription</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classSdpMediaDescription.html">SdpMediaDescription</a> &amp;&#160;</td>
           <td class="paramname"><em>md</em></td><td>)</td>
           <td></td>
         </tr>
@@ -1023,15 +1031,15 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">IntegerType</a> , <a class="el" href="classList.html">IntegerType</a> Min, <a class="el" href="classList.html">IntegerType</a> Max&gt; </div>
+template&lt;<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">typename</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> , <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> Min, <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> Max&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">float</a> AudioDesc::integerToFloat </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a> AudioDesc::integerToFloat </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">IntegerType</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a>&#160;</td>
           <td class="paramname"><em>value</em></td><td>)</td>
           <td></td>
         </tr>
@@ -1069,15 +1077,15 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">IntegerType</a> &gt; </div>
+template&lt;<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">typename</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">float</a> AudioDesc::integerToFloat </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a> AudioDesc::integerToFloat </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">IntegerType</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a>&#160;</td>
           <td class="paramname"><em>value</em></td><td>)</td>
           <td></td>
         </tr>
@@ -1116,7 +1124,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">bool</a> AudioDesc::isCompressed </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">bool</a> AudioDesc::isCompressed </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -1144,7 +1152,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">bool</a> AudioDesc::isNative </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">bool</a> AudioDesc::isNative </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -1172,7 +1180,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">bool</a> AudioDesc::isValid </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">bool</a> AudioDesc::isValid </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -1200,7 +1208,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="structAudioDesc_1_1Format.html">Format</a> * AudioDesc::lookupFormat </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="structAudioDesc_1_1Format.html">Format</a> * AudioDesc::lookupFormat </td>
           <td>(</td>
           <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>id</em></td><td>)</td>
@@ -1235,9 +1243,9 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">bool</a> AudioDesc::operator== </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">bool</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">AudioDesc::operator</a>== </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;&#160;</td>
           <td class="paramname"><em>other</em></td><td>)</td>
           <td> const</td>
         </tr>
@@ -1270,7 +1278,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">float</a> AudioDesc::sampleRate </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a> AudioDesc::sampleRate </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -1298,21 +1306,21 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> AudioDesc::samplesToFloat </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">void</a> AudioDesc::samplesToFloat </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">float</a> *&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a> *&#160;</td>
           <td class="paramname"><em>out</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classList.html">uint8_t</a> *&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">uint8_t</a> *&#160;</td>
           <td class="paramname"><em>in</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">size_t</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">size_t</a>&#160;</td>
           <td class="paramname"><em>samples</em>&#160;</td>
         </tr>
         <tr>
@@ -1346,27 +1354,27 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">IntegerType</a> , <a class="el" href="classList.html">bool</a> InputIsBigEndian&gt; </div>
+template&lt;<a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">typename</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">IntegerType</a> , <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">bool</a> InputIsBigEndian&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a> AudioDesc::samplesToFloat </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">void</a> AudioDesc::samplesToFloat </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">float</a> *&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a> *&#160;</td>
           <td class="paramname"><em>out</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classList.html">uint8_t</a> *&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">uint8_t</a> *&#160;</td>
           <td class="paramname"><em>inbuf</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">size_t</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">size_t</a>&#160;</td>
           <td class="paramname"><em>samples</em>&#160;</td>
         </tr>
         <tr>
@@ -1412,9 +1420,9 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> AudioDesc::setChannels </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">void</a> AudioDesc::setChannels </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">unsigned</a> int&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">unsigned</a> int&#160;</td>
           <td class="paramname"><em>val</em></td><td>)</td>
           <td></td>
         </tr>
@@ -1446,7 +1454,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> AudioDesc::setCodecFourCC </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">void</a> AudioDesc::setCodecFourCC </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classFourCC.html">FourCC</a>&#160;</td>
           <td class="paramname"><em>code</em></td><td>)</td>
@@ -1475,7 +1483,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> AudioDesc::setDataType </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">void</a> AudioDesc::setDataType </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">DataType</a>&#160;</td>
           <td class="paramname"><em>val</em></td><td>)</td>
@@ -1490,6 +1498,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 </div><div class="memdoc">
 
 <p>Sets the data type. </p>
+<p>Also refreshes the cached <code><a class="el" href="structAudioDesc_1_1Format.html" title="Descriptor for a specific audio sample format.">Format</a></code> pointer so <a class="el" href="classAudioDesc.html#a39a3326dbbe81cbb3951e3f31beff7df">toString</a>, <a class="el" href="classAudioDesc.html#a32c198911f37bb6caed55d5d5e357853">bytesPerSample</a>, isPlanar, and the StructDatabase-driven helpers stay in sync with <code>val</code>. Without this, <code>toString</code> would keep reporting the previously-cached format name even after <a class="el" href="classAudioDesc.html#a331dc642a6ebce45a2cc3edbe654b039">setDataType</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">val</td><td>The new DataType value. </td></tr>
@@ -1509,9 +1518,9 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> AudioDesc::setSampleRate </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">void</a> AudioDesc::setSampleRate </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">float</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">float</a>&#160;</td>
           <td class="paramname"><em>val</em></td><td>)</td>
           <td></td>
         </tr>
@@ -1543,9 +1552,9 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">DataType</a> AudioDesc::stringToDataType </td>
+          <td class="memname"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">static</a> <a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">DataType</a> AudioDesc::stringToDataType </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
           <td class="paramname"><em>val</em></td><td>)</td>
           <td></td>
         </tr>
@@ -1605,7 +1614,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
         <tr>
           <td class="memname"><a class="el" href="classSdpMediaDescription.html">SdpMediaDescription</a> AudioDesc::toSdp </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">uint8_t</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">uint8_t</a>&#160;</td>
           <td class="paramname"><em>payloadType</em></td><td>)</td>
           <td> const</td>
         </tr>
@@ -1691,7 +1700,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudioDesc.html">AudioDesc</a></li>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

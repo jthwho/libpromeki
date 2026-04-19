@@ -920,7 +920,7 @@ Functions</h2></td></tr>
 
 <p>Constructs a <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> writer that plays frames through SDL using the legacy <a class="el" href="classFramePacer.html">FramePacer</a> path. </p>
 <dl class="deprecated"><dt><b><a class="el" href="deprecated.html#_deprecated000002">Deprecated:</a></b></dt><dd>Use <a class="el" href="sdlplayer_8h.html#a208abb06e90244b09338754815786635">createSDLPlayer</a> instead — see <a class="el" href="classSDLPlayerOldTask.html">SDLPlayerOldTask</a>.</dd></dl>
-<p>Creates an <a class="el" href="classSDLPlayerOldTask.html" title="MediaIOTask writer that plays frames through SDL (legacy path).">SDLPlayerOldTask</a> with the supplied widget/audio pointers and adopts it into a newly allocated <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a>. The returned <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> is not yet open; the caller must set the source <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> (and optionally an <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a>) and then call <code>open(MediaIO::Input)</code>.</p>
+<p>Creates an <a class="el" href="classSDLPlayerOldTask.html" title="MediaIOTask writer that plays frames through SDL (legacy path).">SDLPlayerOldTask</a> with the supplied widget/audio pointers and adopts it into a newly allocated <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a>. The returned <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> is not yet open; the caller must set the source <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> (and optionally an <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a>) and then call <code>open(MediaIO::Sink)</code>.</p>
 <p>The returned <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> owns the task and deletes it on destruction. Ownership of <code>video</code> and <code>audio</code> stays with the caller — they must outlive the returned <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -942,7 +942,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="dir_5de5535980063e87a96453d3d72f8c3d.html">sdl</a></li><li class="navelem"><a class="el" href="sdlplayerold_8h.html">sdlplayerold.h</a></li>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

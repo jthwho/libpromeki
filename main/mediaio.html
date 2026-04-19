@@ -116,6 +116,7 @@ $(document).ready(function(){initNavTree('mediaio.html',''); initResizable(); })
 <li class="level2"><a href="#mediaio_lifecycle">Open / close lifecycle</a></li>
 <li class="level2"><a href="#mediaio_read">Reading frames</a></li>
 <li class="level2"><a href="#mediaio_write">Writing frames</a></li>
+<li class="level2"><a href="#mediaio_async_close">Async close</a></li>
 <li class="level2"><a href="#mediaio_seek">Seeking</a></li>
 <li class="level2"><a href="#mediaio_params">Parameterized commands</a></li>
 </ul>
@@ -159,20 +160,18 @@ Available backends</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>V4L2</code>   </td><td class="markdownTableBodyNone">source   </td><td class="markdownTableBodyNone">Video4Linux2 capture device (webcams, capture cards exposing a V4L2 node).    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>Converter</code>   </td><td class="markdownTableBodyNone">transform   </td><td class="markdownTableBodyNone">In-process pixel-format converter that wraps a child read-side and a parent write-side.    </td></tr>
+<td class="markdownTableBodyNone"><code>CSC</code>   </td><td class="markdownTableBodyNone">transform   </td><td class="markdownTableBodyNone">Colour-space / pixel-format converter stage (replaces the deprecated <code>Converter</code>).    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>CSC</code>   </td><td class="markdownTableBodyNone">transform   </td><td class="markdownTableBodyNone">Stand-alone colour-space / pixel-format converter stage.    </td></tr>
-<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>SRC</code>   </td><td class="markdownTableBodyNone">transform   </td><td class="markdownTableBodyNone">Stand-alone audio sample-rate converter stage.    </td></tr>
-<tr class="markdownTableRowOdd">
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>Burn</code>   </td><td class="markdownTableBodyNone">transform   </td><td class="markdownTableBodyNone">Burn-in overlay generator (text / timecode) for QA and review.    </td></tr>
-<tr class="markdownTableRowEven">
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code><a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a></code>   </td><td class="markdownTableBodyNone">transform   </td><td class="markdownTableBodyNone">Frame-rate sync / re-clock stage.    </td></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classVideoEncoder.html" title="Abstract base class for stateful video encoders.">VideoEncoder</a></code>   </td><td class="markdownTableBodyNone">transform   </td><td class="markdownTableBodyNone">Generic video-encoder stage that dispatches to the registered <a class="el" href="classVideoEncoder.html">VideoEncoder</a> backend for the configured MediaConfig::VideoCodec. Emits one compressed <a class="el" href="classImage.html">Image</a> per encoded access unit with its <a class="el" href="classImage.html#aed813848fdebb5874f9f29878cd7e5f1">Image::packet</a> populated.    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classVideoDecoder.html" title="Abstract base class for stateful video decoders.">VideoDecoder</a></code>   </td><td class="markdownTableBodyNone">transform   </td><td class="markdownTableBodyNone">Generic video-decoder stage — consumes the <a class="el" href="classImage.html#aed813848fdebb5874f9f29878cd7e5f1">Image::packet</a> from each compressed input <a class="el" href="classImage.html">Image</a> and emits uncompressed <a class="el" href="classImage.html">Image</a> frames on the other side. Auto-detects the codec from the packet's <a class="el" href="classMediaPacket.html#a56035fad1d51bc0bd4a45ea341fdbea8">MediaPacket::pixelDesc</a> when MediaConfig::VideoCodec is unset.    </td></tr>
+<td class="markdownTableBodyNone"><code><a class="el" href="classVideoEncoder.html" title="Abstract base class for stateful video encoders.">VideoEncoder</a></code>   </td><td class="markdownTableBodyNone">transform   </td><td class="markdownTableBodyNone">Generic video-encoder stage that dispatches to the registered <a class="el" href="classVideoEncoder.html">VideoEncoder</a> backend for the configured MediaConfig::VideoCodec. Emits one compressed <a class="el" href="classImage.html">Image</a> per encoded access unit with its <a class="el" href="classImage.html#aed813848fdebb5874f9f29878cd7e5f1">Image::packet</a> populated.    </td></tr>
 <tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code><a class="el" href="classVideoDecoder.html" title="Abstract base class for stateful video decoders.">VideoDecoder</a></code>   </td><td class="markdownTableBodyNone">transform   </td><td class="markdownTableBodyNone">Generic video-decoder stage — consumes the <a class="el" href="classImage.html#aed813848fdebb5874f9f29878cd7e5f1">Image::packet</a> from each compressed input <a class="el" href="classImage.html">Image</a> and emits uncompressed <a class="el" href="classImage.html">Image</a> frames on the other side. Auto-detects the codec from the packet's <a class="el" href="classMediaPacket.html#a56035fad1d51bc0bd4a45ea341fdbea8">MediaPacket::pixelDesc</a> when MediaConfig::VideoCodec is unset.    </td></tr>
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>RawBitstream</code>   </td><td class="markdownTableBodyNone">sink   </td><td class="markdownTableBodyNone">Writes every compressed <a class="el" href="classImage.html">Image's</a> attached <a class="el" href="classMediaPacket.html">MediaPacket</a> payload verbatim to a file — the elementary-stream mirror of the encoder output.   </td></tr>
 </table>
 <p>The TPG and Inspector are designed to be used together with no extra configuration: a default-config TPG produces everything the default-config Inspector knows how to verify (image data band, BCD timecode, LTC audio, A/V sync), so a smoke-test pipeline is just two factory calls plus a frame loop. See <a class="el" href="inspector.html">Inspector — Frame validation and monitoring</a> for the full walk-through.</p>
@@ -251,24 +250,24 @@ Creating an instance</h2>
 <div class="ttc" id="aclassMediaIO_html_af89231d60485661711ec7e11837a33d0"><div class="ttname"><a href="classMediaIO.html#af89231d60485661711ec7e11837a33d0">MediaIO::createForFileRead</a></div><div class="ttdeci">static MediaIO * createForFileRead(const String &amp;filename, ObjectBase *parent=nullptr)</div><div class="ttdoc">Creates a MediaIO reader for the given filename.</div></div>
 </div><!-- fragment --><h2><a class="anchor" id="mediaio_lifecycle"></a>
 Open / close lifecycle</h2>
-<div class="fragment"><div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#a1275eb1f436852fd2fd63a1fefd5df95">setMediaDesc</a>(<a class="code hl_class" href="classList.html">myMediaDesc</a>);     <span class="comment">// optional, pre-open setters</span></div>
-<div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#a6de44bf5739776dc1b5eaa2ea21e0fbc">setMetadata</a>(<a class="code hl_class" href="classList.html">myMetadata</a>);</div>
+<div class="fragment"><div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#a4fbce71f10169c3986844ce2c451daa5">setExpectedDesc</a>(<a class="code hl_class" href="classList.html">myMediaDesc</a>);  <span class="comment">// optional, pre-open setters</span></div>
+<div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#a5a04427682c77c6f00703feec8075ca1">setExpectedMetadata</a>(<a class="code hl_class" href="classList.html">myMetadata</a>);</div>
 <div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#a307a396ad329c3c1e6de4f3df2fb2ff3">setVideoTracks</a>({0});           <span class="comment">// optional track selection</span></div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classError.html">Error</a> <a class="code hl_class" href="classList.html">err</a> = io-&gt;<a class="code hl_function" href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3">open</a>(<a class="code hl_variable" href="classMediaIO.html#a209efe1b5da1839d22ac041f62813615">MediaIO::Output</a>);</div>
+<div class="line"><a class="code hl_class" href="classError.html">Error</a> <a class="code hl_class" href="classList.html">err</a> = io-&gt;<a class="code hl_function" href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3">open</a>(<a class="code hl_variable" href="classMediaIO.html#aa4e38e7fc22ac0bbb0fb29fb8e8ae428">MediaIO::Source</a>);</div>
 <div class="line"><span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">err</a>.isError()) { ... }</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// ... read/write frames ...</span></div>
 <div class="line"> </div>
-<div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#adec397e0125f2e156de27c9ac5cb1f3d">close</a>();</div>
+<div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#af37ceef12934d2397a18c58d518c3489">close</a>();</div>
 <div class="line"><span class="keyword">delete</span> io;</div>
 <div class="ttc" id="aclassError_html"><div class="ttname"><a href="classError.html">Error</a></div><div class="ttdoc">Lightweight error code wrapper for the promeki library.</div><div class="ttdef"><b>Definition</b> error.h:39</div></div>
-<div class="ttc" id="aclassMediaIO_html_a1275eb1f436852fd2fd63a1fefd5df95"><div class="ttname"><a href="classMediaIO.html#a1275eb1f436852fd2fd63a1fefd5df95">MediaIO::setMediaDesc</a></div><div class="ttdeci">Error setMediaDesc(const MediaDesc &amp;desc)</div><div class="ttdoc">Sets the media description for writing.</div></div>
-<div class="ttc" id="aclassMediaIO_html_a209efe1b5da1839d22ac041f62813615"><div class="ttname"><a href="classMediaIO.html#a209efe1b5da1839d22ac041f62813615">MediaIO::Output</a></div><div class="ttdeci">static constexpr Mode Output</div><div class="ttdoc">Backend provides frames (source).</div><div class="ttdef"><b>Definition</b> mediaio.h:491</div></div>
 <div class="ttc" id="aclassMediaIO_html_a307a396ad329c3c1e6de4f3df2fb2ff3"><div class="ttname"><a href="classMediaIO.html#a307a396ad329c3c1e6de4f3df2fb2ff3">MediaIO::setVideoTracks</a></div><div class="ttdeci">Error setVideoTracks(const List&lt; int &gt; &amp;tracks)</div><div class="ttdoc">Selects which video tracks to decode (pre-open).</div></div>
+<div class="ttc" id="aclassMediaIO_html_a4fbce71f10169c3986844ce2c451daa5"><div class="ttname"><a href="classMediaIO.html#a4fbce71f10169c3986844ce2c451daa5">MediaIO::setExpectedDesc</a></div><div class="ttdeci">Error setExpectedDesc(const MediaDesc &amp;desc)</div><div class="ttdoc">Sets the expected media description.</div></div>
+<div class="ttc" id="aclassMediaIO_html_a5a04427682c77c6f00703feec8075ca1"><div class="ttname"><a href="classMediaIO.html#a5a04427682c77c6f00703feec8075ca1">MediaIO::setExpectedMetadata</a></div><div class="ttdeci">Error setExpectedMetadata(const Metadata &amp;meta)</div><div class="ttdoc">Sets the expected container-level metadata.</div></div>
 <div class="ttc" id="aclassMediaIO_html_a6a601a20bd14d709a28e09e6165254d3"><div class="ttname"><a href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3">MediaIO::open</a></div><div class="ttdeci">Error open(Mode mode)</div><div class="ttdoc">Opens the media resource.</div></div>
-<div class="ttc" id="aclassMediaIO_html_a6de44bf5739776dc1b5eaa2ea21e0fbc"><div class="ttname"><a href="classMediaIO.html#a6de44bf5739776dc1b5eaa2ea21e0fbc">MediaIO::setMetadata</a></div><div class="ttdeci">Error setMetadata(const Metadata &amp;meta)</div><div class="ttdoc">Sets the container-level metadata for writing.</div></div>
-<div class="ttc" id="aclassMediaIO_html_adec397e0125f2e156de27c9ac5cb1f3d"><div class="ttname"><a href="classMediaIO.html#adec397e0125f2e156de27c9ac5cb1f3d">MediaIO::close</a></div><div class="ttdeci">Error close()</div><div class="ttdoc">Closes the media resource.</div></div>
+<div class="ttc" id="aclassMediaIO_html_aa4e38e7fc22ac0bbb0fb29fb8e8ae428"><div class="ttname"><a href="classMediaIO.html#aa4e38e7fc22ac0bbb0fb29fb8e8ae428">MediaIO::Source</a></div><div class="ttdeci">static constexpr Mode Source</div><div class="ttdoc">Backend provides frames to the caller.</div><div class="ttdef"><b>Definition</b> mediaio.h:491</div></div>
+<div class="ttc" id="aclassMediaIO_html_af37ceef12934d2397a18c58d518c3489"><div class="ttname"><a href="classMediaIO.html#af37ceef12934d2397a18c58d518c3489">MediaIO::close</a></div><div class="ttdeci">Error close(bool block=true)</div><div class="ttdoc">Closes the media resource.</div></div>
 </div><!-- fragment --><h2><a class="anchor" id="mediaio_read"></a>
 Reading frames</h2>
 <div class="fragment"><div class="line"><a class="code hl_class" href="classSharedPtr.html">Frame::Ptr</a> frame;</div>
@@ -281,14 +280,29 @@ Reading frames</h2>
 </div><!-- fragment --><p><a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> maintains a configurable read prefetch depth (set via <code>setPrefetchDepth</code>, default per task) so that bulk reads can be pipelined.</p>
 <h2><a class="anchor" id="mediaio_write"></a>
 Writing frames</h2>
-<div class="fragment"><div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#a1275eb1f436852fd2fd63a1fefd5df95">setMediaDesc</a>(<a class="code hl_class" href="classList.html">myDesc</a>);</div>
-<div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3">open</a>(<a class="code hl_variable" href="classMediaIO.html#a3f8b370536ea3e89c4598bb475fedc87">MediaIO::Input</a>);</div>
+<div class="fragment"><div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#a4fbce71f10169c3986844ce2c451daa5">setExpectedDesc</a>(<a class="code hl_class" href="classList.html">myDesc</a>);</div>
+<div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3">open</a>(<a class="code hl_variable" href="classMediaIO.html#a54825254dffb007bc72929645024a495">MediaIO::Sink</a>);</div>
 <div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#a083b9e49f5f676da9066f084bfbd0f60">writeFrame</a>(frame);                     <span class="comment">// blocking</span></div>
 <div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#a083b9e49f5f676da9066f084bfbd0f60">writeFrame</a>(frame, <span class="keyword">false</span>);              <span class="comment">// fire-and-forget</span></div>
-<div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#adec397e0125f2e156de27c9ac5cb1f3d">close</a>();</div>
+<div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#af37ceef12934d2397a18c58d518c3489">close</a>();</div>
 <div class="ttc" id="aclassMediaIO_html_a083b9e49f5f676da9066f084bfbd0f60"><div class="ttname"><a href="classMediaIO.html#a083b9e49f5f676da9066f084bfbd0f60">MediaIO::writeFrame</a></div><div class="ttdeci">Error writeFrame(const Frame::Ptr &amp;frame, bool block=true)</div><div class="ttdoc">Writes a frame to the media resource.</div></div>
-<div class="ttc" id="aclassMediaIO_html_a3f8b370536ea3e89c4598bb475fedc87"><div class="ttname"><a href="classMediaIO.html#a3f8b370536ea3e89c4598bb475fedc87">MediaIO::Input</a></div><div class="ttdeci">static constexpr Mode Input</div><div class="ttdoc">Backend accepts frames (sink).</div><div class="ttdef"><b>Definition</b> mediaio.h:492</div></div>
+<div class="ttc" id="aclassMediaIO_html_a54825254dffb007bc72929645024a495"><div class="ttname"><a href="classMediaIO.html#a54825254dffb007bc72929645024a495">MediaIO::Sink</a></div><div class="ttdeci">static constexpr Mode Sink</div><div class="ttdoc">Backend accepts frames from the caller.</div><div class="ttdef"><b>Definition</b> mediaio.h:492</div></div>
 </div><!-- fragment --><p>Non-blocking writes report errors only via the <code>writeError</code> signal.</p>
+<h2><a class="anchor" id="mediaio_async_close"></a>
+Async close</h2>
+<p><code>close(bool)</code> defaults to blocking. Pass <code>false</code> to return immediately and learn completion via the <code>closed</code> signal:</p>
+<div class="fragment"><div class="line">io-&gt;closedSignal.<a class="code hl_function" href="classObjectBase.html#a7d2e491c5289e22a84070551cc95aaa1">connect</a>([](<a class="code hl_class" href="classError.html">Error</a> <a class="code hl_class" href="classList.html">err</a>) {</div>
+<div class="line">        <span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">err</a>.isError()) { ... }</div>
+<div class="line">}, <a class="code hl_class" href="classList.html">thisObject</a>);</div>
+<div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#af37ceef12934d2397a18c58d518c3489">close</a>(<span class="keyword">false</span>);   <span class="comment">// returns Ok immediately</span></div>
+<div class="line"><span class="comment">// ... pipeline keeps running; eventually closedSignal fires.</span></div>
+<div class="ttc" id="aclassObjectBase_html_a7d2e491c5289e22a84070551cc95aaa1"><div class="ttname"><a href="classObjectBase.html#a7d2e491c5289e22a84070551cc95aaa1">ObjectBase::connect</a></div><div class="ttdeci">static void connect(Signal&lt; Args... &gt; *signal, Slot&lt; Args... &gt; *slot)</div><div class="ttdoc">connects a signal and slot together. This function assumes both the signal and slot exist in a Object...</div></div>
+</div><!-- fragment --><p>Behaviour during an async close:</p>
+<ul>
+<li>Any reads/writes submitted before the <code>close</code> call run to completion on the strand — blocking callers still unblock with the real result, prefetched reads land in the ready queue, and outgoing writes complete normally.</li>
+<li>New <code>readFrame</code> / <code>writeFrame</code> / <code>seekToFrame</code> / <code>sendParams</code> calls return <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a36766448250f002cfab6d0d2c9268612" title="Resource is not open.">Error::NotOpen</a></code> (the <code>isClosing</code> flag gates them).</li>
+<li>Exactly one synthetic <code>readFrame</code> result with <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a47ebde87a9587fbdf7b0d5a2c5a443d0" title="End of file reached.">Error::EndOfFile</a></code> is appended to the ready queue after the real trailing frames, so signal-driven consumers see one last <code>frameReady</code> carrying EOS. Cached descriptor accessors (<code>mediaDesc</code>, <code>frameRate</code>, ...) must not be read between the <code>close</code> call and the <code>closed</code> signal.</li>
+</ul>
 <h2><a class="anchor" id="mediaio_seek"></a>
 Seeking</h2>
 <div class="fragment"><div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#a4b2216ffe65f522fdb1d1e44d9053557">seekToFrame</a>(100);                              <span class="comment">// SeekDefault</span></div>
@@ -355,7 +369,7 @@ Skeleton</h2>
 <div class="ttc" id="aclassMediaIOCommandRead_html"><div class="ttname"><a href="classMediaIOCommandRead.html">MediaIOCommandRead</a></div><div class="ttdoc">Command to read the next frame.</div><div class="ttdef"><b>Definition</b> mediaio.h:337</div></div>
 <div class="ttc" id="aclassMediaIOCommandSeek_html"><div class="ttname"><a href="classMediaIOCommandSeek.html">MediaIOCommandSeek</a></div><div class="ttdoc">Command to seek to a frame position.</div><div class="ttdef"><b>Definition</b> mediaio.h:383</div></div>
 <div class="ttc" id="aclassMediaIOCommandWrite_html"><div class="ttname"><a href="classMediaIOCommandWrite.html">MediaIOCommandWrite</a></div><div class="ttdoc">Command to write a frame.</div><div class="ttdef"><b>Definition</b> mediaio.h:368</div></div>
-<div class="ttc" id="aclassMediaIOTask_html"><div class="ttname"><a href="classMediaIOTask.html">MediaIOTask</a></div><div class="ttdoc">Backend interface for media I/O.</div><div class="ttdef"><b>Definition</b> mediaiotask.h:61</div></div>
+<div class="ttc" id="aclassMediaIOTask_html"><div class="ttname"><a href="classMediaIOTask.html">MediaIOTask</a></div><div class="ttdoc">Backend interface for media I/O.</div><div class="ttdef"><b>Definition</b> mediaiotask.h:64</div></div>
 <div class="ttc" id="aclassMediaIO_html_a08d6f0ff155c9b44e241d5c0f4a4559f"><div class="ttname"><a href="classMediaIO.html#a08d6f0ff155c9b44e241d5c0f4a4559f">MediaIO::ConfigID</a></div><div class="ttdeci">MediaConfigID ConfigID</div><div class="ttdoc">Configuration ID type.</div><div class="ttdef"><b>Definition</b> mediaio.h:508</div></div>
 <div class="ttc" id="astructMediaIO_1_1FormatDesc_html"><div class="ttname"><a href="structMediaIO_1_1FormatDesc.html">MediaIO::FormatDesc</a></div><div class="ttdoc">Describes a registered media I/O backend.</div><div class="ttdef"><b>Definition</b> mediaio.h:522</div></div>
 </div><!-- fragment --><h2><a class="anchor" id="mediaio_authoring_open"></a>
@@ -573,7 +587,7 @@ Thread pool sizing</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

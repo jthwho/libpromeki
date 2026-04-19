@@ -156,7 +156,7 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a6abbc0aaa23752e35202f44f3cf71b96"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a78a92d4cbc43321698d4610a7d8e5b02" id="r_a78a92d4cbc43321698d4610a7d8e5b02"><td class="memItemLeft" align="right" valign="top"><a id="a78a92d4cbc43321698d4610a7d8e5b02" name="a78a92d4cbc43321698d4610a7d8e5b02"></a>
 <a class="el" href="mediaio_8h.html#ad6d9e160ca5b681f44b2927606f9e601">MediaIO::Mode</a>&#160;</td><td class="memItemRight" valign="bottom"><b>mode</b> = MediaIO::NotOpen</td></tr>
-<tr class="memdesc:a78a92d4cbc43321698d4610a7d8e5b02"><td class="mdescLeft">&#160;</td><td class="mdescRight">Direction: <a class="el" href="classMediaIO.html#a209efe1b5da1839d22ac041f62813615">MediaIO::Output</a>, <code>Input</code>, or <code>InputAndOutput</code>. <br /></td></tr>
+<tr class="memdesc:a78a92d4cbc43321698d4610a7d8e5b02"><td class="mdescLeft">&#160;</td><td class="mdescRight">Direction: <a class="el" href="classMediaIO.html#aa4e38e7fc22ac0bbb0fb29fb8e8ae428">MediaIO::Source</a>, <code>Sink</code>, or <code>Transform</code>. <br /></td></tr>
 <tr class="separator:a78a92d4cbc43321698d4610a7d8e5b02"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a965e393571601d228eda4bec660ef053" id="r_a965e393571601d228eda4bec660ef053"><td class="memItemLeft" align="right" valign="top"><a id="a965e393571601d228eda4bec660ef053" name="a965e393571601d228eda4bec660ef053"></a>
 <a class="el" href="classMediaConfig.html">MediaConfig</a>&#160;</td><td class="memItemRight" valign="bottom"><b>config</b></td></tr>
@@ -169,7 +169,7 @@ Public Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Declarative description of one <a class="el" href="classMediaIO.html">MediaIO</a> stage. </p>
-<p>A stage is either a registered backend (identified by <a class="el" href="structMediaPipelineConfig_1_1Stage.html#a4d7408ec8a497edc2be07e549e4d7766">type</a> — e.g. <code>"TPG"</code>, <code>"Converter"</code>) or an opaque filesystem path (identified by <a class="el" href="structMediaPipelineConfig_1_1Stage.html#a6abbc0aaa23752e35202f44f3cf71b96">path</a> with <a class="el" href="structMediaPipelineConfig_1_1Stage.html#a4d7408ec8a497edc2be07e549e4d7766">type</a> empty) that is resolved at build time via <a class="el" href="classMediaIO.html#af89231d60485661711ec7e11837a33d0">MediaIO::createForFileRead</a> / <a class="el" href="classMediaIO.html#acab99958892f50469f2c4f0386121dab">MediaIO::createForFileWrite</a>. When both are set <a class="el" href="structMediaPipelineConfig_1_1Stage.html#a4d7408ec8a497edc2be07e549e4d7766">type</a> wins and <a class="el" href="structMediaPipelineConfig_1_1Stage.html#a6abbc0aaa23752e35202f44f3cf71b96">path</a> is passed through to the backend as MediaConfig::Filename. </p>
+<p>A stage is either a registered backend (identified by <a class="el" href="structMediaPipelineConfig_1_1Stage.html#a4d7408ec8a497edc2be07e549e4d7766">type</a> — e.g. <code>"TPG"</code>, <code>"CSC"</code>) or an opaque filesystem path (identified by <a class="el" href="structMediaPipelineConfig_1_1Stage.html#a6abbc0aaa23752e35202f44f3cf71b96">path</a> with <a class="el" href="structMediaPipelineConfig_1_1Stage.html#a4d7408ec8a497edc2be07e549e4d7766">type</a> empty) that is resolved at build time via <a class="el" href="classMediaIO.html#af89231d60485661711ec7e11837a33d0">MediaIO::createForFileRead</a> / <a class="el" href="classMediaIO.html#acab99958892f50469f2c4f0386121dab">MediaIO::createForFileWrite</a>. When both are set <a class="el" href="structMediaPipelineConfig_1_1Stage.html#a4d7408ec8a497edc2be07e549e4d7766">type</a> wins and <a class="el" href="structMediaPipelineConfig_1_1Stage.html#a6abbc0aaa23752e35202f44f3cf71b96">path</a> is passed through to the backend as MediaConfig::Filename. </p>
 </div><hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="mediapipelineconfig_8h_source.html">mediapipelineconfig.h</a></li>
 </ul>
@@ -180,7 +180,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaPipelineConfig.html">MediaPipelineConfig</a></li><li class="navelem"><a class="el" href="structMediaPipelineConfig_1_1Stage.html">Stage</a></li>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

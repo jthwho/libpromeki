@@ -1,5 +1,7 @@
 <map id="include/promeki/mediapipelineconfig.h" name="include/promeki/mediapipelineconfig.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,280,31"/>
-<area shape="rect" id="Node000002" href="$mediapipeline_8h.html" title=" " alt="" coords="25,79,261,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="145,44,145,79,140,79,140,44"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="127,5,402,31"/>
+<area shape="rect" id="Node000002" href="$mediapipeline_8h.html" title=" " alt="" coords="5,79,241,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,39,148,81,145,76,229,34"/>
+<area shape="rect" id="Node000003" href="$mediapipelineplanner_8h.html" title=" " alt="" coords="265,79,549,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="301,34,385,76,383,81,298,39"/>
 </map>

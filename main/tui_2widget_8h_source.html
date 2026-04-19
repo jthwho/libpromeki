@@ -109,7 +109,7 @@ $(document).ready(function(){initNavTree('tui_2widget_8h_source.html',''); initR
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="keyword">class </span><a class="code hl_class" href="classTuiApplication.html">TuiApplication</a>;</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="keyword">class </span><a class="code hl_class" href="classTuiSubsystem.html">TuiSubsystem</a>;</div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="comment">// Backward-compatible type aliases so existing TUI code compiles</span></div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="comment">// unchanged.  The actual types now live in core/widget.h.</span></div>
@@ -129,7 +129,7 @@ $(document).ready(function(){initNavTree('tui_2widget_8h_source.html',''); initR
 <div class="line"><a id="l00052" name="l00052"></a><span class="lineno"><a class="line" href="classTuiWidget.html#a95d9cb30fa4d0931af3b901f0dae2737">   52</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classTuiWidget.html#a95d9cb30fa4d0931af3b901f0dae2737">update</a>() <span class="keyword">override</span>;</div>
 <div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span> </div>
 <div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        <span class="keyword">private</span>:</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>                <span class="keyword">friend</span> <span class="keyword">class </span><a class="code hl_class" href="classTuiApplication.html">TuiApplication</a>;</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>                <span class="keyword">friend</span> <span class="keyword">class </span><a class="code hl_class" href="classTuiSubsystem.html">TuiSubsystem</a>;</div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>};</div>
 </div>
 <div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span> </div>
@@ -138,7 +138,7 @@ $(document).ready(function(){initNavTree('tui_2widget_8h_source.html',''); initR
 <div class="ttc" id="aclassObjectBase_html_ad8a11dd19f4510f3ce38c779fc7911a8"><div class="ttname"><a href="classObjectBase.html#ad8a11dd19f4510f3ce38c779fc7911a8">ObjectBase::parent</a></div><div class="ttdeci">ObjectBase * parent() const</div><div class="ttdoc">Returns the parent object, if one. nullptr if none.</div><div class="ttdef"><b>Definition</b> objectbase.h:256</div></div>
 <div class="ttc" id="aclassPaintEvent_html"><div class="ttname"><a href="classPaintEvent.html">PaintEvent</a></div><div class="ttdoc">Event delivered when a widget needs to repaint.</div><div class="ttdef"><b>Definition</b> widget.h:27</div></div>
 <div class="ttc" id="aclassResizeEvent_html"><div class="ttname"><a href="classResizeEvent.html">ResizeEvent</a></div><div class="ttdoc">Event delivered when a widget is resized.</div><div class="ttdef"><b>Definition</b> widget.h:40</div></div>
-<div class="ttc" id="aclassTuiApplication_html"><div class="ttname"><a href="classTuiApplication.html">TuiApplication</a></div><div class="ttdoc">Application class for TUI programs.</div><div class="ttdef"><b>Definition</b> application.h:33</div></div>
+<div class="ttc" id="aclassTuiSubsystem_html"><div class="ttname"><a href="classTuiSubsystem.html">TuiSubsystem</a></div><div class="ttdoc">TUI subsystem installed alongside an Application.</div><div class="ttdef"><b>Definition</b> tuisubsystem.h:49</div></div>
 <div class="ttc" id="aclassTuiWidget_html"><div class="ttname"><a href="classTuiWidget.html">TuiWidget</a></div><div class="ttdoc">TUI-specific widget base class.</div><div class="ttdef"><b>Definition</b> widget.h:34</div></div>
 <div class="ttc" id="aclassTuiWidget_html_a5e42aa0784a97894dce841beb12b5e8e"><div class="ttname"><a href="classTuiWidget.html#a5e42aa0784a97894dce841beb12b5e8e">TuiWidget::TuiWidget</a></div><div class="ttdeci">TuiWidget(ObjectBase *parent=nullptr)</div><div class="ttdoc">Constructs a TuiWidget.</div></div>
 <div class="ttc" id="aclassTuiWidget_html_a95d9cb30fa4d0931af3b901f0dae2737"><div class="ttname"><a href="classTuiWidget.html#a95d9cb30fa4d0931af3b901f0dae2737">TuiWidget::update</a></div><div class="ttdeci">void update() override</div><div class="ttdoc">Marks the widget as needing a repaint.</div></div>
@@ -156,7 +156,7 @@ $(document).ready(function(){initNavTree('tui_2widget_8h_source.html',''); initR
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="dir_53b52c957e3055cfb134304189fa5299.html">tui</a></li><li class="navelem"><a class="el" href="tui_2widget_8h.html">widget.h</a></li>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

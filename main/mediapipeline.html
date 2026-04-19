@@ -134,12 +134,13 @@ Lifecycle</h1>
 <div class="line">                                                      Closed</div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 </div><!-- fragment --><ul>
-<li><a class="el" href="classMediaPipeline.html#a6594e7cbef8bc353eaee549373f1cbef">MediaPipeline::build</a> validates the config (structural + per-stage <a class="el" href="classVariantSpec.html">VariantSpec</a>) and instantiates every stage.</li>
+<li><a class="el" href="classMediaPipeline.html#aaaebd4b1af73e2f0378ac89c09e095dd">MediaPipeline::build</a> validates the config (structural + per-stage <a class="el" href="classVariantSpec.html">VariantSpec</a>) and instantiates every stage.</li>
 <li><a class="el" href="classMediaPipeline.html#a59c0dc82e28c06e6acf7a06d64368be3">MediaPipeline::open</a> opens each stage in reverse topological order so sinks are ready when sources produce the first frame. On any failure already-opened stages are closed.</li>
 <li><a class="el" href="classMediaPipeline.html#a2b9c9fc9c80f13452459182d9f968b09">MediaPipeline::start</a> connects <code>frameReady</code> / <code>frameWanted</code> / <code>writeError</code> signals and primes the drain with a single synchronous kick.</li>
 <li><a class="el" href="classMediaPipeline.html#a0ae5fc86ccd54b3ed18c9feaa1d2c99a">MediaPipeline::stop</a> cancels pending commands on every stage and disconnects the drain.</li>
-<li><a class="el" href="classMediaPipeline.html#a10592501ecd6719454e5890ef6c7d483">MediaPipeline::close</a> closes each stage in topological order and releases the underlying <a class="el" href="classMediaIO.html">MediaIO</a> objects.</li>
+<li><a class="el" href="classMediaPipeline.html#a43817d314f804c00eb6102b4ec138ed0">MediaPipeline::close</a> runs a graceful cascade. The true source stages (no upstream in the DAG) are closed first with <a class="el" href="classMediaIO.html#af37ceef12934d2397a18c58d518c3489">MediaIO::close(bool)</a> set to non-blocking. As each source's synthetic EOS reaches the drain loop and latches <code>upstreamDone</code>, every direct downstream consumer of that source is closed in turn — so intermediate stages only see <code>close()</code> after all their input frames have been written to them. When every stage has emitted its own MediaIO::closedSignal the pipeline emits MediaPipeline::closedSignal and transitions to <code>State::Closed</code>. Natural EOF (all sources exhaust their input) triggers the same cascade automatically, so consumers have a single completion signal to wait on regardless of what stopped the run.</li>
 </ul>
+<p><a class="el" href="classMediaPipeline.html#a43817d314f804c00eb6102b4ec138ed0">MediaPipeline::close</a> can be called blocking (waits until the cascade completes, pumping the owning <a class="el" href="classEventLoop.html">EventLoop</a> when invoked from it) or non-blocking (returns immediately, learns completion via <code>closedSignal</code>). MediaPipeline::finishedSignal is repurposed to fire alongside <code>closedSignal</code> at the end of the cascade and carries a <code>clean</code> bool that summarises whether any operational or close-time error was observed.</p>
 <h1><a class="anchor" id="mediapipeline_json"></a>
 JSON schema</h1>
 <div class="fragment"><div class="line">{</div>
@@ -148,7 +149,7 @@ JSON schema</h1>
 <div class="line">    {</div>
 <div class="line">      &quot;name&quot;: &quot;source&quot;,</div>
 <div class="line">      &quot;type&quot;: &quot;TPG&quot;,</div>
-<div class="line">      &quot;mode&quot;: &quot;Output&quot;,</div>
+<div class="line">      &quot;mode&quot;: &quot;Source&quot;,</div>
 <div class="line">      &quot;config&quot;: {</div>
 <div class="line">        &quot;VideoEnabled&quot;:    true,</div>
 <div class="line">        &quot;VideoPattern&quot;:    &quot;ColorBars&quot;,</div>
@@ -160,20 +161,20 @@ JSON schema</h1>
 <div class="line">    },</div>
 <div class="line">    {</div>
 <div class="line">      &quot;name&quot;: &quot;csc&quot;,</div>
-<div class="line">      &quot;type&quot;: &quot;Converter&quot;,</div>
-<div class="line">      &quot;mode&quot;: &quot;InputAndOutput&quot;,</div>
+<div class="line">      &quot;type&quot;: &quot;CSC&quot;,</div>
+<div class="line">      &quot;mode&quot;: &quot;Transform&quot;,</div>
 <div class="line">      &quot;config&quot;: { &quot;OutputPixelDesc&quot;: &quot;RGBA8_sRGB&quot; }</div>
 <div class="line">    },</div>
 <div class="line">    {</div>
 <div class="line">      &quot;name&quot;: &quot;display&quot;,</div>
 <div class="line">      &quot;type&quot;: &quot;SDLPlayer&quot;,</div>
-<div class="line">      &quot;mode&quot;: &quot;Input&quot;,</div>
+<div class="line">      &quot;mode&quot;: &quot;Sink&quot;,</div>
 <div class="line">      &quot;config&quot;: {}</div>
 <div class="line">    },</div>
 <div class="line">    {</div>
 <div class="line">      &quot;name&quot;: &quot;recorder&quot;,</div>
 <div class="line">      &quot;type&quot;: &quot;QuickTime&quot;,</div>
-<div class="line">      &quot;mode&quot;: &quot;Input&quot;,</div>
+<div class="line">      &quot;mode&quot;: &quot;Sink&quot;,</div>
 <div class="line">      &quot;config&quot;: { &quot;Filename&quot;: &quot;/tmp/out.mov&quot; }</div>
 <div class="line">    }</div>
 <div class="line">  ],</div>
@@ -183,12 +184,12 @@ JSON schema</h1>
 <div class="line">    { &quot;from&quot;: &quot;csc&quot;,      &quot;to&quot;: &quot;recorder&quot; }</div>
 <div class="line">  ]</div>
 <div class="line">}</div>
-</div><!-- fragment --><p>Keys in the stage-level <code>config</code> are <a class="el" href="classMediaConfig.html">MediaConfig</a> IDs and round-trip via <a class="el" href="classVariantDatabase.html#ab7e52a245253bf7dd06b117645aac782">VariantDatabase::toJson</a> / <a class="el" href="classVariantDatabase.html#a668f107115c4238b49ad324722a2462e">VariantDatabase::fromJson</a>, so every spec documented in <code><a class="el" href="mediaconfig_8h.html">include/promeki/mediaconfig.h</a></code> is expressible. The <code>mode</code> string uses <a class="el" href="classMediaPipelineConfig.html#a06932d9325fac53e48be104490c96db4">MediaPipelineConfig::modeName</a> — one of <code>"Output"</code>, <code>"Input"</code>, <code>"InputAndOutput"</code>, or <code>"NotOpen"</code>.</p>
+</div><!-- fragment --><p>Keys in the stage-level <code>config</code> are <a class="el" href="classMediaConfig.html">MediaConfig</a> IDs and round-trip via <a class="el" href="classVariantDatabase.html#ab7e52a245253bf7dd06b117645aac782">VariantDatabase::toJson</a> / <a class="el" href="classVariantDatabase.html#a668f107115c4238b49ad324722a2462e">VariantDatabase::fromJson</a>, so every spec documented in <code><a class="el" href="mediaconfig_8h.html">include/promeki/mediaconfig.h</a></code> is expressible. The <code>mode</code> string uses <a class="el" href="classMediaPipelineConfig.html#a06932d9325fac53e48be104490c96db4">MediaPipelineConfig::modeName</a> — one of <code>"Source"</code>, <code>"Sink"</code>, <code>"Transform"</code>, or <code>"NotOpen"</code>.</p>
 <h1><a class="anchor" id="mediapipeline_topology"></a>
 Topology rules</h1>
 <ul>
 <li>Fan-out is unrestricted — any stage may appear as the <code>from</code> of multiple routes and each destination back-pressures independently via <a class="el" href="classMediaIO.html#a7ce9a1fdad6095256ca5c22e1bb787f8">MediaIO::writesAccepted</a> and <code>frameWanted</code>.</li>
-<li>Fan-in is rejected at <a class="el" href="classMediaPipeline.html#a6594e7cbef8bc353eaee549373f1cbef">MediaPipeline::build</a> time in the initial implementation — every stage has at most one incoming route. A future converter / mixer extension will lift this.</li>
+<li>Fan-in is rejected at <a class="el" href="classMediaPipeline.html#aaaebd4b1af73e2f0378ac89c09e095dd">MediaPipeline::build</a> time in the initial implementation — every stage has at most one incoming route. A future converter / mixer extension will lift this.</li>
 <li>Cycles are rejected by <a class="el" href="classMediaPipelineConfig.html#a3135cc14dad689ce5768cac77a94f4c7">MediaPipelineConfig::validate</a>.</li>
 <li>Orphan stages (not referenced by any route in a multi-stage config) are rejected by validation.</li>
 </ul>
@@ -206,25 +207,25 @@ mediaplay CLI integration</h1>
 <p>The bundled <code>mediaplay</code> utility exposes the pipeline through three preset / telemetry flags:</p>
 <ul>
 <li><code>--save-pipeline</code> <code>&lt;PATH&gt;</code> — build a <a class="el" href="classMediaPipelineConfig.html">MediaPipelineConfig</a> from the other flags (<code>-s</code> / <code>-c</code> / <code>-d</code>, etc.), write it as a JSON preset, and exit without opening any stage.</li>
-<li><code>--pipeline</code> <code>&lt;PATH&gt;</code> — load a previously-written preset and run it. Other non-stage flags (<code>--duration</code>, <code>--frame-count</code>, <code>--stats</code>, ...) still apply. Stages whose <code>type</code> is <code>"SDL"</code> are recognised and the SDL UI is built and injected via <a class="el" href="classMediaPipeline.html#ae79fd967c62d3ceec499db34143a3f3c">MediaPipeline::injectStage</a> before <a class="el" href="classMediaPipeline.html#a6594e7cbef8bc353eaee549373f1cbef">MediaPipeline::build</a> runs.</li>
+<li><code>--pipeline</code> <code>&lt;PATH&gt;</code> — load a previously-written preset and run it. Other non-stage flags (<code>--duration</code>, <code>--frame-count</code>, <code>--stats</code>, ...) still apply. Stages whose <code>type</code> is <code>"SDL"</code> are recognised and the SDL UI is built and injected via <a class="el" href="classMediaPipeline.html#ae79fd967c62d3ceec499db34143a3f3c">MediaPipeline::injectStage</a> before <a class="el" href="classMediaPipeline.html#aaaebd4b1af73e2f0378ac89c09e095dd">MediaPipeline::build</a> runs.</li>
 <li><code>--write-stats</code> <code>&lt;PATH&gt;</code> — append one JSON object per <code>--stats-interval</code> to PATH (JSON-lines), plus a final aggregate snapshot at shutdown. Each line is a <a class="el" href="classMediaPipelineStats.html">MediaPipelineStats</a> <code>toJson</code> with two extra fields: <code>timestamp</code> (ISO-style wall-clock at write time) and <code>phase</code> (<code>"stats"</code> for periodic ticks, <code>"final"</code> for the shutdown record). Setting <code>--write-stats</code> also turns on the stats collector when no <code>--stats-interval</code> was given (default 1 s).</li>
 </ul>
 <h1><a class="anchor" id="mediapipeline_example"></a>
 Code walk-through</h1>
-<p>Build and run a TPG → Converter → <a class="el" href="classQuickTime.html" title="QuickTime / ISO-BMFF container reader and writer.">QuickTime</a> pipeline from an in-memory config:</p>
+<p>Build and run a TPG → CSC → <a class="el" href="classQuickTime.html" title="QuickTime / ISO-BMFF container reader and writer.">QuickTime</a> pipeline from an in-memory config:</p>
 <div class="fragment"><div class="line"><a class="code hl_class" href="classMediaPipelineConfig.html">MediaPipelineConfig</a> <a class="code hl_class" href="classList.html">cfg</a>;</div>
 <div class="line"> </div>
 <div class="line"><a class="code hl_struct" href="structMediaPipelineConfig_1_1Stage.html">MediaPipelineConfig::Stage</a> <a class="code hl_class" href="classList.html">src</a>;</div>
 <div class="line"><a class="code hl_class" href="classList.html">src</a>.name = <span class="stringliteral">&quot;src&quot;</span>;</div>
 <div class="line"><a class="code hl_class" href="classList.html">src</a>.type = <span class="stringliteral">&quot;TPG&quot;</span>;</div>
-<div class="line"><a class="code hl_class" href="classList.html">src</a>.mode = <a class="code hl_variable" href="classMediaIO.html#a209efe1b5da1839d22ac041f62813615">MediaIO::Output</a>;</div>
+<div class="line"><a class="code hl_class" href="classList.html">src</a>.mode = <a class="code hl_variable" href="classMediaIO.html#aa4e38e7fc22ac0bbb0fb29fb8e8ae428">MediaIO::Source</a>;</div>
 <div class="line"><a class="code hl_class" href="classList.html">src</a>.config.<a class="code hl_function" href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">set</a>(MediaConfig::VideoEnabled, <span class="keyword">true</span>);</div>
 <div class="line"><a class="code hl_class" href="classList.html">cfg</a>.addStage(<a class="code hl_class" href="classList.html">src</a>);</div>
 <div class="line"> </div>
 <div class="line"><a class="code hl_struct" href="structMediaPipelineConfig_1_1Stage.html">MediaPipelineConfig::Stage</a> csc;</div>
 <div class="line">csc.<a class="code hl_variable" href="structMediaPipelineConfig_1_1Stage.html#a779ef7c9461f386a8207bd45384c265e">name</a> = <span class="stringliteral">&quot;csc&quot;</span>;</div>
-<div class="line">csc.<a class="code hl_variable" href="structMediaPipelineConfig_1_1Stage.html#a4d7408ec8a497edc2be07e549e4d7766">type</a> = <span class="stringliteral">&quot;Converter&quot;</span>;</div>
-<div class="line">csc.<a class="code hl_variable" href="structMediaPipelineConfig_1_1Stage.html#a78a92d4cbc43321698d4610a7d8e5b02">mode</a> = <a class="code hl_variable" href="classMediaIO.html#a64de61bb890ddec057552f69c650bd35">MediaIO::InputAndOutput</a>;</div>
+<div class="line">csc.<a class="code hl_variable" href="structMediaPipelineConfig_1_1Stage.html#a4d7408ec8a497edc2be07e549e4d7766">type</a> = <span class="stringliteral">&quot;CSC&quot;</span>;</div>
+<div class="line">csc.<a class="code hl_variable" href="structMediaPipelineConfig_1_1Stage.html#a78a92d4cbc43321698d4610a7d8e5b02">mode</a> = <a class="code hl_variable" href="classMediaIO.html#aab0ab31ae4c7dabc1e3f3339ef80001d">MediaIO::Transform</a>;</div>
 <div class="line">csc.<a class="code hl_variable" href="structMediaPipelineConfig_1_1Stage.html#a965e393571601d228eda4bec660ef053">config</a>.<a class="code hl_function" href="classVariantDatabase.html#acc09774a54c4b14168cc55fc14c4ad19">set</a>(MediaConfig::OutputPixelDesc,</div>
 <div class="line">               <a class="code hl_class" href="classPixelDesc.html">PixelDesc</a>(<a class="code hl_enumvalue" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00">PixelDesc::RGBA8_sRGB</a>));</div>
 <div class="line"><a class="code hl_class" href="classList.html">cfg</a>.addStage(csc);</div>
@@ -232,7 +233,7 @@ Code walk-through</h1>
 <div class="line"><a class="code hl_struct" href="structMediaPipelineConfig_1_1Stage.html">MediaPipelineConfig::Stage</a> <a class="code hl_class" href="classList.html">sink</a>;</div>
 <div class="line"><a class="code hl_class" href="classList.html">sink</a>.name = <span class="stringliteral">&quot;mov&quot;</span>;</div>
 <div class="line"><a class="code hl_class" href="classList.html">sink</a>.path = <span class="stringliteral">&quot;/tmp/out.mov&quot;</span>;           <span class="comment">// file sink, type auto-detected</span></div>
-<div class="line"><a class="code hl_class" href="classList.html">sink</a>.mode = <a class="code hl_variable" href="classMediaIO.html#a3f8b370536ea3e89c4598bb475fedc87">MediaIO::Input</a>;</div>
+<div class="line"><a class="code hl_class" href="classList.html">sink</a>.mode = <a class="code hl_variable" href="classMediaIO.html#a54825254dffb007bc72929645024a495">MediaIO::Sink</a>;</div>
 <div class="line"><a class="code hl_class" href="classList.html">cfg</a>.addStage(<a class="code hl_class" href="classList.html">sink</a>);</div>
 <div class="line"> </div>
 <div class="line"><a class="code hl_class" href="classList.html">cfg</a>.addRoute(<span class="stringliteral">&quot;src&quot;</span>, <span class="stringliteral">&quot;csc&quot;</span>);</div>
@@ -244,26 +245,29 @@ Code walk-through</h1>
 <div class="line"><span class="comment">// Run.</span></div>
 <div class="line"><a class="code hl_class" href="classApplication.html">Application</a> <a class="code hl_class" href="classList.html">app</a>(<a class="code hl_class" href="classList.html">argc</a>, <a class="code hl_class" href="classList.html">argv</a>);</div>
 <div class="line"><a class="code hl_class" href="classMediaPipeline.html">MediaPipeline</a> pipeline;</div>
-<div class="line">pipeline.<a class="code hl_function" href="classMediaPipeline.html#a6594e7cbef8bc353eaee549373f1cbef">build</a>(<a class="code hl_class" href="classList.html">cfg</a>);</div>
+<div class="line">pipeline.<a class="code hl_function" href="classMediaPipeline.html#aaaebd4b1af73e2f0378ac89c09e095dd">build</a>(<a class="code hl_class" href="classList.html">cfg</a>);</div>
 <div class="line">pipeline.<a class="code hl_function" href="classMediaPipeline.html#a59c0dc82e28c06e6acf7a06d64368be3">open</a>();</div>
 <div class="line">pipeline.<a class="code hl_function" href="classMediaPipeline.html#a2b9c9fc9c80f13452459182d9f968b09">start</a>();</div>
 <div class="line"> </div>
-<div class="line"><span class="comment">// Quit when the pipeline naturally drains.</span></div>
-<div class="line">pipeline.finishedSignal.<a class="code hl_function" href="classObjectBase.html#a7d2e491c5289e22a84070551cc95aaa1">connect</a>(</div>
-<div class="line">    [](<span class="keywordtype">bool</span> <a class="code hl_class" href="classList.html">clean</a>) { <a class="code hl_function" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa">Application::quit</a>(<a class="code hl_class" href="classList.html">clean</a> ? 0 : 1); }, &amp;pipeline);</div>
+<div class="line"><span class="comment">// Quit once the graceful close cascade has run to completion.</span></div>
+<div class="line"><span class="comment">// Natural EOF auto-initiates the cascade; Ctrl-C can be wired to</span></div>
+<div class="line"><span class="comment">// pipeline.close(false) via Application::setQuitRequestHandler.</span></div>
+<div class="line">pipeline.closedSignal.<a class="code hl_function" href="classObjectBase.html#a7d2e491c5289e22a84070551cc95aaa1">connect</a>(</div>
+<div class="line">    [](<a class="code hl_class" href="classError.html">Error</a> <a class="code hl_class" href="classList.html">err</a>) { <a class="code hl_function" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa">Application::quit</a>(<a class="code hl_class" href="classList.html">err</a>.isOk() ? 0 : 1); }, &amp;pipeline);</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordflow">return</span> <a class="code hl_class" href="classList.html">app</a>.exec();</div>
-<div class="ttc" id="aclassApplication_html"><div class="ttname"><a href="classApplication.html">Application</a></div><div class="ttdoc">Application-wide state for the promeki library.</div><div class="ttdef"><b>Definition</b> application.h:47</div></div>
+<div class="ttc" id="aclassApplication_html"><div class="ttname"><a href="classApplication.html">Application</a></div><div class="ttdoc">Application-wide state for the promeki library.</div><div class="ttdef"><b>Definition</b> application.h:49</div></div>
 <div class="ttc" id="aclassApplication_html_a208db3379cddeea6924b8b3c3f9f10aa"><div class="ttname"><a href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa">Application::quit</a></div><div class="ttdeci">static void quit(int exitCode=0)</div><div class="ttdoc">Requests the application to quit.</div></div>
+<div class="ttc" id="aclassError_html"><div class="ttname"><a href="classError.html">Error</a></div><div class="ttdoc">Lightweight error code wrapper for the promeki library.</div><div class="ttdef"><b>Definition</b> error.h:39</div></div>
 <div class="ttc" id="aclassList_html_ab5f4f4c756727be7a037ea66660a2fec"><div class="ttname"><a href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">List::set</a></div><div class="ttdeci">bool set(size_t index, const T &amp;val)</div><div class="ttdoc">Sets an item in the list by index.</div><div class="ttdef"><b>Definition</b> list.h:541</div></div>
-<div class="ttc" id="aclassMediaIO_html_a209efe1b5da1839d22ac041f62813615"><div class="ttname"><a href="classMediaIO.html#a209efe1b5da1839d22ac041f62813615">MediaIO::Output</a></div><div class="ttdeci">static constexpr Mode Output</div><div class="ttdoc">Backend provides frames (source).</div><div class="ttdef"><b>Definition</b> mediaio.h:491</div></div>
-<div class="ttc" id="aclassMediaIO_html_a3f8b370536ea3e89c4598bb475fedc87"><div class="ttname"><a href="classMediaIO.html#a3f8b370536ea3e89c4598bb475fedc87">MediaIO::Input</a></div><div class="ttdeci">static constexpr Mode Input</div><div class="ttdoc">Backend accepts frames (sink).</div><div class="ttdef"><b>Definition</b> mediaio.h:492</div></div>
-<div class="ttc" id="aclassMediaIO_html_a64de61bb890ddec057552f69c650bd35"><div class="ttname"><a href="classMediaIO.html#a64de61bb890ddec057552f69c650bd35">MediaIO::InputAndOutput</a></div><div class="ttdeci">static constexpr Mode InputAndOutput</div><div class="ttdoc">Backend does both (converter / passthrough).</div><div class="ttdef"><b>Definition</b> mediaio.h:493</div></div>
+<div class="ttc" id="aclassMediaIO_html_a54825254dffb007bc72929645024a495"><div class="ttname"><a href="classMediaIO.html#a54825254dffb007bc72929645024a495">MediaIO::Sink</a></div><div class="ttdeci">static constexpr Mode Sink</div><div class="ttdoc">Backend accepts frames from the caller.</div><div class="ttdef"><b>Definition</b> mediaio.h:492</div></div>
+<div class="ttc" id="aclassMediaIO_html_aa4e38e7fc22ac0bbb0fb29fb8e8ae428"><div class="ttname"><a href="classMediaIO.html#aa4e38e7fc22ac0bbb0fb29fb8e8ae428">MediaIO::Source</a></div><div class="ttdeci">static constexpr Mode Source</div><div class="ttdoc">Backend provides frames to the caller.</div><div class="ttdef"><b>Definition</b> mediaio.h:491</div></div>
+<div class="ttc" id="aclassMediaIO_html_aab0ab31ae4c7dabc1e3f3339ef80001d"><div class="ttname"><a href="classMediaIO.html#aab0ab31ae4c7dabc1e3f3339ef80001d">MediaIO::Transform</a></div><div class="ttdeci">static constexpr Mode Transform</div><div class="ttdoc">Backend does both (consumer + emitter).</div><div class="ttdef"><b>Definition</b> mediaio.h:493</div></div>
 <div class="ttc" id="aclassMediaPipelineConfig_html"><div class="ttname"><a href="classMediaPipelineConfig.html">MediaPipelineConfig</a></div><div class="ttdoc">Declarative description of a complete media pipeline.</div><div class="ttdef"><b>Definition</b> mediapipelineconfig.h:45</div></div>
-<div class="ttc" id="aclassMediaPipeline_html"><div class="ttname"><a href="classMediaPipeline.html">MediaPipeline</a></div><div class="ttdoc">Data-driven builder and runtime for a DAG of MediaIO stages.</div><div class="ttdef"><b>Definition</b> mediapipeline.h:56</div></div>
+<div class="ttc" id="aclassMediaPipeline_html"><div class="ttname"><a href="classMediaPipeline.html">MediaPipeline</a></div><div class="ttdoc">Data-driven builder and runtime for a DAG of MediaIO stages.</div><div class="ttdef"><b>Definition</b> mediapipeline.h:57</div></div>
 <div class="ttc" id="aclassMediaPipeline_html_a2b9c9fc9c80f13452459182d9f968b09"><div class="ttname"><a href="classMediaPipeline.html#a2b9c9fc9c80f13452459182d9f968b09">MediaPipeline::start</a></div><div class="ttdeci">Error start()</div><div class="ttdoc">Wires signals and primes the drain.</div></div>
 <div class="ttc" id="aclassMediaPipeline_html_a59c0dc82e28c06e6acf7a06d64368be3"><div class="ttname"><a href="classMediaPipeline.html#a59c0dc82e28c06e6acf7a06d64368be3">MediaPipeline::open</a></div><div class="ttdeci">Error open()</div><div class="ttdoc">Opens every stage.</div></div>
-<div class="ttc" id="aclassMediaPipeline_html_a6594e7cbef8bc353eaee549373f1cbef"><div class="ttname"><a href="classMediaPipeline.html#a6594e7cbef8bc353eaee549373f1cbef">MediaPipeline::build</a></div><div class="ttdeci">Error build(const MediaPipelineConfig &amp;config)</div><div class="ttdoc">Validates config and instantiates every MediaIO.</div></div>
+<div class="ttc" id="aclassMediaPipeline_html_aaaebd4b1af73e2f0378ac89c09e095dd"><div class="ttname"><a href="classMediaPipeline.html#aaaebd4b1af73e2f0378ac89c09e095dd">MediaPipeline::build</a></div><div class="ttdeci">Error build(const MediaPipelineConfig &amp;config, bool autoplan=false)</div><div class="ttdoc">Validates config and instantiates every MediaIO.</div></div>
 <div class="ttc" id="aclassObjectBase_html_a7d2e491c5289e22a84070551cc95aaa1"><div class="ttname"><a href="classObjectBase.html#a7d2e491c5289e22a84070551cc95aaa1">ObjectBase::connect</a></div><div class="ttdeci">static void connect(Signal&lt; Args... &gt; *signal, Slot&lt; Args... &gt; *slot)</div><div class="ttdoc">connects a signal and slot together. This function assumes both the signal and slot exist in a Object...</div></div>
 <div class="ttc" id="aclassPixelDesc_html"><div class="ttname"><a href="classPixelDesc.html">PixelDesc</a></div><div class="ttdoc">Complete pixel description combining format, color model, and semantics.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:128</div></div>
 <div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00">PixelDesc::RGBA8_sRGB</a></div><div class="ttdeci">@ RGBA8_sRGB</div><div class="ttdoc">8-bit RGBA, sRGB, full range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:142</div></div>
@@ -271,7 +275,7 @@ Code walk-through</h1>
 <div class="ttc" id="astructMediaPipelineConfig_1_1Stage_html"><div class="ttname"><a href="structMediaPipelineConfig_1_1Stage.html">MediaPipelineConfig::Stage</a></div><div class="ttdoc">Declarative description of one MediaIO stage.</div><div class="ttdef"><b>Definition</b> mediapipelineconfig.h:69</div></div>
 <div class="ttc" id="astructMediaPipelineConfig_1_1Stage_html_a4d7408ec8a497edc2be07e549e4d7766"><div class="ttname"><a href="structMediaPipelineConfig_1_1Stage.html#a4d7408ec8a497edc2be07e549e4d7766">MediaPipelineConfig::Stage::type</a></div><div class="ttdeci">String type</div><div class="ttdoc">Registered MediaIO backend name, or empty for a file stage.</div><div class="ttdef"><b>Definition</b> mediapipelineconfig.h:73</div></div>
 <div class="ttc" id="astructMediaPipelineConfig_1_1Stage_html_a779ef7c9461f386a8207bd45384c265e"><div class="ttname"><a href="structMediaPipelineConfig_1_1Stage.html#a779ef7c9461f386a8207bd45384c265e">MediaPipelineConfig::Stage::name</a></div><div class="ttdeci">String name</div><div class="ttdoc">Unique stage identifier used by routes and error messages.</div><div class="ttdef"><b>Definition</b> mediapipelineconfig.h:71</div></div>
-<div class="ttc" id="astructMediaPipelineConfig_1_1Stage_html_a78a92d4cbc43321698d4610a7d8e5b02"><div class="ttname"><a href="structMediaPipelineConfig_1_1Stage.html#a78a92d4cbc43321698d4610a7d8e5b02">MediaPipelineConfig::Stage::mode</a></div><div class="ttdeci">MediaIO::Mode mode</div><div class="ttdoc">Direction: MediaIO::Output, Input, or InputAndOutput.</div><div class="ttdef"><b>Definition</b> mediapipelineconfig.h:77</div></div>
+<div class="ttc" id="astructMediaPipelineConfig_1_1Stage_html_a78a92d4cbc43321698d4610a7d8e5b02"><div class="ttname"><a href="structMediaPipelineConfig_1_1Stage.html#a78a92d4cbc43321698d4610a7d8e5b02">MediaPipelineConfig::Stage::mode</a></div><div class="ttdeci">MediaIO::Mode mode</div><div class="ttdoc">Direction: MediaIO::Source, Sink, or Transform.</div><div class="ttdef"><b>Definition</b> mediapipelineconfig.h:77</div></div>
 <div class="ttc" id="astructMediaPipelineConfig_1_1Stage_html_a965e393571601d228eda4bec660ef053"><div class="ttname"><a href="structMediaPipelineConfig_1_1Stage.html#a965e393571601d228eda4bec660ef053">MediaPipelineConfig::Stage::config</a></div><div class="ttdeci">MediaConfig config</div><div class="ttdoc">Per-stage configuration.</div><div class="ttdef"><b>Definition</b> mediapipelineconfig.h:79</div></div>
 </div><!-- fragment --> </div></div><!-- contents -->
 </div><!-- PageDoc -->
@@ -280,7 +284,7 @@ Code walk-through</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

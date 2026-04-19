@@ -107,6 +107,61 @@ var group__network =
       [ "toSockAddr", "classIpv6Address.html#a96e8e20b45df5de1ae707b8ece132df0", null ],
       [ "toString", "classIpv6Address.html#a74bd387f37ffb73f1c784a89e65157f1", null ]
     ] ],
+    [ "KlvFrame", "classKlvFrame.html", [
+      [ "KlvFrame", "classKlvFrame.html#a591519145b6db5a948816a3a7a063c5b", null ],
+      [ "KlvFrame", "classKlvFrame.html#aeffd848429d6839f1709fed02b7e5b21", null ],
+      [ "key", "classKlvFrame.html#ac21a62749b6eefc4fcfef91730095402", null ],
+      [ "value", "classKlvFrame.html#ad2a1b809ef97323fac7130ccac6e15c6", null ]
+    ] ],
+    [ "KlvReader", "classKlvReader.html", [
+      [ "KlvReader", "classKlvReader.html#a1eb4d6970efad553ef09694bbb078b75", null ],
+      [ "readFrame", "classKlvReader.html#ade6268b7c9785b0b1e10602543e48d61", null ],
+      [ "readHeader", "classKlvReader.html#acadbb0e796c3bbaf85b743e9c6702e05", null ],
+      [ "readValue", "classKlvReader.html#a90f7080a47fb740496eb0f836c59abfd", null ],
+      [ "skipValue", "classKlvReader.html#a282b0f1859c0745f657beb54ac7f7168", null ]
+    ] ],
+    [ "KlvWriter", "classKlvWriter.html", [
+      [ "KlvWriter", "classKlvWriter.html#ada8e4c92f661ebf5bc269c53dd886804", null ],
+      [ "writeFrame", "classKlvWriter.html#a5addc6e06aa3f1c1542df6761fb41bf7", null ],
+      [ "writeFrame", "classKlvWriter.html#a18cf62478f28fedbb5baec8bcb5aff1f", null ],
+      [ "writeFrame", "classKlvWriter.html#ac1fdea677740d6f9e3ad980c5e4f3f8c", null ],
+      [ "writeFrame", "classKlvWriter.html#ac44e1a3d539b0faaec98e91e5911be04", null ],
+      [ "writeHeader", "classKlvWriter.html#a0fac3b2df6040af6dba0810d214b34e3", null ],
+      [ "writeValue", "classKlvWriter.html#a078add1756267371421633147503964b", null ]
+    ] ],
+    [ "LocalServer", "classLocalServer.html", [
+      [ "LocalServer", "classLocalServer.html#a85b5f524463aa004facba4be488e3275", null ],
+      [ "~LocalServer", "classLocalServer.html#acfb1761e2e0ac56d02bba4f1564bff89", null ],
+      [ "close", "classLocalServer.html#ac6c28accdb6221ad2c123389da2df861", null ],
+      [ "hasPendingConnections", "classLocalServer.html#a14a13995d28a5da95ca920429d2eceba", null ],
+      [ "isListening", "classLocalServer.html#a65dee3f8fa15f54f5cb97d41eff3eda1", null ],
+      [ "listen", "classLocalServer.html#a782364cab833e6599a69f963003dcd71", null ],
+      [ "nextPendingConnection", "classLocalServer.html#a4f7536626c062d7b1051e543fe8bdc19", null ],
+      [ "PROMEKI_SIGNAL", "classLocalServer.html#a1203fffd2cc9ac7e8ebf4101c4267a11", null ],
+      [ "serverPath", "classLocalServer.html#aee46abc4aac998f9d68320de13566407", null ],
+      [ "socketDescriptor", "classLocalServer.html#a87b4637ff082de3d14d4dc672550a76f", null ],
+      [ "waitForNewConnection", "classLocalServer.html#afcecf7c6c5b066e62cc95bcd9634c7c8", null ]
+    ] ],
+    [ "LocalSocket", "classLocalSocket.html", [
+      [ "LocalSocket", "classLocalSocket.html#a806a5255d92c1210758a48c24b284109", null ],
+      [ "~LocalSocket", "classLocalSocket.html#a4f4424939a80f40a0c90522ad272b8ce", null ],
+      [ "bytesAvailable", "classLocalSocket.html#a42c8d411cbaac080fb1ba73f93975b0f", null ],
+      [ "close", "classLocalSocket.html#a8744e06c7a96fed879d6854a1effbd4f", null ],
+      [ "connectTo", "classLocalSocket.html#a9bdebe28f39b8016e2933f617c0ea6ec", null ],
+      [ "isConnected", "classLocalSocket.html#a2452198fc3b0c2e053893c0c817fd836", null ],
+      [ "isOpen", "classLocalSocket.html#a29a60072291cc0aaa4ec07aa69a9f97a", null ],
+      [ "isSequential", "classLocalSocket.html#ab8e17d4b1bbdb5b836de7a9c5b6a47c1", null ],
+      [ "open", "classLocalSocket.html#aa5e7e2c5057a5a21008cc7b0e483faf0", null ],
+      [ "peerPath", "classLocalSocket.html#adb85fcc87d9aa7bf47e6e03ca62c60e9", null ],
+      [ "PROMEKI_SIGNAL", "classLocalSocket.html#ab9d8c26d46184eee7d78c1c07e14645b", null ],
+      [ "PROMEKI_SIGNAL", "classLocalSocket.html#a9c6f46c8031e4dc65578bc17ee7d48da", null ],
+      [ "read", "classLocalSocket.html#a62f44b773c61a50beba12cf6803f033c", null ],
+      [ "setReceiveTimeout", "classLocalSocket.html#a0fe598b1846a346bad3b9e35574348bc", null ],
+      [ "setSendTimeout", "classLocalSocket.html#aa0d081b86e0b46a1a0a75c00d4f9985d", null ],
+      [ "setSocketDescriptor", "classLocalSocket.html#a4c0668ae21992a8ecb52f73a7dc49cd1", null ],
+      [ "socketDescriptor", "classLocalSocket.html#acb8b39fe757e0911df2ffc67de83663f", null ],
+      [ "write", "classLocalSocket.html#a3c16a6d03b204c4b97baad38cd68ddf4", null ]
+    ] ],
     [ "LoopbackTransport", "classLoopbackTransport.html", [
       [ "LoopbackTransport", "classLoopbackTransport.html#a30042cba0f05ec4b45e702db9b94ca55", null ],
       [ "~LoopbackTransport", "classLoopbackTransport.html#a2aa8b50503fd4bd670ee1a5d4784ae00", null ],

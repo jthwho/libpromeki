@@ -368,9 +368,9 @@ template&lt;typename... Args&gt; </td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
 Friends</h2></td></tr>
-<tr class="memitem:acf000adb15a51ec129355593b1b4130a" id="r_acf000adb15a51ec129355593b1b4130a"><td class="memItemLeft" align="right" valign="top"><a id="acf000adb15a51ec129355593b1b4130a" name="acf000adb15a51ec129355593b1b4130a"></a>
-<a class="el" href="classList.html">class</a>&#160;</td><td class="memItemRight" valign="bottom"><b>TuiApplication</b></td></tr>
-<tr class="separator:acf000adb15a51ec129355593b1b4130a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a616c380b7d536e75aecb23a18305c67c" id="r_a616c380b7d536e75aecb23a18305c67c"><td class="memItemLeft" align="right" valign="top"><a id="a616c380b7d536e75aecb23a18305c67c" name="a616c380b7d536e75aecb23a18305c67c"></a>
+<a class="el" href="classList.html">class</a>&#160;</td><td class="memItemRight" valign="bottom"><b>TuiSubsystem</b></td></tr>
+<tr class="separator:a616c380b7d536e75aecb23a18305c67c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
@@ -432,7 +432,7 @@ template&lt;typename... Args&gt; </td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>TUI-specific widget base class. </p>
-<p>Thin subclass of the core <a class="el" href="classWidget.html" title="Base class for all widgets across UI backends.">Widget</a> that adds TUI-specific behavior: notifying <a class="el" href="classTuiApplication.html" title="Application class for TUI programs.">TuiApplication</a> when the widget is dirty so that the screen can be repainted.</p>
+<p>Thin subclass of the core <a class="el" href="classWidget.html" title="Base class for all widgets across UI backends.">Widget</a> that adds TUI-specific behavior: notifying <a class="el" href="classTuiSubsystem.html" title="TUI subsystem installed alongside an Application.">TuiSubsystem</a> when the widget is dirty so that the screen can be repainted.</p>
 <p>All geometry, visibility, focus, size policy, layout, and event dispatch functionality is inherited from <a class="el" href="classWidget.html" title="Base class for all widgets across UI backends.">Widget</a>. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a5e42aa0784a97894dce841beb12b5e8e" name="a5e42aa0784a97894dce841beb12b5e8e"></a>
@@ -486,7 +486,7 @@ template&lt;typename... Args&gt; </td></tr>
 </div><div class="memdoc">
 
 <p>Marks the widget as needing a repaint. </p>
-<p>Overrides <a class="el" href="classWidget.html#afe2dda7a8a52942718713a02e666b26a" title="Marks the widget as needing a repaint.">Widget::update()</a> to also notify <a class="el" href="classTuiApplication.html" title="Application class for TUI programs.">TuiApplication</a> that the screen needs repainting. </p>
+<p>Overrides <a class="el" href="classWidget.html#afe2dda7a8a52942718713a02e666b26a" title="Marks the widget as needing a repaint.">Widget::update()</a> to also notify <a class="el" href="classTuiSubsystem.html" title="TUI subsystem installed alongside an Application.">TuiSubsystem</a> that the screen needs repainting. </p>
 
 <p>Reimplemented from <a class="el" href="classWidget.html#afe2dda7a8a52942718713a02e666b26a">Widget</a>.</p>
 
@@ -502,7 +502,7 @@ template&lt;typename... Args&gt; </td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classTuiWidget.html">TuiWidget</a></li>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

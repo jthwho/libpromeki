@@ -207,8 +207,14 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classMediaPipelineConfig.html#a95f4f4ede7f9cc07f7b4f9cd79712245">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setPipelineMetadata</b> (<a class="el" href="classMediaPipelineConfig.html#a95f4f4ede7f9cc07f7b4f9cd79712245">const</a> <a class="el" href="classMetadata.html">Metadata</a> &amp;<a class="el" href="classMediaPipelineConfig.html#a95f4f4ede7f9cc07f7b4f9cd79712245">m</a>)</td></tr>
 <tr class="memdesc:a7b441d3467072b62aaafad463a61b68e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replaces the pipeline-wide metadata block. <br /></td></tr>
 <tr class="separator:a7b441d3467072b62aaafad463a61b68e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1a56cacd6e80b50a905553ce52b837ae" id="r_a1a56cacd6e80b50a905553ce52b837ae"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaPipelineConfig.html#a95f4f4ede7f9cc07f7b4f9cd79712245">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipelineConfig.html#a1a56cacd6e80b50a905553ce52b837ae">isResolved</a> (<a class="el" href="classString.html">String</a> *<a class="el" href="classMediaPipelineConfig.html#a95f4f4ede7f9cc07f7b4f9cd79712245">diagnostic</a>=<a class="el" href="classMediaPipelineConfig.html#a95f4f4ede7f9cc07f7b4f9cd79712245">nullptr</a>) <a class="el" href="classMediaPipelineConfig.html#a95f4f4ede7f9cc07f7b4f9cd79712245">const</a></td></tr>
+<tr class="memdesc:a1a56cacd6e80b50a905553ce52b837ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when every route is already format- compatible (no bridge insertion required).  <br /></td></tr>
+<tr class="separator:a1a56cacd6e80b50a905553ce52b837ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a35c27aca4f9501ad7d978db41f0115f1" id="r_a35c27aca4f9501ad7d978db41f0115f1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaPipelineConfig.html">MediaPipelineConfig</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipelineConfig.html#a35c27aca4f9501ad7d978db41f0115f1">resolved</a> (<a class="el" href="classError.html">Error</a> *<a class="el" href="classMediaPipelineConfig.html#a95f4f4ede7f9cc07f7b4f9cd79712245">err</a>=<a class="el" href="classMediaPipelineConfig.html#a95f4f4ede7f9cc07f7b4f9cd79712245">nullptr</a>, <a class="el" href="classString.html">String</a> *<a class="el" href="classMediaPipelineConfig.html#a95f4f4ede7f9cc07f7b4f9cd79712245">diagnostic</a>=<a class="el" href="classMediaPipelineConfig.html#a95f4f4ede7f9cc07f7b4f9cd79712245">nullptr</a>) <a class="el" href="classMediaPipelineConfig.html#a95f4f4ede7f9cc07f7b4f9cd79712245">const</a></td></tr>
+<tr class="memdesc:a35c27aca4f9501ad7d978db41f0115f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a fully-resolved copy of this config.  <br /></td></tr>
+<tr class="separator:a35c27aca4f9501ad7d978db41f0115f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3135cc14dad689ce5768cac77a94f4c7" id="r_a3135cc14dad689ce5768cac77a94f4c7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipelineConfig.html#a3135cc14dad689ce5768cac77a94f4c7">validate</a> () <a class="el" href="classMediaPipelineConfig.html#a95f4f4ede7f9cc07f7b4f9cd79712245">const</a></td></tr>
-<tr class="memdesc:a3135cc14dad689ce5768cac77a94f4c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Validates the config for use by <a class="el" href="classMediaPipeline.html#a6594e7cbef8bc353eaee549373f1cbef">MediaPipeline::build</a>.  <br /></td></tr>
+<tr class="memdesc:a3135cc14dad689ce5768cac77a94f4c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Validates the config for use by <a class="el" href="classMediaPipeline.html#aaaebd4b1af73e2f0378ac89c09e095dd">MediaPipeline::build</a>.  <br /></td></tr>
 <tr class="separator:a3135cc14dad689ce5768cac77a94f4c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a65dab8dc5c0d625fa9c70723db5769b0" id="r_a65dab8dc5c0d625fa9c70723db5769b0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classStringList.html">StringList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipelineConfig.html#a65dab8dc5c0d625fa9c70723db5769b0">describe</a> () <a class="el" href="classMediaPipelineConfig.html#a95f4f4ede7f9cc07f7b4f9cd79712245">const</a></td></tr>
 <tr class="memdesc:a65dab8dc5c0d625fa9c70723db5769b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Produces a human-readable multi-line description.  <br /></td></tr>
@@ -345,6 +351,34 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a1a56cacd6e80b50a905553ce52b837ae" name="a1a56cacd6e80b50a905553ce52b837ae"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1a56cacd6e80b50a905553ce52b837ae">&#9670;&#160;</a></span>isResolved()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classMediaPipelineConfig.html#a95f4f4ede7f9cc07f7b4f9cd79712245">bool</a> MediaPipelineConfig::isResolved </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classString.html">String</a> *&#160;</td>
+          <td class="paramname"><em>diagnostic</em> = <code><a class="el" href="classMediaPipelineConfig.html#a95f4f4ede7f9cc07f7b4f9cd79712245">nullptr</a></code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns true when every route is already format- compatible (no bridge insertion required). </p>
+<p>Thin wrapper around <a class="el" href="classMediaPipelinePlanner.html#afd34edfe122630687274ec74da636d3c">MediaPipelinePlanner::isResolved</a>. Useful as a pre-flight check before <a class="el" href="classMediaPipeline.html#aaaebd4b1af73e2f0378ac89c09e095dd">MediaPipeline::build</a> to decide whether the planner needs to run at all.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">diagnostic</td><td>Optional output describing the first gapped route on a false return. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><code>true</code> when no bridge is required. </dd></dl>
+
+</div>
+</div>
 <a id="a9a4c907bc9aff8fa29d9c56c91ff4fd5" name="a9a4c907bc9aff8fa29d9c56c91ff4fd5"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9a4c907bc9aff8fa29d9c56c91ff4fd5">&#9670;&#160;</a></span>loadFromFile()</h2>
 
@@ -466,6 +500,45 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a35c27aca4f9501ad7d978db41f0115f1" name="a35c27aca4f9501ad7d978db41f0115f1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a35c27aca4f9501ad7d978db41f0115f1">&#9670;&#160;</a></span>resolved()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classMediaPipelineConfig.html">MediaPipelineConfig</a> MediaPipelineConfig::resolved </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classError.html">Error</a> *&#160;</td>
+          <td class="paramname"><em>err</em> = <code><a class="el" href="classMediaPipelineConfig.html#a95f4f4ede7f9cc07f7b4f9cd79712245">nullptr</a></code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classString.html">String</a> *&#160;</td>
+          <td class="paramname"><em>diagnostic</em> = <code><a class="el" href="classMediaPipelineConfig.html#a95f4f4ede7f9cc07f7b4f9cd79712245">nullptr</a></code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns a fully-resolved copy of this config. </p>
+<p>Thin wrapper around <a class="el" href="classMediaPipelinePlanner.html#a99ce676a7023ba5b8b38e9589936c4da">MediaPipelinePlanner::plan</a> — splices in the bridging stages required to make every route directly format-compatible. See <a class="el" href="classMediaPipelinePlanner.html">MediaPipelinePlanner</a> for the algorithm and the <code>Policy</code> semantics.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">err</td><td>Optional error output (set to <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a43f2b142b3d7aca3163f2e36e12c8fde">Error::NotSupported</a> when no bridge chain exists for some route). </td></tr>
+    <tr><td class="paramname">diagnostic</td><td>Optional human-readable error detail on failure. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The resolved config on success, or an empty config when planning failed. </dd></dl>
+
+</div>
+</div>
 <a id="a6324c7224d65b472e77ea87234f93a16" name="a6324c7224d65b472e77ea87234f93a16"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6324c7224d65b472e77ea87234f93a16">&#9670;&#160;</a></span>saveToFile()</h2>
 
@@ -539,7 +612,7 @@ Static Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Validates the config for use by <a class="el" href="classMediaPipeline.html#a6594e7cbef8bc353eaee549373f1cbef">MediaPipeline::build</a>. </p>
+<p>Validates the config for use by <a class="el" href="classMediaPipeline.html#aaaebd4b1af73e2f0378ac89c09e095dd">MediaPipeline::build</a>. </p>
 <p>Checks performed:</p><ul>
 <li>Every stage has a non-empty <a class="el" href="structMediaPipelineConfig_1_1Stage.html#a779ef7c9461f386a8207bd45384c265e">Stage::name</a> and the names are unique.</li>
 <li>Every stage has a non-empty <a class="el" href="structMediaPipelineConfig_1_1Stage.html#a4d7408ec8a497edc2be07e549e4d7766">Stage::type</a> or <a class="el" href="structMediaPipelineConfig_1_1Stage.html#a6abbc0aaa23752e35202f44f3cf71b96">Stage::path</a>.</li>
@@ -564,7 +637,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaPipelineConfig.html">MediaPipelineConfig</a></li>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

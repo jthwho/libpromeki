@@ -30,18 +30,22 @@ var group__pipeline =
       ] ],
       [ "MediaPipeline", "classMediaPipeline.html#a48591532723de50ab0988a6e59317f33", null ],
       [ "~MediaPipeline", "classMediaPipeline.html#aa642097855029a2c4214129f0d5d8278", null ],
-      [ "build", "classMediaPipeline.html#a6594e7cbef8bc353eaee549373f1cbef", null ],
-      [ "close", "classMediaPipeline.html#a10592501ecd6719454e5890ef6c7d483", null ],
+      [ "build", "classMediaPipeline.html#aaaebd4b1af73e2f0378ac89c09e095dd", null ],
+      [ "close", "classMediaPipeline.html#a43817d314f804c00eb6102b4ec138ed0", null ],
+      [ "closeTimeoutMs", "classMediaPipeline.html#a0a73b9c08a9719fb507fa53691421601", null ],
       [ "config", "classMediaPipeline.html#aee403c30a365e845646fa5fa47a5d5a7", null ],
       [ "describe", "classMediaPipeline.html#a62e5eeae6eefee5818866a58023a593d", null ],
       [ "injectStage", "classMediaPipeline.html#ae79fd967c62d3ceec499db34143a3f3c", null ],
+      [ "isClosing", "classMediaPipeline.html#ae7b214a8270aa57766ed15113124a3ce", null ],
       [ "open", "classMediaPipeline.html#a59c0dc82e28c06e6acf7a06d64368be3", null ],
+      [ "PROMEKI_SIGNAL", "classMediaPipeline.html#a682ffd4d759b249f5c4ab2b0d7c83b7d", null ],
       [ "PROMEKI_SIGNAL", "classMediaPipeline.html#ab1e4dc635623329ff50c471a3c75730a", null ],
       [ "PROMEKI_SIGNAL", "classMediaPipeline.html#ac04065241e220dba967c552d23493228", null ],
       [ "PROMEKI_SIGNAL", "classMediaPipeline.html#a1c28dcdfa4fda176ec1248ff139aad01", null ],
       [ "PROMEKI_SIGNAL", "classMediaPipeline.html#a085c98d845de323610df50e378b2fbd2", null ],
       [ "PROMEKI_SIGNAL", "classMediaPipeline.html#a39d12a9a6108c57b2539e8670aaa9bf3", null ],
       [ "PROMEKI_SIGNAL", "classMediaPipeline.html#aa655930c6d6b05572f3cea4640534ee4", null ],
+      [ "setCloseTimeoutMs", "classMediaPipeline.html#a330cc5f42c96f78b03b054cfaa816496", null ],
       [ "stage", "classMediaPipeline.html#a1004216f401cd223dbb59c8875121dc6", null ],
       [ "stageNames", "classMediaPipeline.html#a840b8f2df26bd5eff2d167cfb1e553cf", null ],
       [ "start", "classMediaPipeline.html#a2b9c9fc9c80f13452459182d9f968b09", null ],
@@ -78,9 +82,11 @@ var group__pipeline =
       [ "describe", "classMediaPipelineConfig.html#a65dab8dc5c0d625fa9c70723db5769b0", null ],
       [ "findStage", "classMediaPipelineConfig.html#aaf94a85dedf5769dc9a1a2712ac71dfa", null ],
       [ "hasStage", "classMediaPipelineConfig.html#af9890df6b7b96db8f8959a29d9dbf0ee", null ],
+      [ "isResolved", "classMediaPipelineConfig.html#a1a56cacd6e80b50a905553ce52b837ae", null ],
       [ "operator==", "classMediaPipelineConfig.html#af6a2347c4dae3eefa63a5695699fcdd9", null ],
       [ "pipelineMetadata", "classMediaPipelineConfig.html#ac85a016b9ec18a71fc4a1d4195c6189b", null ],
       [ "pipelineMetadata", "classMediaPipelineConfig.html#a80a866f7d88028699d52cc5529bb38c7", null ],
+      [ "resolved", "classMediaPipelineConfig.html#a35c27aca4f9501ad7d978db41f0115f1", null ],
       [ "routes", "classMediaPipelineConfig.html#a7244d94724ab7380a7f40d2f8e88834e", null ],
       [ "routes", "classMediaPipelineConfig.html#aaf537e6dd5c7662ed24d5131f41c0567", null ],
       [ "saveToFile", "classMediaPipelineConfig.html#a6324c7224d65b472e77ea87234f93a16", null ],
@@ -90,6 +96,21 @@ var group__pipeline =
       [ "stages", "classMediaPipelineConfig.html#abba94dbfb70bcf0f9b4f1128395a25e3", null ],
       [ "toJson", "classMediaPipelineConfig.html#aa6fa5a666df6fcc4e505fbc526e20bde", null ],
       [ "validate", "classMediaPipelineConfig.html#a3135cc14dad689ce5768cac77a94f4c7", null ]
+    ] ],
+    [ "MediaPipelinePlanner", "classMediaPipelinePlanner.html", [
+      [ "Policy", "structMediaPipelinePlanner_1_1Policy.html", [
+        [ "Policy", "structMediaPipelinePlanner_1_1Policy.html#aebe00b6e77ee36af2cabda1b10dce4fb", null ],
+        [ "excludedBridges", "structMediaPipelinePlanner_1_1Policy.html#a7a8a4e6970d11c8e47db1e37138fe448", null ],
+        [ "maxBridgeDepth", "structMediaPipelinePlanner_1_1Policy.html#a882034fc872bf313370ee48374569d3f", null ],
+        [ "quality", "structMediaPipelinePlanner_1_1Policy.html#a0bc0db3291de61eb55c42f6b18db6a5a", null ]
+      ] ],
+      [ "InjectedStages", "classMediaPipelinePlanner.html#ab3e33cfb126b0a3ff978135313bb2151", null ],
+      [ "Quality", "classMediaPipelinePlanner.html#aaf285578c78fd4dd66fe8cafa7835277", [
+        [ "Highest", "classMediaPipelinePlanner.html#aaf285578c78fd4dd66fe8cafa7835277a582996407922dab08d5cf2b3d2a7c1c9", null ],
+        [ "Balanced", "classMediaPipelinePlanner.html#aaf285578c78fd4dd66fe8cafa7835277ac6589f5236c0c434d0c63dc5f9a856f2", null ],
+        [ "Fastest", "classMediaPipelinePlanner.html#aaf285578c78fd4dd66fe8cafa7835277a90fd7fdf6f41406a75e5265b9583bb4e", null ],
+        [ "ZeroCopyOnly", "classMediaPipelinePlanner.html#aaf285578c78fd4dd66fe8cafa7835277a80749a41b1f9d038a116a51a388b1f85", null ]
+      ] ]
     ] ],
     [ "MediaPipelineStats", "classMediaPipelineStats.html", [
       [ "List", "classMediaPipelineStats.html#ad94c01d1e9fcafec10e10a77a16b63e4", null ],

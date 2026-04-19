@@ -7,9 +7,9 @@ var mediaio_8h =
     [ "MediaIOParamsID", "mediaio_8h.html#a218d9d799191abce354a7120ce37ebbe", null ],
     [ "MediaIOMode", "mediaio_8h.html#ad6d9e160ca5b681f44b2927606f9e601", [
       [ "MediaIO_NotOpen", "mediaio_8h.html#ad6d9e160ca5b681f44b2927606f9e601a4c65c5fecc5d0585553f71716523e1f1", null ],
-      [ "MediaIO_Output", "mediaio_8h.html#ad6d9e160ca5b681f44b2927606f9e601aa12e4aacda2c069f42dbc08ec9996940", null ],
-      [ "MediaIO_Input", "mediaio_8h.html#ad6d9e160ca5b681f44b2927606f9e601ab9b8e65f4935a9f8339132230798a7be", null ],
-      [ "MediaIO_InputAndOutput", "mediaio_8h.html#ad6d9e160ca5b681f44b2927606f9e601a4b65575d5f463b64c3afa427cfefc0d2", null ]
+      [ "MediaIO_Source", "mediaio_8h.html#ad6d9e160ca5b681f44b2927606f9e601a338921305dfd1d87aececa64cb12b45a", null ],
+      [ "MediaIO_Sink", "mediaio_8h.html#ad6d9e160ca5b681f44b2927606f9e601ad8382bd5b49db499c62fdd741eb69cd3", null ],
+      [ "MediaIO_Transform", "mediaio_8h.html#ad6d9e160ca5b681f44b2927606f9e601adc3f1c85bdd24c1121abcb1ca9ddc399", null ]
     ] ],
     [ "MediaIOSeekMode", "mediaio_8h.html#a3252a63d4800a4d9d7a0d49231a68307", [
       [ "MediaIO_SeekDefault", "mediaio_8h.html#a3252a63d4800a4d9d7a0d49231a68307aa2124fa62b7e38749c1493e5bc7dd7e3", null ],

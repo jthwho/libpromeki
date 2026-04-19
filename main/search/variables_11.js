@@ -14,5 +14,6 @@ var searchData=
   ['repoident_11',['repoident',['../structBuildInfo.html#a20b4d6a2107f88027f9c8d5a61a30192',1,'BuildInfo']]],
   ['resize_12',['Resize',['../classResizeEvent.html#a216f4563eccf3880282d29b646e3a013',1,'ResizeEvent']]],
   ['result_13',['result',['../classMediaIOCommandRead.html#a141c78b1dc0b319e1ac71123fce7c884',1,'MediaIOCommandRead::result'],['../classMediaIOCommandParams.html#a8d58a2d0c5a7e12a26a8250b2e6fc6ab',1,'MediaIOCommandParams::result']]],
-  ['rgbtoxyz_14',['rgbToXyz',['../structColorModel_1_1Data.html#a9901ef9ea6923749a4f98c4b505fe970',1,'ColorModel::Data']]]
+  ['rgbtoxyz_14',['rgbToXyz',['../structColorModel_1_1Data.html#a9901ef9ea6923749a4f98c4b505fe970',1,'ColorModel::Data']]],
+  ['ringdepth_15',['ringDepth',['../structFrameBridge_1_1Config.html#ac58c635f12a89c811d17b3571ea883b2',1,'FrameBridge::Config']]]
 ];

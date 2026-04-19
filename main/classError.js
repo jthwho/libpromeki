@@ -50,7 +50,9 @@ var classError =
       [ "DeviceError", "classError.html#ab5980e13b879db253df802b0950d1708af55d0efc5264924861e4aab9d83d9cac", null ],
       [ "DeviceNotFound", "classError.html#ab5980e13b879db253df802b0950d1708abfafed1687967630c6ead7ae486c06d3", null ],
       [ "FormatMismatch", "classError.html#ab5980e13b879db253df802b0950d1708a7e5b3da50016db37eaa13051d0ae32bf", null ],
-      [ "FontUnavailable", "classError.html#ab5980e13b879db253df802b0950d1708a860bb07c791353ea49a5c70a3cbd4ebc", null ]
+      [ "FontUnavailable", "classError.html#ab5980e13b879db253df802b0950d1708a860bb07c791353ea49a5c70a3cbd4ebc", null ],
+      [ "BrokenPipe", "classError.html#ab5980e13b879db253df802b0950d1708a001c622365338bdf6d05e4ed46744d99", null ],
+      [ "ConnectionReset", "classError.html#ab5980e13b879db253df802b0950d1708afdfdd90b202ec76534905cdf1692ac49", null ]
     ] ],
     [ "Error", "classError.html#a83eaa8db2a6c22d6aff5758eea236a6e", null ],
     [ "~Error", "classError.html#a1a45d42a3a035d510333cdfeb36a0e93", null ],

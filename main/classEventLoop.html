@@ -122,6 +122,15 @@ Public Types</h2></td></tr>
  }</td></tr>
 <tr class="memdesc:a18e4672007c4c1c025a5ed07243cbd9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flags controlling <a class="el" href="classEventLoop.html#ae63f0671a0d3d3b8d08d7caf13529f96" title="Processes pending events and returns.">processEvents()</a> behavior.  <a href="classEventLoop.html#a18e4672007c4c1c025a5ed07243cbd9e">More...</a><br /></td></tr>
 <tr class="separator:a18e4672007c4c1c025a5ed07243cbd9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ada6ce89952ce9dbacc31badd7d33b6bf" id="r_ada6ce89952ce9dbacc31badd7d33b6bf"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEventLoop.html#ada6ce89952ce9dbacc31badd7d33b6bf">IoEvent</a> : uint32_t { <a class="el" href="classEventLoop.html#ada6ce89952ce9dbacc31badd7d33b6bfa8a657ae0547e1426d7e8c033726e6e24">IoRead</a> = 0x01
+, <a class="el" href="classEventLoop.html#ada6ce89952ce9dbacc31badd7d33b6bfa2c044c5599ef030869f0ab0966d282b1">IoWrite</a> = 0x02
+, <a class="el" href="classEventLoop.html#ada6ce89952ce9dbacc31badd7d33b6bfa5f94684312d9e717c3b73666043889cb">IoError</a> = 0x04
+ }</td></tr>
+<tr class="memdesc:ada6ce89952ce9dbacc31badd7d33b6bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bitmask values for <a class="el" href="classEventLoop.html#a4369df254aac9f10ae457996055f290d">addIoSource</a>.  <a href="classEventLoop.html#ada6ce89952ce9dbacc31badd7d33b6bf">More...</a><br /></td></tr>
+<tr class="separator:ada6ce89952ce9dbacc31badd7d33b6bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae16e978e6db97a9b98b0f34473d94b82" id="r_ae16e978e6db97a9b98b0f34473d94b82"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEventLoop.html#ae16e978e6db97a9b98b0f34473d94b82">IoCallback</a> = std::function&lt; <a class="el" href="classList.html">void</a>(int fd, <a class="el" href="classList.html">uint32_t</a> events)&gt;</td></tr>
+<tr class="memdesc:ae16e978e6db97a9b98b0f34473d94b82"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback invoked when a registered I/O source becomes ready.  <br /></td></tr>
+<tr class="separator:ae16e978e6db97a9b98b0f34473d94b82"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -149,9 +158,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5a3e14fab5c562237cf0bdee218b11a1" id="r_a5a3e14fab5c562237cf0bdee218b11a1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEventLoop.html#a5a3e14fab5c562237cf0bdee218b11a1">postCallable</a> (std::function&lt; <a class="el" href="classList.html">void</a>()&gt; func)</td></tr>
 <tr class="memdesc:a5a3e14fab5c562237cf0bdee218b11a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Posts a callable to be executed on this <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a>'s thread.  <br /></td></tr>
 <tr class="separator:a5a3e14fab5c562237cf0bdee218b11a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae7de62b668488ec8a01537c3b9416ab2" id="r_ae7de62b668488ec8a01537c3b9416ab2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEventLoop.html#ae7de62b668488ec8a01537c3b9416ab2">setWakeCallback</a> (std::function&lt; <a class="el" href="classList.html">void</a>()&gt; cb)</td></tr>
-<tr class="memdesc:ae7de62b668488ec8a01537c3b9416ab2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets a wake callback invoked whenever new work is posted.  <br /></td></tr>
-<tr class="separator:ae7de62b668488ec8a01537c3b9416ab2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaf48e9f44e9568fce1de3f49cce39b4d" id="r_aaf48e9f44e9568fce1de3f49cce39b4d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEventLoop.html#aaf48e9f44e9568fce1de3f49cce39b4d">postEvent</a> (<a class="el" href="classObjectBase.html">ObjectBase</a> *receiver, <a class="el" href="classEvent.html">Event</a> *event)</td></tr>
 <tr class="memdesc:aaf48e9f44e9568fce1de3f49cce39b4d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Posts an <a class="el" href="classEvent.html" title="Base class for the event system.">Event</a> to this <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> for delivery to a receiver.  <br /></td></tr>
 <tr class="separator:aaf48e9f44e9568fce1de3f49cce39b4d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -170,6 +176,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:abeae412fd6862c66cf2d891492460511" id="r_abeae412fd6862c66cf2d891492460511"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEventLoop.html#abeae412fd6862c66cf2d891492460511">exitCode</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:abeae412fd6862c66cf2d891492460511"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the exit code set by the most recent <a class="el" href="classEventLoop.html#a9e126989d057c302e18f20061f93deb5" title="Signals the event loop to exit with the given return code.">quit()</a>.  <br /></td></tr>
 <tr class="separator:abeae412fd6862c66cf2d891492460511"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a569331b0577108c4de91df41e86baf40" id="r_a569331b0577108c4de91df41e86baf40"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">unsigned</a> int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEventLoop.html#a569331b0577108c4de91df41e86baf40">nextTimerTimeout</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a569331b0577108c4de91df41e86baf40"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns milliseconds until the next timer fires.  <br /></td></tr>
+<tr class="separator:a569331b0577108c4de91df41e86baf40"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4369df254aac9f10ae457996055f290d" id="r_a4369df254aac9f10ae457996055f290d"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEventLoop.html#a4369df254aac9f10ae457996055f290d">addIoSource</a> (int fd, <a class="el" href="classList.html">uint32_t</a> events, <a class="el" href="classEventLoop.html#ae16e978e6db97a9b98b0f34473d94b82">IoCallback</a> cb)</td></tr>
+<tr class="memdesc:a4369df254aac9f10ae457996055f290d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers a file descriptor to be monitored by this <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a>.  <br /></td></tr>
+<tr class="separator:a4369df254aac9f10ae457996055f290d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af96adc2939dd93514f118548a6c2cc92" id="r_af96adc2939dd93514f118548a6c2cc92"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEventLoop.html#af96adc2939dd93514f118548a6c2cc92">removeIoSource</a> (int handle)</td></tr>
+<tr class="memdesc:af96adc2939dd93514f118548a6c2cc92"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes a previously-registered I/O source.  <br /></td></tr>
+<tr class="separator:af96adc2939dd93514f118548a6c2cc92"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -199,12 +214,54 @@ Static Public Member Functions</h2></td></tr>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Run the event loop (blocks until quit)</span></div>
 <div class="line"><span class="keywordtype">int</span> <a class="code hl_function" href="classEventLoop.html#abeae412fd6862c66cf2d891492460511">exitCode</a> = <a class="code hl_class" href="classList.html">loop</a>.exec();</div>
-<div class="ttc" id="aclassEventLoop_html"><div class="ttname"><a href="classEventLoop.html">EventLoop</a></div><div class="ttdoc">Per-thread event loop providing event dispatch, timers, and posted callables.</div><div class="ttdef"><b>Definition</b> eventloop.h:59</div></div>
-<div class="ttc" id="aclassEventLoop_html_abeae412fd6862c66cf2d891492460511"><div class="ttname"><a href="classEventLoop.html#abeae412fd6862c66cf2d891492460511">EventLoop::exitCode</a></div><div class="ttdeci">int exitCode() const</div><div class="ttdoc">Returns the exit code set by the most recent quit().</div><div class="ttdef"><b>Definition</b> eventloop.h:223</div></div>
+<div class="ttc" id="aclassEventLoop_html"><div class="ttname"><a href="classEventLoop.html">EventLoop</a></div><div class="ttdoc">Per-thread event loop providing event dispatch, timers, and posted callables.</div><div class="ttdef"><b>Definition</b> eventloop.h:64</div></div>
+<div class="ttc" id="aclassEventLoop_html_abeae412fd6862c66cf2d891492460511"><div class="ttname"><a href="classEventLoop.html#abeae412fd6862c66cf2d891492460511">EventLoop::exitCode</a></div><div class="ttdeci">int exitCode() const</div><div class="ttdoc">Returns the exit code set by the most recent quit().</div><div class="ttdef"><b>Definition</b> eventloop.h:208</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 </div><!-- fragment --> </dd></dl>
 <dl class="section note"><dt>Note</dt><dd>Timer precision is millisecond-level, based on steady_clock polling. </dd></dl>
-</div><h2 class="groupheader">Member Enumeration Documentation</h2>
+</div><h2 class="groupheader">Member Typedef Documentation</h2>
+<a id="ae16e978e6db97a9b98b0f34473d94b82" name="ae16e978e6db97a9b98b0f34473d94b82"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae16e978e6db97a9b98b0f34473d94b82">&#9670;&#160;</a></span>IoCallback</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="classEventLoop.html#ae16e978e6db97a9b98b0f34473d94b82">EventLoop::IoCallback</a> =  std::function&lt;<a class="el" href="classList.html">void</a>(int fd, <a class="el" href="classList.html">uint32_t</a> events)&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Callback invoked when a registered I/O source becomes ready. </p>
+<p>The <code>events</code> bitmask reports which of <a class="el" href="classEventLoop.html#ada6ce89952ce9dbacc31badd7d33b6bfa8a657ae0547e1426d7e8c033726e6e24">IoRead</a> / <a class="el" href="classEventLoop.html#ada6ce89952ce9dbacc31badd7d33b6bfa2c044c5599ef030869f0ab0966d282b1">IoWrite</a> / <a class="el" href="classEventLoop.html#ada6ce89952ce9dbacc31badd7d33b6bfa5f94684312d9e717c3b73666043889cb">IoError</a> actually fired for this wake. Always a subset (or equal to) the events the source was registered with, plus <a class="el" href="classEventLoop.html#ada6ce89952ce9dbacc31badd7d33b6bfa5f94684312d9e717c3b73666043889cb">IoError</a> which is reported whenever <code>POLLERR</code> / <code>POLLHUP</code> surface regardless of the caller's mask. </p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Enumeration Documentation</h2>
+<a id="ada6ce89952ce9dbacc31badd7d33b6bf" name="ada6ce89952ce9dbacc31badd7d33b6bf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ada6ce89952ce9dbacc31badd7d33b6bf">&#9670;&#160;</a></span>IoEvent</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">enum</a> <a class="el" href="classEventLoop.html#ada6ce89952ce9dbacc31badd7d33b6bf">EventLoop::IoEvent</a> : <a class="el" href="classList.html">uint32_t</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Bitmask values for <a class="el" href="classEventLoop.html#a4369df254aac9f10ae457996055f290d">addIoSource</a>. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ada6ce89952ce9dbacc31badd7d33b6bfa8a657ae0547e1426d7e8c033726e6e24" name="ada6ce89952ce9dbacc31badd7d33b6bfa8a657ae0547e1426d7e8c033726e6e24"></a>IoRead&#160;</td><td class="fielddoc"><p>fd is readable </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ada6ce89952ce9dbacc31badd7d33b6bfa2c044c5599ef030869f0ab0966d282b1" name="ada6ce89952ce9dbacc31badd7d33b6bfa2c044c5599ef030869f0ab0966d282b1"></a>IoWrite&#160;</td><td class="fielddoc"><p>fd is writable </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ada6ce89952ce9dbacc31badd7d33b6bfa5f94684312d9e717c3b73666043889cb" name="ada6ce89952ce9dbacc31badd7d33b6bfa5f94684312d9e717c3b73666043889cb"></a>IoError&#160;</td><td class="fielddoc"><p>error / hangup (always reported; mask is informational) </p>
+</td></tr>
+</table>
+
+</div>
+</div>
 <a id="a18e4672007c4c1c025a5ed07243cbd9e" name="a18e4672007c4c1c025a5ed07243cbd9e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a18e4672007c4c1c025a5ed07243cbd9e">&#9670;&#160;</a></span>ProcessEventsFlag</h2>
 
@@ -271,6 +328,56 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a4369df254aac9f10ae457996055f290d" name="a4369df254aac9f10ae457996055f290d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4369df254aac9f10ae457996055f290d">&#9670;&#160;</a></span>addIoSource()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int EventLoop::addIoSource </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>fd</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">uint32_t</a>&#160;</td>
+          <td class="paramname"><em>events</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classEventLoop.html#ae16e978e6db97a9b98b0f34473d94b82">IoCallback</a>&#160;</td>
+          <td class="paramname"><em>cb</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Registers a file descriptor to be monitored by this <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a>. </p>
+<p>While registered, <code>cb</code> is invoked on the <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a>'s thread each time <code>fd</code> becomes ready for any of the requested <code>events</code>. The callback runs synchronously between <code>processEvents</code> iterations (not from inside <code>poll</code>), so it may call any <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> API including <a class="el" href="classEventLoop.html#af96adc2939dd93514f118548a6c2cc92">removeIoSource</a> on itself.</p>
+<p>Thread-safe: may be called from any thread. When called cross-thread, the <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> is woken so its next poll includes the newly registered fd.</p>
+<p>The caller retains ownership of <code>fd</code> — the <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> never closes it. Close the fd only after <a class="el" href="classEventLoop.html#af96adc2939dd93514f118548a6c2cc92">removeIoSource</a> has been called and the handle is no longer in use.</p>
+<p>The API intentionally uses an opaque integer handle rather than an ObjectBase-receiver pattern: TUI and SDL register a handful of long-lived sources at startup and unregister them at shutdown, which maps naturally onto a return-the-handle-and-hold-it model. An ObjectBase-receiver variant can be layered on top later if a widget-like consumer emerges — don't add one speculatively.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fd</td><td>The file descriptor to monitor. </td></tr>
+    <tr><td class="paramname">events</td><td>Bitmask of <a class="el" href="classEventLoop.html#ada6ce89952ce9dbacc31badd7d33b6bf">IoEvent</a> values requesting read / write readiness notifications. </td></tr>
+    <tr><td class="paramname">cb</td><td>Callback invoked with (fd, readyEvents) on each readiness event. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A handle <code>&gt;=</code> 0 on success, or <code>-1</code> on failure (invalid <code>fd</code>, empty <code>cb</code>, empty <code>events</code>, or unsupported on this platform).</dd></dl>
+<dl class="section note"><dt>Note</dt><dd>On non-POSIX platforms (Windows, Emscripten) this call currently returns <code>-1</code> and records <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a618c5c9abd6638a820400e9948e6e737" title="Feature is not implemented.">Error::NotImplemented</a></code> in the library log. Emscripten cooperative loops should move to explicit non-blocking <a class="el" href="classEventLoop.html#ae63f0671a0d3d3b8d08d7caf13529f96">processEvents</a> calls. </dd></dl>
+
+</div>
+</div>
 <a id="a57b77a83e4b97d475cabe686548408ad" name="a57b77a83e4b97d475cabe686548408ad"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a57b77a83e4b97d475cabe686548408ad">&#9670;&#160;</a></span>current()</h2>
 
@@ -372,6 +479,27 @@ Static Public Member Functions</h2></td></tr>
 
 <p>Returns whether the event loop is currently running. </p>
 <dl class="section return"><dt>Returns</dt><dd><code>true</code> if <a class="el" href="classEventLoop.html#aff91014422ad30a80aa3a2fcc96b423e" title="Blocks and processes events until quit() is called.">exec()</a> is active. </dd></dl>
+
+</div>
+</div>
+<a id="a569331b0577108c4de91df41e86baf40" name="a569331b0577108c4de91df41e86baf40"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a569331b0577108c4de91df41e86baf40">&#9670;&#160;</a></span>nextTimerTimeout()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">unsigned</a> int EventLoop::nextTimerTimeout </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns milliseconds until the next timer fires. </p>
+<p>Intended for external pumps that want to bound their own wait (e.g. <code>SDL_WaitEventTimeout</code>) by the loop's next timer deadline so armed timers fire on schedule even when no external events are arriving.</p>
+<dl class="section return"><dt>Returns</dt><dd>The milliseconds remaining until the next timer fire (minimum 1 for sub-millisecond remaining), or <code>0</code> when no timer is armed. </dd></dl>
 
 </div>
 </div>
@@ -504,28 +632,27 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="ae7de62b668488ec8a01537c3b9416ab2" name="ae7de62b668488ec8a01537c3b9416ab2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae7de62b668488ec8a01537c3b9416ab2">&#9670;&#160;</a></span>setWakeCallback()</h2>
+<a id="af96adc2939dd93514f118548a6c2cc92" name="af96adc2939dd93514f118548a6c2cc92"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af96adc2939dd93514f118548a6c2cc92">&#9670;&#160;</a></span>removeIoSource()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> EventLoop::setWakeCallback </td>
+          <td class="memname"><a class="el" href="classList.html">void</a> EventLoop::removeIoSource </td>
           <td>(</td>
-          <td class="paramtype">std::function&lt; <a class="el" href="classList.html">void</a>()&gt;&#160;</td>
-          <td class="paramname"><em>cb</em></td><td>)</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>handle</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Sets a wake callback invoked whenever new work is posted. </p>
-<p>The callback is invoked from inside <code>postCallable</code>, <code>postEvent</code>, and <code>quit</code> after the item has been pushed to the queue. It is intended for use by an external blocking mechanism (for example, the SDL event pump blocked on <code>SDL_WaitEvent</code>) that must be woken so it can return and let the owning event loop drain its queue.</p>
-<p>The callback runs on the posting thread, which may be any thread, so it must be thread-safe. Only one wake callback may be registered at a time; passing an empty function removes the current callback.</p>
+<p>Removes a previously-registered I/O source. </p>
+<p>Thread-safe. If called cross-thread while a callback is in flight on the loop thread, the in-flight callback completes first; subsequent readiness events for this handle do not fire. Unknown handles are silently ignored.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">cb</td><td>The wake callback, or an empty function to clear. </td></tr>
+    <tr><td class="paramname">handle</td><td>The handle returned by <a class="el" href="classEventLoop.html#a4369df254aac9f10ae457996055f290d">addIoSource</a>. </td></tr>
   </table>
   </dd>
 </dl>
@@ -661,7 +788,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classEventLoop.html">EventLoop</a></li>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

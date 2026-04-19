@@ -101,6 +101,7 @@ $(document).ready(function(){initNavTree('classJpegVideoEncoder.html',''); initR
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classJpegVideoEncoder-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">JpegVideoEncoder Class Reference<div class="ingroups"><a class="el" href="group__proav.html">ProAV Media</a></div></div></div>
 </div><!--header-->
@@ -181,8 +182,11 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a1aeb8603ca5b5787f90ffd32e7c22481 inherit pub_methods_classVideoEncoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a human-readable message for the last error. <br /></td></tr>
 <tr class="separator:a1aeb8603ca5b5787f90ffd32e7c22481 inherit pub_methods_classVideoEncoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
-Additional Inherited Members</h2></td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a7a417703400cc4206304317429432363" id="r_a7a417703400cc4206304317429432363"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">List</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegVideoEncoder.html#a7a417703400cc4206304317429432363">supportedInputList</a> ()</td></tr>
+<tr class="memdesc:a7a417703400cc4206304317429432363"><td class="mdescLeft">&#160;</td><td class="mdescRight">Static view of the encoder's <a class="el" href="classJpegVideoEncoder.html#ac46e257a01fb134905a39b542b24b0ae">supportedInputs</a> list.  <br /></td></tr>
+<tr class="separator:a7a417703400cc4206304317429432363"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_static_methods_classVideoEncoder"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classVideoEncoder')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classVideoEncoder.html">VideoEncoder</a></td></tr>
 <tr class="memitem:aaf3309fc45bd95ad44c57c6116b9fd0e inherit pub_static_methods_classVideoEncoder" id="r_aaf3309fc45bd95ad44c57c6116b9fd0e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoEncoder.html#aaf3309fc45bd95ad44c57c6116b9fd0e">registerEncoder</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classVideoEncoder.html#a458f5a446eb61370897560bd14653c4d">name</a>, std::function&lt; <a class="el" href="classVideoEncoder.html">VideoEncoder</a> *()&gt; <a class="el" href="classList.html">factory</a>)</td></tr>
 <tr class="memdesc:aaf3309fc45bd95ad44c57c6116b9fd0e inherit pub_static_methods_classVideoEncoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers a video encoder factory.  <br /></td></tr>
@@ -194,6 +198,9 @@ Additional Inherited Members</h2></td></tr>
 <a class="el" href="classList.html">static</a> <a class="el" href="classList.html">List</a>&lt; <a class="el" href="classString.html">String</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>registeredEncoders</b> ()</td></tr>
 <tr class="memdesc:abc96287cc4e49ea25195746df5cd060b inherit pub_static_methods_classVideoEncoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of all registered encoder codec names. <br /></td></tr>
 <tr class="separator:abc96287cc4e49ea25195746df5cd060b inherit pub_static_methods_classVideoEncoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pro_methods_classVideoEncoder"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classVideoEncoder')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classVideoEncoder.html">VideoEncoder</a></td></tr>
 <tr class="memitem:a911b6f13999a5ef3ca614cce6677cb74 inherit pro_methods_classVideoEncoder" id="r_a911b6f13999a5ef3ca614cce6677cb74"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoEncoder.html#a911b6f13999a5ef3ca614cce6677cb74">setError</a> (<a class="el" href="classError.html">Error</a> <a class="el" href="classList.html">err</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;msg=<a class="el" href="classString.html">String</a>())</td></tr>
 <tr class="memdesc:a911b6f13999a5ef3ca614cce6677cb74 inherit pro_methods_classVideoEncoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Records a new error state.  <br /></td></tr>
@@ -526,6 +533,34 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a7a417703400cc4206304317429432363" name="a7a417703400cc4206304317429432363"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7a417703400cc4206304317429432363">&#9670;&#160;</a></span>supportedInputList()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">List</a>&lt; int &gt; JpegVideoEncoder::supportedInputList </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Static view of the encoder's <a class="el" href="classJpegVideoEncoder.html#ac46e257a01fb134905a39b542b24b0ae">supportedInputs</a> list. </p>
+<p>Returned verbatim by the virtual <a class="el" href="classJpegVideoEncoder.html#ac46e257a01fb134905a39b542b24b0ae">supportedInputs</a> override. Exposed statically so the <a class="el" href="classVideoCodec.html">VideoCodec</a> registry can populate <a class="el" href="structVideoCodec_1_1Data.html#a7ce0c2feebd0a5f4eb4a866400440a90">VideoCodec::Data::encoderSupportedInputs</a> without allocating an encoder instance. </p>
+
+</div>
+</div>
 <a id="ac46e257a01fb134905a39b542b24b0ae" name="ac46e257a01fb134905a39b542b24b0ae"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac46e257a01fb134905a39b542b24b0ae">&#9670;&#160;</a></span>supportedInputs()</h2>
 
@@ -566,7 +601,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classJpegVideoEncoder.html">JpegVideoEncoder</a></li>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

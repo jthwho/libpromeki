@@ -28,6 +28,7 @@ var classVideoCodec =
     [ "createEncoder", "classVideoCodec.html#a2277de00627b09dababfa87743ce81d6", null ],
     [ "data", "classVideoCodec.html#a7a7e8243e92c5f3781e1a2231427e243", null ],
     [ "description", "classVideoCodec.html#a9116cd7b4055b648f14cef43d31ba1c3", null ],
+    [ "encoderSupportedInputs", "classVideoCodec.html#a8d2e4a95f049e022364873463c8baac2", null ],
     [ "fourccList", "classVideoCodec.html#ade6c014445b3fb804e8dc8429b7c76d6", null ],
     [ "id", "classVideoCodec.html#a970be6fa47cc0934f92c20493ac96b37", null ],
     [ "isValid", "classVideoCodec.html#a14acda48f4792085f9668b7b53183b89", null ],

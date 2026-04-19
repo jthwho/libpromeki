@@ -169,6 +169,10 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a7f15181f8f1b3e6cff604ccd23ef4fd3" id="r_a7f15181f8f1b3e6cff604ccd23ef4fd3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="structMediaIO_1_1FormatDesc.html">MediaIO::FormatDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask__TPG.html#a7f15181f8f1b3e6cff604ccd23ef4fd3">formatDesc</a> ()</td></tr>
 <tr class="memdesc:a7f15181f8f1b3e6cff604ccd23ef4fd3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the format descriptor for this backend.  <br /></td></tr>
 <tr class="separator:a7f15181f8f1b3e6cff604ccd23ef4fd3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_static_methods_classMediaIOTask"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classMediaIOTask')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classMediaIOTask.html">MediaIOTask</a></td></tr>
+<tr class="memitem:a750931ea2502dc99a36e6a83dd4fad73 inherit pub_static_methods_classMediaIOTask" id="r_a750931ea2502dc99a36e6a83dd4fad73"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classMediaDesc.html">MediaDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask.html#a750931ea2502dc99a36e6a83dd4fad73">applyOutputOverrides</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaDesc.html">MediaDesc</a> &amp;<a class="el" href="classList.html">input</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classMediaConfig.html">MediaConfig</a> &amp;config)</td></tr>
+<tr class="memdesc:a750931ea2502dc99a36e6a83dd4fad73 inherit pub_static_methods_classMediaIOTask"><td class="mdescLeft">&#160;</td><td class="mdescRight">Applies the standard <code>Output*</code> overrides from <code>config</code> to <code>input</code>, returning the resulting <a class="el" href="classMediaDesc.html">MediaDesc</a>.  <br /></td></tr>
+<tr class="separator:a750931ea2502dc99a36e6a83dd4fad73 inherit pub_static_methods_classMediaIOTask"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
@@ -282,20 +286,20 @@ Additional Inherited Members</h2></td></tr>
 <div class="line"><span class="comment">// form is enough for a ready-to-use TPG source.</span></div>
 <div class="line"><a class="code hl_class" href="classMediaConfig.html">MediaIO::Config</a> <a class="code hl_class" href="classList.html">cfg</a> = <a class="code hl_function" href="classMediaIO.html#a0cb498ce63da62e06f5f463c0b046d74">MediaIO::defaultConfig</a>(<span class="stringliteral">&quot;TPG&quot;</span>);</div>
 <div class="line"><a class="code hl_class" href="classMediaIO.html">MediaIO</a> *io = <a class="code hl_function" href="classMediaIO.html#a594b8b55ae788efe104c871248d73808">MediaIO::create</a>(<a class="code hl_class" href="classList.html">cfg</a>);</div>
-<div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3">open</a>(<a class="code hl_variable" href="classMediaIO.html#a209efe1b5da1839d22ac041f62813615">MediaIO::Output</a>);</div>
+<div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3">open</a>(<a class="code hl_variable" href="classMediaIO.html#aa4e38e7fc22ac0bbb0fb29fb8e8ae428">MediaIO::Source</a>);</div>
 <div class="line"><a class="code hl_class" href="classSharedPtr.html">Frame::Ptr</a> frame;</div>
 <div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#ad3fa425ad0f171274e3c9013d14dd813">readFrame</a>(frame);</div>
-<div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#adec397e0125f2e156de27c9ac5cb1f3d">close</a>();</div>
+<div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#af37ceef12934d2397a18c58d518c3489">close</a>();</div>
 <div class="line"><span class="keyword">delete</span> io;</div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassMediaConfig_html"><div class="ttname"><a href="classMediaConfig.html">MediaConfig</a></div><div class="ttdoc">Generic name/value configuration container for the media subsystem.</div><div class="ttdef"><b>Definition</b> mediaconfig.h:54</div></div>
 <div class="ttc" id="aclassMediaIO_html"><div class="ttname"><a href="classMediaIO.html">MediaIO</a></div><div class="ttdoc">Controller for media I/O backends.</div><div class="ttdef"><b>Definition</b> mediaio.h:484</div></div>
 <div class="ttc" id="aclassMediaIO_html_a0cb498ce63da62e06f5f463c0b046d74"><div class="ttname"><a href="classMediaIO.html#a0cb498ce63da62e06f5f463c0b046d74">MediaIO::defaultConfig</a></div><div class="ttdeci">static Config defaultConfig(const String &amp;typeName)</div><div class="ttdoc">Returns the default configuration for the named backend.</div></div>
-<div class="ttc" id="aclassMediaIO_html_a209efe1b5da1839d22ac041f62813615"><div class="ttname"><a href="classMediaIO.html#a209efe1b5da1839d22ac041f62813615">MediaIO::Output</a></div><div class="ttdeci">static constexpr Mode Output</div><div class="ttdoc">Backend provides frames (source).</div><div class="ttdef"><b>Definition</b> mediaio.h:491</div></div>
 <div class="ttc" id="aclassMediaIO_html_a594b8b55ae788efe104c871248d73808"><div class="ttname"><a href="classMediaIO.html#a594b8b55ae788efe104c871248d73808">MediaIO::create</a></div><div class="ttdeci">static MediaIO * create(const Config &amp;config, ObjectBase *parent=nullptr)</div><div class="ttdoc">Creates a MediaIO instance from a configuration.</div></div>
 <div class="ttc" id="aclassMediaIO_html_a6a601a20bd14d709a28e09e6165254d3"><div class="ttname"><a href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3">MediaIO::open</a></div><div class="ttdeci">Error open(Mode mode)</div><div class="ttdoc">Opens the media resource.</div></div>
+<div class="ttc" id="aclassMediaIO_html_aa4e38e7fc22ac0bbb0fb29fb8e8ae428"><div class="ttname"><a href="classMediaIO.html#aa4e38e7fc22ac0bbb0fb29fb8e8ae428">MediaIO::Source</a></div><div class="ttdeci">static constexpr Mode Source</div><div class="ttdoc">Backend provides frames to the caller.</div><div class="ttdef"><b>Definition</b> mediaio.h:491</div></div>
 <div class="ttc" id="aclassMediaIO_html_ad3fa425ad0f171274e3c9013d14dd813"><div class="ttname"><a href="classMediaIO.html#ad3fa425ad0f171274e3c9013d14dd813">MediaIO::readFrame</a></div><div class="ttdeci">Error readFrame(Frame::Ptr &amp;frame, bool block=true)</div><div class="ttdoc">Reads the next synchronized frame.</div></div>
-<div class="ttc" id="aclassMediaIO_html_adec397e0125f2e156de27c9ac5cb1f3d"><div class="ttname"><a href="classMediaIO.html#adec397e0125f2e156de27c9ac5cb1f3d">MediaIO::close</a></div><div class="ttdeci">Error close()</div><div class="ttdoc">Closes the media resource.</div></div>
+<div class="ttc" id="aclassMediaIO_html_af37ceef12934d2397a18c58d518c3489"><div class="ttname"><a href="classMediaIO.html#af37ceef12934d2397a18c58d518c3489">MediaIO::close</a></div><div class="ttdeci">Error close(bool block=true)</div><div class="ttdoc">Closes the media resource.</div></div>
 <div class="ttc" id="aclassSharedPtr_html"><div class="ttname"><a href="classSharedPtr.html">SharedPtr&lt; Frame &gt;</a></div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
@@ -337,7 +341,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIOTask__TPG.html">MediaIOTask_TPG</a></li>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>

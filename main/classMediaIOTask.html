@@ -101,6 +101,7 @@ $(document).ready(function(){initNavTree('classMediaIOTask.html',''); initResiza
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="#friends">Friends</a> &#124;
 <a href="classMediaIOTask-members.html">List of all members</a>  </div>
@@ -124,7 +125,7 @@ Inheritance diagram for MediaIOTask:</div>
 <area shape="poly" title=" " alt="" coords="57,362,63,305,78,232,91,193,108,155,129,120,157,89,172,79,188,72,190,77,174,84,160,93,134,123,112,158,96,195,83,233,68,306,63,362"/>
 <area shape="rect" href="classMediaIOTask__CSC.html" title="MediaIOTask backend that performs color space conversion." alt="" coords="191,104,330,129"/>
 <area shape="poly" title=" " alt="" coords="59,361,68,313,85,253,114,191,133,163,157,139,173,128,190,121,192,126,175,133,160,143,137,167,118,194,90,255,73,314,65,362"/>
-<area shape="rect" href="classMediaIOTask__Converter.html" title="MediaIOTask backend that transforms media frames." alt="" coords="173,153,349,179"/>
+<area shape="rect" href="classMediaIOTask__FrameBridge.html" title="MediaIO backend that publishes/consumes frames via FrameBridge." alt="" coords="163,153,358,179"/>
 <area shape="poly" title=" " alt="" coords="62,362,74,323,92,276,120,228,137,207,157,188,176,177,179,181,160,192,141,210,124,231,97,278,79,324,67,363"/>
 <area shape="rect" href="classMediaIOTask__FrameSync.html" title="MediaIOTask backend that resyncs media to a target clock cadence." alt="" coords="169,203,353,228"/>
 <area shape="poly" title=" " alt="" coords="67,362,100,299,126,265,157,237,179,226,181,231,160,242,130,269,105,302,72,364"/>
@@ -176,6 +177,12 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classMediaIOTask.html">MediaIOTask</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classMediaIOTask.html">MediaIOTask</a> &amp;&amp;)=<a class="el" href="classList.html">delete</a></td></tr>
 <tr class="separator:a431bfa4fb034c6872be44d00ddfd3866"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a750931ea2502dc99a36e6a83dd4fad73" id="r_a750931ea2502dc99a36e6a83dd4fad73"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classMediaDesc.html">MediaDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask.html#a750931ea2502dc99a36e6a83dd4fad73">applyOutputOverrides</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaDesc.html">MediaDesc</a> &amp;<a class="el" href="classList.html">input</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classMediaConfig.html">MediaConfig</a> &amp;config)</td></tr>
+<tr class="memdesc:a750931ea2502dc99a36e6a83dd4fad73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Applies the standard <code>Output*</code> overrides from <code>config</code> to <code>input</code>, returning the resulting <a class="el" href="classMediaDesc.html">MediaDesc</a>.  <br /></td></tr>
+<tr class="separator:a750931ea2502dc99a36e6a83dd4fad73"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
 <tr class="memitem:a33a701a9866643312bab92a63113fe83" id="r_a33a701a9866643312bab92a63113fe83"><td class="memItemLeft" align="right" valign="top"><a id="a33a701a9866643312bab92a63113fe83" name="a33a701a9866643312bab92a63113fe83"></a>
@@ -219,6 +226,63 @@ Friends</h2></td></tr>
 <dl class="section user"><dt>Parameterized commands</dt><dd></dd></dl>
 <p>Backends can expose operations beyond the standard set by overriding <code>executeCmd(MediaIOCommandParams &amp;)</code>. Dispatch on <code>cmd.name</code> and read <code>cmd.params</code>; populate <code>cmd.result</code> for the caller. Return <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a43f2b142b3d7aca3163f2e36e12c8fde" title="Operation is not supported.">Error::NotSupported</a></code> for unrecognized names. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a750931ea2502dc99a36e6a83dd4fad73" name="a750931ea2502dc99a36e6a83dd4fad73"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a750931ea2502dc99a36e6a83dd4fad73">&#9670;&#160;</a></span>applyOutputOverrides()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classMediaDesc.html">MediaDesc</a> MediaIOTask::applyOutputOverrides </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classMediaDesc.html">MediaDesc</a> &amp;&#160;</td>
+          <td class="paramname"><em>input</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classMediaConfig.html">MediaConfig</a> &amp;&#160;</td>
+          <td class="paramname"><em>config</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Applies the standard <code>Output*</code> overrides from <code>config</code> to <code>input</code>, returning the resulting <a class="el" href="classMediaDesc.html">MediaDesc</a>. </p>
+<p>Every transform backend (CSC, <a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a>, SRC, <a class="el" href="classVideoEncoder.html" title="Abstract base class for stateful video encoders.">VideoEncoder</a>, <a class="el" href="classVideoDecoder.html" title="Abstract base class for stateful video decoders.">VideoDecoder</a>) consumes the same family of <a class="el" href="classMediaConfig.html">MediaConfig</a> keys to express "given this input
+shape, produce this output":</p>
+<ul>
+<li>MediaConfig::OutputPixelDesc — replaces the <a class="el" href="classImageDesc.html#a8fd13b343836d8b7465a6da4ae3ecd2e">ImageDesc::pixelDesc</a> of every video image.</li>
+<li>MediaConfig::OutputFrameRate — replaces <a class="el" href="classMediaDesc.html#a1e97279a95a210a57927c4a44d4d83f7">MediaDesc::frameRate</a>.</li>
+<li>MediaConfig::OutputAudioRate — replaces <a class="el" href="classAudioDesc.html#a76e846fe714813ae7d9255818012aa95">AudioDesc::sampleRate</a> on every audio entry.</li>
+<li>MediaConfig::OutputAudioChannels — replaces <a class="el" href="classAudioDesc.html#a28ace60e735420592c1cc45eede92700">AudioDesc::channels</a> on every audio entry.</li>
+<li>MediaConfig::OutputAudioDataType — replaces <a class="el" href="classAudioDesc.html#aed77bd03c20f0e1b332243412bc6cb76">AudioDesc::dataType</a> on every audio entry.</li>
+</ul>
+<p>Keys at their default (invalid <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a>, invalid <a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a>, zero audio rate / channels, invalid <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a>) mean "inherit from input" — the corresponding field passes through unchanged.</p>
+<p>The pipeline planner uses this helper to compute what shape a configured transform will produce without instantiating it. Backend authors call it from MediaIOTask::proposeOutput / MediaIOTask::describe so every transform answers the planner uniformly.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">input</td><td>The <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> the transform will consume. </td></tr>
+    <tr><td class="paramname">config</td><td>The transform's <a class="el" href="classMediaConfig.html" title="Generic name/value configuration container for the media subsystem.">MediaConfig</a> (read-only). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> the transform will produce. </dd></dl>
+
+</div>
+</div>
 <a id="a56ee29aac6f338c32541042c01754160" name="a56ee29aac6f338c32541042c01754160"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a56ee29aac6f338c32541042c01754160">&#9670;&#160;</a></span>mediaIo()</h2>
 
@@ -315,7 +379,7 @@ Friends</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIOTask.html">MediaIOTask</a></li>
-    <li class="footer">Generated on 2026-04-18 04:55:27 from commit 10b53f3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
   </ul>
 </div>
 </body>
