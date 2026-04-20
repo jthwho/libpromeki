@@ -224,13 +224,12 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>size</b> () <a class="
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>add</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classUUID.html">UUID</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
 <tr class="memdesc:a40d8ec6d19755c9a9f5092b5b98a2e35"><td class="mdescLeft">&#160;</td><td class="mdescRight">Appends a <a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a> (stored as its string representation) to the array. <br /></td></tr>
 <tr class="separator:a40d8ec6d19755c9a9f5092b5b98a2e35"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9aaea8a5ad489354188de8d4b921b2ba" id="r_a9aaea8a5ad489354188de8d4b921b2ba"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJsonArray.html#a9aaea8a5ad489354188de8d4b921b2ba">addFromVariant</a> (<a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#ac36566cc2c5535bba736babd50c4894f">Variant</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
-<tr class="memdesc:a9aaea8a5ad489354188de8d4b921b2ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Appends a value from a Variant, automatically selecting the JSON type.  <br /></td></tr>
+<tr class="memitem:a9aaea8a5ad489354188de8d4b921b2ba" id="r_a9aaea8a5ad489354188de8d4b921b2ba"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJsonArray.html#a9aaea8a5ad489354188de8d4b921b2ba">addFromVariant</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classVariant.html">Variant</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
+<tr class="memdesc:a9aaea8a5ad489354188de8d4b921b2ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Appends a value from a <a class="el" href="classVariant.html" title="Concrete Variant type used throughout promeki.">Variant</a>, automatically selecting the JSON type.  <br /></td></tr>
 <tr class="separator:a9aaea8a5ad489354188de8d4b921b2ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4bbe8f51eb93f37c3a3758ed84695c41" id="r_a4bbe8f51eb93f37c3a3758ed84695c41"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">Func</a> &gt; </td></tr>
-<tr class="memitem:a4bbe8f51eb93f37c3a3758ed84695c41"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classJsonArray.html#a4bbe8f51eb93f37c3a3758ed84695c41">forEach</a> (<a class="el" href="classList.html">Func</a> &amp;&amp;func) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a4bbe8f51eb93f37c3a3758ed84695c41"><td class="mdescLeft">&#160;</td><td class="mdescRight">Iterates over all elements in the array.  <br /></td></tr>
-<tr class="separator:a4bbe8f51eb93f37c3a3758ed84695c41"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac72e496191c8bdfa3b87fe896317acf6" id="r_ac72e496191c8bdfa3b87fe896317acf6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJsonArray.html#ac72e496191c8bdfa3b87fe896317acf6">forEach</a> (std::function&lt; <a class="el" href="classList.html">void</a>(<a class="el" href="classList.html">const</a> <a class="el" href="classVariant.html">Variant</a> &amp;<a class="el" href="classList.html">val</a>)&gt; func) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ac72e496191c8bdfa3b87fe896317acf6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Iterates over all elements in the array.  <br /></td></tr>
+<tr class="separator:ac72e496191c8bdfa3b87fe896317acf6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -253,71 +252,47 @@ Friends</h2></td></tr>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="classList.html">void</a> JsonArray::addFromVariant </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#ac36566cc2c5535bba736babd50c4894f">Variant</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classVariant.html">Variant</a> &amp;&#160;</td>
           <td class="paramname"><em>val</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
-<p>Appends a value from a Variant, automatically selecting the JSON type. </p>
+<p>Appends a value from a <a class="el" href="classVariant.html" title="Concrete Variant type used throughout promeki.">Variant</a>, automatically selecting the JSON type. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">val</td><td>The Variant whose value and type determine the appended JSON element. </td></tr>
+    <tr><td class="paramname">val</td><td>The <a class="el" href="classVariant.html" title="Concrete Variant type used throughout promeki.">Variant</a> whose value and type determine the appended JSON element. </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a id="a4bbe8f51eb93f37c3a3758ed84695c41" name="a4bbe8f51eb93f37c3a3758ed84695c41"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4bbe8f51eb93f37c3a3758ed84695c41">&#9670;&#160;</a></span>forEach()</h2>
+<a id="ac72e496191c8bdfa3b87fe896317acf6" name="ac72e496191c8bdfa3b87fe896317acf6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac72e496191c8bdfa3b87fe896317acf6">&#9670;&#160;</a></span>forEach()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<div class="memtemplate">
-template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">Func</a> &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="classList.html">void</a> JsonArray::forEach </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">Func</a> &amp;&amp;&#160;</td>
+          <td class="paramtype">std::function&lt; <a class="el" href="classList.html">void</a>(<a class="el" href="classList.html">const</a> <a class="el" href="classVariant.html">Variant</a> &amp;<a class="el" href="classList.html">val</a>)&gt;&#160;</td>
           <td class="paramname"><em>func</em></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Iterates over all elements in the array. </p>
-<dl class="tparams"><dt>Template Parameters</dt><dd>
-  <table class="tparams">
-    <tr><td class="paramname">Func</td><td>Callable with signature void(const Variant &amp;val). </td></tr>
-  </table>
-  </dd>
-</dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">func</td><td>The function to invoke for each element. </td></tr>
+    <tr><td class="paramname">func</td><td>Callback invoked for each element. </td></tr>
   </table>
   </dd>
 </dl>
@@ -839,7 +814,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classJsonArray.html">JsonArray</a></li>
-    <li class="footer">Generated on 2026-04-20 02:52:47 from commit 9c7824a (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-20 23:51:17 from commit 43d9012 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -101,7 +101,6 @@ $(document).ready(function(){initNavTree('classObjectBase.html',''); initResizab
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
-<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pub-attribs">Public Attributes</a> &#124;
@@ -248,13 +247,6 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMetadata.html" title="Key-value metadata container using typed Variant values.">Metadata</a> entry describing a slot on an ObjectBase-derived class.  <a href="classObjectBase_1_1SlotMeta.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:aa5b71229762e66678aa59aaa21ecd7af" id="r_aa5b71229762e66678aa59aaa21ecd7af"><td class="memItemLeft" align="right" valign="top"><a id="aa5b71229762e66678aa59aaa21ecd7af" name="aa5b71229762e66678aa59aaa21ecd7af"></a>
-<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>SlotVariantFunc</b> = std::function&lt; <a class="el" href="classList.html">void</a>(<a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a237e2a78d81fec1b598585def4459f2a">VariantList</a> &amp;)&gt;</td></tr>
-<tr class="memdesc:aa5b71229762e66678aa59aaa21ecd7af"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function type for invoking a slot with a list of Variants. <br /></td></tr>
-<tr class="separator:aa5b71229762e66678aa59aaa21ecd7af"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ad1f655ffb3998bc290c2407bcb895586" id="r_ad1f655ffb3998bc290c2407bcb895586"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classObjectBase.html#ad1f655ffb3998bc290c2407bcb895586">ObjectBase</a> (<a class="el" href="classObjectBase.html">ObjectBase</a> *p=<a class="el" href="classList.html">nullptr</a>)</td></tr>
@@ -290,10 +282,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a1b92022c1cad139382f3681a0e1c405a" id="r_a1b92022c1cad139382f3681a0e1c405a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classObjectBase.html#a1b92022c1cad139382f3681a0e1c405a">stopTimer</a> (int timerId)</td></tr>
 <tr class="memdesc:a1b92022c1cad139382f3681a0e1c405a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stops a timer previously started with <a class="el" href="classObjectBase.html#a2fabc995337aed5634ed041bf7dcd989" title="Starts a timer on this object&#39;s EventLoop.">startTimer()</a>.  <br /></td></tr>
 <tr class="separator:a1b92022c1cad139382f3681a0e1c405a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5ee9c4a45874eeef32c887718823feda" id="r_a5ee9c4a45874eeef32c887718823feda"><td class="memTemplParams" colspan="2"><a id="a5ee9c4a45874eeef32c887718823feda" name="a5ee9c4a45874eeef32c887718823feda"></a>
-template&lt;typename... Args&gt; </td></tr>
-<tr class="memitem:a5ee9c4a45874eeef32c887718823feda"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><b>connect</b> (<a class="el" href="classSignal.html">Signal</a>&lt; Args... &gt; *signal, <a class="el" href="classSlot.html">Slot</a>&lt; Args... &gt; *<a class="el" href="classList.html">slot</a>)</td></tr>
-<tr class="separator:a5ee9c4a45874eeef32c887718823feda"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -336,9 +324,10 @@ Protected Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
 Friends</h2></td></tr>
-<tr class="memitem:a4031edc88f396bc2a83ca3d9d3d234a6" id="r_a4031edc88f396bc2a83ca3d9d3d234a6"><td class="memItemLeft" align="right" valign="top"><a id="a4031edc88f396bc2a83ca3d9d3d234a6" name="a4031edc88f396bc2a83ca3d9d3d234a6"></a>
-<a class="el" href="classList.html">class</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ObjectBasePtr</b></td></tr>
-<tr class="separator:a4031edc88f396bc2a83ca3d9d3d234a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0ce3386747ba7ef2d5926dba68ad62f2" id="r_a0ce3386747ba7ef2d5926dba68ad62f2"><td class="memTemplParams" colspan="2"><a id="a0ce3386747ba7ef2d5926dba68ad62f2" name="a0ce3386747ba7ef2d5926dba68ad62f2"></a>
+template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">U</a> &gt; </td></tr>
+<tr class="memitem:a0ce3386747ba7ef2d5926dba68ad62f2"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">class</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><b>ObjectBasePtr</b></td></tr>
+<tr class="separator:a0ce3386747ba7ef2d5926dba68ad62f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aca25e36665670fcb6909dd8ab04b1d05" id="r_aca25e36665670fcb6909dd8ab04b1d05"><td class="memItemLeft" align="right" valign="top"><a id="aca25e36665670fcb6909dd8ab04b1d05" name="aca25e36665670fcb6909dd8ab04b1d05"></a>
 <a class="el" href="classList.html">class</a>&#160;</td><td class="memItemRight" valign="bottom"><b>EventLoop</b></td></tr>
 <tr class="separator:aca25e36665670fcb6909dd8ab04b1d05"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -710,7 +699,7 @@ template&lt;typename... Args&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classObjectBase.html">ObjectBase</a></li>
-    <li class="footer">Generated on 2026-04-20 02:52:47 from commit 9c7824a (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-20 23:51:17 from commit 43d9012 (1.0.0).</li>
   </ul>
 </div>
 </body>

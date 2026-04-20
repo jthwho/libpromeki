@@ -208,6 +208,7 @@ var hierarchy =
       [ "ToStringFormatter< T >", "structToStringFormatter.html", null ],
       [ "std::formatter< promeki::Char >", "structstd_1_1formatter_3_01promeki_1_1Char_01_4.html", null ],
       [ "std::formatter< promeki::String >", "structstd_1_1formatter_3_01promeki_1_1String_01_4.html", null ],
+      [ "std::formatter< promeki::Variant >", "structstd_1_1formatter_3_01promeki_1_1Variant_01_4.html", null ],
       [ "std::formatter< promeki::VariantImpl< Types... > >", "structstd_1_1formatter_3_01promeki_1_1VariantImpl_3_01Types_8_8_8_01_4_01_4.html", null ]
     ] ],
     [ "std::formatter< promeki::Duration >", "structstd_1_1formatter_3_01promeki_1_1Duration_01_4.html", null ],
@@ -308,6 +309,9 @@ var hierarchy =
     [ "List< TuiMenu * >", "classList.html", null ],
     [ "List< Type >", "classList.html", null ],
     [ "List< uint8_t >", "classList.html", null ],
+    [ "List< Variant >", "classList.html", [
+      [ "VariantList", "classVariantList.html", null ]
+    ] ],
     [ "List< Widget * >", "classList.html", null ],
     [ "Mutex::Locker", "classMutex_1_1Locker.html", null ],
     [ "Logger::LogEntry", "structLogger_1_1LogEntry.html", null ],
@@ -318,9 +322,9 @@ var hierarchy =
     [ "MacAddress", "classMacAddress.html", null ],
     [ "Map< K, V >", "classMap.html", null ],
     [ "Map< int, int >", "classMap.html", null ],
-    [ "Map< ObjectBasePtr *, ObjectBasePtr * >", "classMap.html", null ],
     [ "Map< Pair, Accumulator >", "classMap.html", null ],
     [ "Map< size_t, Audio >", "classMap.html", null ],
+    [ "Map< std::atomic< ObjectBase * > *, std::atomic< ObjectBase * > * >", "classMap.html", null ],
     [ "Map< String, CmdLineParser::Option >", "classMap.html", null ],
     [ "Map< String, double >", "classMap.html", null ],
     [ "Map< String, Params >", "classMap.html", null ],
@@ -332,7 +336,7 @@ var hierarchy =
     [ "Map< uint64_t, IndexedScalarEntry >", "classMap.html", null ],
     [ "Map< uint64_t, ScalarEntry >", "classMap.html", null ],
     [ "Map< uint64_t, String >", "classMap.html", null ],
-    [ "Map< uint64_t, VariantImpl >", "classMap.html", null ],
+    [ "Map< uint64_t, Variant >", "classMap.html", null ],
     [ "Map< uint64_t, VariantSpec >", "classMap.html", null ],
     [ "Map< uintptr_t, Block >", "classMap.html", null ],
     [ "MasteringDisplay", "classMasteringDisplay.html", null ],
@@ -449,7 +453,7 @@ var hierarchy =
         ] ]
       ] ]
     ] ],
-    [ "ObjectBasePtr", "classObjectBasePtr.html", null ],
+    [ "ObjectBasePtr< T >", "classObjectBasePtr.html", null ],
     [ "DebugMediaFile::OpenOptions", "structDebugMediaFile_1_1OpenOptions.html", null ],
     [ "MemSpace::Ops", "structMemSpace_1_1Ops.html", null ],
     [ "CmdLineParser::Option", "classCmdLineParser_1_1Option.html", null ],
@@ -619,7 +623,9 @@ var hierarchy =
     ] ],
     [ "detail::VariantEnd", "structdetail_1_1VariantEnd.html", null ],
     [ "VariantImpl< Types >", "classVariantImpl.html", null ],
-    [ "VariantImpl< std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, Size2Du32, UUID, UMID, Timecode, Rational< int >, FrameRate, VideoFormat, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, VideoCodec, AudioCodec, Enum, EnumList, MasteringDisplay, ContentLightLevel, detail::VariantEnd >", "classVariantImpl.html", null ],
+    [ "VariantImpl< std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, Size2Du32, UUID, UMID, Timecode, Rational< int >, FrameRate, VideoFormat, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, VideoCodec, AudioCodec, Enum, EnumList, MasteringDisplay, ContentLightLevel, detail::VariantEnd >", "classVariantImpl.html", [
+      [ "Variant", "classVariant.html", null ]
+    ] ],
     [ "VariantLookup< T >", "classVariantLookup.html", null ],
     [ "detail::VariantLookupSegment", "structdetail_1_1VariantLookupSegment.html", null ],
     [ "VariantQuery< T >", "classVariantQuery.html", null ],

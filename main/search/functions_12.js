@@ -17,7 +17,7 @@ var searchData=
   ['rateratio_14',['rateratio',['../classClock.html#ac1e728a766b91f93239f74a206a16e97',1,'Clock::rateRatio()'],['../classSDLAudioClock.html#a2e7923f2903f39625c6bc3fa705935c6',1,'SDLAudioClock::rateRatio()'],['../classSyntheticClock.html#ab443f45b7b931691ce95ae9d5d5be032',1,'SyntheticClock::rateRatio()']]],
   ['ratetracker_15',['RateTracker',['../classRateTracker.html#a7a22ea04659f872569d53ecb44cd46fd',1,'RateTracker']]],
   ['ratio_16',['ratio',['../classAudioResampler.html#ab96807f073505b21a9933b898f8795d5',1,'AudioResampler']]],
-  ['rational_17',['rational',['../classRational.html#a7f8469593a56252639a394ad45a3c184',1,'Rational::Rational()'],['../classFrameRate.html#ae1a6d0901f7f0c9691b662ae6828832e',1,'FrameRate::rational()']]],
+  ['rational_17',['rational',['../classFrameRate.html#ae1a6d0901f7f0c9691b662ae6828832e',1,'FrameRate::rational()'],['../classRational.html#a7f8469593a56252639a394ad45a3c184',1,'Rational::Rational()']]],
   ['raw_18',['raw',['../classEUI64.html#abda3b3e7ac300bc6f8ede1da08e16351',1,'EUI64::raw()'],['../classUUID.html#a957c19ce29ccf5c605f543a5a5050e57',1,'UUID::raw()'],['../classUMID.html#a3cfc97220e1fee94601da74b8b4bcc63',1,'UMID::raw()'],['../classIpv6Address.html#a2acdb539eef3bfd2758e18c4780dce3d',1,'Ipv6Address::raw()'],['../classMacAddress.html#a9af819a4a4725ac597e4657f10fb8d1a',1,'MacAddress::raw()']]],
   ['rawsocket_19',['RawSocket',['../classRawSocket.html#abfa5ad6c0d0bd5c0b91810d02d59223b',1,'RawSocket']]],
   ['rawstr_20',['rawStr',['../classStringLatin1Data.html#a6982b54bba5f54c781ec367521b98538',1,'StringLatin1Data']]],

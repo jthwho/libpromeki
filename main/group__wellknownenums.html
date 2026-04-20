@@ -733,7 +733,7 @@ Variables</h2></td></tr>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassList_html_ab5f4f4c756727be7a037ea66660a2fec"><div class="ttname"><a href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">List::set</a></div><div class="ttdeci">bool set(size_t index, const T &amp;val)</div><div class="ttdoc">Sets an item in the list by index.</div><div class="ttdef"><b>Definition</b> list.h:541</div></div>
 </div><!-- fragment --></li>
-<li>Functions that want compile-time type checking take the concrete class (e.g. <code>"const VideoPattern &amp;"</code>) instead of a bare <code>"const Enum &amp;"</code>; runtime compatibility with <a class="el" href="variant_8h.html#ac36566cc2c5535bba736babd50c4894f">Variant</a> and any Enum-based API is preserved via public inheritance.</li>
+<li>Functions that want compile-time type checking take the concrete class (e.g. <code>"const VideoPattern &amp;"</code>) instead of a bare <code>"const Enum &amp;"</code>; runtime compatibility with <a class="el" href="classVariant.html">Variant</a> and any Enum-based API is preserved via public inheritance.</li>
 </ul>
 <p>Subsystems that consume these values (e.g. <code><a class="el" href="classVideoTestPattern.html" title="Standalone video test pattern generator.">VideoTestPattern</a></code>) alias the well-known class directly via <code>using</code>, so there is no parallel C++ <code>enum</code> to keep in sync.</p>
 <p>The registered string names use the same CamelCase spelling as the C++ constants on the wrapper class (e.g. <code>"ColorBars"</code>, <code>"BottomCenter"</code>, <code>"LTC"</code>). Use the typed constants directly at call sites. </p>
@@ -743,7 +743,7 @@ Variables</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-20 02:52:47 from commit 9c7824a (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-20 23:51:17 from commit 43d9012 (1.0.0).</li>
   </ul>
 </div>
 </body>

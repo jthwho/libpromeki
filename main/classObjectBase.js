@@ -3,7 +3,6 @@ var classObjectBase =
     [ "MetaInfo", "classObjectBase_1_1MetaInfo.html", "classObjectBase_1_1MetaInfo" ],
     [ "SignalMeta", "classObjectBase_1_1SignalMeta.html", "classObjectBase_1_1SignalMeta" ],
     [ "SlotMeta", "classObjectBase_1_1SlotMeta.html", "classObjectBase_1_1SlotMeta" ],
-    [ "SlotVariantFunc", "classObjectBase.html#aa5b71229762e66678aa59aaa21ecd7af", null ],
     [ "ObjectBase", "classObjectBase.html#ad1f655ffb3998bc290c2407bcb895586", null ],
     [ "~ObjectBase", "classObjectBase.html#a7074bc9389069351c2d0eee6a47e5ee3", null ],
     [ "childList", "classObjectBase.html#ac03e63064ff5183197c72b98b5e4b1b9", null ],

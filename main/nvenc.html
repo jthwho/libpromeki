@@ -151,9 +151,10 @@ $(document).ready(function(){initNavTree('nvenc.html',''); initResizable(); });
 <div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">cmake</a> -<a class="code hl_class" href="classList.html">B</a> build -<a class="code hl_class" href="classList.html">S</a> . \</div>
 <div class="line">    -<a class="code hl_class" href="classList.html">DPROMEKI_NVENC_SDK_DIR</a>=/home/<a class="code hl_class" href="classList.html">you</a>/<a class="code hl_class" href="classList.html">src</a>/<a class="code hl_class" href="classList.html">Video_Codec_SDK_13</a>.0.37</div>
 </div><!-- fragment --><p>Or export it as an environment variable once:</p>
-<div class="fragment"><div class="line"><span class="keyword">export</span> <a class="code hl_class" href="classList.html">NVENC_SDK_DIR</a>=/home/<a class="code hl_class" href="classList.html">you</a>/<a class="code hl_class" href="classList.html">src</a>/<a class="code hl_class" href="classList.html">Video_Codec_SDK_13</a>.0.37</div>
+<div class="fragment"><div class="line"><span class="keyword">export</span> <a class="code hl_class" href="classList.html">PROMEKI_NVENC_SDK_DIR</a>=/home/<a class="code hl_class" href="classList.html">you</a>/<a class="code hl_class" href="classList.html">src</a>/<a class="code hl_class" href="classList.html">Video_Codec_SDK_13</a>.0.37</div>
 <div class="line"><a class="code hl_class" href="classList.html">cmake</a> -<a class="code hl_class" href="classList.html">B</a> build -<a class="code hl_class" href="classList.html">S</a> .</div>
-</div><!-- fragment --><p>The CMake probe looks for <code>Interface/nvEncodeAPI.h</code> below that directory. If it finds the header, PROMEKI_ENABLE_NVENC defaults to <code>ON</code>; otherwise it defaults to <code>OFF</code> and the backend is not built.</p>
+</div><!-- fragment --><p>A <code>-DPROMEKI_NVENC_SDK_DIR=</code>... on the command line always wins over the environment variable. The legacy <code>NVENC_SDK_DIR</code> environment variable is also consulted as a find hint for compatibility with existing setups.</p>
+<p>The CMake probe looks for <code>Interface/nvEncodeAPI.h</code> below that directory. If it finds the header, PROMEKI_ENABLE_NVENC defaults to <code>ON</code>; otherwise it defaults to <code>OFF</code> and the backend is not built.</p>
 <p>Supported SDK versions: <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">12.0</a> and newer. Older SDKs use a different preset / tuning-info model that libpromeki does not map to.</p>
 <h1><a class="anchor" id="nvenc_verify"></a>
 Verification</h1>
@@ -190,7 +191,7 @@ Driver / toolkit version skew</h2>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-20 02:52:47 from commit 9c7824a (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-20 23:51:17 from commit 43d9012 (1.0.0).</li>
   </ul>
 </div>
 </body>

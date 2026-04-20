@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['wire_20format_0',['Image Data Encoder Wire Format',['../imagedataencoder.html',1,'']]]
+  ['validation_20and_20monitoring_0',['Inspector — Frame validation and monitoring',['../inspector.html',1,'']]]
 ];

@@ -89,6 +89,5 @@ var group__events =
       [ "SchedulePolicy::Fifo", "group__events.html#gga5f6319f9bba46b51ebc61f9c0e4a896daa0476ca4d7283b340d24c53c16270958", null ],
       [ "SchedulePolicy::Batch", "group__events.html#gga5f6319f9bba46b51ebc61f9c0e4a896da51ffe9dd1b1e143c1b9f1144d040e454", null ],
       [ "SchedulePolicy::Idle", "group__events.html#gga5f6319f9bba46b51ebc61f9c0e4a896dae599161956d626eda4cb0a5ffb85271c", null ]
-    ] ],
-    [ "ObjectBasePtr::ObjectBasePtr", "group__events.html#gafae67ee68f029801adb92c6676a76de1", null ]
+    ] ]
 ];

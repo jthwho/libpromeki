@@ -156,20 +156,20 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>id</b> () <a class="el
 <tr class="memitem:aef6761b6b6fd10fe2af0ae7d557ad0ba" id="r_aef6761b6b6fd10fe2af0ae7d557ad0ba"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSlot.html#aef6761b6b6fd10fe2af0ae7d557ad0ba">exec</a> (Args... <a class="el" href="classList.html">args</a>)</td></tr>
 <tr class="memdesc:aef6761b6b6fd10fe2af0ae7d557ad0ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes the slot's callable with the given typed arguments.  <br /></td></tr>
 <tr class="separator:aef6761b6b6fd10fe2af0ae7d557ad0ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a70493bcca1dd8707157457ae6776869c" id="r_a70493bcca1dd8707157457ae6776869c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSlot.html#a70493bcca1dd8707157457ae6776869c">exec</a> (<a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a237e2a78d81fec1b598585def4459f2a">VariantList</a> &amp;<a class="el" href="classList.html">variantList</a>)</td></tr>
-<tr class="memdesc:a70493bcca1dd8707157457ae6776869c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes the slot's callable by unpacking arguments from a VariantList.  <br /></td></tr>
+<tr class="memitem:a70493bcca1dd8707157457ae6776869c" id="r_a70493bcca1dd8707157457ae6776869c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSlot.html#a70493bcca1dd8707157457ae6776869c">exec</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classVariantList.html">VariantList</a> &amp;<a class="el" href="classList.html">variantList</a>)</td></tr>
+<tr class="memdesc:a70493bcca1dd8707157457ae6776869c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes the slot's callable by unpacking arguments from a <a class="el" href="classVariantList.html" title="List of Variant values used for type-erased argument marshalling.">VariantList</a>.  <br /></td></tr>
 <tr class="separator:a70493bcca1dd8707157457ae6776869c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a0b5cc85e9241604d1ac8e74da64f241c" id="r_a0b5cc85e9241604d1ac8e74da64f241c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="variant_8h.html#a237e2a78d81fec1b598585def4459f2a">VariantList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSlot.html#a0b5cc85e9241604d1ac8e74da64f241c">pack</a> (Args... <a class="el" href="classList.html">args</a>)</td></tr>
-<tr class="memdesc:a0b5cc85e9241604d1ac8e74da64f241c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Packs the given arguments into a VariantList.  <br /></td></tr>
+<tr class="memitem:a0b5cc85e9241604d1ac8e74da64f241c" id="r_a0b5cc85e9241604d1ac8e74da64f241c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVariantList.html">VariantList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSlot.html#a0b5cc85e9241604d1ac8e74da64f241c">pack</a> (Args... <a class="el" href="classList.html">args</a>)</td></tr>
+<tr class="memdesc:a0b5cc85e9241604d1ac8e74da64f241c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Packs the given arguments into a <a class="el" href="classVariantList.html" title="List of Variant values used for type-erased argument marshalling.">VariantList</a>.  <br /></td></tr>
 <tr class="separator:a0b5cc85e9241604d1ac8e74da64f241c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename... Args&gt;<br />
 class Slot&lt; Args &gt;</div><p>Type-safe callback slot that wraps a callable with optional ownership tracking. </p>
-<p><a class="el" href="classSlot.html" title="Type-safe callback slot that wraps a callable with optional ownership tracking.">Slot</a> provides a mechanism for storing and invoking callbacks with a fixed argument signature. It supports direct invocation with typed arguments as well as deferred invocation from a VariantList, enabling type-erased signal/slot communication.</p>
+<p><a class="el" href="classSlot.html" title="Type-safe callback slot that wraps a callable with optional ownership tracking.">Slot</a> provides a mechanism for storing and invoking callbacks with a fixed argument signature. It supports direct invocation with typed arguments as well as deferred invocation from a <a class="el" href="classVariantList.html" title="List of Variant values used for type-erased argument marshalling.">VariantList</a>, enabling type-erased signal/slot communication.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">Args</td><td>The argument types that the slot's callable accepts. </td></tr>
@@ -282,30 +282,23 @@ template&lt;typename... Args&gt; </div>
 <div class="memproto">
 <div class="memtemplate">
 template&lt;typename... Args&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="classList.html">void</a> <a class="el" href="classSlot.html">Slot</a>&lt; <a class="el" href="classList.html">Args</a> &gt;::exec </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a237e2a78d81fec1b598585def4459f2a">VariantList</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantList.html">VariantList</a> &amp;&#160;</td>
           <td class="paramname"><em>variantList</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
-<p>Executes the slot's callable by unpacking arguments from a VariantList. </p>
-<p>Each element in the VariantList is converted back to the corresponding typed argument and forwarded to the underlying callable.</p>
+<p>Executes the slot's callable by unpacking arguments from a <a class="el" href="classVariantList.html" title="List of Variant values used for type-erased argument marshalling.">VariantList</a>. </p>
+<p>Each element in the <a class="el" href="classVariantList.html" title="List of Variant values used for type-erased argument marshalling.">VariantList</a> is converted back to the corresponding typed argument and forwarded to the underlying callable.</p>
+<p>Defined in <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">slot.tpp</a></code> so <code><a class="el" href="slot_8h.html">slot.h</a></code> does not pull in the full <code><a class="el" href="variant_8h.html">variant.h</a></code>. Include <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">promeki/slot.tpp</a></code> from any TU that calls <code><a class="el" href="classSlot.html#a70493bcca1dd8707157457ae6776869c" title="Executes the slot&#39;s callable by unpacking arguments from a VariantList.">exec(const VariantList &amp;)</a></code>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">variantList</td><td>The list of Variant values to unpack as arguments. </td></tr>
+    <tr><td class="paramname">variantList</td><td>The list of <a class="el" href="classVariant.html" title="Concrete Variant type used throughout promeki.">Variant</a> values to unpack as arguments. </td></tr>
   </table>
   </dd>
 </dl>
@@ -324,7 +317,7 @@ template&lt;typename... Args&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="variant_8h.html#a237e2a78d81fec1b598585def4459f2a">VariantList</a> <a class="el" href="classSlot.html">Slot</a>&lt; <a class="el" href="classList.html">Args</a> &gt;::pack </td>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classVariantList.html">VariantList</a> <a class="el" href="classSlot.html">Slot</a>&lt; <a class="el" href="classList.html">Args</a> &gt;::pack </td>
           <td>(</td>
           <td class="paramtype">Args...&#160;</td>
           <td class="paramname"><em>args</em></td><td>)</td>
@@ -333,20 +326,21 @@ template&lt;typename... Args&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Packs the given arguments into a VariantList. </p>
-<p>Each argument is converted to a Variant after stripping const and reference qualifiers. This is useful for serializing a set of arguments for later deferred invocation via <a class="el" href="classSlot.html#a70493bcca1dd8707157457ae6776869c" title="Executes the slot&#39;s callable by unpacking arguments from a VariantList.">exec(const VariantList &amp;)</a>.</p>
+<p>Packs the given arguments into a <a class="el" href="classVariantList.html" title="List of Variant values used for type-erased argument marshalling.">VariantList</a>. </p>
+<p>Each argument is converted to a <a class="el" href="classVariant.html" title="Concrete Variant type used throughout promeki.">Variant</a> after stripping const and reference qualifiers. This is useful for serializing a set of arguments for later deferred invocation via <a class="el" href="classSlot.html#a70493bcca1dd8707157457ae6776869c" title="Executes the slot&#39;s callable by unpacking arguments from a VariantList.">exec(const VariantList &amp;)</a>.</p>
+<p>Defined in <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">slot.tpp</a></code> so <code><a class="el" href="slot_8h.html">slot.h</a></code> does not pull in the full <code><a class="el" href="variant_8h.html">variant.h</a></code>. Include <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">promeki/slot.tpp</a></code> from any TU that calls <a class="el" href="classSlot.html#a0b5cc85e9241604d1ac8e74da64f241c" title="Packs the given arguments into a VariantList.">pack()</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">args</td><td>The arguments to pack. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A VariantList containing each argument as a Variant. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classVariantList.html" title="List of Variant values used for type-erased argument marshalling.">VariantList</a> containing each argument as a <a class="el" href="classVariant.html" title="Concrete Variant type used throughout promeki.">Variant</a>. </dd></dl>
 
 </div>
 </div>
@@ -360,7 +354,7 @@ template&lt;typename... Args&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classSlot.html">Slot</a></li>
-    <li class="footer">Generated on 2026-04-20 02:52:47 from commit 9c7824a (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-20 23:51:17 from commit 43d9012 (1.0.0).</li>
   </ul>
 </div>
 </body>

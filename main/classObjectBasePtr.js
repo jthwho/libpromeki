@@ -1,10 +1,11 @@
 var classObjectBasePtr =
 [
-    [ "ObjectBasePtr", "group__events.html#gafae67ee68f029801adb92c6676a76de1", null ],
-    [ "ObjectBasePtr", "classObjectBasePtr.html#ac5ab3d730afaeff603da41666df735cf", null ],
-    [ "~ObjectBasePtr", "classObjectBasePtr.html#a45b2a25d0f57fc10569529ff29252616", null ],
-    [ "data", "classObjectBasePtr.html#adf1b8edd2a2f6e822c973b69a18ef306", null ],
-    [ "data", "classObjectBasePtr.html#ab735301c3b7449a3c53562f6915bf4ce", null ],
-    [ "isValid", "classObjectBasePtr.html#a44617e6ec26e06b05ef07cf46a457d75", null ],
-    [ "operator=", "classObjectBasePtr.html#a1f36bcdbbd6210d0dc176295194aa509", null ]
+    [ "ObjectBasePtr", "classObjectBasePtr.html#a34fcec5c385f62968e9a210d1ba5089a", null ],
+    [ "ObjectBasePtr", "classObjectBasePtr.html#a50cdf404e8ce978ccbc520e3a32b3f1b", null ],
+    [ "ObjectBasePtr", "classObjectBasePtr.html#a1afb2d7109f3ddcc0772c4d9cd9222ce", null ],
+    [ "~ObjectBasePtr", "classObjectBasePtr.html#a7e6044be74cf8227638e430288671702", null ],
+    [ "data", "classObjectBasePtr.html#af6d7ad854f55210fd18c6e770b8f655b", null ],
+    [ "data", "classObjectBasePtr.html#afbeccb4b9b635206d1f3f1c584a7e4bc", null ],
+    [ "isValid", "classObjectBasePtr.html#a96a88d937d6828315d04c8511dcf4766", null ],
+    [ "operator=", "classObjectBasePtr.html#a57e2d09164fb7e8b85b911582928ba95", null ]
 ];

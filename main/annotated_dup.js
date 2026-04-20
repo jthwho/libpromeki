@@ -21,6 +21,7 @@ var annotated_dup =
       [ "formatter< promeki::Size2DTemplate< T > >", "structstd_1_1formatter_3_01promeki_1_1Size2DTemplate_3_01T_01_4_01_4.html", null ],
       [ "formatter< promeki::String >", "structstd_1_1formatter_3_01promeki_1_1String_01_4.html", null ],
       [ "formatter< promeki::Timecode >", "structstd_1_1formatter_3_01promeki_1_1Timecode_01_4.html", "structstd_1_1formatter_3_01promeki_1_1Timecode_01_4" ],
+      [ "formatter< promeki::Variant >", "structstd_1_1formatter_3_01promeki_1_1Variant_01_4.html", null ],
       [ "formatter< promeki::VariantImpl< Types... > >", "structstd_1_1formatter_3_01promeki_1_1VariantImpl_3_01Types_8_8_8_01_4_01_4.html", null ],
       [ "formatter< promeki::VideoFormat >", "structstd_1_1formatter_3_01promeki_1_1VideoFormat_01_4.html", "structstd_1_1formatter_3_01promeki_1_1VideoFormat_01_4" ]
     ] ],
@@ -346,8 +347,10 @@ var annotated_dup =
     [ "UUID", "classUUID.html", "classUUID" ],
     [ "V4l2ExposureMode", "classV4l2ExposureMode.html", null ],
     [ "V4l2PowerLineMode", "classV4l2PowerLineMode.html", null ],
+    [ "Variant", "classVariant.html", null ],
     [ "VariantDatabase", "classVariantDatabase.html", "classVariantDatabase" ],
     [ "VariantImpl", "classVariantImpl.html", "classVariantImpl" ],
+    [ "VariantList", "classVariantList.html", null ],
     [ "VariantLookup", "classVariantLookup.html", "classVariantLookup" ],
     [ "VariantQuery", "classVariantQuery.html", "classVariantQuery" ],
     [ "VariantSpec", "classVariantSpec.html", "classVariantSpec" ],

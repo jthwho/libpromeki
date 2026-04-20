@@ -155,7 +155,7 @@ Cross-Thread Signals</h2>
 <div class="line"><span class="comment">// EventLoop -- not on thread A.  No manual synchronization needed.</span></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassObjectBase_html_a7d2e491c5289e22a84070551cc95aaa1"><div class="ttname"><a href="classObjectBase.html#a7d2e491c5289e22a84070551cc95aaa1">ObjectBase::connect</a></div><div class="ttdeci">static void connect(Signal&lt; Args... &gt; *signal, Slot&lt; Args... &gt; *slot)</div><div class="ttdoc">connects a signal and slot together. This function assumes both the signal and slot exist in a Object...</div></div>
-</div><!-- fragment --><p><a class="el" href="classSignal.html" title="Type-safe signal/slot mechanism for decoupled event notification.">Signal</a> arguments are marshaled via VariantList for cross-thread dispatch, so all argument types must be representable as Variant.</p>
+</div><!-- fragment --><p><a class="el" href="classSignal.html" title="Type-safe signal/slot mechanism for decoupled event notification.">Signal</a> arguments are marshaled via <a class="el" href="classVariantList.html" title="List of Variant values used for type-erased argument marshalling.">VariantList</a> for cross-thread dispatch, so all argument types must be representable as <a class="el" href="classVariant.html" title="Concrete Variant type used throughout promeki.">Variant</a>.</p>
 <h1><a class="anchor" id="thread_eventloop"></a>
 EventLoop</h1>
 <p>Each thread can have at most one <a class="el" href="classEventLoop.html">EventLoop</a>. The <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> processes events, timers, deferred calls, and cross-thread signal deliveries.</p>
@@ -272,7 +272,7 @@ MediaIO Threading</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-20 02:52:47 from commit 9c7824a (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-20 23:51:17 from commit 43d9012 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -26,6 +26,28 @@ var NAVTREE =
 [
   [ "libpromeki", "index.html", [
     [ "PROfessional MEdia toolKIt", "index.html", "index" ],
+    [ "Building and Installing libpromeki", "building.html", [
+      [ "Requirements", "building.html#building_requirements", null ],
+      [ "Quick Start", "building.html#building_quickstart", null ],
+      [ "Build Types", "building.html#building_build_types", null ],
+      [ "Feature Flags", "building.html#building_feature_flags", null ],
+      [ "Vendored vs. System Dependencies", "building.html#building_system_deps", null ],
+      [ "Build Targets", "building.html#building_build_targets", null ],
+      [ "Build Performance Options", "building.html#building_perf_options", null ],
+      [ "Common Configurations", "building.html#building_configurations", [
+        [ "Minimal core-only build", "building.html#building_config_minimal", null ],
+        [ "System dependencies", "building.html#building_config_system_deps", null ],
+        [ "Release packaging", "building.html#building_config_release", null ]
+      ] ],
+      [ "Cleaning", "building.html#building_cleaning", null ],
+      [ "Running Tests", "building.html#building_tests", null ],
+      [ "Installing", "building.html#building_installing", null ],
+      [ "Using libpromeki in Your Project", "building.html#building_downstream", [
+        [ "Include Conventions", "building.html#building_include_conventions", null ]
+      ] ],
+      [ "Building the Documentation", "building.html#building_docs", null ],
+      [ "See Also", "building.html#building_see_also", null ]
+    ] ],
     [ "Color Science", "color_science.html", [
       [ "What Is a Color?", "color_science.html#cs_what", null ],
       [ "CIE XYZ: The Universal Color Space", "color_science.html#cs_cie", null ],
@@ -256,85 +278,85 @@ var NAVTREE =
       [ "Current Utilities", "utils.html#utils_list", null ]
     ] ],
     [ "Coding Standards", "md_CODING__STANDARDS.html", [
-      [ "Design Philosophy", "md_CODING__STANDARDS.html#autotoc_md28", null ],
+      [ "Design Philosophy", "md_CODING__STANDARDS.html#autotoc_md34", null ],
       [ "Object Categories", "md_CODING__STANDARDS.html#object-categories", [
-        [ "Data Objects", "md_CODING__STANDARDS.html#autotoc_md30", null ],
-        [ "Functional Objects (ObjectBase)", "md_CODING__STANDARDS.html#autotoc_md31", null ],
-        [ "Utility Classes", "md_CODING__STANDARDS.html#autotoc_md32", null ],
-        [ "Choosing the Right Category", "md_CODING__STANDARDS.html#autotoc_md33", null ],
-        [ "Sharing Data Objects Across Threads", "md_CODING__STANDARDS.html#autotoc_md34", null ]
+        [ "Data Objects", "md_CODING__STANDARDS.html#autotoc_md36", null ],
+        [ "Functional Objects (ObjectBase)", "md_CODING__STANDARDS.html#autotoc_md37", null ],
+        [ "Utility Classes", "md_CODING__STANDARDS.html#autotoc_md38", null ],
+        [ "Choosing the Right Category", "md_CODING__STANDARDS.html#autotoc_md39", null ],
+        [ "Sharing Data Objects Across Threads", "md_CODING__STANDARDS.html#autotoc_md40", null ]
       ] ],
-      [ "File Layout", "md_CODING__STANDARDS.html#autotoc_md36", [
-        [ "Header Files", "md_CODING__STANDARDS.html#autotoc_md37", null ],
-        [ "File Header Comment", "md_CODING__STANDARDS.html#autotoc_md38", null ],
-        [ "Include Guards", "md_CODING__STANDARDS.html#autotoc_md39", null ],
-        [ "Includes", "md_CODING__STANDARDS.html#autotoc_md40", null ]
+      [ "File Layout", "md_CODING__STANDARDS.html#autotoc_md42", [
+        [ "Header Files", "md_CODING__STANDARDS.html#autotoc_md43", null ],
+        [ "File Header Comment", "md_CODING__STANDARDS.html#autotoc_md44", null ],
+        [ "Include Guards", "md_CODING__STANDARDS.html#autotoc_md45", null ],
+        [ "Includes", "md_CODING__STANDARDS.html#autotoc_md46", null ]
       ] ],
-      [ "Naming Conventions", "md_CODING__STANDARDS.html#autotoc_md42", [
-        [ "Classes and Types", "md_CODING__STANDARDS.html#autotoc_md43", null ],
-        [ "Convenience Type Aliases for Templates", "md_CODING__STANDARDS.html#autotoc_md44", null ],
-        [ "Methods", "md_CODING__STANDARDS.html#autotoc_md45", null ],
-        [ "Member Variables", "md_CODING__STANDARDS.html#autotoc_md46", null ],
-        [ "Enums", "md_CODING__STANDARDS.html#autotoc_md47", null ],
-        [ "Standard Library Type Aliases", "md_CODING__STANDARDS.html#autotoc_md48", null ],
-        [ "Prefer Library Wrappers Over Raw std:: Types", "md_CODING__STANDARDS.html#autotoc_md49", null ],
-        [ "Macros", "md_CODING__STANDARDS.html#autotoc_md50", null ],
-        [ "Constants", "md_CODING__STANDARDS.html#autotoc_md51", null ]
+      [ "Naming Conventions", "md_CODING__STANDARDS.html#autotoc_md48", [
+        [ "Classes and Types", "md_CODING__STANDARDS.html#autotoc_md49", null ],
+        [ "Convenience Type Aliases for Templates", "md_CODING__STANDARDS.html#autotoc_md50", null ],
+        [ "Methods", "md_CODING__STANDARDS.html#autotoc_md51", null ],
+        [ "Member Variables", "md_CODING__STANDARDS.html#autotoc_md52", null ],
+        [ "Enums", "md_CODING__STANDARDS.html#autotoc_md53", null ],
+        [ "Standard Library Type Aliases", "md_CODING__STANDARDS.html#autotoc_md54", null ],
+        [ "Prefer Library Wrappers Over Raw std:: Types", "md_CODING__STANDARDS.html#autotoc_md55", null ],
+        [ "Macros", "md_CODING__STANDARDS.html#autotoc_md56", null ],
+        [ "Constants", "md_CODING__STANDARDS.html#autotoc_md57", null ]
       ] ],
-      [ "Indentation and Formatting", "md_CODING__STANDARDS.html#autotoc_md53", null ],
-      [ "The SharedPtr / Copy-on-Write Pattern", "md_CODING__STANDARDS.html#autotoc_md55", [
-        [ "Shareable Data Objects Support SharedPtr", "md_CODING__STANDARDS.html#autotoc_md56", null ],
-        [ "No Internal SharedPtr<Data>", "md_CODING__STANDARDS.html#autotoc_md57", null ],
-        [ "How to Implement (Shareable Classes)", "md_CODING__STANDARDS.html#autotoc_md58", null ]
+      [ "Indentation and Formatting", "md_CODING__STANDARDS.html#autotoc_md59", null ],
+      [ "The SharedPtr / Copy-on-Write Pattern", "md_CODING__STANDARDS.html#autotoc_md61", [
+        [ "Shareable Data Objects Support SharedPtr", "md_CODING__STANDARDS.html#autotoc_md62", null ],
+        [ "No Internal SharedPtr<Data>", "md_CODING__STANDARDS.html#autotoc_md63", null ],
+        [ "How to Implement (Shareable Classes)", "md_CODING__STANDARDS.html#autotoc_md64", null ]
       ] ],
-      [ "Error Handling", "md_CODING__STANDARDS.html#autotoc_md60", [
-        [ "The Error Class", "md_CODING__STANDARDS.html#autotoc_md61", null ],
-        [ "Return Patterns", "md_CODING__STANDARDS.html#autotoc_md62", null ],
-        [ "Avoid <tt>bool</tt> for Error Reporting", "md_CODING__STANDARDS.html#autotoc_md63", null ]
+      [ "Error Handling", "md_CODING__STANDARDS.html#autotoc_md66", [
+        [ "The Error Class", "md_CODING__STANDARDS.html#autotoc_md67", null ],
+        [ "Return Patterns", "md_CODING__STANDARDS.html#autotoc_md68", null ],
+        [ "Avoid <tt>bool</tt> for Error Reporting", "md_CODING__STANDARDS.html#autotoc_md69", null ]
       ] ],
-      [ "Container and Wrapper Types", "md_CODING__STANDARDS.html#autotoc_md65", [
-        [ "String", "md_CODING__STANDARDS.html#autotoc_md66", null ],
-        [ "List<T>", "md_CODING__STANDARDS.html#autotoc_md67", null ],
-        [ "Array<T, N>", "md_CODING__STANDARDS.html#autotoc_md68", null ],
-        [ "Buffer", "md_CODING__STANDARDS.html#autotoc_md69", null ]
+      [ "Container and Wrapper Types", "md_CODING__STANDARDS.html#autotoc_md71", [
+        [ "String", "md_CODING__STANDARDS.html#autotoc_md72", null ],
+        [ "List<T>", "md_CODING__STANDARDS.html#autotoc_md73", null ],
+        [ "Array<T, N>", "md_CODING__STANDARDS.html#autotoc_md74", null ],
+        [ "Buffer", "md_CODING__STANDARDS.html#autotoc_md75", null ]
       ] ],
-      [ "TypeRegistry Types", "md_CODING__STANDARDS.html#autotoc_md71", [
-        [ "Pass the Wrapper, Not the ID", "md_CODING__STANDARDS.html#autotoc_md72", null ],
-        [ "ID Disambiguation Guards", "md_CODING__STANDARDS.html#autotoc_md73", null ]
+      [ "TypeRegistry Types", "md_CODING__STANDARDS.html#autotoc_md77", [
+        [ "Pass the Wrapper, Not the ID", "md_CODING__STANDARDS.html#autotoc_md78", null ],
+        [ "ID Disambiguation Guards", "md_CODING__STANDARDS.html#autotoc_md79", null ]
       ] ],
-      [ "Well-Known Enums", "md_CODING__STANDARDS.html#autotoc_md75", [
-        [ "Use the <tt>TypedEnum<Derived></tt> CRTP Pattern", "md_CODING__STANDARDS.html#autotoc_md76", null ],
-        [ "Where Well-Known Enums Live", "md_CODING__STANDARDS.html#autotoc_md77", null ],
-        [ "Function Signatures", "md_CODING__STANDARDS.html#autotoc_md78", null ],
-        [ "Backward Compatibility", "md_CODING__STANDARDS.html#autotoc_md79", null ]
+      [ "Well-Known Enums", "md_CODING__STANDARDS.html#autotoc_md81", [
+        [ "Use the <tt>TypedEnum<Derived></tt> CRTP Pattern", "md_CODING__STANDARDS.html#autotoc_md82", null ],
+        [ "Where Well-Known Enums Live", "md_CODING__STANDARDS.html#autotoc_md83", null ],
+        [ "Function Signatures", "md_CODING__STANDARDS.html#autotoc_md84", null ],
+        [ "Backward Compatibility", "md_CODING__STANDARDS.html#autotoc_md85", null ]
       ] ],
-      [ "ObjectBase and Signals/Slots", "md_CODING__STANDARDS.html#autotoc_md81", null ],
-      [ "Namespace", "md_CODING__STANDARDS.html#autotoc_md83", null ],
-      [ "Stream Operator Support (TextStream / DataStream)", "md_CODING__STANDARDS.html#autotoc_md85", [
-        [ "TextStream", "md_CODING__STANDARDS.html#autotoc_md86", null ],
-        [ "DataStream", "md_CODING__STANDARDS.html#autotoc_md87", null ],
-        [ "When to Omit", "md_CODING__STANDARDS.html#autotoc_md88", null ]
+      [ "ObjectBase and Signals/Slots", "md_CODING__STANDARDS.html#autotoc_md87", null ],
+      [ "Namespace", "md_CODING__STANDARDS.html#autotoc_md89", null ],
+      [ "Stream Operator Support (TextStream / DataStream)", "md_CODING__STANDARDS.html#autotoc_md91", [
+        [ "TextStream", "md_CODING__STANDARDS.html#autotoc_md92", null ],
+        [ "DataStream", "md_CODING__STANDARDS.html#autotoc_md93", null ],
+        [ "When to Omit", "md_CODING__STANDARDS.html#autotoc_md94", null ]
       ] ],
-      [ "Documentation (Doxygen)", "md_CODING__STANDARDS.html#autotoc_md90", [
-        [ "Class Documentation", "md_CODING__STANDARDS.html#autotoc_md91", null ],
-        [ "Method Documentation", "md_CODING__STANDARDS.html#autotoc_md92", null ],
-        [ "Thread Safety Documentation", "md_CODING__STANDARDS.html#autotoc_md93", null ],
-        [ "What Not to Document", "md_CODING__STANDARDS.html#autotoc_md94", null ]
+      [ "Documentation (Doxygen)", "md_CODING__STANDARDS.html#autotoc_md96", [
+        [ "Class Documentation", "md_CODING__STANDARDS.html#autotoc_md97", null ],
+        [ "Method Documentation", "md_CODING__STANDARDS.html#autotoc_md98", null ],
+        [ "Thread Safety Documentation", "md_CODING__STANDARDS.html#autotoc_md99", null ],
+        [ "What Not to Document", "md_CODING__STANDARDS.html#autotoc_md100", null ]
       ] ],
-      [ "Testing", "md_CODING__STANDARDS.html#autotoc_md96", [
-        [ "File Layout", "md_CODING__STANDARDS.html#autotoc_md97", null ],
-        [ "Structure", "md_CODING__STANDARDS.html#autotoc_md98", null ],
-        [ "Assertions", "md_CODING__STANDARDS.html#autotoc_md99", null ],
-        [ "Build Integration", "md_CODING__STANDARDS.html#autotoc_md100", null ]
+      [ "Testing", "md_CODING__STANDARDS.html#autotoc_md102", [
+        [ "File Layout", "md_CODING__STANDARDS.html#autotoc_md103", null ],
+        [ "Structure", "md_CODING__STANDARDS.html#autotoc_md104", null ],
+        [ "Assertions", "md_CODING__STANDARDS.html#autotoc_md105", null ],
+        [ "Build Integration", "md_CODING__STANDARDS.html#autotoc_md106", null ]
       ] ],
-      [ "Logging", "md_CODING__STANDARDS.html#autotoc_md102", [
-        [ "Use the Right Level", "md_CODING__STANDARDS.html#autotoc_md103", null ],
-        [ "Register Every Source File for Debug Logging", "md_CODING__STANDARDS.html#autotoc_md104", null ],
-        [ "Capture All Relevant State", "md_CODING__STANDARDS.html#autotoc_md105", null ],
-        [ "Identify the Object Instance", "md_CODING__STANDARDS.html#autotoc_md106", null ],
-        [ "Instrument the Library with promekiDebug", "md_CODING__STANDARDS.html#autotoc_md107", null ]
+      [ "Logging", "md_CODING__STANDARDS.html#autotoc_md108", [
+        [ "Use the Right Level", "md_CODING__STANDARDS.html#autotoc_md109", null ],
+        [ "Register Every Source File for Debug Logging", "md_CODING__STANDARDS.html#autotoc_md110", null ],
+        [ "Capture All Relevant State", "md_CODING__STANDARDS.html#autotoc_md111", null ],
+        [ "Identify the Object Instance", "md_CODING__STANDARDS.html#autotoc_md112", null ],
+        [ "Instrument the Library with promekiDebug", "md_CODING__STANDARDS.html#autotoc_md113", null ]
       ] ],
-      [ "Miscellaneous", "md_CODING__STANDARDS.html#autotoc_md109", null ]
+      [ "Miscellaneous", "md_CODING__STANDARDS.html#autotoc_md115", null ]
     ] ],
     [ "Signal List", "signal.html", null ],
     [ "Deprecated List", "deprecated.html", null ],
@@ -378,39 +400,39 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "abstractsocket_8h.html",
-"classAnsiStream.html#a338b08f6aae49641c1f62523260304dca6ae7c8570c8bb8c4e09aa3d7a3d04b14",
-"classAtomic.html#a44907e07c9b466d45f4aa3ff48279efb",
-"classAudioResampler.html#aea36a9456ad7ba2c96db1b532e2df215",
-"classBufferedIODevice.html#aba8ed1673ddc0ed2246ad8ecdf886976",
-"classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa8e67296f20e43a5761f630b2d8215914",
-"classDeque.html#a7dcf80ff0f942e745a86231860c1eddc",
-"classEventLoop.html#acd0f2fd1a93194d07d2c9fe0c855b6a8",
-"classFrameRate.html#a0b03c0fe2f653ec8479d240690191b9ca53b06ef3844e9cdac3a7915550fdf300",
-"classImage.html#aed813848fdebb5874f9f29878cd7e5f1",
-"classJpegXsVideoDecoder.html#a9ea854572897cd70ef6362ee2b303657",
-"classList.html#ad5b73152c7d881729f8a66d20343cd90",
-"classMediaConfig.html#a22edfa26a23de3516da2d4980d07f6eb",
-"classMediaIOCommandOpen.html#a0d0b5f356c1896755dc09a049b29d4dc",
-"classMediaPipelineStats.html#a374b0c85c8fbb480e574aa9670869764",
-"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a5f7120c16316c63585d4801a5fbd4aa7",
-"classMusicalNote.html#a8bb56002e10df5cda9edea4f9108b1d4",
-"classPixelDesc.html#a177e81a9ea97518417e3efec00e77b75",
-"classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda7db3c60f269ab3f6bbfa4754dc647f96",
-"classQuickTime_1_1Track.html#a5cb85e6a2a1694375577cda422d0e5fd",
-"classRtpSession.html#a982403a5be30d9149c864f55df13eabf",
-"classSlot.html#a6f03f41ff89a99870b1561cdb7de2bb3",
-"classStringData.html#a8cb7a91035aebb89432af0f53136d634",
-"classTerminal.html#ac5402e9e7338b30d030b591e29448f13",
-"classTuiMenuBar.html",
-"classUdpSocketTransport.html#af8e565b91b7ffdfd8857448f356f0b27",
-"classVideoFormat.html#a4662636b759042b41f00b272dc5beabca4c68b0372df8f2611be33c1f5990a9d5",
-"cscpipeline_8h_source.html",
-"functions_type_v.html",
-"line_8h.html#a7a8fa44bfd41c89b35458c6ec1b2f5c1",
-"multicastmanager_8h.html",
-"structAvcDecoderConfig.html#afbbb4c261c67825038c728611ccaea32",
-"structIsSharedObject.html",
-"structstd_1_1formatter_3_01promeki_1_1Timecode_01_4.html#ab12772e49ed650e120b926d82af4e651a5f1a5f9baac7b62ac1082576a667533f"
+"classAnsiStream.html#a338b08f6aae49641c1f62523260304dca59fa840f42b01b78f94aad3a4f9a9e6c",
+"classArray.html#aa19f87f0f40b3354e5f0c1b831440c50",
+"classAudioLevel.html#ab295de100237435d4f3452283c2f9bc6",
+"classBufferView.html#adf705177a1664cad6f757313e1c08edf",
+"classColorModel.html#a81bdb81a566ed9ef6da7138f74e36e27",
+"classDeque.html#a0ddf4dfe36bd2323ce28d62fa42ab6aa",
+"classEvent.html#a125c246d8ea0315dcf6d8e56cd414c1c",
+"classFramePacer.html#a421cf42767c2e195f4243964d0b94f1f",
+"classImage.html#a45f3cb17cda1d4247bff5cbaf7c84105",
+"classJpegXsImageCodec.html#a2e2e6402cbbf4d356e70e35d12ff8c6c",
+"classList.html#a9a420583a98d4b640a8b8cd6df873164",
+"classMediaConfig.html#a03172e60c31125e9bd6b145a84e747c2",
+"classMediaIOCommand.html",
+"classMediaPipelineConfig.html#af606a229aff7630e307f40978c07e00a",
+"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a4d66968ba9cdf4246f2bd72c980d8f45",
+"classMulticastReceiver.html#a8b0d63b7e3fe1b4688d02653cb3fe5e1",
+"classPeriodicCallback.html#a556dcae9a157a7484c146dc6a8e3b004",
+"classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda31765ad46b32db2fd081321a665d2501",
+"classQuickTime_1_1Impl.html#a8ecf453a4f32a95987aa687e3cd9629f",
+"classRtpPayloadRawVideo.html#a7389fdc1927fd6ed2a972ba7e7930316",
+"classSize2DTemplate.html#a0976be32f15a86e07ba87a1db87f6619",
+"classString.html#af28b3f3ea4b2cefc96fc7161cb8034e2",
+"classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6",
+"classTuiLabel.html#afce012884f3e11461b2eda4a8325519b",
+"classUdpSocketTransport.html#a33a3f124833e56dae641de7f04aa5355",
+"classVideoFormat.html#a272705b35c0105c192e6636cd0a074b0",
+"crc_8h.html#a8d97826e3079c419fdfb454c7ab3107b",
+"functions_rela.html",
+"keyevent_8h.html",
+"mempool_8h.html",
+"structAudioGen_1_1Config.html",
+"structInspectorSnapshot.html#a74bf47a3d931b8120cb1e9dc765e1b45",
+"structdetail_1_1is__type__registry_3_01AudioCodec_01_4.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

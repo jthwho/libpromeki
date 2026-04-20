@@ -233,6 +233,7 @@ var dir_30d7745b8a6c1e773354baf27ada1f39 =
     [ "util.h", "util_8h.html", null ],
     [ "uuid.h", "uuid_8h.html", null ],
     [ "variant.h", "variant_8h.html", "variant_8h" ],
+    [ "variant_fwd.h", "variant__fwd_8h.html", null ],
     [ "variantdatabase.h", "variantdatabase_8h.html", "variantdatabase_8h" ],
     [ "variantlookup.h", "variantlookup_8h.html", "variantlookup_8h" ],
     [ "variantquery.h", "variantquery_8h.html", "variantquery_8h" ],

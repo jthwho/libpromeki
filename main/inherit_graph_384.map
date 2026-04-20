@@ -1,3 +1,5 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classVariantImpl.html" title="Type&#45;safe tagged union that can hold any of the types listed in PROMEKI_VARIANT_TYPES." alt="" coords="5,5,169,31"/>
+<area shape="rect" id="Node000000" href="$classVariantImpl.html" title=" " alt="" coords="5,5,344,192"/>
+<area shape="rect" id="Node000001" href="$classVariant.html" title="Concrete Variant type used throughout promeki." alt="" coords="392,86,460,111"/>
+<area shape="poly" id="edge178_Node000000_Node000001" title=" " alt="" coords="358,96,392,96,392,101,358,101"/>
 </map>

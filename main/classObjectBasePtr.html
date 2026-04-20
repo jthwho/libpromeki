@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>libpromeki: ObjectBasePtr Class Reference</title>
+<title>libpromeki: ObjectBasePtr&lt; T &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -103,43 +103,49 @@ $(document).ready(function(){initNavTree('classObjectBasePtr.html',''); initResi
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#friends">Friends</a> &#124;
 <a href="classObjectBasePtr-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">ObjectBasePtr Class Reference</div></div>
+  <div class="headertitle"><div class="title">ObjectBasePtr&lt; T &gt; Class Template Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Object that holds a pointer to an <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> (or derived) object. This class will register itself with the given <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> object. When the registered <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> object is destroyed, it will null the internal pointer. You can use this object to ensure you don't have dangling pointers to <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> objects.  
+<p>Object that holds a pointer to an ObjectBase-derived object.  
  <a href="classObjectBasePtr.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="objectbase_8h_source.html">objectbase.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:gafae67ee68f029801adb92c6676a76de1" id="r_gafae67ee68f029801adb92c6676a76de1"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__events.html#gafae67ee68f029801adb92c6676a76de1">ObjectBasePtr</a> (<a class="el" href="classObjectBase.html">ObjectBase</a> *object=<a class="el" href="classList.html">nullptr</a>)</td></tr>
-<tr class="separator:gafae67ee68f029801adb92c6676a76de1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac5ab3d730afaeff603da41666df735cf" id="r_ac5ab3d730afaeff603da41666df735cf"><td class="memItemLeft" align="right" valign="top"><a id="ac5ab3d730afaeff603da41666df735cf" name="ac5ab3d730afaeff603da41666df735cf"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>ObjectBasePtr</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classObjectBasePtr.html">ObjectBasePtr</a> &amp;object)</td></tr>
-<tr class="memdesc:ac5ab3d730afaeff603da41666df735cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy constructor. Tracks the same <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> as the source. <br /></td></tr>
-<tr class="separator:ac5ab3d730afaeff603da41666df735cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a45b2a25d0f57fc10569529ff29252616" id="r_a45b2a25d0f57fc10569529ff29252616"><td class="memItemLeft" align="right" valign="top"><a id="a45b2a25d0f57fc10569529ff29252616" name="a45b2a25d0f57fc10569529ff29252616"></a>
+<tr class="memitem:a34fcec5c385f62968e9a210d1ba5089a" id="r_a34fcec5c385f62968e9a210d1ba5089a"><td class="memItemLeft" align="right" valign="top"><a id="a34fcec5c385f62968e9a210d1ba5089a" name="a34fcec5c385f62968e9a210d1ba5089a"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>ObjectBasePtr</b> (<a class="el" href="classList.html">T</a> *object=<a class="el" href="classList.html">nullptr</a>)</td></tr>
+<tr class="memdesc:a34fcec5c385f62968e9a210d1ba5089a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a pointer tracking the given object. <br /></td></tr>
+<tr class="separator:a34fcec5c385f62968e9a210d1ba5089a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50cdf404e8ce978ccbc520e3a32b3f1b" id="r_a50cdf404e8ce978ccbc520e3a32b3f1b"><td class="memItemLeft" align="right" valign="top"><a id="a50cdf404e8ce978ccbc520e3a32b3f1b" name="a50cdf404e8ce978ccbc520e3a32b3f1b"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>ObjectBasePtr</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classObjectBasePtr.html">ObjectBasePtr</a> &amp;<a class="el" href="classList.html">other</a>)</td></tr>
+<tr class="memdesc:a50cdf404e8ce978ccbc520e3a32b3f1b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy constructor. Tracks the same object as the source. <br /></td></tr>
+<tr class="separator:a50cdf404e8ce978ccbc520e3a32b3f1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1afb2d7109f3ddcc0772c4d9cd9222ce" id="r_a1afb2d7109f3ddcc0772c4d9cd9222ce"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">U</a> , <a class="el" href="classList.html">typename</a>  = std::enable_if_t&lt;std::is_base_of_v&lt;T, U&gt; &amp;&amp; !std::is_same_v&lt;T, U&gt;&gt;&gt; </td></tr>
+<tr class="memitem:a1afb2d7109f3ddcc0772c4d9cd9222ce"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classObjectBasePtr.html#a1afb2d7109f3ddcc0772c4d9cd9222ce">ObjectBasePtr</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classObjectBasePtr.html">ObjectBasePtr</a>&lt; <a class="el" href="classList.html">U</a> &gt; &amp;<a class="el" href="classList.html">other</a>)</td></tr>
+<tr class="memdesc:a1afb2d7109f3ddcc0772c4d9cd9222ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converting copy-constructor from an <a class="el" href="classObjectBasePtr.html" title="Object that holds a pointer to an ObjectBase-derived object.">ObjectBasePtr</a> tracking a derived type.  <br /></td></tr>
+<tr class="separator:a1afb2d7109f3ddcc0772c4d9cd9222ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e6044be74cf8227638e430288671702" id="r_a7e6044be74cf8227638e430288671702"><td class="memItemLeft" align="right" valign="top"><a id="a7e6044be74cf8227638e430288671702" name="a7e6044be74cf8227638e430288671702"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>~ObjectBasePtr</b> ()</td></tr>
-<tr class="memdesc:a45b2a25d0f57fc10569529ff29252616"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. Unlinks from the tracked <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a>. <br /></td></tr>
-<tr class="separator:a45b2a25d0f57fc10569529ff29252616"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1f36bcdbbd6210d0dc176295194aa509" id="r_a1f36bcdbbd6210d0dc176295194aa509"><td class="memItemLeft" align="right" valign="top"><a id="a1f36bcdbbd6210d0dc176295194aa509" name="a1f36bcdbbd6210d0dc176295194aa509"></a>
-<a class="el" href="classObjectBasePtr.html">ObjectBasePtr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classObjectBasePtr.html">ObjectBasePtr</a> &amp;object)</td></tr>
-<tr class="memdesc:a1f36bcdbbd6210d0dc176295194aa509"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy assignment operator. Re-links to the new <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a>. <br /></td></tr>
-<tr class="separator:a1f36bcdbbd6210d0dc176295194aa509"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a44617e6ec26e06b05ef07cf46a457d75" id="r_a44617e6ec26e06b05ef07cf46a457d75"><td class="memItemLeft" align="right" valign="top"><a id="a44617e6ec26e06b05ef07cf46a457d75" name="a44617e6ec26e06b05ef07cf46a457d75"></a>
+<tr class="memdesc:a7e6044be74cf8227638e430288671702"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. Unlinks from the tracked object. <br /></td></tr>
+<tr class="separator:a7e6044be74cf8227638e430288671702"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a57e2d09164fb7e8b85b911582928ba95" id="r_a57e2d09164fb7e8b85b911582928ba95"><td class="memItemLeft" align="right" valign="top"><a id="a57e2d09164fb7e8b85b911582928ba95" name="a57e2d09164fb7e8b85b911582928ba95"></a>
+<a class="el" href="classObjectBasePtr.html">ObjectBasePtr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classObjectBasePtr.html">ObjectBasePtr</a> &amp;<a class="el" href="classList.html">other</a>)</td></tr>
+<tr class="memdesc:a57e2d09164fb7e8b85b911582928ba95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy assignment operator. Re-links to the new object. <br /></td></tr>
+<tr class="separator:a57e2d09164fb7e8b85b911582928ba95"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a96a88d937d6828315d04c8511dcf4766" id="r_a96a88d937d6828315d04c8511dcf4766"><td class="memItemLeft" align="right" valign="top"><a id="a96a88d937d6828315d04c8511dcf4766" name="a96a88d937d6828315d04c8511dcf4766"></a>
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isValid</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a44617e6ec26e06b05ef07cf46a457d75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the tracked pointer is not null. <br /></td></tr>
-<tr class="separator:a44617e6ec26e06b05ef07cf46a457d75"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adf1b8edd2a2f6e822c973b69a18ef306" id="r_adf1b8edd2a2f6e822c973b69a18ef306"><td class="memItemLeft" align="right" valign="top"><a id="adf1b8edd2a2f6e822c973b69a18ef306" name="adf1b8edd2a2f6e822c973b69a18ef306"></a>
-<a class="el" href="classObjectBase.html">ObjectBase</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>data</b> ()</td></tr>
-<tr class="memdesc:adf1b8edd2a2f6e822c973b69a18ef306"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable pointer to the tracked <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a>. <br /></td></tr>
-<tr class="separator:adf1b8edd2a2f6e822c973b69a18ef306"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab735301c3b7449a3c53562f6915bf4ce" id="r_ab735301c3b7449a3c53562f6915bf4ce"><td class="memItemLeft" align="right" valign="top"><a id="ab735301c3b7449a3c53562f6915bf4ce" name="ab735301c3b7449a3c53562f6915bf4ce"></a>
-<a class="el" href="classList.html">const</a> <a class="el" href="classObjectBase.html">ObjectBase</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>data</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:ab735301c3b7449a3c53562f6915bf4ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const pointer to the tracked <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a>. <br /></td></tr>
-<tr class="separator:ab735301c3b7449a3c53562f6915bf4ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memdesc:a96a88d937d6828315d04c8511dcf4766"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the tracked pointer is not null. <br /></td></tr>
+<tr class="separator:a96a88d937d6828315d04c8511dcf4766"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af6d7ad854f55210fd18c6e770b8f655b" id="r_af6d7ad854f55210fd18c6e770b8f655b"><td class="memItemLeft" align="right" valign="top"><a id="af6d7ad854f55210fd18c6e770b8f655b" name="af6d7ad854f55210fd18c6e770b8f655b"></a>
+<a class="el" href="classList.html">T</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>data</b> ()</td></tr>
+<tr class="memdesc:af6d7ad854f55210fd18c6e770b8f655b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable pointer to the tracked object. <br /></td></tr>
+<tr class="separator:af6d7ad854f55210fd18c6e770b8f655b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afbeccb4b9b635206d1f3f1c584a7e4bc" id="r_afbeccb4b9b635206d1f3f1c584a7e4bc"><td class="memItemLeft" align="right" valign="top"><a id="afbeccb4b9b635206d1f3f1c584a7e4bc" name="afbeccb4b9b635206d1f3f1c584a7e4bc"></a>
+<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">T</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>data</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:afbeccb4b9b635206d1f3f1c584a7e4bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const pointer to the tracked object. <br /></td></tr>
+<tr class="separator:afbeccb4b9b635206d1f3f1c584a7e4bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
 Friends</h2></td></tr>
@@ -148,9 +154,58 @@ Friends</h2></td></tr>
 <tr class="separator:abe8be1e4b259c2c7a713b1ab733c80ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Object that holds a pointer to an <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> (or derived) object. This class will register itself with the given <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> object. When the registered <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> object is destroyed, it will null the internal pointer. You can use this object to ensure you don't have dangling pointers to <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> objects. </p>
-<dl class="section note"><dt>Note</dt><dd><a class="el" href="classThread.html" title="Wrapper around std::thread with a built-in EventLoop.">Thread</a> safety: The internal pointer is stored as a std::atomic, and the <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> pointer map is protected by a <a class="el" href="classMutex.html" title="Mutual exclusion lock wrapping std::mutex.">Mutex</a>. This allows an <a class="el" href="classObjectBasePtr.html" title="Object that holds a pointer to an ObjectBase (or derived) object. This class will register itself wit...">ObjectBasePtr</a> to be safely invalidated from a different thread than the one holding it, as happens during cross-thread object destruction. However, the <a class="el" href="classObjectBasePtr.html" title="Object that holds a pointer to an ObjectBase (or derived) object. This class will register itself wit...">ObjectBasePtr</a> itself is not designed for concurrent read/write from multiple threads without external synchronization. </dd></dl>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
+<div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">T</a> = ObjectBase&gt;<br />
+class ObjectBasePtr&lt; T &gt;</div><p>Object that holds a pointer to an ObjectBase-derived object. </p>
+<p>Registers itself with the tracked object so that when the object is destroyed the internal pointer is atomically cleared, giving you a safe, non-dangling reference. The template parameter <code>T</code> selects the concrete type returned by <code><a class="el" href="classObjectBasePtr.html#af6d7ad854f55210fd18c6e770b8f655b" title="Returns a mutable pointer to the tracked object.">data()</a></code>; it defaults to <code><a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a></code> so untyped usage <code>ObjectBasePtr&lt;&gt;</code> still works.</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>The ObjectBase-derived type being tracked.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Class template argument deduction is supported via a deduction guide, so <code><a class="el" href="classObjectBasePtr.html" title="Object that holds a pointer to an ObjectBase-derived object.">ObjectBasePtr</a>{obj}</code> deduces <code>ObjectBasePtr&lt;Foo&gt;</code> from a <code>Foo*</code>.</p>
+<p>An <code>ObjectBasePtr&lt;Derived&gt;</code> converts implicitly to <code>ObjectBasePtr&lt;Base&gt;</code> where <code>Derived</code> inherits from <code>Base</code>, mirroring raw pointer conversions.</p>
+<dl class="section note"><dt>Note</dt><dd><a class="el" href="classThread.html" title="Wrapper around std::thread with a built-in EventLoop.">Thread</a> safety: The internal pointer is stored as a std::atomic, and the <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> pointer map is protected by a <a class="el" href="classMutex.html" title="Mutual exclusion lock wrapping std::mutex.">Mutex</a>. This allows an <a class="el" href="classObjectBasePtr.html" title="Object that holds a pointer to an ObjectBase-derived object.">ObjectBasePtr</a> to be safely invalidated from a different thread than the one holding it, as happens during cross-thread object destruction. However, the <a class="el" href="classObjectBasePtr.html" title="Object that holds a pointer to an ObjectBase-derived object.">ObjectBasePtr</a> itself is not designed for concurrent read/write from multiple threads without external synchronization. </dd></dl>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="a1afb2d7109f3ddcc0772c4d9cd9222ce" name="a1afb2d7109f3ddcc0772c4d9cd9222ce"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1afb2d7109f3ddcc0772c4d9cd9222ce">&#9670;&#160;</a></span>ObjectBasePtr()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">T</a>  = ObjectBase&gt; </div>
+<div class="memtemplate">
+template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">U</a> , <a class="el" href="classList.html">typename</a>  = std::enable_if_t&lt;std::is_base_of_v&lt;T, U&gt; &amp;&amp; !std::is_same_v&lt;T, U&gt;&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classObjectBasePtr.html">ObjectBasePtr</a>&lt; <a class="el" href="classList.html">T</a> &gt;<a class="el" href="classObjectBasePtr.html">::ObjectBasePtr</a> </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classObjectBasePtr.html">ObjectBasePtr</a>&lt; <a class="el" href="classList.html">U</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Converting copy-constructor from an <a class="el" href="classObjectBasePtr.html" title="Object that holds a pointer to an ObjectBase-derived object.">ObjectBasePtr</a> tracking a derived type. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">U</td><td>Source type; must derive from <code>T</code>. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="objectbase_8h_source.html">objectbase.h</a></li>
 </ul>
 </div><!-- contents -->
@@ -160,7 +215,7 @@ Friends</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classObjectBasePtr.html">ObjectBasePtr</a></li>
-    <li class="footer">Generated on 2026-04-20 02:52:47 from commit 9c7824a (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-20 23:51:17 from commit 43d9012 (1.0.0).</li>
   </ul>
 </div>
 </body>

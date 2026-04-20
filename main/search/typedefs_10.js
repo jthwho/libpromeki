@@ -10,8 +10,7 @@ var searchData=
   ['size2di32_7',['Size2Di32',['../size2d_8h.html#afd30331c873f6ef9c0ee4d8d2671aa22',1,'size2d.h']]],
   ['size2du32_8',['Size2Du32',['../size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a',1,'size2d.h']]],
   ['sizelist_9',['SizeList',['../classRtpPacket.html#a7309614010f7c3315032b63ea15b1d2f',1,'RtpPacket']]],
-  ['slotvariantfunc_10',['SlotVariantFunc',['../classObjectBase.html#aa5b71229762e66678aa59aaa21ecd7af',1,'ObjectBase']]],
-  ['specmap_11',['SpecMap',['../classVariantDatabase.html#ab4f16069dd41722fb0b8d3b8fc1009f5',1,'VariantDatabase']]],
-  ['stagelist_12',['StageList',['../classMediaPipelineConfig.html#acc55c57345b26490ac0e92c942d8a9eb',1,'MediaPipelineConfig']]],
-  ['status_13',['Status',['../classFileInfo.html#a96655a8e63c3237c295ba3e7b7ffb684',1,'FileInfo']]]
+  ['specmap_10',['SpecMap',['../classVariantDatabase.html#ab4f16069dd41722fb0b8d3b8fc1009f5',1,'VariantDatabase']]],
+  ['stagelist_11',['StageList',['../classMediaPipelineConfig.html#acc55c57345b26490ac0e92c942d8a9eb',1,'MediaPipelineConfig']]],
+  ['status_12',['Status',['../classFileInfo.html#a96655a8e63c3237c295ba3e7b7ffb684',1,'FileInfo']]]
 ];
