@@ -72,7 +72,9 @@ Single-hop solver plus a codec-transitive two-hop fallback (VideoDecoder → Vid
 | `AudioFile` sink | —      | per-extension DataType preference (WAV/BWF/AIFF/FLAC/W64/RF64 pass-through; OGG/Opus → Float32); preserves source bit depth | default                                                      |
 | `QuickTime` sink | —      | curated FourCC whitelist (compressed: H.264 / HEVC / AV1 / ProRes / JPEG / JPEG XS; uncompressed: RGB8 / RGBA8 / YUYV / UYVY / v210 / I422 / I420 / NV12 / NV16); chroma + bit depth preserved | default                                                      |
 | `SDLPlayer`      | —      | restricted to native `mapPixelDesc` set; prefers same colour family + bit depth | describe advertises full SDL-native acceptable list           |
-| `FrameBridge` / `RawBitstream` / `Inspector` / `Burn` | — | default (passthrough) | default                                                      |
+| `RawBitstream`          | —      | rejects uncompressed input (`NotSupported`); passthrough on compressed | describes every registered compressed PixelDesc as acceptable |
+| `Burn`                  | —      | rejects compressed and non-paintable input; substitutes same-family uncompressed via `defaultUncompressedPixelDesc` | passthrough (output shape == input shape) |
+| `FrameBridge` / `Inspector` | — | default (passthrough) | default                                                      |
 
 ### `mediaplay` integration
 

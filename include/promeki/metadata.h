@@ -321,6 +321,34 @@ class Metadata : public VariantDatabase<"Metadata"> {
                                 .setMin(int32_t(0))
                                 .setDescription("Number of frames dropped before this one."));
 
+                /// @brief Number of input frames the FrameSync dropped between
+                /// this output and the previous fresh emit (int32_t).
+                ///
+                /// Set by @ref FrameSync on every output frame.  The value is
+                /// always 0 on a repeat output; any input frames that were
+                /// discarded while the output was stuck on a repeat are
+                /// accumulated and reported on the next fresh emit so a
+                /// downstream consumer can pinpoint exactly where the drop
+                /// occurred in the output timeline and how many source frames
+                /// were skipped.
+                PROMEKI_DECLARE_ID(FrameSyncDrop,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("Input frames dropped between this FrameSync emit and the previous one."));
+
+                /// @brief Position of this output within a FrameSync repeat
+                /// sequence (int32_t).
+                ///
+                /// Set by @ref FrameSync on every output frame.  Zero on a
+                /// fresh emit; 1, 2, 3, ... on successive repeats of the
+                /// currently held frame.  Resets to 0 on the next fresh emit.
+                PROMEKI_DECLARE_ID(FrameSyncRepeat,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("Position within a FrameSync repeat sequence (0 = fresh emit)."));
+
                 /// @brief This frame arrived later than its scheduled time (bool).
                 PROMEKI_DECLARE_ID(FrameLate,
                         VariantSpec().setType(Variant::TypeBool)
@@ -348,6 +376,51 @@ class Metadata : public VariantDatabase<"Metadata"> {
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(false)
                                 .setDescription("Frame's MediaDesc differs from previously reported."));
+
+                // ============================================================
+                // Session / capture environment
+                //
+                // These keys describe the environment a container was
+                // written in.  They're populated automatically by
+                // backends whose files are meant for debugging or
+                // forensic replay (e.g. PMDF), but any writer is free
+                // to stamp them.
+                // ============================================================
+
+                /// @brief Runtime hostname of the machine that produced the file.
+                PROMEKI_DECLARE_ID(SessionHostname,
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Runtime hostname of the machine that produced the file."));
+
+                /// @brief Process ID of the writer at capture time.
+                PROMEKI_DECLARE_ID(SessionProcessId,
+                        VariantSpec().setType(Variant::TypeS64)
+                                .setDefault(int64_t(0))
+                                .setDescription("Writer process ID at capture time."));
+
+                /// @brief Full libpromeki build identity (name, version,
+                /// repo ident, type, date/time, build hostname).  Written
+                /// by debug-oriented sinks so readers can locate the
+                /// exact library revision that produced a file.
+                PROMEKI_DECLARE_ID(LibraryBuildInfo,
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("libpromeki build identity (version, repo, date, host)."));
+
+                /// @brief Platform / compiler / C++ standard the
+                /// library was compiled against.
+                PROMEKI_DECLARE_ID(LibraryPlatform,
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Platform / compiler / C++ standard of the writer."));
+
+                /// @brief Library feature flags enabled at build time
+                /// (e.g. @c "NETWORK PROAV MUSIC PNG JPEG AUDIO CSC").
+                PROMEKI_DECLARE_ID(LibraryFeatures,
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Library feature flags enabled at build time."));
 
                 // ============================================================
                 // DPX file info

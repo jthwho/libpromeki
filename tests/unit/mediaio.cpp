@@ -3362,3 +3362,229 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioSourceHint") {
 }
 
 #endif // PROMEKI_ENABLE_AUDIO
+
+// ============================================================================
+// MediaIO::copyFrames
+// ============================================================================
+
+namespace {
+
+MediaIO *makeTpgSource(const Size2Du32 &size = Size2Du32(16, 16)) {
+        MediaIO::Config cfg = MediaIO::defaultConfig("TPG");
+        cfg.set(MediaConfig::VideoFormat,
+                VideoFormat(size, FrameRate(FrameRate::FPS_24)));
+        cfg.set(MediaConfig::VideoEnabled, true);
+        cfg.set(MediaConfig::AudioEnabled, false);
+        cfg.set(MediaConfig::TimecodeEnabled, false);
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Source).isOk());
+        return io;
+}
+
+MediaIO *makeDpxSequenceSink(const FilePath &dir, const String &mask) {
+        Dir d(dir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+        String fullMask = (dir / mask).toString();
+        MediaIO *io = MediaIO::createForFileWrite(fullMask);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Sink).isOk());
+        return io;
+}
+
+int countFiles(const FilePath &dir, const String &extension) {
+        Dir d(dir);
+        if(!d.exists()) return 0;
+        List<FilePath> entries = d.entryList();
+        int n = 0;
+        for(const FilePath &fp : entries) {
+                if(fp.toString().endsWith(extension)) ++n;
+        }
+        return n;
+}
+
+} // namespace
+
+TEST_CASE("MediaIO::copyFrames: basic TPG -> DPX sequence") {
+        FilePath dir = Dir::temp().path() / "promeki_test_copyFrames_basic";
+        MediaIO *src = makeTpgSource();
+        MediaIO *dst = makeDpxSequenceSink(dir, "f_####.dpx");
+
+        int64_t copied = 0;
+        Error err = MediaIO::copyFrames(src, dst, 0, 5, &copied);
+        CHECK(err.isOk());
+        CHECK(copied == 5);
+
+        src->close(); dst->close();
+        delete src; delete dst;
+
+        CHECK(countFiles(dir, ".dpx") == 5);
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO::copyFrames: count limits output") {
+        FilePath dir = Dir::temp().path() / "promeki_test_copyFrames_count";
+        MediaIO *src = makeTpgSource();
+        MediaIO *dst = makeDpxSequenceSink(dir, "f_####.dpx");
+
+        int64_t copied = 0;
+        Error err = MediaIO::copyFrames(src, dst, 0, 3, &copied);
+        CHECK(err.isOk());
+        CHECK(copied == 3);
+
+        src->close(); dst->close();
+        delete src; delete dst;
+
+        CHECK(countFiles(dir, ".dpx") == 3);
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO::copyFrames: mutate callback runs per frame") {
+        FilePath dir = Dir::temp().path() / "promeki_test_copyFrames_mutate";
+        MediaIO *src = makeTpgSource();
+        MediaIO *dst = makeDpxSequenceSink(dir, "f_####.dpx");
+
+        int64_t lastIndex = -1;
+        int     mutateCalls = 0;
+        auto mutate = [&](const Frame::Ptr &f, int64_t i) -> Frame::Ptr {
+                ++mutateCalls;
+                lastIndex = i;
+                // Pass through unchanged.
+                return f;
+        };
+
+        int64_t copied = 0;
+        Error err = MediaIO::copyFrames(src, dst, 0, 4, mutate, &copied);
+        CHECK(err.isOk());
+        CHECK(copied == 4);
+        CHECK(mutateCalls == 4);
+        CHECK(lastIndex == 3);
+
+        src->close(); dst->close();
+        delete src; delete dst;
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO::copyFrames: mutate returning invalid frame skips write") {
+        FilePath dir = Dir::temp().path() / "promeki_test_copyFrames_skip";
+        MediaIO *src = makeTpgSource();
+        MediaIO *dst = makeDpxSequenceSink(dir, "f_####.dpx");
+
+        // Drop odd-indexed frames.
+        auto mutate = [](const Frame::Ptr &f, int64_t i) -> Frame::Ptr {
+                return (i % 2 == 0) ? f : Frame::Ptr();
+        };
+
+        int64_t copied = 0;
+        Error err = MediaIO::copyFrames(src, dst, 0, 6, mutate, &copied);
+        CHECK(err.isOk());
+        CHECK(copied == 3); // indices 0, 2, 4
+
+        src->close(); dst->close();
+        delete src; delete dst;
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO::copyFrames: fromFrame on non-seekable source reads and discards") {
+        FilePath dir = Dir::temp().path() / "promeki_test_copyFrames_skip_head";
+        MediaIO *src = makeTpgSource();
+        CHECK_FALSE(src->canSeek()); // TPG is not seekable.
+
+        MediaIO *dst = makeDpxSequenceSink(dir, "f_####.dpx");
+
+        int64_t lastIndex = -1;
+        auto mutate = [&](const Frame::Ptr &f, int64_t i) -> Frame::Ptr {
+                lastIndex = i;
+                return f;
+        };
+
+        int64_t copied = 0;
+        Error err = MediaIO::copyFrames(src, dst, 10, 3, mutate, &copied);
+        CHECK(err.isOk());
+        CHECK(copied == 3);
+        // First callback fires at index 10, last at 12.
+        CHECK(lastIndex == 12);
+
+        src->close(); dst->close();
+        delete src; delete dst;
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO::copyFrames: reads real sequence back") {
+        // Write a 6-frame sequence, then copy it into a second sequence
+        // and check every frame round-trips.
+        FilePath srcDir = Dir::temp().path() / "promeki_test_copyFrames_src";
+        FilePath dstDir = Dir::temp().path() / "promeki_test_copyFrames_dst";
+
+        // Produce the source sequence with a separate TPG->sink pair so
+        // the copyFrames under test sees a finite source.
+        {
+                MediaIO *tpg = makeTpgSource();
+                MediaIO *seq = makeDpxSequenceSink(srcDir, "frame_####.dpx");
+                Error e = MediaIO::copyFrames(tpg, seq, 0, 6);
+                REQUIRE(e.isOk());
+                tpg->close(); seq->close();
+                delete tpg; delete seq;
+        }
+
+        String srcMask = (srcDir / "frame_####.dpx").toString();
+        MediaIO *src = MediaIO::createForFileRead(srcMask);
+        REQUIRE(src != nullptr);
+        REQUIRE(src->open(MediaIO::Source).isOk());
+        CHECK(src->frameCount() == 6);
+
+        MediaIO *dst = makeDpxSequenceSink(dstDir, "copy_####.dpx");
+
+        int64_t copied = 0;
+        Error err = MediaIO::copyFrames(src, dst, 0, MediaIO::FrameCountInfinite,
+                                        &copied);
+        CHECK(err.isOk());
+        CHECK(copied == 6);
+
+        src->close(); dst->close();
+        delete src; delete dst;
+
+        CHECK(countFiles(dstDir, ".dpx") == 6);
+        Dir(srcDir).removeRecursively();
+        Dir(dstDir).removeRecursively();
+}
+
+TEST_CASE("MediaIO::copyFrames: seekable source uses seekToFrame for fromFrame") {
+        // Seekable source (DPX sequence) — verifies the seek branch
+        // without having to read-and-discard.
+        FilePath srcDir = Dir::temp().path() / "promeki_test_copyFrames_seek";
+        {
+                MediaIO *tpg = makeTpgSource();
+                MediaIO *seq = makeDpxSequenceSink(srcDir, "frame_####.dpx");
+                Error e = MediaIO::copyFrames(tpg, seq, 0, 10);
+                REQUIRE(e.isOk());
+                tpg->close(); seq->close();
+                delete tpg; delete seq;
+        }
+
+        String srcMask = (srcDir / "frame_####.dpx").toString();
+        MediaIO *src = MediaIO::createForFileRead(srcMask);
+        REQUIRE(src != nullptr);
+        REQUIRE(src->open(MediaIO::Source).isOk());
+        REQUIRE(src->canSeek());
+
+        FilePath dstDir = Dir::temp().path() / "promeki_test_copyFrames_seek_dst";
+        MediaIO *dst = makeDpxSequenceSink(dstDir, "out_####.dpx");
+
+        int64_t copied = 0;
+        Error err = MediaIO::copyFrames(src, dst, 5, 3, &copied);
+        CHECK(err.isOk());
+        CHECK(copied == 3);
+
+        src->close(); dst->close();
+        delete src; delete dst;
+
+        Dir(srcDir).removeRecursively();
+        Dir(dstDir).removeRecursively();
+}
+
+TEST_CASE("MediaIO::copyFrames: null arguments fail cleanly") {
+        Error err = MediaIO::copyFrames(nullptr, nullptr);
+        CHECK(err == Error::InvalidArgument);
+}

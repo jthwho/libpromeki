@@ -242,13 +242,16 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandWrite &cmd) {
                 if(pkt.isValid() && pkt->isValid()) packets.pushToBack(pkt);
         }
 
+        if(packets.isEmpty()) {
+                promekiErr("MediaIOTask_VideoDecoder: write frame carries no "
+                           "compressed Image with an attached MediaPacket; "
+                           "upstream must call Image::setPacket on every "
+                           "compressed Image it emits");
+                stampWorkEnd();
+                return Error::InvalidArgument;
+        }
+
         if(_decoder == nullptr) {
-                if(packets.isEmpty()) {
-                        promekiErr("MediaIOTask_VideoDecoder: no compressed Image "
-                                   "with an attached MediaPacket on the write frame");
-                        stampWorkEnd();
-                        return Error::InvalidArgument;
-                }
                 const MediaPacket &pkt = *packets[0];
                 VideoCodec codec = VideoCodec::fromPixelDesc(pkt.pixelDesc());
                 if(!codec.isValid()) {
@@ -410,11 +413,33 @@ Error MediaIOTask_VideoDecoder::proposeOutput(const MediaDesc &requested,
         if(achievable == nullptr) return Error::Invalid;
         const MediaIO *io = mediaIo();
         const MediaConfig &cfg = (io != nullptr) ? io->config() : MediaConfig();
-        // Compute the uncompressed output by applying the
-        // configured Output* overrides.  When OutputPixelDesc is
-        // unset the decoder produces its native uncompressed shape
-        // (which the requested input would already imply).
-        *achievable = applyOutputOverrides(requested, cfg);
+
+        // Start from the input shape and apply any explicit
+        // Output* overrides (OutputPixelDesc, OutputFrameRate, ...).
+        MediaDesc proposed = applyOutputOverrides(requested, cfg);
+
+        // When OutputPixelDesc is unset, the planner needs to know
+        // that the *output* of this decoder is uncompressed — not
+        // the compressed shape it was handed on the input.  Fall
+        // back to the input PixelDesc's preferred decodeTarget
+        // (the first entry in the list is the canonical raw
+        // format for that compressed variant, e.g.
+        // JPEG_YUV8_422_Rec709 → YUV8_422_Rec709).
+        const bool hasExplicitOutput =
+                cfg.contains(MediaConfig::OutputPixelDesc) &&
+                cfg.getAs<PixelDesc>(MediaConfig::OutputPixelDesc).isValid();
+        if(!hasExplicitOutput && !requested.imageList().isEmpty()) {
+                const PixelDesc &inPd = requested.imageList()[0].pixelDesc();
+                if(inPd.isCompressed() && !inPd.decodeTargets().isEmpty()) {
+                        const PixelDesc rawPd(inPd.decodeTargets().front());
+                        ImageDesc::List &imgs = proposed.imageList();
+                        for(size_t i = 0; i < imgs.size(); ++i) {
+                                imgs[i].setPixelDesc(rawPd);
+                        }
+                }
+        }
+
+        *achievable = proposed;
         return Error::Ok;
 }
 

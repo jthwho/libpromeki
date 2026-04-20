@@ -94,7 +94,8 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(FormatMismatch, NONE, "Audio/video format does not match the expected format"),
         DEFINE_ERROR(FontUnavailable, NONE, "Font could not be loaded or has zero metrics"),
         DEFINE_ERROR(BrokenPipe, EPIPE, "Peer closed the stream"),
-        DEFINE_ERROR(ConnectionReset, ECONNRESET, "Peer reset the connection")
+        DEFINE_ERROR(ConnectionReset, ECONNRESET, "Peer reset the connection"),
+        DEFINE_ERROR(ParseFailed, NONE, "Text input failed to parse")
 };
 
 static StructDatabase<int, Error::Code> &posixErrorDb() {

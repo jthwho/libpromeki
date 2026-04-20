@@ -272,12 +272,12 @@ TEST_CASE("MediaPipelinePlanner_PixelGap_InsertsCSC") {
         CHECK(stageTypeAt(out, 2, "CSC"));
 
         // The bridge stage has a deterministic, scopable name.
-        CHECK(out.stages()[2].name == "src__bridge0__sink");
+        CHECK(out.stages()[2].name == "br0_src_sink");
 
         // Routes flow through the bridge.
         CHECK(out.routes()[0].from == "src");
-        CHECK(out.routes()[0].to   == "src__bridge0__sink");
-        CHECK(out.routes()[1].from == "src__bridge0__sink");
+        CHECK(out.routes()[0].to   == "br0_src_sink");
+        CHECK(out.routes()[1].from == "br0_src_sink");
         CHECK(out.routes()[1].to   == "sink");
 
         // The bridge stage carries the right OutputPixelDesc so the

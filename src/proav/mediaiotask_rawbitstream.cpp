@@ -7,11 +7,16 @@
 
 #include <promeki/mediaiotask_rawbitstream.h>
 #include <promeki/mediaconfig.h>
+#include <promeki/mediadesc.h>
+#include <promeki/mediaiodescription.h>
 #include <promeki/mediapacket.h>
 #include <promeki/bufferview.h>
 #include <promeki/frame.h>
 #include <promeki/image.h>
+#include <promeki/imagedesc.h>
 #include <promeki/logger.h>
+#include <promeki/pixeldesc.h>
+#include <promeki/videocodec.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -144,6 +149,54 @@ Error MediaIOTask_RawBitstream::executeCmd(MediaIOCommandWrite &cmd) {
 Error MediaIOTask_RawBitstream::executeCmd(MediaIOCommandStats &cmd) {
         cmd.stats.set(StatsPacketsWritten, _packetsWritten);
         cmd.stats.set(StatsBytesWritten, _bytesWritten);
+        return Error::Ok;
+}
+
+// ---- Introspection / negotiation ----
+//
+// RawBitstream is a "dumb" sink — it copies MediaPacket payload bytes
+// verbatim to the file.  The only hard constraint is that the input
+// carries a compressed Image with an attached MediaPacket; the file
+// extension (.h264 / .h265 / .hevc / .bit) advertises which codec a
+// consumer should assume, but the writer itself doesn't enforce it.
+// So:
+//  - describe(): every registered compressed PixelDesc is acceptable.
+//  - proposeInput(): reject uncompressed input so the planner splices
+//    in a VideoEncoder ahead of us instead of routing raw frames that
+//    would hit the `no compressed Image with an attached MediaPacket`
+//    warning at runtime.
+
+Error MediaIOTask_RawBitstream::describe(MediaIODescription *out) const {
+        if(out == nullptr) return Error::Invalid;
+        for(VideoCodec::ID cid : VideoCodec::registeredIDs()) {
+                VideoCodec codec(cid);
+                if(!codec.isValid()) continue;
+                for(int pdId : codec.compressedPixelDescs()) {
+                        // A codec could in principle register a PixelDesc
+                        // ID that is not in the well-known table (custom
+                        // variant added by a plugin); skip those so we
+                        // do not advertise a malformed MediaDesc from
+                        // describe().
+                        PixelDesc pd(static_cast<PixelDesc::ID>(pdId));
+                        if(!pd.isValid()) continue;
+                        MediaDesc accepted;
+                        accepted.imageList().pushToBack(
+                                ImageDesc(Size2Du32(0, 0), pd));
+                        out->acceptableFormats().pushToBack(accepted);
+                }
+        }
+        return Error::Ok;
+}
+
+Error MediaIOTask_RawBitstream::proposeInput(const MediaDesc &offered,
+                                             MediaDesc *preferred) const {
+        if(preferred == nullptr) return Error::Invalid;
+        if(offered.imageList().isEmpty()) return Error::NotSupported;
+        const PixelDesc &pd = offered.imageList()[0].pixelDesc();
+        if(!pd.isValid() || !pd.isCompressed()) {
+                return Error::NotSupported;
+        }
+        *preferred = offered;
         return Error::Ok;
 }
 

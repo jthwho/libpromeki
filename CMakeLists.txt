@@ -767,6 +767,7 @@ set(PROMEKI_HEADERS
     include/promeki/uuid.h
     include/promeki/variant.h
     include/promeki/variantdatabase.h
+    include/promeki/variantlookup.h
     include/promeki/variantspec.h
     include/promeki/videocodec.h
     include/promeki/videoformat.h
@@ -880,6 +881,7 @@ set(PROMEKI_SOURCES
     src/core/util.cpp
     src/core/uuid.cpp
     src/core/variant.cpp
+    src/core/variantquery.cpp
     src/core/variantspec.cpp
     src/core/videoformat.cpp
     src/core/widget.cpp
@@ -1012,6 +1014,8 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/frame.cpp
         src/proav/framebridge.cpp
         src/proav/framesync.cpp
+        src/proav/debugmediafile.cpp
+        src/proav/mediaiotask_debugmedia.cpp
         src/proav/image.cpp
         src/proav/imagedataencoder.cpp
         src/proav/imagedatadecoder.cpp
@@ -1687,6 +1691,8 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/uuid.cpp
         tests/unit/variant.cpp
         tests/unit/variantdatabase.cpp
+        tests/unit/variantlookup.cpp
+        tests/unit/variantquery.cpp
         tests/unit/variantspec.cpp
         tests/unit/videoformat.cpp
         tests/unit/waitcondition.cpp
@@ -1732,6 +1738,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/encodeddesc.cpp
             tests/unit/fastfont.cpp
             tests/unit/basicfont.cpp
+            tests/unit/debugmediafile.cpp
             tests/unit/frame.cpp
             tests/unit/framebridge.cpp
             tests/unit/image.cpp
@@ -1765,6 +1772,8 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/mediaiotask_csc.cpp
             tests/unit/mediaiotask_src.cpp
             tests/unit/mediaiotask_burn.cpp
+            tests/unit/mediaiotask_debugmedia.cpp
+            tests/unit/mediaiotask_rawbitstream.cpp
             tests/unit/mediaiotask_framebridge.cpp
             tests/unit/mediaiotask_framesync.cpp
             tests/unit/mediaiotask_videoencoder.cpp

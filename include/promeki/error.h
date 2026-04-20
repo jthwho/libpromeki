@@ -99,7 +99,8 @@ class Error {
                         FormatMismatch,          ///< Audio/video format does not match the expected format.
                         FontUnavailable,         ///< Font could not be loaded or has zero metrics.
                         BrokenPipe,              ///< Peer closed the stream before we could write (EPIPE).
-                        ConnectionReset          ///< Peer reset the connection while we were reading/writing (ECONNRESET).
+                        ConnectionReset,         ///< Peer reset the connection while we were reading/writing (ECONNRESET).
+                        ParseFailed              ///< Text input (expression, URL, etc.) failed to parse.
                 };
 
                 /**

@@ -262,9 +262,19 @@ class FrameSync {
                  * no-op — the clock is advanced by one frame per
                  * call.
                  *
+                 * @param blockOnEmpty If true (default), the first
+                 *        pull on an empty input queue waits on the
+                 *        producer's @ref pushFrame.  If false, it
+                 *        returns @c Error::TryAgain instead.  Set
+                 *        this to false when the caller cannot afford
+                 *        to block (e.g. the MediaIO strand, which
+                 *        serves both push and pull — a blocking pull
+                 *        would hold the strand against the very push
+                 *        that would wake it).
+                 *
                  * @return The output frame and accompanying stats.
                  */
-                Result<PullResult> pullFrame();
+                Result<PullResult> pullFrame(bool blockOnEmpty = true);
 
                 /**
                  * @brief Unblocks any thread waiting in @ref pullFrame.
@@ -367,6 +377,18 @@ class FrameSync {
                 Image::Ptr         _heldVideo;
                 int64_t            _heldVideoSourceTsNs = 0;
                 bool               _hasHeldVideo = false;
+
+                // FrameSyncDrop/FrameSyncRepeat metadata state.
+                // _pendingFrameSyncDrops accumulates input drops across
+                // pulls that emit a repeat — the spec requires
+                // FrameSyncDrop to be zero on repeat outputs, so any
+                // drops that occur while the output is stuck on a
+                // repeat are deferred to the next fresh emit.
+                // _frameSyncRepeatIndex is the position of the current
+                // output within a repeat sequence (0 on fresh emit;
+                // 1, 2, ... on successive repeats).
+                int64_t            _pendingFrameSyncDrops = 0;
+                int64_t            _frameSyncRepeatIndex  = 0;
 
                 // Audio resampler pipeline.
                 AudioResampler    *_resampler = nullptr;

@@ -104,47 +104,106 @@ bool Audio::allocate(const MemSpace &ms) {
         return true;
 }
 
-std::optional<String> Audio::resolveTemplateKey(const String &key, const String &spec) const {
-        if(!key.isEmpty() && key.cstr()[0] == '@') {
-                return resolvePseudoKey(key, spec);
-        }
-        Metadata::ID id = Metadata::ID::find(key);
-        if(id.isValid() && _desc.metadata().contains(id)) {
-                return _desc.metadata().get(id).format(spec);
-        }
-        return std::nullopt;
+namespace {
+
+String codecFourCCString(const AudioDesc &desc) {
+        FourCC fc = desc.codecFourCC();
+        uint32_t raw = fc.value();
+        if(raw == 0) return String();
+        char buf[5];
+        buf[0] = static_cast<char>((raw >> 24) & 0xFF);
+        buf[1] = static_cast<char>((raw >> 16) & 0xFF);
+        buf[2] = static_cast<char>((raw >>  8) & 0xFF);
+        buf[3] = static_cast<char>( raw        & 0xFF);
+        buf[4] = '\0';
+        return String(buf);
 }
 
-std::optional<String> Audio::resolvePseudoKey(const String &key, const String &spec) const {
-        Variant v;
-        if(key == String("@SampleRate"))           v = _desc.sampleRate();
-        else if(key == String("@Channels"))        v = static_cast<uint32_t>(_desc.channels());
-        else if(key == String("@DataType"))        v = _desc.dataTypeName();
-        else if(key == String("@Samples"))         v = static_cast<uint64_t>(_samples);
-        else if(key == String("@MaxSamples"))      v = static_cast<uint64_t>(_maxSamples);
-        else if(key == String("@Frames"))          v = static_cast<uint64_t>(frames());
-        else if(key == String("@BytesPerSample"))  v = static_cast<uint64_t>(_desc.bytesPerSample());
-        else if(key == String("@IsValid"))         v = isValid();
-        else if(key == String("@IsCompressed"))    v = isCompressed();
-        else if(key == String("@IsNative"))        v = isNative();
-        else if(key == String("@CompressedSize"))  v = static_cast<uint64_t>(compressedSize());
-        else if(key == String("@CodecFourCC")) {
-                FourCC fc = _desc.codecFourCC();
-                uint32_t raw = fc.value();
-                if(raw == 0) {
-                        v = String();
-                } else {
-                        char buf[5];
-                        buf[0] = static_cast<char>((raw >> 24) & 0xFF);
-                        buf[1] = static_cast<char>((raw >> 16) & 0xFF);
-                        buf[2] = static_cast<char>((raw >>  8) & 0xFF);
-                        buf[3] = static_cast<char>( raw        & 0xFF);
-                        buf[4] = '\0';
-                        v = String(buf);
+} // namespace
+
+StringList Audio::dump(const String &indent) const {
+        StringList out;
+        VariantLookup<Audio>::forEachScalar([this, &out, &indent](const String &name) {
+                auto v = VariantLookup<Audio>::resolve(*this, name);
+                if(v.has_value()) {
+                        out += indent + name + ": " + v->format(String());
                 }
+        });
+        if(_buffer.isValid()) {
+                out += indent + String::sprintf("Buffer: size=%zu bytes (alloc=%zu, align=%zu)",
+                                                _buffer->size(), _buffer->allocSize(), _buffer->align());
         }
-        else return std::nullopt;
-        return v.format(spec);
+        if(_packet.isValid()) {
+                out += indent + String::sprintf("Packet: pts=%s dts=%s flags=0x%08x size=%zu",
+                                                _packet->pts().toString().cstr(),
+                                                _packet->dts().toString().cstr(),
+                                                static_cast<unsigned>(_packet->flags()),
+                                                _packet->size());
+        }
+        StringList mdLines = _desc.metadata().dump();
+        if(!mdLines.isEmpty()) {
+                out += indent + "Meta:";
+                String sub = indent + "  ";
+                for(const String &ln : mdLines) out += sub + ln;
+        }
+        return out;
 }
+
+PROMEKI_LOOKUP_REGISTER(Audio)
+        .scalar("SampleRate",
+                [](const Audio &a) -> std::optional<Variant> {
+                        return Variant(a.desc().sampleRate());
+                })
+        .scalar("Channels",
+                [](const Audio &a) -> std::optional<Variant> {
+                        return Variant(static_cast<uint32_t>(a.desc().channels()));
+                })
+        .scalar("DataType",
+                [](const Audio &a) -> std::optional<Variant> {
+                        return Variant(a.desc().dataTypeName());
+                })
+        .scalar("Samples",
+                [](const Audio &a) -> std::optional<Variant> {
+                        return Variant(static_cast<uint64_t>(a.samples()));
+                })
+        .scalar("MaxSamples",
+                [](const Audio &a) -> std::optional<Variant> {
+                        return Variant(static_cast<uint64_t>(a.maxSamples()));
+                })
+        .scalar("Frames",
+                [](const Audio &a) -> std::optional<Variant> {
+                        return Variant(static_cast<uint64_t>(a.frames()));
+                })
+        .scalar("BytesPerSample",
+                [](const Audio &a) -> std::optional<Variant> {
+                        return Variant(static_cast<uint64_t>(a.desc().bytesPerSample()));
+                })
+        .scalar("IsValid",
+                [](const Audio &a) -> std::optional<Variant> {
+                        return Variant(a.isValid());
+                })
+        .scalar("IsCompressed",
+                [](const Audio &a) -> std::optional<Variant> {
+                        return Variant(a.isCompressed());
+                })
+        .scalar("IsNative",
+                [](const Audio &a) -> std::optional<Variant> {
+                        return Variant(a.isNative());
+                })
+        .scalar("CompressedSize",
+                [](const Audio &a) -> std::optional<Variant> {
+                        return Variant(static_cast<uint64_t>(a.compressedSize()));
+                })
+        .scalar("CodecFourCC",
+                [](const Audio &a) -> std::optional<Variant> {
+                        return Variant(codecFourCCString(a.desc()));
+                })
+        .database<"Metadata">("Meta",
+                [](const Audio &a) -> const VariantDatabase<"Metadata"> * {
+                        return &a.metadata();
+                },
+                [](Audio &a) -> VariantDatabase<"Metadata"> * {
+                        return &a.metadata();
+                });
 
 PROMEKI_NAMESPACE_END

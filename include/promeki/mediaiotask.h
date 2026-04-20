@@ -10,6 +10,7 @@
 #include <promeki/namespace.h>
 #include <promeki/error.h>
 #include <promeki/mediaio.h>
+#include <promeki/pixeldesc.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -113,6 +114,27 @@ class MediaIOTask {
                  */
                 static MediaDesc applyOutputOverrides(const MediaDesc &input,
                                                      const MediaConfig &config);
+
+                /**
+                 * @brief Returns a canonical uncompressed PixelDesc that
+                 *        stays in the same family as @p source.
+                 *
+                 * Transform backends that refuse compressed or
+                 * paint-engine-less input (Burn, FrameSync, ...) use
+                 * this to ask the pipeline planner for a same-family
+                 * uncompressed substitute in @c proposeInput.  The
+                 * planner's VideoDecoder / CSC bridges then close the
+                 * gap.  The helper keeps the mapping in one place so
+                 * the fallback does not drift between backends.
+                 *
+                 *  - YCbCr sources → @ref PixelDesc::YUV8_422_Rec709
+                 *  - RGB / other → @ref PixelDesc::RGBA8_sRGB
+                 *
+                 * @param source The compressed or paint-engine-less
+                 *               input PixelDesc.
+                 * @return A canonical uncompressed PixelDesc.
+                 */
+                static PixelDesc defaultUncompressedPixelDesc(const PixelDesc &source);
 
         protected:
                 // ---- Live-telemetry helpers ----

@@ -23,10 +23,10 @@ PROMEKI_NAMESPACE_BEGIN
  * text overlay onto each video image, and emits the result on
  * @c readFrame().  Audio and non-video metadata are forwarded unchanged.
  *
- * The burn text is specified as a @ref Frame::makeString template
+ * The burn text is specified as a @ref VariantLookup<Frame>::format template
  * (via @ref MediaConfig::VideoBurnText), resolved per-frame against
  * the frame's metadata.  This allows dynamic content such as
- * @c "{Timecode:smpte}" or @c "{@VideoFormat}" to update on every
+ * @c "{Meta.Timecode:smpte}" or @c "{VideoFormat}" to update on every
  * frame.
  *
  * Font rendering is delegated to @ref VideoTestPattern::applyBurn,
@@ -54,7 +54,7 @@ PROMEKI_NAMESPACE_BEGIN
  * | @ref MediaConfig::VideoBurnEnabled   | bool                    | true         | Enable text burn-in. |
  * | @ref MediaConfig::VideoBurnFontPath  | String                  | ""           | TrueType font path.  Empty = bundled default font. |
  * | @ref MediaConfig::VideoBurnFontSize  | int                     | 0            | Font size in pixels.  0 = auto-scale from image height. |
- * | @ref MediaConfig::VideoBurnText      | String                  | "{Timecode:smpte}" | @ref Frame::makeString template resolved per-frame. |
+ * | @ref MediaConfig::VideoBurnText      | String                  | "{Timecode:smpte}" | @ref VariantLookup<Frame>::format template resolved per-frame. |
  * | @ref MediaConfig::VideoBurnPosition  | Enum @ref BurnPosition  | BottomCenter | Position preset. |
  * | @ref MediaConfig::VideoBurnTextColor | Color                   | White        | Burn text foreground color. |
  * | @ref MediaConfig::VideoBurnBgColor   | Color                   | Black        | Burn text background color. |
@@ -107,6 +107,11 @@ class MediaIOTask_Burn : public MediaIOTask {
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 Error executeCmd(MediaIOCommandStats &cmd) override;
                 int pendingOutput() const override;
+
+                Error proposeInput(const MediaDesc &offered,
+                                   MediaDesc *preferred) const override;
+                Error proposeOutput(const MediaDesc &requested,
+                                    MediaDesc *achievable) const override;
 
                 Error burnFrame(const Frame::Ptr &input, Frame::Ptr &output);
 

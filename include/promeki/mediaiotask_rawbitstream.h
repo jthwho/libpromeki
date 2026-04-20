@@ -72,6 +72,10 @@ class MediaIOTask_RawBitstream : public MediaIOTask {
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 Error executeCmd(MediaIOCommandStats &cmd) override;
 
+                Error describe(MediaIODescription *out) const override;
+                Error proposeInput(const MediaDesc &offered,
+                                   MediaDesc *preferred) const override;
+
                 File      _file;
                 String    _filename;
                 int64_t   _packetsWritten = 0;

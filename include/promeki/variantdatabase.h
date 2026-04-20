@@ -147,6 +147,28 @@ class VariantDatabase {
                 }
 
                 /**
+                 * @brief Returns the VariantSpec for a key name, or nullptr if none.
+                 *
+                 * Convenience wrapper that resolves @p name through the
+                 * per-@c Name StringRegistry without registering it, then
+                 * returns the registered spec (if any).  Used by
+                 * @ref VariantLookup::specFor when a database-backed path
+                 * needs to expose the declared type of a key to callers
+                 * that only have the string form (query compilers, tools,
+                 * introspectors).
+                 *
+                 * @param name The key name to look up.
+                 * @return A pointer to the registered spec, or nullptr
+                 *         when the name is unknown or no spec was
+                 *         declared for it.
+                 */
+                static const VariantSpec *specFor(const String &name) {
+                        ID id = ID::find(name);
+                        if(!id.isValid()) return nullptr;
+                        return spec(id);
+                }
+
+                /**
                  * @brief Returns a copy of the entire spec registry.
                  * @return A map from integer ID to VariantSpec.
                  */

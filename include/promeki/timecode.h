@@ -8,6 +8,7 @@
 #pragma once
 
 #include <cstdint>
+#include <tuple>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
@@ -203,19 +204,40 @@ class Timecode {
                         return !(*this == other);
                 }
 
+                /**
+                 * @brief Ordering operators.
+                 *
+                 * Comparison strategy depends on the modes of the two
+                 * operands:
+                 *  - If both sides carry the same @ref Mode, digits
+                 *    alone determine the order.  Drop-frame gaps do not
+                 *    affect digit ordering within a single mode (they
+                 *    only collapse frame counts).
+                 *  - If either side lacks a libvtc format (i.e. the
+                 *    timecode is invalid, or was parsed / constructed
+                 *    with an unknown frame rate), digits are used
+                 *    because no frame-number conversion is possible.
+                 *  - Otherwise the two sides are at different valid
+                 *    rates and we convert each to an absolute frame
+                 *    number using its own rate and compare those.
+                 */
                 bool operator>(const Timecode &other) const {
+                        if(compareByDigits(other)) return digitTuple() > other.digitTuple();
                         return toFrameNumber().first() > other.toFrameNumber().first();
                 }
 
                 bool operator<(const Timecode &other) const {
+                        if(compareByDigits(other)) return digitTuple() < other.digitTuple();
                         return toFrameNumber().first() < other.toFrameNumber().first();
                 }
 
                 bool operator>=(const Timecode &other) const {
+                        if(compareByDigits(other)) return digitTuple() >= other.digitTuple();
                         return toFrameNumber().first() >= other.toFrameNumber().first();
                 }
 
                 bool operator<=(const Timecode &other) const {
+                        if(compareByDigits(other)) return digitTuple() <= other.digitTuple();
                         return toFrameNumber().first() <= other.toFrameNumber().first();
                 }
 
@@ -411,6 +433,22 @@ class Timecode {
         private:
                 VtcTimecode toVtc() const;
                 void fromVtc(const VtcTimecode &vtc);
+
+                // Tuple of the four digit fields for lexicographic
+                // ordering.  Used by the comparison operators whenever a
+                // frame-number conversion would be undefined or
+                // unnecessary (same mode, or either side lacks a rate).
+                using DigitTuple = std::tuple<DigitType, DigitType, DigitType, DigitType>;
+                DigitTuple digitTuple() const { return DigitTuple(_hour, _min, _sec, _frame); }
+
+                // Returns true when @ref operator< / @c > / @c <= / @c >=
+                // should use digit ordering rather than converting to
+                // absolute frame numbers.  See the operator block above
+                // for the full rules.
+                bool compareByDigits(const Timecode &other) const {
+                        if(_mode == other._mode) return true;
+                        return !_mode.hasFormat() || !other._mode.hasFormat();
+                }
 
                 Mode            _mode;
                 FlagsType       _flags  = 0;

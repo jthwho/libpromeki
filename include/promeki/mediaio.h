@@ -811,6 +811,76 @@ class MediaIO : public ObjectBase {
                 static MediaIO *create(const Config &config, ObjectBase *parent = nullptr);
 
                 /**
+                 * @brief Drains frames from @p src into @p dst.
+                 *
+                 * Reusable source→sink drain used by tooling that
+                 * needs to pipe frames between two already-open
+                 * MediaIOs without spinning up a full
+                 * @ref MediaPipeline (e.g. extracting images from a
+                 * PMDF debug capture into a DPX sequence, testing a
+                 * newly-registered backend against a known source,
+                 * or converting between container formats).
+                 *
+                 * Both @p src and @p dst must already be open in
+                 * compatible modes (source in @ref Source or
+                 * @ref Transform, sink in @ref Sink or @ref Transform).
+                 *
+                 * Seeks @p src to @p fromFrame when the source
+                 * supports seeking; otherwise reads and discards
+                 * @p fromFrame frames to advance.  Then loops up to
+                 * @p count iterations, each iteration doing:
+                 * @p src->readFrame(), optional @p mutate transform,
+                 * @p dst->writeFrame().  Stops early on
+                 * @ref Error::EndOfFile from the source (that's a
+                 * clean termination; the function returns
+                 * @ref Error::Ok) or on any other backend error.
+                 *
+                 * @param src        The source MediaIO (already open).
+                 * @param dst        The sink MediaIO (already open).
+                 * @param fromFrame  Starting frame number on the source
+                 *                   (default 0).
+                 * @param count      Maximum number of frames to copy;
+                 *                   defaults to
+                 *                   @ref FrameCountInfinite which is
+                 *                   interpreted as "until EOF".
+                 * @param mutate     Optional per-frame transform.
+                 *                   Receives the frame read from the
+                 *                   source and the absolute frame
+                 *                   number it was read at; returns the
+                 *                   frame to hand to the sink.  An
+                 *                   invalid returned Frame::Ptr skips
+                 *                   the write for that iteration.
+                 *                   @c nullptr (default) forwards
+                 *                   frames unchanged.
+                 * @param copied     Optional output: number of frames
+                 *                   actually written to the sink.
+                 * @return @ref Error::Ok on a clean copy (including
+                 *         clean EOF), or the first error encountered.
+                 */
+                static Error copyFrames(MediaIO *src, MediaIO *dst,
+                                        int64_t fromFrame = 0,
+                                        int64_t count     = FrameCountInfinite,
+                                        int64_t *copied   = nullptr);
+
+                /**
+                 * @brief Overload of @ref copyFrames with a per-frame @p mutate callback.
+                 *
+                 * @tparam Fn Callable with signature
+                 *            @c Frame::Ptr(const Frame::Ptr &, int64_t).
+                 *            Returning an invalid @c Frame::Ptr skips the
+                 *            write for that iteration.
+                 *
+                 * Template parameter (instead of @c std::function) avoids
+                 * the heap allocation and indirect call that a type-erased
+                 * callable imposes on every frame; lambdas inline directly
+                 * into the copy loop.
+                 */
+                template <typename Fn>
+                static Error copyFrames(MediaIO *src, MediaIO *dst,
+                                        int64_t fromFrame, int64_t count,
+                                        Fn &&mutate, int64_t *copied = nullptr);
+
+                /**
                  * @brief Creates a MediaIO reader for the given filename.
                  * @param filename The path to the media file.
                  * @param parent Optional parent object.
@@ -1810,6 +1880,62 @@ class MediaIO : public ObjectBase {
                 // the count stays accurate whether writes succeed,
                 // fail, or are cancelled.
                 Atomic<int>                 _pendingWriteCount;
+
+                /**
+                 * @brief Shared read-skip helper for @ref copyFrames.
+                 *
+                 * Positions @p src at @p fromFrame via seek when the
+                 * source supports it, or reads-and-discards otherwise.
+                 * Returns @c Error::EndOfFile when the skip hits EOF
+                 * before reaching @p fromFrame — callers treat that
+                 * as a clean no-op completion.
+                 */
+                static Error copyFramesSeekTo(MediaIO *src, int64_t fromFrame);
 };
+
+template <typename Fn>
+Error MediaIO::copyFrames(MediaIO *src, MediaIO *dst,
+                          int64_t fromFrame, int64_t count,
+                          Fn &&mutate, int64_t *copied) {
+        if(copied != nullptr) *copied = 0;
+        if(src == nullptr || dst == nullptr) return Error::InvalidArgument;
+
+        if(fromFrame > 0) {
+                Error se = copyFramesSeekTo(src, fromFrame);
+                if(se == Error::EndOfFile) return Error::Ok;
+                if(se.isError()) return se;
+        }
+
+        // remaining < 0 encodes the infinite-copy case; the
+        // "if(remaining > 0) --remaining" branch below never fires in
+        // that mode, so the loop runs until the source returns EOF.
+        int64_t remaining = (count == FrameCountInfinite) ? -1 : count;
+        int64_t written   = 0;
+        int64_t index     = fromFrame;
+
+        while(remaining != 0) {
+                Frame::Ptr frame;
+                Error rerr = src->readFrame(frame);
+                if(rerr == Error::EndOfFile) break;
+                if(rerr.isError()) return rerr;
+                if(!frame.isValid()) {
+                        if(remaining > 0) --remaining;
+                        ++index;
+                        continue;
+                }
+
+                Frame::Ptr outFrame = mutate(frame, index);
+                if(outFrame.isValid()) {
+                        Error werr = dst->writeFrame(outFrame);
+                        if(werr.isError()) return werr;
+                        ++written;
+                }
+                ++index;
+                if(remaining > 0) --remaining;
+        }
+
+        if(copied != nullptr) *copied = written;
+        return Error::Ok;
+}
 
 PROMEKI_NAMESPACE_END

@@ -145,6 +145,86 @@ TEST_CASE("Timecode equality and comparison") {
                 CHECK(a <= a);
                 CHECK(a >= a);
         }
+
+        SUBCASE("Ordering: same mode compares digits") {
+                // Ascending order, same mode — digit-tuple ordering
+                // suffices without a frame-number conversion.
+                Timecode a(Timecode::NDF30, 1, 0, 0, 5);
+                Timecode b(Timecode::NDF30, 1, 0, 0, 6);
+                Timecode c(Timecode::NDF30, 1, 0, 1, 0);
+                Timecode d(Timecode::NDF30, 1, 1, 0, 0);
+                Timecode e(Timecode::NDF30, 2, 0, 0, 0);
+                CHECK(a < b);
+                CHECK(b < c);
+                CHECK(c < d);
+                CHECK(d < e);
+                CHECK_FALSE(e < a);
+        }
+
+        SUBCASE("Ordering: format-less (unknown mode) uses digits") {
+                // Digits-only Timecodes (mode is valid-but-format-less)
+                // can still be ordered by their digit tuple.  This is
+                // the case pmdf-inspect's "Meta.Timecode > \"01:00:00:05\""
+                // hits when the parsed literal has no mode attached.
+                Timecode lit(1, 0, 0, 5);
+                Timecode before(1, 0, 0, 4);
+                Timecode after(1, 0, 0, 6);
+                REQUIRE_FALSE(lit.mode().hasFormat());
+                CHECK(before < lit);
+                CHECK(lit < after);
+                CHECK(lit > before);
+                CHECK(lit <= lit);
+                CHECK(lit >= lit);
+        }
+
+        SUBCASE("Ordering: unknown vs moded uses digits") {
+                // Mixing a format-less side with a moded side must also
+                // use digits — we have no rate with which to convert the
+                // unknown side to a frame number.
+                Timecode lit(1, 0, 0, 5);     // no mode
+                Timecode moded(Timecode::NDF30, 1, 0, 0, 10);
+                REQUIRE_FALSE(lit.mode().hasFormat());
+                REQUIRE(moded.mode().hasFormat());
+                CHECK(lit < moded);
+                CHECK(moded > lit);
+
+                // Equal digits across unknown + moded → neither < nor >.
+                Timecode litEqDigits(1, 0, 0, 10);
+                CHECK_FALSE(litEqDigits < moded);
+                CHECK_FALSE(litEqDigits > moded);
+                CHECK(litEqDigits <= moded);
+                CHECK(litEqDigits >= moded);
+        }
+
+        SUBCASE("Ordering: different valid modes use frame numbers") {
+                // Same digits at different rates produce different
+                // absolute frame counts — ordering must reflect that.
+                // 01:00:00:00 at NDF30 = 108000; at NDF24 = 86400.
+                Timecode tc30(Timecode::NDF30, 1, 0, 0, 0);
+                Timecode tc24(Timecode::NDF24, 1, 0, 0, 0);
+                CHECK(tc30 > tc24);
+                CHECK(tc24 < tc30);
+
+                // And sanity-check a case where frame-number ordering
+                // disagrees with digit ordering: DF30 drops frames so
+                // DF30 01:00:00:00 = 107892 frames < NDF30 108000.
+                Timecode ndf30(Timecode::NDF30, 1, 0, 0, 0);
+                Timecode df30 (Timecode::DF30,  1, 0, 0, 0);
+                CHECK(df30 < ndf30);
+                CHECK(ndf30 > df30);
+        }
+
+        SUBCASE("Ordering: invalid timecodes fall back to digits") {
+                // A default-constructed (invalid) Timecode has zero
+                // digits and no format — comparing it to a moded
+                // Timecode picks the digit path and gives the expected
+                // "zero is less than one" result instead of all-false.
+                Timecode invalid;
+                Timecode moded(Timecode::NDF30, 1, 0, 0, 0);
+                REQUIRE_FALSE(invalid.isValid());
+                CHECK(invalid < moded);
+                CHECK(moded > invalid);
+        }
 }
 
 TEST_CASE("Timecode set") {

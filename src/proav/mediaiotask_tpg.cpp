@@ -196,7 +196,7 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
                 // cached background and applies the burn on a copy, so
                 // there's no pre-render pass needed here.  The actual
                 // burn text is computed per-frame from
-                // @ref _burnTextTemplate via @ref Frame::makeString
+                // @ref _burnTextTemplate via @ref VariantLookup<Frame>::format
                 // after the frame's metadata has been populated.
                 _burnEnabled = cfg.getAs<bool>(MediaConfig::VideoBurnEnabled, true);
                 _videoPattern.setBurnEnabled(_burnEnabled);
@@ -397,7 +397,7 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandRead &cmd) {
 
         // Video background — pure pattern, no burn yet.  Pushed to the
         // frame so the per-frame burn template (resolved below) can see
-        // it via {Image[0].*} and {@VideoFormat}.
+        // it via {Image[0].*} and {VideoFormat}.
         if(_videoEnabled) {
                 Image img = _videoPattern.create(_imageDesc, _motionOffset,
                                                  _timecodeEnabled ? tc : Timecode());
@@ -409,8 +409,8 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandRead &cmd) {
         }
 
         // Frame-level metadata.  Written before the burn template
-        // resolves so {Timecode}, {FrameRate}, and {@VideoFormat} all
-        // pick it up.  FrameRate is required for VideoFormat to
+        // resolves so {Meta.Timecode}, {Meta.FrameRate}, and {VideoFormat}
+        // all pick it up.  FrameRate is required for VideoFormat to
         // render its rate component.
         frame.modify()->metadata().set(Metadata::FrameRate, _frameRate);
         if(_timecodeEnabled) {
@@ -424,7 +424,7 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandRead &cmd) {
         // background plane; ensureExclusive() detaches the pixel
         // buffers so painting is safe.
         if(_videoEnabled && _burnEnabled && !_burnTextTemplate.isEmpty()) {
-                String burnText = frame->makeString(_burnTextTemplate);
+                String burnText = VariantLookup<Frame>::format(*frame, _burnTextTemplate);
                 if(!burnText.isEmpty()) {
                         Image *imgMut = frame.modify()->imageList().back().modify();
                         imgMut->ensureExclusive();
@@ -474,8 +474,8 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandRead &cmd) {
                 }
         }
 
-        _frameCount++;
         cmd.frame = std::move(frame);
+        _frameCount++;
         cmd.currentFrame = _frameCount;
         stampWorkEnd();
         return Error::Ok;

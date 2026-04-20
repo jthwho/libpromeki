@@ -27,6 +27,7 @@ endif()
 
 if(PROMEKI_ENABLE_PROAV)
     add_subdirectory(imgtest)
+    add_subdirectory(pmdf-inspect)
     if(PROMEKI_BUILD_SDL)
         add_subdirectory(mediaplay)
     endif()

@@ -188,11 +188,11 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                 .setMin(int32_t(0))
                                 .setDescription("Burn-in font size in pixels."));
 
-                /// @brief String — burn-in text template (Frame::makeString).
+                /// @brief String — burn-in text template (VariantLookup<Frame>::format).
                 PROMEKI_DECLARE_ID(VideoBurnText,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
-                                .setDescription("Burn-in text as a Frame::makeString "
+                                .setDescription("Burn-in text as a VariantLookup<Frame>::format "
                                         "template, resolved per-frame against the "
                                         "frame's metadata.  Use \\n for multi-line."));
 

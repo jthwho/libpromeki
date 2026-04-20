@@ -192,3 +192,191 @@ TEST_CASE("MediaIOTask_Burn_ReadEmptyQueueTryAgain") {
         io->close();
         delete io;
 }
+
+// ----------------------------------------------------------------------------
+// Introspection / negotiation
+// ----------------------------------------------------------------------------
+//
+// Burn is a pure passthrough transform — the only negotiation
+// constraint is that the video PixelDesc must have a paint engine (the
+// overlay goes through VideoTestPattern::applyBurn, which needs one).
+// These cases exercise proposeInput / proposeOutput against the three
+// classes of offered MediaDesc: (a) paintable uncompressed, which
+// passes through; (b) compressed or non-paintable, which is rewritten
+// to a same-family paintable substitute so the planner splices in a
+// CSC / decoder ahead of us; and (c) audio-only, which has nothing to
+// burn but is still a valid passthrough.
+
+namespace {
+
+MediaDesc makeVideoDesc(uint32_t w, uint32_t h, PixelDesc::ID id) {
+        MediaDesc md;
+        md.setFrameRate(FrameRate(FrameRate::FPS_30));
+        md.imageList().pushToBack(
+                ImageDesc(Size2Du32(w, h), PixelDesc(id)));
+        return md;
+}
+
+} // namespace
+
+TEST_CASE("MediaIOTask_Burn_proposeInput_PaintableRgbPassesThrough") {
+        MediaIO::Config cfg = MediaIO::defaultConfig("Burn");
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+
+        const MediaDesc offered = makeVideoDesc(1920, 1080, PixelDesc::RGBA8_sRGB);
+        MediaDesc preferred;
+        CHECK(io->proposeInput(offered, &preferred) == Error::Ok);
+        CHECK(preferred == offered);
+
+        delete io;
+}
+
+TEST_CASE("MediaIOTask_Burn_proposeInput_PaintableYuvPassesThrough") {
+        MediaIO::Config cfg = MediaIO::defaultConfig("Burn");
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+
+        const MediaDesc offered =
+                makeVideoDesc(1920, 1080, PixelDesc::YUV8_420_SemiPlanar_Rec709);
+        MediaDesc preferred;
+        CHECK(io->proposeInput(offered, &preferred) == Error::Ok);
+        CHECK(preferred == offered);
+
+        delete io;
+}
+
+TEST_CASE("MediaIOTask_Burn_proposeInput_CompressedYuvSubstitutesYuv") {
+        // Compressed input has no paint engine; the backend must ask
+        // for a paintable substitute in the same family so the planner
+        // inserts a decoder + CSC ahead of us.  H.264 is a YCbCr codec,
+        // so the substitute stays in the YUV family.
+        MediaIO::Config cfg = MediaIO::defaultConfig("Burn");
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+
+        const MediaDesc offered = makeVideoDesc(1920, 1080, PixelDesc::H264);
+        MediaDesc preferred;
+        REQUIRE(io->proposeInput(offered, &preferred) == Error::Ok);
+        REQUIRE_FALSE(preferred.imageList().isEmpty());
+        CHECK(preferred.imageList()[0].pixelDesc().id() == PixelDesc::YUV8_422_Rec709);
+        // Raster + frame rate are preserved — only the pixel format
+        // changes.
+        CHECK(preferred.imageList()[0].size() == offered.imageList()[0].size());
+        CHECK(preferred.frameRate() == offered.frameRate());
+
+        delete io;
+}
+
+TEST_CASE("MediaIOTask_Burn_proposeInput_CompressedRgbSubstitutesRgba") {
+        // Compressed RGB input (e.g. JPEG's RGB variant) substitutes
+        // to an RGB paintable format so the planner's inserted
+        // decoder + CSC stays inside the matching colour family.
+        MediaIO::Config cfg = MediaIO::defaultConfig("Burn");
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+
+        const MediaDesc offered = makeVideoDesc(1920, 1080, PixelDesc::JPEG_RGB8_sRGB);
+        MediaDesc preferred;
+        REQUIRE(io->proposeInput(offered, &preferred) == Error::Ok);
+        REQUIRE_FALSE(preferred.imageList().isEmpty());
+        CHECK(preferred.imageList()[0].pixelDesc().id() == PixelDesc::RGBA8_sRGB);
+
+        delete io;
+}
+
+TEST_CASE("MediaIOTask_Burn_proposeInput_NonPaintableYuvSubstitutesYuv") {
+        // BE-ordered YUV is uncompressed but has no registered paint
+        // engine; the substitute must stay in the YUV family to keep
+        // the required CSC cheap.
+        MediaIO::Config cfg = MediaIO::defaultConfig("Burn");
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+
+        const MediaDesc offered =
+                makeVideoDesc(1920, 1080, PixelDesc::YUV10_422_Planar_BE_Rec709);
+        MediaDesc preferred;
+        REQUIRE(io->proposeInput(offered, &preferred) == Error::Ok);
+        REQUIRE_FALSE(preferred.imageList().isEmpty());
+        CHECK(preferred.imageList()[0].pixelDesc().id() == PixelDesc::YUV8_422_Rec709);
+        CHECK(preferred.imageList()[0].size() == offered.imageList()[0].size());
+
+        delete io;
+}
+
+TEST_CASE("MediaIOTask_Burn_proposeInput_NonPaintableRgbSubstitutesRgba") {
+        // BE-ordered RGB is uncompressed but has no paint engine; the
+        // substitute stays in the RGB family.
+        MediaIO::Config cfg = MediaIO::defaultConfig("Burn");
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+
+        const MediaDesc offered =
+                makeVideoDesc(1920, 1080, PixelDesc::RGBA12_BE_sRGB);
+        MediaDesc preferred;
+        REQUIRE(io->proposeInput(offered, &preferred) == Error::Ok);
+        REQUIRE_FALSE(preferred.imageList().isEmpty());
+        CHECK(preferred.imageList()[0].pixelDesc().id() == PixelDesc::RGBA8_sRGB);
+
+        delete io;
+}
+
+TEST_CASE("MediaIOTask_Burn_proposeInput_AudioOnlyPassesThrough") {
+        // An audio-only frame has nothing to draw on; Burn is still a
+        // valid passthrough for audio.
+        MediaIO::Config cfg = MediaIO::defaultConfig("Burn");
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+
+        MediaDesc offered;
+        offered.setFrameRate(FrameRate(FrameRate::FPS_30));
+        AudioDesc ad;
+        ad.setSampleRate(48000.0f);
+        ad.setChannels(2);
+        ad.setDataType(AudioDesc::PCMI_Float32LE);
+        offered.audioList().pushToBack(ad);
+
+        MediaDesc preferred;
+        CHECK(io->proposeInput(offered, &preferred) == Error::Ok);
+        CHECK(preferred == offered);
+
+        delete io;
+}
+
+TEST_CASE("MediaIOTask_Burn_proposeInput_NullPreferredIsInvalid") {
+        MediaIO::Config cfg = MediaIO::defaultConfig("Burn");
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+
+        const MediaDesc offered = makeVideoDesc(640, 480, PixelDesc::RGBA8_sRGB);
+        CHECK(io->proposeInput(offered, nullptr) == Error::Invalid);
+
+        delete io;
+}
+
+TEST_CASE("MediaIOTask_Burn_proposeOutput_Passthrough") {
+        // Burn is a pure passthrough transform — output shape equals
+        // input shape.  proposeOutput must echo whatever is requested
+        // so the planner treats Burn as a zero-cost passthrough.
+        MediaIO::Config cfg = MediaIO::defaultConfig("Burn");
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+
+        const MediaDesc requested = makeVideoDesc(1920, 1080, PixelDesc::RGBA8_sRGB);
+        MediaDesc achievable;
+        CHECK(io->proposeOutput(requested, &achievable) == Error::Ok);
+        CHECK(achievable == requested);
+
+        delete io;
+}
+
+TEST_CASE("MediaIOTask_Burn_proposeOutput_NullAchievableIsInvalid") {
+        MediaIO::Config cfg = MediaIO::defaultConfig("Burn");
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+
+        const MediaDesc requested = makeVideoDesc(640, 480, PixelDesc::RGBA8_sRGB);
+        CHECK(io->proposeOutput(requested, nullptr) == Error::Invalid);
+
+        delete io;
+}

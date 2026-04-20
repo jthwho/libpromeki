@@ -6,14 +6,17 @@
  */
 
 #include <promeki/mediaiotask_framesync.h>
+#include <promeki/colormodel.h>
 #include <promeki/enums.h>
 #include <promeki/frame.h>
 #include <promeki/framerate.h>
 #include <promeki/audiodesc.h>
+#include <promeki/imagedesc.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/mediaiodescription.h>
 #include <promeki/metadata.h>
+#include <promeki/pixeldesc.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -234,7 +237,12 @@ Error MediaIOTask_FrameSync::executeCmd(MediaIOCommandWrite &cmd) {
 }
 
 Error MediaIOTask_FrameSync::executeCmd(MediaIOCommandRead &cmd) {
-        auto result = _sync.pullFrame();
+        // Non-blocking pull: the MediaIO strand runs both pushes and
+        // pulls, so blocking here would deadlock against the very
+        // write that would wake us.  The write-side of MediaIO emits
+        // frameReadySignal on every successful push, which re-arms
+        // this prefetch as soon as the producer queues a frame.
+        auto result = _sync.pullFrame(/*blockOnEmpty=*/false);
         if(result.second().isError()) {
                 return result.second();
         }
@@ -275,9 +283,31 @@ Error MediaIOTask_FrameSync::describe(MediaIODescription *out) const {
 Error MediaIOTask_FrameSync::proposeInput(const MediaDesc &offered,
                                           MediaDesc *preferred) const {
         if(preferred == nullptr) return Error::Invalid;
-        // FrameSync has no opinion on the input shape — it re-times
-        // whatever it receives.
-        *preferred = offered;
+        if(offered.imageList().isEmpty()) {
+                // Audio-only frame: no pixel constraint, pass through.
+                *preferred = offered;
+                return Error::Ok;
+        }
+        const PixelDesc &pd = offered.imageList()[0].pixelDesc();
+        if(!pd.isValid() || !pd.isCompressed()) {
+                // Uncompressed (or unknown) — FrameSync has no opinion
+                // on the shape; it just re-times whatever it receives.
+                *preferred = offered;
+                return Error::Ok;
+        }
+        // Compressed input: reject so the planner puts the decoder
+        // ahead of us.  Repeating a bitstream forces the downstream
+        // decoder to re-decode every held frame, and intra-only codecs
+        // would outright break on any non-keyframe repeat.  Ask for a
+        // same-family uncompressed substitute via the shared helper;
+        // the planner's VideoDecoder bridge closes the gap in one hop.
+        const PixelDesc target = defaultUncompressedPixelDesc(pd);
+        MediaDesc want = offered;
+        ImageDesc::List &imgs = want.imageList();
+        for(size_t i = 0; i < imgs.size(); ++i) {
+                imgs[i].setPixelDesc(target);
+        }
+        *preferred = want;
         return Error::Ok;
 }
 

@@ -26,89 +26,117 @@ MediaDesc Frame::mediaDesc() const {
         return md;
 }
 
-namespace {
-
-// Parse "<prefix>[N].<inner>".  On success, fills index/inner and
-// returns true.  Inner may itself contain dots (e.g. nested subscripts
-// in the future) — we deliberately only split on the first '.' after
-// the closing ']'.
-bool parseSubscript(const String &key, const char *prefix,
-                    size_t &index, String &inner) {
-        size_t prefixLen = std::strlen(prefix);
-        if(key.byteCount() < prefixLen + 4) return false; // [N].x minimum
-        const char *p = key.cstr();
-        if(std::strncmp(p, prefix, prefixLen) != 0) return false;
-        if(p[prefixLen] != '[') return false;
-        size_t i = prefixLen + 1;
-        const size_t total = key.byteCount();
-        const size_t numStart = i;
-        while(i < total && p[i] >= '0' && p[i] <= '9') ++i;
-        if(i == numStart) return false;
-        if(i >= total || p[i] != ']') return false;
-        if(i + 1 >= total || p[i + 1] != '.') return false;
-        char *endp = nullptr;
-        index = static_cast<size_t>(std::strtoull(p + numStart, &endp, 10));
-        inner = String(p + i + 2, total - (i + 2));
-        return true;
-}
-
-} // namespace
-
-std::optional<String> Frame::resolveTemplateKey(const String &key, const String &spec) const {
-        if(!key.isEmpty() && key.cstr()[0] == '@') {
-                return resolvePseudoKey(key, spec);
-        }
-        size_t idx = 0;
-        String inner;
-        if(parseSubscript(key, "Image", idx, inner)) {
-                if(idx >= _imageList.size()) return std::nullopt;
-                const Image::Ptr &img = _imageList[idx];
-                if(!img) return std::nullopt;
-                return img->resolveTemplateKey(inner, spec);
-        }
-        if(parseSubscript(key, "Audio", idx, inner)) {
-                if(idx >= _audioList.size()) return std::nullopt;
-                const Audio::Ptr &aud = _audioList[idx];
-                if(!aud) return std::nullopt;
-                return aud->resolveTemplateKey(inner, spec);
-        }
-        Metadata::ID id = Metadata::ID::find(key);
-        if(id.isValid() && _metadata.contains(id)) {
-                return _metadata.get(id).format(spec);
-        }
-        return std::nullopt;
-}
-
-std::optional<String> Frame::resolvePseudoKey(const String &key, const String &spec) const {
-        Variant v;
-        if(key == String("@ImageCount"))         v = static_cast<uint64_t>(_imageList.size());
-        else if(key == String("@AudioCount"))    v = static_cast<uint64_t>(_audioList.size());
-        else if(key == String("@HasBenchmark"))  v = _benchmark.isValid();
-        else if(key == String("@VideoFormat")) {
-                v = videoFormat(0);
-        }
-        else if(key.byteCount() > std::strlen("@VideoFormat[")
-                && std::strncmp(key.cstr(), "@VideoFormat[",
-                                std::strlen("@VideoFormat[")) == 0
-                && key.cstr()[key.byteCount() - 1] == ']') {
-                // @VideoFormat[N] — parse the index, fail to nullopt
-                // if it's malformed or out-of-range so the caller's
-                // resolver still gets a chance.
-                const size_t pfx = std::strlen("@VideoFormat[");
-                const size_t numLen = key.byteCount() - pfx - 1;
-                String numStr(key.cstr() + pfx, numLen);
-                char *endp = nullptr;
-                size_t idx = static_cast<size_t>(
-                        std::strtoull(numStr.cstr(), &endp, 10));
-                if(endp == nullptr || *endp != '\0' || numLen == 0) {
-                        return std::nullopt;
+StringList Frame::dump(const String &indent) const {
+        StringList out;
+        VariantLookup<Frame>::forEachScalar([this, &out, &indent](const String &name) {
+                auto v = VariantLookup<Frame>::resolve(*this, name);
+                if(v.has_value()) {
+                        out += indent + name + ": " + v->format(String());
                 }
-                if(idx >= _imageList.size()) return std::nullopt;
-                v = videoFormat(idx);
+        });
+
+        StringList mdLines = _metadata.dump();
+        if(!mdLines.isEmpty()) {
+                out += indent + "Meta:";
+                String sub = indent + "  ";
+                for(const String &ln : mdLines) out += sub + ln;
         }
-        else return std::nullopt;
-        return v.format(spec);
+
+        if(!_configUpdate.isEmpty()) {
+                out += indent + "ConfigUpdate:";
+                String sub = indent + "  ";
+                _configUpdate.forEach([&out, &sub](MediaConfig::ID id, const Variant &value) {
+                        String s = id.name();
+                        s += " [";
+                        s += value.typeName();
+                        s += "]: ";
+                        // format() renders via the Variant's own formatter
+                        // and handles types (PixelDesc, FrameRate, etc.)
+                        // whose get<String> would silently produce an
+                        // empty string.
+                        s += value.format(String());
+                        out += sub + s;
+                });
+        }
+
+        for(size_t i = 0; i < _imageList.size(); ++i) {
+                out += indent + String::sprintf("Image[%zu]:", i);
+                const Image::Ptr &img = _imageList[i];
+                if(img.isValid()) {
+                        StringList lines = img->dump(indent + "  ");
+                        for(const String &ln : lines) out += ln;
+                } else {
+                        out += indent + "  <null>";
+                }
+        }
+        for(size_t i = 0; i < _audioList.size(); ++i) {
+                out += indent + String::sprintf("Audio[%zu]:", i);
+                const Audio::Ptr &aud = _audioList[i];
+                if(aud.isValid()) {
+                        StringList lines = aud->dump(indent + "  ");
+                        for(const String &ln : lines) out += ln;
+                } else {
+                        out += indent + "  <null>";
+                }
+        }
+        return out;
 }
+
+PROMEKI_LOOKUP_REGISTER(Frame)
+        .scalar("ImageCount",
+                [](const Frame &f) -> std::optional<Variant> {
+                        return Variant(static_cast<uint64_t>(f.imageList().size()));
+                })
+        .scalar("AudioCount",
+                [](const Frame &f) -> std::optional<Variant> {
+                        return Variant(static_cast<uint64_t>(f.audioList().size()));
+                })
+        .scalar("HasBenchmark",
+                [](const Frame &f) -> std::optional<Variant> {
+                        return Variant(f.benchmark().isValid());
+                })
+        .scalar("VideoFormat",
+                [](const Frame &f) -> std::optional<Variant> {
+                        return Variant(f.videoFormat(0));
+                })
+        .indexedScalar("VideoFormat",
+                [](const Frame &f, size_t i) -> std::optional<Variant> {
+                        if(i >= f.imageList().size()) return std::nullopt;
+                        return Variant(f.videoFormat(i));
+                })
+        .indexedChild<Image>("Image",
+                [](const Frame &f, size_t i) -> const Image * {
+                        if(i >= f.imageList().size()) return nullptr;
+                        const Image::Ptr &img = f.imageList()[i];
+                        if(!img.isValid()) return nullptr;
+                        return img.ptr();
+                },
+                [](Frame &f, size_t i) -> Image * {
+                        if(i >= f.imageList().size()) return nullptr;
+                        Image::Ptr &img = f.imageList()[i];
+                        if(!img.isValid()) return nullptr;
+                        return img.modify();
+                })
+        .indexedChild<Audio>("Audio",
+                [](const Frame &f, size_t i) -> const Audio * {
+                        if(i >= f.audioList().size()) return nullptr;
+                        const Audio::Ptr &aud = f.audioList()[i];
+                        if(!aud.isValid()) return nullptr;
+                        return aud.ptr();
+                },
+                [](Frame &f, size_t i) -> Audio * {
+                        if(i >= f.audioList().size()) return nullptr;
+                        Audio::Ptr &aud = f.audioList()[i];
+                        if(!aud.isValid()) return nullptr;
+                        return aud.modify();
+                })
+        .database<"Metadata">("Meta",
+                [](const Frame &f) -> const VariantDatabase<"Metadata"> * {
+                        return &f.metadata();
+                },
+                [](Frame &f) -> VariantDatabase<"Metadata"> * {
+                        return &f.metadata();
+                });
 
 PROMEKI_NAMESPACE_END
 

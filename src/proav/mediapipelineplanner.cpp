@@ -480,9 +480,7 @@ Error resolveRoute(const MediaPipelineConfig::Route &route,
         String prevName = route.from;
         for(size_t i = 0; i < chain.size(); ++i) {
                 MediaPipelineConfig::Stage bridgeStage;
-                bridgeStage.name = route.from + "__bridge"
-                                 + String::number(*bridgeCounter)
-                                 + "__" + route.to;
+                bridgeStage.name = "br" + String::number(*bridgeCounter) + "_" + route.from + "_" + route.to;
                 bridgeStage.type = chain[i].backendName;
                 bridgeStage.mode = MediaIO::Transform;
                 bridgeStage.config = chain[i].config;

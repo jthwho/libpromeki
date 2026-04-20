@@ -18,8 +18,10 @@
 #include <promeki/mediapacket.h>
 #include <promeki/metadata.h>
 #include <promeki/list.h>
+#include <promeki/stringlist.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/videoformat.h>
+#include <promeki/variantlookup.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -170,99 +172,28 @@ class Frame {
                 void setConfigUpdate(MediaConfig cfg) { _configUpdate = std::move(cfg); }
 
                 /**
-                 * @brief Resolves a single template key against this frame's structure.
+                 * @brief Returns a human-readable multi-line dump of
+                 *        this frame's full contents.
                  *
-                 * Used by @ref makeString.  Returns a value when the
-                 * key names something this frame can describe and
-                 * @c std::nullopt otherwise.  The recognised forms
-                 * mirror @ref makeString:
+                 * Emits the scalar-key block registered with
+                 * @c VariantLookup<Frame> (@c ImageCount, @c AudioCount,
+                 * @c HasBenchmark), the frame's metadata via
+                 * @ref Metadata::dump, the @ref configUpdate delta
+                 * when non-empty, and then @ref Image::dump /
+                 * @ref Audio::dump for every entry indented by two
+                 * spaces.
                  *
-                 *  - @c "@<Pseudo>" — frame-level introspection (see
-                 *    @ref makeString for the list).
-                 *  - @c "Image[N].<sub>" — delegates to
-                 *    @ref Image::resolveTemplateKey on the image at
-                 *    index @c N.  When @c N is out of range or the
-                 *    image is null, returns @c std::nullopt.
-                 *  - @c "Audio[N].<sub>" — delegates to
-                 *    @ref Audio::resolveTemplateKey on the audio at
-                 *    index @c N.
-                 *  - Any registered metadata key — looked up in the
-                 *    frame's @ref metadata and rendered with
-                 *    @ref Variant::format.
+                 * No leading @c "Frame:" header is emitted — callers
+                 * that need one (e.g. @c pmdf-inspect printing a
+                 * frame index) prepend their own title and an
+                 * additional indent so the output is uniform
+                 * regardless of whether one frame or many are being
+                 * printed.
                  *
-                 * @param key  The placeholder key (no braces, no colon).
-                 * @param spec The format spec (may be empty).
+                 * @param indent Leading whitespace to prefix every line.
+                 * @return A @ref StringList (one entry per line).
                  */
-                std::optional<String> resolveTemplateKey(const String &key, const String &spec) const;
-
-                /**
-                 * @brief Substitutes @c {Key[:spec]} placeholders against this frame.
-                 *
-                 * Built on top of @ref Metadata::format with a custom
-                 * resolver that adds three layers of introspection on
-                 * top of the bare metadata lookup:
-                 *
-                 *  1. Frame-level pseudo keys (prefixed with @c "@" so
-                 *     they cannot collide with metadata keys):
-                 *     - @c \@ImageCount, @c \@AudioCount — list
-                 *       sizes (uint64).
-                 *     - @c \@HasBenchmark — bool.
-                 *     - @c \@VideoFormat / @c \@VideoFormat[N] —
-                 *       @ref VideoFormat for image @c N (default 0).
-                 *       Combines the frame's @c Metadata::FrameRate
-                 *       with the image's raster and scan mode and
-                 *       honours @ref VideoFormat format specs (e.g.
-                 *       @c :smpte).  Out-of-range @c N falls through
-                 *       to the user resolver / unknown-key path.
-                 *  2. Subscripted descent into images and audio — any
-                 *     placeholder of the form @c "Image[N].<sub>" or
-                 *     @c "Audio[N].<sub>" is dispatched to the
-                 *     corresponding @ref Image::resolveTemplateKey or
-                 *     @ref Audio::resolveTemplateKey, so the full
-                 *     vocabulary of those classes (their pseudo keys
-                 *     and their own metadata) is available with no
-                 *     extra plumbing.
-                 *  3. The user-supplied @p resolver is consulted last
-                 *     for anything else.
-                 *
-                 * @par Example
-                 * @code
-                 * Frame::Ptr frame = Frame::Ptr::create();
-                 * frame.modify()->imageList().pushToBack(Image::Ptr::create(1920, 1080,
-                 *     PixelDesc::RGBA8_sRGB));
-                 * frame.modify()->metadata().set(Metadata::Timecode,
-                 *     Timecode(Timecode::NDF24, 1, 0, 0, 0));
-                 * String s = frame->makeString(
-                 *     "[{Timecode:smpte}] {@ImageCount}img {Image[0].@Size}");
-                 * // "[01:00:00:00] 1img 1920x1080"
-                 * @endcode
-                 *
-                 * @tparam Resolver Callable returning @c std::optional<String>.  Pass
-                 *                  @c nullptr to disable the user fallback.
-                 * @param tmpl     Template string with @c {Key[:spec]} placeholders.
-                 * @param resolver Optional fallback resolver consulted for any key
-                 *                 that is not a frame-level pseudo, an
-                 *                 @c Image[N] / @c Audio[N] subscript, or a key
-                 *                 present in @ref metadata.
-                 * @param err      Optional error output.
-                 */
-                template <typename Resolver>
-                String makeString(const String &tmpl, Resolver &&resolver, Error *err = nullptr) const {
-                        return _metadata.format(tmpl,
-                                [this, &resolver](const String &key, const String &spec) -> std::optional<String> {
-                                        auto v = resolveTemplateKey(key, spec);
-                                        if(v.has_value()) return v;
-                                        if constexpr (!std::is_same_v<std::decay_t<Resolver>, std::nullptr_t>) {
-                                                return resolver(key, spec);
-                                        }
-                                        return std::nullopt;
-                                }, err);
-                }
-
-                /** @brief Convenience overload of @ref makeString with no fallback resolver. */
-                String makeString(const String &tmpl, Error *err = nullptr) const {
-                        return makeString(tmpl, nullptr, err);
-                }
+                StringList dump(const String &indent = String()) const;
 
         private:
                 Image::PtrList         _imageList;
@@ -270,8 +201,6 @@ class Frame {
                 Metadata               _metadata;
                 Benchmark::Ptr         _benchmark;
                 MediaConfig            _configUpdate;
-
-                std::optional<String> resolvePseudoKey(const String &key, const String &spec) const;
 };
 
 PROMEKI_NAMESPACE_END

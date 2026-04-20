@@ -8,11 +8,13 @@
 #include <promeki/mediaiotask_burn.h>
 #include <promeki/enums.h>
 #include <promeki/image.h>
+#include <promeki/imagedesc.h>
 #include <promeki/frame.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/metadata.h>
 #include <promeki/pixeldesc.h>
+#include <promeki/colormodel.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -146,7 +148,7 @@ Error MediaIOTask_Burn::burnFrame(const Frame::Ptr &input, Frame::Ptr &output) {
                 outRaw->imageList().pushToBack(srcImgPtr);
         }
 
-        String burnText = outFrame->makeString(_burnTextTemplate);
+        String burnText = VariantLookup<Frame>::format(*outFrame, _burnTextTemplate);
         if(!burnText.isEmpty()) {
                 for(size_t i = 0; i < outRaw->imageList().size(); ++i) {
                         Image::Ptr &imgPtr = outRaw->imageList()[i];
@@ -224,6 +226,54 @@ Error MediaIOTask_Burn::executeCmd(MediaIOCommandStats &cmd) {
 
 int MediaIOTask_Burn::pendingOutput() const {
         return static_cast<int>(_outputQueue.size());
+}
+
+// ---- Introspection / negotiation ----
+//
+// Burn is a pure passthrough transform — output shape == input shape.
+// The only constraint is that the video PixelDesc must have a paint
+// engine, because the overlay goes through VideoTestPattern::applyBurn
+// which needs one.  We advertise that constraint via proposeInput so
+// the planner splices in a CSC ahead of us when the upstream produces
+// a non-paintable format, instead of hitting the "no paint engine"
+// warning at runtime.
+
+Error MediaIOTask_Burn::proposeInput(const MediaDesc &offered,
+                                     MediaDesc *preferred) const {
+        if(preferred == nullptr) return Error::Invalid;
+        if(offered.imageList().isEmpty()) {
+                // Audio-only frame: burn has nothing to draw on but is
+                // still a valid passthrough.
+                *preferred = offered;
+                return Error::Ok;
+        }
+        const PixelDesc &pd = offered.imageList()[0].pixelDesc();
+        if(pd.isValid() && !pd.isCompressed() && pd.hasPaintEngine()) {
+                *preferred = offered;
+                return Error::Ok;
+        }
+        // Either compressed (needs a decoder ahead of us) or
+        // uncompressed without a paint engine (needs a CSC).  Ask for
+        // a same-family paintable substitute via the shared helper so
+        // every transform backend picks the same fallback; the planner
+        // chooses the cheapest bridge chain that satisfies the gap.
+        const PixelDesc target = defaultUncompressedPixelDesc(pd);
+        MediaDesc want = offered;
+        ImageDesc::List &imgs = want.imageList();
+        for(size_t i = 0; i < imgs.size(); ++i) {
+                imgs[i].setPixelDesc(target);
+        }
+        *preferred = want;
+        return Error::Ok;
+}
+
+Error MediaIOTask_Burn::proposeOutput(const MediaDesc &requested,
+                                      MediaDesc *achievable) const {
+        if(achievable == nullptr) return Error::Invalid;
+        // Pure passthrough transform: whatever shape comes in is the
+        // shape that goes out.
+        *achievable = requested;
+        return Error::Ok;
 }
 
 PROMEKI_NAMESPACE_END

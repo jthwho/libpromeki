@@ -24,6 +24,7 @@
 #include <promeki/image.h>
 #include <promeki/audio.h>
 #include <promeki/frame.h>
+#include <promeki/mediapacket.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/mediadesc.h>
 #include <promeki/metadata.h>
@@ -1220,6 +1221,19 @@ void MediaIOTask_V4L2::videoCaptureLoop() {
                         continue;
                 }
                 Image::Ptr imgPtr = Image::Ptr::create(img);
+
+                // Compressed captures (MJPEG, etc.) need a MediaPacket
+                // pointing at the encoded bytes so a downstream
+                // VideoDecoder can find the bitstream via the
+                // Image::packet accessor.  Every V4L2 capture is a
+                // keyframe (no inter-frame prediction at this layer).
+                if(pd.isCompressed()) {
+                        auto pkt = MediaPacket::Ptr::create(imgBuf, pd);
+                        pkt.modify()->setPts(captureMts);
+                        pkt.modify()->setDts(captureMts);
+                        pkt.modify()->addFlag(MediaPacket::Keyframe);
+                        imgPtr.modify()->setPacket(std::move(pkt));
+                }
 
                 // Drop oldest if queue is over depth to keep latency low
                 while(_videoQueue.size() >= static_cast<size_t>(VideoQueueDepth)) {

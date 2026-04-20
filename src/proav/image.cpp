@@ -122,38 +122,102 @@ Image Image::convert(const PixelDesc &pd, const Metadata &metadata,
 #endif
 }
 
-std::optional<String> Image::resolveTemplateKey(const String &key, const String &spec) const {
-        if(!key.isEmpty() && key.cstr()[0] == '@') {
-                return resolvePseudoKey(key, spec);
+StringList Image::dump(const String &indent) const {
+        StringList out;
+        VariantLookup<Image>::forEachScalar([this, &out, &indent](const String &name) {
+                auto v = VariantLookup<Image>::resolve(*this, name);
+                if(v.has_value()) {
+                        out += indent + name + ": " + v->format(String());
+                }
+        });
+        for(size_t i = 0; i < _planeList.size(); ++i) {
+                const Buffer::Ptr &p = _planeList[i];
+                if(p.isValid()) {
+                        out += indent + String::sprintf("Plane[%zu]: size=%zu bytes (alloc=%zu, align=%zu)",
+                                                        i, p->size(), p->allocSize(), p->align());
+                } else {
+                        out += indent + String::sprintf("Plane[%zu]: <null>", i);
+                }
         }
-        Metadata::ID id = Metadata::ID::find(key);
-        if(id.isValid() && _desc.metadata().contains(id)) {
-                return _desc.metadata().get(id).format(spec);
+        if(_packet.isValid()) {
+                out += indent + String::sprintf("Packet: pts=%s dts=%s flags=0x%08x size=%zu",
+                                                _packet->pts().toString().cstr(),
+                                                _packet->dts().toString().cstr(),
+                                                static_cast<unsigned>(_packet->flags()),
+                                                _packet->size());
         }
-        return std::nullopt;
+        StringList mdLines = _desc.metadata().dump();
+        if(!mdLines.isEmpty()) {
+                out += indent + "Meta:";
+                String sub = indent + "  ";
+                for(const String &ln : mdLines) out += sub + ln;
+        }
+        return out;
 }
 
-std::optional<String> Image::resolvePseudoKey(const String &key, const String &spec) const {
-        // Build a Variant for the requested introspection value and let
-        // Variant::format apply the spec — this gives templates the full
-        // std::format vocabulary for free (e.g. "{@Width:05}").
-        Variant v;
-        if(key == String("@Width"))                v = static_cast<uint32_t>(_desc.width());
-        else if(key == String("@Height"))          v = static_cast<uint32_t>(_desc.height());
-        else if(key == String("@Size"))            v = _desc.size();
-        else if(key == String("@PixelDesc"))       v = _desc.pixelDesc();
-        else if(key == String("@PixelFormat"))     v = _desc.pixelFormat();
-        else if(key == String("@ColorModel"))      v = _desc.colorModel();
-        else if(key == String("@LinePad"))         v = static_cast<uint64_t>(_desc.linePad());
-        else if(key == String("@LineAlign"))       v = static_cast<uint64_t>(_desc.lineAlign());
-        else if(key == String("@ScanMode"))        v = _desc.videoScanMode().valueName();
-        else if(key == String("@PlaneCount"))      v = static_cast<int32_t>(_desc.planeCount());
-        else if(key == String("@IsValid"))         v = isValid();
-        else if(key == String("@IsCompressed"))    v = isCompressed();
-        else if(key == String("@IsExclusive"))     v = isExclusive();
-        else if(key == String("@CompressedSize"))  v = static_cast<uint64_t>(compressedSize());
-        else return std::nullopt;
-        return v.format(spec);
-}
+PROMEKI_LOOKUP_REGISTER(Image)
+        .scalar("Width",
+                [](const Image &i) -> std::optional<Variant> {
+                        return Variant(static_cast<uint32_t>(i.desc().width()));
+                })
+        .scalar("Height",
+                [](const Image &i) -> std::optional<Variant> {
+                        return Variant(static_cast<uint32_t>(i.desc().height()));
+                })
+        .scalar("Size",
+                [](const Image &i) -> std::optional<Variant> {
+                        return Variant(i.desc().size());
+                })
+        .scalar("PixelDesc",
+                [](const Image &i) -> std::optional<Variant> {
+                        return Variant(i.desc().pixelDesc());
+                })
+        .scalar("PixelFormat",
+                [](const Image &i) -> std::optional<Variant> {
+                        return Variant(i.desc().pixelFormat());
+                })
+        .scalar("ColorModel",
+                [](const Image &i) -> std::optional<Variant> {
+                        return Variant(i.desc().colorModel());
+                })
+        .scalar("LinePad",
+                [](const Image &i) -> std::optional<Variant> {
+                        return Variant(static_cast<uint64_t>(i.desc().linePad()));
+                })
+        .scalar("LineAlign",
+                [](const Image &i) -> std::optional<Variant> {
+                        return Variant(static_cast<uint64_t>(i.desc().lineAlign()));
+                })
+        .scalar("ScanMode",
+                [](const Image &i) -> std::optional<Variant> {
+                        return Variant(String(i.desc().videoScanMode().valueName()));
+                })
+        .scalar("PlaneCount",
+                [](const Image &i) -> std::optional<Variant> {
+                        return Variant(static_cast<int32_t>(i.desc().planeCount()));
+                })
+        .scalar("IsValid",
+                [](const Image &i) -> std::optional<Variant> {
+                        return Variant(i.isValid());
+                })
+        .scalar("IsCompressed",
+                [](const Image &i) -> std::optional<Variant> {
+                        return Variant(i.isCompressed());
+                })
+        .scalar("IsExclusive",
+                [](const Image &i) -> std::optional<Variant> {
+                        return Variant(i.isExclusive());
+                })
+        .scalar("CompressedSize",
+                [](const Image &i) -> std::optional<Variant> {
+                        return Variant(static_cast<uint64_t>(i.compressedSize()));
+                })
+        .database<"Metadata">("Meta",
+                [](const Image &i) -> const VariantDatabase<"Metadata"> * {
+                        return &i.metadata();
+                },
+                [](Image &i) -> VariantDatabase<"Metadata"> * {
+                        return &i.metadata();
+                });
 
 PROMEKI_NAMESPACE_END

@@ -295,6 +295,31 @@ MediaIO *MediaIO::createForFileWrite(const String &filename, ObjectBase *parent)
         return io;
 }
 
+Error MediaIO::copyFramesSeekTo(MediaIO *src, int64_t fromFrame) {
+        // Prefer a single seek when the source supports it; otherwise
+        // read-and-discard to advance (expensive for large offsets but
+        // lets sequential-only sources still participate).
+        if(src->canSeek()) return src->seekToFrame(fromFrame);
+        for(int64_t skipped = 0; skipped < fromFrame; ++skipped) {
+                Frame::Ptr discard;
+                Error e = src->readFrame(discard);
+                if(e.isError()) return e;
+        }
+        return Error::Ok;
+}
+
+Error MediaIO::copyFrames(MediaIO *src, MediaIO *dst,
+                          int64_t fromFrame, int64_t count,
+                          int64_t *copied) {
+        // Delegates to the template overload with a trivial pass-through
+        // mutate.  Each call site instantiates the template against the
+        // same identity lambda, so there is no run-time cost to the
+        // extra hop.
+        return copyFrames(src, dst, fromFrame, count,
+                          [](const Frame::Ptr &f, int64_t) { return f; },
+                          copied);
+}
+
 StringList MediaIO::enumerate(const String &typeName) {
         const FormatDesc *desc = findFormatByName(typeName);
         if(desc == nullptr || !desc->enumerate) return StringList();
@@ -721,15 +746,41 @@ void MediaIO::submitReadCommand() {
                                 }
                         }
 
+                        // TryAgain means "no output available yet" — a
+                        // transient condition, not a completion.  Don't
+                        // push it to the result queue and don't signal
+                        // readers: a pushed TryAgain would trigger the
+                        // consumer to immediately resubmit a prefetch,
+                        // which would also return TryAgain, and so on
+                        // in a tight busy loop that starves the main
+                        // event loop (and any other consumer dispatching
+                        // on it, e.g. the SDL renderer's renderPending
+                        // callable).
+                        //
+                        // Source tasks are the only wake source for
+                        // themselves — if a source returned TryAgain
+                        // (e.g. a V4L2 capture timeout), re-submit the
+                        // prefetch so the poll continues.  Transform
+                        // tasks rely on their write side to wake the
+                        // read: the write strand handler below emits
+                        // frameReadySignal after a successful write,
+                        // which drives the downstream pipeline to call
+                        // readFrame again and re-arm the prefetch.
+                        if(cr->result == Error::TryAgain) {
+                                _pendingReadCount.fetchAndSub(1);
+                                if(_mode == Source && !_closing) {
+                                        submitReadCommand();
+                                }
+                                return;
+                        }
                         _readResultQueue.push(cmd);
                         _pendingReadCount.fetchAndSub(1);
-                        // Fire on every completion — success, EOF, or
-                        // error.  Signal-driven consumers need the
-                        // signal for terminal results too so they can
-                        // observe EOF/errors via a subsequent
-                        // readFrame(..., false) call that pops the
-                        // queued result.  The signal is "a read
-                        // finished", not "a frame is available".
+                        // Fire on every non-transient completion —
+                        // success, EOF, or error.  Signal-driven
+                        // consumers need the signal for terminal
+                        // results too so they can observe EOF/errors
+                        // via a subsequent readFrame(..., false) call
+                        // that pops the queued result.
                         frameReadySignal.emit();
                         // A successful read drained the task's output
                         // FIFO by one slot, which raises writesAccepted
@@ -1331,6 +1382,23 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
                                                 _rateTracker.record(
                                                         frameByteSize(cw->frame));
                                                 frameWantedSignal.emit();
+                                                // Transform tasks may have
+                                                // produced output as a
+                                                // side-effect of this write
+                                                // (e.g. VideoDecoder pushes
+                                                // a decoded frame onto its
+                                                // output queue).  Wake the
+                                                // read side so a waiting
+                                                // prefetch gets re-armed and
+                                                // picks up the new frame —
+                                                // without this emit, the
+                                                // read side can go silent
+                                                // since readFrame on a
+                                                // Transform returns TryAgain
+                                                // without pushing a result.
+                                                if(_mode == Transform) {
+                                                        frameReadySignal.emit();
+                                                }
                                         } else {
                                                 writeErrorSignal.emit(err);
                                         }
@@ -1344,6 +1412,11 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
                                 _rateTracker.record(
                                         frameByteSize(cw->frame));
                                 frameWantedSignal.emit();
+                                // Wake the read side — see the matching
+                                // comment on the benchmarked path above.
+                                if(_mode == Transform) {
+                                        frameReadySignal.emit();
+                                }
                         } else {
                                 writeErrorSignal.emit(err);
                         }

@@ -18,6 +18,7 @@
 #include <cmath>
 #include <chrono>
 #include <algorithm>
+#include <climits>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -143,6 +144,9 @@ void FrameSync::resetLocked(bool setExplicitOrigin, int64_t originNs) {
         _heldVideo = Image::Ptr();
         _hasHeldVideo = false;
         _heldVideoSourceTsNs = 0;
+
+        _pendingFrameSyncDrops = 0;
+        _frameSyncRepeatIndex  = 0;
 
         _sourceAudioRateHz = 0.0;
         _sourceVideoRateHz = 0.0;
@@ -555,7 +559,7 @@ Audio::Ptr FrameSync::produceAudio(int64_t targetSamples) {
         return Audio::Ptr::create(out);
 }
 
-Result<FrameSync::PullResult> FrameSync::pullFrame() {
+Result<FrameSync::PullResult> FrameSync::pullFrame(bool blockOnEmpty) {
         PullResult result;
         if(_clock == nullptr) {
                 return Result<PullResult>(result, Error::Invalid);
@@ -574,20 +578,35 @@ Result<FrameSync::PullResult> FrameSync::pullFrame() {
                 }
 
                 // Anchor origin on the first pull if no explicit
-                // origin was supplied.  Wait until the producer has
-                // actually queued a frame before capturing origin —
-                // otherwise the pull timeline begins earlier than
-                // the source and the first few pulls waste periods
-                // as repeats (and then catch up with drops).
+                // origin was supplied.  We defer anchoring until the
+                // producer has actually queued a frame so the pull
+                // timeline doesn't begin earlier than the source
+                // (otherwise the first few pulls are wasted as
+                // repeats before the stream catches up).
+                //
+                // Callers that cannot afford to block (the MediaIO
+                // strand — see @ref pullFrame docs) pass
+                // @c blockOnEmpty=false and receive @c TryAgain
+                // instead.  Callers on a dedicated thread (e.g.
+                // SDLPlayerTask::pullLoop) keep the legacy blocking
+                // behaviour so they can wait indefinitely for the
+                // first push.
                 if(!_started) {
-                        while(_queue.isEmpty() && !_eos &&
-                              !_interrupted) {
-                                _cv.wait(_mutex);
-                        }
-                        if(_interrupted) {
-                                _interrupted = false;
+                        if(blockOnEmpty) {
+                                while(_queue.isEmpty() && !_eos &&
+                                      !_interrupted) {
+                                        _cv.wait(_mutex);
+                                }
+                                if(_interrupted) {
+                                        _interrupted = false;
+                                        return Result<PullResult>(
+                                                result, Error::Interrupt);
+                                }
+                        } else if(_queue.isEmpty()) {
+                                if(_eos) return Result<PullResult>(
+                                                result, Error::EndOfFile);
                                 return Result<PullResult>(
-                                        result, Error::Interrupt);
+                                        result, Error::TryAgain);
                         }
                         _originNs = _clock->nowNs();
                         _started = true;
@@ -621,6 +640,8 @@ Result<FrameSync::PullResult> FrameSync::pullFrame() {
         }
         Audio::Ptr outAudio;
         int64_t    actualNs = 0;
+        int64_t    frameSyncDrop = 0;
+        int64_t    frameSyncRepeat = 0;
         {
                 Mutex::Locker lock(_mutex);
                 if(_interrupted) {
@@ -635,6 +656,24 @@ Result<FrameSync::PullResult> FrameSync::pullFrame() {
                 selectVideo(sourceTimeNs, nextSourceTimeNs,
                             outImage, outRepeated, outDropped);
                 outAudio = produceAudio(audioTargetSamples);
+
+                // Compute FrameSyncDrop/FrameSyncRepeat values for
+                // this output.  Drops that occur while the output is
+                // stuck on a repeat are held in _pendingFrameSyncDrops
+                // and flushed on the next fresh emit so the reported
+                // drop count is attached to the exact output that
+                // represents the "resumed new input" — per the spec,
+                // FrameSyncDrop is always zero on repeat frames.
+                _pendingFrameSyncDrops += outDropped;
+                if(outRepeated > 0) {
+                        _frameSyncRepeatIndex++;
+                        frameSyncRepeat = _frameSyncRepeatIndex;
+                        // frameSyncDrop stays 0 on repeats.
+                } else {
+                        frameSyncDrop = _pendingFrameSyncDrops;
+                        _pendingFrameSyncDrops = 0;
+                        _frameSyncRepeatIndex  = 0;
+                }
 
                 actualNs = _clock->nowNs();
                 _accumulatedErrorNs = actualNs - deadlineNs;
@@ -676,6 +715,15 @@ Result<FrameSync::PullResult> FrameSync::pullFrame() {
         }
         outFrame.modify()->metadata().set(Metadata::MediaTimeStamp, outStamp);
         outFrame.modify()->metadata().set(Metadata::FrameNumber, currentIndex);
+        // FrameSyncDrop/FrameSyncRepeat are declared as int32 in the
+        // Metadata schema; clamp here so an unexpectedly large
+        // accumulated drop count (e.g. a badly stalled pipeline) does
+        // not silently wrap or truncate on the 64→32-bit cast.
+        constexpr int64_t kMaxS32 = static_cast<int64_t>(INT32_MAX);
+        outFrame.modify()->metadata().set(Metadata::FrameSyncDrop,
+                static_cast<int32_t>(std::min(frameSyncDrop, kMaxS32)));
+        outFrame.modify()->metadata().set(Metadata::FrameSyncRepeat,
+                static_cast<int32_t>(std::min(frameSyncRepeat, kMaxS32)));
 
         // Advance the synthetic clock in lockstep so its nowNs() tracks
         // the number of emitted output frames.

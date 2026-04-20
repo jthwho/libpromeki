@@ -636,12 +636,25 @@ static Image decodeToYCbCr(const Image &input, PixelDesc::ID outputPd, YCbCrInfo
                         }
                 }
 
-                // For interleaved output, combine luma + chroma into packed lines
+                // For interleaved output, combine luma + chroma into packed lines.
+                // chromaRow must track the *source* JPEG's subsampling (how many
+                // chroma rows libjpeg delivered for this MCU group), not the
+                // output layout.  Using info.is420 (the output layout's flag)
+                // would walk off the end of cbRowBufs/crRowBufs whenever the
+                // source is 4:2:0 but the output is 4:2:2 (e.g. a 4:2:0 USB
+                // MJPEG webcam decoding to YUV8_422_Rec709) — chroma buffers
+                // only hold chromaMcuRows entries while the luma loop runs for
+                // mcuRows.  chromaMcuRows / mcuRows gives the correct chroma
+                // upsample ratio for the usual Cb_v_samp=1 cases (4:4:4, 4:2:2,
+                // 4:2:0), replicating each chroma row as needed.
                 if(info.layout == LayoutInterleavedUYVY || info.layout == LayoutInterleavedYUYV) {
                         for(int r = 0; r < mcuRows; r++) {
                                 int line = lumaStart + r;
                                 if(line >= height) break;
-                                int chromaRow = info.is420 ? r / 2 : r;
+                                int chromaRow = (mcuRows > 0)
+                                        ? (r * chromaMcuRows / mcuRows)
+                                        : 0;
+                                if(chromaRow >= chromaMcuRows) chromaRow = chromaMcuRows - 1;
                                 interleaveFn(dstY + line * strideOut,
                                              yRowBufs[r].data(),
                                              cbRowBufs[chromaRow].data(),

@@ -8,6 +8,8 @@
 #include <promeki/mediaiotask.h>
 
 #include <promeki/audiodesc.h>
+#include <promeki/color.h>
+#include <promeki/colormodel.h>
 #include <promeki/enums.h>
 #include <promeki/imagedesc.h>
 #include <promeki/mediaconfig.h>
@@ -87,6 +89,18 @@ Error MediaIOTask::proposeOutput(const MediaDesc &requested,
         (void)requested;
         if(achievable != nullptr) *achievable = MediaDesc();
         return Error::NotSupported;
+}
+
+PixelDesc MediaIOTask::defaultUncompressedPixelDesc(const PixelDesc &source) {
+        // Both fallbacks are registered in the PixelDesc well-known
+        // table and carry paint engines, so the planner can splice a
+        // cheap one-hop CSC between the source and us.  A YCbCr source
+        // stays in the YUV family to minimise that CSC cost.
+        const bool isYuv = source.isValid()
+                && source.colorModel().type() == ColorModel::TypeYCbCr;
+        return isYuv
+                ? PixelDesc(PixelDesc::YUV8_422_Rec709)
+                : PixelDesc(PixelDesc::RGBA8_sRGB);
 }
 
 MediaDesc MediaIOTask::applyOutputOverrides(const MediaDesc &input,

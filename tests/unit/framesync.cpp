@@ -232,8 +232,9 @@ TEST_CASE("FrameSync: first pull blocks until a frame is pushed") {
         fs.setClock(&clk);
         fs.reset();
 
-        // A pull on an empty sync blocks.  Interrupt it from another
-        // thread and verify the caller observes Error::Interrupt.
+        // Default blocking pull waits on the CV until a frame
+        // arrives.  Interrupt it from another thread and verify the
+        // caller observes Error::Interrupt.
         std::thread interrupter([&]{
                 std::this_thread::sleep_for(std::chrono::milliseconds(20));
                 fs.interrupt();
@@ -241,6 +242,39 @@ TEST_CASE("FrameSync: first pull blocks until a frame is pushed") {
         auto r = fs.pullFrame();
         interrupter.join();
         CHECK(r.second() == Error::Interrupt);
+        CHECK(fs.framesOut() == 0);
+}
+
+TEST_CASE("FrameSync: non-blocking first pull on empty queue returns TryAgain") {
+        FrameRate fps(FrameRate::FPS_30);
+        SyntheticClock clk(fps);
+        FrameSync fs;
+        fs.setTargetFrameRate(fps);
+        fs.setClock(&clk);
+        fs.reset();
+
+        // Callers that share a strand with the producer (MediaIO)
+        // pass blockOnEmpty=false to avoid deadlocking against the
+        // very push that would wake them.
+        auto r = fs.pullFrame(/*blockOnEmpty=*/false);
+        CHECK(r.second() == Error::TryAgain);
+        CHECK(fs.framesOut() == 0);
+}
+
+TEST_CASE("FrameSync: non-blocking first pull after EOS reports EOF") {
+        FrameRate fps(FrameRate::FPS_30);
+        SyntheticClock clk(fps);
+        FrameSync fs;
+        fs.setTargetFrameRate(fps);
+        fs.setClock(&clk);
+        fs.reset();
+
+        // EOS with an empty queue has to surface as EndOfFile so
+        // the pipeline cascade can latch and close — TryAgain would
+        // leave the consumer waiting on a wake that never arrives.
+        fs.pushEndOfStream();
+        auto r = fs.pullFrame(/*blockOnEmpty=*/false);
+        CHECK(r.second() == Error::EndOfFile);
         CHECK(fs.framesOut() == 0);
 }
 
@@ -275,6 +309,125 @@ TEST_CASE("FrameSync: drained queue repeats the last held frame") {
         REQUIRE(r1.second().isOk());
         CHECK(r0.first().framesRepeated == 0);
         CHECK(r1.first().framesRepeated == 1);
+}
+
+// ===========================================================================
+// FrameSyncDrop / FrameSyncRepeat metadata
+// ===========================================================================
+
+TEST_CASE("FrameSync: steady-state stamps FrameSyncDrop=0 and FrameSyncRepeat=0") {
+        FrameRate fps(FrameRate::FPS_60);
+        SyntheticClock clk(fps);
+        FrameSync fs(String("meta-steady"));
+        fs.setTargetFrameRate(fps);
+        fs.setClock(&clk);
+        fs.reset();
+
+        for(int i = 0; i < 4; i++) {
+                fs.pushFrame(makeVideoOnlyFrame(srcFrameNs(fps, i)));
+        }
+        for(int i = 0; i < 4; i++) {
+                auto r = fs.pullFrame();
+                REQUIRE(r.second().isOk());
+                const Metadata &m = r.first().frame->metadata();
+                CHECK(m.get(Metadata::FrameSyncDrop).get<int32_t>() == 0);
+                CHECK(m.get(Metadata::FrameSyncRepeat).get<int32_t>() == 0);
+        }
+}
+
+TEST_CASE("FrameSync: upsample increments FrameSyncRepeat on held repeats") {
+        // FPS_30 -> FPS_60: each source frame is emitted once
+        // fresh and then repeated once, yielding the sequence
+        // F0[0] F0[1] F1[0] F1[1] F2[0] F2[1].
+        FrameRate src(FrameRate::FPS_30);
+        FrameRate tgt(FrameRate::FPS_60);
+        SyntheticClock clk(tgt);
+        FrameSync fs(String("meta-up"));
+        fs.setTargetFrameRate(tgt);
+        fs.setClock(&clk);
+        fs.reset();
+
+        for(int i = 0; i < 3; i++) {
+                fs.pushFrame(makeVideoOnlyFrame(srcFrameNs(src, i)));
+        }
+
+        const int32_t expected[6] = { 0, 1, 0, 1, 0, 1 };
+        for(int i = 0; i < 6; i++) {
+                auto r = fs.pullFrame();
+                REQUIRE(r.second().isOk());
+                const Metadata &m = r.first().frame->metadata();
+                CHECK(m.get(Metadata::FrameSyncRepeat).get<int32_t>()
+                      == expected[i]);
+                // Upsample drops no source frames — every output
+                // FrameSyncDrop should be zero, whether fresh or repeat.
+                CHECK(m.get(Metadata::FrameSyncDrop).get<int32_t>() == 0);
+        }
+}
+
+TEST_CASE("FrameSync: downsample reports FrameSyncDrop on the next fresh emit") {
+        // FPS_60 -> FPS_24: each target pull consumes roughly 2.5
+        // source frames.  After the first emit, subsequent pulls drop
+        // intermediates and the dropped count is stamped on the fresh
+        // emit that follows.  FrameSyncRepeat is always zero — the
+        // output side is never stuck on a repeat because input is
+        // arriving faster than output.
+        FrameRate src(FrameRate::FPS_60);
+        FrameRate tgt(FrameRate::FPS_24);
+        SyntheticClock clk(tgt);
+        FrameSync fs(String("meta-down"));
+        fs.setTargetFrameRate(tgt);
+        fs.setClock(&clk);
+        fs.setInputQueueCapacity(16);
+        fs.reset();
+
+        for(int i = 0; i < 9; i++) {
+                fs.pushFrame(makeVideoOnlyFrame(srcFrameNs(src, i)));
+        }
+
+        // First pull emits the frame at t=0 with no drops recorded
+        // yet.  Subsequent fresh emits carry the drops accumulated
+        // since the previous fresh emit.
+        auto r0 = fs.pullFrame();
+        REQUIRE(r0.second().isOk());
+        CHECK(r0.first().frame->metadata()
+                .get(Metadata::FrameSyncDrop).get<int32_t>() == 0);
+        CHECK(r0.first().frame->metadata()
+                .get(Metadata::FrameSyncRepeat).get<int32_t>() == 0);
+
+        for(int i = 0; i < 2; i++) {
+                auto r = fs.pullFrame();
+                REQUIRE(r.second().isOk());
+                const Metadata &m = r.first().frame->metadata();
+                CHECK(m.get(Metadata::FrameSyncRepeat).get<int32_t>() == 0);
+                CHECK(m.get(Metadata::FrameSyncDrop).get<int32_t>()
+                      == static_cast<int32_t>(r.first().framesDropped));
+                CHECK(m.get(Metadata::FrameSyncDrop).get<int32_t>() >= 1);
+        }
+}
+
+TEST_CASE("FrameSync: empty-queue repeat stamps FrameSyncRepeat and zero drop") {
+        FrameRate fps(FrameRate::FPS_30);
+        SyntheticClock clk(fps);
+        FrameSync fs(String("meta-drained"));
+        fs.setTargetFrameRate(fps);
+        fs.setClock(&clk);
+        fs.reset();
+
+        fs.pushFrame(makeVideoOnlyFrame(srcFrameNs(fps, 0)));
+        auto r0 = fs.pullFrame();
+        REQUIRE(r0.second().isOk());
+        CHECK(r0.first().frame->metadata()
+                .get(Metadata::FrameSyncRepeat).get<int32_t>() == 0);
+        CHECK(r0.first().frame->metadata()
+                .get(Metadata::FrameSyncDrop).get<int32_t>() == 0);
+
+        for(int i = 1; i <= 3; i++) {
+                auto r = fs.pullFrame();
+                REQUIRE(r.second().isOk());
+                const Metadata &m = r.first().frame->metadata();
+                CHECK(m.get(Metadata::FrameSyncRepeat).get<int32_t>() == i);
+                CHECK(m.get(Metadata::FrameSyncDrop).get<int32_t>() == 0);
+        }
 }
 
 // ===========================================================================
