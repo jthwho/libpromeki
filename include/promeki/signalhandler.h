@@ -11,6 +11,7 @@
 #include <functional>
 
 #include <promeki/namespace.h>
+#include <promeki/eventloop.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

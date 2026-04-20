@@ -8,9 +8,10 @@
 
 #pragma once
 
+#include <functional>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
-#include <promeki/variant.h>
+#include <promeki/variant_fwd.h>
 #include <promeki/sharedptr.h>
 #include <promeki/datastream.h>
 #include <nlohmann/json.hpp>
@@ -231,44 +232,20 @@ class JsonObject {
         /** @brief Sets a String value for the given key. */
         void set(const String &key, const String &val) { _j[key.str()] = val.str(); }
         /** @brief Sets a UUID value (stored as its string representation) for the given key. */
-        void set(const String &key, const UUID &val) { _j[key.str()] = val.toString().str(); }
+        void set(const String &key, const UUID &val);
 
         /**
          * @brief Sets a value from a Variant, automatically selecting the JSON type.
          * @param key The key to set.
          * @param val The Variant whose value and type determine the stored JSON value.
          */
-        void setFromVariant(const String &key, const Variant &val) {
-            const auto &k = key.str();
-            switch(val.type()) {
-                case Variant::TypeInvalid: _j[k] = nullptr; break;
-                case Variant::TypeBool:    _j[k] = val.get<bool>(); break;
-                case Variant::TypeU8:      _j[k] = val.get<uint8_t>(); break;
-                case Variant::TypeS8:      _j[k] = val.get<int8_t>(); break;
-                case Variant::TypeU16:     _j[k] = val.get<uint16_t>(); break;
-                case Variant::TypeS16:     _j[k] = val.get<int16_t>(); break;
-                case Variant::TypeU32:     _j[k] = val.get<uint32_t>(); break;
-                case Variant::TypeS32:     _j[k] = val.get<int32_t>(); break;
-                case Variant::TypeU64:     _j[k] = val.get<uint64_t>(); break;
-                case Variant::TypeS64:     _j[k] = val.get<int64_t>(); break;
-                case Variant::TypeFloat:   _j[k] = val.get<float>(); break;
-                case Variant::TypeDouble:  _j[k] = val.get<double>(); break;
-                default:                   _j[k] = val.get<String>().str(); break;
-            }
-        }
+        void setFromVariant(const String &key, const Variant &val);
 
         /**
          * @brief Iterates over all key-value pairs in the object.
-         * @tparam Func Callable with signature void(const String &key, const Variant &val).
-         * @param func The function to invoke for each key-value pair.
+         * @param func Callback invoked for each key-value pair.
          */
-        template <typename Func> void forEach(Func &&func) const {
-            for(auto it = _j.begin(); it != _j.end(); ++it) {
-                String key = it.key();
-                Variant val = Variant::fromJson(it.value());
-                func(key, val);
-            }
-        }
+        void forEach(std::function<void(const String &key, const Variant &val)> func) const;
 
         /** @brief Returns true if both JSON objects have identical contents. */
         bool operator==(const JsonObject &other) const { return _j == other._j; }
@@ -482,41 +459,19 @@ class JsonArray {
         /** @brief Appends a String value to the array. */
         void add(const String &val) { _j.push_back(val.str()); }
         /** @brief Appends a UUID (stored as its string representation) to the array. */
-        void add(const UUID &val) { _j.push_back(val.toString().str()); }
+        void add(const UUID &val);
 
         /**
          * @brief Appends a value from a Variant, automatically selecting the JSON type.
          * @param val The Variant whose value and type determine the appended JSON element.
          */
-        void addFromVariant(const Variant &val) {
-            switch(val.type()) {
-                case Variant::TypeInvalid: _j.push_back(nullptr); break;
-                case Variant::TypeBool:    _j.push_back(val.get<bool>()); break;
-                case Variant::TypeU8:      _j.push_back(val.get<uint8_t>()); break;
-                case Variant::TypeS8:      _j.push_back(val.get<int8_t>()); break;
-                case Variant::TypeU16:     _j.push_back(val.get<uint16_t>()); break;
-                case Variant::TypeS16:     _j.push_back(val.get<int16_t>()); break;
-                case Variant::TypeU32:     _j.push_back(val.get<uint32_t>()); break;
-                case Variant::TypeS32:     _j.push_back(val.get<int32_t>()); break;
-                case Variant::TypeU64:     _j.push_back(val.get<uint64_t>()); break;
-                case Variant::TypeS64:     _j.push_back(val.get<int64_t>()); break;
-                case Variant::TypeFloat:   _j.push_back(val.get<float>()); break;
-                case Variant::TypeDouble:  _j.push_back(val.get<double>()); break;
-                default:                   _j.push_back(val.get<String>().str()); break;
-            }
-        }
+        void addFromVariant(const Variant &val);
 
         /**
          * @brief Iterates over all elements in the array.
-         * @tparam Func Callable with signature void(const Variant &val).
-         * @param func The function to invoke for each element.
+         * @param func Callback invoked for each element.
          */
-        template <typename Func> void forEach(Func &&func) const {
-            for(const auto &elem : _j) {
-                Variant val = Variant::fromJson(elem);
-                func(val);
-            }
-        }
+        void forEach(std::function<void(const Variant &val)> func) const;
 
     private:
         friend class JsonObject;

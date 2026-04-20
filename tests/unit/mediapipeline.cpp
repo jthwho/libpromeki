@@ -16,6 +16,7 @@
 #include <promeki/mediapipelineconfig.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/mediaio.h>
+#include <promeki/objectbase.tpp>
 #include <promeki/pipelinestats.h>
 #include <promeki/videoformat.h>
 

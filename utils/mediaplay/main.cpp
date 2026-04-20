@@ -46,6 +46,7 @@
 #include <promeki/mediapipelinestats.h>
 #include <promeki/memspace.h>
 #include <promeki/metadata.h>
+#include <promeki/objectbase.tpp>
 #include <promeki/rect.h>
 #include <promeki/size2d.h>
 #include <promeki/string.h>

@@ -8,6 +8,7 @@
 #pragma once
 
 #include <tuple>
+#include <type_traits>
 #include <functional>
 #include <promeki/namespace.h>
 #include <promeki/list.h>
@@ -15,6 +16,7 @@
 #include <promeki/mutex.h>
 #include <promeki/util.h>
 #include <promeki/logger.h>
+#include <promeki/variant_fwd.h>
 #include <promeki/signal.h>
 #include <promeki/slot.h>
 
@@ -55,11 +57,21 @@ class ObjectBase;
 using ObjectBaseList = List<ObjectBase *>;
 
 /**
- * @brief Object that holds a pointer to an ObjectBase (or derived) object.
- * This class will register itself with the given ObjectBase object.  When
- * the registered ObjectBase object is destroyed, it will null the internal
- * pointer.  You can use this object to ensure you don't have dangling
- * pointers to ObjectBase objects.
+ * @brief Object that holds a pointer to an ObjectBase-derived object.
+ *
+ * Registers itself with the tracked object so that when the object is
+ * destroyed the internal pointer is atomically cleared, giving you a
+ * safe, non-dangling reference.  The template parameter @p T selects
+ * the concrete type returned by @c data(); it defaults to @c ObjectBase
+ * so untyped usage @c ObjectBasePtr<> still works.
+ *
+ * @tparam T The ObjectBase-derived type being tracked.
+ *
+ * Class template argument deduction is supported via a deduction guide,
+ * so @c ObjectBasePtr{obj} deduces @c ObjectBasePtr<Foo> from a @c Foo*.
+ *
+ * An @c ObjectBasePtr<Derived> converts implicitly to @c ObjectBasePtr<Base>
+ * where @c Derived inherits from @c Base, mirroring raw pointer conversions.
  *
  * @note Thread safety: The internal pointer is stored as a std::atomic,
  * and the ObjectBase pointer map is protected by a Mutex. This allows
@@ -67,28 +79,39 @@ using ObjectBaseList = List<ObjectBase *>;
  * than the one holding it, as happens during cross-thread object
  * destruction. However, the ObjectBasePtr itself is not designed for
  * concurrent read/write from multiple threads without external
- * synchronization. */
+ * synchronization.
+ */
+template <typename T = ObjectBase>
 class ObjectBasePtr {
         friend class ObjectBase;
+        template <typename U> friend class ObjectBasePtr;
         public:
+                /** @brief Constructs a pointer tracking the given object. */
+                ObjectBasePtr(T *object = nullptr) : p(object) { link(); }
+
+                /** @brief Copy constructor. Tracks the same object as the source. */
+                ObjectBasePtr(const ObjectBasePtr &other) :
+                        p(other.p.load(std::memory_order_relaxed)) { link(); }
+
                 /**
-                 * @brief Constructs a pointer tracking the given ObjectBase.
- * @ingroup events
- *
-                 * @param object The ObjectBase to track, or nullptr.
+                 * @brief Converting copy-constructor from an ObjectBasePtr
+                 * tracking a derived type.
+                 * @tparam U Source type; must derive from @c T.
                  */
-                ObjectBasePtr(ObjectBase *object = nullptr) : p(object) { link(); }
+                template <typename U,
+                        typename = std::enable_if_t<std::is_base_of_v<T, U> && !std::is_same_v<T, U>>>
+                ObjectBasePtr(const ObjectBasePtr<U> &other) :
+                        p(other.p.load(std::memory_order_relaxed)) { link(); }
 
-                /** @brief Copy constructor. Tracks the same ObjectBase as the source. */
-                ObjectBasePtr(const ObjectBasePtr &object) : p(object.p.load(std::memory_order_relaxed)) { link(); }
-
-                /** @brief Destructor. Unlinks from the tracked ObjectBase. */
+                /** @brief Destructor. Unlinks from the tracked object. */
                 ~ObjectBasePtr() { unlink(); }
 
-                /** @brief Copy assignment operator. Re-links to the new ObjectBase. */
-                ObjectBasePtr &operator=(const ObjectBasePtr &object) {
+                /** @brief Copy assignment operator. Re-links to the new object. */
+                ObjectBasePtr &operator=(const ObjectBasePtr &other) {
+                        if(this == &other) return *this;
                         unlink();
-                        p.store(object.p.load(std::memory_order_relaxed), std::memory_order_relaxed);
+                        p.store(other.p.load(std::memory_order_relaxed),
+                                std::memory_order_relaxed);
                         link();
                         return *this;
                 }
@@ -96,11 +119,11 @@ class ObjectBasePtr {
                 /** @brief Returns true if the tracked pointer is not null. */
                 bool isValid() const { return p.load(std::memory_order_acquire) != nullptr; }
 
-                /** @brief Returns a mutable pointer to the tracked ObjectBase. */
-                ObjectBase *data() { return p.load(std::memory_order_acquire); }
+                /** @brief Returns a mutable pointer to the tracked object. */
+                T *data() { return static_cast<T *>(p.load(std::memory_order_acquire)); }
 
-                /** @brief Returns a const pointer to the tracked ObjectBase. */
-                const ObjectBase *data() const { return p.load(std::memory_order_acquire); }
+                /** @brief Returns a const pointer to the tracked object. */
+                const T *data() const { return static_cast<const T *>(p.load(std::memory_order_acquire)); }
 
         private:
                 std::atomic<ObjectBase *> p{nullptr};
@@ -108,6 +131,10 @@ class ObjectBasePtr {
                 void link();
                 void unlink();
 };
+
+/** @brief Deduction guide: @c ObjectBasePtr(Foo*) deduces to @c ObjectBasePtr<Foo>. */
+template <typename T>
+ObjectBasePtr(T *) -> ObjectBasePtr<T>;
 
 
 /** 
@@ -125,7 +152,7 @@ class ObjectBasePtr {
  * 
  */
 class ObjectBase {
-        friend class ObjectBasePtr;
+        template <typename U> friend class ObjectBasePtr;
         friend class EventLoop;
         public:
                 class SignalMeta;
@@ -226,9 +253,6 @@ class ObjectBase {
                 template <typename... Args> static void connect(Signal<Args...> *signal, Slot<Args...> *slot);
 
 
-                /** @brief Function type for invoking a slot with a list of Variants. */
-                using SlotVariantFunc = std::function<void(const VariantList &)>;
-
                 /**
                  * @brief Default ObjectBase constructor
                  * @param[in] p Parent object
@@ -287,11 +311,7 @@ class ObjectBase {
                 template <typename... Args> int registerSlot(Slot<Args...> *slot) {
                         int ret = _slotList.size();
                         slot->setID(ret);
-                        _slotList += SlotItem(
-                                ret,
-                                slot->prototype(),
-                                [slot](const VariantList &args) { slot->exec(args); }
-                        );
+                        _slotList += SlotItem(ret, slot->prototype());
                         return ret;
                 }
 
@@ -371,11 +391,10 @@ class ObjectBase {
                 struct SlotItem {
                         int                     id;
                         const char              *prototype;
-                        SlotVariantFunc         variantFunc;
                 };
 
                 struct Cleanup {
-                        ObjectBasePtr           object;
+                        ObjectBasePtr<>         object;
                         CleanupFunc             func;
                 };
 
@@ -385,7 +404,8 @@ class ObjectBase {
                 ObjectBaseList                                  _childList;
                 List<SlotItem>                                  _slotList;
                 mutable Mutex                                   _pointerMapMutex; ///< Guards _pointerMap for cross-thread ObjectBasePtr invalidation.
-                Map<ObjectBasePtr *, ObjectBasePtr *>           _pointerMap;
+                Map<std::atomic<ObjectBase *> *,
+                    std::atomic<ObjectBase *> *>                _pointerMap; ///< Keys are &ObjectBasePtr::p; stored as a type-erased handle so runCleanup() can null every tracker without knowing its @c T.
                 List<Cleanup>                                   _cleanupList;
 
                 void setEventLoopRecursive(EventLoop *loop);
@@ -416,7 +436,7 @@ class ObjectBase {
                         {
                                 Mutex::Locker lock(_pointerMapMutex);
                                 for(auto item : _pointerMap) {
-                                        item.first->p.store(nullptr, std::memory_order_release);
+                                        item.first->store(nullptr, std::memory_order_release);
                                 }
                                 _pointerMap.clear();
                         }
@@ -431,20 +451,22 @@ class ObjectBase {
                 }
 };
 
-inline void ObjectBasePtr::link() {
+template <typename T>
+inline void ObjectBasePtr<T>::link() {
         ObjectBase *obj = p.load(std::memory_order_relaxed);
         if(obj != nullptr) {
                 Mutex::Locker lock(obj->_pointerMapMutex);
-                obj->_pointerMap[this] = this;
+                obj->_pointerMap[&p] = &p;
         }
         return;
 }
 
-inline void ObjectBasePtr::unlink() {
+template <typename T>
+inline void ObjectBasePtr<T>::unlink() {
         ObjectBase *obj = p.exchange(nullptr, std::memory_order_acq_rel);
         if(obj != nullptr) {
                 Mutex::Locker lock(obj->_pointerMapMutex);
-                auto it = obj->_pointerMap.find(this);
+                auto it = obj->_pointerMap.find(&p);
                 if(it != obj->_pointerMap.end()) {
                         obj->_pointerMap.remove(it);
                 }
@@ -453,92 +475,10 @@ inline void ObjectBasePtr::unlink() {
 
 PROMEKI_NAMESPACE_END
 
-// connect() template requires EventLoop to be complete for cross-thread dispatch.
-#include <promeki/eventloop.h>
-
-PROMEKI_NAMESPACE_BEGIN
-
-template <typename... Args>
-void ObjectBase::connect(Signal<Args...> *signal, Slot<Args...> *slot) {
-        if(signal == nullptr || slot == nullptr) return;
-
-        signal->connect([signal, slot](Args... args) {
-                ObjectBase *signalObject = static_cast<ObjectBase *>(signal->owner());
-                ObjectBase *slotObject = static_cast<ObjectBase *>(slot->owner());
-
-                EventLoop *slotLoop = slotObject->_eventLoop;
-                EventLoop *currentLoop = EventLoop::current();
-
-                // Same thread or no event loop: direct call (zero overhead path)
-                if(slotLoop == nullptr || slotLoop == currentLoop) {
-                        ObjectBase *prevSender = slotObject->_signalSender;
-                        slotObject->_signalSender = signalObject;
-                        slot->exec(args...);
-                        slotObject->_signalSender = prevSender;
-                } else {
-                        // Cross-thread: marshal via VariantList and post
-                        VariantList packed = Signal<Args...>::pack(args...);
-                        ObjectBasePtr senderTracker(signalObject);
-                        slotLoop->postCallable(
-                                [slot, slotObject, packed = std::move(packed),
-                                 senderTracker = std::move(senderTracker)]() {
-                                        ObjectBase *prevSender = slotObject->_signalSender;
-                                        slotObject->_signalSender =
-                                                senderTracker.isValid()
-                                                ? const_cast<ObjectBase *>(senderTracker.data())
-                                                : nullptr;
-                                        slot->exec(packed);
-                                        slotObject->_signalSender = prevSender;
-                                }
-                        );
-                }
-        }, slot->owner());
-
-        // Register a cleanup
-        ObjectBase *signalObject = static_cast<ObjectBase *>(signal->owner());
-        ObjectBase *slotObject = static_cast<ObjectBase *>(slot->owner());
-        slotObject->_cleanupList += Cleanup(
-                signalObject,
-                [signal](ObjectBase *ptr){ signal->disconnectFromObject(ptr); }
-        );
-}
-
-// Context-aware Signal::connect overload.  Defined here because it
-// needs ObjectBase and EventLoop to be complete — signal.h forward
-// declares ObjectBase and only stores the declaration.  The wrapping
-// bridge lambda captures @p owner and uses its @c eventLoop() at
-// emit time, matching Qt's @c Qt::AutoConnection: direct invocation
-// on the owner's own thread, @c postCallable marshalling otherwise.
-template <typename... Args>
-size_t Signal<Args...>::connect(Function slot, ObjectBase *owner) {
-        // Passing a null @ref ObjectBase context is a programmer error
-        // — the whole point of this overload is to anchor dispatch to
-        // the owner's EventLoop, and there is no loop to anchor to
-        // when @p owner is null.  Callers that explicitly want the
-        // raw, same-thread-only behaviour should use the @c void*
-        // overload with @c nullptr instead.
-        PROMEKI_ASSERT(owner != nullptr);
-        return connect(
-                [slot = std::move(slot), owner](Args... args) {
-                        EventLoop *ownerLoop   = owner->eventLoop();
-                        EventLoop *currentLoop = EventLoop::current();
-                        if(ownerLoop == nullptr || ownerLoop == currentLoop) {
-                                slot(args...);
-                                return;
-                        }
-                        // Copy args into a tuple, hop to the owner's
-                        // EventLoop, then unpack and invoke.  Requires
-                        // every Args type to be copy-constructible,
-                        // which is the same restriction the Slot-based
-                        // ObjectBase::connect path already carries via
-                        // VariantList packing.
-                        ownerLoop->postCallable(
-                                [slot, tup = std::make_tuple(std::move(args)...)]() {
-                                        std::apply(slot, tup);
-                                });
-                },
-                static_cast<void *>(owner));
-}
-
-PROMEKI_NAMESPACE_END
+// The template bodies for ObjectBase::connect and
+// Signal<Args...>::connect(Function, ObjectBase *) previously lived at
+// the bottom of this file but pulled @c variant.h and @c eventloop.h
+// into every TU that includes @c objectbase.h — ~270 of them.  They
+// now live in @c objectbase.tpp; TUs that actually call those methods
+// must include @c promeki/objectbase.tpp.
 

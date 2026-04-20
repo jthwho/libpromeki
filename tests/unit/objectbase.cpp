@@ -7,6 +7,7 @@
 
 #include <doctest/doctest.h>
 #include <promeki/objectbase.h>
+#include <promeki/objectbase.tpp>
 #include <promeki/signal.h>
 #include <promeki/slot.h>
 #include <promeki/logger.h>
@@ -147,7 +148,36 @@ TEST_CASE("ObjectBase: ObjectBasePtr assignment") {
 }
 
 TEST_CASE("ObjectBase: ObjectBasePtr default is null") {
-        ObjectBasePtr ptr;
+        ObjectBasePtr<> ptr;
         CHECK_FALSE(ptr.isValid());
         CHECK(ptr.data() == nullptr);
+}
+
+TEST_CASE("ObjectBase: ObjectBasePtr typed data() returns derived pointer") {
+        TestOne *obj = new TestOne();
+        ObjectBasePtr<TestOne> ptr(obj);
+        // data() is typed as TestOne*, no cast required.
+        TestOne *typed = ptr.data();
+        CHECK(typed == obj);
+        delete obj;
+        CHECK(ptr.data() == nullptr);
+}
+
+TEST_CASE("ObjectBase: ObjectBasePtr CTAD deduces derived type") {
+        TestOne *obj = new TestOne();
+        ObjectBasePtr ptr(obj); // CTAD -> ObjectBasePtr<TestOne>
+        static_assert(std::is_same_v<decltype(ptr.data()), TestOne *>);
+        CHECK(ptr.data() == obj);
+        delete obj;
+}
+
+TEST_CASE("ObjectBase: ObjectBasePtr derived-to-base conversion") {
+        TestOne *obj = new TestOne();
+        ObjectBasePtr<TestOne> derived(obj);
+        ObjectBasePtr<ObjectBase> base(derived); // implicit upcast
+        CHECK(base.isValid());
+        CHECK(base.data() == obj);
+        delete obj;
+        CHECK_FALSE(derived.isValid());
+        CHECK_FALSE(base.isValid());
 }

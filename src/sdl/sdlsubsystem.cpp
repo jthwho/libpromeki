@@ -6,6 +6,7 @@
  */
 
 #include <promeki/sdl/sdlsubsystem.h>
+#include <promeki/eventloop.h>
 #include <promeki/logger.h>
 #include <promeki/platform.h>
 #include <promeki/util.h>

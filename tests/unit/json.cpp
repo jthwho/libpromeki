@@ -8,6 +8,7 @@
 
 #include <doctest/doctest.h>
 #include <promeki/json.h>
+#include <promeki/variant.h>
 
 using namespace promeki;
 

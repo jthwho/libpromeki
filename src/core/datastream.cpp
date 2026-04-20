@@ -8,6 +8,7 @@
 #include <chrono>
 #include <cstring>
 #include <promeki/datastream.h>
+#include <promeki/variant.h>
 #include <promeki/enumlist.h>
 #include <promeki/mediatimestamp.h>
 #include <promeki/macaddress.h>

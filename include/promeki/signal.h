@@ -10,7 +10,8 @@
 #include <tuple>
 #include <functional>
 #include <promeki/namespace.h>
-#include <promeki/variant.h>
+#include <promeki/list.h>
+#include <promeki/variant_fwd.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -49,12 +50,15 @@ template <typename... Args> class Signal {
                  * reference as the references probably won't be valid
                  * by the time you want to use the container.
                  *
+                 * The definition lives in @c signal.tpp so that @c signal.h
+                 * does not pull the full @c variant.h through its 40+ member
+                 * type headers.  Callers that need to invoke pack() must
+                 * include @c promeki/signal.tpp.
+                 *
                  * @param args The signal arguments to pack.
                  * @return A VariantList containing copies of all arguments.
                  */
-                static VariantList pack(Args... args) {
-                        return { Variant(RemoveConstAndRef<Args>(args))... };
-                }
+                static VariantList pack(Args... args);
 
                 /**
                  * @brief Signal constructor.

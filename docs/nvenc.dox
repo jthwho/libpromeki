@@ -113,9 +113,14 @@
  * Or export it as an environment variable once:
  *
  * @code
- * export NVENC_SDK_DIR=/home/you/src/Video_Codec_SDK_13.0.37
+ * export PROMEKI_NVENC_SDK_DIR=/home/you/src/Video_Codec_SDK_13.0.37
  * cmake -B build -S .
  * @endcode
+ *
+ * A @c -DPROMEKI_NVENC_SDK_DIR=... on the command line always wins
+ * over the environment variable.  The legacy @c NVENC_SDK_DIR
+ * environment variable is also consulted as a find hint for
+ * compatibility with existing setups.
  *
  * The CMake probe looks for @c Interface/nvEncodeAPI.h below that
  * directory.  If it finds the header,

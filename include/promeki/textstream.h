@@ -11,7 +11,7 @@
 #include <cstdint>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
-#include <promeki/variant.h>
+#include <promeki/variant_fwd.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

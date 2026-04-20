@@ -23,6 +23,7 @@
 #include <promeki/tui/splitter.h>
 #include <promeki/terminal.h>
 #include <promeki/timerevent.h>
+#include <promeki/objectbase.tpp>
 
 using namespace promeki;
 

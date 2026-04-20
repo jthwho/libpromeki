@@ -12,7 +12,7 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/buffer.h>
-#include <promeki/variant.h>
+#include <promeki/variant_fwd.h>
 #include <promeki/list.h>
 #include <promeki/map.h>
 #include <promeki/set.h>
@@ -20,6 +20,11 @@
 #include <promeki/hashset.h>
 #include <promeki/rect.h>
 #include <promeki/point.h>
+#include <promeki/size2d.h>
+#include <promeki/rational.h>
+#include <promeki/xyzcolor.h>
+#include <promeki/masteringdisplay.h>
+#include <promeki/contentlightlevel.h>
 #include <promeki/result.h>
 #include <promeki/iodevice.h>
 
@@ -30,6 +35,25 @@ class JsonArray;
 class MediaTimeStamp;
 class MacAddress;
 class EUI64;
+// Forward-declared Variant-alternative types used only as `const T &` /
+// `T &` parameters on DataStream's operator overloads.  Full definitions
+// are included in datastream.cpp (via variant.h), so declarations here
+// stay header-cheap.
+class UUID;
+class UMID;
+class DateTime;
+class TimeStamp;
+class FrameRate;
+class VideoFormat;
+class Timecode;
+class Color;
+class ColorModel;
+class MemSpace;
+class PixelFormat;
+class PixelDesc;
+class Enum;
+class EnumList;
+class StringList;
 
 /**
  * @brief Binary stream for structured, portable serialization.

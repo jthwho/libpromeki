@@ -212,174 +212,22 @@ libsndfile, nlohmann/json, libvtc, SVT-JPEG-XS, Highway, CIRF.
 
 ## Building
 
-Requirements: a C++20 compiler, CMake 3.22+, and git.  Some vendored
-libraries (libjpeg-turbo, SVT-JPEG-XS) use hand-written SIMD assembly
-and will build their accelerated code paths when `nasm` or `yasm` is
-available.  They still build without an assembler, but without the
-SIMD fast paths.
-
 ```sh
 git clone --recurse-submodules https://github.com/jthwho/libpromeki.git
 cd libpromeki
-cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake -B build
 cmake --build build -j$(nproc)
 ```
 
-### CMake Build Options
+For the complete build, install, and downstream-integration guide —
+including every CMake feature flag, vendored-vs-system dependency
+switch, build-performance option, test and install targets, and
+consumer CMake usage — see the **Building and Installing libpromeki**
+page in the API documentation:
 
-**Feature flags** (control what goes into `libpromeki.so`):
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `PROMEKI_ENABLE_NETWORK` | `ON` | Networking (sockets, RTP, SDP) |
-| `PROMEKI_ENABLE_PROAV` | `ON` | Pro A/V (image, audio, color, pipeline) |
-| `PROMEKI_ENABLE_MUSIC` | `ON` | Music/MIDI support |
-| `PROMEKI_ENABLE_PNG` | `ON` | PNG image I/O (libspng) |
-| `PROMEKI_ENABLE_JPEG` | `ON` | JPEG codec |
-| `PROMEKI_ENABLE_JPEGXS` | `OFF`* | JPEG XS codec (*auto-enabled on x86-64 with nasm/yasm) |
-| `PROMEKI_ENABLE_FREETYPE` | `ON` | FreeType font rendering |
-| `PROMEKI_ENABLE_AUDIO` | `ON` | Audio file I/O (libsndfile) |
-| `PROMEKI_ENABLE_CSC` | `ON` | SIMD color space conversion (Highway) |
-| `PROMEKI_ENABLE_CIRF` | `ON` | Compiled-in resource filesystem |
-
-**Dependency source** (vendored submodule or system package):
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `PROMEKI_USE_SYSTEM_ZLIB` | `OFF` | Use system zlib |
-| `PROMEKI_USE_SYSTEM_LIBSPNG` | `OFF` | Use system libspng |
-| `PROMEKI_USE_SYSTEM_LIBJPEG` | `OFF` | Use system libjpeg-turbo |
-| `PROMEKI_USE_SYSTEM_SVT_JPEG_XS` | `OFF` | Use system SVT-JPEG-XS |
-| `PROMEKI_USE_SYSTEM_FREETYPE` | `OFF` | Use system FreeType |
-| `PROMEKI_USE_SYSTEM_SNDFILE` | `OFF` | Use system libsndfile |
-| `PROMEKI_USE_SYSTEM_NLOHMANN_JSON` | `OFF` | Use system nlohmann-json |
-| `PROMEKI_USE_SYSTEM_VTC` | `OFF` | Use system libvtc |
-| `PROMEKI_USE_SYSTEM_HIGHWAY` | `OFF` | Use system Highway |
-| `PROMEKI_USE_SYSTEM_CIRF` | `OFF` | Use system CIRF |
-
-**Build targets:**
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `PROMEKI_BUILD_TUI` | `ON` | Build the promeki-tui library |
-| `PROMEKI_BUILD_SDL` | `OFF` | Build the promeki-sdl library |
-| `PROMEKI_BUILD_TESTS` | `ON` | Build unit tests |
-| `PROMEKI_BUILD_UTILS` | `ON` | Build utility applications |
-| `PROMEKI_BUILD_DEMOS` | `ON` | Build demonstration applications |
-| `PROMEKI_BUILD_DOCS` | `OFF` | Build Doxygen API documentation |
-
-To build a minimal core-only library:
-
-```sh
-cmake -B build -DPROMEKI_ENABLE_PROAV=OFF -DPROMEKI_ENABLE_NETWORK=OFF -DPROMEKI_ENABLE_MUSIC=OFF
-```
-
-To build using system-installed dependencies:
-
-```sh
-cmake -B build -DPROMEKI_USE_SYSTEM_ZLIB=ON -DPROMEKI_USE_SYSTEM_LIBSPNG=ON \
-    -DPROMEKI_USE_SYSTEM_FREETYPE=ON -DPROMEKI_USE_SYSTEM_SNDFILE=ON \
-    -DPROMEKI_USE_SYSTEM_LIBJPEG=ON
-```
-
-### Cleaning
-
-The `libclean` target removes only the promeki library objects, test
-executables, and utilities while preserving third-party builds. This
-avoids rebuilding vendored dependencies which rarely change:
-
-```sh
-cmake --build build --target libclean
-```
-
-To clean everything including third-party builds, use the standard CMake
-`clean` target:
-
-```sh
-cmake --build build --target clean
-```
-
-### Running Tests
-
-```sh
-cd build
-ctest --output-on-failure
-```
-
-### Installing
-
-```sh
-cmake --install build
-# or to a custom prefix:
-cmake --install build --prefix /opt/promeki
-```
-
-This installs:
-- `lib/libpromeki.so` (versioned, with SONAME), plus `libpromeki-tui.so` and `libpromeki-sdl.so` if enabled
-- `include/promeki/` — all public headers (including generated `config.h`)
-- `include/promeki/thirdparty/` — bundled third-party headers (when using vendored deps)
-- `lib/cmake/promeki/` — CMake package config files
-- `share/doc/promeki/` — license and third-party notices
-
-## Using libpromeki in Your Project
-
-After installing, add this to your project's `CMakeLists.txt`:
-
-```cmake
-find_package(promeki REQUIRED)
-
-# Link against the main library:
-target_link_libraries(myapp PRIVATE promeki::promeki)
-
-# For TUI applications:
-target_link_libraries(myapp PRIVATE promeki::tui)
-
-# For SDL applications:
-target_link_libraries(myapp PRIVATE promeki::sdl)
-```
-
-If you installed to a non-standard prefix, tell CMake where to find it:
-
-```sh
-cmake -B build -DCMAKE_PREFIX_PATH=/opt/promeki
-```
-
-### Include Conventions
-
-All promeki headers live under the `promeki/` namespace:
-
-```cpp
-#include <promeki/string.h>
-#include <promeki/timecode.h>
-#include <promeki/imagedesc.h>
-```
-
-Bundled third-party headers use their canonical include paths:
-
-```cpp
-#include <nlohmann/json.hpp>
-#include <spng.h>
-#include <ft2build.h>
-```
-
-Everything in promeki is in the `promeki` namespace:
-
-```cpp
-using namespace promeki;
-
-String name("hello");
-Timecode tc(1, 2, 3, 4, FrameRate::fps24());
-UUID id = UUID::generate();
-```
-
-## Building the Documentation
-
-To build the API documentation locally (requires Doxygen):
-
-```sh
-cmake -B build -DPROMEKI_BUILD_DOCS=ON
-cmake --build build --target docs
-```
+- Hosted: <https://jthwho.github.io/libpromeki/main/building.html>
+- Local: `build/doxygen/html/building.html` after
+  `cmake -B build -DPROMEKI_BUILD_DOCS=ON && cmake --build build --target docs`
 
 ## Debugging
 

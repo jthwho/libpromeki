@@ -10,6 +10,7 @@
 #include <promeki/thread.h>
 #include <promeki/eventloop.h>
 #include <promeki/objectbase.h>
+#include <promeki/objectbase.tpp>
 #include <promeki/logger.h>
 #include "test.h"
 
@@ -846,7 +847,7 @@ TEST_CASE("Thread: ObjectBasePtr copy assignment across threads") {
 
         t.threadEventLoop()->postCallable([&] {
                 // Copy-construct from a pointer owned by the main thread
-                ObjectBasePtr workerPtr;
+                ObjectBasePtr<> workerPtr;
                 workerPtr = mainPtr;
                 ready.store(true, std::memory_order_release);
                 while(!gate.load(std::memory_order_acquire)) {

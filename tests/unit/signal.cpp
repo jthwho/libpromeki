@@ -7,9 +7,13 @@
 
 #include <doctest/doctest.h>
 #include <promeki/signal.h>
+#include <promeki/signal.tpp>
 #include <promeki/slot.h>
 #include <promeki/string.h>
 #include <promeki/list.h>
+#include <promeki/objectbase.h>
+#include <promeki/objectbase.tpp>
+#include <promeki/variant.h>
 
 using namespace promeki;
 

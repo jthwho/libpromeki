@@ -7,6 +7,7 @@
 
 #include <promeki/benchmarkrunner.h>
 #include <promeki/json.h>
+#include <promeki/variant.h>
 #include <promeki/regex.h>
 #include <promeki/datetime.h>
 #include <promeki/buildinfo.h>

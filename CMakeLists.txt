@@ -12,11 +12,15 @@ set(APP_VERSION_BETA 0) # If this is a beta, set this value to the beta version 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # DevRelease build type --------------------------------------------------------
-# Release-level optimisations with developer features: debug symbols for
-# useful crash logs / core dumps, and promekiDebug() logging compiled in.
+# Release-level optimisations with developer features: line-table debug info
+# for useful crash logs / core dumps (-g1, enough for symbol+file:line in
+# backtraces without the full DWARF type tree), and promekiDebug() logging
+# compiled in.  `-g1` instead of `-g` cuts peak compile RSS ~40% on this
+# project's template-heavy TUs — switch to CMAKE_BUILD_TYPE=Debug for full
+# DWARF when stepping through templates in gdb.
 # Must be set before project() so CMake picks up the _INIT flags.
-set(CMAKE_C_FLAGS_DEVRELEASE_INIT            "-O3 -g -DNDEBUG")
-set(CMAKE_CXX_FLAGS_DEVRELEASE_INIT          "-O3 -g -DNDEBUG")
+set(CMAKE_C_FLAGS_DEVRELEASE_INIT            "-O3 -g1 -DNDEBUG")
+set(CMAKE_CXX_FLAGS_DEVRELEASE_INIT          "-O3 -g1 -DNDEBUG")
 set(CMAKE_EXE_LINKER_FLAGS_DEVRELEASE_INIT   "")
 set(CMAKE_SHARED_LINKER_FLAGS_DEVRELEASE_INIT "")
 
@@ -51,6 +55,24 @@ option(PROMEKI_BUILD_DEMOS      "Build demonstration applications" ON)
 option(PROMEKI_BUILD_TESTS      "Build unit tests"                 ON)
 option(PROMEKI_BUILD_DOCS       "Build documentation"              OFF)
 option(PROMEKI_BUILD_BENCHMARKS "Build the promeki-bench utility"  ON)
+# Per-TU build statistics: wraps every compile with /usr/bin/time -v so
+# peak RSS + wall/user/sys time land in ${CMAKE_BINARY_DIR}/build-stats.log
+# (one tab-separated line per successful compile).  Silently ignored on
+# platforms where the GNU-time `-v` probe fails (e.g. Windows, busybox).
+# Summary report: scripts/build-stats-report.sh [log] [N]
+option(PROMEKI_BUILD_STATS      "Record per-TU compile wall-time and peak RSS (requires GNU /usr/bin/time)" ON)
+# Precompiled headers: front-load the hot stable headers (stdlib + promeki
+# infrastructure) into a PCH so incremental compiles skip re-parsing them.
+# Excludes headers that are edited frequently (variant.h, metadata.h) since
+# touching a PCH input invalidates the PCH and cascades.  See
+# PROMEKI_PCH_HEADERS below for the content.
+option(PROMEKI_USE_PCH          "Use precompiled headers to speed up incremental builds" ON)
+# ccache speeds up rebuilds when preprocessed compiler input hasn't actually
+# changed (branch switches, undo/redo, whitespace-only edits).  Auto-enabled
+# if `ccache` is on PATH, silently skipped otherwise.  Chains cleanly with
+# PROMEKI_BUILD_STATS (stats wrapper times the ccache call, so cache hits
+# log near-zero wall + small RSS).
+option(PROMEKI_USE_CCACHE       "Use ccache as a compiler launcher when available" ON)
 
 # Feature flags for the main promeki library
 # NOTE: When adding a new PROMEKI_ENABLE_* flag, also update
@@ -106,10 +128,17 @@ option(PROMEKI_ENABLE_CUDA     "Include CUDA support (device / pinned-host memsp
 # NVENC video encoder backend: NVIDIA hardware H.264 / HEVC via the
 # NVIDIA Video Codec SDK.  The SDK is distributed separately from CUDA
 # and the driver — see docs/nvenc.dox for setup instructions.  Default
-# ON when the SDK is located via PROMEKI_NVENC_SDK_DIR (or the
-# NVENC_SDK_DIR environment variable), silently OFF elsewhere.
-# Requires PROMEKI_ENABLE_CUDA.
-set(PROMEKI_NVENC_SDK_DIR "" CACHE PATH
+# ON when the SDK is located via PROMEKI_NVENC_SDK_DIR (cache var set
+# via -D, or PROMEKI_NVENC_SDK_DIR / NVENC_SDK_DIR environment
+# variables), silently OFF elsewhere.  Requires PROMEKI_ENABLE_CUDA.
+# The -D cache value overrides the environment variable since CMake
+# only honours the default on the first configure when the cache is
+# unset.
+set(_promeki_nvenc_sdk_dir_default "")
+if(DEFINED ENV{PROMEKI_NVENC_SDK_DIR})
+    set(_promeki_nvenc_sdk_dir_default "$ENV{PROMEKI_NVENC_SDK_DIR}")
+endif()
+set(PROMEKI_NVENC_SDK_DIR "${_promeki_nvenc_sdk_dir_default}" CACHE PATH
     "Path to the NVIDIA Video Codec SDK (the directory containing Interface/nvEncodeAPI.h).")
 set(PROMEKI_ENABLE_NVENC_DEFAULT OFF)
 if(PROMEKI_ENABLE_CUDA_DEFAULT OR PROMEKI_ENABLE_CUDA)
@@ -155,6 +184,67 @@ option(PROMEKI_USE_SYSTEM_NLOHMANN_JSON "Use system nlohmann_json instead of ven
 option(PROMEKI_USE_SYSTEM_VTC           "Use system libvtc instead of vendored"         OFF)
 option(PROMEKI_USE_SYSTEM_HIGHWAY      "Use system Highway instead of vendored"        OFF)
 option(PROMEKI_USE_SYSTEM_CIRF          "Use system cirf instead of vendored"           OFF)
+
+# Build statistics wrapper #####################################################
+# When PROMEKI_BUILD_STATS is ON and the platform has GNU `/usr/bin/time -v`,
+# wrap every C/C++ compile via CMAKE_*_COMPILER_LAUNCHER so peak RSS and
+# wall/user/sys time are recorded to ${CMAKE_BINARY_DIR}/build-stats.log.
+# Use scripts/build-stats-report.sh to see the slowest / heaviest TUs.
+# Silently skipped when the probe fails (e.g. non-GNU time, Windows).
+set(_promeki_launcher_prefix "")
+if(PROMEKI_BUILD_STATS)
+    find_program(PROMEKI_GNU_TIME NAMES time PATHS /usr/bin /usr/local/bin NO_DEFAULT_PATH)
+    if(PROMEKI_GNU_TIME)
+        execute_process(
+            COMMAND ${PROMEKI_GNU_TIME} -f "ok" -o /dev/null true
+            RESULT_VARIABLE _promeki_time_probe
+            OUTPUT_QUIET ERROR_QUIET
+        )
+        if(_promeki_time_probe EQUAL 0)
+            set(_promeki_stats_wrapper "${CMAKE_CURRENT_SOURCE_DIR}/scripts/build-stats-wrapper.sh")
+            set(_promeki_stats_log     "${CMAKE_BINARY_DIR}/build-stats.log")
+            set(_promeki_launcher_prefix "${_promeki_stats_wrapper};${_promeki_stats_log}")
+            message(STATUS "PROMEKI_BUILD_STATS: per-TU stats -> ${_promeki_stats_log}")
+        else()
+            message(STATUS "PROMEKI_BUILD_STATS: /usr/bin/time -f probe failed; stats disabled")
+        endif()
+    else()
+        message(STATUS "PROMEKI_BUILD_STATS: GNU /usr/bin/time not found; stats disabled")
+    endif()
+endif()
+
+# ccache compiler launcher #####################################################
+# Auto-detected; chained AFTER the build-stats wrapper so the wrapper times
+# the ccache invocation (cache hits log near-zero wall + tiny RSS).
+# Silently skipped when ccache isn't installed.
+if(PROMEKI_USE_CCACHE)
+    find_program(PROMEKI_CCACHE ccache)
+    if(PROMEKI_CCACHE)
+        # `CCACHE_SLOPPINESS=pch_defines,time_macros` lets ccache cache
+        # compiles that use precompiled headers — without it, every PCH-
+        # consuming TU is marked uncacheable and skipped.  Injected via
+        # /usr/bin/env so we don't have to touch the user's ~/.ccache/config.
+        find_program(PROMEKI_ENV_BIN NAMES env PATHS /usr/bin /bin NO_DEFAULT_PATH)
+        if(PROMEKI_ENV_BIN)
+            set(_ccache_chain "${PROMEKI_ENV_BIN};CCACHE_SLOPPINESS=pch_defines,time_macros;${PROMEKI_CCACHE}")
+        else()
+            set(_ccache_chain "${PROMEKI_CCACHE}")
+        endif()
+        if(_promeki_launcher_prefix)
+            set(_promeki_launcher_prefix "${_promeki_launcher_prefix};${_ccache_chain}")
+        else()
+            set(_promeki_launcher_prefix "${_ccache_chain}")
+        endif()
+        message(STATUS "PROMEKI_USE_CCACHE: using ${PROMEKI_CCACHE}")
+    else()
+        message(STATUS "PROMEKI_USE_CCACHE: ccache not found on PATH; skipped")
+    endif()
+endif()
+
+if(_promeki_launcher_prefix)
+    set(CMAKE_C_COMPILER_LAUNCHER   "${_promeki_launcher_prefix}")
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${_promeki_launcher_prefix}")
+endif()
 
 # Dependency validation ########################################################
 
@@ -440,6 +530,8 @@ if(PROMEKI_ENABLE_PNG OR PROMEKI_ENABLE_FREETYPE)
         set(PROMEKI_ZLIB_LIBRARY ${ZLIB_LIBRARIES})
     else()
         set(PROMEKI_ZLIB_SRC_COPY ${CMAKE_CURRENT_BINARY_DIR}/thirdparty-src/zlib-ng)
+        set(PROMEKI_ZLIB_INCLUDE ${PROMEKI_THIRDPARTY_PREFIX}/include)
+        set(PROMEKI_ZLIB_LIBRARY ${PROMEKI_THIRDPARTY_PREFIX}/lib/libz.a)
         ExternalProject_Add(
             zlib-ng-ep
             DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -454,9 +546,8 @@ if(PROMEKI_ENABLE_PNG OR PROMEKI_ENABLE_FREETYPE)
                 -DZLIBNG_ENABLE_TESTS=OFF
                 -DBUILD_SHARED_LIBS=OFF
                 -DWITH_GTEST=OFF
+            BUILD_BYPRODUCTS ${PROMEKI_ZLIB_LIBRARY}
         )
-        set(PROMEKI_ZLIB_INCLUDE ${PROMEKI_THIRDPARTY_PREFIX}/include)
-        set(PROMEKI_ZLIB_LIBRARY ${PROMEKI_THIRDPARTY_PREFIX}/lib/libz.a)
         add_library(promeki_zlib_vendored STATIC IMPORTED)
         set_target_properties(promeki_zlib_vendored PROPERTIES
             IMPORTED_LOCATION ${PROMEKI_ZLIB_LIBRARY}
@@ -489,6 +580,7 @@ if(PROMEKI_ENABLE_JPEG)
                 -DENABLE_STATIC=ON
                 -DWITH_TURBOJPEG=OFF
                 ${_JPEG_TURBO_EXTRA_ARGS}
+            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libjpeg.a
         )
         add_library(promeki_jpeg_vendored STATIC IMPORTED)
         set_target_properties(promeki_jpeg_vendored PROPERTIES
@@ -524,6 +616,7 @@ if(PROMEKI_ENABLE_JPEGXS)
                 -DBUILD_APPS=OFF
                 -DBUILD_TESTING=OFF
                 -DCMAKE_BUILD_TYPE=Release
+            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libSvtJpegxs.a
         )
         add_library(promeki_jpegxs_vendored STATIC IMPORTED)
         set_target_properties(promeki_jpegxs_vendored PROPERTIES
@@ -557,6 +650,7 @@ if(PROMEKI_ENABLE_PNG)
                 -DSPNG_SHARED=OFF
                 -DSPNG_STATIC=ON
                 -DBUILD_EXAMPLES=OFF
+            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libspng_static.a
         )
         add_library(promeki_spng_vendored STATIC IMPORTED)
         set_target_properties(promeki_spng_vendored PROPERTIES
@@ -587,6 +681,7 @@ if(PROMEKI_ENABLE_AUDIO)
                 -DBUILD_TESTING=OFF
                 -DENABLE_EXTERNAL_LIBS=OFF
                 -DENABLE_MPEG=OFF
+            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libsndfile.a
         )
         add_library(promeki_sndfile_vendored STATIC IMPORTED)
         set_target_properties(promeki_sndfile_vendored PROPERTIES
@@ -613,6 +708,7 @@ if(PROMEKI_ENABLE_SRC)
                 -DBUILD_TESTING=OFF
                 -DLIBSAMPLERATE_EXAMPLES=OFF
                 -DLIBSAMPLERATE_INSTALL=ON
+            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libsamplerate.a
         )
         add_library(promeki_samplerate_vendored STATIC IMPORTED)
         set_target_properties(promeki_samplerate_vendored PROPERTIES
@@ -643,6 +739,7 @@ if(PROMEKI_ENABLE_FREETYPE)
                 -DFT_DISABLE_BROTLI=ON
                 -DFT_DISABLE_HARFBUZZ=ON
                 -DFT_DISABLE_PNG=ON
+            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libfreetype.a
         )
         add_library(promeki_freetype_vendored STATIC IMPORTED)
         set_target_properties(promeki_freetype_vendored PROPERTIES
@@ -1224,6 +1321,43 @@ endif()
 target_link_libraries(promeki PUBLIC stdc++fs)
 target_link_libraries(promeki PRIVATE m)
 target_compile_definitions(promeki PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:DevRelease>>:PROMEKI_DEBUG_ENABLE>)
+
+# Precompiled headers — front-load the hot stable headers so each incremental
+# compile skips re-parsing them.  Limited to infrastructure that rarely
+# changes: touching any input here invalidates the PCH and cascades to every
+# TU in the target.  Deliberately excludes variant.h / metadata.h / etc.
+# (changed often) and feature-area headers (changed when that feature is in
+# active development).
+set(PROMEKI_PCH_HEADERS
+    # Standard library — widely used, expensive to parse, ABI-stable
+    <cstdint>
+    <cstddef>
+    <cstring>
+    <memory>
+    <string>
+    <string_view>
+    <vector>
+    <map>
+    <functional>
+    <chrono>
+    <atomic>
+    <type_traits>
+    <utility>
+    # promeki infrastructure — widely included, stable
+    <promeki/namespace.h>
+    <promeki/platform.h>
+    <promeki/error.h>
+    <promeki/util.h>
+    <promeki/char.h>
+    <promeki/string.h>
+    <promeki/sharedptr.h>
+    <promeki/list.h>
+    <promeki/result.h>
+    <promeki/pair.h>
+)
+if(PROMEKI_USE_PCH)
+    target_precompile_headers(promeki PRIVATE ${PROMEKI_PCH_HEADERS})
+endif()
 
 # Vendored thirdparty include paths and link dependencies
 if(PROMEKI_ENABLE_PROAV)

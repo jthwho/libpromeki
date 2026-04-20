@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <cstring>
 #include <promeki/textstream.h>
+#include <promeki/variant.h>
 #include <promeki/iodevice.h>
 #include <promeki/buffer.h>
 #include <promeki/bufferiodevice.h>

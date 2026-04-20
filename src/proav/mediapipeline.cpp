@@ -7,8 +7,10 @@
 
 #include <promeki/mediapipeline.h>
 
+#include <promeki/eventloop.h>
 #include <promeki/logger.h>
 #include <promeki/mediapipelineplanner.h>
+#include <promeki/objectbase.tpp>
 #include <promeki/set.h>
 #include <promeki/timerevent.h>
 #include <promeki/util.h>

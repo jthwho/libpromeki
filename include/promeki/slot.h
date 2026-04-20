@@ -8,9 +8,12 @@
 #pragma once
 
 #include <algorithm>
+#include <cstddef>
 #include <functional>
+#include <utility>
+#include <tuple>
 #include <promeki/namespace.h>
-#include <promeki/variant.h>
+#include <promeki/variant_fwd.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -71,12 +74,14 @@ class Slot {
                  * reference qualifiers. This is useful for serializing a set of
                  * arguments for later deferred invocation via exec(const VariantList &).
                  *
+                 * Defined in @c slot.tpp so @c slot.h does not pull in the
+                 * full @c variant.h.  Include @c promeki/slot.tpp from any TU
+                 * that calls pack().
+                 *
                  * @param args The arguments to pack.
                  * @return A VariantList containing each argument as a Variant.
                  */
-                static VariantList pack(Args... args) {
-                        return { Variant(RemoveConstAndRef<Args>(args))... };
-                }
+                static VariantList pack(Args... args);
 
                 /**
                  * @brief Executes the slot's callable with the given typed arguments.
@@ -93,11 +98,13 @@ class Slot {
                  * Each element in the VariantList is converted back to the corresponding
                  * typed argument and forwarded to the underlying callable.
                  *
+                 * Defined in @c slot.tpp so @c slot.h does not pull in the
+                 * full @c variant.h.  Include @c promeki/slot.tpp from any TU
+                 * that calls @c exec(const VariantList &).
+                 *
                  * @param variantList The list of Variant values to unpack as arguments.
                  */
-                void exec(const VariantList &variantList) {
-                        execFromVariantList(std::make_index_sequence<sizeof...(Args)>(), variantList);
-                }
+                void exec(const VariantList &variantList);
 
         private:
                 void            *_owner = nullptr;
@@ -105,14 +112,10 @@ class Slot {
                 int             _id = -1;
                 Function        _function;
 
-                template <std::size_t... Idx> void execFromVariantList(std::index_sequence<Idx...>, const VariantList &variantList) {
-                        exec(unpackVariant<Idx>(variantList[Idx])...);
-                }
+                template <std::size_t... Idx>
+                void execFromVariantList(std::index_sequence<Idx...>, const VariantList &variantList);
 
-                template <std::size_t Idx> decltype(auto) unpackVariant(const Variant &variant) {
-                        using T = RemoveConstAndRef<std::tuple_element_t<Idx, std::tuple<Args...>>>;
-                        return variant.get<T>();
-                }
+                template <std::size_t Idx> decltype(auto) unpackVariant(const Variant &variant);
 };
 
 PROMEKI_NAMESPACE_END
