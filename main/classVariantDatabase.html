@@ -226,6 +226,9 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a36bb90a1f330786356fe58b22a4a321d" id="r_a36bb90a1f330786356fe58b22a4a321d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantSpec.html">VariantSpec</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a36bb90a1f330786356fe58b22a4a321d">spec</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id)</td></tr>
 <tr class="memdesc:a36bb90a1f330786356fe58b22a4a321d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a> for the given ID, or nullptr if none.  <br /></td></tr>
 <tr class="separator:a36bb90a1f330786356fe58b22a4a321d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae4baa8b54bcddb4d39044fe525501117" id="r_ae4baa8b54bcddb4d39044fe525501117"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantSpec.html">VariantSpec</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ae4baa8b54bcddb4d39044fe525501117">specFor</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;name)</td></tr>
+<tr class="memdesc:ae4baa8b54bcddb4d39044fe525501117"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a> for a key name, or nullptr if none.  <br /></td></tr>
+<tr class="separator:ae4baa8b54bcddb4d39044fe525501117"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a49997a5c19f9cf2d4715b8e048d196c6" id="r_a49997a5c19f9cf2d4715b8e048d196c6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classMap.html">Map</a>&lt; <a class="el" href="classList.html">uint64_t</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a49997a5c19f9cf2d4715b8e048d196c6">registeredSpecs</a> ()</td></tr>
 <tr class="memdesc:a49997a5c19f9cf2d4715b8e048d196c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a copy of the entire spec registry.  <br /></td></tr>
 <tr class="separator:a49997a5c19f9cf2d4715b8e048d196c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -366,7 +369,7 @@ template&lt;<a class="el" href="classCompiledString.html">CompiledString</a> Nam
 <div class="line">    <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32)</div>
 <div class="line">                 .setDefault(1920)</div>
 <div class="line">                 .setDescription(<span class="stringliteral">&quot;Frame width&quot;</span>));</div>
-<div class="ttc" id="agroup__util_html_ga155b8e018cd70514a008a09951cf033e"><div class="ttname"><a href="group__util.html#ga155b8e018cd70514a008a09951cf033e">PROMEKI_DECLARE_ID</a></div><div class="ttdeci">#define PROMEKI_DECLARE_ID(Name,...)</div><div class="ttdoc">Declares a well-known VariantDatabase key as a compile-time constant.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:1004</div></div>
+<div class="ttc" id="agroup__util_html_ga155b8e018cd70514a008a09951cf033e"><div class="ttname"><a href="group__util.html#ga155b8e018cd70514a008a09951cf033e">PROMEKI_DECLARE_ID</a></div><div class="ttdeci">#define PROMEKI_DECLARE_ID(Name,...)</div><div class="ttdoc">Declares a well-known VariantDatabase key as a compile-time constant.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:1026</div></div>
 </div><!-- fragment --> </dd></dl>
 
 </div>
@@ -554,8 +557,8 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div class="line"><a class="code hl_class" href="classList.html">cfg</a>.<a class="code hl_function" href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">set</a>(<a class="code hl_class" href="classList.html">TimecodeKey</a>,    <a class="code hl_class" href="classTimecode.html">Timecode</a>(<a class="code hl_enumvalue" href="classTimecode.html#a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207">Timecode::NDF24</a>, 1, 0, 0, 0));</div>
 <div class="line"><a class="code hl_class" href="classString.html">String</a> s = <a class="code hl_class" href="classList.html">cfg</a>.format(<span class="stringliteral">&quot;Format: {VideoFormat:smpte}, TC: {Timecode:smpte}&quot;</span>);</div>
 <div class="line"><span class="comment">// &quot;Format: 1080p29.97, TC: 01:00:00:00&quot;</span></div>
-<div class="ttc" id="aclassTimecode_html"><div class="ttname"><a href="classTimecode.html">Timecode</a></div><div class="ttdoc">Class for holding and manipulating timecode.</div><div class="ttdef"><b>Definition</b> timecode.h:47</div></div>
-<div class="ttc" id="aclassTimecode_html_a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207"><div class="ttname"><a href="classTimecode.html#a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207">Timecode::NDF24</a></div><div class="ttdeci">@ NDF24</div><div class="ttdoc">24 fps non-drop-frame (maps to VTC_FORMAT_24)</div><div class="ttdef"><b>Definition</b> timecode.h:55</div></div>
+<div class="ttc" id="aclassTimecode_html"><div class="ttname"><a href="classTimecode.html">Timecode</a></div><div class="ttdoc">Class for holding and manipulating timecode.</div><div class="ttdef"><b>Definition</b> timecode.h:48</div></div>
+<div class="ttc" id="aclassTimecode_html_a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207"><div class="ttname"><a href="classTimecode.html#a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207">Timecode::NDF24</a></div><div class="ttdeci">@ NDF24</div><div class="ttdoc">24 fps non-drop-frame (maps to VTC_FORMAT_24)</div><div class="ttdef"><b>Definition</b> timecode.h:56</div></div>
 <div class="ttc" id="aclassVideoFormat_html"><div class="ttname"><a href="classVideoFormat.html">VideoFormat</a></div><div class="ttdoc">Combined video raster, frame rate, and scan mode.</div><div class="ttdef"><b>Definition</b> videoformat.h:189</div></div>
 </div><!-- fragment --></dd></dl>
 <dl class="section user"><dt>Example: nested resolution via resolver callback</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classError.html">Error</a> <a class="code hl_class" href="classList.html">err</a>;</div>
@@ -905,7 +908,7 @@ template&lt;<a class="el" href="classCompiledString.html">CompiledString</a> Nam
 <div class="line">a.<a class="code hl_function" href="classVariantDatabase.html#acc09774a54c4b14168cc55fc14c4ad19">set</a>(key, 1920);</div>
 <div class="line">b.<a class="code hl_function" href="classVariantDatabase.html#acc09774a54c4b14168cc55fc14c4ad19">set</a>(key, 1920);</div>
 <div class="line"><span class="keywordtype">bool</span> <a class="code hl_class" href="classList.html">same</a> = (a == b);  <span class="comment">// true</span></div>
-<div class="ttc" id="aclassVariantDatabase_html_acc09774a54c4b14168cc55fc14c4ad19"><div class="ttname"><a href="classVariantDatabase.html#acc09774a54c4b14168cc55fc14c4ad19">VariantDatabase::set</a></div><div class="ttdeci">bool set(ID id, const Variant &amp;value)</div><div class="ttdoc">Sets the value for the given ID.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:379</div></div>
+<div class="ttc" id="aclassVariantDatabase_html_acc09774a54c4b14168cc55fc14c4ad19"><div class="ttname"><a href="classVariantDatabase.html#acc09774a54c4b14168cc55fc14c4ad19">VariantDatabase::set</a></div><div class="ttdeci">bool set(ID id, const Variant &amp;value)</div><div class="ttdoc">Sets the value for the given ID.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:401</div></div>
 </div><!-- fragment --> </dd></dl>
 
 </div>
@@ -1372,6 +1375,44 @@ template&lt;<a class="el" href="classCompiledString.html">CompiledString</a> Nam
 
 </div>
 </div>
+<a id="ae4baa8b54bcddb4d39044fe525501117" name="ae4baa8b54bcddb4d39044fe525501117"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae4baa8b54bcddb4d39044fe525501117">&#9670;&#160;</a></span>specFor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="classCompiledString.html">CompiledString</a> Name&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantSpec.html">VariantSpec</a> * <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&lt; <a class="el" href="classList.html">Name</a> &gt;::specFor </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a> for a key name, or nullptr if none. </p>
+<p>Convenience wrapper that resolves <code>name</code> through the per-<code>Name</code> <a class="el" href="classStringRegistry.html" title="Thread-safe append-only registry that maps unique strings to integer IDs.">StringRegistry</a> without registering it, then returns the registered spec (if any). Used by <a class="el" href="classVariantLookup.html#a53c79454da63f0e817cb2f75e2334958">VariantLookup::specFor</a> when a database-backed path needs to expose the declared type of a key to callers that only have the string form (query compilers, tools, introspectors).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>The key name to look up. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the registered spec, or nullptr when the name is unknown or no spec was declared for it. </dd></dl>
+
+</div>
+</div>
 <a id="ab7e52a245253bf7dd06b117645aac782" name="ab7e52a245253bf7dd06b117645aac782"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab7e52a245253bf7dd06b117645aac782">&#9670;&#160;</a></span>toJson()</h2>
 
@@ -1613,7 +1654,7 @@ template&lt;<a class="el" href="classCompiledString.html">CompiledString</a> Nam
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classVariantDatabase.html">VariantDatabase</a></li>
-    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-20 02:52:47 from commit 9c7824a (1.0.0).</li>
   </ul>
 </div>
 </body>

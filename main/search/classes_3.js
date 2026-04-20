@@ -4,10 +4,11 @@ var searchData=
   ['datagram_1',['datagram',['../structPacketTransport_1_1Datagram.html',1,'PacketTransport::Datagram'],['../structUdpSocket_1_1Datagram.html',1,'UdpSocket::Datagram']]],
   ['datastream_2',['DataStream',['../classDataStream.html',1,'']]],
   ['datetime_3',['DateTime',['../classDateTime.html',1,'']]],
-  ['decodeditem_4',['DecodedItem',['../structImageDataDecoder_1_1DecodedItem.html',1,'ImageDataDecoder']]],
-  ['decodedtimecode_5',['DecodedTimecode',['../structLtcDecoder_1_1DecodedTimecode.html',1,'LtcDecoder']]],
-  ['definition_6',['Definition',['../structEnum_1_1Definition.html',1,'Enum']]],
-  ['deque_7',['Deque',['../classDeque.html',1,'']]],
-  ['dir_8',['Dir',['../classDir.html',1,'']]],
-  ['duration_9',['Duration',['../classDuration.html',1,'']]]
+  ['debugmediafile_4',['DebugMediaFile',['../classDebugMediaFile.html',1,'']]],
+  ['decodeditem_5',['DecodedItem',['../structImageDataDecoder_1_1DecodedItem.html',1,'ImageDataDecoder']]],
+  ['decodedtimecode_6',['DecodedTimecode',['../structLtcDecoder_1_1DecodedTimecode.html',1,'LtcDecoder']]],
+  ['definition_7',['Definition',['../structEnum_1_1Definition.html',1,'Enum']]],
+  ['deque_8',['Deque',['../classDeque.html',1,'']]],
+  ['dir_9',['Dir',['../classDir.html',1,'']]],
+  ['duration_10',['Duration',['../classDuration.html',1,'']]]
 ];

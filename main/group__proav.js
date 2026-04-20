@@ -12,18 +12,16 @@ var group__proav =
       [ "convertTo", "classAudio.html#a639fd47cab076652c462e7a42c7d5de0", null ],
       [ "data", "classAudio.html#a55558ab750f8d19bc9e068a40a1814b5", null ],
       [ "desc", "classAudio.html#af4c906c113ec44e511a595637482367c", null ],
+      [ "dump", "classAudio.html#a49cb4271bad33588205418a857cec0a4", null ],
       [ "frames", "classAudio.html#a88072bd5b083d9cd82e18dedfb2fd19c", null ],
       [ "isCompressed", "classAudio.html#a8e9c3df3874362b193f445ad6d4dd525", null ],
       [ "isNative", "classAudio.html#a06acc626e1be46c11183951b474af0cf", null ],
       [ "isValid", "classAudio.html#af39f380ec7303f814f36d7f97cc48701", null ],
-      [ "makeString", "classAudio.html#a227bba6c30321bea9b444ab86491c294", null ],
-      [ "makeString", "classAudio.html#a8cf63a293e2c313ed9ca72d000a840ac", null ],
       [ "maxSamples", "classAudio.html#ac108341b8923cec805d8a5bd926ed657", null ],
       [ "metadata", "classAudio.html#a4d444aebd87bc49e59eac89ef0441d16", null ],
       [ "metadata", "classAudio.html#a08645d1308d88192f68851fbd1d44d04", null ],
       [ "packet", "classAudio.html#a2067dbdb24ad25991da81764635ff7bb", null ],
       [ "resize", "classAudio.html#abc2ac90f3453dd40c349fecfd37739fb", null ],
-      [ "resolveTemplateKey", "classAudio.html#a9b07d569e5cbda89c25f2f44adf27038", null ],
       [ "samples", "classAudio.html#a0ec5c30a7e45cc01dc9eeffe033cd2e3", null ],
       [ "setPacket", "classAudio.html#aeea98aa01c4dfc85ec01fe5c18eced06", null ],
       [ "zero", "classAudio.html#a07a3d3807c2d71f5ef1fa7be0c97d219", null ]
@@ -439,6 +437,37 @@ var group__proav =
     [ "CSCRegistry", "classCSCRegistry.html", [
       [ "LineFuncPtr", "classCSCRegistry.html#a5f27b5db466f0f5520bd57630c62079d", null ]
     ] ],
+    [ "DebugMediaFile", "classDebugMediaFile.html", [
+      [ "FrameIndexEntry", "structDebugMediaFile_1_1FrameIndexEntry.html", [
+        [ "fileOffset", "structDebugMediaFile_1_1FrameIndexEntry.html#a19e7fc4683b1d3a34b0aff3d3616b2c2", null ],
+        [ "frameNumber", "structDebugMediaFile_1_1FrameIndexEntry.html#abc70d0a1bcfb11d6948c9b6edcc44b0e", null ],
+        [ "presentationUs", "structDebugMediaFile_1_1FrameIndexEntry.html#ad71fd12d0713239f99f70c2e6fa7a844", null ]
+      ] ],
+      [ "OpenOptions", "structDebugMediaFile_1_1OpenOptions.html", [
+        [ "sessionInfo", "structDebugMediaFile_1_1OpenOptions.html#ad473fcf4e30f5be88c00731b3d258717", null ]
+      ] ],
+      [ "Mode", "classDebugMediaFile.html#af102ac2a5a6619d4f1d290f2ffff26e5", [
+        [ "NotOpen", "classDebugMediaFile.html#af102ac2a5a6619d4f1d290f2ffff26e5a48a08c0c5aa052b15385ede83401580e", null ],
+        [ "Read", "classDebugMediaFile.html#af102ac2a5a6619d4f1d290f2ffff26e5aac5803403d80e2ca6de76055e2b9d857", null ],
+        [ "Write", "classDebugMediaFile.html#af102ac2a5a6619d4f1d290f2ffff26e5acf2cf30ba69783a306b147f845fcc6e5", null ]
+      ] ],
+      [ "DebugMediaFile", "classDebugMediaFile.html#a9ecbee7db601e1e214c2802f8191827d", null ],
+      [ "~DebugMediaFile", "classDebugMediaFile.html#a760aa1b80f0c2914c9a3410843d37c7a", null ],
+      [ "close", "classDebugMediaFile.html#afdbee41ff0151d98002c86177af318a6", null ],
+      [ "filename", "classDebugMediaFile.html#a95f3d5c017222484994b272317b0bae5", null ],
+      [ "frameCount", "classDebugMediaFile.html#aed3369a5c964a5ef9d6a73f7f0b6ff8d", null ],
+      [ "framesWritten", "classDebugMediaFile.html#aa971bbfeeace04acfebfe175252da3fa", null ],
+      [ "hasFooter", "classDebugMediaFile.html#acf1e1d44a8d00503cc73f71c0358a46c", null ],
+      [ "index", "classDebugMediaFile.html#a11d0e430c51c2bea5acf76e8fd52ae67", null ],
+      [ "isOpen", "classDebugMediaFile.html#aaaf546ffb0211f3ae8a99cd95de8aac5", null ],
+      [ "mode", "classDebugMediaFile.html#a1183177616945058c0d34170fc314bf3", null ],
+      [ "open", "classDebugMediaFile.html#a3fb63703b58d5a41273c609bd4bdbef8", null ],
+      [ "readFrame", "classDebugMediaFile.html#a169efbf98fe417a6f2222250104b31ab", null ],
+      [ "readFrameAt", "classDebugMediaFile.html#a814fb061074e7a05c93af99d59257f97", null ],
+      [ "seek", "classDebugMediaFile.html#a8459c6ad40254017e661b6f7f98ddbfb", null ],
+      [ "sessionInfo", "classDebugMediaFile.html#aa1707cf13395880a80c4e1f0299c92b6", null ],
+      [ "writeFrame", "classDebugMediaFile.html#a6d105a65de193efa818eb8e37f9a9d29", null ]
+    ] ],
     [ "EncodedDesc", "classEncodedDesc.html", [
       [ "List", "classEncodedDesc.html#aaf8cd648b796a8910debe4ffcd8de560", null ],
       [ "Ptr", "classEncodedDesc.html#abd57f1a974f497389d07777c6b24b448", null ],
@@ -472,14 +501,12 @@ var group__proav =
       [ "benchmark", "classFrame.html#a6a74d626f104011cc6315eb56f75411e", null ],
       [ "configUpdate", "classFrame.html#ae5989fe0491399710a61610ff1680af0", null ],
       [ "configUpdate", "classFrame.html#acb804a3581dc400469e62ca1f75e12bc", null ],
+      [ "dump", "classFrame.html#a892dbdc2c358b5d85f4a2f58f5b841ae", null ],
       [ "imageList", "classFrame.html#a8d258b0e55414fc85257cb1784559db5", null ],
       [ "imageList", "classFrame.html#a8360d8a81a700a1b90cf6da71cd524e4", null ],
-      [ "makeString", "classFrame.html#a5e1d873d5e8d99f87d89f4ccaeedee98", null ],
-      [ "makeString", "classFrame.html#aa537bccb563e0500ba1117ad0eac19d1", null ],
       [ "mediaDesc", "classFrame.html#afb948d42ec82b719221b60a1ce25926f", null ],
       [ "metadata", "classFrame.html#a4ff149c36694dcda0da237da9d454d39", null ],
       [ "metadata", "classFrame.html#a3029bf6f68d261411f9510536c1994d2", null ],
-      [ "resolveTemplateKey", "classFrame.html#abd2b409a1df6e780aea5eb9fcf83a7cd", null ],
       [ "setBenchmark", "classFrame.html#a6e5e34cd3fc8dca4b282c125b7bb1035", null ],
       [ "setConfigUpdate", "classFrame.html#ab360c63e4255d03d24c242dcef4dee17", null ],
       [ "videoFormat", "classFrame.html#a5cd4e91eefa51727a9e709143888fe31", null ]
@@ -531,6 +558,7 @@ var group__proav =
       [ "createPaintEngine", "classImage.html#a2ea6053a9be42b4b21b59a0944e5d564", null ],
       [ "data", "classImage.html#a1940daf743c22020142daf837d76c8ca", null ],
       [ "desc", "classImage.html#ac89cd3932f4a60d133232ef5fcb24bdb", null ],
+      [ "dump", "classImage.html#a8eb5dd2eec5499384b64d85326f5e52e", null ],
       [ "ensureExclusive", "classImage.html#a350033e3fb9fad034de15f79b1b2d72c", null ],
       [ "fill", "classImage.html#a0ad1d382f2dc0c18c65786ba5b16a0dc", null ],
       [ "height", "classImage.html#a07d2c4468079fc049cd06594481d7c5e", null ],
@@ -538,15 +566,12 @@ var group__proav =
       [ "isExclusive", "classImage.html#a7e0432eb699f012ce6a1e498392ee83f", null ],
       [ "isValid", "classImage.html#ac78aa7b47e7a8b279d2e95ac309ab375", null ],
       [ "lineStride", "classImage.html#abf9283ed3c232c709afcd5dd22bd60f1", null ],
-      [ "makeString", "classImage.html#a4a3f114fb1273a404797e57004b9be2d", null ],
-      [ "makeString", "classImage.html#aaef7d633bb0a0147c6524c9399d32a2a", null ],
       [ "metadata", "classImage.html#ad1808461031b4813284ca41f38ae7e38", null ],
       [ "metadata", "classImage.html#a41648e00f1e62388c26b526afb817409", null ],
       [ "packet", "classImage.html#aed813848fdebb5874f9f29878cd7e5f1", null ],
       [ "pixelDesc", "classImage.html#a510ed5bb09ccb7896dfecf2c066e7f6c", null ],
       [ "plane", "classImage.html#a45f3cb17cda1d4247bff5cbaf7c84105", null ],
       [ "planes", "classImage.html#adc70674604363e20832ad93fd71f37cd", null ],
-      [ "resolveTemplateKey", "classImage.html#a2a4c83156dda4c457ba287d3ebc6c058", null ],
       [ "setPacket", "classImage.html#a2c7dfff98641759859ead86064557f8d", null ],
       [ "size", "classImage.html#a82a4a6f6f0e6d370bb1a81e4c55ce20f", null ],
       [ "width", "classImage.html#aa3c6a86a6e5f35499ae781710154cb33", null ]
@@ -1045,6 +1070,7 @@ var group__proav =
       [ "MediaIOTask_CSC", "classMediaIOTask__CSC.html#a770464ffa838c53e670ecf0c08b7502d", null ],
       [ "~MediaIOTask_CSC", "classMediaIOTask__CSC.html#a4b434594214c84c927a5937b9ab3ee3e", null ]
     ] ],
+    [ "MediaIOTask_DebugMedia", "classMediaIOTask__DebugMedia.html", null ],
     [ "MediaIOTask_FrameBridge", "classMediaIOTask__FrameBridge.html", [
       [ "MediaIOTask_FrameBridge", "classMediaIOTask__FrameBridge.html#ad73993e9877b0f1a86de76bb341d1101", null ],
       [ "~MediaIOTask_FrameBridge", "classMediaIOTask__FrameBridge.html#ae260caf6fff5f7fb8f82caf7c75dfda0", null ]

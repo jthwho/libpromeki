@@ -8,12 +8,14 @@ var searchData=
   ['red_5',['Red',['../classColor.html#ade25ce437fd74a7b08fee1583b329c8e',1,'Color']]],
   ['reflect_6',['reflect',['../structCRC_1_1Params.html#a55ef927e97034e79f99f0b5653b6121c',1,'CRC::Params']]],
   ['release_7',['release',['../structMemSpace_1_1Ops.html#a7e1a52bd6ab8f690d90ce2c462a2c76d',1,'MemSpace::Ops']]],
-  ['releasebytes_8',['releasebytes',['../structMemSpace_1_1Stats.html#a1eee343d4320da5f12d51bb20d1e5028',1,'MemSpace::Stats::releaseBytes'],['../structMemSpace_1_1Stats_1_1Snapshot.html#ae0b98b7202090cdaf0d0d2e6c97cc510',1,'MemSpace::Stats::Snapshot::releaseBytes']]],
+  ['releasebytes_8',['releasebytes',['../structMemSpace_1_1Stats_1_1Snapshot.html#ae0b98b7202090cdaf0d0d2e6c97cc510',1,'MemSpace::Stats::Snapshot::releaseBytes'],['../structMemSpace_1_1Stats.html#a1eee343d4320da5f12d51bb20d1e5028',1,'MemSpace::Stats::releaseBytes']]],
   ['releasecount_9',['releasecount',['../structMemSpace_1_1Stats_1_1Snapshot.html#a14ef0dab7e776649f1b8b7be82bdb553',1,'MemSpace::Stats::Snapshot::releaseCount'],['../structMemSpace_1_1Stats.html#acb1a98c04069d0f18612c581ba581a80',1,'MemSpace::Stats::releaseCount']]],
   ['repeats_10',['repeats',['../classBenchmarkResult.html#af3f3364cfcddf40cd548a2eefdc202b1',1,'BenchmarkResult']]],
   ['repoident_11',['repoident',['../structBuildInfo.html#a20b4d6a2107f88027f9c8d5a61a30192',1,'BuildInfo']]],
   ['resize_12',['Resize',['../classResizeEvent.html#a216f4563eccf3880282d29b646e3a013',1,'ResizeEvent']]],
-  ['result_13',['result',['../classMediaIOCommandRead.html#a141c78b1dc0b319e1ac71123fce7c884',1,'MediaIOCommandRead::result'],['../classMediaIOCommandParams.html#a8d58a2d0c5a7e12a26a8250b2e6fc6ab',1,'MediaIOCommandParams::result']]],
-  ['rgbtoxyz_14',['rgbToXyz',['../structColorModel_1_1Data.html#a9901ef9ea6923749a4f98c4b505fe970',1,'ColorModel::Data']]],
-  ['ringdepth_15',['ringDepth',['../structFrameBridge_1_1Config.html#ac58c635f12a89c811d17b3571ea883b2',1,'FrameBridge::Config']]]
+  ['resolve_13',['resolve',['../structdetail_1_1VariantQueryContext.html#a6ad2e5883ba11691cf88ab643e29075d',1,'detail::VariantQueryContext']]],
+  ['rest_14',['rest',['../structdetail_1_1VariantLookupSegment.html#ab98c85898ab4a6188b4916a60dd89176',1,'detail::VariantLookupSegment']]],
+  ['result_15',['result',['../classMediaIOCommandRead.html#a141c78b1dc0b319e1ac71123fce7c884',1,'MediaIOCommandRead::result'],['../classMediaIOCommandParams.html#a8d58a2d0c5a7e12a26a8250b2e6fc6ab',1,'MediaIOCommandParams::result']]],
+  ['rgbtoxyz_16',['rgbToXyz',['../structColorModel_1_1Data.html#a9901ef9ea6923749a4f98c4b505fe970',1,'ColorModel::Data']]],
+  ['ringdepth_17',['ringDepth',['../structFrameBridge_1_1Config.html#ac58c635f12a89c811d17b3571ea883b2',1,'FrameBridge::Config']]]
 ];

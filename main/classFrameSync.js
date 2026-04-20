@@ -22,7 +22,7 @@ var classFrameSync =
     [ "interrupt", "classFrameSync.html#a7930fa43cb6c66b3f8a428cfd19587e5", null ],
     [ "name", "classFrameSync.html#a86e8ddaa8171345d29e73d398e18771a", null ],
     [ "overflowDrops", "classFrameSync.html#ac1c804eb856c8007daeeffb62db1b41b", null ],
-    [ "pullFrame", "classFrameSync.html#a77c525c0e90cf3c1ee577e44f011e5f5", null ],
+    [ "pullFrame", "classFrameSync.html#a3736b6c8661b596de0662892d881d7f3", null ],
     [ "pushEndOfStream", "classFrameSync.html#a34a3a58187272443c6bd5c8037499b51", null ],
     [ "pushFrame", "classFrameSync.html#ad6cc3588bf2a967c1706564a05c4a58e", null ],
     [ "reset", "classFrameSync.html#a2b723b9d9129dc45edd29712d2d5b4a6", null ],

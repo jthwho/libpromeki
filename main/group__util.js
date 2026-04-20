@@ -272,7 +272,8 @@ var group__util =
         [ "FormatMismatch", "classError.html#ab5980e13b879db253df802b0950d1708a7e5b3da50016db37eaa13051d0ae32bf", null ],
         [ "FontUnavailable", "classError.html#ab5980e13b879db253df802b0950d1708a860bb07c791353ea49a5c70a3cbd4ebc", null ],
         [ "BrokenPipe", "classError.html#ab5980e13b879db253df802b0950d1708a001c622365338bdf6d05e4ed46744d99", null ],
-        [ "ConnectionReset", "classError.html#ab5980e13b879db253df802b0950d1708afdfdd90b202ec76534905cdf1692ac49", null ]
+        [ "ConnectionReset", "classError.html#ab5980e13b879db253df802b0950d1708afdfdd90b202ec76534905cdf1692ac49", null ],
+        [ "ParseFailed", "classError.html#ab5980e13b879db253df802b0950d1708ac5ee0586eea50614d95aea00d1eff4a9", null ]
       ] ],
       [ "Error", "classError.html#a83eaa8db2a6c22d6aff5758eea236a6e", null ],
       [ "~Error", "classError.html#a1a45d42a3a035d510333cdfeb36a0e93", null ],
@@ -574,8 +575,13 @@ var group__util =
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#abe3c960c587617b1d75750196185931a", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a4f0bd9b55aa58028fe48a625394658b9", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a575cf01d52d7a25317dbac328d48474d", null ],
+      [ "PROMEKI_DECLARE_ID", "classMetadata.html#afb2fcf431ff9210de9dd71f7d0036c77", null ],
+      [ "PROMEKI_DECLARE_ID", "classMetadata.html#a7c7ae06b21b30e90eda28388bfee524a", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#aa344f4437203072707fb0d5f02f5246e", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a8a684b75b27a92812a0c045b817cf9e9", null ],
+      [ "PROMEKI_DECLARE_ID", "classMetadata.html#afaf9f1957198662aa7859a51fd4759ee", null ],
+      [ "PROMEKI_DECLARE_ID", "classMetadata.html#a5648d9d45b0f07b6631ecda4d7fdf8b2", null ],
+      [ "PROMEKI_DECLARE_ID", "classMetadata.html#ab15b7493d9bda9a6e20da0b2b845b8b9", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a3c80ac68088dae1e9a8fd642326a45b0", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#ac0ed89de2069a3cfe1d291d14edc67df", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a1e2a73639847906484fdcdcf1a680a1c", null ],
@@ -589,6 +595,8 @@ var group__util =
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a3311b77a906c6f49bea9ed1491f06020", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#addab986c1b6f57d645f935fa5cb74026", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a2f3f23133d826559a7f03a257e6dfa7b", null ],
+      [ "PROMEKI_DECLARE_ID", "classMetadata.html#a1a5b0a50da34efb9e7d9137e370a5f56", null ],
+      [ "PROMEKI_DECLARE_ID", "classMetadata.html#a1db1a7672ee52131a194901528bd83ff", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#ad026fe8eab4b47c864da9dc13f8440d4", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a1b1b907af416eaaf80427f5fb55bad43", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#aeb4f6c70b88d70ba34c4f33379958391", null ],
@@ -887,6 +895,46 @@ var group__util =
       [ "writeTo", "classVariantDatabase.html#a1ad56182795672a62720c7141a2d7e91", null ],
       [ "writeTo", "classVariantDatabase.html#a2e92bbafcc701007f9ce40ed322662df", null ]
     ] ],
+    [ "detail::VariantLookupSegment", "structdetail_1_1VariantLookupSegment.html", [
+      [ "hasIndex", "structdetail_1_1VariantLookupSegment.html#a4fb87827545188e36060a5c98eaca1be", null ],
+      [ "hasRest", "structdetail_1_1VariantLookupSegment.html#a4324fc23fdfc03f90029d832bedad4a0", null ],
+      [ "index", "structdetail_1_1VariantLookupSegment.html#a58c19b4ed715ef3675da9a864b228911", null ],
+      [ "name", "structdetail_1_1VariantLookupSegment.html#a400470c148e085046ed26009494ad004", null ],
+      [ "rest", "structdetail_1_1VariantLookupSegment.html#ab98c85898ab4a6188b4916a60dd89176", null ]
+    ] ],
+    [ "VariantLookup< T >", "classVariantLookup.html", [
+      [ "Key", "classVariantLookup_1_1Key.html", [
+        [ "Key", "classVariantLookup_1_1Key.html#ac3d341cb72d50b5cbdf3562df27d43a9", null ],
+        [ "id", "classVariantLookup_1_1Key.html#a7a6765f9b23d63347759cc07ce886b4c", null ],
+        [ "isValid", "classVariantLookup_1_1Key.html#a297425232fffaf24f4082104f3f14bb5", null ],
+        [ "name", "classVariantLookup_1_1Key.html#a6f4268968773b2effff3dccdd38469cf", null ]
+      ] ],
+      [ "Registrar", "classVariantLookup_1_1Registrar.html", [
+        [ "child", "classVariantLookup_1_1Registrar.html#aa6482ba289cef43c2939d8c7e4d8e611", null ],
+        [ "database", "classVariantLookup_1_1Registrar.html#a796f81362b9763823f46df88cea6f747", null ],
+        [ "indexedChild", "classVariantLookup_1_1Registrar.html#a3d597fc6ebd07314aafc9d1ad12416ad", null ],
+        [ "indexedScalar", "classVariantLookup_1_1Registrar.html#abfa30f8250f2a511034d75b9b8e9a4cf", null ],
+        [ "indexedScalar", "classVariantLookup_1_1Registrar.html#af228c79f6c33b33761af142775d470f3", null ],
+        [ "scalar", "classVariantLookup_1_1Registrar.html#ac1a5cac00d0ff4fcbb198bfc76cc9ec7", null ],
+        [ "scalar", "classVariantLookup_1_1Registrar.html#af3008d9459020c4a45e87a6b5ee480ae", null ]
+      ] ],
+      [ "ComposeAssign", "classVariantLookup.html#a1ddbcdb2d3f56d773fccf193b44e6920", null ],
+      [ "ComposeResolve", "classVariantLookup.html#ae53c4ce73b8dc3b3b3492aa2a553e1be", null ],
+      [ "ComposeSpecFor", "classVariantLookup.html#a36c995a6dc5b7998f69055317a55a644", null ],
+      [ "IndexedCompAssign", "classVariantLookup.html#ade2a3ee240728667a7ba10798d612e15", null ],
+      [ "IndexedCompResolve", "classVariantLookup.html#a76f31180cd21275a546880c6b8b40458", null ],
+      [ "IndexedScalarGet", "classVariantLookup.html#a8eea93632902fb5d5d3fc66e6e478d14", null ],
+      [ "IndexedScalarSet", "classVariantLookup.html#a99bc0079c6db4e32b5c84097eb9674fd", null ],
+      [ "ScalarGet", "classVariantLookup.html#ad7f8b3df4c75d1376981e57496a8ce1a", null ],
+      [ "ScalarSet", "classVariantLookup.html#add1882389ab493336a3773385b64b465", null ]
+    ] ],
+    [ "VariantQuery< T >", "classVariantQuery.html", [
+      [ "VariantQuery", "classVariantQuery.html#a491c3e59342f5f0e5cb4b02acd25dd4f", null ],
+      [ "errorDetail", "classVariantQuery.html#aa495c713020370aee8555beadbf378f2", null ],
+      [ "isValid", "classVariantQuery.html#a3d3dc80a33cca36d39b8eddb969d0cec", null ],
+      [ "match", "classVariantQuery.html#a4ec7b2e2fd13aaa5b25dc72c19075d73", null ],
+      [ "source", "classVariantQuery.html#a5e76b26773b5a8014822478eeb95076f", null ]
+    ] ],
     [ "VariantSpec", "classVariantSpec.html", [
       [ "Type", "classVariantSpec.html#acb73d1fdda875e2825bae15df6030ced", null ],
       [ "TypeList", "classVariantSpec.html#a679ab0766715574b3ee1565974f184fc", null ],
@@ -921,6 +969,7 @@ var group__util =
       [ "validate", "classVariantSpec.html#aa7b6da2209fad230a6158db936acc3e4", null ]
     ] ],
     [ "PROMEKI_DECLARE_ID", "group__util.html#ga155b8e018cd70514a008a09951cf033e", null ],
+    [ "PROMEKI_LOOKUP_REGISTER", "group__util.html#ga5cbdbf7bece870dee46af061c78a716a", null ],
     [ "PROMEKI_REGISTER_BENCHMARK", "group__util.html#ga70723073a3da0b313289ae73f693b7a2", null ],
     [ "PROMEKI_REGISTER_ENUM_TYPE", "group__util.html#gad8f5b041efeaee084ccff55a8e187e33", null ],
     [ "PROMEKI_SHARED", "group__util.html#ga171ec9034fbfc2c134195af18ea762e7", null ],

@@ -32,6 +32,7 @@ var classTimecode =
     [ "operator++", "classTimecode.html#a101c9bb88f10c83785c3889af1ecc7e0", null ],
     [ "operator--", "classTimecode.html#a0bb89fa0cca1b0b88ee8aa0d9090c6f1", null ],
     [ "operator--", "classTimecode.html#aa8777347891f00c963ddb9b22ce6c5a3", null ],
+    [ "operator>", "classTimecode.html#af37f66a9822490cc12d53b3c95c9c423", null ],
     [ "sec", "classTimecode.html#a272c41e442d480433841f7ae450359fa", null ],
     [ "set", "classTimecode.html#aa0f3e6aa1cc6828116515cbbaa7f501f", null ],
     [ "setMode", "classTimecode.html#a52245e2b5d56982b35a08e533dacd53b", null ],

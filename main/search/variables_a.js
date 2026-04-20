@@ -11,12 +11,15 @@ var searchData=
   ['keyframe_8',['keyframe',['../structQuickTime_1_1Sample.html#a28ea595f261a33b6e9db9ae6862ea640',1,'QuickTime::Sample']]],
   ['keypress_9',['KeyPress',['../classKeyEvent.html#a219478053d87c3c1c2c71d00fac6120f',1,'KeyEvent']]],
   ['keyrelease_10',['KeyRelease',['../classKeyEvent.html#a4dc5e9b314879c2ef2ae39efa527ac71',1,'KeyEvent']]],
-  ['kiec60958samplesperbit_11',['kIec60958SamplesPerBit',['../classAudioTestPattern.html#aee2c9d6764db5a49e81c5f0afd9ffac3',1,'AudioTestPattern']]],
-  ['kiec60958statusbits_12',['kIec60958StatusBits',['../classAudioTestPattern.html#a42b173f642111b9914d46303eb04f0db',1,'AudioTestPattern']]],
-  ['kind_13',['kind',['../structInspectorDiscontinuity.html#a1935c3a4d2c999342e0e40ba2ffbe49d',1,'InspectorDiscontinuity']]],
-  ['kpcmmarkerframesamples_14',['kPcmMarkerFrameSamples',['../classAudioTestPattern.html#aaefe7b4dd1eab47567ef2f1981c40d18',1,'AudioTestPattern']]],
-  ['kpcmmarkerpayloadbits_15',['kPcmMarkerPayloadBits',['../classAudioTestPattern.html#ab867ba1721d171d1ffdbb93a62f8f523',1,'AudioTestPattern']]],
-  ['kpcmmarkerpreamblesamples_16',['kPcmMarkerPreambleSamples',['../classAudioTestPattern.html#a361a11c2f8ed7d60fd3b07010aca8f61',1,'AudioTestPattern']]],
-  ['kpcmmarkerstartsamples_17',['kPcmMarkerStartSamples',['../classAudioTestPattern.html#ad915545729338f9c1e28b0f3d7142f88',1,'AudioTestPattern']]],
-  ['ksrcprobefrequencyhz_18',['kSrcProbeFrequencyHz',['../classAudioTestPattern.html#a852e1beb7487d36c42c3eef52c4bc97d',1,'AudioTestPattern']]]
+  ['kfileflaghasfooter_11',['kFileFlagHasFooter',['../classDebugMediaFile.html#a9158f2d5d0a7dda13831b3209fed0f3e',1,'DebugMediaFile']]],
+  ['kformatversion_12',['kFormatVersion',['../classDebugMediaFile.html#adb27a7dbfc406d80bb5e045b84512121',1,'DebugMediaFile']]],
+  ['kiec60958samplesperbit_13',['kIec60958SamplesPerBit',['../classAudioTestPattern.html#aee2c9d6764db5a49e81c5f0afd9ffac3',1,'AudioTestPattern']]],
+  ['kiec60958statusbits_14',['kIec60958StatusBits',['../classAudioTestPattern.html#a42b173f642111b9914d46303eb04f0db',1,'AudioTestPattern']]],
+  ['kind_15',['kind',['../structInspectorDiscontinuity.html#a1935c3a4d2c999342e0e40ba2ffbe49d',1,'InspectorDiscontinuity']]],
+  ['kmagic_16',['kMagic',['../classDebugMediaFile.html#a39c42595781e208ae314af6a682a4653',1,'DebugMediaFile']]],
+  ['kpcmmarkerframesamples_17',['kPcmMarkerFrameSamples',['../classAudioTestPattern.html#aaefe7b4dd1eab47567ef2f1981c40d18',1,'AudioTestPattern']]],
+  ['kpcmmarkerpayloadbits_18',['kPcmMarkerPayloadBits',['../classAudioTestPattern.html#ab867ba1721d171d1ffdbb93a62f8f523',1,'AudioTestPattern']]],
+  ['kpcmmarkerpreamblesamples_19',['kPcmMarkerPreambleSamples',['../classAudioTestPattern.html#a361a11c2f8ed7d60fd3b07010aca8f61',1,'AudioTestPattern']]],
+  ['kpcmmarkerstartsamples_20',['kPcmMarkerStartSamples',['../classAudioTestPattern.html#ad915545729338f9c1e28b0f3d7142f88',1,'AudioTestPattern']]],
+  ['ksrcprobefrequencyhz_21',['kSrcProbeFrequencyHz',['../classAudioTestPattern.html#a852e1beb7487d36c42c3eef52c4bc97d',1,'AudioTestPattern']]]
 ];

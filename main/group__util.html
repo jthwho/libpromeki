@@ -259,6 +259,15 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html">VariantDatabase&lt; Name &gt;</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A collection of named Variant values keyed by string-registered IDs.  <a href="classVariantDatabase.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdetail_1_1VariantLookupSegment.html">detail::VariantLookupSegment</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parsed leading segment of a <a class="el" href="classVariantLookup.html" title="Type-parameterised registry of named accessors on T.">VariantLookup</a> key.  <a href="structdetail_1_1VariantLookupSegment.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantLookup.html">VariantLookup&lt; T &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type-parameterised registry of named accessors on <code>T</code>.  <a href="classVariantLookup.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantQuery.html">VariantQuery&lt; T &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compiled predicate that matches any VariantLookup-registered type against an expression.  <a href="classVariantQuery.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantSpec.html">VariantSpec</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes the constraints and default value for a <a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a> ID.  <a href="classVariantSpec.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -280,6 +289,9 @@ Macros</h2></td></tr>
 <tr class="memitem:ga155b8e018cd70514a008a09951cf033e" id="r_ga155b8e018cd70514a008a09951cf033e"><td class="memItemLeft" align="right" valign="top">#<a class="el" href="classList.html">define</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga155b8e018cd70514a008a09951cf033e">PROMEKI_DECLARE_ID</a>(<a class="el" href="classList.html">Name</a>, ...)</td></tr>
 <tr class="memdesc:ga155b8e018cd70514a008a09951cf033e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declares a well-known <a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a> key as a compile-time constant.  <br /></td></tr>
 <tr class="separator:ga155b8e018cd70514a008a09951cf033e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga5cbdbf7bece870dee46af061c78a716a" id="r_ga5cbdbf7bece870dee46af061c78a716a"><td class="memItemLeft" align="right" valign="top">#<a class="el" href="classList.html">define</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga5cbdbf7bece870dee46af061c78a716a">PROMEKI_LOOKUP_REGISTER</a>(Type)</td></tr>
+<tr class="memdesc:ga5cbdbf7bece870dee46af061c78a716a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers <a class="el" href="classVariantLookup.html" title="Type-parameterised registry of named accessors on T.">VariantLookup</a> handlers for a type.  <br /></td></tr>
+<tr class="separator:ga5cbdbf7bece870dee46af061c78a716a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
@@ -370,7 +382,42 @@ Functions</h2></td></tr>
 <div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:56</div></div>
 <div class="ttc" id="aclassVariantDatabase_html"><div class="ttname"><a href="classVariantDatabase.html">VariantDatabase</a></div><div class="ttdoc">A collection of named Variant values keyed by string-registered IDs.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:96</div></div>
 <div class="ttc" id="aclassVariantSpec_html"><div class="ttname"><a href="classVariantSpec.html">VariantSpec</a></div><div class="ttdoc">Describes the constraints and default value for a VariantDatabase ID.</div><div class="ttdef"><b>Definition</b> variantspec.h:62</div></div>
-<div class="ttc" id="agroup__util_html_ga155b8e018cd70514a008a09951cf033e"><div class="ttname"><a href="group__util.html#ga155b8e018cd70514a008a09951cf033e">PROMEKI_DECLARE_ID</a></div><div class="ttdeci">#define PROMEKI_DECLARE_ID(Name,...)</div><div class="ttdoc">Declares a well-known VariantDatabase key as a compile-time constant.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:1004</div></div>
+<div class="ttc" id="agroup__util_html_ga155b8e018cd70514a008a09951cf033e"><div class="ttname"><a href="group__util.html#ga155b8e018cd70514a008a09951cf033e">PROMEKI_DECLARE_ID</a></div><div class="ttdeci">#define PROMEKI_DECLARE_ID(Name,...)</div><div class="ttdoc">Declares a well-known VariantDatabase key as a compile-time constant.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:1026</div></div>
+</div><!-- fragment --> </dd></dl>
+
+</div>
+</div>
+<a id="ga5cbdbf7bece870dee46af061c78a716a" name="ga5cbdbf7bece870dee46af061c78a716a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga5cbdbf7bece870dee46af061c78a716a">&#9670;&#160;</a></span>PROMEKI_LOOKUP_REGISTER</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#<a class="el" href="classList.html">define</a> PROMEKI_LOOKUP_REGISTER</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">Type</td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Value:</b><div class="fragment"><div class="line">        [[<a class="code hl_class" href="classList.html">maybe_unused</a>]] <span class="keyword">static</span> <span class="keyword">inline</span> const                            \</div>
+<div class="line">        ::promeki::VariantLookup&lt;Type&gt;::Registrar                       \</div>
+<div class="line">        PROMEKI_CONCAT(<a class="code hl_class" href="classList.html">_promeki_lookup_reg_</a>, <a class="code hl_class" href="classList.html">__COUNTER__</a>) =             \</div>
+<div class="line">                ::promeki::VariantLookup&lt;Type&gt;::registrar()</div>
+</div><!-- fragment -->
+<p>Registers <a class="el" href="classVariantLookup.html" title="Type-parameterised registry of named accessors on T.">VariantLookup</a> handlers for a type. </p>
+<p>Expands to a uniquely-named <code>static</code> <code>inline</code> constant that captures the final Registrar value from a fluent chain. The side effects (inserting handlers into the per-<code>T</code> registry) happen during static-init, so the macro must appear at namespace or class scope.</p>
+<dl class="section note"><dt>Note</dt><dd>Must be invoked from inside <code>PROMEKI_NAMESPACE_BEGIN</code> / <code>PROMEKI_NAMESPACE_END</code> (the usual case for <code></code>.cpp files that register against their own types). Invocation at global scope places the generated registration variable in the global namespace, which works but pollutes the global scope with implementation-detail names.</dd></dl>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_define" href="group__util.html#ga5cbdbf7bece870dee46af061c78a716a">PROMEKI_LOOKUP_REGISTER</a>(<a class="code hl_class" href="classImage.html">Image</a>)</div>
+<div class="line">        .scalar(<span class="stringliteral">&quot;Width&quot;</span>,  [](<span class="keyword">const</span> <a class="code hl_class" href="classImage.html">Image</a> &amp;<a class="code hl_class" href="classList.html">i</a>){ <span class="keywordflow">return</span> <a class="code hl_typedef" href="variant_8h.html#ac36566cc2c5535bba736babd50c4894f">Variant</a>(<a class="code hl_class" href="classList.html">i</a>.desc().width()); })</div>
+<div class="line">        .scalar(<span class="stringliteral">&quot;Height&quot;</span>, [](<span class="keyword">const</span> <a class="code hl_class" href="classImage.html">Image</a> &amp;<a class="code hl_class" href="classList.html">i</a>){ <span class="keywordflow">return</span> <a class="code hl_typedef" href="variant_8h.html#ac36566cc2c5535bba736babd50c4894f">Variant</a>(<a class="code hl_class" href="classList.html">i</a>.desc().height()); })</div>
+<div class="line">        .<a class="code hl_class" href="classList.html">database&lt;&quot;Metadata&quot;&gt;</a>(<span class="stringliteral">&quot;Meta&quot;</span>,</div>
+<div class="line">                [](<span class="keyword">const</span> <a class="code hl_class" href="classImage.html">Image</a> &amp;<a class="code hl_class" href="classList.html">i</a>){ <span class="keywordflow">return</span> &amp;<a class="code hl_class" href="classList.html">i</a>.desc().metadata(); });</div>
+<div class="ttc" id="aclassImage_html"><div class="ttname"><a href="classImage.html">Image</a></div><div class="ttdoc">Raster image with pixel description, planes, and metadata.</div><div class="ttdef"><b>Definition</b> image.h:64</div></div>
+<div class="ttc" id="agroup__util_html_ga5cbdbf7bece870dee46af061c78a716a"><div class="ttname"><a href="group__util.html#ga5cbdbf7bece870dee46af061c78a716a">PROMEKI_LOOKUP_REGISTER</a></div><div class="ttdeci">#define PROMEKI_LOOKUP_REGISTER(Type)</div><div class="ttdoc">Registers VariantLookup handlers for a type.</div><div class="ttdef"><b>Definition</b> variantlookup.h:1300</div></div>
+<div class="ttc" id="avariant_8h_html_ac36566cc2c5535bba736babd50c4894f"><div class="ttname"><a href="variant_8h.html#ac36566cc2c5535bba736babd50c4894f">Variant</a></div><div class="ttdeci">VariantImpl&lt; std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, Size2Du32, UUID, UMID, Timecode, Rational&lt; int &gt;, FrameRate, VideoFormat, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, VideoCodec, AudioCodec, Enum, EnumList, MasteringDisplay, ContentLightLevel, detail::VariantEnd &gt; Variant</div><div class="ttdoc">Concrete variant type instantiated with every type from PROMEKI_VARIANT_TYPES.</div><div class="ttdef"><b>Definition</b> variant.h:851</div></div>
 </div><!-- fragment --> </dd></dl>
 
 </div>
@@ -904,7 +951,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-20 02:52:47 from commit 9c7824a (1.0.0).</li>
   </ul>
 </div>
 </body>

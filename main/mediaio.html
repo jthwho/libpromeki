@@ -326,8 +326,8 @@ Parameterized commands</h2>
 <div class="ttc" id="aclassList_html_a708769d50011e6bdadc6bed2a6468aec"><div class="ttname"><a href="classList.html#a708769d50011e6bdadc6bed2a6468aec">List::List</a></div><div class="ttdeci">List()=default</div><div class="ttdoc">Default constructor. Creates an empty list.</div></div>
 <div class="ttc" id="aclassMediaIO_html_a2e5ae6fcfa20997a48b85b4e91a77169"><div class="ttname"><a href="classMediaIO.html#a2e5ae6fcfa20997a48b85b4e91a77169">MediaIO::sendParams</a></div><div class="ttdeci">Error sendParams(const String &amp;name, const MediaIOParams &amp;params=MediaIOParams(), MediaIOParams *result=nullptr)</div><div class="ttdoc">Sends a backend-specific parameterized command.</div></div>
 <div class="ttc" id="aclassVariantDatabase_html"><div class="ttname"><a href="classVariantDatabase.html">VariantDatabase&lt;&quot;MediaIOParams&quot;&gt;</a></div></div>
-<div class="ttc" id="aclassVariantDatabase_html_aba34c18fb083556f801a692fce34d76b"><div class="ttname"><a href="classVariantDatabase.html#aba34c18fb083556f801a692fce34d76b">VariantDatabase::getAs</a></div><div class="ttdeci">T getAs(ID id, const T &amp;defaultValue=T{}, Error *err=nullptr) const</div><div class="ttdoc">Returns the stored value converted to the requested type.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:455</div></div>
-<div class="ttc" id="aclassVariantDatabase_html_acc09774a54c4b14168cc55fc14c4ad19"><div class="ttname"><a href="classVariantDatabase.html#acc09774a54c4b14168cc55fc14c4ad19">VariantDatabase::set</a></div><div class="ttdeci">bool set(ID id, const Variant &amp;value)</div><div class="ttdoc">Sets the value for the given ID.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:379</div></div>
+<div class="ttc" id="aclassVariantDatabase_html_aba34c18fb083556f801a692fce34d76b"><div class="ttname"><a href="classVariantDatabase.html#aba34c18fb083556f801a692fce34d76b">VariantDatabase::getAs</a></div><div class="ttdeci">T getAs(ID id, const T &amp;defaultValue=T{}, Error *err=nullptr) const</div><div class="ttdoc">Returns the stored value converted to the requested type.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:477</div></div>
+<div class="ttc" id="aclassVariantDatabase_html_acc09774a54c4b14168cc55fc14c4ad19"><div class="ttname"><a href="classVariantDatabase.html#acc09774a54c4b14168cc55fc14c4ad19">VariantDatabase::set</a></div><div class="ttdeci">bool set(ID id, const Variant &amp;value)</div><div class="ttdoc">Sets the value for the given ID.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:401</div></div>
 </div><!-- fragment --><p>The meaning of <code>name</code> and the layout of <code>params</code> / <code>result</code> are entirely backend-defined.</p>
 <h1><a class="anchor" id="mediaio_authoring"></a>
 Authoring a backend</h1>
@@ -369,7 +369,7 @@ Skeleton</h2>
 <div class="ttc" id="aclassMediaIOCommandRead_html"><div class="ttname"><a href="classMediaIOCommandRead.html">MediaIOCommandRead</a></div><div class="ttdoc">Command to read the next frame.</div><div class="ttdef"><b>Definition</b> mediaio.h:337</div></div>
 <div class="ttc" id="aclassMediaIOCommandSeek_html"><div class="ttname"><a href="classMediaIOCommandSeek.html">MediaIOCommandSeek</a></div><div class="ttdoc">Command to seek to a frame position.</div><div class="ttdef"><b>Definition</b> mediaio.h:383</div></div>
 <div class="ttc" id="aclassMediaIOCommandWrite_html"><div class="ttname"><a href="classMediaIOCommandWrite.html">MediaIOCommandWrite</a></div><div class="ttdoc">Command to write a frame.</div><div class="ttdef"><b>Definition</b> mediaio.h:368</div></div>
-<div class="ttc" id="aclassMediaIOTask_html"><div class="ttname"><a href="classMediaIOTask.html">MediaIOTask</a></div><div class="ttdoc">Backend interface for media I/O.</div><div class="ttdef"><b>Definition</b> mediaiotask.h:64</div></div>
+<div class="ttc" id="aclassMediaIOTask_html"><div class="ttname"><a href="classMediaIOTask.html">MediaIOTask</a></div><div class="ttdoc">Backend interface for media I/O.</div><div class="ttdef"><b>Definition</b> mediaiotask.h:65</div></div>
 <div class="ttc" id="aclassMediaIO_html_a08d6f0ff155c9b44e241d5c0f4a4559f"><div class="ttname"><a href="classMediaIO.html#a08d6f0ff155c9b44e241d5c0f4a4559f">MediaIO::ConfigID</a></div><div class="ttdeci">MediaConfigID ConfigID</div><div class="ttdoc">Configuration ID type.</div><div class="ttdef"><b>Definition</b> mediaio.h:508</div></div>
 <div class="ttc" id="astructMediaIO_1_1FormatDesc_html"><div class="ttname"><a href="structMediaIO_1_1FormatDesc.html">MediaIO::FormatDesc</a></div><div class="ttdoc">Describes a registered media I/O backend.</div><div class="ttdef"><b>Definition</b> mediaio.h:522</div></div>
 </div><!-- fragment --><h2><a class="anchor" id="mediaio_authoring_open"></a>
@@ -587,7 +587,7 @@ Thread pool sizing</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-20 02:52:47 from commit 9c7824a (1.0.0).</li>
   </ul>
 </div>
 </body>

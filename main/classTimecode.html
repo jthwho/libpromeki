@@ -171,8 +171,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad445db2d21bb3b585c2da038601fd3e3" id="r_ad445db2d21bb3b585c2da038601fd3e3"><td class="memItemLeft" align="right" valign="top"><a id="ad445db2d21bb3b585c2da038601fd3e3" name="ad445db2d21bb3b585c2da038601fd3e3"></a>
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator!=</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classTimecode.html">Timecode</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="separator:ad445db2d21bb3b585c2da038601fd3e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af37f66a9822490cc12d53b3c95c9c423" id="r_af37f66a9822490cc12d53b3c95c9c423"><td class="memItemLeft" align="right" valign="top"><a id="af37f66a9822490cc12d53b3c95c9c423" name="af37f66a9822490cc12d53b3c95c9c423"></a>
-<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator&gt;</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classTimecode.html">Timecode</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:af37f66a9822490cc12d53b3c95c9c423" id="r_af37f66a9822490cc12d53b3c95c9c423"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimecode.html#af37f66a9822490cc12d53b3c95c9c423">operator&gt;</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classTimecode.html">Timecode</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:af37f66a9822490cc12d53b3c95c9c423"><td class="mdescLeft">&#160;</td><td class="mdescRight">Ordering operators.  <br /></td></tr>
 <tr class="separator:af37f66a9822490cc12d53b3c95c9c423"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:addc6bcef33aa749ffaf8d1d4cd6777d8" id="r_addc6bcef33aa749ffaf8d1d4cd6777d8"><td class="memItemLeft" align="right" valign="top"><a id="addc6bcef33aa749ffaf8d1d4cd6777d8" name="addc6bcef33aa749ffaf8d1d4cd6777d8"></a>
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator&lt;</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classTimecode.html">Timecode</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
@@ -295,9 +295,9 @@ Static Public Member Functions</h2></td></tr>
 <div class="line"><span class="comment">// Parse from string</span></div>
 <div class="line"><span class="keyword">auto</span> [<a class="code hl_class" href="classList.html">tc3</a>, <a class="code hl_class" href="classList.html">err2</a>] = <a class="code hl_function" href="classTimecode.html#abdfde6ef249fe224b4986ee482ee6bf0">Timecode::fromString</a>(<span class="stringliteral">&quot;10:30:00:00&quot;</span>);</div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassTimecode_html"><div class="ttname"><a href="classTimecode.html">Timecode</a></div><div class="ttdoc">Class for holding and manipulating timecode.</div><div class="ttdef"><b>Definition</b> timecode.h:47</div></div>
+<div class="ttc" id="aclassTimecode_html"><div class="ttname"><a href="classTimecode.html">Timecode</a></div><div class="ttdoc">Class for holding and manipulating timecode.</div><div class="ttdef"><b>Definition</b> timecode.h:48</div></div>
 <div class="ttc" id="aclassTimecode_html_a3ee26bacefa096ade620149e0f0b035b"><div class="ttname"><a href="classTimecode.html#a3ee26bacefa096ade620149e0f0b035b">Timecode::fromFrameNumber</a></div><div class="ttdeci">static Timecode fromFrameNumber(const Mode &amp;mode, FrameNumber frameNumber)</div><div class="ttdoc">Constructs a Timecode from a mode and absolute frame number.</div></div>
-<div class="ttc" id="aclassTimecode_html_a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207"><div class="ttname"><a href="classTimecode.html#a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207">Timecode::NDF24</a></div><div class="ttdeci">@ NDF24</div><div class="ttdoc">24 fps non-drop-frame (maps to VTC_FORMAT_24)</div><div class="ttdef"><b>Definition</b> timecode.h:55</div></div>
+<div class="ttc" id="aclassTimecode_html_a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207"><div class="ttname"><a href="classTimecode.html#a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207">Timecode::NDF24</a></div><div class="ttdeci">@ NDF24</div><div class="ttdoc">24 fps non-drop-frame (maps to VTC_FORMAT_24)</div><div class="ttdef"><b>Definition</b> timecode.h:56</div></div>
 <div class="ttc" id="aclassTimecode_html_abdfde6ef249fe224b4986ee482ee6bf0"><div class="ttname"><a href="classTimecode.html#abdfde6ef249fe224b4986ee482ee6bf0">Timecode::fromString</a></div><div class="ttdeci">static Result&lt; Timecode &gt; fromString(const String &amp;str)</div><div class="ttdoc">Parses a Timecode from its string representation.</div></div>
 </div><!-- fragment --> Internally delegates all timecode logic to libvtc. </dd></dl>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
@@ -695,6 +695,39 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="af37f66a9822490cc12d53b3c95c9c423" name="af37f66a9822490cc12d53b3c95c9c423"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af37f66a9822490cc12d53b3c95c9c423">&#9670;&#160;</a></span>operator&gt;()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">bool</a> Timecode::operator&gt; </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classTimecode.html">Timecode</a> &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Ordering operators. </p>
+<p>Comparison strategy depends on the modes of the two operands:</p><ul>
+<li>If both sides carry the same <a class="el" href="classTimecode_1_1Mode.html">Mode</a>, digits alone determine the order. Drop-frame gaps do not affect digit ordering within a single mode (they only collapse frame counts).</li>
+<li>If either side lacks a libvtc format (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">i.e</a>. the timecode is invalid, or was parsed / constructed with an unknown frame rate), digits are used because no frame-number conversion is possible.</li>
+<li>Otherwise the two sides are at different valid rates and we convert each to an absolute frame number using its own rate and compare those. </li>
+</ul>
+
+</div>
+</div>
 <a id="aa0f3e6aa1cc6828116515cbbaa7f501f" name="aa0f3e6aa1cc6828116515cbbaa7f501f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa0f3e6aa1cc6828116515cbbaa7f501f">&#9670;&#160;</a></span>set()</h2>
 
@@ -883,7 +916,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classTimecode.html">Timecode</a></li>
-    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-20 02:52:47 from commit 9c7824a (1.0.0).</li>
   </ul>
 </div>
 </body>

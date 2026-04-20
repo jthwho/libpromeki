@@ -291,6 +291,12 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">FrameDropped</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32) .setDefault(<a class="el" href="classList.html">int32_t</a>(0)) .setMin(<a class="el" href="classList.html">int32_t</a>(0)) .setDescription(&quot;Number <a class="el" href="classList.html">of</a> frames <a class="el" href="classList.html">dropped</a> <a class="el" href="classList.html">before</a> <a class="el" href="classList.html">this</a> <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">one.&quot;</a>))</td></tr>
 <tr class="memdesc:a7b81d8cc9483e120d8b4611940d22d6e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of frames dropped immediately before this one (int). <br /></td></tr>
 <tr class="separator:a7b81d8cc9483e120d8b4611940d22d6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afb2fcf431ff9210de9dd71f7d0036c77" id="r_afb2fcf431ff9210de9dd71f7d0036c77"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#afb2fcf431ff9210de9dd71f7d0036c77">PROMEKI_DECLARE_ID</a> (<a class="el" href="classList.html">FrameSyncDrop</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32) .setDefault(<a class="el" href="classList.html">int32_t</a>(0)) .setMin(<a class="el" href="classList.html">int32_t</a>(0)) .setDescription(&quot;Input frames <a class="el" href="classList.html">dropped</a> <a class="el" href="classList.html">between</a> <a class="el" href="classList.html">this</a> <a class="el" href="classFrameSync.html">FrameSync</a> emit <a class="el" href="classList.html">and</a> <a class="el" href="classList.html">the</a> <a class="el" href="classList.html">previous</a> <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">one.&quot;</a>))</td></tr>
+<tr class="memdesc:afb2fcf431ff9210de9dd71f7d0036c77"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of input frames the <a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a> dropped between this output and the previous fresh emit (int32_t).  <br /></td></tr>
+<tr class="separator:afb2fcf431ff9210de9dd71f7d0036c77"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7c7ae06b21b30e90eda28388bfee524a" id="r_a7c7ae06b21b30e90eda28388bfee524a"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a7c7ae06b21b30e90eda28388bfee524a">PROMEKI_DECLARE_ID</a> (<a class="el" href="classList.html">FrameSyncRepeat</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32) .setDefault(<a class="el" href="classList.html">int32_t</a>(0)) .setMin(<a class="el" href="classList.html">int32_t</a>(0)) .setDescription(&quot;Position <a class="el" href="classList.html">within</a> a <a class="el" href="classFrameSync.html">FrameSync</a> <a class="el" href="classList.html">repeat</a> <a class="el" href="classList.html">sequence</a> (0 = <a class="el" href="classList.html">fresh</a> emit).&quot;))</td></tr>
+<tr class="memdesc:a7c7ae06b21b30e90eda28388bfee524a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Position of this output within a <a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a> repeat sequence (int32_t).  <br /></td></tr>
+<tr class="separator:a7c7ae06b21b30e90eda28388bfee524a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2f4468cdc18f1061ab66cc125315614a" id="r_a2f4468cdc18f1061ab66cc125315614a"><td class="memItemLeft" align="right" valign="top"><a id="a2f4468cdc18f1061ab66cc125315614a" name="a2f4468cdc18f1061ab66cc125315614a"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">FrameLate</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool) .setDefault(<a class="el" href="classList.html">false</a>) .setDescription(&quot;Frame <a class="el" href="classList.html">arrived</a> <a class="el" href="classList.html">later</a> <a class="el" href="classList.html">than</a> <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">scheduled.&quot;</a>))</td></tr>
 <tr class="memdesc:a2f4468cdc18f1061ab66cc125315614a"><td class="mdescLeft">&#160;</td><td class="mdescRight">This frame arrived later than its scheduled time (bool). <br /></td></tr>
@@ -307,6 +313,26 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">MediaDescChanged</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool) .setDefault(<a class="el" href="classList.html">false</a>) .setDescription(&quot;Frame's <a class="el" href="classMediaDesc.html">MediaDesc</a> <a class="el" href="classList.html">differs</a> from <a class="el" href="classList.html">previously</a> <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">reported.&quot;</a>))</td></tr>
 <tr class="memdesc:a1e2a73639847906484fdcdcf1a680a1c"><td class="mdescLeft">&#160;</td><td class="mdescRight">This frame's <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> differs from the previously reported one (bool). <br /></td></tr>
 <tr class="separator:a1e2a73639847906484fdcdcf1a680a1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1a5b0a50da34efb9e7d9137e370a5f56" id="r_a1a5b0a50da34efb9e7d9137e370a5f56"><td class="memItemLeft" align="right" valign="top"><a id="a1a5b0a50da34efb9e7d9137e370a5f56" name="a1a5b0a50da34efb9e7d9137e370a5f56"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">SessionHostname</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString) .setDefault(<a class="el" href="classString.html">String</a>()) .setDescription(&quot;Runtime hostname <a class="el" href="classList.html">of</a> <a class="el" href="classList.html">the</a> <a class="el" href="classList.html">machine</a> <a class="el" href="classList.html">that</a> <a class="el" href="classList.html">produced</a> <a class="el" href="classList.html">the</a> file.&quot;))</td></tr>
+<tr class="memdesc:a1a5b0a50da34efb9e7d9137e370a5f56"><td class="mdescLeft">&#160;</td><td class="mdescRight">Runtime hostname of the machine that produced the file. <br /></td></tr>
+<tr class="separator:a1a5b0a50da34efb9e7d9137e370a5f56"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1db1a7672ee52131a194901528bd83ff" id="r_a1db1a7672ee52131a194901528bd83ff"><td class="memItemLeft" align="right" valign="top"><a id="a1db1a7672ee52131a194901528bd83ff" name="a1db1a7672ee52131a194901528bd83ff"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">SessionProcessId</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS64) .setDefault(<a class="el" href="classList.html">int64_t</a>(0)) .setDescription(&quot;Writer process <a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> at <a class="el" href="classList.html">capture</a> time.&quot;))</td></tr>
+<tr class="memdesc:a1db1a7672ee52131a194901528bd83ff"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classProcess.html" title="Subprocess execution with pipe-based I/O.">Process</a> ID of the writer at capture time. <br /></td></tr>
+<tr class="separator:a1db1a7672ee52131a194901528bd83ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afaf9f1957198662aa7859a51fd4759ee" id="r_afaf9f1957198662aa7859a51fd4759ee"><td class="memItemLeft" align="right" valign="top"><a id="afaf9f1957198662aa7859a51fd4759ee" name="afaf9f1957198662aa7859a51fd4759ee"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">LibraryBuildInfo</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString) .setDefault(<a class="el" href="classString.html">String</a>()) .setDescription(&quot;libpromeki build identity (version, <a class="el" href="classList.html">repo</a>, date, <a class="el" href="classList.html">host</a>).&quot;))</td></tr>
+<tr class="memdesc:afaf9f1957198662aa7859a51fd4759ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Full libpromeki build identity (name, version, repo ident, type, date/time, build hostname). Written by debug-oriented sinks so readers can locate the exact library revision that produced a file. <br /></td></tr>
+<tr class="separator:afaf9f1957198662aa7859a51fd4759ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab15b7493d9bda9a6e20da0b2b845b8b9" id="r_ab15b7493d9bda9a6e20da0b2b845b8b9"><td class="memItemLeft" align="right" valign="top"><a id="ab15b7493d9bda9a6e20da0b2b845b8b9" name="ab15b7493d9bda9a6e20da0b2b845b8b9"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">LibraryPlatform</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString) .setDefault(<a class="el" href="classString.html">String</a>()) .setDescription(&quot;Platform / <a class="el" href="classList.html">compiler</a> / <a class="el" href="classList.html">C</a>++ <a class="el" href="classList.html">standard</a> <a class="el" href="classList.html">of</a> <a class="el" href="classList.html">the</a> <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">writer.&quot;</a>))</td></tr>
+<tr class="memdesc:ab15b7493d9bda9a6e20da0b2b845b8b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Platform / compiler / C++ standard the library was compiled against. <br /></td></tr>
+<tr class="separator:ab15b7493d9bda9a6e20da0b2b845b8b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5648d9d45b0f07b6631ecda4d7fdf8b2" id="r_a5648d9d45b0f07b6631ecda4d7fdf8b2"><td class="memItemLeft" align="right" valign="top"><a id="a5648d9d45b0f07b6631ecda4d7fdf8b2" name="a5648d9d45b0f07b6631ecda4d7fdf8b2"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">LibraryFeatures</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString) .setDefault(<a class="el" href="classString.html">String</a>()) .setDescription(&quot;Library <a class="el" href="classList.html">feature</a> flags enabled at build time.&quot;))</td></tr>
+<tr class="memdesc:a5648d9d45b0f07b6631ecda4d7fdf8b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Library feature flags enabled at build time (e.g. <code>"NETWORK PROAV MUSIC PNG JPEG AUDIO CSC"</code>). <br /></td></tr>
+<tr class="separator:a5648d9d45b0f07b6631ecda4d7fdf8b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8569972fb2b0683866ef15350669fe5e" id="r_a8569972fb2b0683866ef15350669fe5e"><td class="memItemLeft" align="right" valign="top"><a id="a8569972fb2b0683866ef15350669fe5e" name="a8569972fb2b0683866ef15350669fe5e"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">FileOrigName</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString) .setDefault(<a class="el" href="classString.html">String</a>()) .setDescription(&quot;Original source filename.&quot;))</td></tr>
 <tr class="memdesc:a8569972fb2b0683866ef15350669fe5e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Original source filename (from previous save). <br /></td></tr>
@@ -530,6 +556,9 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a36bb90a1f330786356fe58b22a4a321d inherit pub_static_methods_classVariantDatabase" id="r_a36bb90a1f330786356fe58b22a4a321d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantSpec.html">VariantSpec</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a36bb90a1f330786356fe58b22a4a321d">spec</a> (<a class="el" href="classVariantDatabase.html#acc1cc83a86ed35a952fe287115b501d9">ID</a> id)</td></tr>
 <tr class="memdesc:a36bb90a1f330786356fe58b22a4a321d inherit pub_static_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a> for the given ID, or nullptr if none.  <br /></td></tr>
 <tr class="separator:a36bb90a1f330786356fe58b22a4a321d inherit pub_static_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae4baa8b54bcddb4d39044fe525501117 inherit pub_static_methods_classVariantDatabase" id="r_ae4baa8b54bcddb4d39044fe525501117"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantSpec.html">VariantSpec</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ae4baa8b54bcddb4d39044fe525501117">specFor</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;name)</td></tr>
+<tr class="memdesc:ae4baa8b54bcddb4d39044fe525501117 inherit pub_static_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a> for a key name, or nullptr if none.  <br /></td></tr>
+<tr class="separator:ae4baa8b54bcddb4d39044fe525501117 inherit pub_static_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a49997a5c19f9cf2d4715b8e048d196c6 inherit pub_static_methods_classVariantDatabase" id="r_a49997a5c19f9cf2d4715b8e048d196c6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classMap.html">Map</a>&lt; <a class="el" href="classList.html">uint64_t</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a49997a5c19f9cf2d4715b8e048d196c6">registeredSpecs</a> ()</td></tr>
 <tr class="memdesc:a49997a5c19f9cf2d4715b8e048d196c6 inherit pub_static_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a copy of the entire spec registry.  <br /></td></tr>
 <tr class="separator:a49997a5c19f9cf2d4715b8e048d196c6 inherit pub_static_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -718,7 +747,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="ade696870d6c1a3460a25371a616290d3" name="ade696870d6c1a3460a25371a616290d3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ade696870d6c1a3460a25371a616290d3">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[1/5]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ade696870d6c1a3460a25371a616290d3">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[1/7]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -749,7 +778,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="a50d5380637e810618ac86f0b6b5730c2" name="a50d5380637e810618ac86f0b6b5730c2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a50d5380637e810618ac86f0b6b5730c2">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[2/5]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a50d5380637e810618ac86f0b6b5730c2">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[2/7]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -779,8 +808,70 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="afb2fcf431ff9210de9dd71f7d0036c77" name="afb2fcf431ff9210de9dd71f7d0036c77"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afb2fcf431ff9210de9dd71f7d0036c77">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[3/7]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Metadata::PROMEKI_DECLARE_ID </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">FrameSyncDrop</a>&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32) .setDefault(<a class="el" href="classList.html">int32_t</a>(0)) .setMin(<a class="el" href="classList.html">int32_t</a>(0)) .setDescription(&quot;Input frames <a class="el" href="classList.html">dropped</a> <a class="el" href="classList.html">between</a> <a class="el" href="classList.html">this</a> <a class="el" href="classFrameSync.html">FrameSync</a> emit <a class="el" href="classList.html">and</a> <a class="el" href="classList.html">the</a> <a class="el" href="classList.html">previous</a> <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">one.&quot;</a>)&#160;</td>
+          <td class="paramname">&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Number of input frames the <a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a> dropped between this output and the previous fresh emit (int32_t). </p>
+<p><a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> by <a class="el" href="classFrameSync.html">FrameSync</a> on every output frame. The value is always 0 on a repeat output; any input frames that were discarded while the output was stuck on a repeat are accumulated and reported on the next fresh emit so a downstream consumer can pinpoint exactly where the drop occurred in the output timeline and how many source frames were skipped. </p>
+
+</div>
+</div>
+<a id="a7c7ae06b21b30e90eda28388bfee524a" name="a7c7ae06b21b30e90eda28388bfee524a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7c7ae06b21b30e90eda28388bfee524a">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[4/7]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Metadata::PROMEKI_DECLARE_ID </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">FrameSyncRepeat</a>&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32) .setDefault(<a class="el" href="classList.html">int32_t</a>(0)) .setMin(<a class="el" href="classList.html">int32_t</a>(0)) .setDescription(&quot;Position <a class="el" href="classList.html">within</a> a <a class="el" href="classFrameSync.html">FrameSync</a> <a class="el" href="classList.html">repeat</a> <a class="el" href="classList.html">sequence</a> (0 = <a class="el" href="classList.html">fresh</a> emit).&quot;)&#160;</td>
+          <td class="paramname">&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Position of this output within a <a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a> repeat sequence (int32_t). </p>
+<p><a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> by <a class="el" href="classFrameSync.html">FrameSync</a> on every output frame. Zero on a fresh emit; 1, 2, 3, ... on successive repeats of the currently held frame. Resets to 0 on the next fresh emit. </p>
+
+</div>
+</div>
 <a id="ae1260a748fefec50e1d60f51c7baa8d8" name="ae1260a748fefec50e1d60f51c7baa8d8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae1260a748fefec50e1d60f51c7baa8d8">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[3/5]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1260a748fefec50e1d60f51c7baa8d8">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[5/7]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -811,7 +902,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="a2f3f23133d826559a7f03a257e6dfa7b" name="a2f3f23133d826559a7f03a257e6dfa7b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2f3f23133d826559a7f03a257e6dfa7b">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[4/5]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a2f3f23133d826559a7f03a257e6dfa7b">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[6/7]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -842,7 +933,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="ab694155f6292e23d4129efd3490cfe0b" name="ab694155f6292e23d4129efd3490cfe0b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab694155f6292e23d4129efd3490cfe0b">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[5/5]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ab694155f6292e23d4129efd3490cfe0b">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[7/7]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -917,7 +1008,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMetadata.html">Metadata</a></li>
-    <li class="footer">Generated on 2026-04-19 08:22:21 from commit 7210927 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-20 02:52:47 from commit 9c7824a (1.0.0).</li>
   </ul>
 </div>
 </body>

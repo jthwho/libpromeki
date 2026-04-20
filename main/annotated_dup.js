@@ -8,7 +8,9 @@ var annotated_dup =
       [ "is_type_registry< PixelDesc >", "structdetail_1_1is__type__registry_3_01PixelDesc_01_4.html", null ],
       [ "is_type_registry< PixelFormat >", "structdetail_1_1is__type__registry_3_01PixelFormat_01_4.html", null ],
       [ "is_type_registry< VideoCodec >", "structdetail_1_1is__type__registry_3_01VideoCodec_01_4.html", null ],
-      [ "VariantEnd", "structdetail_1_1VariantEnd.html", null ]
+      [ "VariantEnd", "structdetail_1_1VariantEnd.html", null ],
+      [ "VariantLookupSegment", "structdetail_1_1VariantLookupSegment.html", "structdetail_1_1VariantLookupSegment" ],
+      [ "VariantQueryContext", "structdetail_1_1VariantQueryContext.html", "structdetail_1_1VariantQueryContext" ]
     ] ],
     [ "std", null, [
       [ "formatter< promeki::Char >", "structstd_1_1formatter_3_01promeki_1_1Char_01_4.html", null ],
@@ -83,6 +85,7 @@ var annotated_dup =
     [ "CudaDevice", "classCudaDevice.html", "classCudaDevice" ],
     [ "DataStream", "classDataStream.html", "classDataStream" ],
     [ "DateTime", "classDateTime.html", "classDateTime" ],
+    [ "DebugMediaFile", "classDebugMediaFile.html", "classDebugMediaFile" ],
     [ "Deque", "classDeque.html", "classDeque" ],
     [ "Dir", "classDir.html", "classDir" ],
     [ "Duration", "classDuration.html", "classDuration" ],
@@ -182,6 +185,7 @@ var annotated_dup =
     [ "MediaIOTask_AudioFile", "classMediaIOTask__AudioFile.html", "classMediaIOTask__AudioFile" ],
     [ "MediaIOTask_Burn", "classMediaIOTask__Burn.html", "classMediaIOTask__Burn" ],
     [ "MediaIOTask_CSC", "classMediaIOTask__CSC.html", "classMediaIOTask__CSC" ],
+    [ "MediaIOTask_DebugMedia", "classMediaIOTask__DebugMedia.html", null ],
     [ "MediaIOTask_FrameBridge", "classMediaIOTask__FrameBridge.html", "classMediaIOTask__FrameBridge" ],
     [ "MediaIOTask_FrameSync", "classMediaIOTask__FrameSync.html", "classMediaIOTask__FrameSync" ],
     [ "MediaIOTask_ImageFile", "classMediaIOTask__ImageFile.html", "classMediaIOTask__ImageFile" ],
@@ -344,6 +348,8 @@ var annotated_dup =
     [ "V4l2PowerLineMode", "classV4l2PowerLineMode.html", null ],
     [ "VariantDatabase", "classVariantDatabase.html", "classVariantDatabase" ],
     [ "VariantImpl", "classVariantImpl.html", "classVariantImpl" ],
+    [ "VariantLookup", "classVariantLookup.html", "classVariantLookup" ],
+    [ "VariantQuery", "classVariantQuery.html", "classVariantQuery" ],
     [ "VariantSpec", "classVariantSpec.html", "classVariantSpec" ],
     [ "VBoxLayout", "classVBoxLayout.html", null ],
     [ "VideoCodec", "classVideoCodec.html", "classVideoCodec" ],
