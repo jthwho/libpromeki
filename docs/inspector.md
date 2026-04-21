@@ -1,0 +1,505 @@
+# Inspector — Frame validation and monitoring {#inspector}
+
+QA-oriented user guide for `MediaIOTask_Inspector` — what
+each check does, how to consume the results, what the log
+output means, and how to interpret the A/V sync values a
+real production stream will produce.
+
+The Inspector is the inverse of the `MediaIOTask_TPG` Test
+Pattern Generator: where the TPG *produces* synthetic frames
+with embedded validation signals, the Inspector *consumes* frames
+and runs a configurable set of checks on each one. It is a
+MediaIO **sink** — frames go in, no frames come out — designed to
+sit at the terminal end of a pipeline and tell you whether the
+stream still looks the way it should.
+
+## Quick start {#inspector_quickstart}
+
+The fastest way to verify a TPG stream is to wire a default
+inspector to it. Both sides default to "full checks", so this is
+literally a two-factory-call setup with a frame loop:
+
+```cpp
+#include <promeki/mediaio.h>
+
+MediaIO *src  = MediaIO::create(MediaIO::defaultConfig("TPG"));
+MediaIO *sink = MediaIO::create(MediaIO::defaultConfig("Inspector"));
+
+src->open(MediaIO::Source);
+sink->open(MediaIO::Sink);
+
+for(int i = 0; i < 1000; i++) {
+    Frame::Ptr frame;
+    src->readFrame(frame);
+    sink->writeFrame(frame);
+}
+
+src->close();
+sink->close();
+delete src;
+delete sink;
+```
+
+That's enough to get every check running:
+
+- The TPG's default audio mode is `AudioPattern::AvSync`, which
+  embeds **continuous LTC on channel 0** alongside the click marker
+  on the other channels.
+- The TPG's image data encoder pass is on by default and stamps two
+  64-bit payloads (frame ID + BCD timecode) into the top of every
+  frame.
+- The Inspector's default `MediaConfig::InspectorTests` list
+  carries every test (`ImageData`, `Ltc`, `TcSync`,
+  `Continuity`, `Timestamp`, `AudioSamples`), so the full
+  suite runs out of the box.
+
+The default periodic log writes a multi-line report once per second
+of wall time, plus immediate warnings whenever a discontinuity is
+detected. Sample output (1080p RGBA8 source, 30 fps, 48 kHz audio):
+
+```
+config: image data decode  = enabled
+config: LTC decode         = enabled
+config: LTC channel        = 0
+config: A/V sync check     = enabled (auto-enables image data + LTC decode)
+config: A/V sync jitter tolerance = 0 samples (any frame-to-frame change beyond this fires a discontinuity warning; default = report any change at all)
+config: continuity check    = enabled (auto-enables image data decode)
+config: image data band    = 16 scan lines per item, TPG-convention 2 items at top of frame
+config: drop frames         = yes (sink behaviour)
+config: periodic log every  = 1.00 seconds (wall time)
+Frame 30: report after 30 frames (1.00 s wall) — 30 total since open
+Frame 30: picture data band: decoded 30 / 30 frames (100.0%) — most recent: streamID 0x00000000, frameNo 29, TC 01:00:00:29
+Frame 30: audio LTC: decoded 30 / 30 frames (100.0%) — most recent: TC 01:00:00:29, sync word at sample 2 within chunk
+Frame 30: A/V Sync: Video leads audio by 2 samples, 0.0013 frames
+```
+
+The continuity line is intentionally absent on a clean stream — the
+inspector stays silent when there is nothing to flag. See
+[Annotated log reference](#inspector_log_reference) for a full
+annotation of every line.
+
+## The inspector tests {#inspector_checks}
+
+The inspector runs an independently-selectable set of tests per
+frame. The selection is driven by a single config key,
+`MediaConfig::InspectorTests` — an `EnumList` of
+`InspectorTest` values. The default list carries every test
+so the full suite runs out of the box; narrow the list to run a
+subset. The inspector resolves test dependencies at open time, so
+you never have to list the upstream decoders explicitly.
+
+| Test                           | Enum value                       | Auto-enables                |
+|--------------------------------|----------------------------------|-----------------------------|
+| Decode picture data band       | `InspectorTest::ImageData`       | (no deps)                   |
+| Decode audio LTC               | `InspectorTest::Ltc`             | (no deps)                   |
+| A/V Sync (TC offset, samples)  | `InspectorTest::TcSync`          | `ImageData` + `Ltc`         |
+| Continuity (TC / frame# / SID) | `InspectorTest::Continuity`      | `ImageData`                 |
+| Timestamp delta + actual FPS   | `InspectorTest::Timestamp`       | (no deps)                   |
+| Per-frame audio sample count   | `InspectorTest::AudioSamples`    | (no deps)                   |
+
+Example — only run the timestamp and A/V sync checks:
+
+```cpp
+EnumList tests = EnumList::forType<InspectorTest>();
+tests.append(InspectorTest::Timestamp);
+tests.append(InspectorTest::TcSync);
+cfg.set(MediaConfig::InspectorTests, tests);
+// Or from the command line / string form:
+//   InspectorTests=Timestamp,TcSync
+```
+
+### Picture data band decode {#inspector_check_picture}
+
+Pulls the two 64-bit payloads written by `ImageDataEncoder` out
+of the top of every frame:
+
+- **Band 1** (lines `0..N-1`): the **frame ID** word, encoded as
+  `(streamID << 32) | frameNumber`. StreamID is the upstream
+  producer's identifier (set via `MediaConfig::StreamID` on the
+  TPG); frameNumber is the producer's monotonic frame counter
+  from when the source was opened.
+- **Band 2** (lines `N..2N-1`): the **BCD timecode** word, packed
+  in the `TimecodePackFormat::Vitc` format that
+  `Timecode::toBcd64` produces.
+
+`N` is set by `MediaConfig::InspectorImageDataRepeatLines` and
+must match the producer's `MediaConfig::TpgDataEncoderRepeatLines`.
+The default is 16 — wide enough that the inspector can use
+multi-line averaging for SNR but cheap enough that the visible
+data band is unobtrusive.
+
+The decode is **all-or-nothing**: if either band fails to decode
+(sync nibble corruption, CRC mismatch, missing image, decoder not
+yet initialised, etc.) the inspector reports
+`InspectorEvent::pictureDecoded` as `false` and leaves all
+picture-side fields at their default values. This guarantees a
+callback consumer can never confuse a stale or partially-decoded
+reading with a real "frame 0, stream 0, TC 00:00:00:00" frame —
+always check `pictureDecoded` before reading the other fields.
+
+### Audio LTC decode {#inspector_check_ltc}
+
+Pulls one channel of the frame's audio (selected by
+`MediaConfig::InspectorLtcChannel`, default channel 0) and
+feeds it through `LtcDecoder`. The decoder is format-agnostic:
+any `AudioDesc::DataType` is accepted (PCMI_S8, PCMI_S16LE,
+PCMI_Float32LE, ...). The most recently recovered timecode is
+reported in `InspectorEvent::ltcTimecode` along with the
+within-chunk sample offset of the LTC sync word in
+`InspectorEvent::ltcSampleStart`.
+
+The LTC decoder is stateful and may need a few frames to lock onto
+a fresh stream — early frames will report
+`InspectorEvent::ltcDecoded` as `false` until the decoder has
+accumulated enough biphase-mark transitions.
+
+### A/V Sync {#inspector_check_avsync}
+
+The headline check. When both decoders are running and the LTC
+carries a known frame rate, the inspector computes the
+**instantaneous offset** between the picture timecode anchor and
+the audio LTC sync anchor on every frame, in audio samples. The
+value lives in `InspectorEvent::avSyncOffsetSamples`.
+
+**What this measures, exactly**
+
+For picture frame N, the audio chunk for that frame spans absolute
+audio samples `[N*spf, (N+1)*spf)`, where `spf` is the average
+samples-per-frame (computed exactly from the LTC mode's rational
+frame rate, so 29.97 NDF and friends are accurate). The picture's
+"TC anchor" is sample 0 of that chunk: the picture says we are at
+`picTC` starting here. The LTC's "TC anchor" is the sample at
+which the LTC sync word is detected for the recovered LTC frame:
+the LTC says we are at `ltcTC` starting there.
+
+If the two streams are perfectly aligned, both should agree on the
+same TC at the same sample. The inspector measures:
+
+```
+offset = (ltcSampleStart - chunkStart) + (picFrames - ltcFrames) * spf
+```
+
+where `ltcSampleStart - chunkStart` is the LTC sync word's offset
+within this audio chunk and `picFrames - ltcFrames` is the
+difference between the two TCs converted to absolute frame counts.
+
+**Sign convention**
+
+The inspector renders the offset in plain language so the sign
+convention isn't something a QA reader has to remember:
+
+```
+Frame N: A/V Sync: Video leads audio by 2 samples, 0.0013 frames
+Frame N: A/V Sync: Audio leads video by 5 samples, 0.0031 frames
+Frame N: A/V Sync: audio and video locked (0 samples)
+```
+
+Internally, positive `avSyncOffsetSamples` means **video leads
+audio** (the picture's TC anchor lands at an earlier wall-clock
+audio sample than the LTC's TC anchor) and negative means **audio
+leads video**.
+
+**What "in sync" actually looks like**
+
+In professional video the audio and video are locked to a common
+reference, so a healthy stream's offset is **constant** across
+frames — not necessarily zero, but not changing. Any movement
+from one frame to the next is a real fault. The inspector
+enforces that contract via the change-detection check (see
+[Continuity tracking](#inspector_check_continuity) below) with a
+configurable tolerance via
+`MediaConfig::InspectorSyncOffsetToleranceSamples`.
+
+**The libvtc baseline**
+
+> **Note:** When both encoder and decoder are libvtc (which is the
+> case for any TPG → Inspector pipeline you set up using libpromeki
+> factories), expect a **small constant offset** of 1-3 samples at
+> common audio rates — typically `+2` at 48 kHz / 30 fps. This is
+> not real misalignment. It comes from the libvtc encoder's
+> raised-cosine transition ramp combined with the decoder's
+> hysteresis threshold: the first detectable edge fires at the start
+> of the encoder's first **steady-state** sample, which is one or
+> two samples after the bit boundary. The same fixed phase
+> relationship holds for every frame, so the change-detection check
+> still passes (delta = 0 from frame to frame), and the absolute
+> value is rendered honestly so you can see what your pipeline is
+> actually doing.
+
+For real-world LTC sources (hardware generators, captured audio
+tracks, etc.), the libvtc decoder's edge-detection latency still
+applies but the encoder side is whatever the source happens to do,
+so the constant baseline will be different. Pick a tolerance band
+that matches your pipeline's known jitter and let the inspector
+flag deviations from that.
+
+### Continuity tracking {#inspector_check_continuity}
+
+Compares this frame's picture-side metadata against the previous
+frame's and emits an `InspectorDiscontinuity` for every property
+that changed in an unexpected way. Tracked properties:
+
+| Property              | Discontinuity kind                                     | What "unexpected" means                                                            |
+|-----------------------|--------------------------------------------------------|------------------------------------------------------------------------------------|
+| Frame number          | `InspectorDiscontinuity::FrameNumberJump`              | Did not advance by exactly 1                                                       |
+| Stream ID             | `InspectorDiscontinuity::StreamIdChange`               | Changed at all                                                                     |
+| Picture timecode      | `InspectorDiscontinuity::PictureTcJump`                | Did not advance by exactly 1 (uses LTC's mode if known, otherwise the check skips) |
+| LTC timecode          | `InspectorDiscontinuity::LtcTcJump`                    | Did not advance by exactly 1                                                       |
+| Picture decoded       | `InspectorDiscontinuity::ImageDataDecodeFailure`       | Failed to decode after a previously successful frame                               |
+| LTC decoded           | `InspectorDiscontinuity::LtcDecodeFailure`             | Failed to decode after a previously successful frame                               |
+| A/V sync offset       | `InspectorDiscontinuity::SyncOffsetChange`             | Moved more than `MediaConfig::InspectorSyncOffsetToleranceSamples`                 |
+
+Each discontinuity carries a pre-rendered description with the
+**previous and current values inline** so a QA reader can see the
+whole story in one log line:
+
+```
+Frame 4: discontinuity: Frame number jumped: was 3 (expected 4 next), got 5 (+1 frame relative to expected)
+Frame 47: discontinuity: A/V sync offset moved: was +2 samples, now +1 samples (delta -1, tolerance 0) — audio and video are no longer locked
+```
+
+Discontinuities also accumulate into
+`InspectorSnapshot::totalDiscontinuities` so a polled consumer
+can see how many have occurred over the inspector's lifetime
+without having to subscribe to the per-frame stream.
+
+## Consuming the results {#inspector_results}
+
+The inspector exposes its measurements in three complementary
+ways. Pick whichever fits your consumer pattern:
+
+### Per-frame callback {#inspector_callback}
+
+Set via `MediaIOTask_Inspector::setEventCallback` before the
+inspector is opened. The callback receives a fully-populated
+`InspectorEvent` once per frame and is invoked from the
+MediaIO worker thread, so it must be thread-safe. This is the
+lowest-latency path — useful for real-time UIs or telemetry
+shipping.
+
+Because `MediaIO::create` returns a `MediaIO*` and hides the
+underlying task, callers that want to set a callback must
+construct the task themselves and adopt it. See
+[Construction patterns](#inspector_construct).
+
+### Accumulator snapshot {#inspector_snapshot}
+
+`MediaIOTask_Inspector::snapshot` returns a thread-safe value
+copy of the running totals plus the most recent
+`InspectorEvent`. Useful for polled consumers — the test
+suite, a status bar, anything that wants "how is the stream
+doing right now" without subscribing to every frame.
+
+```cpp
+InspectorSnapshot snap = inspector->snapshot();
+if(snap.totalDiscontinuities > 0) { failed_check_count++; }
+if(snap.lastEvent.avSyncValid) { recordAvSync(snap.lastEvent.avSyncOffsetSamples); }
+```
+
+### Periodic log {#inspector_log}
+
+The default delivery channel. At the cadence configured by
+`MediaConfig::InspectorLogIntervalSec` (default 1.0 second of
+wall time), the inspector emits a multi-line summary via
+`promekiInfo` plus immediate warnings via `promekiWarn` for any
+discontinuities detected. Set the interval to `0` to disable
+the periodic summary entirely (immediate warnings still fire).
+
+Every line in a single periodic report shares the same
+`"Frame N:"` prefix where `N` is the inspector's monotonic
+frame counter at report time, so a log reader (or `grep`) can
+group the lines for a single report by string match.
+Discontinuity warnings emitted between periodic reports use the
+frame index of the frame on which the discontinuity was detected.
+
+Lines for **disabled** checks are silently elided so the log
+doesn't carry stale "n/a" placeholders. The continuity summary
+line is only emitted when the running total is non-zero — a clean
+stream produces a four-line periodic report (header + picture +
+audio + A/V sync), and only grows the continuity summary line
+when something needs attention.
+
+## Construction patterns {#inspector_construct}
+
+Two paths, depending on whether you need the per-frame callback.
+
+### Standard factory (no callback) {#inspector_construct_factory}
+
+```cpp
+MediaIO *io = MediaIO::create(MediaIO::defaultConfig("Inspector"));
+io->open(MediaIO::Sink);
+io->writeFrame(frame);
+// ... query io->stats() or rely on the periodic log
+io->close();
+delete io;
+```
+
+The factory route is the right choice when you only care about the
+periodic log and the `MediaIOTask_Inspector::snapshot` accessor.
+The MediaIO factory hides the underlying task, so there's no
+pointer to set callbacks on.
+
+### Adopt-task path (per-frame callback) {#inspector_construct_adopt}
+
+```cpp
+auto *insp = new MediaIOTask_Inspector();
+insp->setEventCallback([](const InspectorEvent &e) {
+    // Runs on the worker thread — be thread-safe.
+    if(e.avSyncValid && std::abs(e.avSyncOffsetSamples) > 100) {
+        std::printf("WARNING: large sync offset: %lld samples\n",
+                    (long long)e.avSyncOffsetSamples);
+    }
+});
+
+MediaIO *io = new MediaIO();
+io->setConfig(MediaIO::defaultConfig("Inspector"));
+io->adoptTask(insp);                  // takes ownership of `insp`
+io->open(MediaIO::Sink);
+
+io->writeFrame(frame);
+// ... insp is still valid as long as io is — you keep the typed
+//     pointer for snapshot() / setEventCallback() calls.
+
+io->close();
+delete io;                           // also deletes insp
+```
+
+The callback **must** be installed before `open()` — calling
+`setEventCallback` on a running inspector is a data race. This
+is why the factory path can't expose the callback: by the time
+`create()` returns, the task is already owned and inaccessible
+to user code.
+
+## What to look for in CI / QA {#inspector_what_to_look_for}
+
+The inspector's design assumption is that **a clean run is silent
+past the configuration block**. An automated CI job that wires up
+a TPG → Inspector pair and pumps frames for some duration only has
+to grep its log for a few patterns:
+
+| Pattern                                         | Meaning                                                          |
+|-------------------------------------------------|------------------------------------------------------------------|
+| `discontinuity:`                                | Something was unexpected. Always a warning.                      |
+| `NOT DECODED`                                   | The decoder lost lock mid-stream. Always a warning.              |
+| `audio and video are no longer locked`          | The A/V sync offset moved. Specific `SyncOffsetChange` wording.  |
+| `Frame number jumped`                           | The producer dropped or repeated a frame.                        |
+| `Stream ID changed`                             | The producer was swapped mid-stream.                             |
+
+Use the periodic report's "X / Y frames (Z%)" decode percentages
+to drive a "did the inspector see anything at all?" sanity check —
+a 0% decode rate over a long run usually means the upstream
+producer isn't actually emitting the data band the inspector is
+looking for, or the band geometry doesn't match.
+
+The default sync-offset jitter tolerance is **0** — every
+sample-of-change is reported. In production this is the right
+default because in pro video audio and video are locked to the
+same reference and any drift is real. Pipelines with bounded
+jitter (e.g. resampler-induced phase wander) can raise the
+tolerance via `MediaConfig::InspectorSyncOffsetToleranceSamples`.
+
+## Annotated log reference {#inspector_log_reference}
+
+Every line the inspector writes, in the order you'll see them.
+
+### At open time — configuration block {#inspector_log_config}
+
+```
+config: image data decode  = enabled
+config: LTC decode         = enabled
+config: LTC channel        = 0
+config: A/V sync check     = enabled (auto-enables image data + LTC decode)
+config: A/V sync jitter tolerance = 0 samples (any frame-to-frame change beyond this fires a discontinuity warning; default = report any change at all)
+config: continuity check    = enabled (auto-enables image data decode)
+config: image data band    = 16 scan lines per item, TPG-convention 2 items at top of frame
+config: drop frames         = yes (sink behaviour)
+config: periodic log every  = 1.00 seconds (wall time)
+```
+
+Captured at `open()` so a post-mortem reader can interpret any
+later log lines in the right context. Lines for disabled checks
+still appear (so a forensics reader can see what wasn't enabled).
+
+### Periodic report (one block per interval) {#inspector_log_periodic}
+
+```
+Frame 30: report after 30 frames (1.00 s wall) — 30 total since open
+Frame 30: picture data band: decoded 30 / 30 frames (100.0%) — most recent: streamID 0xc0ffeeaa, frameNo 29, TC 01:00:00:29
+Frame 30: audio LTC: decoded 30 / 30 frames (100.0%) — most recent: TC 01:00:00:29, sync word at sample 2 within chunk
+Frame 30: A/V Sync: Video leads audio by 2 samples, 0.0013 frames
+```
+
+- **Header line**: how many frames were processed since the last
+  report, the wall-clock window, and the running total since the
+  inspector opened.
+- **picture data band**: cumulative decode rate (X of Y frames),
+  the most recently recovered stream ID, frame number, and
+  timecode. The TC is rendered using the LTC's mode if known
+  (with the proper drop-frame separator), otherwise as bare
+  digits. When the most recent frame failed to decode, the line
+  becomes a warning instead of an info line.
+- **audio LTC**: same shape — cumulative decode rate plus the most
+  recent timecode and the within-chunk sample offset of the sync
+  word.
+- **A/V Sync**: the per-frame offset rendered in plain language
+  plus both samples and fractional frames. Only emitted when the
+  sync check is enabled and a measurement was possible on the
+  most recent frame.
+
+Lines that aren't relevant (decoders disabled, etc.) are elided.
+
+### Discontinuity warnings (immediate) {#inspector_log_warnings}
+
+```
+Frame 4: discontinuity: Frame number jumped: was 3 (expected 4 next), got 5 (+1 frame relative to expected)
+Frame 47: discontinuity: A/V sync offset moved: was +2 samples, now +1 samples (delta -1, tolerance 0) — audio and video are no longer locked
+Frame 91: discontinuity: Stream ID changed: was 0x12345678, now 0xabcdef00
+```
+
+Fired the moment a discontinuity is detected, with the same
+`"Frame N:"` prefix as the periodic report so a log reader can
+tie them together. Always at warning level so log scrapers can
+pull them out separately from the routine info-level traffic.
+
+## Known limits {#inspector_known_limits}
+
+- **Picture TC continuity needs a frame rate.** The picture data
+  band's wire format only carries digits + the DF flag, so the
+  recovered TC has no native `Timecode::Mode`. The inspector
+  latches the first `Timecode::Mode` it sees from any source
+  (currently the LTC decoder) and attaches it to picture TCs from
+  then on. When LTC is disabled, the picture TC continuity check
+  is silently skipped — the frame number and stream ID continuity
+  checks still run because they're just integer comparisons.
+
+- **The LTC decoder needs a few frames to lock.** Early frames
+  in a fresh stream report `ltcDecoded` as `false` until the
+  biphase mark state machine has accumulated enough transitions.
+  The inspector reports the cumulative percentage in the
+  periodic log so you can see the decoder catch up.
+
+- **The image data decoder uses the slow CSC path.** The first
+  implementation runs every band-decode through
+  `Image::convert(RGBA8_sRGB)`, which works for every `PixelDesc`
+  but isn't free. Hand-rolled fast paths per-format are a future
+  enhancement; until then the inspector is fine for QA / monitoring
+  use but not for fully-loaded production paths.
+
+- **One global continuity history.** The inspector tracks a
+  single previous-frame snapshot for continuity, not per-stream.
+  A stream-ID change is treated as its own discontinuity kind
+  rather than as "switch tracking history".
+
+## See also {#inspector_see_also}
+
+- `MediaIOTask_Inspector` — the C++ API.
+- `InspectorEvent` / `InspectorSnapshot` /
+  `InspectorDiscontinuity` — the result types.
+- `MediaIOTask_TPG` — the producer side designed to pair
+  with the inspector for end-to-end QA.
+- [Image Data Encoder Wire Format](imagedataencoder.md) — the wire
+  format spec for the picture-side data band.
+- `Timecode::toBcd64` / `Timecode::fromBcd64` — the
+  timecode encoding the picture data band carries.
+- `LtcDecoder` — the format-agnostic LTC decoder the
+  inspector uses for the audio side.

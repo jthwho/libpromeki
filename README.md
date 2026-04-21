@@ -18,6 +18,28 @@ infrastructure.
 
 **[API Documentation](https://jthwho.github.io/libpromeki/main/)**
 
+## Guides
+
+In-depth topic guides, browsable directly on GitHub or as part of the
+hosted Doxygen output:
+
+- [Building and Installing libpromeki](docs/building.md)
+- [Debugging and Diagnostics](docs/debugging.md)
+- [Threading and Concurrency](docs/threading.md)
+- [Data Object Categories](docs/dataobjects.md)
+- [TypeRegistry Pattern](docs/typeregistry.md)
+- [Color Science](docs/color.md)
+- [Color Space Conversion (CSC) Framework](docs/csc.md)
+- [Font Rendering](docs/fonts.md)
+- [Media I/O Subsystem](docs/mediaio.md)
+- [MediaPipeline](docs/mediapipeline.md)
+- [MediaPipelinePlanner](docs/mediaplanner.md)
+- [Inspector — Frame validation and monitoring](docs/inspector.md)
+- [Image Data Encoder Wire Format](docs/imagedataencoder.md)
+- [NVIDIA NVENC setup](docs/nvenc.md)
+- [Demonstration Applications](docs/demos.md)
+- [Utility Applications](docs/utils.md)
+
 ## Feature Overview
 
 ### Core Library
@@ -223,10 +245,11 @@ For the complete build, install, and downstream-integration guide —
 including every CMake feature flag, vendored-vs-system dependency
 switch, build-performance option, test and install targets, and
 consumer CMake usage — see the **Building and Installing libpromeki**
-page in the API documentation:
+guide:
 
-- Hosted: <https://jthwho.github.io/libpromeki/main/building.html>
-- Local: `build/doxygen/html/building.html` after
+- Markdown source: [docs/building.md](docs/building.md)
+- Hosted Doxygen: <https://jthwho.github.io/libpromeki/main/building.html>
+- Local Doxygen: `build/doxygen/html/building.html` after
   `cmake -B build -DPROMEKI_BUILD_DOCS=ON && cmake --build build --target docs`
 
 ## Debugging
