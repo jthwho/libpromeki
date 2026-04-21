@@ -1,6 +1,6 @@
 var classTuiSplitter =
 [
-    [ "keyEvent", "classTuiSplitter.html#a01af0055a95d0f5f603faa80f90f63d6", null ],
+    [ "keyPressEvent", "classTuiSplitter.html#a9bf23428827c0aae3da126df5fcf7396", null ],
     [ "mouseEvent", "classTuiSplitter.html#ac859b22f7f70273c2c9f7be02e6398e0", null ],
     [ "paintEvent", "classTuiSplitter.html#a541b78477e47497687c8fb140d9e7950", null ],
     [ "resizeEvent", "classTuiSplitter.html#a36c17cb6659393bc81b78d3a5b0cc3ad", null ],

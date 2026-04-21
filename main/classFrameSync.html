@@ -174,13 +174,13 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>targetAudioDesc</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a9a7cd745818b68f872c4d05a29095a06"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the configured target audio descriptor. <br /></td></tr>
 <tr class="separator:a9a7cd745818b68f872c4d05a29095a06"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4bc72ade7a5259b1ce307121f2df8244" id="r_a4bc72ade7a5259b1ce307121f2df8244"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameSync.html#a4bc72ade7a5259b1ce307121f2df8244">setClock</a> (<a class="el" href="classClock.html">Clock</a> *<a class="el" href="classFrameSync.html#a1b840f254f328f45cc3aa83b1d6a171e">clock</a>)</td></tr>
-<tr class="memdesc:a4bc72ade7a5259b1ce307121f2df8244"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the destination clock.  <br /></td></tr>
-<tr class="separator:a4bc72ade7a5259b1ce307121f2df8244"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1b840f254f328f45cc3aa83b1d6a171e" id="r_a1b840f254f328f45cc3aa83b1d6a171e"><td class="memItemLeft" align="right" valign="top"><a id="a1b840f254f328f45cc3aa83b1d6a171e" name="a1b840f254f328f45cc3aa83b1d6a171e"></a>
-<a class="el" href="classClock.html">Clock</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>clock</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a1b840f254f328f45cc3aa83b1d6a171e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the configured clock (may be null). <br /></td></tr>
-<tr class="separator:a1b840f254f328f45cc3aa83b1d6a171e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5f0175d1635f49a641ef402b7a69cd1e" id="r_a5f0175d1635f49a641ef402b7a69cd1e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameSync.html#a5f0175d1635f49a641ef402b7a69cd1e">setClock</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classClock.html#a2515694aed5f821c7af75ab792d1a891">Clock::Ptr</a> &amp;<a class="el" href="classFrameSync.html#ad41cbf6a14d86c8d10c232ec95a9ca11">clock</a>)</td></tr>
+<tr class="memdesc:a5f0175d1635f49a641ef402b7a69cd1e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the destination clock.  <br /></td></tr>
+<tr class="separator:a5f0175d1635f49a641ef402b7a69cd1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad41cbf6a14d86c8d10c232ec95a9ca11" id="r_ad41cbf6a14d86c8d10c232ec95a9ca11"><td class="memItemLeft" align="right" valign="top"><a id="ad41cbf6a14d86c8d10c232ec95a9ca11" name="ad41cbf6a14d86c8d10c232ec95a9ca11"></a>
+<a class="el" href="classClock.html#a2515694aed5f821c7af75ab792d1a891">Clock::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><b>clock</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ad41cbf6a14d86c8d10c232ec95a9ca11"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the configured clock (may be null). <br /></td></tr>
+<tr class="separator:ad41cbf6a14d86c8d10c232ec95a9ca11"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa6a73eab50d8589e13b34a1f0e71aea4" id="r_aa6a73eab50d8589e13b34a1f0e71aea4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameSync.html#aa6a73eab50d8589e13b34a1f0e71aea4">setInputQueueCapacity</a> (int capacity)</td></tr>
 <tr class="memdesc:aa6a73eab50d8589e13b34a1f0e71aea4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the maximum number of input frames to buffer.  <br /></td></tr>
 <tr class="separator:aa6a73eab50d8589e13b34a1f0e71aea4"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -214,6 +214,12 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>inputQueueCapacity</b>
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>interrupt</b> ()</td></tr>
 <tr class="memdesc:a7930fa43cb6c66b3f8a428cfd19587e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unblocks any thread waiting in <a class="el" href="classFrameSync.html#a3736b6c8661b596de0662892d881d7f3">pullFrame</a>. <br /></td></tr>
 <tr class="separator:a7930fa43cb6c66b3f8a428cfd19587e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a472e295ce76a352a4db1e032f2d1cd6c" id="r_a472e295ce76a352a4db1e032f2d1cd6c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameSync.html#a472e295ce76a352a4db1e032f2d1cd6c">clearInterrupt</a> ()</td></tr>
+<tr class="memdesc:a472e295ce76a352a4db1e032f2d1cd6c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears a pending interrupt request.  <br /></td></tr>
+<tr class="separator:a472e295ce76a352a4db1e032f2d1cd6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af18f7711d3494fab53be6142ac59b162" id="r_af18f7711d3494fab53be6142ac59b162"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameSync.html#af18f7711d3494fab53be6142ac59b162">resetSourceRateEstimator</a> ()</td></tr>
+<tr class="memdesc:af18f7711d3494fab53be6142ac59b162"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drops the source-rate estimator's most recent measurement so the next <code>pushFrame</code> establishes a fresh baseline.  <br /></td></tr>
+<tr class="separator:af18f7711d3494fab53be6142ac59b162"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade92df13702c51f89c58df3aae72ee18" id="r_ade92df13702c51f89c58df3aae72ee18"><td class="memItemLeft" align="right" valign="top"><a id="ade92df13702c51f89c58df3aae72ee18" name="ade92df13702c51f89c58df3aae72ee18"></a>
 <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>framesIn</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ade92df13702c51f89c58df3aae72ee18"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total frames pushed since reset. <br /></td></tr>
@@ -334,6 +340,26 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>inputQueueCapacity</b>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a472e295ce76a352a4db1e032f2d1cd6c" name="a472e295ce76a352a4db1e032f2d1cd6c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a472e295ce76a352a4db1e032f2d1cd6c">&#9670;&#160;</a></span>clearInterrupt()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> FrameSync::clearInterrupt </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Clears a pending interrupt request. </p>
+<p>Callers that <code><a class="el" href="classFrameSync.html#a7930fa43cb6c66b3f8a428cfd19587e5" title="Unblocks any thread waiting in pullFrame.">interrupt()</a></code> to stop a pull thread and then spin up a fresh one (e.g. a pause/resume cycle) should clear the flag before the new pullFrame call so the replacement thread doesn't see a stale interrupt and exit immediately. A no-op if no interrupt is pending. </p>
+
+</div>
+</div>
 <a id="a3736b6c8661b596de0662892d881d7f3" name="a3736b6c8661b596de0662892d881d7f3"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3736b6c8661b596de0662892d881d7f3">&#9670;&#160;</a></span>pullFrame()</h2>
 
@@ -457,8 +483,28 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>inputQueueCapacity</b>
 
 </div>
 </div>
-<a id="a4bc72ade7a5259b1ce307121f2df8244" name="a4bc72ade7a5259b1ce307121f2df8244"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4bc72ade7a5259b1ce307121f2df8244">&#9670;&#160;</a></span>setClock()</h2>
+<a id="af18f7711d3494fab53be6142ac59b162" name="af18f7711d3494fab53be6142ac59b162"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af18f7711d3494fab53be6142ac59b162">&#9670;&#160;</a></span>resetSourceRateEstimator()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> FrameSync::resetSourceRateEstimator </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Drops the source-rate estimator's most recent measurement so the next <code>pushFrame</code> establishes a fresh baseline. </p>
+<p>Callers that pause frame delivery for an extended period should invoke this before resuming. The first post-resume push otherwise produces a timestamp-delta vs previous-push-samples ratio that straddles the paused interval — upstream MediaTimeStamps may have advanced faster than the sample count because the queue back-pressure dropped whole chunks — and the EMA filter takes that spurious ratio as an honest measurement, silently biasing <code>_sourceAudioRateHz</code> (and with it the audio resample ratio) until it reconverges. </p>
+
+</div>
+</div>
+<a id="a5f0175d1635f49a641ef402b7a69cd1e" name="a5f0175d1635f49a641ef402b7a69cd1e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5f0175d1635f49a641ef402b7a69cd1e">&#9670;&#160;</a></span>setClock()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -466,7 +512,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>inputQueueCapacity</b>
         <tr>
           <td class="memname"><a class="el" href="classList.html">void</a> FrameSync::setClock </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classClock.html">Clock</a> *&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classClock.html#a2515694aed5f821c7af75ab792d1a891">Clock::Ptr</a> &amp;&#160;</td>
           <td class="paramname"><em>clock</em></td><td>)</td>
           <td></td>
         </tr>
@@ -474,7 +520,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>inputQueueCapacity</b>
 </div><div class="memdoc">
 
 <p>Sets the destination clock. </p>
-<p>Not owned. Must outlive the <a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a>. Setting a different clock mid-run requires a <a class="el" href="classFrameSync.html#a2b723b9d9129dc45edd29712d2d5b4a6">reset</a> to re-anchor the timeline. </p>
+<p>Ownership is shared via the <a class="el" href="classClock.html#a2515694aed5f821c7af75ab792d1a891">Clock::Ptr</a>. Setting a different clock mid-run requires a <a class="el" href="classFrameSync.html#a2b723b9d9129dc45edd29712d2d5b4a6">reset</a> to re-anchor the timeline. </p>
 
 </div>
 </div>
@@ -578,7 +624,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>inputQueueCapacity</b>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classFrameSync.html">FrameSync</a></li>
-    <li class="footer">Generated on 2026-04-21 00:53:11 from commit 3126200 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-21 07:27:58 from commit 3f2d824 (1.0.0).</li>
   </ul>
 </div>
 </body>

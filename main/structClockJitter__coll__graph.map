@@ -1,5 +1,5 @@
 <map id="ClockJitter" name="ClockJitter">
-<area shape="rect" id="Node000001" title="Asymmetric bound on the error envelope of a clock&#39;s nowNs() reading relative to ground truth." alt="" coords="5,108,95,133"/>
+<area shape="rect" id="Node000001" title="Asymmetric bound on the error envelope of a clock&#39;s now() reading relative to ground truth." alt="" coords="5,108,95,133"/>
 <area shape="rect" id="Node000002" href="$classDuration.html" title="Time duration with nanosecond precision." alt="" coords="11,5,89,31"/>
 <area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="53,45,53,108,47,108,47,45"/>
 </map>

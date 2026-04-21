@@ -12,7 +12,7 @@ var searchData=
   ['sinkchannels_9',['sinkChannels',['../classAudioBlock_1_1Config.html#a5da22db09e876427e48d1864b7976164',1,'AudioBlock::Config']]],
   ['size_10',['size',['../structFile_1_1IOVec.html#a709b98ebf60e2ecf958eb35f42a525c7',1,'File::IOVec::size'],['../classMemPool_1_1Block.html#a27bc0ce0ebdb21e3a70159bccf6975ff',1,'MemPool::Block::size'],['../structMemAllocation.html#a8ae99c16b3d333fc422acc0c1acc9609',1,'MemAllocation::size'],['../structPacketTransport_1_1Datagram.html#a7c808f6ac47382e942ff33c72b85098b',1,'PacketTransport::Datagram::size'],['../structUdpSocket_1_1Datagram.html#a1f5cfa771b4419fbe452e87d3e53e0d6',1,'UdpSocket::Datagram::size']]],
   ['smpte2084_11',['SMPTE2084',['../group__wellknownenums.html#ga8c5dddd5923da6100f4a55b76bc75c94',1,'TransferCharacteristics']]],
-  ['source_12',['source',['../classMediaIO.html#aa4e38e7fc22ac0bbb0fb29fb8e8ae428',1,'MediaIO::Source'],['../structMulticastReceiver_1_1GroupEntry.html#a2c75f2c379901557d01a7cbdf1e3abd9',1,'MulticastReceiver::GroupEntry::source']]],
+  ['source_12',['source',['../structMulticastReceiver_1_1GroupEntry.html#a2c75f2c379901557d01a7cbdf1e3abd9',1,'MulticastReceiver::GroupEntry::source'],['../classMediaIO.html#aa4e38e7fc22ac0bbb0fb29fb8e8ae428',1,'MediaIO::Source']]],
   ['sourcechannels_13',['sourceChannels',['../classAudioBlock_1_1Config.html#ac2bbfaabf008f8f84e8c255ef05c64d1',1,'AudioBlock::Config']]],
   ['specfor_14',['specFor',['../structdetail_1_1VariantQueryContext.html#a390ebeb7683519b4760dbab730d987d0',1,'detail::VariantQueryContext']]],
   ['sps_15',['sps',['../structAvcDecoderConfig.html#a0ff4f87a6e74fbd4e8ec380432e2705c',1,'AvcDecoderConfig::sps'],['../structHevcDecoderConfig.html#a379dcdb34842cc2a9b15e13035ac70c3',1,'HevcDecoderConfig::sps']]],

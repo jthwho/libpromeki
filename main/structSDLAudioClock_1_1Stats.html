@@ -115,7 +115,7 @@ $(document).ready(function(){initNavTree('structSDLAudioClock_1_1Stats.html','')
 Public Attributes</h2></td></tr>
 <tr class="memitem:a9cd38f1da5178fe7047ff6edd3b2472e" id="r_a9cd38f1da5178fe7047ff6edd3b2472e"><td class="memItemLeft" align="right" valign="top"><a id="a9cd38f1da5178fe7047ff6edd3b2472e" name="a9cd38f1da5178fe7047ff6edd3b2472e"></a>
 <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>updateCount</b> = 0</td></tr>
-<tr class="memdesc:a9cd38f1da5178fe7047ff6edd3b2472e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total <a class="el" href="classSDLAudioClock.html#a77a0c9db33c46c3fe4832d17e9b72f8e">nowNs</a> calls. <br /></td></tr>
+<tr class="memdesc:a9cd38f1da5178fe7047ff6edd3b2472e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total <a class="el" href="classClock.html#a01eb1c375850caf4264fd3a8fbabd423">nowNs</a> calls. <br /></td></tr>
 <tr class="separator:a9cd38f1da5178fe7047ff6edd3b2472e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a08ee6b3783c81e26259b89ae1d15ebbb" id="r_a08ee6b3783c81e26259b89ae1d15ebbb"><td class="memItemLeft" align="right" valign="top"><a id="a08ee6b3783c81e26259b89ae1d15ebbb" name="a08ee6b3783c81e26259b89ae1d15ebbb"></a>
 <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>checkpointResyncs</b> = 0</td></tr>
@@ -135,7 +135,7 @@ Public Attributes</h2></td></tr>
 <tr class="separator:ac656ce327b0619dfd65a6e00c443ea4d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1401ecfc646e9ad16398de8e519520a9" id="r_a1401ecfc646e9ad16398de8e519520a9"><td class="memItemLeft" align="right" valign="top"><a id="a1401ecfc646e9ad16398de8e519520a9" name="a1401ecfc646e9ad16398de8e519520a9"></a>
 <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>maxStepNs</b> = 0</td></tr>
-<tr class="memdesc:a1401ecfc646e9ad16398de8e519520a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Largest forward step between two consecutive <a class="el" href="classSDLAudioClock.html#a77a0c9db33c46c3fe4832d17e9b72f8e">nowNs</a> values. <br /></td></tr>
+<tr class="memdesc:a1401ecfc646e9ad16398de8e519520a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Largest forward step between two consecutive <a class="el" href="classClock.html#a01eb1c375850caf4264fd3a8fbabd423">nowNs</a> values. <br /></td></tr>
 <tr class="separator:a1401ecfc646e9ad16398de8e519520a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a49c9952af67770e37d519c94a93e9ee2" id="r_a49c9952af67770e37d519c94a93e9ee2"><td class="memItemLeft" align="right" valign="top"><a id="a49c9952af67770e37d519c94a93e9ee2" name="a49c9952af67770e37d519c94a93e9ee2"></a>
 <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>maxBackDateNs</b> = 0</td></tr>
@@ -148,7 +148,7 @@ Public Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Runtime counters for the clock's smoothing machinery. </p>
-<p>Populated as <a class="el" href="classSDLAudioClock.html#a77a0c9db33c46c3fe4832d17e9b72f8e">nowNs</a> runs and snapshotable through <a class="el" href="classSDLAudioClock.html#a33d0f84b815edeeb0bd2b47eff601f90">stats</a>. Cumulative since construction (or the last <a class="el" href="classSDLAudioClock.html#a45e035ac7721c0cf201005ade146a0e5">resetStats</a>). Non-atomic — the clock is expected to be driven from a single thread, so external readers that call <a class="el" href="classSDLAudioClock.html#a33d0f84b815edeeb0bd2b47eff601f90">stats</a> from a different thread may see a slightly inconsistent snapshot. Good enough for monitoring; not a synchronisation mechanism. </p>
+<p>Populated as <a class="el" href="classClock.html#a01eb1c375850caf4264fd3a8fbabd423">nowNs</a> runs and snapshotable through <a class="el" href="classSDLAudioClock.html#a33d0f84b815edeeb0bd2b47eff601f90">stats</a>. Cumulative since construction (or the last <a class="el" href="classSDLAudioClock.html#a45e035ac7721c0cf201005ade146a0e5">resetStats</a>). Non-atomic — the clock is expected to be driven from a single thread, so external readers that call <a class="el" href="classSDLAudioClock.html#a33d0f84b815edeeb0bd2b47eff601f90">stats</a> from a different thread may see a slightly inconsistent snapshot. Good enough for monitoring; not a synchronisation mechanism. </p>
 </div><hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/promeki/sdl/<a class="el" href="sdlaudioclock_8h_source.html">sdlaudioclock.h</a></li>
 </ul>
@@ -159,7 +159,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classSDLAudioClock.html">SDLAudioClock</a></li><li class="navelem"><a class="el" href="structSDLAudioClock_1_1Stats.html">Stats</a></li>
-    <li class="footer">Generated on 2026-04-21 00:53:11 from commit 3126200 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-21 07:27:58 from commit 3f2d824 (1.0.0).</li>
   </ul>
 </div>
 </body>

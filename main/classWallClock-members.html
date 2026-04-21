@@ -105,20 +105,39 @@ $(document).ready(function(){initNavTree('classWallClock.html',''); initResizabl
 
 <p>This is the complete list of members for <a class="el" href="classWallClock.html">WallClock</a>, including all inherited members.</p>
 <table class="directory">
-  <tr class="even"><td class="entry"><a class="el" href="classWallClock.html#aae295e6e18d58da9416b16538c9e88b4">domain</a>() const override</td><td class="entry"><a class="el" href="classWallClock.html">WallClock</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classClock.html#ac8eb573ef829cea0f7347543562871dc">_promeki_clone</a>() const</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">virtual</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classClock.html#aabe85da9783b4bc7fc9689c598bb75f6">_promeki_refct</a></td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classClock.html#a613661ca8eb8943f5d1446df9e94a2d3">canPause</a>() const</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classClock.html#a72a341cf79d5b0ac585c02e32bf360f3">Clock</a>(const ClockDomain &amp;domain, const Duration &amp;fixedOffset=Duration(), ClockPauseMode pauseMode=ClockPauseMode::CannotPause, ClockFilter *filter=nullptr)</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>Clock</b>(const Clock &amp;)=delete (defined in <a class="el" href="classClock.html">Clock</a>)</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>Clock</b>(Clock &amp;&amp;)=delete (defined in <a class="el" href="classClock.html">Clock</a>)</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classClock.html#a1fb097d1e07fe5c1512ccce49f5d2cf1">domain</a>() const</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classClock.html#aaa1d16ed8b85ea43bb4e78a5d0ad4551">fixedOffset</a>() const</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classClock.html#a844aad3ded4303ec6ef3d93cb6146eda">isPaused</a>() const</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classWallClock.html#aa77d77cfeb38ab0407677e18229cf8dc">jitter</a>() const override</td><td class="entry"><a class="el" href="classWallClock.html">WallClock</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classWallClock.html#a3463852ffc3453eed2fd6a6f3b9c0b0f">nowNs</a>() const override</td><td class="entry"><a class="el" href="classWallClock.html">WallClock</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classClock.html#a34e2affb4b2241fb5c8c6dbdf3ade5e8">now</a>() const</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classClock.html#a01eb1c375850caf4264fd3a8fbabd423">nowNs</a>() const</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classClock.html#ab7c1c5cb4280d6569b59c9ba9b2bb299">onPause</a>(bool paused)</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"><span class="mlabel">protected</span><span class="mlabel">virtual</span></td></tr>
+  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>operator=</b>(const Clock &amp;)=delete (defined in <a class="el" href="classClock.html">Clock</a>)</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>operator=</b>(Clock &amp;&amp;)=delete (defined in <a class="el" href="classClock.html">Clock</a>)</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classClock.html#ab14aa8fe714115e8264b53836dca471b">pauseMode</a>() const</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classClock.html#a2515694aed5f821c7af75ab792d1a891">Ptr</a> typedef</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classClock.html#ac1e728a766b91f93239f74a206a16e97">rateRatio</a>() const</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">virtual</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classWallClock.html#aa37cbbb7a41f4e08a57b7b69f9618a03">resolutionNs</a>() const override</td><td class="entry"><a class="el" href="classWallClock.html">WallClock</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="classWallClock.html#a4c43c55c3121f6573c60e699dc891c39">sleepUntilNs</a>(int64_t targetNs) override</td><td class="entry"><a class="el" href="classWallClock.html">WallClock</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>~Clock</b>()=default (defined in <a class="el" href="classClock.html">Clock</a>)</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classWallClock.html#ac14be092812b728aa624094fb73eaead">raw</a>() const override</td><td class="entry"><a class="el" href="classWallClock.html">WallClock</a></td><td class="entry"><span class="mlabel">protected</span><span class="mlabel">virtual</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classWallClock.html#aa37cbbb7a41f4e08a57b7b69f9618a03">resolutionNs</a>() const override</td><td class="entry"><a class="el" href="classWallClock.html">WallClock</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classClock.html#a7b040f874cc9aa23307448a3d4d99a46">setFixedOffset</a>(const Duration &amp;offset)</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classClock.html#acedc580419855c32366ce8347d6caec5">setPause</a>(bool paused)</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classClock.html#a8758f13a2d05f30e62fd5c035b0e2190">sleepUntil</a>(const MediaTimeStamp &amp;deadline) const</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classWallClock.html#aeeaf83100b278acb5a3178a83280cdfd">sleepUntilNs</a>(int64_t targetNs) const override</td><td class="entry"><a class="el" href="classWallClock.html">WallClock</a></td><td class="entry"><span class="mlabel">protected</span><span class="mlabel">virtual</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classWallClock.html#a51982e8ff73c4e6fbc36eb3cbf93d70a">WallClock</a>()</td><td class="entry"><a class="el" href="classWallClock.html">WallClock</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classClock.html#ac1ddbca9092c61e98668473209f36b19">~Clock</a>()</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
 </table></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- HTML footer for doxygen -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-21 00:53:11 from commit 3126200 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-21 07:27:58 from commit 3f2d824 (1.0.0).</li>
   </ul>
 </div>
 </body>

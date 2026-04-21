@@ -133,6 +133,13 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a6a8bf47dbbbb132e918dc1ab72fa9879" id="r_a6a8bf47dbbbb132e918dc1ab72fa9879"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classEventLoop.html">EventLoop</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSdlSubsystem.html#a6a8bf47dbbbb132e918dc1ab72fa9879">eventLoop</a> ()</td></tr>
 <tr class="memdesc:a6a8bf47dbbbb132e918dc1ab72fa9879"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the main <a class="el" href="classEventLoop.html">EventLoop</a> the subsystem is bound to.  <br /></td></tr>
 <tr class="separator:a6a8bf47dbbbb132e918dc1ab72fa9879"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0bde9030210b4826b1b143cd47d5144" id="r_af0bde9030210b4826b1b143cd47d5144"><td class="memItemLeft" align="right" valign="top"><a id="af0bde9030210b4826b1b143cd47d5144" name="af0bde9030210b4826b1b143cd47d5144"></a>
+<a class="el" href="classWidget.html">Widget</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>focusedWidget</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:af0bde9030210b4826b1b143cd47d5144"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the widget that currently receives keyboard input, or <code>nullptr</code> if none is set. <br /></td></tr>
+<tr class="separator:af0bde9030210b4826b1b143cd47d5144"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a163cdc0f20a5b8a83eb7df46ea61aa9d" id="r_a163cdc0f20a5b8a83eb7df46ea61aa9d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSdlSubsystem.html#a163cdc0f20a5b8a83eb7df46ea61aa9d">setFocusedWidget</a> (<a class="el" href="classWidget.html">Widget</a> *widget)</td></tr>
+<tr class="memdesc:a163cdc0f20a5b8a83eb7df46ea61aa9d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the widget that receives keyboard input.  <br /></td></tr>
+<tr class="separator:a163cdc0f20a5b8a83eb7df46ea61aa9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -153,7 +160,7 @@ Static Public Member Functions</h2></td></tr>
 <div class="ttc" id="aclassApplication_html"><div class="ttname"><a href="classApplication.html">Application</a></div><div class="ttdoc">Application-wide state for the promeki library.</div><div class="ttdef"><b>Definition</b> application.h:49</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassSDLWindow_html"><div class="ttname"><a href="classSDLWindow.html">SDLWindow</a></div><div class="ttdoc">Top-level SDL window that serves as a root Widget.</div><div class="ttdef"><b>Definition</b> sdlwindow.h:42</div></div>
-<div class="ttc" id="aclassSdlSubsystem_html"><div class="ttname"><a href="classSdlSubsystem.html">SdlSubsystem</a></div><div class="ttdoc">SDL subsystem installed alongside an Application.</div><div class="ttdef"><b>Definition</b> sdlsubsystem.h:44</div></div>
+<div class="ttc" id="aclassSdlSubsystem_html"><div class="ttname"><a href="classSdlSubsystem.html">SdlSubsystem</a></div><div class="ttdoc">SDL subsystem installed alongside an Application.</div><div class="ttdef"><b>Definition</b> sdlsubsystem.h:46</div></div>
 </div><!-- fragment --><p>Multiple subsystems can coexist in the same process — e.g. a program that wants both a graphical SDL window and a text-mode TUI can construct a <a class="el" href="classTuiSubsystem.html">TuiSubsystem</a> alongside this one and both will install their I/O sources on the same <code><a class="el" href="classApplication.html" title="Application-wide state for the promeki library.">Application</a></code> main <a class="el" href="classEventLoop.html">EventLoop</a>. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a34919dad625fecb9e935ece23176049a" name="a34919dad625fecb9e935ece23176049a"></a>
@@ -261,6 +268,43 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a163cdc0f20a5b8a83eb7df46ea61aa9d" name="a163cdc0f20a5b8a83eb7df46ea61aa9d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a163cdc0f20a5b8a83eb7df46ea61aa9d">&#9670;&#160;</a></span>setFocusedWidget()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> SdlSubsystem::setFocusedWidget </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classWidget.html">Widget</a> *&#160;</td>
+          <td class="paramname"><em>widget</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the widget that receives keyboard input. </p>
+<p>Key events arriving from SDL are delivered to <code>widget</code> first; if the widget does not <code>accept</code> the event, delivery walks up the parent chain until a handler accepts or the chain ends.</p>
+<p>Passing <code>nullptr</code> clears focus — key events with no focused widget fall back to the receiving window.</p>
+<p>Managing <a class="el" href="classWidget.html#a54d7047c0d0065d91175947825e9037a">Widget::setFocused</a> on the old / new widget is the caller's responsibility.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">widget</td><td>The new focused widget, or nullptr. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/sdl/<a class="el" href="sdlsubsystem_8h_source.html">sdlsubsystem.h</a></li>
 </ul>
@@ -271,7 +315,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classSdlSubsystem.html">SdlSubsystem</a></li>
-    <li class="footer">Generated on 2026-04-21 00:53:11 from commit 3126200 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-21 07:27:58 from commit 3f2d824 (1.0.0).</li>
   </ul>
 </div>
 </body>

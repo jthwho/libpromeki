@@ -1,0 +1,5 @@
+<map id="SDLAudioOutput" name="SDLAudioOutput">
+<area shape="rect" id="Node000001" title="Manages an SDL3 audio output device for playback." alt="" coords="5,79,135,104"/>
+<area shape="rect" id="Node000002" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="22,5,118,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="73,44,73,79,67,79,67,44"/>
+</map>

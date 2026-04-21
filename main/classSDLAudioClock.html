@@ -102,6 +102,7 @@ $(document).ready(function(){initNavTree('classSDLAudioClock.html',''); initResi
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="classSDLAudioClock-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">SDLAudioClock Class Reference</div></div>
 </div><!--header-->
@@ -126,9 +127,11 @@ Collaboration diagram for SDLAudioClock:</div>
 <div class="dyncontent">
 <div class="center"><img src="classSDLAudioClock__coll__graph.png" border="0" usemap="#aSDLAudioClock_coll__map" alt="Collaboration graph"/></div>
 <map name="aSDLAudioClock_coll__map" id="aSDLAudioClock_coll__map">
-<area shape="rect" title="Clock driven by an SDL audio device&#39;s consumption rate." alt="" coords="5,79,127,104"/>
-<area shape="rect" href="classClock.html" title="Abstract clock interface." alt="" coords="37,5,95,31"/>
-<area shape="poly" title=" " alt="" coords="69,44,69,79,63,79,63,44"/>
+<area shape="rect" title="Clock driven by an SDL audio device&#39;s consumption rate." alt="" coords="5,168,127,193"/>
+<area shape="rect" href="classClock.html" title="Abstract clock interface." alt="" coords="37,93,95,119"/>
+<area shape="poly" title=" " alt="" coords="69,133,69,168,63,168,63,133"/>
+<area shape="rect" href="classRefCount.html" title="An atomic reference count object." alt="" coords="25,5,107,31"/>
+<area shape="poly" title=" " alt="" coords="69,45,69,93,63,93,63,45"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -140,24 +143,15 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a993ae5c261f348d19c7d01b976ef2c1d" id="r_a993ae5c261f348d19c7d01b976ef2c1d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLAudioClock.html#a993ae5c261f348d19c7d01b976ef2c1d">SDLAudioClock</a> (<a class="el" href="classSDLAudioOutput.html">SDLAudioOutput</a> *<a class="el" href="classList.html">output</a>, <a class="el" href="classList.html">double</a> <a class="el" href="classList.html">bytesPerSec</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">deviceName</a>=<a class="el" href="classString.html">String</a>())</td></tr>
-<tr class="memdesc:a993ae5c261f348d19c7d01b976ef2c1d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an SDL audio clock.  <br /></td></tr>
-<tr class="separator:a993ae5c261f348d19c7d01b976ef2c1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abc79d25b378e34aad535bfcbc813f91a" id="r_abc79d25b378e34aad535bfcbc813f91a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classClockDomain.html">ClockDomain</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLAudioClock.html#abc79d25b378e34aad535bfcbc813f91a">domain</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:abc79d25b378e34aad535bfcbc813f91a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the clock's identity domain.  <br /></td></tr>
-<tr class="separator:abc79d25b378e34aad535bfcbc813f91a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c41b80a928a776da662f3e7e8176f5a" id="r_a0c41b80a928a776da662f3e7e8176f5a"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLAudioClock.html#a0c41b80a928a776da662f3e7e8176f5a">SDLAudioClock</a> (<a class="el" href="classSDLAudioOutput.html">SDLAudioOutput</a> *<a class="el" href="classList.html">output</a>)</td></tr>
+<tr class="memdesc:a0c41b80a928a776da662f3e7e8176f5a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an SDL audio clock bound to <code>output</code>.  <br /></td></tr>
+<tr class="separator:a0c41b80a928a776da662f3e7e8176f5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1307c261548e419b2605c7c6cfb99696" id="r_a1307c261548e419b2605c7c6cfb99696"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLAudioClock.html#a1307c261548e419b2605c7c6cfb99696">resolutionNs</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
 <tr class="memdesc:a1307c261548e419b2605c7c6cfb99696"><td class="mdescLeft">&#160;</td><td class="mdescRight">Smallest meaningful time step in nanoseconds.  <br /></td></tr>
 <tr class="separator:a1307c261548e419b2605c7c6cfb99696"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad0efbdc5e186a408423a9a547441ac87" id="r_ad0efbdc5e186a408423a9a547441ac87"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structClockJitter.html">ClockJitter</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLAudioClock.html#ad0efbdc5e186a408423a9a547441ac87">jitter</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:ad0efbdc5e186a408423a9a547441ac87"><td class="mdescLeft">&#160;</td><td class="mdescRight">Expected asymmetric error envelope on <a class="el" href="classSDLAudioClock.html#a77a0c9db33c46c3fe4832d17e9b72f8e">nowNs</a>.  <br /></td></tr>
+<tr class="memdesc:ad0efbdc5e186a408423a9a547441ac87"><td class="mdescLeft">&#160;</td><td class="mdescRight">Expected asymmetric error envelope on <a class="el" href="classClock.html#a34e2affb4b2241fb5c8c6dbdf3ade5e8">now</a>.  <br /></td></tr>
 <tr class="separator:ad0efbdc5e186a408423a9a547441ac87"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a77a0c9db33c46c3fe4832d17e9b72f8e" id="r_a77a0c9db33c46c3fe4832d17e9b72f8e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLAudioClock.html#a77a0c9db33c46c3fe4832d17e9b72f8e">nowNs</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:a77a0c9db33c46c3fe4832d17e9b72f8e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current time in nanoseconds.  <br /></td></tr>
-<tr class="separator:a77a0c9db33c46c3fe4832d17e9b72f8e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae735443228a01c1d60a3979e628bc605" id="r_ae735443228a01c1d60a3979e628bc605"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLAudioClock.html#ae735443228a01c1d60a3979e628bc605">sleepUntilNs</a> (<a class="el" href="classList.html">int64_t</a> <a class="el" href="classList.html">targetNs</a>) <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:ae735443228a01c1d60a3979e628bc605"><td class="mdescLeft">&#160;</td><td class="mdescRight">Blocks until the clock reaches <code>targetNs</code>.  <br /></td></tr>
-<tr class="separator:ae735443228a01c1d60a3979e628bc605"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2e7923f2903f39625c6bc3fa705935c6" id="r_a2e7923f2903f39625c6bc3fa705935c6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">double</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLAudioClock.html#a2e7923f2903f39625c6bc3fa705935c6">rateRatio</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
 <tr class="memdesc:a2e7923f2903f39625c6bc3fa705935c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Ratio of actual tick rate to nominal tick rate.  <br /></td></tr>
 <tr class="separator:a2e7923f2903f39625c6bc3fa705935c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -167,6 +161,89 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a45e035ac7721c0cf201005ade146a0e5" id="r_a45e035ac7721c0cf201005ade146a0e5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLAudioClock.html#a45e035ac7721c0cf201005ade146a0e5">resetStats</a> ()</td></tr>
 <tr class="memdesc:a45e035ac7721c0cf201005ade146a0e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resets all counters in <a class="el" href="classSDLAudioClock.html#a33d0f84b815edeeb0bd2b47eff601f90">stats</a> to zero.  <br /></td></tr>
 <tr class="separator:a45e035ac7721c0cf201005ade146a0e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_classClock"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classClock')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classClock.html">Clock</a></td></tr>
+<tr class="memitem:a72a341cf79d5b0ac585c02e32bf360f3 inherit pub_methods_classClock" id="r_a72a341cf79d5b0ac585c02e32bf360f3"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classClock.html#a72a341cf79d5b0ac585c02e32bf360f3">Clock</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classClockDomain.html">ClockDomain</a> &amp;<a class="el" href="classClock.html#a1fb097d1e07fe5c1512ccce49f5d2cf1">domain</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classDuration.html">Duration</a> &amp;<a class="el" href="classClock.html#aaa1d16ed8b85ea43bb4e78a5d0ad4551">fixedOffset</a>=<a class="el" href="classDuration.html">Duration</a>(), <a class="el" href="group__time.html#ga339eee54b6b4d766b3a39c08606fa1b6">ClockPauseMode</a> <a class="el" href="classClock.html#ab14aa8fe714115e8264b53836dca471b">pauseMode</a>=<a class="el" href="group__time.html#gga339eee54b6b4d766b3a39c08606fa1b6aa0d3e5327da86b0e7f39bef0cf6a66bb">ClockPauseMode::CannotPause</a>, <a class="el" href="classClockFilter.html">ClockFilter</a> *filter=<a class="el" href="classList.html">nullptr</a>)</td></tr>
+<tr class="memdesc:a72a341cf79d5b0ac585c02e32bf360f3 inherit pub_methods_classClock"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classClock.html" title="Abstract clock interface.">Clock</a>.  <br /></td></tr>
+<tr class="separator:a72a341cf79d5b0ac585c02e32bf360f3 inherit pub_methods_classClock"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac1ddbca9092c61e98668473209f36b19 inherit pub_methods_classClock" id="r_ac1ddbca9092c61e98668473209f36b19"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><b>~Clock</b> ()</td></tr>
+<tr class="memdesc:ac1ddbca9092c61e98668473209f36b19 inherit pub_methods_classClock"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual destructor. <br /></td></tr>
+<tr class="separator:ac1ddbca9092c61e98668473209f36b19 inherit pub_methods_classClock"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaadf4fd3494f23514024098c2d0c9134 inherit pub_methods_classClock" id="r_aaadf4fd3494f23514024098c2d0c9134"><td class="memItemLeft" align="right" valign="top">
+&#160;</td><td class="memItemRight" valign="bottom"><b>Clock</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classClock.html">Clock</a> &amp;)=<a class="el" href="classList.html">delete</a></td></tr>
+<tr class="separator:aaadf4fd3494f23514024098c2d0c9134 inherit pub_methods_classClock"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a21bfcb54d1da00cea13a357ea5d8696c inherit pub_methods_classClock" id="r_a21bfcb54d1da00cea13a357ea5d8696c"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classClock.html">Clock</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classClock.html">Clock</a> &amp;)=<a class="el" href="classList.html">delete</a></td></tr>
+<tr class="separator:a21bfcb54d1da00cea13a357ea5d8696c inherit pub_methods_classClock"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad30a55562e0f210ac1f784a8b8d6ede1 inherit pub_methods_classClock" id="r_ad30a55562e0f210ac1f784a8b8d6ede1"><td class="memItemLeft" align="right" valign="top">
+&#160;</td><td class="memItemRight" valign="bottom"><b>Clock</b> (<a class="el" href="classClock.html">Clock</a> &amp;&amp;)=<a class="el" href="classList.html">delete</a></td></tr>
+<tr class="separator:ad30a55562e0f210ac1f784a8b8d6ede1 inherit pub_methods_classClock"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3505b5ca5e29ae1961946ddbb073f2e8 inherit pub_methods_classClock" id="r_a3505b5ca5e29ae1961946ddbb073f2e8"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classClock.html">Clock</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classClock.html">Clock</a> &amp;&amp;)=<a class="el" href="classList.html">delete</a></td></tr>
+<tr class="separator:a3505b5ca5e29ae1961946ddbb073f2e8 inherit pub_methods_classClock"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1fb097d1e07fe5c1512ccce49f5d2cf1 inherit pub_methods_classClock" id="r_a1fb097d1e07fe5c1512ccce49f5d2cf1"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classClockDomain.html">ClockDomain</a>&#160;</td><td class="memItemRight" valign="bottom"><b>domain</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a1fb097d1e07fe5c1512ccce49f5d2cf1 inherit pub_methods_classClock"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the clock's identity domain. <br /></td></tr>
+<tr class="separator:a1fb097d1e07fe5c1512ccce49f5d2cf1 inherit pub_methods_classClock"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab14aa8fe714115e8264b53836dca471b inherit pub_methods_classClock" id="r_ab14aa8fe714115e8264b53836dca471b"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="group__time.html#ga339eee54b6b4d766b3a39c08606fa1b6">ClockPauseMode</a>&#160;</td><td class="memItemRight" valign="bottom"><b>pauseMode</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ab14aa8fe714115e8264b53836dca471b inherit pub_methods_classClock"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the clock's pause capability. <br /></td></tr>
+<tr class="separator:ab14aa8fe714115e8264b53836dca471b inherit pub_methods_classClock"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a613661ca8eb8943f5d1446df9e94a2d3 inherit pub_methods_classClock" id="r_a613661ca8eb8943f5d1446df9e94a2d3"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>canPause</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a613661ca8eb8943f5d1446df9e94a2d3 inherit pub_methods_classClock"><td class="mdescLeft">&#160;</td><td class="mdescRight">True if <a class="el" href="classClock.html#acedc580419855c32366ce8347d6caec5">setPause</a> will accept requests. <br /></td></tr>
+<tr class="separator:a613661ca8eb8943f5d1446df9e94a2d3 inherit pub_methods_classClock"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a34e2affb4b2241fb5c8c6dbdf3ade5e8 inherit pub_methods_classClock" id="r_a34e2affb4b2241fb5c8c6dbdf3ade5e8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classClock.html#a34e2affb4b2241fb5c8c6dbdf3ade5e8">now</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a34e2affb4b2241fb5c8c6dbdf3ade5e8 inherit pub_methods_classClock"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current time as a <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a>.  <br /></td></tr>
+<tr class="separator:a34e2affb4b2241fb5c8c6dbdf3ade5e8 inherit pub_methods_classClock"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a01eb1c375850caf4264fd3a8fbabd423 inherit pub_methods_classClock" id="r_a01eb1c375850caf4264fd3a8fbabd423"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classClock.html#a01eb1c375850caf4264fd3a8fbabd423">nowNs</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a01eb1c375850caf4264fd3a8fbabd423 inherit pub_methods_classClock"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience: the ns value <a class="el" href="classClock.html#a34e2affb4b2241fb5c8c6dbdf3ade5e8">now</a> would carry.  <br /></td></tr>
+<tr class="separator:a01eb1c375850caf4264fd3a8fbabd423 inherit pub_methods_classClock"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa1d16ed8b85ea43bb4e78a5d0ad4551 inherit pub_methods_classClock" id="r_aaa1d16ed8b85ea43bb4e78a5d0ad4551"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classDuration.html">Duration</a>&#160;</td><td class="memItemRight" valign="bottom"><b>fixedOffset</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aaa1d16ed8b85ea43bb4e78a5d0ad4551 inherit pub_methods_classClock"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the currently-set fixed offset. <br /></td></tr>
+<tr class="separator:aaa1d16ed8b85ea43bb4e78a5d0ad4551 inherit pub_methods_classClock"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7b040f874cc9aa23307448a3d4d99a46 inherit pub_methods_classClock" id="r_a7b040f874cc9aa23307448a3d4d99a46"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classClock.html#a7b040f874cc9aa23307448a3d4d99a46">setFixedOffset</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classDuration.html">Duration</a> &amp;offset)</td></tr>
+<tr class="memdesc:a7b040f874cc9aa23307448a3d4d99a46 inherit pub_methods_classClock"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replaces the fixed offset.  <br /></td></tr>
+<tr class="separator:a7b040f874cc9aa23307448a3d4d99a46 inherit pub_methods_classClock"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a844aad3ded4303ec6ef3d93cb6146eda inherit pub_methods_classClock" id="r_a844aad3ded4303ec6ef3d93cb6146eda"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isPaused</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a844aad3ded4303ec6ef3d93cb6146eda inherit pub_methods_classClock"><td class="mdescLeft">&#160;</td><td class="mdescRight">True if the clock is currently paused. <br /></td></tr>
+<tr class="separator:a844aad3ded4303ec6ef3d93cb6146eda inherit pub_methods_classClock"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acedc580419855c32366ce8347d6caec5 inherit pub_methods_classClock" id="r_acedc580419855c32366ce8347d6caec5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classClock.html#acedc580419855c32366ce8347d6caec5">setPause</a> (<a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">paused</a>)</td></tr>
+<tr class="memdesc:acedc580419855c32366ce8347d6caec5 inherit pub_methods_classClock"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the pause state.  <br /></td></tr>
+<tr class="separator:acedc580419855c32366ce8347d6caec5 inherit pub_methods_classClock"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8758f13a2d05f30e62fd5c035b0e2190 inherit pub_methods_classClock" id="r_a8758f13a2d05f30e62fd5c035b0e2190"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classClock.html#a8758f13a2d05f30e62fd5c035b0e2190">sleepUntil</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> &amp;<a class="el" href="classList.html">deadline</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a8758f13a2d05f30e62fd5c035b0e2190 inherit pub_methods_classClock"><td class="mdescLeft">&#160;</td><td class="mdescRight">Blocks until <a class="el" href="classClock.html#a34e2affb4b2241fb5c8c6dbdf3ade5e8">now</a> would return at or past <code>deadline</code>.  <br /></td></tr>
+<tr class="separator:a8758f13a2d05f30e62fd5c035b0e2190 inherit pub_methods_classClock"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac8eb573ef829cea0f7347543562871dc inherit pub_methods_classClock" id="r_ac8eb573ef829cea0f7347543562871dc"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">virtual</a> <a class="el" href="classClock.html">Clock</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>_promeki_clone</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ac8eb573ef829cea0f7347543562871dc inherit pub_methods_classClock"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clone hook for <a class="el" href="classSharedPtr.html">SharedPtr</a>. Always asserts — <a class="el" href="classClock.html" title="Abstract clock interface.">Clock</a> objects are not copyable. <br /></td></tr>
+<tr class="separator:ac8eb573ef829cea0f7347543562871dc inherit pub_methods_classClock"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
+Protected Member Functions</h2></td></tr>
+<tr class="memitem:acb8072eee98b5f0b1782d5412be7e3d6" id="r_acb8072eee98b5f0b1782d5412be7e3d6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLAudioClock.html#acb8072eee98b5f0b1782d5412be7e3d6">raw</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
+<tr class="memdesc:acb8072eee98b5f0b1782d5412be7e3d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the raw clock value in nanoseconds.  <br /></td></tr>
+<tr class="separator:acb8072eee98b5f0b1782d5412be7e3d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b1a8411933685838fa0af24ecc8416c" id="r_a9b1a8411933685838fa0af24ecc8416c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLAudioClock.html#a9b1a8411933685838fa0af24ecc8416c">sleepUntilNs</a> (<a class="el" href="classList.html">int64_t</a> <a class="el" href="classList.html">targetNs</a>) <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
+<tr class="memdesc:a9b1a8411933685838fa0af24ecc8416c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Native blocking wait in raw clock nanoseconds.  <br /></td></tr>
+<tr class="separator:a9b1a8411933685838fa0af24ecc8416c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abf2820a262ce8aad904ea05fddf73d08" id="r_abf2820a262ce8aad904ea05fddf73d08"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLAudioClock.html#abf2820a262ce8aad904ea05fddf73d08">onPause</a> (<a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">paused</a>) <a class="el" href="classList.html">override</a></td></tr>
+<tr class="memdesc:abf2820a262ce8aad904ea05fddf73d08"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when pause state changes.  <br /></td></tr>
+<tr class="separator:abf2820a262ce8aad904ea05fddf73d08"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pub_types_classClock"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classClock')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classClock.html">Clock</a></td></tr>
+<tr class="memitem:a2515694aed5f821c7af75ab792d1a891 inherit pub_types_classClock" id="r_a2515694aed5f821c7af75ab792d1a891"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classClock.html#a2515694aed5f821c7af75ab792d1a891">Ptr</a> = <a class="el" href="classSharedPtr.html">SharedPtr</a>&lt; <a class="el" href="classClock.html">Clock</a>, <a class="el" href="classList.html">false</a>, <a class="el" href="classClock.html">Clock</a> &gt;</td></tr>
+<tr class="memdesc:a2515694aed5f821c7af75ab792d1a891 inherit pub_types_classClock"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shared-pointer alias for lifetime management.  <br /></td></tr>
+<tr class="separator:a2515694aed5f821c7af75ab792d1a891 inherit pub_types_classClock"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_attribs_classClock"><td colspan="2" onclick="javascript:toggleInherit('pub_attribs_classClock')"><img src="closed.png" alt="-"/>&#160;Public Attributes inherited from <a class="el" href="classClock.html">Clock</a></td></tr>
+<tr class="memitem:aabe85da9783b4bc7fc9689c598bb75f6 inherit pub_attribs_classClock" id="r_aabe85da9783b4bc7fc9689c598bb75f6"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classRefCount.html">RefCount</a>&#160;</td><td class="memItemRight" valign="bottom"><b>_promeki_refct</b></td></tr>
+<tr class="memdesc:aabe85da9783b4bc7fc9689c598bb75f6 inherit pub_attribs_classClock"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classAtomic.html" title="Atomic variable wrapping std::atomic&lt;T&gt;.">Atomic</a> reference count for <a class="el" href="classSharedPtr.html">SharedPtr</a>. <br /></td></tr>
+<tr class="separator:aabe85da9783b4bc7fc9689c598bb75f6 inherit pub_attribs_classClock"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p><a class="el" href="classClock.html" title="Abstract clock interface.">Clock</a> driven by an SDL audio device's consumption rate. </p>
@@ -176,67 +253,22 @@ Public Member Functions</h2></td></tr>
 <dl class="section user"><dt>Time model</dt><dd></dd></dl>
 <p>The clock's epoch is the moment the audio stream started (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">i.e</a>. when <code>totalBytesPushed</code> was 0 and the device had consumed nothing). The current time in nanoseconds is:</p>
 <div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">consumed</a> = <a class="code hl_class" href="classList.html">output</a>-&gt;totalBytesPushed() - <a class="code hl_class" href="classList.html">output</a>-&gt;queuedBytes()</div>
-<div class="line"><a class="code hl_function" href="classSDLAudioClock.html#a77a0c9db33c46c3fe4832d17e9b72f8e">nowNs</a>    = <a class="code hl_class" href="classList.html">consumed</a> * 1<a class="code hl_class" href="classList.html">e9</a> / <a class="code hl_class" href="classList.html">bytesPerSec</a></div>
+<div class="line"><a class="code hl_function" href="classClock.html#a01eb1c375850caf4264fd3a8fbabd423">nowNs</a>    = <a class="code hl_class" href="classList.html">consumed</a> * 1<a class="code hl_class" href="classList.html">e9</a> / <a class="code hl_class" href="classList.html">bytesPerSec</a></div>
+<div class="ttc" id="aclassClock_html_a01eb1c375850caf4264fd3a8fbabd423"><div class="ttname"><a href="classClock.html#a01eb1c375850caf4264fd3a8fbabd423">Clock::nowNs</a></div><div class="ttdeci">Result&lt; int64_t &gt; nowNs() const</div><div class="ttdoc">Convenience: the ns value now would carry.</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassSDLAudioClock_html_a77a0c9db33c46c3fe4832d17e9b72f8e"><div class="ttname"><a href="classSDLAudioClock.html#a77a0c9db33c46c3fe4832d17e9b72f8e">SDLAudioClock::nowNs</a></div><div class="ttdeci">int64_t nowNs() const override</div><div class="ttdoc">Returns the current time in nanoseconds.</div></div>
 </div><!-- fragment --><dl class="section user"><dt>Rate ratio and drift</dt><dd></dd></dl>
 <p><a class="el" href="classSDLAudioClock.html#a2e7923f2903f39625c6bc3fa705935c6">rateRatio</a> returns the audio device's actual consumption rate divided by the nominal rate the stream was configured for, low-pass filtered over roughly a second. Values above <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a> mean the device is consuming faster than nominal (clock runs fast); below <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a> means it is consuming slower. Consumers that resample audio or correct for drift should feed this ratio into their resampler.</p>
 <dl class="section user"><dt>Monotonicity</dt><dd></dd></dl>
-<p><a class="el" href="classSDLAudioClock.html#a77a0c9db33c46c3fe4832d17e9b72f8e">nowNs</a> is strictly monotonic: consecutive reads never produce a decreasing value. SDL's consumed-byte counter advances in chunks and its callback cadence jitters, so the raw phase that a new checkpoint implies can land behind the value interpolation has already driven the clock to. When that happens the algorithm back-dates the wall anchor instead of snapping the reported time backward, preserving monotonicity. A final clamp guards against sub-nanosecond floating-point rounding.</p>
+<p><a class="el" href="classClock.html#a01eb1c375850caf4264fd3a8fbabd423">nowNs</a> is strictly monotonic: consecutive reads never produce a decreasing value. SDL's consumed-byte counter advances in chunks and its callback cadence jitters, so the raw phase that a new checkpoint implies can land behind the value interpolation has already driven the clock to. When that happens the algorithm back-dates the wall anchor instead of snapping the reported time backward, preserving monotonicity. A final clamp guards against sub-nanosecond floating-point rounding.</p>
 <dl class="section user"><dt>Jitter</dt><dd></dd></dl>
 <p>The monotonicity guarantee costs a possible early bias: the reported time can lead the true playback position by up to one callback period during transients, until the rate filter converges on the device's actual drain rate. <a class="el" href="classSDLAudioClock.html#ad0efbdc5e186a408423a9a547441ac87">jitter</a> reports a symmetric envelope <code>{-callbackPeriod</code>, callbackPeriod} so consumers that filter clock-derived rate estimates size their window correctly in both directions.</p>
 <dl class="section user"><dt>Sleep model</dt><dd></dd></dl>
-<p><a class="el" href="classSDLAudioClock.html#ae735443228a01c1d60a3979e628bc605">sleepUntilNs</a> computes how many bytes need to drain to reach the target time, sleeps for 90% of the estimated drain duration, then polls the remainder at 250 us granularity.</p>
+<p><a class="el" href="classSDLAudioClock.html#a9b1a8411933685838fa0af24ecc8416c">sleepUntilNs</a> computes how many bytes need to drain to reach the target time, sleeps for 90% of the estimated drain duration, then polls the remainder at 250 us granularity.</p>
 <dl class="section user"><dt>Ownership</dt><dd></dd></dl>
 <p>The clock does not own the <a class="el" href="classSDLAudioOutput.html" title="Manages an SDL3 audio output device for playback.">SDLAudioOutput</a>. The caller must keep the output alive for the clock's lifetime. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a993ae5c261f348d19c7d01b976ef2c1d" name="a993ae5c261f348d19c7d01b976ef2c1d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a993ae5c261f348d19c7d01b976ef2c1d">&#9670;&#160;</a></span>SDLAudioClock()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">SDLAudioClock::SDLAudioClock </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classSDLAudioOutput.html">SDLAudioOutput</a> *&#160;</td>
-          <td class="paramname"><em>output</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">double</a>&#160;</td>
-          <td class="paramname"><em>bytesPerSec</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
-          <td class="paramname"><em>deviceName</em> = <code><a class="el" href="classString.html">String</a>()</code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Constructs an SDL audio clock. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">output</td><td>The SDL audio output to derive time from. </td></tr>
-    <tr><td class="paramname">bytesPerSec</td><td><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> drain rate in float32 bytes per second (<code>sampleRate * channels * sizeof(float)</code>). </td></tr>
-    <tr><td class="paramname">deviceName</td><td>Optional device identifier used to distinguish the registered <a class="el" href="classClockDomain.html" title="Named identity for a clock source.">ClockDomain</a>. Multiple clocks constructed with the same name share a domain. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<h2 class="groupheader">Member Function Documentation</h2>
-<a id="abc79d25b378e34aad535bfcbc813f91a" name="abc79d25b378e34aad535bfcbc813f91a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abc79d25b378e34aad535bfcbc813f91a">&#9670;&#160;</a></span>domain()</h2>
+<a id="a0c41b80a928a776da662f3e7e8176f5a" name="a0c41b80a928a776da662f3e7e8176f5a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0c41b80a928a776da662f3e7e8176f5a">&#9670;&#160;</a></span>SDLAudioClock()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -245,27 +277,33 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classClockDomain.html">ClockDomain</a> SDLAudioClock::domain </td>
+          <td class="memname">SDLAudioClock::SDLAudioClock </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
+          <td class="paramtype"><a class="el" href="classSDLAudioOutput.html">SDLAudioOutput</a> *&#160;</td>
+          <td class="paramname"><em>output</em></td><td>)</td>
+          <td></td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Returns the clock's identity domain. </p>
-<p>Timestamps produced by two clocks sharing the same <a class="el" href="classClockDomain.html">ClockDomain</a> can be compared directly; timestamps from different domains may drift relative to each other.</p>
-<dl class="section return"><dt>Returns</dt><dd>The clock's <a class="el" href="classClockDomain.html">ClockDomain</a>. </dd></dl>
-
-<p>Implements <a class="el" href="classClock.html#ad78765d0f3cf546ae9ed0d518848af01">Clock</a>.</p>
+<p>Constructs an SDL audio clock bound to <code>output</code>. </p>
+<p>Derives the drain rate (bytes per second of float32 audio) from the output's <a class="el" href="classAudioDesc.html">AudioDesc</a>, adopts the output's per-device <a class="el" href="classClockDomain.html">ClockDomain</a>, and tracks the output's lifetime via an <a class="el" href="classObjectBasePtr.html">ObjectBasePtr</a>. The clock's pause mode is <a class="el" href="group__time.html#gga339eee54b6b4d766b3a39c08606fa1b6a7087388a84dce34ae02e5bd96ed92c9d">ClockPauseMode::PausesRawStops</a> — pausing the clock pauses the SDL device, and the base-class pause accounting leaves the reported time frozen across the pause interval.</p>
+<p>Typically constructed by <a class="el" href="classSDLAudioOutput.html#a3882a8ad9e77ba63e58e7d1d86dab354">SDLAudioOutput::createClock</a> rather than directly.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">output</td><td>The SDL audio output to derive time from. Must already be open. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
+<h2 class="groupheader">Member Function Documentation</h2>
 <a id="ad0efbdc5e186a408423a9a547441ac87" name="ad0efbdc5e186a408423a9a547441ac87"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad0efbdc5e186a408423a9a547441ac87">&#9670;&#160;</a></span>jitter()</h2>
 
@@ -289,16 +327,15 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Expected asymmetric error envelope on <a class="el" href="classSDLAudioClock.html#a77a0c9db33c46c3fe4832d17e9b72f8e">nowNs</a>. </p>
-<p>Used by consumers that filter clock-derived rate or offset estimates. The filter window should cover at least <a class="el" href="structClockJitter.html#a974b7381304fdf47ff7cc895255fd33c">ClockJitter::span</a> so that one reading's jitter is averaged out.</p>
+<p>Expected asymmetric error envelope on <a class="el" href="classClock.html#a34e2affb4b2241fb5c8c6dbdf3ade5e8">now</a>. </p>
 <dl class="section return"><dt>Returns</dt><dd>The envelope as a <a class="el" href="structClockJitter.html">ClockJitter</a>. </dd></dl>
 
 <p>Implements <a class="el" href="classClock.html#a78d42644cd73b0beba037134f7f36a5d">Clock</a>.</p>
 
 </div>
 </div>
-<a id="a77a0c9db33c46c3fe4832d17e9b72f8e" name="a77a0c9db33c46c3fe4832d17e9b72f8e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a77a0c9db33c46c3fe4832d17e9b72f8e">&#9670;&#160;</a></span>nowNs()</h2>
+<a id="abf2820a262ce8aad904ea05fddf73d08" name="abf2820a262ce8aad904ea05fddf73d08"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abf2820a262ce8aad904ea05fddf73d08">&#9670;&#160;</a></span>onPause()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -307,24 +344,30 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">int64_t</a> SDLAudioClock::nowNs </td>
+          <td class="memname"><a class="el" href="classError.html">Error</a> SDLAudioClock::onPause </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
+          <td class="paramtype"><a class="el" href="classList.html">bool</a>&#160;</td>
+          <td class="paramname"><em>paused</em></td><td>)</td>
+          <td></td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Returns the current time in nanoseconds. </p>
-<p>The epoch is clock-defined. Only deltas between two <a class="el" href="classSDLAudioClock.html#a77a0c9db33c46c3fe4832d17e9b72f8e">nowNs</a> readings, or between <a class="el" href="classSDLAudioClock.html#a77a0c9db33c46c3fe4832d17e9b72f8e">nowNs</a> and a deadline supplied to <a class="el" href="classSDLAudioClock.html#ae735443228a01c1d60a3979e628bc605">sleepUntilNs</a>, are meaningful.</p>
-<dl class="section return"><dt>Returns</dt><dd>Current time in nanoseconds from the clock's epoch. </dd></dl>
+<p>Called when pause state changes. </p>
+<p>Subclasses whose underlying source actually stops on pause (<a class="el" href="group__time.html#gga339eee54b6b4d766b3a39c08606fa1b6a7087388a84dce34ae02e5bd96ed92c9d">ClockPauseMode::PausesRawStops</a>) override this to start and stop the hardware. Called while the <a class="el" href="classClock.html" title="Abstract clock interface.">Clock</a>'s internal pause mutex is held, so implementations must not call back into the <a class="el" href="classClock.html" title="Abstract clock interface.">Clock</a>'s public API. Default returns <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a></code>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">paused</td><td>The new pause state. </td></tr>
+  </table>
+  </dd>
+</dl>
 
-<p>Implements <a class="el" href="classClock.html#ac4fb6ebb2edaab48b150f6209ab87619">Clock</a>.</p>
+<p>Reimplemented from <a class="el" href="classClock.html#ab7c1c5cb4280d6569b59c9ba9b2bb299">Clock</a>.</p>
 
 </div>
 </div>
@@ -352,10 +395,39 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Ratio of actual tick rate to nominal tick rate. </p>
-<p>For clocks that are their own nominal reference (<a class="el" href="classWallClock.html">WallClock</a>, PTP, <a class="el" href="classSyntheticClock.html">SyntheticClock</a>) the ratio is <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a></code>. For clocks derived from an external rate source (audio device drain, a remote stream's packet rate), the ratio reports the actual rate measured against that reference, which callers can use as a drift-correction signal (e.g. feeding an audio resampler ratio).</p>
-<p>The default implementation returns <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a></code>. </p>
+<dl class="section return"><dt>Returns</dt><dd>The rate ratio (<code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a></code> for self-referenced clocks). </dd></dl>
 
 <p>Reimplemented from <a class="el" href="classClock.html#ac1e728a766b91f93239f74a206a16e97">Clock</a>.</p>
+
+</div>
+</div>
+<a id="acb8072eee98b5f0b1782d5412be7e3d6" name="acb8072eee98b5f0b1782d5412be7e3d6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acb8072eee98b5f0b1782d5412be7e3d6">&#9670;&#160;</a></span>raw()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt; SDLAudioClock::raw </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the raw clock value in nanoseconds. </p>
+<p>The epoch is clock-defined. The base class applies the filter, pause accounting, and offsets on top. An error result indicates the clock has become unavailable (for example, the underlying hardware or owner went away); the error propagates from <a class="el" href="classClock.html#a34e2affb4b2241fb5c8c6dbdf3ade5e8">now</a>. </p>
+
+<p>Implements <a class="el" href="classClock.html#a40af74acbb45b695b3d7218fbc3fa3e4">Clock</a>.</p>
 
 </div>
 </div>
@@ -403,15 +475,14 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Smallest meaningful time step in nanoseconds. </p>
-<p>The resolution tells callers what precision to expect from <a class="el" href="classSDLAudioClock.html#a77a0c9db33c46c3fe4832d17e9b72f8e">nowNs</a>. A 48 kHz audio clock has <code>~20833</code> ns resolution (one sample period); a steady_clock wall clock is near <code>1</code> ns; a PTP hardware clock is also <code>~1</code> ns.</p>
 <dl class="section return"><dt>Returns</dt><dd>Resolution in nanoseconds (<code>&gt;=</code> 1). </dd></dl>
 
 <p>Implements <a class="el" href="classClock.html#ad95118aed30fce290503214f17b037e3">Clock</a>.</p>
 
 </div>
 </div>
-<a id="ae735443228a01c1d60a3979e628bc605" name="ae735443228a01c1d60a3979e628bc605"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae735443228a01c1d60a3979e628bc605">&#9670;&#160;</a></span>sleepUntilNs()</h2>
+<a id="a9b1a8411933685838fa0af24ecc8416c" name="a9b1a8411933685838fa0af24ecc8416c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9b1a8411933685838fa0af24ecc8416c">&#9670;&#160;</a></span>sleepUntilNs()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -420,31 +491,31 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> SDLAudioClock::sleepUntilNs </td>
+          <td class="memname"><a class="el" href="classError.html">Error</a> SDLAudioClock::sleepUntilNs </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classList.html">int64_t</a>&#160;</td>
           <td class="paramname"><em>targetNs</em></td><td>)</td>
-          <td></td>
+          <td> const</td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Blocks until the clock reaches <code>targetNs</code>. </p>
-<p>Implementation determines the waiting mechanism: an OS sleep for wall clocks, polling a queue depth for audio clocks, waiting on a hardware timer for PTP.</p>
-<p>If <code>targetNs</code> is in the past, the call returns immediately. A <a class="el" href="classSyntheticClock.html">SyntheticClock</a> implements this as a no-op — its notion of "now" is driven by explicit <code>advance</code> calls, not by sleeping.</p>
+<p>Native blocking wait in raw clock nanoseconds. </p>
+<p>Invoked by <a class="el" href="classClock.html#a8758f13a2d05f30e62fd5c035b0e2190">sleepUntil</a> after domain validation and offset translation. If <code>targetNs</code> is in the past, implementations should return <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> immediately. Implementations backed by a disappearing resource (audio device, remote clock) return the relevant error when the wait cannot complete.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">targetNs</td><td>Target time in nanoseconds from the clock's epoch. </td></tr>
+    <tr><td class="paramname">targetNs</td><td>Raw deadline in this clock's epoch. </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on successful wake. </dd></dl>
 
-<p>Implements <a class="el" href="classClock.html#a19238ec90f104f9065703b0a81b03f70">Clock</a>.</p>
+<p>Implements <a class="el" href="classClock.html#a04a9b78dcc7089756ae01b2e5e265406">Clock</a>.</p>
 
 </div>
 </div>
@@ -486,7 +557,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classSDLAudioClock.html">SDLAudioClock</a></li>
-    <li class="footer">Generated on 2026-04-21 00:53:11 from commit 3126200 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-21 07:27:58 from commit 3f2d824 (1.0.0).</li>
   </ul>
 </div>
 </body>

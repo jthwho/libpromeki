@@ -952,6 +952,7 @@ var group__proav =
       [ "canSeek", "classMediaIO.html#afae845b4b2bae524405f1b6fc1c188ea", null ],
       [ "close", "classMediaIO.html#af37ceef12934d2397a18c58d518c3489", null ],
       [ "config", "classMediaIO.html#afd4dfa37eca8c62bb3bc6a3fb43bb0d9", null ],
+      [ "createClock", "classMediaIO.html#a5652901626615d71e95538b218e1fba0", null ],
       [ "currentFrame", "classMediaIO.html#acf195589096aea9af346c71ba5ca47f1", null ],
       [ "defaultSeekMode", "classMediaIO.html#a4f03c7498e34562a1a3a0c8f5a24e925", null ],
       [ "describe", "classMediaIO.html#a3156be3edca6d5702d60fd1341bf361b", null ],
@@ -1001,6 +1002,13 @@ var group__proav =
       [ "writeDepth", "classMediaIO.html#ae1ec99e28db88b2ab6b0dc064d1f4586", null ],
       [ "writeFrame", "classMediaIO.html#a083b9e49f5f676da9066f084bfbd0f60", null ],
       [ "writesAccepted", "classMediaIO.html#a7ce9a1fdad6095256ca5c22e1bb787f8", null ]
+    ] ],
+    [ "MediaIOClock", "classMediaIOClock.html", [
+      [ "MediaIOClock", "classMediaIOClock.html#ab620220286199c8060855198aa03bdf0", null ],
+      [ "jitter", "classMediaIOClock.html#aa9774e202f7fbdc19288473911cedfc7", null ],
+      [ "raw", "classMediaIOClock.html#a735fe69a513ebe9f36dd0ac282d3abf2", null ],
+      [ "resolutionNs", "classMediaIOClock.html#a44b4930068d5508938507ebda46315f3", null ],
+      [ "sleepUntilNs", "classMediaIOClock.html#afe57b1c1f8b798d5081660c049ad24a1", null ]
     ] ],
     [ "MediaIODescription", "classMediaIODescription.html", [
       [ "List", "classMediaIODescription.html#a7e33d2b72bc6ee4b8987a1773940f4b7", null ],
@@ -1079,7 +1087,7 @@ var group__proav =
       [ "MediaIOTask_FrameSync", "classMediaIOTask__FrameSync.html#acd353faeacdc4dfcfafdf968c5926a69", null ],
       [ "~MediaIOTask_FrameSync", "classMediaIOTask__FrameSync.html#a5278f627b356db9a382259be2e15c109", null ],
       [ "frameSync", "classMediaIOTask__FrameSync.html#a6a1830e8ed20df2050dd7d28921c3f32", null ],
-      [ "setClock", "classMediaIOTask__FrameSync.html#a20e05624322192a3e73c41fcb3cdfa3b", null ]
+      [ "setClock", "classMediaIOTask__FrameSync.html#af0a6f2c35f7439ef3ac301fc34776b23", null ]
     ] ],
     [ "MediaIOTask_ImageFile", "classMediaIOTask__ImageFile.html", [
       [ "MediaIOTask_ImageFile", "classMediaIOTask__ImageFile.html#af4f06377303c84c45c73803e88a07599", null ],

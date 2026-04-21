@@ -101,6 +101,7 @@ $(document).ready(function(){initNavTree('classSDLPlayerTask.html',''); initResi
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#friends">Friends</a> &#124;
 <a href="classSDLPlayerTask-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">SDLPlayerTask Class Reference</div></div>
 </div><!--header-->
@@ -133,13 +134,10 @@ Collaboration diagram for SDLPlayerTask:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:aba66211c1e3cbd05dcad899fd3cbc878" id="r_aba66211c1e3cbd05dcad899fd3cbc878"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLPlayerTask.html#aba66211c1e3cbd05dcad899fd3cbc878">SDLPlayerTask</a> (<a class="el" href="classSDLVideoWidget.html">SDLVideoWidget</a> *<a class="el" href="classList.html">video</a>, <a class="el" href="classSDLAudioOutput.html">SDLAudioOutput</a> *audio, <a class="el" href="classList.html">bool</a> <a class="el" href="classSDLPlayerTask.html#a8861d18e9dd433e8025136a7f5c154d4">useAudioClock</a>=<a class="el" href="classList.html">true</a>)</td></tr>
-<tr class="memdesc:aba66211c1e3cbd05dcad899fd3cbc878"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a FrameSync-based player task.  <br /></td></tr>
-<tr class="separator:aba66211c1e3cbd05dcad899fd3cbc878"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a064b89a410013eea93fbff0dee9c5706" id="r_a064b89a410013eea93fbff0dee9c5706"><td class="memItemLeft" align="right" valign="top"><a id="a064b89a410013eea93fbff0dee9c5706" name="a064b89a410013eea93fbff0dee9c5706"></a>
-<a class="el" href="classSDLVideoWidget.html">SDLVideoWidget</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>videoWidget</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a064b89a410013eea93fbff0dee9c5706"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the configured video widget. <br /></td></tr>
-<tr class="separator:a064b89a410013eea93fbff0dee9c5706"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa2d4f60d608160d8c1f11dd019257313" id="r_aa2d4f60d608160d8c1f11dd019257313"><td class="memItemLeft" align="right" valign="top"><a id="aa2d4f60d608160d8c1f11dd019257313" name="aa2d4f60d608160d8c1f11dd019257313"></a>
+<a class="el" href="classSDLPlayerWidget.html">SDLPlayerWidget</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>widget</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aa2d4f60d608160d8c1f11dd019257313"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the widget that owns this task. <br /></td></tr>
+<tr class="separator:aa2d4f60d608160d8c1f11dd019257313"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a13c7e17c195b16fa2ab521d69e69c29b" id="r_a13c7e17c195b16fa2ab521d69e69c29b"><td class="memItemLeft" align="right" valign="top"><a id="a13c7e17c195b16fa2ab521d69e69c29b" name="a13c7e17c195b16fa2ab521d69e69c29b"></a>
 <a class="el" href="classSDLAudioOutput.html">SDLAudioOutput</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>audioOutput</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a13c7e17c195b16fa2ab521d69e69c29b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the configured audio output. <br /></td></tr>
@@ -148,14 +146,20 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>useAudioClock</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a8861d18e9dd433e8025136a7f5c154d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">True when the audio device drives timing. <br /></td></tr>
 <tr class="separator:a8861d18e9dd433e8025136a7f5c154d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa9f1a07788a9c827cd9ad6e6a9300963" id="r_aa9f1a07788a9c827cd9ad6e6a9300963"><td class="memItemLeft" align="right" valign="top"><a id="aa9f1a07788a9c827cd9ad6e6a9300963" name="aa9f1a07788a9c827cd9ad6e6a9300963"></a>
-<a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>framesPresented</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:aa9f1a07788a9c827cd9ad6e6a9300963"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total frames presented to the video widget. <br /></td></tr>
-<tr class="separator:aa9f1a07788a9c827cd9ad6e6a9300963"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a513080dbf04ddbdd22c40e8ce594ea1b" id="r_a513080dbf04ddbdd22c40e8ce594ea1b"><td class="memItemLeft" align="right" valign="top"><a id="a513080dbf04ddbdd22c40e8ce594ea1b" name="a513080dbf04ddbdd22c40e8ce594ea1b"></a>
-<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>renderPending</b> ()</td></tr>
-<tr class="memdesc:a513080dbf04ddbdd22c40e8ce594ea1b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Paints the currently stashed image on the main thread. Callable in response to a wake event posted by the pull thread. <br /></td></tr>
-<tr class="separator:a513080dbf04ddbdd22c40e8ce594ea1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad03cb66870db0bcbc4a32fc865206542" id="r_ad03cb66870db0bcbc4a32fc865206542"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLPlayerTask.html#ad03cb66870db0bcbc4a32fc865206542">pause</a> ()</td></tr>
+<tr class="memdesc:ad03cb66870db0bcbc4a32fc865206542"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pauses playback.  <br /></td></tr>
+<tr class="separator:ad03cb66870db0bcbc4a32fc865206542"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae2f01074df06d6dbccefd212aebd01aa" id="r_ae2f01074df06d6dbccefd212aebd01aa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLPlayerTask.html#ae2f01074df06d6dbccefd212aebd01aa">resume</a> ()</td></tr>
+<tr class="memdesc:ae2f01074df06d6dbccefd212aebd01aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resumes playback after a <a class="el" href="classSDLPlayerTask.html#ad03cb66870db0bcbc4a32fc865206542">pause</a>.  <br /></td></tr>
+<tr class="separator:ae2f01074df06d6dbccefd212aebd01aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a495c05988b8d67f6620b16919d498918" id="r_a495c05988b8d67f6620b16919d498918"><td class="memItemLeft" align="right" valign="top"><a id="a495c05988b8d67f6620b16919d498918" name="a495c05988b8d67f6620b16919d498918"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>togglePause</b> ()</td></tr>
+<tr class="memdesc:a495c05988b8d67f6620b16919d498918"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience: calls <a class="el" href="classSDLPlayerTask.html#ad03cb66870db0bcbc4a32fc865206542">pause</a> or <a class="el" href="classSDLPlayerTask.html#ae2f01074df06d6dbccefd212aebd01aa">resume</a>. <br /></td></tr>
+<tr class="separator:a495c05988b8d67f6620b16919d498918"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a203d0f6ed5bed1f84572792e2696bf25" id="r_a203d0f6ed5bed1f84572792e2696bf25"><td class="memItemLeft" align="right" valign="top"><a id="a203d0f6ed5bed1f84572792e2696bf25" name="a203d0f6ed5bed1f84572792e2696bf25"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isPaused</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a203d0f6ed5bed1f84572792e2696bf25"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when the playback clock is paused. <br /></td></tr>
+<tr class="separator:a203d0f6ed5bed1f84572792e2696bf25"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classMediaIOTask"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classMediaIOTask')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classMediaIOTask.html">MediaIOTask</a></td></tr>
 <tr class="memitem:a0b805f45d7b99204ec16da2f3ee060c1 inherit pub_methods_classMediaIOTask" id="r_a0b805f45d7b99204ec16da2f3ee060c1"><td class="memItemLeft" align="right" valign="top">
 &#160;</td><td class="memItemRight" valign="bottom"><b>MediaIOTask</b> ()=<a class="el" href="classList.html">default</a></td></tr>
@@ -177,6 +181,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a431bfa4fb034c6872be44d00ddfd3866 inherit pub_methods_classMediaIOTask" id="r_a431bfa4fb034c6872be44d00ddfd3866"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classMediaIOTask.html">MediaIOTask</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classMediaIOTask.html">MediaIOTask</a> &amp;&amp;)=<a class="el" href="classList.html">delete</a></td></tr>
 <tr class="separator:a431bfa4fb034c6872be44d00ddfd3866 inherit pub_methods_classMediaIOTask"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:a0e75c97c3125111a0844a11f3de2c671" id="r_a0e75c97c3125111a0844a11f3de2c671"><td class="memItemLeft" align="right" valign="top"><a id="a0e75c97c3125111a0844a11f3de2c671" name="a0e75c97c3125111a0844a11f3de2c671"></a>
+<a class="el" href="classList.html">class</a>&#160;</td><td class="memItemRight" valign="bottom"><b>SDLPlayerWidget</b></td></tr>
+<tr class="separator:a0e75c97c3125111a0844a11f3de2c671"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
@@ -212,61 +222,52 @@ Additional Inherited Members</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p><a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a> writer that plays frames through SDL via <a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a>. </p>
-<p><a class="el" href="classSDLPlayerTask.html" title="MediaIOTask writer that plays frames through SDL via FrameSync.">SDLPlayerTask</a> is a write-only <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> sink that consumes <code><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a></code> objects via <code><a class="el" href="classMediaIO.html#a083b9e49f5f676da9066f084bfbd0f60" title="Writes a frame to the media resource.">MediaIO::writeFrame()</a></code> and displays their video through an application-provided <code><a class="el" href="classSDLVideoWidget.html" title="Widget that displays a promeki Image via SDL texture rendering.">SDLVideoWidget</a></code> and (optionally) plays their audio through an application-provided <code><a class="el" href="classSDLAudioOutput.html" title="Manages an SDL3 audio output device for playback.">SDLAudioOutput</a></code>.</p>
+<p><a class="el" href="classSDLPlayerTask.html" title="MediaIOTask writer that plays frames through SDL via FrameSync.">SDLPlayerTask</a> is a write-only <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> sink that consumes <code><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a></code> objects via <code><a class="el" href="classMediaIO.html#a083b9e49f5f676da9066f084bfbd0f60" title="Writes a frame to the media resource.">MediaIO::writeFrame()</a></code>. It is always owned by an <a class="el" href="classSDLPlayerWidget.html">SDLPlayerWidget</a> which provides both the render target and the user-facing controls (play/pause, focus routing, etc.) — clients should construct an <a class="el" href="classSDLPlayerWidget.html">SDLPlayerWidget</a> rather than instantiating the task directly.</p>
 <dl class="section user"><dt>Architecture</dt><dd></dd></dl>
 <ul>
 <li>The strand worker does not pace per frame. <code>executeCmd(Write)</code> decodes compressed images and hands the frame to a <a class="el" href="classFrameSync.html">FrameSync</a> instance, then returns.</li>
-<li>A dedicated pull thread drives <a class="el" href="classFrameSync.html#a3736b6c8661b596de0662892d881d7f3">FrameSync::pullFrame</a> in a loop. The clock (SDL audio or wall) blocks the pull thread until each destination deadline; the output frame is then routed to the video widget (main-thread render) and the audio output.</li>
-<li>Back-pressure comes from <a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a>'s input queue running in <a class="el" href="classFrameSync.html#ad80fade46930e81f41b11349ebe6c708ae1e4c8c9ccd9fc39c391da4bcd093fb2">FrameSync::InputOverflowPolicy::Block</a> mode: if the producer outruns the sink, <code>pushFrame</code> blocks until the pull thread makes room.</li>
-<li><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> drift correction is real. The audio clock reports a live <a class="el" href="classClock.html#ac1e728a766b91f93239f74a206a16e97">Clock::rateRatio</a> and <a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a> resamples audio to match.</li>
+<li>A dedicated pull thread drives <a class="el" href="classFrameSync.html#a3736b6c8661b596de0662892d881d7f3">FrameSync::pullFrame</a> in a loop. The clock (SDL audio or wall) blocks the pull thread until each destination deadline; the output frame is then delivered to the <a class="el" href="classSDLPlayerWidget.html">SDLPlayerWidget</a> for display and, if configured, to the <a class="el" href="classSDLAudioOutput.html">SDLAudioOutput</a>.</li>
+<li>Back-pressure comes from <a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a>'s input queue running in <a class="el" href="classFrameSync.html#ad80fade46930e81f41b11349ebe6c708ae1e4c8c9ccd9fc39c391da4bcd093fb2">FrameSync::InputOverflowPolicy::Block</a> mode.</li>
+<li><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> drift correction is real — the audio clock's rate ratio feeds <a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a>'s audio resampler. </li>
 </ul>
-<p>The legacy FramePacer-based implementation is retained as <code><a class="el" href="classSDLPlayerOldTask.html" title="MediaIOTask writer that plays frames through SDL (legacy path).">SDLPlayerOldTask</a></code> in <code><a class="el" href="sdlplayerold_8h.html">sdlplayerold.h</a></code> for comparison.</p>
-<dl class="section user"><dt>Creation</dt><dd></dd></dl>
-<p>Use <a class="el" href="sdlplayer_8h.html#a208abb06e90244b09338754815786635">createSDLPlayer</a> to build a ready-to-use <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a>.</p>
-<dl class="section user"><dt>Teardown ordering</dt><dd></dd></dl>
-<p>Close the <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> and let the main event loop drain before destroying the owning <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> — the main-thread render callable captures a pointer to the task. </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="aba66211c1e3cbd05dcad899fd3cbc878" name="aba66211c1e3cbd05dcad899fd3cbc878"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aba66211c1e3cbd05dcad899fd3cbc878">&#9670;&#160;</a></span>SDLPlayerTask()</h2>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="ad03cb66870db0bcbc4a32fc865206542" name="ad03cb66870db0bcbc4a32fc865206542"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad03cb66870db0bcbc4a32fc865206542">&#9670;&#160;</a></span>pause()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">SDLPlayerTask::SDLPlayerTask </td>
+          <td class="memname"><a class="el" href="classList.html">void</a> SDLPlayerTask::pause </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classSDLVideoWidget.html">SDLVideoWidget</a> *&#160;</td>
-          <td class="paramname"><em>video</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
+          <td class="paramname"></td><td>)</td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classSDLAudioOutput.html">SDLAudioOutput</a> *&#160;</td>
-          <td class="paramname"><em>audio</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">bool</a>&#160;</td>
-          <td class="paramname"><em>useAudioClock</em> = <code><a class="el" href="classList.html">true</a></code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Constructs a FrameSync-based player task. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">video</td><td>Video widget (may be nullptr). </td></tr>
-    <tr><td class="paramname">audio</td><td><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> output (may be nullptr). </td></tr>
-    <tr><td class="paramname">useAudioClock</td><td>Prefer the audio device as the timing source (default true). </td></tr>
-  </table>
-  </dd>
-</dl>
+<p>Pauses playback. </p>
+<p>Pauses the playback clock (which stops SDL audio consumption via <a class="el" href="classSDLAudioClock.html#abf2820a262ce8aad904ea05fddf73d08">SDLAudioClock::onPause</a>) and tears down the pull thread so it isn't blocked on the clock. Safe to call from any thread; no-ops when no <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> is open or playback is already paused. </p>
+
+</div>
+</div>
+<a id="ae2f01074df06d6dbccefd212aebd01aa" name="ae2f01074df06d6dbccefd212aebd01aa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae2f01074df06d6dbccefd212aebd01aa">&#9670;&#160;</a></span>resume()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> SDLPlayerTask::resume </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Resumes playback after a <a class="el" href="classSDLPlayerTask.html#ad03cb66870db0bcbc4a32fc865206542">pause</a>. </p>
+<p>Unpauses the clock and spawns a fresh pull thread. The base <a class="el" href="classClock.html">Clock</a>'s paused-offset accumulator rolls the deadline forward so the next output frame lands where it would have without the pause. No-op when no <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> is open or playback is not paused. </p>
 
 </div>
 </div>
@@ -280,7 +281,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classSDLPlayerTask.html">SDLPlayerTask</a></li>
-    <li class="footer">Generated on 2026-04-21 00:53:11 from commit 3126200 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-21 07:27:58 from commit 3f2d824 (1.0.0).</li>
   </ul>
 </div>
 </body>

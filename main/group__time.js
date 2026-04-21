@@ -6,20 +6,38 @@ var group__time =
       [ "maxError", "structClockJitter.html#ab5824afcc407414bce6daf61d9d1f6c2", null ],
       [ "minError", "structClockJitter.html#a02f64b3fea3497898c12d37501b9bcba", null ]
     ] ],
+    [ "ClockFilter", "classClockFilter.html", [
+      [ "filter", "classClockFilter.html#a64a3268d56cf39088656ca27875f6f04", null ]
+    ] ],
     [ "Clock", "classClock.html", [
-      [ "domain", "classClock.html#ad78765d0f3cf546ae9ed0d518848af01", null ],
+      [ "Ptr", "classClock.html#a2515694aed5f821c7af75ab792d1a891", null ],
+      [ "Clock", "classClock.html#a72a341cf79d5b0ac585c02e32bf360f3", null ],
+      [ "~Clock", "classClock.html#ac1ddbca9092c61e98668473209f36b19", null ],
+      [ "_promeki_clone", "classClock.html#ac8eb573ef829cea0f7347543562871dc", null ],
+      [ "canPause", "classClock.html#a613661ca8eb8943f5d1446df9e94a2d3", null ],
+      [ "domain", "classClock.html#a1fb097d1e07fe5c1512ccce49f5d2cf1", null ],
+      [ "fixedOffset", "classClock.html#aaa1d16ed8b85ea43bb4e78a5d0ad4551", null ],
+      [ "isPaused", "classClock.html#a844aad3ded4303ec6ef3d93cb6146eda", null ],
       [ "jitter", "classClock.html#a78d42644cd73b0beba037134f7f36a5d", null ],
-      [ "nowNs", "classClock.html#ac4fb6ebb2edaab48b150f6209ab87619", null ],
+      [ "now", "classClock.html#a34e2affb4b2241fb5c8c6dbdf3ade5e8", null ],
+      [ "nowNs", "classClock.html#a01eb1c375850caf4264fd3a8fbabd423", null ],
+      [ "onPause", "classClock.html#ab7c1c5cb4280d6569b59c9ba9b2bb299", null ],
+      [ "pauseMode", "classClock.html#ab14aa8fe714115e8264b53836dca471b", null ],
       [ "rateRatio", "classClock.html#ac1e728a766b91f93239f74a206a16e97", null ],
+      [ "raw", "classClock.html#a40af74acbb45b695b3d7218fbc3fa3e4", null ],
       [ "resolutionNs", "classClock.html#ad95118aed30fce290503214f17b037e3", null ],
-      [ "sleepUntilNs", "classClock.html#a19238ec90f104f9065703b0a81b03f70", null ]
+      [ "setFixedOffset", "classClock.html#a7b040f874cc9aa23307448a3d4d99a46", null ],
+      [ "setPause", "classClock.html#acedc580419855c32366ce8347d6caec5", null ],
+      [ "sleepUntil", "classClock.html#a8758f13a2d05f30e62fd5c035b0e2190", null ],
+      [ "sleepUntilNs", "classClock.html#a04a9b78dcc7089756ae01b2e5e265406", null ],
+      [ "_promeki_refct", "classClock.html#aabe85da9783b4bc7fc9689c598bb75f6", null ]
     ] ],
     [ "WallClock", "classWallClock.html", [
-      [ "domain", "classWallClock.html#aae295e6e18d58da9416b16538c9e88b4", null ],
+      [ "WallClock", "classWallClock.html#a51982e8ff73c4e6fbc36eb3cbf93d70a", null ],
       [ "jitter", "classWallClock.html#aa77d77cfeb38ab0407677e18229cf8dc", null ],
-      [ "nowNs", "classWallClock.html#a3463852ffc3453eed2fd6a6f3b9c0b0f", null ],
+      [ "raw", "classWallClock.html#ac14be092812b728aa624094fb73eaead", null ],
       [ "resolutionNs", "classWallClock.html#aa37cbbb7a41f4e08a57b7b69f9618a03", null ],
-      [ "sleepUntilNs", "classWallClock.html#a4c43c55c3121f6573c60e699dc891c39", null ]
+      [ "sleepUntilNs", "classWallClock.html#aeeaf83100b278acb5a3178a83280cdfd", null ]
     ] ],
     [ "ClockDomain", "classClockDomain.html", [
       [ "ID", "classClockDomain.html#a8b87a82c532a932df76e08d0858927f4", null ],
@@ -100,35 +118,6 @@ var group__time =
       [ "restart", "classElapsedTimer.html#a764a4246b14f2fcc0eb31de5cf0496e2", null ],
       [ "start", "classElapsedTimer.html#a27343db4608fa0bce7182e4351974dd6", null ]
     ] ],
-    [ "FramePacer", "classFramePacer.html", [
-      [ "PaceResult", "structFramePacer_1_1PaceResult.html", [
-        [ "error", "structFramePacer_1_1PaceResult.html#ac655a95721681d6679c9704e885c29fc", null ],
-        [ "frameIndex", "structFramePacer_1_1PaceResult.html#a4a6072a14303ca6342ba2392d0bbf22c", null ],
-        [ "framesToDrop", "structFramePacer_1_1PaceResult.html#ac57a92f55eaa258b0d703579db18605d", null ]
-      ] ],
-      [ "FramePacer", "classFramePacer.html#a4d7fe17ed062e42a9faca97740eb4736", null ],
-      [ "FramePacer", "classFramePacer.html#a9e1c865be1adef380af39bf2fa3484d9", null ],
-      [ "~FramePacer", "classFramePacer.html#a4d71820956e2957ff50ae0c0b8b163aa", null ],
-      [ "accumulatedError", "classFramePacer.html#a2ad35980b60de0b30719cc08dc16b95f", null ],
-      [ "advance", "classFramePacer.html#ac9958292caf31486e130656f364fe6f1", null ],
-      [ "clock", "classFramePacer.html#a205a7d33ce1fe9d644991f43c7474e36", null ],
-      [ "droppedFrames", "classFramePacer.html#a5c957a0db3439d6930098c57735db474", null ],
-      [ "frameCount", "classFramePacer.html#ab158c50183adc0e403668371532f8293", null ],
-      [ "frameRate", "classFramePacer.html#a4b6d50e8f63fb67a215e263389a41215", null ],
-      [ "missedFrames", "classFramePacer.html#a6e0450ef17619ebb6cc25ea6f9e94672", null ],
-      [ "name", "classFramePacer.html#a7be9babce3bd509199dc1aad47fb3db7", null ],
-      [ "noteDropped", "classFramePacer.html#a1f0ce43a95cddf9e090a4b949fb5724d", null ],
-      [ "noteRendered", "classFramePacer.html#a01c8f1981d790d185e7adf8ff4d8c55a", null ],
-      [ "noteRepeated", "classFramePacer.html#a76a1993b79906c4b4f0357329c58565e", null ],
-      [ "pace", "classFramePacer.html#a421cf42767c2e195f4243964d0b94f1f", null ],
-      [ "renderedFrames", "classFramePacer.html#aecf74eb57fa3b6c1654a4735b59d4065", null ],
-      [ "repeatedFrames", "classFramePacer.html#ac43c2f5a84e584817fa831a1509909f5", null ],
-      [ "reset", "classFramePacer.html#a3188f9f7e86c24208e0e1abc1b458dd1", null ],
-      [ "reset", "classFramePacer.html#a091f5c0265ec7b0c14f66685169bdce4", null ],
-      [ "setClock", "classFramePacer.html#ace64c3e09c9db9e3bb785a89bfe863c5", null ],
-      [ "setFrameRate", "classFramePacer.html#a4d95ef03b4a6b9425221b94223b7c86d", null ],
-      [ "setName", "classFramePacer.html#a11232e3e0bb8223fc332353dfe78066d", null ]
-    ] ],
     [ "FrameRate", "classFrameRate.html", [
       [ "RationalType", "classFrameRate.html#ad06e0a3a69109ae17dde81e2a59afd8b", null ],
       [ "WellKnownRate", "classFrameRate.html#a0b03c0fe2f653ec8479d240690191b9c", [
@@ -181,7 +170,8 @@ var group__time =
       [ "FrameSync", "classFrameSync.html#a3ee57e69ac9b9f96ec063d77b112759a", null ],
       [ "~FrameSync", "classFrameSync.html#a83dc511175e05d93a38b767fd485f0aa", null ],
       [ "accumulatedError", "classFrameSync.html#a5eabad4f31d24db6bca95476ad410950", null ],
-      [ "clock", "classFrameSync.html#a1b840f254f328f45cc3aa83b1d6a171e", null ],
+      [ "clearInterrupt", "classFrameSync.html#a472e295ce76a352a4db1e032f2d1cd6c", null ],
+      [ "clock", "classFrameSync.html#ad41cbf6a14d86c8d10c232ec95a9ca11", null ],
       [ "currentResampleRatio", "classFrameSync.html#a22a93b7108e977f39b1a0bea1f369e2a", null ],
       [ "currentSourceAudioRate", "classFrameSync.html#ac13f40a8f2f2bdc41e9b8d49fb98350f", null ],
       [ "currentSourceVideoRate", "classFrameSync.html#abccf0e59afa2a0297239765628bba79e", null ],
@@ -199,7 +189,8 @@ var group__time =
       [ "pushFrame", "classFrameSync.html#ad6cc3588bf2a967c1706564a05c4a58e", null ],
       [ "reset", "classFrameSync.html#a2b723b9d9129dc45edd29712d2d5b4a6", null ],
       [ "reset", "classFrameSync.html#a174877c719ed1250800a2c18ee0f2cf8", null ],
-      [ "setClock", "classFrameSync.html#a4bc72ade7a5259b1ce307121f2df8244", null ],
+      [ "resetSourceRateEstimator", "classFrameSync.html#af18f7711d3494fab53be6142ac59b162", null ],
+      [ "setClock", "classFrameSync.html#a5f0175d1635f49a641ef402b7a69cd1e", null ],
       [ "setInputOverflowPolicy", "classFrameSync.html#a9fc8b2ea17a38d48a7d0ef515e790a9a", null ],
       [ "setInputQueueCapacity", "classFrameSync.html#aa6a73eab50d8589e13b34a1f0e71aea4", null ],
       [ "setName", "classFrameSync.html#a7800fac9bdc1e9b16f173f03bbae40d8", null ],
@@ -239,21 +230,18 @@ var group__time =
       [ "toString", "classMediaTimeStamp.html#ad29e7ccf040f63de808ce765fbd010c9", null ]
     ] ],
     [ "SyntheticClock", "classSyntheticClock.html", [
-      [ "SyntheticClock", "classSyntheticClock.html#a55163da79ab5f0e757ccb2748b70ed38", null ],
-      [ "SyntheticClock", "classSyntheticClock.html#a8c91d92b364f275f1bfe09c13d1b48f0", null ],
+      [ "SyntheticClock", "classSyntheticClock.html#a5fecb99cf45c50c6f47a94f1e3667f7c", null ],
+      [ "SyntheticClock", "classSyntheticClock.html#a8150f3a70ac3294d6486f41ec735249d", null ],
       [ "advance", "classSyntheticClock.html#afbb24570c4807c7b5514939acb11c174", null ],
       [ "currentFrame", "classSyntheticClock.html#a44d68359d40430a33612875464295379", null ],
-      [ "domain", "classSyntheticClock.html#afcbc7749c42f3984b8f304dd1762ea83", null ],
       [ "frameRate", "classSyntheticClock.html#a35cefa6652cb657f2e6420396f10107f", null ],
       [ "jitter", "classSyntheticClock.html#a5e81eec9c0190fe1245f3323e5e0cf06", null ],
-      [ "nowNs", "classSyntheticClock.html#ac08710f223740de86ed7003b89c77779", null ],
-      [ "rateRatio", "classSyntheticClock.html#ab443f45b7b931691ce95ae9d5d5be032", null ],
+      [ "raw", "classSyntheticClock.html#a58634cecade648e3d296ce58fb6b1449", null ],
       [ "reset", "classSyntheticClock.html#a049095aab3c1d0c09acfba1815d31370", null ],
       [ "resolutionNs", "classSyntheticClock.html#aafa1481c3f32e84f2cd234b296aeb697", null ],
       [ "setCurrentFrame", "classSyntheticClock.html#a120247c87195062e22070142ea279e15", null ],
-      [ "setDomain", "classSyntheticClock.html#a7a2bce7d2d686223d2837446f591d5c2", null ],
       [ "setFrameRate", "classSyntheticClock.html#a2f203cffee58fa49b8027e3304735499", null ],
-      [ "sleepUntilNs", "classSyntheticClock.html#a2ddf1af29f48e510b36d330e2e22d73c", null ]
+      [ "sleepUntilNs", "classSyntheticClock.html#a04fce71c08812869f5dfd6f38fc5830d", null ]
     ] ],
     [ "Timecode", "classTimecode.html", [
       [ "Mode", "classTimecode_1_1Mode.html", [
@@ -355,5 +343,10 @@ var group__time =
       [ "toString", "classTimeStamp.html#a7225a0d87e75b4b8c94aaca7b125d30d", null ],
       [ "update", "classTimeStamp.html#a783f8a3e871bff2006483045bbbbe702", null ],
       [ "value", "classTimeStamp.html#addfbdefd6881c31b2b9974e46469921e", null ]
+    ] ],
+    [ "ClockPauseMode", "group__time.html#ga339eee54b6b4d766b3a39c08606fa1b6", [
+      [ "ClockPauseMode::CannotPause", "group__time.html#gga339eee54b6b4d766b3a39c08606fa1b6aa0d3e5327da86b0e7f39bef0cf6a66bb", null ],
+      [ "ClockPauseMode::PausesRawKeepsRunning", "group__time.html#gga339eee54b6b4d766b3a39c08606fa1b6a4abdb460e40fee7cc1355428989eedcf", null ],
+      [ "ClockPauseMode::PausesRawStops", "group__time.html#gga339eee54b6b4d766b3a39c08606fa1b6a7087388a84dce34ae02e5bd96ed92c9d", null ]
     ] ]
 ];

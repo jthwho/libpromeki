@@ -24,9 +24,8 @@ var searchData=
   ['frame_21',['Frame',['../classFrame.html',1,'']]],
   ['framebridge_22',['FrameBridge',['../classFrameBridge.html',1,'']]],
   ['frameindexentry_23',['FrameIndexEntry',['../structDebugMediaFile_1_1FrameIndexEntry.html',1,'DebugMediaFile']]],
-  ['framepacer_24',['FramePacer',['../classFramePacer.html',1,'']]],
-  ['framerate_25',['FrameRate',['../classFrameRate.html',1,'']]],
-  ['framesync_26',['FrameSync',['../classFrameSync.html',1,'']]],
-  ['future_27',['Future',['../classFuture.html',1,'']]],
-  ['future_3c_20void_20_3e_28',['Future&lt; void &gt;',['../classFuture_3_01void_01_4.html',1,'']]]
+  ['framerate_24',['FrameRate',['../classFrameRate.html',1,'']]],
+  ['framesync_25',['FrameSync',['../classFrameSync.html',1,'']]],
+  ['future_26',['Future',['../classFuture.html',1,'']]],
+  ['future_3c_20void_20_3e_27',['Future&lt; void &gt;',['../classFuture_3_01void_01_4.html',1,'']]]
 ];

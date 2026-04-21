@@ -50,11 +50,13 @@ var hierarchy =
     [ "CIEPoint", "classCIEPoint.html", null ],
     [ "CIEWavelength", "structCIEWavelength.html", null ],
     [ "Clock", "classClock.html", [
+      [ "MediaIOClock", "classMediaIOClock.html", null ],
       [ "SDLAudioClock", "classSDLAudioClock.html", null ],
       [ "SyntheticClock", "classSyntheticClock.html", null ],
       [ "WallClock", "classWallClock.html", null ]
     ] ],
     [ "ClockDomain", "classClockDomain.html", null ],
+    [ "ClockFilter", "classClockFilter.html", null ],
     [ "ClockJitter", "structClockJitter.html", null ],
     [ "CmdLineParser", "classCmdLineParser.html", null ],
     [ "Color", "classColor.html", null ],
@@ -218,7 +220,6 @@ var hierarchy =
     [ "FourCC", "classFourCC.html", null ],
     [ "Frame", "classFrame.html", null ],
     [ "DebugMediaFile::FrameIndexEntry", "structDebugMediaFile_1_1FrameIndexEntry.html", null ],
-    [ "FramePacer", "classFramePacer.html", null ],
     [ "FrameRate", "classFrameRate.html", null ],
     [ "FrameSync", "classFrameSync.html", null ],
     [ "Future< T >", "classFuture.html", null ],
@@ -369,7 +370,6 @@ var hierarchy =
       [ "MediaIOTask_TPG", "classMediaIOTask__TPG.html", null ],
       [ "MediaIOTask_VideoDecoder", "classMediaIOTask__VideoDecoder.html", null ],
       [ "MediaIOTask_VideoEncoder", "classMediaIOTask__VideoEncoder.html", null ],
-      [ "SDLPlayerOldTask", "classSDLPlayerOldTask.html", null ],
       [ "SDLPlayerTask", "classSDLPlayerTask.html", null ]
     ] ],
     [ "MediaPacket", "classMediaPacket.html", null ],
@@ -427,13 +427,16 @@ var hierarchy =
       [ "MulticastManager", "classMulticastManager.html", null ],
       [ "Process", "classProcess.html", null ],
       [ "RtpSession", "classRtpSession.html", null ],
+      [ "SDLAudioOutput", "classSDLAudioOutput.html", null ],
       [ "TcpServer", "classTcpServer.html", null ],
       [ "Thread", "classThread.html", [
         [ "MulticastReceiver", "classMulticastReceiver.html", null ]
       ] ],
       [ "TuiAction", "classTuiAction.html", null ],
       [ "Widget", "classWidget.html", [
-        [ "SDLVideoWidget", "classSDLVideoWidget.html", null ],
+        [ "SDLVideoWidget", "classSDLVideoWidget.html", [
+          [ "SDLPlayerWidget", "classSDLPlayerWidget.html", null ]
+        ] ],
         [ "SDLWindow", "classSDLWindow.html", null ],
         [ "TuiWidget", "classTuiWidget.html", [
           [ "TuiButton", "classTuiButton.html", null ],
@@ -454,10 +457,11 @@ var hierarchy =
       ] ]
     ] ],
     [ "ObjectBasePtr< T >", "classObjectBasePtr.html", null ],
+    [ "ObjectBasePtr< MediaIO >", "classObjectBasePtr.html", null ],
+    [ "ObjectBasePtr< SDLAudioOutput >", "classObjectBasePtr.html", null ],
     [ "DebugMediaFile::OpenOptions", "structDebugMediaFile_1_1OpenOptions.html", null ],
     [ "MemSpace::Ops", "structMemSpace_1_1Ops.html", null ],
     [ "CmdLineParser::Option", "classCmdLineParser_1_1Option.html", null ],
-    [ "FramePacer::PaceResult", "structFramePacer_1_1PaceResult.html", null ],
     [ "PacketTransport", "classPacketTransport.html", [
       [ "LoopbackTransport", "classLoopbackTransport.html", null ],
       [ "UdpSocketTransport", "classUdpSocketTransport.html", null ]
@@ -516,7 +520,6 @@ var hierarchy =
       [ "RtpPayloadRawVideo", "classRtpPayloadRawVideo.html", null ]
     ] ],
     [ "QuickTime::Sample", "structQuickTime_1_1Sample.html", null ],
-    [ "SDLAudioOutput", "classSDLAudioOutput.html", null ],
     [ "SDLEventPump", "classSDLEventPump.html", null ],
     [ "SdlSubsystem", "classSdlSubsystem.html", null ],
     [ "SdpMediaDescription", "classSdpMediaDescription.html", null ],
@@ -529,6 +532,7 @@ var hierarchy =
     [ "SharedPtr< AudioFile::Impl >", "classSharedPtr.html", null ],
     [ "SharedPtr< Benchmark >", "classSharedPtr.html", null ],
     [ "SharedPtr< Buffer >", "classSharedPtr.html", null ],
+    [ "SharedPtr< Clock, false, Clock >", "classSharedPtr.html", null ],
     [ "SharedPtr< Frame >", "classSharedPtr.html", null ],
     [ "SharedPtr< Image >", "classSharedPtr.html", null ],
     [ "SharedPtr< MediaPacket >", "classSharedPtr.html", null ],

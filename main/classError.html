@@ -182,6 +182,9 @@ Public Types</h2></td></tr>
 , <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708afdfdd90b202ec76534905cdf1692ac49">ConnectionReset</a>
 , <br />
 &#160;&#160;<a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ac5ee0586eea50614d95aea00d1eff4a9">ParseFailed</a>
+, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a7eb7c3167bbfd4848b72b843e36fc1f7">ClockDomainMismatch</a>
+, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a99cd04054fffa79f63c560723eb4ecfd">ObjectGone</a>
+, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a472abb37baff1ed0725d1a8400e1ec1e">ClockPaused</a>
 <br />
  }</td></tr>
 <tr class="memdesc:ab5980e13b879db253df802b0950d1708"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> codes for the promeki library.  <a href="classError.html#ab5980e13b879db253df802b0950d1708">More...</a><br /></td></tr>
@@ -392,6 +395,12 @@ Static Public Member Functions</h2></td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708afdfdd90b202ec76534905cdf1692ac49" name="ab5980e13b879db253df802b0950d1708afdfdd90b202ec76534905cdf1692ac49"></a>ConnectionReset&#160;</td><td class="fielddoc"><p>Peer reset the connection while we were reading/writing (ECONNRESET). </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708ac5ee0586eea50614d95aea00d1eff4a9" name="ab5980e13b879db253df802b0950d1708ac5ee0586eea50614d95aea00d1eff4a9"></a>ParseFailed&#160;</td><td class="fielddoc"><p>Text input (expression, URL, etc.) failed to parse. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a7eb7c3167bbfd4848b72b843e36fc1f7" name="ab5980e13b879db253df802b0950d1708a7eb7c3167bbfd4848b72b843e36fc1f7"></a>ClockDomainMismatch&#160;</td><td class="fielddoc"><p>Operation mixed MediaTimeStamps from different ClockDomains. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a99cd04054fffa79f63c560723eb4ecfd" name="ab5980e13b879db253df802b0950d1708a99cd04054fffa79f63c560723eb4ecfd"></a>ObjectGone&#160;</td><td class="fielddoc"><p>Referenced object has been destroyed. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a472abb37baff1ed0725d1a8400e1ec1e" name="ab5980e13b879db253df802b0950d1708a472abb37baff1ed0725d1a8400e1ec1e"></a>ClockPaused&#160;</td><td class="fielddoc"><p><a class="el" href="classClock.html" title="Abstract clock interface.">Clock</a> is paused; operation cannot complete until resumed. </p>
 </td></tr>
 </table>
 
@@ -706,7 +715,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classError.html">Error</a></li>
-    <li class="footer">Generated on 2026-04-21 00:53:11 from commit 3126200 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-21 07:27:58 from commit 3f2d824 (1.0.0).</li>
   </ul>
 </div>
 </body>

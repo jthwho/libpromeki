@@ -182,7 +182,7 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>~MediaIO</b> () <a class="el" href="classList.html">override</a></td></tr>
 <tr class="memdesc:aa8ae7f54296e42a66f7733c004854e3c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. Closes if still open and deletes the task. <br /></td></tr>
 <tr class="separator:aa8ae7f54296e42a66f7733c004854e3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adf861eac41671d654408efeada979bcd" id="r_adf861eac41671d654408efeada979bcd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#adf861eac41671d654408efeada979bcd">adoptTask</a> (<a class="el" href="classMediaIOTask.html">MediaIOTask</a> *<a class="el" href="classList.html">task</a>)</td></tr>
+<tr class="memitem:adf861eac41671d654408efeada979bcd" id="r_adf861eac41671d654408efeada979bcd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#adf861eac41671d654408efeada979bcd">adoptTask</a> (<a class="el" href="classMediaIOTask.html">MediaIOTask</a> *task)</td></tr>
 <tr class="memdesc:adf861eac41671d654408efeada979bcd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Injects an externally constructed backend task.  <br /></td></tr>
 <tr class="separator:adf861eac41671d654408efeada979bcd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afd4dfa37eca8c62bb3bc6a3fb43bb0d9" id="r_afd4dfa37eca8c62bb3bc6a3fb43bb0d9"><td class="memItemLeft" align="right" valign="top"><a id="afd4dfa37eca8c62bb3bc6a3fb43bb0d9" name="afd4dfa37eca8c62bb3bc6a3fb43bb0d9"></a>
@@ -341,6 +341,9 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>step</b> () <a class="
 <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>currentFrame</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:acf195589096aea9af346c71ba5ca47f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the cached current frame. <br /></td></tr>
 <tr class="separator:acf195589096aea9af346c71ba5ca47f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5652901626615d71e95538b218e1fba0" id="r_a5652901626615d71e95538b218e1fba0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classClock.html">Clock</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a5652901626615d71e95538b218e1fba0">createClock</a> ()</td></tr>
+<tr class="memdesc:a5652901626615d71e95538b218e1fba0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a new <a class="el" href="classClock.html">Clock</a> for this <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a>'s timing source.  <br /></td></tr>
+<tr class="separator:a5652901626615d71e95538b218e1fba0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa7fa76347a8b9344c335fcda93658db3" id="r_aa7fa76347a8b9344c335fcda93658db3"><td class="memItemLeft" align="right" valign="top"><a id="aa7fa76347a8b9344c335fcda93658db3" name="aa7fa76347a8b9344c335fcda93658db3"></a>
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setConfig</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade">Config</a> &amp;<a class="el" href="classMediaIO.html#afd4dfa37eca8c62bb3bc6a3fb43bb0d9">config</a>)</td></tr>
 <tr class="memdesc:aa7fa76347a8b9344c335fcda93658db3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the configuration. <br /></td></tr>
@@ -952,6 +955,28 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>A new <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> instance, or nullptr on failure. </dd></dl>
+
+</div>
+</div>
+<a id="a5652901626615d71e95538b218e1fba0" name="a5652901626615d71e95538b218e1fba0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5652901626615d71e95538b218e1fba0">&#9670;&#160;</a></span>createClock()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classClock.html">Clock</a> * MediaIO::createClock </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns a new <a class="el" href="classClock.html">Clock</a> for this <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a>'s timing source. </p>
+<p>Delegates first to the task's MediaIOTask::createClock hook; backends with a device clock (capture card, audio output, PTP) hand back a subclass of <a class="el" href="classClock.html">Clock</a> tied to that source. Falls back to a <a class="el" href="classMediaIOClock.html">MediaIOClock</a> holding a weak reference to this <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a>, so <a class="el" href="classClock.html#a34e2affb4b2241fb5c8c6dbdf3ade5e8">Clock::now</a> reads <code>currentFrame</code> × framePeriod and reports <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a99cd04054fffa79f63c560723eb4ecfd">Error::ObjectGone</a> if this <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> is later destroyed.</p>
+<p>The returned pointer is newly heap-allocated; the caller adopts it into a <a class="el" href="classClock.html#a2515694aed5f821c7af75ab792d1a891">Clock::Ptr</a> to manage lifetime.</p>
+<dl class="section return"><dt>Returns</dt><dd>A newly-allocated <a class="el" href="classClock.html" title="Abstract clock interface.">Clock</a> (never nullptr). </dd></dl>
 
 </div>
 </div>
@@ -2761,7 +2786,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIO.html">MediaIO</a></li>
-    <li class="footer">Generated on 2026-04-21 00:53:11 from commit 3126200 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-21 07:27:58 from commit 3f2d824 (1.0.0).</li>
   </ul>
 </div>
 </body>

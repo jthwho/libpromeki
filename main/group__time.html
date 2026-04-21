@@ -100,7 +100,8 @@ $(document).ready(function(){initNavTree('group__time.html',''); initResizable()
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a>  </div>
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#enum-members">Enumerations</a>  </div>
   <div class="headertitle"><div class="title">Time</div></div>
 </div><!--header-->
 <div class="contents">
@@ -111,7 +112,10 @@ $(document).ready(function(){initNavTree('group__time.html',''); initResizable()
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structClockJitter.html">ClockJitter</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Asymmetric bound on the error envelope of a clock's nowNs() reading relative to ground truth.  <a href="structClockJitter.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Asymmetric bound on the error envelope of a clock's now() reading relative to ground truth.  <a href="structClockJitter.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classClockFilter.html">ClockFilter</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pluggable smoothing filter applied to a clock's raw ns reading.  <a href="classClockFilter.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classClock.html">Clock</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract clock interface.  <a href="classClock.html#details">More...</a><br /></td></tr>
@@ -130,9 +134,6 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classElapsedTimer.html">ElapsedTimer</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Monotonic elapsed-time measurement using std::chrono::steady_clock.  <a href="classElapsedTimer.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFramePacer.html">FramePacer</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drift-free frame pacer with pluggable clock and phase control.  <a href="classFramePacer.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameRate.html">FrameRate</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents a video frame rate as a rational number.  <a href="classFrameRate.html#details">More...</a><br /></td></tr>
@@ -158,17 +159,60 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimeStamp.html">TimeStamp</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A monotonic timestamp based on std::chrono::steady_clock.  <a href="classTimeStamp.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:ga339eee54b6b4d766b3a39c08606fa1b6" id="r_ga339eee54b6b4d766b3a39c08606fa1b6"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__time.html#ga339eee54b6b4d766b3a39c08606fa1b6">ClockPauseMode</a> { <a class="el" href="group__time.html#gga339eee54b6b4d766b3a39c08606fa1b6aa0d3e5327da86b0e7f39bef0cf6a66bb">ClockPauseMode::CannotPause</a>
+, <a class="el" href="group__time.html#gga339eee54b6b4d766b3a39c08606fa1b6a4abdb460e40fee7cc1355428989eedcf">ClockPauseMode::PausesRawKeepsRunning</a>
+, <a class="el" href="group__time.html#gga339eee54b6b4d766b3a39c08606fa1b6a7087388a84dce34ae02e5bd96ed92c9d">ClockPauseMode::PausesRawStops</a>
+ }</td></tr>
+<tr class="memdesc:ga339eee54b6b4d766b3a39c08606fa1b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes a clock's pause capability.  <a href="group__time.html#ga339eee54b6b4d766b3a39c08606fa1b6">More...</a><br /></td></tr>
+<tr class="separator:ga339eee54b6b4d766b3a39c08606fa1b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p><a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a>, timestamps, durations, and frame rates. </p>
 <p>SMPTE <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> (backed by libvtc), steady-clock <a class="el" href="classTimeStamp.html" title="A monotonic timestamp based on std::chrono::steady_clock.">TimeStamp</a>, calendar-aware <a class="el" href="classDateTime.html" title="Wall-clock date and time based on std::chrono::system_clock.">DateTime</a>, <a class="el" href="classDuration.html" title="Time duration with nanosecond precision.">Duration</a>, <a class="el" href="classElapsedTimer.html" title="Monotonic elapsed-time measurement using std::chrono::steady_clock.">ElapsedTimer</a> for benchmarking, and <a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> descriptors. </p>
+<h2 class="groupheader">Enumeration Type Documentation</h2>
+<a id="ga339eee54b6b4d766b3a39c08606fa1b6" name="ga339eee54b6b4d766b3a39c08606fa1b6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga339eee54b6b4d766b3a39c08606fa1b6">&#9670;&#160;</a></span>ClockPauseMode</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">enum</a> <a class="el" href="classList.html">class</a> <a class="el" href="group__time.html#ga339eee54b6b4d766b3a39c08606fa1b6">ClockPauseMode</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Describes a clock's pause capability. </p>
+<p>The base <a class="el" href="classClock.html">Clock</a> applies the same delta-based pause accounting for both paused modes: at pause it snapshots the filtered raw value; on resume it adds <code>raw_now - raw_at_pause</code> to the paused-offset accumulator. The enum exists so callers can distinguish <code>CannotPause</code> (where <a class="el" href="classClock.html#acedc580419855c32366ce8347d6caec5">Clock::setPause</a> will error) and so consumers can reason about whether the underlying clock source actually stops. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="gga339eee54b6b4d766b3a39c08606fa1b6aa0d3e5327da86b0e7f39bef0cf6a66bb" name="gga339eee54b6b4d766b3a39c08606fa1b6aa0d3e5327da86b0e7f39bef0cf6a66bb"></a>CannotPause&#160;</td><td class="fielddoc"><p><a class="el" href="classClock.html#acedc580419855c32366ce8347d6caec5">Clock::setPause</a> returns NotSupported. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="gga339eee54b6b4d766b3a39c08606fa1b6a4abdb460e40fee7cc1355428989eedcf" name="gga339eee54b6b4d766b3a39c08606fa1b6a4abdb460e40fee7cc1355428989eedcf"></a>PausesRawKeepsRunning&#160;</td><td class="fielddoc"><p>Pause is bookkeeping only; raw() keeps advancing. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="gga339eee54b6b4d766b3a39c08606fa1b6a7087388a84dce34ae02e5bd96ed92c9d" name="gga339eee54b6b4d766b3a39c08606fa1b6a7087388a84dce34ae02e5bd96ed92c9d"></a>PausesRawStops&#160;</td><td class="fielddoc"><p>onPause(true) freezes raw(); onPause(false) resumes. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- HTML footer for doxygen -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-21 00:53:11 from commit 3126200 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-21 07:27:58 from commit 3f2d824 (1.0.0).</li>
   </ul>
 </div>
 </body>

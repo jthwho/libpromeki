@@ -20,6 +20,7 @@ var classMediaIO =
     [ "canSeek", "classMediaIO.html#afae845b4b2bae524405f1b6fc1c188ea", null ],
     [ "close", "classMediaIO.html#af37ceef12934d2397a18c58d518c3489", null ],
     [ "config", "classMediaIO.html#afd4dfa37eca8c62bb3bc6a3fb43bb0d9", null ],
+    [ "createClock", "classMediaIO.html#a5652901626615d71e95538b218e1fba0", null ],
     [ "currentFrame", "classMediaIO.html#acf195589096aea9af346c71ba5ca47f1", null ],
     [ "defaultSeekMode", "classMediaIO.html#a4f03c7498e34562a1a3a0c8f5a24e925", null ],
     [ "describe", "classMediaIO.html#a3156be3edca6d5702d60fd1341bf361b", null ],

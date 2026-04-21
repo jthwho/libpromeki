@@ -6,7 +6,7 @@ var searchData=
   ['sdlaudiooutput_2eh_3',['sdlaudiooutput.h',['../sdlaudiooutput_8h.html',1,'']]],
   ['sdleventpump_2eh_4',['sdleventpump.h',['../sdleventpump_8h.html',1,'']]],
   ['sdlplayer_2eh_5',['sdlplayer.h',['../sdlplayer_8h.html',1,'']]],
-  ['sdlplayerold_2eh_6',['sdlplayerold.h',['../sdlplayerold_8h.html',1,'']]],
+  ['sdlplayerwidget_2eh_6',['sdlplayerwidget.h',['../sdlplayerwidget_8h.html',1,'']]],
   ['sdlsubsystem_2eh_7',['sdlsubsystem.h',['../sdlsubsystem_8h.html',1,'']]],
   ['sdlvideowidget_2eh_8',['sdlvideowidget.h',['../sdlvideowidget_8h.html',1,'']]],
   ['sdlwindow_2eh_9',['sdlwindow.h',['../sdlwindow_8h.html',1,'']]],

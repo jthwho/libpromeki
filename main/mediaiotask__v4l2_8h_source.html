@@ -230,7 +230,7 @@ $(document).ready(function(){initNavTree('mediaiotask__v4l2_8h_source.html','');
 <div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>                std::atomic&lt;int64_t&gt;    <a class="code hl_class" href="classList.html">_alsaOverruns</a>{0};</div>
 <div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span> </div>
 <div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>                <span class="comment">// -- Debug reporting --</span></div>
-<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>                <a class="code hl_class" href="classPeriodicCallback.html">PeriodicCallback</a>        _debugReport;</div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>                <a class="code hl_class" href="classPeriodicCallback.html">PeriodicCallback</a>        <a class="code hl_function" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">_debugReport</a>;</div>
 <div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>                <a class="code hl_class" href="classList.html">int64_t</a>                 <a class="code hl_class" href="classList.html">_ringAccum</a> = 0;         <span class="comment">// sum of ring levels sampled each frame</span></div>
 <div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>                <a class="code hl_class" href="classList.html">int64_t</a>                 <a class="code hl_class" href="classList.html">_ringAccumFrames</a> = 0;   <span class="comment">// frames sampled since last report</span></div>
 <div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>                <span class="keywordtype">double</span>                  <a class="code hl_class" href="classList.html">_ringAvgBaseline</a> = 0.0; <span class="comment">// first report&#39;s average</span></div>
@@ -303,11 +303,11 @@ $(document).ready(function(){initNavTree('mediaiotask__v4l2_8h_source.html','');
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassList_html_a708769d50011e6bdadc6bed2a6468aec"><div class="ttname"><a href="classList.html#a708769d50011e6bdadc6bed2a6468aec">List::List</a></div><div class="ttdeci">List()=default</div><div class="ttdoc">Default constructor. Creates an empty list.</div></div>
 <div class="ttc" id="aclassMediaConfig_html"><div class="ttname"><a href="classMediaConfig.html">MediaConfig</a></div><div class="ttdoc">Generic name/value configuration container for the media subsystem.</div><div class="ttdef"><b>Definition</b> mediaconfig.h:54</div></div>
-<div class="ttc" id="aclassMediaIOCommandClose_html"><div class="ttname"><a href="classMediaIOCommandClose.html">MediaIOCommandClose</a></div><div class="ttdoc">Command to close a media resource.</div><div class="ttdef"><b>Definition</b> mediaio.h:329</div></div>
-<div class="ttc" id="aclassMediaIOCommandOpen_html"><div class="ttname"><a href="classMediaIOCommandOpen.html">MediaIOCommandOpen</a></div><div class="ttdoc">Command to open a media resource.</div><div class="ttdef"><b>Definition</b> mediaio.h:300</div></div>
-<div class="ttc" id="aclassMediaIOCommandRead_html"><div class="ttname"><a href="classMediaIOCommandRead.html">MediaIOCommandRead</a></div><div class="ttdoc">Command to read the next frame.</div><div class="ttdef"><b>Definition</b> mediaio.h:337</div></div>
-<div class="ttc" id="aclassMediaIOCommandStats_html"><div class="ttname"><a href="classMediaIOCommandStats.html">MediaIOCommandStats</a></div><div class="ttdoc">Backend statistics query command.</div><div class="ttdef"><b>Definition</b> mediaio.h:432</div></div>
-<div class="ttc" id="aclassMediaIOTask_html"><div class="ttname"><a href="classMediaIOTask.html">MediaIOTask</a></div><div class="ttdoc">Backend interface for media I/O.</div><div class="ttdef"><b>Definition</b> mediaiotask.h:65</div></div>
+<div class="ttc" id="aclassMediaIOCommandClose_html"><div class="ttname"><a href="classMediaIOCommandClose.html">MediaIOCommandClose</a></div><div class="ttdoc">Command to close a media resource.</div><div class="ttdef"><b>Definition</b> mediaio.h:330</div></div>
+<div class="ttc" id="aclassMediaIOCommandOpen_html"><div class="ttname"><a href="classMediaIOCommandOpen.html">MediaIOCommandOpen</a></div><div class="ttdoc">Command to open a media resource.</div><div class="ttdef"><b>Definition</b> mediaio.h:301</div></div>
+<div class="ttc" id="aclassMediaIOCommandRead_html"><div class="ttname"><a href="classMediaIOCommandRead.html">MediaIOCommandRead</a></div><div class="ttdoc">Command to read the next frame.</div><div class="ttdef"><b>Definition</b> mediaio.h:338</div></div>
+<div class="ttc" id="aclassMediaIOCommandStats_html"><div class="ttname"><a href="classMediaIOCommandStats.html">MediaIOCommandStats</a></div><div class="ttdoc">Backend statistics query command.</div><div class="ttdef"><b>Definition</b> mediaio.h:433</div></div>
+<div class="ttc" id="aclassMediaIOTask_html"><div class="ttname"><a href="classMediaIOTask.html">MediaIOTask</a></div><div class="ttdoc">Backend interface for media I/O.</div><div class="ttdef"><b>Definition</b> mediaiotask.h:66</div></div>
 <div class="ttc" id="aclassMutex_html"><div class="ttname"><a href="classMutex.html">Mutex</a></div><div class="ttdoc">Mutual exclusion lock wrapping std::mutex.</div><div class="ttdef"><b>Definition</b> mutex.h:33</div></div>
 <div class="ttc" id="aclassPeriodicCallback_html"><div class="ttname"><a href="classPeriodicCallback.html">PeriodicCallback</a></div><div class="ttdoc">Calls a function at a fixed interval when serviced.</div><div class="ttdef"><b>Definition</b> periodiccallback.h:35</div></div>
 <div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faaf"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faaf">PixelDesc::ID</a></div><div class="ttdeci">ID</div><div class="ttdoc">Identifies a pixel description.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:138</div></div>
@@ -325,7 +325,7 @@ $(document).ready(function(){initNavTree('mediaiotask__v4l2_8h_source.html','');
 <div class="ttc" id="aperiodiccallback_8h_html"><div class="ttname"><a href="periodiccallback_8h.html">periodiccallback.h</a></div></div>
 <div class="ttc" id="apixeldesc_8h_html"><div class="ttname"><a href="pixeldesc_8h.html">pixeldesc.h</a></div></div>
 <div class="ttc" id="aqueue_8h_html"><div class="ttname"><a href="queue_8h.html">queue.h</a></div></div>
-<div class="ttc" id="astructMediaIO_1_1FormatDesc_html"><div class="ttname"><a href="structMediaIO_1_1FormatDesc.html">MediaIO::FormatDesc</a></div><div class="ttdoc">Describes a registered media I/O backend.</div><div class="ttdef"><b>Definition</b> mediaio.h:522</div></div>
+<div class="ttc" id="astructMediaIO_1_1FormatDesc_html"><div class="ttname"><a href="structMediaIO_1_1FormatDesc.html">MediaIO::FormatDesc</a></div><div class="ttdoc">Describes a registered media I/O backend.</div><div class="ttdef"><b>Definition</b> mediaio.h:523</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- HTML footer for doxygen -->
@@ -333,7 +333,7 @@ $(document).ready(function(){initNavTree('mediaiotask__v4l2_8h_source.html','');
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="mediaiotask__v4l2_8h.html">mediaiotask_v4l2.h</a></li>
-    <li class="footer">Generated on 2026-04-21 00:53:11 from commit 3126200 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-21 07:27:58 from commit 3f2d824 (1.0.0).</li>
   </ul>
 </div>
 </body>

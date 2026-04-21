@@ -53,7 +53,10 @@ var classError =
       [ "FontUnavailable", "classError.html#ab5980e13b879db253df802b0950d1708a860bb07c791353ea49a5c70a3cbd4ebc", null ],
       [ "BrokenPipe", "classError.html#ab5980e13b879db253df802b0950d1708a001c622365338bdf6d05e4ed46744d99", null ],
       [ "ConnectionReset", "classError.html#ab5980e13b879db253df802b0950d1708afdfdd90b202ec76534905cdf1692ac49", null ],
-      [ "ParseFailed", "classError.html#ab5980e13b879db253df802b0950d1708ac5ee0586eea50614d95aea00d1eff4a9", null ]
+      [ "ParseFailed", "classError.html#ab5980e13b879db253df802b0950d1708ac5ee0586eea50614d95aea00d1eff4a9", null ],
+      [ "ClockDomainMismatch", "classError.html#ab5980e13b879db253df802b0950d1708a7eb7c3167bbfd4848b72b843e36fc1f7", null ],
+      [ "ObjectGone", "classError.html#ab5980e13b879db253df802b0950d1708a99cd04054fffa79f63c560723eb4ecfd", null ],
+      [ "ClockPaused", "classError.html#ab5980e13b879db253df802b0950d1708a472abb37baff1ed0725d1a8400e1ec1e", null ]
     ] ],
     [ "Error", "classError.html#a83eaa8db2a6c22d6aff5758eea236a6e", null ],
     [ "~Error", "classError.html#a1a45d42a3a035d510333cdfeb36a0e93", null ],

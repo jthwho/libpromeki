@@ -11,7 +11,7 @@ var searchData=
   ['entryqualifiedlits_8',['entryQualifiedLits',['../structEnum_1_1Definition.html#a6f0f35de7ea5e23c03d396173729f57c',1,'Enum::Definition']]],
   ['enumerate_9',['enumerate',['../structMediaIO_1_1FormatDesc.html#aa766150e2cf030dbca33a410334594c1',1,'MediaIO::FormatDesc']]],
   ['eotf_10',['eotf',['../structColorModel_1_1Data.html#af6c7076fd80cbf85fd501a0cfc3babdb',1,'ColorModel::Data']]],
-  ['error_11',['error',['../structFramePacer_1_1PaceResult.html#ac655a95721681d6679c9704e885c29fc',1,'FramePacer::PaceResult::error'],['../structFrameSync_1_1PullResult.html#ac3c92d1fa6c695bf05effda92ec0ad0d',1,'FrameSync::PullResult::error'],['../structImageDataDecoder_1_1DecodedItem.html#a73967f24d5737a681401a032e5a6e756',1,'ImageDataDecoder::DecodedItem::error']]],
+  ['error_11',['error',['../structFrameSync_1_1PullResult.html#ac3c92d1fa6c695bf05effda92ec0ad0d',1,'FrameSync::PullResult::error'],['../structImageDataDecoder_1_1DecodedItem.html#a73967f24d5737a681401a032e5a6e756',1,'ImageDataDecoder::DecodedItem::error']]],
   ['errormessage_12',['errorMessage',['../classBenchmarkResult.html#ae8e0930f6347a15d3672c4b0e860f694',1,'BenchmarkResult']]],
   ['excludedbridges_13',['excludedBridges',['../structMediaPipelinePlanner_1_1Policy.html#a7a8a4e6970d11c8e47db1e37138fe448',1,'MediaPipelinePlanner::Policy']]],
   ['expectedcrc_14',['expectedCrc',['../structImageDataDecoder_1_1DecodedItem.html#a490771e997128b8656fcc9c2b8b239dd',1,'ImageDataDecoder::DecodedItem']]],

@@ -118,11 +118,13 @@ Inheritance diagram for SDLVideoWidget:</div>
 <div class="dyncontent">
 <div class="center"><img src="classSDLVideoWidget__inherit__graph.png" border="0" usemap="#aSDLVideoWidget_inherit__map" alt="Inheritance graph"/></div>
 <map name="aSDLVideoWidget_inherit__map" id="aSDLVideoWidget_inherit__map">
-<area shape="rect" title="Widget that displays a promeki Image via SDL texture rendering." alt="" coords="5,152,135,177"/>
-<area shape="rect" href="classWidget.html" title="Base class for all widgets across UI backends." alt="" coords="36,79,104,104"/>
-<area shape="poly" title=" " alt="" coords="73,118,73,152,67,152,67,118"/>
-<area shape="rect" href="classObjectBase.html" title="Base object for promeki." alt="" coords="22,5,118,31"/>
-<area shape="poly" title=" " alt="" coords="73,44,73,79,67,79,67,44"/>
+<area shape="rect" title="Widget that displays a promeki Image via SDL texture rendering." alt="" coords="8,152,137,177"/>
+<area shape="rect" href="classSDLPlayerWidget.html" title="Widget that plays frames through an SDLPlayerTask." alt="" coords="5,225,140,251"/>
+<area shape="poly" title=" " alt="" coords="75,191,75,225,70,225,70,191"/>
+<area shape="rect" href="classWidget.html" title="Base class for all widgets across UI backends." alt="" coords="39,79,107,104"/>
+<area shape="poly" title=" " alt="" coords="75,118,75,152,70,152,70,118"/>
+<area shape="rect" href="classObjectBase.html" title="Base object for promeki." alt="" coords="25,5,121,31"/>
+<area shape="poly" title=" " alt="" coords="75,44,75,79,70,79,70,44"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <div class="dynheader">
@@ -389,9 +391,13 @@ Protected Member Functions</h2></td></tr>
 <tr class="memdesc:ad241d6a53d50321525bae6902eefb517"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classSignal.html" title="Type-safe signal/slot mechanism for decoupled event notification.">Signal</a> emitted when the widget is resized.  <br /></td></tr>
 <tr class="separator:ad241d6a53d50321525bae6902eefb517"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classWidget"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classWidget')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classWidget.html">Widget</a></td></tr>
-<tr class="memitem:a816190c360f2d28fa1291798e54271e5 inherit pro_methods_classWidget" id="r_a816190c360f2d28fa1291798e54271e5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWidget.html#a816190c360f2d28fa1291798e54271e5">keyEvent</a> (<a class="el" href="classKeyEvent.html">KeyEvent</a> *<a class="el" href="classList.html">e</a>)</td></tr>
-<tr class="memdesc:a816190c360f2d28fa1291798e54271e5 inherit pro_methods_classWidget"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called on keyboard input. Override in subclasses.  <br /></td></tr>
-<tr class="separator:a816190c360f2d28fa1291798e54271e5 inherit pro_methods_classWidget"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6ab645704a67b3b1c6a0c1fa74f64eed inherit pro_methods_classWidget" id="r_a6ab645704a67b3b1c6a0c1fa74f64eed"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWidget.html#a6ab645704a67b3b1c6a0c1fa74f64eed">keyPressEvent</a> (<a class="el" href="classKeyEvent.html">KeyEvent</a> *<a class="el" href="classList.html">e</a>)</td></tr>
+<tr class="memdesc:a6ab645704a67b3b1c6a0c1fa74f64eed inherit pro_methods_classWidget"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called on key-down events. Override in subclasses.  <br /></td></tr>
+<tr class="separator:a6ab645704a67b3b1c6a0c1fa74f64eed inherit pro_methods_classWidget"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a06fe8409491725494127471d248bcf26 inherit pro_methods_classWidget" id="r_a06fe8409491725494127471d248bcf26"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>keyReleaseEvent</b> (<a class="el" href="classKeyEvent.html">KeyEvent</a> *<a class="el" href="classList.html">e</a>)</td></tr>
+<tr class="memdesc:a06fe8409491725494127471d248bcf26 inherit pro_methods_classWidget"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called on key-up events. Override in subclasses. <br /></td></tr>
+<tr class="separator:a06fe8409491725494127471d248bcf26 inherit pro_methods_classWidget"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac325f61a09ed13584895c98fa8bb7e69 inherit pro_methods_classWidget" id="r_ac325f61a09ed13584895c98fa8bb7e69"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWidget.html#ac325f61a09ed13584895c98fa8bb7e69">mouseEvent</a> (<a class="el" href="classMouseEvent.html">MouseEvent</a> *<a class="el" href="classList.html">e</a>)</td></tr>
 <tr class="memdesc:ac325f61a09ed13584895c98fa8bb7e69 inherit pro_methods_classWidget"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called on mouse input. Override in subclasses.  <br /></td></tr>
 <tr class="separator:ac325f61a09ed13584895c98fa8bb7e69 inherit pro_methods_classWidget"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -718,7 +724,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classSDLVideoWidget.html">SDLVideoWidget</a></li>
-    <li class="footer">Generated on 2026-04-21 00:53:11 from commit 3126200 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-21 07:27:58 from commit 3f2d824 (1.0.0).</li>
   </ul>
 </div>
 </body>

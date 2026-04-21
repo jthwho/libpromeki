@@ -107,7 +107,7 @@ $(document).ready(function(){initNavTree('structClockJitter.html',''); initResiz
 </div><!--header-->
 <div class="contents">
 
-<p>Asymmetric bound on the error envelope of a clock's nowNs() reading relative to ground truth.  
+<p>Asymmetric bound on the error envelope of a clock's now() reading relative to ground truth.  
  <a href="structClockJitter.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="clock_8h_source.html">clock.h</a>&gt;</code></p>
@@ -116,7 +116,7 @@ Collaboration diagram for ClockJitter:</div>
 <div class="dyncontent">
 <div class="center"><img src="structClockJitter__coll__graph.png" border="0" usemap="#aClockJitter_coll__map" alt="Collaboration graph"/></div>
 <map name="aClockJitter_coll__map" id="aClockJitter_coll__map">
-<area shape="rect" title="Asymmetric bound on the error envelope of a clock&#39;s nowNs() reading relative to ground truth." alt="" coords="5,108,95,133"/>
+<area shape="rect" title="Asymmetric bound on the error envelope of a clock&#39;s now() reading relative to ground truth." alt="" coords="5,108,95,133"/>
 <area shape="rect" href="classDuration.html" title="Time duration with nanosecond precision." alt="" coords="11,5,89,31"/>
 <area shape="poly" title=" " alt="" coords="53,45,53,108,47,108,47,45"/>
 </map>
@@ -145,14 +145,13 @@ Public Attributes</h2></td></tr>
 <tr class="separator:ab5824afcc407414bce6daf61d9d1f6c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Asymmetric bound on the error envelope of a clock's nowNs() reading relative to ground truth. </p>
+<div class="textblock"><p>Asymmetric bound on the error envelope of a clock's now() reading relative to ground truth. </p>
 <p>The error is defined as <code>reportedTime - trueTime</code>.</p>
 <ul>
 <li><code>minError</code> is the most negative value the clock is expected to return (early bias). Typically <code>&lt;=</code> 0.</li>
 <li><code>maxError</code> is the most positive value the clock is expected to return (late bias). Typically <code>&gt;=</code> 0.</li>
 </ul>
-<p>The envelope is asymmetric by design. For a steady clock like <code>std::chrono::steady_clock</code> the envelope is symmetric and tiny (<code>~1</code> ns on either side). For a clock derived from an audio device's consumed-byte counter the envelope is strictly one-sided late (<code>{0</code>, bufferPeriod}) because the counter reads stale between callbacks and jumps forward only when the device fires its next callback.</p>
-<p>Both bounds are non-strict — a real clock may occasionally exceed them — but they represent the expected operating envelope. Code that filters clock-derived signals (e.g. rate estimates) should size its window according to <a class="el" href="structClockJitter.html#a974b7381304fdf47ff7cc895255fd33c">span</a>. </p>
+<p>The envelope is asymmetric by design. For a steady clock like <code>std::chrono::steady_clock</code> the envelope is symmetric and tiny (<code>~1</code> ns on either side). For a clock derived from an audio device's consumed-byte counter the envelope is strictly one-sided late (<code>{0</code>, bufferPeriod}) because the counter reads stale between callbacks and jumps forward only when the device fires its next callback. </p>
 </div><hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="clock_8h_source.html">clock.h</a></li>
 </ul>
@@ -163,7 +162,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structClockJitter.html">ClockJitter</a></li>
-    <li class="footer">Generated on 2026-04-21 00:53:11 from commit 3126200 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-21 07:27:58 from commit 3f2d824 (1.0.0).</li>
   </ul>
 </div>
 </body>
