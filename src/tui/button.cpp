@@ -84,7 +84,7 @@ void TuiButton::paintEvent(TuiPaintEvent *) {
         if(width() > 1) painter.drawChar(width() - 1, 0, U' ');
 }
 
-void TuiButton::keyEvent(KeyEvent *e) {
+void TuiButton::keyPressEvent(KeyEvent *e) {
         if(e->key() == KeyEvent::Key_Enter || e->key() == KeyEvent::Key_Space) {
                 clickedSignal.emit();
                 e->accept();

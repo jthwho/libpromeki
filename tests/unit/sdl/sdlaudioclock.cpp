@@ -52,6 +52,10 @@ class TestAudioOutput : public SDLAudioOutput {
         public:
                 TestAudioOutput() {
                         configure(AudioDesc(kSampleRate, kChannels));
+                        _domain = ClockDomain(ClockDomain::registerDomain(
+                                "sdl.audio:test",
+                                "Test stand-in for SDL audio clock domain",
+                                ClockEpoch::PerStream));
                 }
 
                 int64_t totalBytesPushed() const override {
@@ -60,6 +64,17 @@ class TestAudioOutput : public SDLAudioOutput {
 
                 int queuedBytes() const override {
                         return _queued.load(std::memory_order_relaxed);
+                }
+
+                ClockDomain clockDomain() const override { return _domain; }
+
+                Error setPaused(bool paused) override {
+                        _paused.store(paused, std::memory_order_relaxed);
+                        return {};
+                }
+
+                bool isPaused() const override {
+                        return _paused.load(std::memory_order_relaxed);
                 }
 
                 void setPushed(int64_t v) {
@@ -73,6 +88,8 @@ class TestAudioOutput : public SDLAudioOutput {
         private:
                 std::atomic<int64_t> _pushed{0};
                 std::atomic<int>     _queued{0};
+                std::atomic<bool>    _paused{false};
+                ClockDomain          _domain;
 };
 
 } // namespace
@@ -85,7 +102,7 @@ TEST_CASE("nowNs advances smoothly between simulated callbacks") {
                 (double)kSampleRate * kChannels * sizeof(float);
 
         TestAudioOutput output;
-        SDLAudioClock clock(&output, bytesPerSec, String("test"));
+        SDLAudioClock clock(&output);
 
         // Pre-buffer enough audio to cover the whole test.  The
         // simulator drains queuedBytes to advance "consumed" in the
@@ -120,8 +137,14 @@ TEST_CASE("nowNs advances smoothly between simulated callbacks") {
         std::this_thread::sleep_for(
                 std::chrono::milliseconds(kCallbackPeriodMs * 2));
 
+        auto clockNow = [&clock]() {
+                auto r = clock.nowNs();
+                REQUIRE(isOk(r));
+                return value(r);
+        };
+
         const int64_t startWallNs  = TimeStamp::now().nanoseconds();
-        const int64_t startClockNs = clock.nowNs();
+        const int64_t startClockNs = clockNow();
         int64_t lastClockNs   = startClockNs;
         int64_t stallStartWall = startWallNs;
         int64_t maxStallNs    = 0;
@@ -140,7 +163,7 @@ TEST_CASE("nowNs advances smoothly between simulated callbacks") {
                         break;
                 }
 
-                int64_t clkNs = clock.nowNs();
+                int64_t clkNs = clockNow();
                 ++sampleCount;
 
                 if(clkNs < lastClockNs) {
@@ -172,7 +195,7 @@ TEST_CASE("nowNs advances smoothly between simulated callbacks") {
         sim.join();
 
         const int64_t endWallNs  = TimeStamp::now().nanoseconds();
-        const int64_t endClockNs = clock.nowNs();
+        const int64_t endClockNs = clockNow();
 
         const double wallSecs = (double)(endWallNs  - startWallNs ) / 1e9;
         const double clkSecs  = (double)(endClockNs - startClockNs) / 1e9;
@@ -221,6 +244,98 @@ TEST_CASE("nowNs advances smoothly between simulated callbacks") {
         // a 10 s run it should be drifting toward 1.0 from its 1.0
         // seed.  Sanity bound: stays near 1.0 throughout.
         CHECK(rateRatio == doctest::Approx(1.0).epsilon(0.05));
+}
+
+TEST_CASE("canPause is true and pauseMode is PausesRawStops") {
+        TestAudioOutput output;
+        SDLAudioClock clock(&output);
+        CHECK(clock.canPause());
+        // onPause(true) snapshots the current wall-interpolated raw
+        // value into @ref _rawAtPause and flips a flag so raw()
+        // returns it unchanged for the paused duration.  onPause(false)
+        // re-anchors the interpolation checkpoint so raw() resumes
+        // from that frozen value — raw truly stops, and the base's
+        // paused-offset delta comes out to zero.
+        CHECK(clock.pauseMode() == ClockPauseMode::PausesRawStops);
+}
+
+TEST_CASE("setPause delegates to SDLAudioOutput::setPaused") {
+        const double bytesPerSec =
+                (double)kSampleRate * kChannels * sizeof(float);
+        TestAudioOutput output;
+        SDLAudioClock clock(&output);
+
+        // Seed a non-zero consumed value so the clock is past its
+        // silent-startup state and pause/resume touches the normal
+        // monotonic-interpolation path.
+        output.setPushed((int64_t)bytesPerSec);
+        output.setQueued(0);
+        auto r0 = clock.nowNs();
+        REQUIRE(isOk(r0));
+        CHECK(value(r0) > 0);
+
+        CHECK(clock.setPause(true).isOk());
+        CHECK(output.isPaused());
+        CHECK(clock.isPaused());
+
+        CHECK(clock.setPause(false).isOk());
+        CHECK_FALSE(output.isPaused());
+        CHECK_FALSE(clock.isPaused());
+}
+
+TEST_CASE("reported time is frozen while paused, seamless on resume") {
+        const double bytesPerSec =
+                (double)kSampleRate * kChannels * sizeof(float);
+        TestAudioOutput output;
+        SDLAudioClock clock(&output);
+
+        // One second of audio consumed.
+        output.setPushed((int64_t)bytesPerSec);
+        output.setQueued(0);
+        REQUIRE(isOk(clock.nowNs()));
+
+        CHECK(clock.setPause(true).isOk());
+
+        // The pause snapshot fixes the reported time — subsequent
+        // calls while paused should report the same value, even if
+        // the underlying consumed counter kept moving (a hardware-
+        // stopped device wouldn't advance, but the interpolation
+        // layer in SDLAudioClock otherwise would).
+        auto r1 = clock.nowNs();
+        REQUIRE(isOk(r1));
+        int64_t paused1 = value(r1);
+
+        // Advance the fake consumed counter during the pause — under
+        // ClockPauseMode::PausesRawStops the base-class delta
+        // accounting must still show a flat nowNs.
+        output.setPushed((int64_t)(bytesPerSec * 2));
+
+        auto r2 = clock.nowNs();
+        REQUIRE(isOk(r2));
+        CHECK(value(r2) == paused1);
+
+        CHECK(clock.setPause(false).isOk());
+
+        // No backward jump on resume, and no forward jump past what
+        // interpolation would produce in the resume-call interval
+        // (SDLAudioClock's internal rate estimator continues to tick
+        // wall-clock nanoseconds even when consumed is static).
+        // Ten callback periods is well beyond any realistic wall-time
+        // gap between setPause(false) and the subsequent read.
+        auto r3 = clock.nowNs();
+        REQUIRE(isOk(r3));
+        CHECK(value(r3) >= paused1);
+        CHECK((value(r3) - paused1) < (int64_t)kCallbackPeriodMs * 10 * 1000000LL);
+}
+
+TEST_CASE("raw returns ObjectGone after output destroyed") {
+        std::unique_ptr<TestAudioOutput> output(new TestAudioOutput());
+        SDLAudioClock clock(output.get());
+        output.reset();
+
+        auto r = clock.nowNs();
+        REQUIRE(isError(r));
+        CHECK(error(r) == Error::ObjectGone);
 }
 
 } // TEST_SUITE

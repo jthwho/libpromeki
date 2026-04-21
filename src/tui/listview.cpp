@@ -202,7 +202,7 @@ void TuiListView::paintScrollbar(TuiPainter &painter, const TuiPalette &pal) {
         }
 }
 
-void TuiListView::keyEvent(KeyEvent *e) {
+void TuiListView::keyPressEvent(KeyEvent *e) {
         // Let Ctrl-modified keys propagate (e.g. Ctrl+Left/Right for tab switching)
         if(e->isCtrl()) return;
         switch(e->key()) {

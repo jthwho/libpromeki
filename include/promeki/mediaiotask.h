@@ -8,6 +8,7 @@
 #pragma once
 
 #include <promeki/namespace.h>
+#include <promeki/clock.h>
 #include <promeki/error.h>
 #include <promeki/mediaio.h>
 #include <promeki/pixeldesc.h>
@@ -393,6 +394,27 @@ class MediaIOTask {
                  */
                 virtual Error proposeInput(const MediaDesc &offered,
                                            MediaDesc *preferred) const;
+
+                /**
+                 * @brief Optionally supplies a @ref Clock for the
+                 *        owning @ref MediaIO.
+                 *
+                 * Called by @ref MediaIO::createClock after the task
+                 * has opened.  Backends with a meaningful hardware or
+                 * device clock (capture card, audio output, PTP source)
+                 * override this to hand back a subclass of @ref Clock
+                 * tied to that timing source.  The returned raw pointer
+                 * is adopted into a @ref Clock::Ptr by the caller; a
+                 * @c nullptr return causes MediaIO to fall back to a
+                 * @ref MediaIOClock synthesized from the task's frame
+                 * position and the configured frame rate.
+                 *
+                 * Default implementation returns @c nullptr.
+                 *
+                 * @return A newly-allocated Clock, or nullptr for the
+                 *         synthesized fallback.
+                 */
+                virtual Clock *createClock();
 
                 /**
                  * @brief Reports what this task can produce given a

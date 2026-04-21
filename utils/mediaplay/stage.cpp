@@ -30,10 +30,9 @@ const char *const kStageFile = "__file__";
 // --------------------------------------------------------------------------
 
 // SDL player config IDs live on @ref MediaConfig (SdlTimingSource /
-// SdlWindowSize / SdlWindowTitle / SdlPlayerImpl).  The CLI surfaces
-// the unprefixed string aliases below in --help text, but the actual
-// MediaConfig keys carry the Sdl prefix to avoid colliding with
-// non-SDL options.
+// SdlWindowSize / SdlWindowTitle).  The CLI surfaces the unprefixed
+// string aliases below in --help text, but the actual MediaConfig
+// keys carry the Sdl prefix to avoid colliding with non-SDL options.
 
 MediaIO::Config::SpecMap sdlConfigSpecs() {
         MediaIO::Config::SpecMap specs;
@@ -44,7 +43,6 @@ MediaIO::Config::SpecMap sdlConfigSpecs() {
         s(MediaConfig::SdlTimingSource, String("audio"));
         s(MediaConfig::SdlWindowSize, Size2Du32(1280, 720));
         s(MediaConfig::SdlWindowTitle, String("mediaplay"));
-        s(MediaConfig::SdlPlayerImpl, String("framesync"));
         return specs;
 }
 

@@ -61,7 +61,7 @@ MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
                         s(MediaConfig::VideoBurnEnabled, true);
                         s(MediaConfig::VideoBurnFontPath, String());
                         s(MediaConfig::VideoBurnFontSize, int32_t(0));
-                        s(MediaConfig::VideoBurnText, String("{Timecode:smpte}"));
+                        s(MediaConfig::VideoBurnText, String("{Meta.Timecode:smpte}"));
                         s(MediaConfig::VideoBurnPosition, BurnPosition::BottomCenter);
                         s(MediaConfig::VideoBurnTextColor, Color::White);
                         s(MediaConfig::VideoBurnBgColor, Color::Black);

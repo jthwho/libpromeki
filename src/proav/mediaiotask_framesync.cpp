@@ -125,7 +125,7 @@ MediaIO::FormatDesc MediaIOTask_FrameSync::formatDesc() {
 
 MediaIOTask_FrameSync::~MediaIOTask_FrameSync() = default;
 
-void MediaIOTask_FrameSync::setClock(Clock *clock) {
+void MediaIOTask_FrameSync::setClock(const Clock::Ptr &clock) {
         _externalClock = clock;
 }
 
@@ -175,10 +175,10 @@ Error MediaIOTask_FrameSync::executeCmd(MediaIOCommandOpen &cmd) {
                 adesc.metadata() = srcAdesc.metadata();
         }
 
-        Clock *clock = _externalClock;
-        if(!clock) {
-                _ownedClock = SyntheticClock();
-                clock = &_ownedClock;
+        Clock::Ptr clock = _externalClock;
+        if(clock.isNull()) {
+                _ownedClock = Clock::Ptr::takeOwnership(new SyntheticClock());
+                clock = _ownedClock;
         }
 
         _sync.setName(String("FrameSync"));
@@ -216,7 +216,7 @@ Error MediaIOTask_FrameSync::executeCmd(MediaIOCommandClose &cmd) {
         _sync.pushEndOfStream();
         _sync.interrupt();
         _sync.reset();
-        _sync.setClock(nullptr);
+        _sync.setClock(Clock::Ptr());
         _framesPushed = 0;
         _framesPulled = 0;
         return Error::Ok;

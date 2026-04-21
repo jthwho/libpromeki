@@ -52,6 +52,7 @@ PROMEKI_NAMESPACE_BEGIN
 class IODevice;
 class ThreadPool;
 class MediaIOTask;
+class Clock;
 class MediaIODescription;
 class BenchmarkReporter;
 
@@ -1607,6 +1608,28 @@ class MediaIO : public ObjectBase {
 
                 /** @brief Returns the cached current frame. */
                 int64_t currentFrame() const { return _currentFrame; }
+
+                /**
+                 * @brief Returns a new @ref Clock for this MediaIO's
+                 *        timing source.
+                 *
+                 * Delegates first to the task's
+                 * @ref MediaIOTask::createClock hook; backends with a
+                 * device clock (capture card, audio output, PTP) hand
+                 * back a subclass of @ref Clock tied to that source.
+                 * Falls back to a @ref MediaIOClock holding a weak
+                 * reference to this MediaIO, so @ref Clock::now reads
+                 * @c currentFrame × framePeriod and reports
+                 * @ref Error::ObjectGone if this MediaIO is later
+                 * destroyed.
+                 *
+                 * The returned pointer is newly heap-allocated; the
+                 * caller adopts it into a @ref Clock::Ptr to manage
+                 * lifetime.
+                 *
+                 * @return A newly-allocated Clock (never nullptr).
+                 */
+                Clock *createClock();
 
                 /** @brief Sets the configuration. */
                 void setConfig(const Config &config) { _config = config; }

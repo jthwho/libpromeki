@@ -597,6 +597,45 @@ Absence of any of these means "no info" — consumers should treat
 an absent `FrameRepeated` as zero, an absent `FrameKeyframe` as
 false, etc.
 
+## Clock integration {#mediaio_clock}
+
+Every open `MediaIO` can supply a `Clock` that represents the stream's
+timing source.  Call `createClock()` to obtain one:
+
+```cpp
+Clock::Ptr clock = Clock::Ptr::takeOwnership(io->createClock());
+```
+
+The method delegates first to the task's `createClock()` hook.
+Backends with a hardware or device clock (capture card, audio output,
+PTP source) override this and return a subclass tied to that source.
+If the task returns `nullptr`, `MediaIO` falls back to a `MediaIOClock`
+— a synthetic `Clock` that reads `currentFrame × framePeriod` and
+propagates `Error::ObjectGone` when the `MediaIO` is destroyed.
+
+The `MediaIOClock` fallback is appropriate for file-based or synthetic
+sources where the authoritative time is the frame counter, not a wall
+clock.  For real-time playback pipelines where A/V sync matters,
+prefer the audio-device clock supplied by `SDLAudioOutput::createClock`.
+
+### Custom task clock {#mediaio_clock_custom}
+
+To supply a hardware clock from a backend, override `createClock` in
+your `MediaIOTask` subclass:
+
+```cpp
+Clock *MyTask::createClock() {
+        // Only valid after open.  Return nullptr if the device is not
+        // yet open so MediaIO falls back to the MediaIOClock safely.
+        if(!_deviceOpen) return nullptr;
+        return new MyDeviceClock(_device);
+}
+```
+
+The returned pointer is adopted by the caller into a `Clock::Ptr`.
+`createClock()` is called after `open()` succeeds, so the device is
+always ready.
+
 ## Thread pool sizing {#mediaio_pool}
 
 All MediaIO instances share a single static `ThreadPool` exposed

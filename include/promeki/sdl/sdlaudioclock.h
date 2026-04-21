@@ -9,9 +9,11 @@
 
 #include <promeki/namespace.h>
 #include <promeki/clock.h>
+#include <promeki/objectbase.h>
 #include <promeki/periodiccallback.h>
 #include <promeki/string.h>
 
+#include <atomic>
 #include <cstdint>
 #include <climits>
 
@@ -136,26 +138,29 @@ class SDLAudioClock : public Clock {
                 };
 
                 /**
-                 * @brief Constructs an SDL audio clock.
+                 * @brief Constructs an SDL audio clock bound to @p output.
                  *
-                 * @param output      The SDL audio output to derive time from.
-                 * @param bytesPerSec Audio drain rate in float32 bytes per
-                 *                    second
-                 *                    (<tt>sampleRate * channels * sizeof(float)</tt>).
-                 * @param deviceName  Optional device identifier used to
-                 *                    distinguish the registered ClockDomain.
-                 *                    Multiple clocks constructed with the
-                 *                    same name share a domain.
+                 * Derives the drain rate (bytes per second of float32
+                 * audio) from the output's @ref AudioDesc, adopts the
+                 * output's per-device @ref ClockDomain, and tracks the
+                 * output's lifetime via an @ref ObjectBasePtr.  The
+                 * clock's pause mode is
+                 * @ref ClockPauseMode::PausesRawStops — pausing the
+                 * clock pauses the SDL device, and the base-class
+                 * pause accounting leaves the reported time frozen
+                 * across the pause interval.
+                 *
+                 * Typically constructed by
+                 * @ref SDLAudioOutput::createClock rather than
+                 * directly.
+                 *
+                 * @param output The SDL audio output to derive time
+                 *               from.  Must already be open.
                  */
-                SDLAudioClock(SDLAudioOutput *output,
-                              double bytesPerSec,
-                              const String &deviceName = String());
+                explicit SDLAudioClock(SDLAudioOutput *output);
 
-                ClockDomain domain() const override;
                 int64_t     resolutionNs() const override;
                 ClockJitter jitter() const override;
-                int64_t     nowNs() const override;
-                void        sleepUntilNs(int64_t targetNs) override;
                 double      rateRatio() const override;
 
                 /**
@@ -178,14 +183,31 @@ class SDLAudioClock : public Clock {
                  */
                 void resetStats();
 
+        protected:
+                Result<int64_t> raw() const override;
+                Error           sleepUntilNs(int64_t targetNs) const override;
+                Error           onPause(bool paused) override;
+
         private:
+                // Core interpolation math shared between the normal
+                // raw() path and the pause-snapshot path in @ref
+                // onPause.  Updates checkpoint state and logs stats.
+                int64_t computeRawNs() const;
+
                 void updateRateEstimate() const;
                 void reportMonitor() const;
 
-                SDLAudioOutput *_output;
+                // When @c _devicePaused is true, @ref raw returns
+                // @c _rawAtPause unchanged so wall time advancing
+                // through the paused interval does not drag the
+                // clock forward.  Rate estimation and interpolation
+                // checkpoints are reset in @ref onPause on resume.
+                mutable std::atomic<bool>    _devicePaused{false};
+                mutable std::atomic<int64_t> _rawAtPause{0};
+
+                ObjectBasePtr<SDLAudioOutput> _output;
                 double          _bytesPerSec;
                 int64_t         _resolutionNs;
-                ClockDomain     _domain;
 
                 // Rate-estimate state.  Kept mutable so the update
                 // can run inside nowNs().  Caller is expected to use

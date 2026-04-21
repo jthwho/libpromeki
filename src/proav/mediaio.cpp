@@ -8,6 +8,7 @@
 #include <promeki/mediaio.h>
 #include <promeki/mediaiodescription.h>
 #include <promeki/mediaiotask.h>
+#include <promeki/mediaioclock.h>
 #include <promeki/threadpool.h>
 #include <promeki/file.h>
 #include <promeki/logger.h>
@@ -630,6 +631,20 @@ Error MediaIO::adoptTask(MediaIOTask *task) {
         return Error::Ok;
 }
 
+Clock *MediaIO::createClock() {
+        // Prefer the task's own device clock (audio drain, capture
+        // hardware, PTP) when it supplies one — those track the real
+        // timing source rather than a synthesized frame count.
+        if(_task != nullptr) {
+                Clock *taskClock = _task->createClock();
+                if(taskClock != nullptr) return taskClock;
+        }
+        // Fallback: synthesize time from currentFrame() × framePeriod.
+        // ObjectBasePtr inside MediaIOClock keeps raw() safe against
+        // this MediaIO being destroyed before the clock is.
+        return new MediaIOClock(this);
+}
+
 MediaIO::~MediaIO() {
         if(isOpen()) close();
         // Wait for any in-flight strand task to complete before deleting
@@ -907,6 +922,8 @@ void MediaIO::resetClosedState() {
 }
 
 Error MediaIO::close(bool block) {
+        promekiDebug("MediaIO::close ENTER block=%d isOpen=%d _closing=%d",
+                     (int)block, (int)isOpen(), (int)_closing);
         if(!isOpen() || _closing) return Error::NotOpen;
 
         // Latch closing state.  This gates readFrame() from submitting
@@ -930,6 +947,7 @@ Error MediaIO::close(bool block) {
         // the strand queue so it only runs after every prior task
         // has completed.
         Future<Error> closeFuture = _strand.submit([this]() -> Error {
+                promekiDebug("MediaIO::close strand running CmdClose");
                 auto *cmdClose = new MediaIOCommandClose();
                 MediaIOCommand::Ptr closeCmd =
                         MediaIOCommand::Ptr::takeOwnership(cmdClose);

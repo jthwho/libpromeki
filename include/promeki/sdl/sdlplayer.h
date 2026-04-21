@@ -22,7 +22,7 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-class SDLVideoWidget;
+class SDLPlayerWidget;
 class SDLAudioOutput;
 class Clock;
 
@@ -31,10 +31,11 @@ class Clock;
  * @ingroup sdl_core
  *
  * SDLPlayerTask is a write-only MediaIO sink that consumes @c Frame
- * objects via @c MediaIO::writeFrame() and displays their video
- * through an application-provided @c SDLVideoWidget and (optionally)
- * plays their audio through an application-provided
- * @c SDLAudioOutput.
+ * objects via @c MediaIO::writeFrame().  It is always owned by an
+ * @ref SDLPlayerWidget which provides both the render target and the
+ * user-facing controls (play/pause, focus routing, etc.) — clients
+ * should construct an @ref SDLPlayerWidget rather than instantiating
+ * the task directly.
  *
  * @par Architecture
  *
@@ -44,46 +45,20 @@ class Clock;
  * - A dedicated pull thread drives @ref FrameSync::pullFrame in a
  *   loop.  The clock (SDL audio or wall) blocks the pull thread
  *   until each destination deadline; the output frame is then
- *   routed to the video widget (main-thread render) and the audio
- *   output.
+ *   delivered to the @ref SDLPlayerWidget for display and, if
+ *   configured, to the @ref SDLAudioOutput.
  * - Back-pressure comes from FrameSync's input queue running in
- *   @ref FrameSync::InputOverflowPolicy::Block mode: if the
- *   producer outruns the sink, @c pushFrame blocks until the pull
- *   thread makes room.
- * - Audio drift correction is real.  The audio clock reports a
- *   live @ref Clock::rateRatio and FrameSync resamples audio to
- *   match.
- *
- * The legacy FramePacer-based implementation is retained as
- * @c SDLPlayerOldTask in @c sdlplayerold.h for comparison.
- *
- * @par Creation
- *
- * Use @ref createSDLPlayer to build a ready-to-use MediaIO.
- *
- * @par Teardown ordering
- *
- * Close the MediaIO and let the main event loop drain before
- * destroying the owning MediaIO — the main-thread render callable
- * captures a pointer to the task.
+ *   @ref FrameSync::InputOverflowPolicy::Block mode.
+ * - Audio drift correction is real — the audio clock's rate ratio
+ *   feeds FrameSync's audio resampler.
  */
 class SDLPlayerTask : public MediaIOTask {
+        friend class SDLPlayerWidget;
         public:
-                /**
-                 * @brief Constructs a FrameSync-based player task.
-                 *
-                 * @param video         Video widget (may be nullptr).
-                 * @param audio         Audio output (may be nullptr).
-                 * @param useAudioClock Prefer the audio device as the
-                 *                      timing source (default true).
-                 */
-                SDLPlayerTask(SDLVideoWidget *video, SDLAudioOutput *audio,
-                               bool useAudioClock = true);
-
                 ~SDLPlayerTask() override;
 
-                /** @brief Returns the configured video widget. */
-                SDLVideoWidget *videoWidget() const { return _videoWidget; }
+                /** @brief Returns the widget that owns this task. */
+                SDLPlayerWidget *widget() const { return _widget; }
 
                 /** @brief Returns the configured audio output. */
                 SDLAudioOutput *audioOutput() const { return _audioOutput; }
@@ -91,17 +66,51 @@ class SDLPlayerTask : public MediaIOTask {
                 /** @brief True when the audio device drives timing. */
                 bool useAudioClock() const { return _useAudioClock; }
 
-                /** @brief Total frames presented to the video widget. */
-                int64_t framesPresented() const { return _framesPresented.value(); }
+                /**
+                 * @brief Pauses playback.
+                 *
+                 * Pauses the playback clock (which stops SDL audio
+                 * consumption via @ref SDLAudioClock::onPause) and
+                 * tears down the pull thread so it isn't blocked on
+                 * the clock.  Safe to call from any thread; no-ops
+                 * when no MediaIO is open or playback is already
+                 * paused.
+                 */
+                void pause();
 
                 /**
-                 * @brief Paints the currently stashed image on the main
-                 *        thread.  Callable in response to a wake event
-                 *        posted by the pull thread.
+                 * @brief Resumes playback after a @ref pause.
+                 *
+                 * Unpauses the clock and spawns a fresh pull thread.
+                 * The base @ref Clock's paused-offset accumulator
+                 * rolls the deadline forward so the next output frame
+                 * lands where it would have without the pause.
+                 * No-op when no MediaIO is open or playback is not
+                 * paused.
                  */
-                bool renderPending();
+                void resume();
+
+                /** @brief Convenience: calls @ref pause or @ref resume. */
+                void togglePause();
+
+                /** @brief Returns true when the playback clock is paused. */
+                bool isPaused() const;
 
         private:
+                /**
+                 * @brief Constructs a FrameSync-based player task.
+                 *
+                 * Private — only @ref SDLPlayerWidget constructs tasks.
+                 *
+                 * @param widget        Owning player widget (required).
+                 * @param audio         Audio output (may be nullptr).
+                 * @param useAudioClock Prefer the audio device as the
+                 *                      timing source (default true).
+                 */
+                SDLPlayerTask(SDLPlayerWidget *widget,
+                              SDLAudioOutput *audio,
+                              bool useAudioClock);
+
                 Error executeCmd(MediaIOCommandOpen &cmd) override;
                 Error executeCmd(MediaIOCommandClose &cmd) override;
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
@@ -110,24 +119,35 @@ class SDLPlayerTask : public MediaIOTask {
                 Error proposeInput(const MediaDesc &offered,
                                    MediaDesc *preferred) const override;
 
-                // Picks the best SDL-native PixelDesc for an offered
-                // image — the format closest to @p offered that
-                // SDLVideoWidget::mapPixelDesc returns a non-zero
-                // SDL pixel format for.  This is what the planner
-                // uses to know "given source X, which native format
-                // should the upstream CSC convert to?"  Returns
-                // @ref PixelDesc::RGBA8_sRGB as the universal
-                // fallback when no closer match is available.
+                // MediaIO::close(false) (the watchdog's forced-close
+                // path) calls this from a thread that's NOT the
+                // strand — we're typically deadlocked with the
+                // strand blocked inside FrameSync::pushFrame on
+                // queue backpressure while the submitted CmdClose
+                // sits behind it in the strand queue.  Interrupting
+                // FrameSync unblocks the pending pushFrame so the
+                // strand can drain to CmdClose.
+                void cancelBlockingWork() override;
+
                 PixelDesc pickNativePixelDesc(const PixelDesc &offered) const;
 
+                // Spawns the pull thread.  Caller must hold
+                // @ref _clockMutex and guarantee no thread is already
+                // running (i.e. @ref _pullThread is not joinable).
+                void startPullThread();
+
+                // Sets the running flag false, interrupts FrameSync,
+                // and joins the pull thread if any.  Caller must hold
+                // @ref _clockMutex.
+                void stopPullThread();
+
                 void pullLoop();
-                void wakeMainThread();
 
-                static uint32_t userEventType();
-
-                // Application-provided outputs (not owned).
-                SDLVideoWidget *_videoWidget = nullptr;
-                SDLAudioOutput *_audioOutput = nullptr;
+                // Owner back-pointer.  The widget outlives the task
+                // (widget owns the MediaIO which owns us) so this
+                // pointer is always valid for the task's lifetime.
+                SDLPlayerWidget *_widget = nullptr;
+                SDLAudioOutput  *_audioOutput = nullptr;
 
                 bool            _useAudioClock = true;
 
@@ -135,41 +155,13 @@ class SDLPlayerTask : public MediaIOTask {
                 bool            _audioConfigured = false;
                 FrameRate       _frameRate;
                 AudioDesc       _audioDesc;
-                Clock          *_clock = nullptr;
-                SDLAudioClock  *_audioClock = nullptr;
+                Clock::Ptr      _clock;
+                mutable Mutex   _clockMutex;    ///< Guards @ref _clock.
                 FrameSync       _sync;
 
                 // Pull-thread state.
                 std::thread     _pullThread;
                 Atomic<bool>    _pullRunning;
-
-                // Main-thread render stash.
-                Image::Ptr      _pendingImage;
-                mutable Mutex   _pendingMutex;
-                Atomic<bool>    _renderScheduled;
-
-                // Stats.
-                Atomic<int64_t> _framesPresented;
 };
-
-/**
- * @brief Constructs a FrameSync-based SDL player MediaIO.
- * @ingroup sdl_core
- *
- * Creates an SDLPlayerTask with the supplied widget/audio pointers
- * and adopts it into a newly allocated MediaIO.  The returned MediaIO
- * owns the task; @p video and @p audio remain caller-owned and must
- * outlive the returned MediaIO.
- *
- * @param video         Video widget (may be nullptr).
- * @param audio         Audio output (may be nullptr).
- * @param useAudioClock Prefer the audio device as the timing source.
- * @param parent        Optional parent object.
- * @return A new MediaIO ready to be configured and opened as a writer.
- */
-MediaIO *createSDLPlayer(SDLVideoWidget *video,
-                          SDLAudioOutput *audio,
-                          bool useAudioClock = true,
-                          ObjectBase *parent = nullptr);
 
 PROMEKI_NAMESPACE_END

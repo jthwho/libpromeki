@@ -90,7 +90,7 @@ void TuiSplitter::resizeEvent(TuiResizeEvent *) {
         updateChildGeometry();
 }
 
-void TuiSplitter::keyEvent(KeyEvent *e) {
+void TuiSplitter::keyPressEvent(KeyEvent *e) {
         if(!hasFocus()) return;
         // Let Ctrl-modified keys propagate (e.g. Ctrl+Left/Right for tab switching)
         if(e->isCtrl()) return;

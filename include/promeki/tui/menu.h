@@ -66,7 +66,7 @@ class TuiMenu : public TuiWidget {
 
         protected:
                 void paintEvent(TuiPaintEvent *e) override;
-                void keyEvent(KeyEvent *e) override;
+                void keyPressEvent(KeyEvent *e) override;
 
         private:
                 String                  _title;
@@ -94,7 +94,7 @@ class TuiMenuBar : public TuiWidget {
 
         protected:
                 void paintEvent(TuiPaintEvent *e) override;
-                void keyEvent(KeyEvent *e) override;
+                void keyPressEvent(KeyEvent *e) override;
 
         private:
                 List<TuiMenu *> _menus;

@@ -100,10 +100,12 @@ void FrameSync::setTargetAudioDesc(const AudioDesc &desc) {
         _resampler = nullptr;
 }
 
-void FrameSync::setClock(Clock *clock) {
+void FrameSync::setClock(const Clock::Ptr &clock) {
         Mutex::Locker lock(_mutex);
         _clock = clock;
-        _syntheticClock = dynamic_cast<SyntheticClock *>(clock);
+        _syntheticClock = _clock.isValid()
+                ? dynamic_cast<SyntheticClock *>(_clock.modify())
+                : nullptr;
 }
 
 void FrameSync::setInputQueueCapacity(int capacity) {
@@ -242,6 +244,17 @@ Error FrameSync::pushFrame(const Frame::Ptr &frame) {
                                 _overflowDrops.fetchAndAdd(1);
                                 break;
                         }
+                        // Sticky shutdown shortcut: once EOS has been
+                        // signalled (e.g. by a pending close asking
+                        // us to drain), drop any further writes
+                        // immediately so the strand can move on to
+                        // CmdClose instead of queueing behind a
+                        // now-doomed pushFrame.  Without this,
+                        // @c interrupt's one-shot flag gets consumed
+                        // by the first waiter and subsequent
+                        // pushFrames block forever on a fresh
+                        // CV.wait that nothing will ever wake.
+                        if(_eos) return Error::EndOfFile;
                         // Block until pullFrame makes room or the
                         // sync is interrupted.
                         _cv.wait(_mutex);
@@ -249,6 +262,7 @@ Error FrameSync::pushFrame(const Frame::Ptr &frame) {
                                 _interrupted = false;
                                 return Error::Interrupt;
                         }
+                        if(_eos) return Error::EndOfFile;
                 }
                 _queue.pushToBack(qf);
 
@@ -319,8 +333,23 @@ void FrameSync::updateSourceAudioRate(const Audio &audio, int64_t audioTsNs) {
                         double alpha = deltaSec / kSourceRateTimeConstantS;
                         if(alpha > 1.0) alpha = 1.0;
                         if(alpha < 0.0) alpha = 0.0;
+                        double before = _sourceAudioRateHz;
                         _sourceAudioRateHz +=
                                 alpha * (measured - _sourceAudioRateHz);
+                        if(std::abs(before - _sourceAudioRateHz) > 100.0) {
+                                promekiDebug("FrameSync[%s]: sourceAudioRate "
+                                             "%.2f -> %.2f (measured=%.2f "
+                                             "deltaSec=%.6f lastSamples=%lld "
+                                             "audioTsNs=%lld lastTsNs=%lld "
+                                             "alpha=%.4f)",
+                                             _name.cstr(), before,
+                                             _sourceAudioRateHz, measured,
+                                             deltaSec,
+                                             (long long)_lastAudioTsSamples,
+                                             (long long)audioTsNs,
+                                             (long long)_lastAudioTsForRateNs,
+                                             alpha);
+                        }
                 }
         }
 
@@ -489,10 +518,18 @@ Audio::Ptr FrameSync::produceAudio(int64_t targetSamples) {
         double sourceRate = (_sourceAudioRateHz > 0.0)
                 ? _sourceAudioRateHz
                 : (double)targetRate;
-        double destRate = (double)targetRate;
-        if(_clock != nullptr) destRate *= _clock->rateRatio();
+        double clockRatio = (_clock != nullptr) ? _clock->rateRatio() : 1.0;
+        double destRate = (double)targetRate * clockRatio;
         double ratio = destRate / sourceRate;
         if(ratio <= 0.0) ratio = 1.0;
+        if(std::abs(ratio - _currentResampleRatio) > 0.01) {
+                promekiDebug("FrameSync[%s]: resample ratio %.4f -> %.4f "
+                             "(clockRatio=%.4f sourceRate=%.2f "
+                             "targetRate=%.2f)",
+                             _name.cstr(),
+                             _currentResampleRatio, ratio,
+                             clockRatio, sourceRate, (double)targetRate);
+        }
         _currentResampleRatio = ratio;
         _resampler->setRatio(ratio);
 
@@ -608,7 +645,11 @@ Result<FrameSync::PullResult> FrameSync::pullFrame(bool blockOnEmpty) {
                                 return Result<PullResult>(
                                         result, Error::TryAgain);
                         }
-                        _originNs = _clock->nowNs();
+                        auto originRes = _clock->nowNs();
+                        if(isError(originRes)) {
+                                return Result<PullResult>(result, error(originRes));
+                        }
+                        _originNs = value(originRes);
                         _started = true;
                         _lastPeriodicLogNs = _originNs;
                         _frameCountAtLastLog = 0;
@@ -626,8 +667,33 @@ Result<FrameSync::PullResult> FrameSync::pullFrame(bool blockOnEmpty) {
                         _deadlineBiasNs;
         }
 
-        // Block on the clock — no-op for SyntheticClock.
-        _clock->sleepUntilNs(deadlineNs);
+        // Block on the clock — no-op for SyntheticClock.  A paused
+        // clock returns @c ClockPaused; we propagate that so the
+        // caller can stop its pull loop rather than blocking here.
+        // If an interrupt is pending at the same time (e.g. the
+        // caller asked us to stop before the clock paused), return
+        // Interrupt so the flag gets consumed here rather than
+        // leaking into the next pullFrame call.
+        {
+                TimeStamp ts{TimeStamp::Clock::time_point(
+                        std::chrono::nanoseconds(deadlineNs))};
+                MediaTimeStamp deadline(ts, _clock->domain());
+                Error sleepErr = _clock->sleepUntil(deadline);
+                if(sleepErr.isError()) {
+                        // If an interrupt is pending at the same time
+                        // (e.g. the caller asked us to stop before the
+                        // clock paused), return Interrupt so the flag
+                        // gets consumed here rather than leaking into
+                        // the next pullFrame call.
+                        Mutex::Locker lock(_mutex);
+                        if(_interrupted) {
+                                _interrupted = false;
+                                return Result<PullResult>(
+                                        result, Error::Interrupt);
+                        }
+                        return Result<PullResult>(result, sleepErr);
+                }
+        }
 
         // Build the output frame.
         Image::Ptr outImage;
@@ -675,7 +741,11 @@ Result<FrameSync::PullResult> FrameSync::pullFrame(bool blockOnEmpty) {
                         _frameSyncRepeatIndex  = 0;
                 }
 
-                actualNs = _clock->nowNs();
+                auto actualRes = _clock->nowNs();
+                if(isError(actualRes)) {
+                        return Result<PullResult>(result, error(actualRes));
+                }
+                actualNs = value(actualRes);
                 _accumulatedErrorNs = actualNs - deadlineNs;
 
                 // LPF the per-pull error into the deadline bias.
@@ -747,6 +817,18 @@ void FrameSync::interrupt() {
         Mutex::Locker lock(_mutex);
         _interrupted = true;
         _cv.wakeAll();
+}
+
+void FrameSync::clearInterrupt() {
+        Mutex::Locker lock(_mutex);
+        _interrupted = false;
+}
+
+void FrameSync::resetSourceRateEstimator() {
+        Mutex::Locker lock(_mutex);
+        _lastAudioTsForRateNs = 0;
+        _lastAudioTsSamples   = 0;
+        _lastVideoTsForRateNs = 0;
 }
 
 // ============================================================================

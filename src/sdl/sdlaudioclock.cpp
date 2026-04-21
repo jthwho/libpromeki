@@ -55,11 +55,30 @@ static constexpr double  kMonitorIntervalSeconds = 1.0;
 static constexpr int64_t kCallbackGapWarnNs      = 200000000LL; // 200 ms
 static constexpr int64_t kBackDateWarnNs         = 100000000LL; // 100 ms
 
-SDLAudioClock::SDLAudioClock(SDLAudioOutput *output,
-                             double bytesPerSec,
-                             const String &deviceName)
-        : _output(output),
-          _bytesPerSec(bytesPerSec)
+namespace {
+
+// Derive float32 bytes-per-second from an AudioDesc.  This is what
+// the SDL stream drains: channels * sampleRate * 4 bytes/float.
+double bytesPerSecFrom(const AudioDesc &desc) {
+        return (double)desc.sampleRate()
+                * (double)desc.channels()
+                * (double)sizeof(float);
+}
+
+}  // namespace
+
+SDLAudioClock::SDLAudioClock(SDLAudioOutput *output)
+        : Clock(output->clockDomain(),
+                Duration(),
+                // @ref onPause freezes raw() at the pause-time value
+                // (_rawAtPause) and resets the interpolation
+                // checkpoint + rate baseline on resume, so the clock
+                // truly stops during pause — the base's paused-offset
+                // delta comes out to zero and the output-time
+                // position survives the pause unchanged.
+                ClockPauseMode::PausesRawStops),
+          _output(output),
+          _bytesPerSec(bytesPerSecFrom(output->desc()))
 {
         // One sample period in nanoseconds.  bytesPerSec includes all
         // channels, so bytes-per-sample (across all channels) divided
@@ -70,32 +89,14 @@ SDLAudioClock::SDLAudioClock(SDLAudioOutput *output,
                 bytesPerSample / _bytesPerSec * 1e9);
         if(_resolutionNs < 1) _resolutionNs = 1;
 
-        // Register (or reuse) a per-device ClockDomain.  PerStream
-        // epoch reflects that two SDL audio clocks run on independent
-        // hardware and cannot be cross-compared.
-        String domainName = "sdl.audio";
-        if(!deviceName.isEmpty()) {
-                domainName += ":";
-                domainName += deviceName;
-        }
-        ClockDomain::ID id = ClockDomain::registerDomain(
-                domainName,
-                "SDL audio device consumption-rate clock",
-                ClockEpoch::PerStream);
-        _domain = ClockDomain(id);
-
-        // Periodic health report.  Serviced from nowNs() so it runs
+        // Periodic health report.  Serviced from raw() so it runs
         // on the clock's own thread — no scheduler, no locks.  Fires
         // its first tick one monitor interval after the clock's
-        // first nowNs() call (PeriodicCallback starts its own clock
-        // on first service()), which keeps the warm-up transient
-        // out of the initial summary.
+        // first read (PeriodicCallback starts its own clock on first
+        // service()), which keeps the warm-up transient out of the
+        // initial summary.
         _monitor.setInterval(kMonitorIntervalSeconds);
         _monitor.setCallback([this]{ reportMonitor(); });
-}
-
-ClockDomain SDLAudioClock::domain() const {
-        return _domain;
 }
 
 int64_t SDLAudioClock::resolutionNs() const {
@@ -117,9 +118,27 @@ ClockJitter SDLAudioClock::jitter() const {
         };
 }
 
-int64_t SDLAudioClock::nowNs() const {
-        int64_t pushed = _output->totalBytesPushed();
-        int64_t queued = static_cast<int64_t>(_output->queuedBytes());
+Result<int64_t> SDLAudioClock::raw() const {
+        const SDLAudioOutput *out = _output.data();
+        if(out == nullptr) return makeError<int64_t>(Error::ObjectGone);
+
+        // Freeze during device pause.  Acquire-load pairs with the
+        // release-store in onPause so any checkpoint / baseline
+        // state mutated by the resume path is visible before the
+        // flag drops back to false.
+        if(_devicePaused.load(std::memory_order_acquire)) {
+                return makeResult<int64_t>(
+                        _rawAtPause.load(std::memory_order_relaxed));
+        }
+        return makeResult<int64_t>(computeRawNs());
+}
+
+int64_t SDLAudioClock::computeRawNs() const {
+        const SDLAudioOutput *out = _output.data();
+        if(out == nullptr) return _lastReportedNs;
+
+        int64_t pushed = out->totalBytesPushed();
+        int64_t queued = static_cast<int64_t>(out->queuedBytes());
         int64_t consumed = pushed - queued;
         if(consumed < 0) consumed = 0;
 
@@ -206,40 +225,26 @@ int64_t SDLAudioClock::nowNs() const {
                 _checkpointConsumedNs = newBaseNs;
 
                 if(newBaseNs >= interpolated) {
-                        // Reality has caught up with (or overtaken)
-                        // interpolation — snap the wall anchor to
-                        // "now" and report the new, larger value.
+                        int64_t jump = newBaseNs - interpolated;
                         _checkpointWallNs = wallNs;
                         _checkpointRate   = liveRate;
                         reported = newBaseNs;
                         ++_stats.forwardSnaps;
+                        if(jump > 50000000LL) {
+                                // > 50 ms forward snap — steady state is
+                                // on the order of one callback period, so
+                                // anything this large usually signals a
+                                // scheduler stall or device glitch.
+                                promekiWarn("SDLAudioClock[%s]: forward snap "
+                                            "jump=%lld ns (interpolated=%lld "
+                                            "newBaseNs=%lld)",
+                                            domain().name().cstr(),
+                                            (long long)jump,
+                                            (long long)interpolated,
+                                            (long long)newBaseNs);
+                        }
                 } else {
-                        // The raw position derived from @c consumed
-                        // is behind where interpolation has already
-                        // driven the reported time.  Snapping to
-                        // @c newBaseNs would walk the clock backward,
-                        // which downstream consumers are not allowed
-                        // to see.  Back-date the wall anchor instead
-                        // so the reported value stays at
-                        // @c interpolated now and continues forward
-                        // from there at @c rate.  The rate filter
-                        // converges toward the true consumption rate
-                        // over time, so the induced lead is
-                        // self-correcting rather than runaway.
                         int64_t deficit = interpolated - newBaseNs;
-                        // Adopt the live rate for the new
-                        // checkpoint and compute the back-date
-                        // offset against *that* rate.  Ceil (not
-                        // floor/truncate) — the next interpolation
-                        // computes @c newBaseNs + (int64_t)
-                        // (wallDelta * _checkpointRate); with a
-                        // floored offset, @c wallDelta*rate
-                        // typically lands one ns below @c deficit,
-                        // dropping the first post-resync value
-                        // one ns and tripping the monotonicity
-                        // clamp.  Rounding up guarantees the
-                        // interpolation reaches at least
-                        // @c interpolated on the next read.
                         _checkpointRate   = liveRate;
                         int64_t offset    = static_cast<int64_t>(
                                 std::ceil((double)deficit / _checkpointRate));
@@ -248,6 +253,20 @@ int64_t SDLAudioClock::nowNs() const {
                         ++_stats.backDates;
                         if(deficit > _stats.maxBackDateNs) {
                                 _stats.maxBackDateNs = deficit;
+                        }
+                        if(deficit > 50000000LL) {
+                                // > 50 ms back-date — steady state is
+                                // one callback period (~20 ms) so an
+                                // outlier this large usually means SDL
+                                // had a long callback stall.
+                                promekiWarn("SDLAudioClock[%s]: back-date "
+                                            "deficit=%lld ns (interpolated=%lld "
+                                            "newBaseNs=%lld reported=%lld)",
+                                            domain().name().cstr(),
+                                            (long long)deficit,
+                                            (long long)interpolated,
+                                            (long long)newBaseNs,
+                                            (long long)reported);
                         }
                 }
         } else {
@@ -305,17 +324,22 @@ void SDLAudioClock::reportMonitor() const {
         const int64_t dBack     = now.backDates          - prev.backDates;
         const int64_t dClamped  = now.clampedRegressions - prev.clampedRegressions;
 
-        // Contract-level breach: the back-date arithmetic rounded
-        // into a regression and only the final clamp saved us.
-        // Monotonicity is still intact for callers, but if this
-        // fires the back-date math has a bug worth investigating.
+        // Clamp regressions are expected in the catch-up window
+        // right after a pause/resume: @ref onPause resets the
+        // checkpoint to the true byte-derived value, which is
+        // below the pre-pause wall-interpolated @c _lastReportedNs
+        // until interpolation catches up (~one callback period).
+        // Every raw() during that window short-circuits through
+        // the clamp.  Only the contract-breach case — clamp firing
+        // during steady state, which would indicate a back-date
+        // arithmetic bug — deserves an error log.  Log at debug
+        // otherwise.
         if(dClamped > 0) {
-                promekiErr("SDLAudioClock[%s]: %lld clamp-level regression(s) "
-                           "in the last %.1f s — back-date math rounded into "
-                           "a backward step (clamp held monotonicity)",
-                           _domain.name().cstr(),
-                           (long long)dClamped,
-                           kMonitorIntervalSeconds);
+                promekiDebug("SDLAudioClock[%s]: %lld clamp-level "
+                             "regression(s) in the last %.1f s",
+                             domain().name().cstr(),
+                             (long long)dClamped,
+                             kMonitorIntervalSeconds);
         }
 
         // The threshold alerts below only fire once the rate
@@ -337,7 +361,7 @@ void SDLAudioClock::reportMonitor() const {
                 promekiErr("SDLAudioClock[%s]: longest callback gap is now "
                            "%lld ms (warn threshold %lld ms) — audio device "
                            "may be starving",
-                           _domain.name().cstr(),
+                           domain().name().cstr(),
                            (long long)(now.maxCallbackGapNs / 1000000LL),
                            (long long)(kCallbackGapWarnNs    / 1000000LL));
         }
@@ -351,7 +375,7 @@ void SDLAudioClock::reportMonitor() const {
                 promekiErr("SDLAudioClock[%s]: largest back-date is now "
                            "%lld ms (warn threshold %lld ms) — rate filter "
                            "may be diverging",
-                           _domain.name().cstr(),
+                           domain().name().cstr(),
                            (long long)(now.maxBackDateNs / 1000000LL),
                            (long long)(kBackDateWarnNs   / 1000000LL));
         }
@@ -359,7 +383,7 @@ void SDLAudioClock::reportMonitor() const {
         promekiDebug("[%s] upd=%lld rsy=%lld fwd=%lld bck=%lld clmp=%lld "
                      "mxStep=%lldns mxBck=%lldns mxGap=%lldns "
                      "rate=%.6f pub=%.6f stbl=%d",
-                     _domain.name().cstr(),
+                     domain().name().cstr(),
                      (long long)dUpdates, (long long)dResyncs,
                      (long long)dFwd,     (long long)dBack,
                      (long long)dClamped,
@@ -373,9 +397,11 @@ void SDLAudioClock::reportMonitor() const {
         _monitorSnapshot = now;
 }
 
-void SDLAudioClock::sleepUntilNs(int64_t targetNs) {
-        int64_t current = nowNs();
-        if(current >= targetNs) return;
+Error SDLAudioClock::sleepUntilNs(int64_t targetNs) const {
+        auto currentRes = raw();
+        if(isError(currentRes)) return error(currentRes);
+        int64_t current = value(currentRes);
+        if(current >= targetNs) return {};
 
         // Convert clock-time-to-target into wall-time-to-target using
         // the filtered rate estimate.  The old 90%-then-poll heuristic
@@ -398,10 +424,110 @@ void SDLAudioClock::sleepUntilNs(int64_t targetNs) {
         }
 
         // Tight final approach.  100 us poll cadence — kernel sleep
-        // latency dominates below that.
-        while(nowNs() < targetNs) {
+        // latency dominates below that.  Bail out promptly with
+        // @c ClockPaused if pause happens mid-sleep so the caller can
+        // retry after the resume, giving interrupts a chance to run
+        // and preventing a paced loop from waking stale.
+        while(true) {
+                if(isPaused()) return Error::ClockPaused;
+                auto r = raw();
+                if(isError(r)) return error(r);
+                if(value(r) >= targetNs) break;
                 std::this_thread::sleep_for(std::chrono::microseconds(100));
         }
+        return {};
+}
+
+Error SDLAudioClock::onPause(bool paused) {
+        SDLAudioOutput *out = _output.data();
+        if(out == nullptr) return Error::ObjectGone;
+
+        if(paused) {
+                // Snapshot where raw() currently is and freeze it.
+                // Setting @c _devicePaused happens BEFORE the SDL
+                // pause call so there's no window where raw() sees
+                // the device stopped but still runs its wall-time
+                // interpolation.
+                int64_t snapshot = computeRawNs();
+                _rawAtPause.store(snapshot, std::memory_order_relaxed);
+                _devicePaused.store(true, std::memory_order_release);
+
+                Error e = out->setPaused(true);
+                if(e.isError()) {
+                        _devicePaused.store(false,
+                                std::memory_order_release);
+                        return e;
+                }
+                return {};
+        }
+
+        // Resume.  Unpause the SDL device first so the consumed-byte
+        // counter starts advancing again, then re-anchor all the
+        // checkpoint / rate-estimator state to "now" before dropping
+        // the paused flag — keeping the pause snapshot as the
+        // authoritative position so the first post-resume raw() call
+        // reports exactly @c _rawAtPause, matching the @c
+        // ClockPauseMode::PausesRawStops contract the base class
+        // uses to compute a zero pause-offset delta.
+        Error e = out->setPaused(false);
+        if(e.isError()) return e;
+
+        const int64_t pauseValue = _rawAtPause.load(
+                std::memory_order_relaxed);
+        const int64_t wallNs = TimeStamp::now().nanoseconds();
+        int64_t pushed = out->totalBytesPushed();
+        int64_t queued = static_cast<int64_t>(out->queuedBytes());
+        int64_t consumed = pushed - queued;
+        if(consumed < 0) consumed = 0;
+
+        // Full checkpoint reset — anchor at the true byte-derived
+        // value with no interpolation lead carried across pause.
+        // Preserving the pre-pause lead sounds cleaner but any first-
+        // post-resume callback that lands later than one callback
+        // period after resume (common — SDL warms up for a few ms
+        // after @c SDL_ResumeAudioStreamDevice) still adds latency
+        // that the back-date machinery absorbs as additional lead,
+        // and the deficit ratchets up over several pause cycles.
+        //
+        // With this reset, the monotonic clamp (@c _lastReportedNs
+        // kept at @c pauseValue) holds reported time at pauseValue
+        // for the ~one-callback-period it takes interpolation to
+        // reach byteDerived + cb_period.  That's the same perceived
+        // "stuck" window as the steady-state interpolation lead —
+        // just located right after resume instead of distributed
+        // across the stream — so the audible effect is nil while
+        // the back-date deficits stay bounded at their natural
+        // steady-state size.
+        const int64_t byteDerivedNs = static_cast<int64_t>(
+                (double)consumed / _bytesPerSec * 1e9);
+
+        _checkpointConsumed   = consumed;
+        _checkpointConsumedNs = byteDerivedNs;
+        _checkpointWallNs     = wallNs;
+        _checkpointRate       = 1.0;
+        _lastCallbackWallNs   = wallNs;
+        if(pauseValue > _lastReportedNs) _lastReportedNs = pauseValue;
+
+        // Rate-estimator: invalidate the baseline so the next
+        // update() call anchors at the current (wallNs, consumed)
+        // pair instead of the stale pre-pause pair, which would
+        // span the pause interval and pull the filtered ratio
+        // toward zero.  Also drop @c _rateEstimateStable so the
+        // published ratio (what FrameSync's audio resampler uses)
+        // stays pinned at its pre-pause value until the
+        // measurement window has re-accumulated — otherwise the
+        // first couple of post-resume SDL callbacks produce a
+        // spuriously low instant ratio (barely any bytes
+        // consumed yet over several milliseconds of wall time),
+        // which drags the published ratio down and audibly
+        // lowers the pitch until it recovers.
+        _rateBaselineValid   = false;
+        _rateEstimateStable  = false;
+        _prevRateStable      = false;
+        _lastRateUpdateWallNs = wallNs;
+
+        _devicePaused.store(false, std::memory_order_release);
+        return {};
 }
 
 double SDLAudioClock::rateRatio() const {
@@ -409,7 +535,18 @@ double SDLAudioClock::rateRatio() const {
         // toward _filteredRateRatio inside updateRateEstimate once
         // the measurement window is stable.  Consumers always see
         // 1.0 until the slow ramp begins.
-        return _publishedRateRatio;
+        double v = _publishedRateRatio;
+        static thread_local double lastReported = 1.0;
+        if(std::abs(v - lastReported) > 0.005) {
+                promekiDebug("SDLAudioClock[%s]::rateRatio published=%.4f "
+                             "filtered=%.4f stable=%d baselineValid=%d",
+                             domain().name().cstr(),
+                             v, _filteredRateRatio,
+                             (int)_rateEstimateStable,
+                             (int)_rateBaselineValid);
+                lastReported = v;
+        }
+        return v;
 }
 
 void SDLAudioClock::updateRateEstimate() const {
@@ -418,9 +555,11 @@ void SDLAudioClock::updateRateEstimate() const {
         // for).  "Measured" = actual bytes consumed over wall-clock
         // time.  We low-pass filter the per-sample ratio so per-
         // callback drain bursts don't throw off consumers.
+        const SDLAudioOutput *out = _output.data();
+        if(out == nullptr) return;
         int64_t wallNs  = TimeStamp::now().nanoseconds();
-        int64_t pushed  = _output->totalBytesPushed();
-        int64_t queued  = static_cast<int64_t>(_output->queuedBytes());
+        int64_t pushed  = out->totalBytesPushed();
+        int64_t queued  = static_cast<int64_t>(out->queuedBytes());
         int64_t consumed = pushed - queued;
         if(consumed < 0) consumed = 0;
 
@@ -464,6 +603,15 @@ void SDLAudioClock::updateRateEstimate() const {
         // underrun would leak into a consumer's drift correction
         // and trigger the very feedback loop we're trying to avoid.
         if(totalWallNs >= kRateMinMeasurementWindowNs) {
+                if(!_rateEstimateStable) {
+                        promekiDebug("SDLAudioClock[%s]: rate estimate stable "
+                                     "(filtered=%.4f published=%.4f "
+                                     "totalWallNs=%lld)",
+                                     domain().name().cstr(),
+                                     _filteredRateRatio,
+                                     _publishedRateRatio,
+                                     (long long)totalWallNs);
+                }
                 _rateEstimateStable = true;
         }
 

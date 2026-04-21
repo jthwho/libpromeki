@@ -38,6 +38,15 @@ MediaTimeStamp mts(int64_t ns, const ClockDomain &domain) {
         return MediaTimeStamp(ts, domain);
 }
 
+// Wrap a stack-allocated Clock in a Clock::Ptr without transferring
+// ownership, by marking its refcount immortal.  Lets existing tests
+// keep local SyntheticClock / MockClock instances addressable while
+// adapting to the Ptr-based FrameSync::setClock signature.
+Clock::Ptr unownedClockPtr(Clock *c) {
+        c->_promeki_refct.setImmortal();
+        return Clock::Ptr::takeOwnership(c);
+}
+
 // Read the nanosecond value from a MediaTimeStamp.
 int64_t mtsNs(const MediaTimeStamp &m) {
         return m.timeStamp().nanoseconds() + m.offset().nanoseconds();
@@ -116,7 +125,7 @@ TEST_CASE("FrameSync: pullFrame without clock returns error") {
 TEST_CASE("FrameSync: pullFrame without frame rate returns error") {
         FrameSync fs;
         SyntheticClock clk(FrameRate(FrameRate::FPS_60));
-        fs.setClock(&clk);
+        fs.setClock(unownedClockPtr(&clk));
         fs.reset();
         auto r = fs.pullFrame();
         CHECK(r.second().isError());
@@ -131,7 +140,7 @@ TEST_CASE("FrameSync: steady-state video-only produces one output per input") {
         SyntheticClock clk(fps);
         FrameSync fs(String("steady"));
         fs.setTargetFrameRate(fps);
-        fs.setClock(&clk);
+        fs.setClock(unownedClockPtr(&clk));
         fs.reset();
 
         for(int i = 0; i < 5; i++) {
@@ -163,7 +172,7 @@ TEST_CASE("FrameSync: 24->60 upsample repeats video frames") {
         SyntheticClock clk(tgt);
         FrameSync fs(String("up"));
         fs.setTargetFrameRate(tgt);
-        fs.setClock(&clk);
+        fs.setClock(unownedClockPtr(&clk));
         fs.reset();
 
         // Push 2 source frames — enough to get through 6 target pulls.
@@ -199,7 +208,7 @@ TEST_CASE("FrameSync: 60->24 downsample drops intermediate video frames") {
         SyntheticClock clk(tgt);
         FrameSync fs(String("down"));
         fs.setTargetFrameRate(tgt);
-        fs.setClock(&clk);
+        fs.setClock(unownedClockPtr(&clk));
         fs.reset();
 
         // Push 6 source frames to fit our 8-deep queue; pull 3 target
@@ -229,7 +238,7 @@ TEST_CASE("FrameSync: first pull blocks until a frame is pushed") {
         SyntheticClock clk(fps);
         FrameSync fs;
         fs.setTargetFrameRate(fps);
-        fs.setClock(&clk);
+        fs.setClock(unownedClockPtr(&clk));
         fs.reset();
 
         // Default blocking pull waits on the CV until a frame
@@ -250,7 +259,7 @@ TEST_CASE("FrameSync: non-blocking first pull on empty queue returns TryAgain") 
         SyntheticClock clk(fps);
         FrameSync fs;
         fs.setTargetFrameRate(fps);
-        fs.setClock(&clk);
+        fs.setClock(unownedClockPtr(&clk));
         fs.reset();
 
         // Callers that share a strand with the producer (MediaIO)
@@ -266,7 +275,7 @@ TEST_CASE("FrameSync: non-blocking first pull after EOS reports EOF") {
         SyntheticClock clk(fps);
         FrameSync fs;
         fs.setTargetFrameRate(fps);
-        fs.setClock(&clk);
+        fs.setClock(unownedClockPtr(&clk));
         fs.reset();
 
         // EOS with an empty queue has to surface as EndOfFile so
@@ -283,7 +292,7 @@ TEST_CASE("FrameSync: first pull after a push anchors cleanly") {
         SyntheticClock clk(fps);
         FrameSync fs;
         fs.setTargetFrameRate(fps);
-        fs.setClock(&clk);
+        fs.setClock(unownedClockPtr(&clk));
         fs.reset();
 
         fs.pushFrame(makeVideoOnlyFrame(srcFrameNs(fps, 0)));
@@ -299,7 +308,7 @@ TEST_CASE("FrameSync: drained queue repeats the last held frame") {
         SyntheticClock clk(fps);
         FrameSync fs;
         fs.setTargetFrameRate(fps);
-        fs.setClock(&clk);
+        fs.setClock(unownedClockPtr(&clk));
         fs.reset();
 
         fs.pushFrame(makeVideoOnlyFrame(srcFrameNs(fps, 0)));
@@ -320,7 +329,7 @@ TEST_CASE("FrameSync: steady-state stamps FrameSyncDrop=0 and FrameSyncRepeat=0"
         SyntheticClock clk(fps);
         FrameSync fs(String("meta-steady"));
         fs.setTargetFrameRate(fps);
-        fs.setClock(&clk);
+        fs.setClock(unownedClockPtr(&clk));
         fs.reset();
 
         for(int i = 0; i < 4; i++) {
@@ -344,7 +353,7 @@ TEST_CASE("FrameSync: upsample increments FrameSyncRepeat on held repeats") {
         SyntheticClock clk(tgt);
         FrameSync fs(String("meta-up"));
         fs.setTargetFrameRate(tgt);
-        fs.setClock(&clk);
+        fs.setClock(unownedClockPtr(&clk));
         fs.reset();
 
         for(int i = 0; i < 3; i++) {
@@ -376,7 +385,7 @@ TEST_CASE("FrameSync: downsample reports FrameSyncDrop on the next fresh emit") 
         SyntheticClock clk(tgt);
         FrameSync fs(String("meta-down"));
         fs.setTargetFrameRate(tgt);
-        fs.setClock(&clk);
+        fs.setClock(unownedClockPtr(&clk));
         fs.setInputQueueCapacity(16);
         fs.reset();
 
@@ -410,7 +419,7 @@ TEST_CASE("FrameSync: empty-queue repeat stamps FrameSyncRepeat and zero drop") 
         SyntheticClock clk(fps);
         FrameSync fs(String("meta-drained"));
         fs.setTargetFrameRate(fps);
-        fs.setClock(&clk);
+        fs.setClock(unownedClockPtr(&clk));
         fs.reset();
 
         fs.pushFrame(makeVideoOnlyFrame(srcFrameNs(fps, 0)));
@@ -439,7 +448,7 @@ TEST_CASE("FrameSync: output MediaTimeStamp is in the clock's domain") {
         SyntheticClock clk(fps);
         FrameSync fs;
         fs.setTargetFrameRate(fps);
-        fs.setClock(&clk);
+        fs.setClock(unownedClockPtr(&clk));
         fs.reset();
 
         fs.pushFrame(makeVideoOnlyFrame(srcFrameNs(fps, 0)));
@@ -468,7 +477,7 @@ TEST_CASE("FrameSync: SyntheticClock advances one frame per pull") {
         SyntheticClock clk(fps);
         FrameSync fs;
         fs.setTargetFrameRate(fps);
-        fs.setClock(&clk);
+        fs.setClock(unownedClockPtr(&clk));
         fs.reset();
 
         CHECK(clk.currentFrame() == 0);
@@ -494,7 +503,7 @@ TEST_CASE("FrameSync: Block policy does not drop under capacity pressure") {
         SyntheticClock clk(fps);
         FrameSync fs;
         fs.setTargetFrameRate(fps);
-        fs.setClock(&clk);
+        fs.setClock(unownedClockPtr(&clk));
         fs.setInputQueueCapacity(4);
         fs.setInputOverflowPolicy(
                 FrameSync::InputOverflowPolicy::Block);
@@ -527,7 +536,7 @@ TEST_CASE("FrameSync: Block policy push is interruptible") {
         SyntheticClock clk(fps);
         FrameSync fs;
         fs.setTargetFrameRate(fps);
-        fs.setClock(&clk);
+        fs.setClock(unownedClockPtr(&clk));
         fs.setInputQueueCapacity(2);
         fs.setInputOverflowPolicy(
                 FrameSync::InputOverflowPolicy::Block);
@@ -552,7 +561,7 @@ TEST_CASE("FrameSync: queue overflow drops oldest") {
         SyntheticClock clk(fps);
         FrameSync fs;
         fs.setTargetFrameRate(fps);
-        fs.setClock(&clk);
+        fs.setClock(unownedClockPtr(&clk));
         fs.setInputQueueCapacity(4);
         fs.reset();
 
@@ -575,7 +584,7 @@ TEST_CASE("FrameSync: audio is produced at target sample count per pull") {
         FrameSync fs(String("audio"));
         fs.setTargetFrameRate(fps);
         fs.setTargetAudioDesc(targetAudio);
-        fs.setClock(&clk);
+        fs.setClock(unownedClockPtr(&clk));
         fs.reset();
 
         // Push frames with exactly 800 samples each (48000 / 60).
@@ -606,7 +615,7 @@ TEST_CASE("FrameSync: video-only source produces no output audio") {
         FrameSync fs;
         fs.setTargetFrameRate(fps);
         fs.setTargetAudioDesc(targetAudio);
-        fs.setClock(&clk);
+        fs.setClock(unownedClockPtr(&clk));
         fs.reset();
 
         for(int i = 0; i < 3; i++) {
@@ -638,7 +647,7 @@ TEST_CASE("FrameSync: reset clears stats and queue") {
         SyntheticClock clk(fps);
         FrameSync fs;
         fs.setTargetFrameRate(fps);
-        fs.setClock(&clk);
+        fs.setClock(unownedClockPtr(&clk));
         fs.reset();
 
         for(int i = 0; i < 3; i++) {

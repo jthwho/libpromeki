@@ -6,6 +6,7 @@
  */
 
 #include <promeki/sdl/sdlplayer.h>
+#include <promeki/sdl/sdlplayerwidget.h>
 #include <promeki/sdl/sdlsubsystem.h>
 #include <promeki/sdl/sdlaudiooutput.h>
 #include <promeki/sdl/sdlvideowidget.h>
@@ -19,7 +20,6 @@
 #include <promeki/mediaiodescription.h>
 #include <promeki/logger.h>
 
-#include <SDL3/SDL.h>
 #include <cstring>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -33,21 +33,15 @@ PROMEKI_DEBUG(SDLPlayer)
 // startup-underrun feedback loop.
 static constexpr int kAudioPrerollFrames = 3;
 
-uint32_t SDLPlayerTask::userEventType() {
-        static uint32_t type = SDL_RegisterEvents(1);
-        return type;
-}
-
-SDLPlayerTask::SDLPlayerTask(SDLVideoWidget *video, SDLAudioOutput *audio,
+SDLPlayerTask::SDLPlayerTask(SDLPlayerWidget *widget, SDLAudioOutput *audio,
                                bool useAudioClock)
-        : _videoWidget(video),
+        : _widget(widget),
           _audioOutput(audio),
           _useAudioClock(useAudioClock)
 {
         _sync.setName(String("SDLPlayer"));
         _sync.setInputOverflowPolicy(
                 FrameSync::InputOverflowPolicy::Block);
-        _renderScheduled.setValue(false);
         _pullRunning.setValue(false);
 }
 
@@ -58,7 +52,119 @@ SDLPlayerTask::~SDLPlayerTask() {
                 _sync.interrupt();
                 _pullThread.join();
         }
-        delete _audioClock;
+}
+
+void SDLPlayerTask::pause() {
+        Mutex::Locker lock(_clockMutex);
+        if(_clock.isNull() || !_clock->canPause()) return;
+        if(_clock->isPaused()) return;
+
+        Error err = _clock.modify()->setPause(true);
+        if(err.isError()) {
+                promekiWarn("SDLPlayerTask: setPause(true) failed: %s",
+                            err.name().cstr());
+                return;
+        }
+        stopPullThread();
+
+        // The next push that unblocks on resume will carry a
+        // timestamp relative to the last pre-pause push's timestamp;
+        // upstream stages may have ticked MediaTimeStamps forward
+        // during the paused interval even though back-pressure
+        // swallowed the sample data.  Drop the estimator's last
+        // sample so the first post-resume push just re-anchors the
+        // baseline without poisoning the audio resample ratio.
+        _sync.resetSourceRateEstimator();
+}
+
+void SDLPlayerTask::resume() {
+        Mutex::Locker lock(_clockMutex);
+        if(_clock.isNull() || !_clock->canPause()) return;
+        if(!_clock->isPaused()) return;
+
+        Error err = _clock.modify()->setPause(false);
+        if(err.isError()) {
+                promekiWarn("SDLPlayerTask: setPause(false) failed: %s",
+                            err.name().cstr());
+                return;
+        }
+        startPullThread();
+}
+
+void SDLPlayerTask::togglePause() {
+        bool paused = false;
+        {
+                Mutex::Locker lock(_clockMutex);
+                if(_clock.isValid() && _clock->canPause()) {
+                        paused = _clock->isPaused();
+                }
+        }
+        if(paused) resume();
+        else       pause();
+}
+
+bool SDLPlayerTask::isPaused() const {
+        Mutex::Locker lock(_clockMutex);
+        if(_clock.isNull()) return false;
+        return _clock->isPaused();
+}
+
+void SDLPlayerTask::startPullThread() {
+        // Caller holds _clockMutex.  Join any leftover std::thread
+        // handle first — a paused pull loop exits on its own but
+        // leaves the handle joinable; reassigning onto a joinable
+        // std::thread would std::terminate().
+        if(_pullThread.joinable()) _pullThread.join();
+        // A prior @ref stopPullThread on this task may have left
+        // @c FrameSync::_interrupted set — the pull thread can exit
+        // through the ClockPaused / _pullRunning check without
+        // consuming the flag.  Clear it so the fresh pull thread
+        // isn't killed by a stale interrupt on its first pullFrame.
+        _sync.clearInterrupt();
+        _pullRunning.setValue(true);
+        _pullThread = std::thread([this]{ pullLoop(); });
+}
+
+void SDLPlayerTask::cancelBlockingWork() {
+        promekiDebug("SDLPlayerTask::cancelBlockingWork");
+        // Called from outside the strand when close is trying to
+        // unwedge a deadlock — typically the strand is parked in
+        // FrameSync::pushFrame waiting for queue room while the
+        // CmdClose we want to run is queued behind it, and the
+        // strand may have several more queued CmdWrites ahead of
+        // CmdClose that will each re-enter pushFrame once the head
+        // one returns.  Pushing EOS is sticky: any pushFrame that
+        // would otherwise wait for queue room sees it on entry (or
+        // on wake from a prior interrupt) and returns
+        // @c Error::EndOfFile immediately, so the strand drains all
+        // remaining writes to EOF and reaches CmdClose without
+        // further intervention.  Interrupt wakes the current waiter.
+        _sync.pushEndOfStream();
+        _sync.interrupt();
+}
+
+void SDLPlayerTask::stopPullThread() {
+        // Caller holds _clockMutex.  We deliberately do NOT call
+        // @c FrameSync::interrupt here — that would also wake any
+        // strand thread parked in @c pushFrame waiting for queue
+        // room, causing it to return @c Error::Interrupt and drop
+        // the in-flight frame.  Drop a frame on every pause and
+        // you get an audible glitch when playback catches up to
+        // where the missing frame would have landed.
+        //
+        // In normal playback the pull thread is always in
+        // @ref Clock::sleepUntil (on the SDL audio clock), which
+        // polls @c isPaused and returns @c ClockPaused within
+        // ~100 us of @c setPause(true).  pullLoop then breaks out
+        // and the thread exits on its own.  If the pull thread is
+        // between pullFrame calls, it sees @c _pullRunning=false
+        // at the top of the loop and exits.
+        //
+        // Close needs a stronger signal (the clock isn't paused
+        // during close) — close calls @c _sync.interrupt explicitly
+        // before invoking this helper.
+        _pullRunning.setValue(false);
+        if(_pullThread.joinable()) _pullThread.join();
 }
 
 Error SDLPlayerTask::executeCmd(MediaIOCommandOpen &cmd) {
@@ -82,9 +188,10 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandOpen &cmd) {
 
         _audioConfigured = false;
         _audioDesc = AudioDesc();
-        delete _audioClock;
-        _audioClock = nullptr;
-        _clock = nullptr;
+        {
+                Mutex::Locker lock(_clockMutex);
+                _clock.clear();
+        }
 
         if(_audioOutput != nullptr && adesc.isValid()) {
                 if(!_audioOutput->configure(adesc)) {
@@ -120,23 +227,22 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandOpen &cmd) {
                 }
 
                 if(_useAudioClock) {
-                        double audioBytesPerSec =
-                                (double)adesc.sampleRate() *
-                                (double)adesc.channels() *
-                                (double)sizeof(float);
-                        _audioClock = new SDLAudioClock(
-                                _audioOutput, audioBytesPerSec);
-                        _clock = _audioClock;
+                        Mutex::Locker lock(_clockMutex);
+                        _clock = Clock::Ptr::takeOwnership(
+                                _audioOutput->createClock());
                 }
         }
 
         // Fall back to wall clock when the audio clock isn't in play.
-        if(_clock == nullptr) {
-                static WallClock wallClock;
-                _clock = &wallClock;
-                if(_useAudioClock) {
-                        promekiInfo("SDLPlayerTask: audio clock requested but "
-                                    "no audio available; using wall clock");
+        {
+                Mutex::Locker lock(_clockMutex);
+                if(_clock.isNull()) {
+                        _clock = Clock::Ptr::takeOwnership(new WallClock());
+                        if(_useAudioClock) {
+                                promekiInfo("SDLPlayerTask: audio clock "
+                                            "requested but no audio available; "
+                                            "using wall clock");
+                        }
                 }
         }
 
@@ -145,8 +251,10 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandOpen &cmd) {
         _sync.setClock(_clock);
         _sync.reset();
 
-        _pullRunning.setValue(true);
-        _pullThread = std::thread([this]{ pullLoop(); });
+        {
+                Mutex::Locker lock(_clockMutex);
+                startPullThread();
+        }
 
         cmd.mediaDesc = mdesc;
         cmd.audioDesc = _audioDesc;
@@ -167,28 +275,38 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandOpen &cmd) {
 
 Error SDLPlayerTask::executeCmd(MediaIOCommandClose &cmd) {
         (void)cmd;
+        promekiDebug("SDLPlayerTask::executeCmd(Close) ENTER");
 
-        _pullRunning.setValue(false);
-        _sync.pushEndOfStream();
-        _sync.interrupt();
-        if(_pullThread.joinable()) _pullThread.join();
+        // If playback was paused, the pull thread has already
+        // exited — unpause so the clock's internal state doesn't
+        // persist into the next open, then tear down the thread
+        // (a no-op when already joined).  Close calls
+        // @c _sync.interrupt explicitly here (unlike pause) — we
+        // need to pry the strand's pushFrame out of any queue-full
+        // backpressure wait so Close itself doesn't deadlock, and
+        // losing the in-flight frame is fine when we're shutting
+        // down anyway.
+        {
+                Mutex::Locker lock(_clockMutex);
+                if(_clock.isValid() && _clock->isPaused()) {
+                        (void)_clock.modify()->setPause(false);
+                }
+                _sync.pushEndOfStream();
+                _sync.interrupt();
+                stopPullThread();
+        }
 
         if(_audioConfigured && _audioOutput != nullptr) {
                 _audioOutput->close();
         }
         _audioConfigured = false;
-        _sync.setClock(nullptr);
-        _clock = nullptr;
-        delete _audioClock;
-        _audioClock = nullptr;
+        _sync.setClock(Clock::Ptr());
+        {
+                Mutex::Locker lock(_clockMutex);
+                _clock.clear();
+        }
         _audioDesc = AudioDesc();
         _frameRate = FrameRate();
-
-        {
-                Mutex::Locker lock(_pendingMutex);
-                _pendingImage = Image::Ptr();
-        }
-        _renderScheduled.setValue(false);
         return Error::Ok;
 }
 
@@ -233,7 +351,11 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandWrite &cmd) {
         Error err = _sync.pushFrame(outFrame);
         stampWorkEnd();
 
-        if(err.isError() && err != Error::Interrupt) {
+        // Interrupt / EndOfFile come through during close and don't
+        // indicate a real problem — the close path's cancelBlockingWork
+        // intentionally unwinds any pending pushFrame via both signals.
+        if(err.isError() &&
+           err != Error::Interrupt && err != Error::EndOfFile) {
                 promekiWarn("SDLPlayerTask: pushFrame returned %s",
                             err.name().cstr());
         }
@@ -247,9 +369,11 @@ void SDLPlayerTask::pullLoop() {
         while(_pullRunning.value()) {
                 auto result = _sync.pullFrame();
                 if(result.second().isError()) {
-                        // Interrupt on shutdown is expected; anything
-                        // else is a real failure.
-                        if(result.second() != Error::Interrupt) {
+                        // Interrupt on shutdown and ClockPaused on
+                        // @ref pause are expected clean exits; any
+                        // other error is a real failure.
+                        if(result.second() != Error::Interrupt &&
+                           result.second() != Error::ClockPaused) {
                                 promekiWarn("SDLPlayerTask: pullFrame: %s",
                                             result.second().name().cstr());
                         }
@@ -258,21 +382,11 @@ void SDLPlayerTask::pullLoop() {
                 const FrameSync::PullResult &pr = result.first();
                 if(!pr.frame.isValid()) continue;
 
-                // Video → stash for the main thread.
+                // Video → hand off to the widget for main-thread paint.
                 if(!pr.frame->imageList().isEmpty()) {
                         Image::Ptr img = pr.frame->imageList()[0];
-                        if(img.isValid()) {
-                                Mutex::Locker lock(_pendingMutex);
-                                if(_pendingImage.isValid()) {
-                                        // Previous image hasn't been
-                                        // picked up — this replacement
-                                        // is a drop at the display stage.
-                                        noteFrameDropped();
-                                }
-                                _pendingImage = img;
-                        }
-                        if(!_renderScheduled.exchange(true)) {
-                                wakeMainThread();
+                        if(img.isValid() && _widget != nullptr) {
+                                _widget->presentImage(img);
                         }
                 }
 
@@ -285,65 +399,6 @@ void SDLPlayerTask::pullLoop() {
                         }
                 }
         }
-}
-
-void SDLPlayerTask::wakeMainThread() {
-        SdlSubsystem *app = SdlSubsystem::instance();
-        if(app != nullptr && app->eventLoop() != nullptr) {
-                app->eventLoop()->postCallable([this]() {
-                        renderPending();
-                });
-        }
-        SDL_Event event = {};
-        event.type = userEventType();
-        SDL_PushEvent(&event);
-}
-
-bool SDLPlayerTask::renderPending() {
-        _renderScheduled.setValue(false);
-
-        if(_videoWidget == nullptr) return false;
-
-        Image::Ptr img;
-        {
-                Mutex::Locker lock(_pendingMutex);
-                if(!_pendingImage.isValid()) return false;
-                img = _pendingImage;
-                _pendingImage = Image::Ptr();
-        }
-
-        _videoWidget->setImage(*img);
-
-        ObjectBase *p = _videoWidget->parent();
-        while(p != nullptr) {
-                SDLWindow *win = dynamic_cast<SDLWindow *>(p);
-                if(win != nullptr) {
-                        win->paintAll();
-                        break;
-                }
-                p = p->parent();
-        }
-
-        _framesPresented.fetchAndAdd(1);
-        return true;
-}
-
-MediaIO *createSDLPlayer(SDLVideoWidget *video,
-                          SDLAudioOutput *audio,
-                          bool useAudioClock,
-                          ObjectBase *parent)
-{
-        auto *task = new SDLPlayerTask(video, audio, useAudioClock);
-        auto *io = new MediaIO(parent);
-        Error err = io->adoptTask(task);
-        if(err.isError()) {
-                promekiErr("createSDLPlayer: adoptTask failed: %s",
-                           err.name().cstr());
-                delete task;
-                delete io;
-                return nullptr;
-        }
-        return io;
 }
 
 // ---- Phase 3 introspection / negotiation overrides ----

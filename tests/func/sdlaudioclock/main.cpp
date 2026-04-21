@@ -136,9 +136,7 @@ int main(int argc, char **argv) {
                 return 1;
         }
 
-        const double bytesPerSec =
-                (double)kSampleRate * (double)kChannels * (double)sizeof(float);
-        SDLAudioClock clock(&output, bytesPerSec, String("functest"));
+        SDLAudioClock clock(&output);
 
         std::atomic<bool> running{true};
         std::thread feeder(feedSilence, &output, &running);
@@ -152,7 +150,11 @@ int main(int argc, char **argv) {
         {
                 const int64_t kMaxWarmupMs = 2000;
                 int64_t warmupStart = TimeStamp::now().nanoseconds();
-                while(clock.nowNs() == 0) {
+                auto warmupNow = [&clock]() {
+                        auto r = clock.nowNs();
+                        return isOk(r) ? value(r) : 0;
+                };
+                while(warmupNow() == 0) {
                         std::this_thread::sleep_for(std::chrono::milliseconds(10));
                         if((TimeStamp::now().nanoseconds() - warmupStart)
                            / 1000000LL >= kMaxWarmupMs) {
@@ -169,7 +171,17 @@ int main(int argc, char **argv) {
 
         const int64_t durationMs   = (int64_t)durationSecs * 1000;
         const int64_t startWallNs  = TimeStamp::now().nanoseconds();
-        const int64_t startClockNs = clock.nowNs();
+        auto clockNow = [&clock]() -> int64_t {
+                auto r = clock.nowNs();
+                if(isError(r)) {
+                        promekiErr("clock read failed: %s",
+                                   error(r).name().cstr());
+                        return 0;
+                }
+                return value(r);
+        };
+
+        const int64_t startClockNs = clockNow();
 
         Stats s;
         int64_t lastClockNs    = startClockNs;
@@ -181,7 +193,7 @@ int main(int argc, char **argv) {
                 int64_t wallNs = TimeStamp::now().nanoseconds();
                 if((wallNs - startWallNs) / 1000000LL >= durationMs) break;
 
-                int64_t clkNs = clock.nowNs();
+                int64_t clkNs = clockNow();
                 ++s.samples;
 
                 if(clkNs < lastClockNs) {
@@ -210,7 +222,7 @@ int main(int argc, char **argv) {
         feeder.join();
 
         const int64_t endWallNs  = TimeStamp::now().nanoseconds();
-        const int64_t endClockNs = clock.nowNs();
+        const int64_t endClockNs = clockNow();
         const double  wallSecs   = (double)(endWallNs  - startWallNs ) / 1e9;
         const double  clkSecs    = (double)(endClockNs - startClockNs) / 1e9;
         const double  ratio      = wallSecs > 0.0 ? clkSecs / wallSecs : 0.0;

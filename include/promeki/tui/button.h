@@ -38,7 +38,7 @@ class TuiButton : public TuiWidget {
 
         protected:
                 void paintEvent(TuiPaintEvent *e) override;
-                void keyEvent(KeyEvent *e) override;
+                void keyPressEvent(KeyEvent *e) override;
                 void mouseEvent(MouseEvent *e) override;
                 void focusInEvent(Event *e) override;
                 void focusOutEvent(Event *e) override;

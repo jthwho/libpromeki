@@ -1194,24 +1194,6 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                 .setDefault(String())
                                 .setDescription("SDL window title bar text."));
 
-                /// @brief String — which SDL player implementation to use.
-                ///
-                /// - @c "framesync" (default) — @c FrameSync-based
-                ///   @c SDLPlayerTask.  Runs video repeat/drop +
-                ///   audio drift-corrected resampling through a
-                ///   shared sync object; the sink's pull thread
-                ///   drives pacing instead of the strand worker.
-                /// - @c "pacer" — legacy FramePacer-based
-                ///   @c SDLPlayerOldTask (deprecated; retained for
-                ///   side-by-side comparison).
-                PROMEKI_DECLARE_ID(SdlPlayerImpl,
-                        VariantSpec().setType(Variant::TypeString)
-                                .setDefault(String("framesync"))
-                                .setDescription(
-                                        "SDL player implementation: "
-                                        "\"framesync\" (default) or "
-                                        "\"pacer\" (deprecated)."));
-
                 // ============================================================
                 // RTP sink (MediaIOTask_Rtp)
                 //

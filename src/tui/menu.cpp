@@ -113,7 +113,7 @@ void TuiMenu::paintEvent(TuiPaintEvent *) {
         }
 }
 
-void TuiMenu::keyEvent(KeyEvent *e) {
+void TuiMenu::keyPressEvent(KeyEvent *e) {
         // Let Ctrl-modified keys propagate (e.g. Ctrl+Left/Right for tab switching)
         if(e->isCtrl()) return;
         switch(e->key()) {
@@ -201,7 +201,7 @@ void TuiMenuBar::paintEvent(TuiPaintEvent *) {
         }
 }
 
-void TuiMenuBar::keyEvent(KeyEvent *e) {
+void TuiMenuBar::keyPressEvent(KeyEvent *e) {
         if(e->isAlt() && !_active) {
                 _active = true;
                 update();

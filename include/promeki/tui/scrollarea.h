@@ -37,7 +37,7 @@ class TuiScrollArea : public TuiWidget {
 
         protected:
                 void paintEvent(TuiPaintEvent *e) override;
-                void keyEvent(KeyEvent *e) override;
+                void keyPressEvent(KeyEvent *e) override;
                 void resizeEvent(TuiResizeEvent *e) override;
 
         private:

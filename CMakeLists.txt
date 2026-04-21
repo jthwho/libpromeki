@@ -913,7 +913,6 @@ set(PROMEKI_SOURCES
     src/core/fileinfo.cpp
     src/core/fileiodevice.cpp
     src/core/fourcc.cpp
-    src/core/framepacer.cpp
     src/core/framerate.cpp
     src/core/h264bitstream.cpp
     src/core/hevcbitstream.cpp
@@ -1131,6 +1130,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/ltcdecoder.cpp
         src/proav/ltcencoder.cpp
         src/proav/mediaio.cpp
+        src/proav/mediaioclock.cpp
         src/proav/mediaiodescription.cpp
         src/proav/mediapipeline.cpp
         src/proav/mediapipelineconfig.cpp
@@ -1530,7 +1530,7 @@ if(PROMEKI_BUILD_SDL)
         include/promeki/sdl/sdlaudiooutput.h
         include/promeki/sdl/sdleventpump.h
         include/promeki/sdl/sdlplayer.h
-        include/promeki/sdl/sdlplayerold.h
+        include/promeki/sdl/sdlplayerwidget.h
         include/promeki/sdl/sdlvideowidget.h
         include/promeki/sdl/sdlwindow.h
     )
@@ -1541,7 +1541,7 @@ if(PROMEKI_BUILD_SDL)
         src/sdl/sdlaudioclock.cpp
         src/sdl/sdleventpump.cpp
         src/sdl/sdlplayer.cpp
-        src/sdl/sdlplayerold.cpp
+        src/sdl/sdlplayerwidget.cpp
         src/sdl/sdlvideowidget.cpp
         src/sdl/sdlwindow.cpp
     )
@@ -1726,6 +1726,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/colormodel.cpp
         tests/unit/configoption.cpp
         tests/unit/crashhandler.cpp
+        tests/unit/clock.cpp
         tests/unit/clockdomain.cpp
         tests/unit/crc.cpp
         tests/unit/cuda.cpp
@@ -1749,7 +1750,6 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/filepath.cpp
         tests/unit/fnv1a.cpp
         tests/unit/fourcc.cpp
-        tests/unit/framepacer.cpp
         tests/unit/framesync.cpp
         tests/unit/framerate.cpp
         tests/unit/future.cpp
@@ -1892,6 +1892,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/ltcencoder.cpp
             tests/unit/mediadesc.cpp
             tests/unit/mediaio.cpp
+            tests/unit/mediaioclock.cpp
             tests/unit/mediaiodescription.cpp
             tests/unit/mediaio_bridges.cpp
             tests/unit/mediaio_identifiers.cpp

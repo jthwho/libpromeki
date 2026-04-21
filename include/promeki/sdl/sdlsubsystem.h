@@ -15,6 +15,8 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+class Widget;
+
 /**
  * @brief SDL subsystem installed alongside an @ref Application.
  * @ingroup sdl_core
@@ -85,11 +87,36 @@ class SdlSubsystem {
                  */
                 EventLoop *eventLoop() { return _eventLoop; }
 
+                /**
+                 * @brief Returns the widget that currently receives
+                 *        keyboard input, or @c nullptr if none is set.
+                 */
+                Widget *focusedWidget() const { return _focusedWidget; }
+
+                /**
+                 * @brief Sets the widget that receives keyboard input.
+                 *
+                 * Key events arriving from SDL are delivered to @p widget
+                 * first; if the widget does not @c accept the event,
+                 * delivery walks up the parent chain until a handler
+                 * accepts or the chain ends.
+                 *
+                 * Passing @c nullptr clears focus — key events with no
+                 * focused widget fall back to the receiving window.
+                 *
+                 * Managing @ref Widget::setFocused on the old / new
+                 * widget is the caller's responsibility.
+                 *
+                 * @param widget The new focused widget, or nullptr.
+                 */
+                void setFocusedWidget(Widget *widget) { _focusedWidget = widget; }
+
         private:
                 static SdlSubsystem    *_instance;
 
                 EventLoop              *_eventLoop = nullptr;
                 SDLEventPump            _eventPump;
+                Widget                 *_focusedWidget = nullptr;
 
                 // Self-pipe used as the SDL → EventLoop bridge.
                 // SDL_AddEventWatch writes one byte to the write end
@@ -98,6 +125,18 @@ class SdlSubsystem {
                 // callback drains the pipe and pumps SDL's queue.
                 SelfPipe                _sdlPipe;
                 int                     _sdlSourceHandle = -1;
+
+                // Periodic kick that calls @c SDL_PumpEvents so OS
+                // input (keyboard, window close, mouse) gets pulled
+                // into SDL's queue even when nothing on the promeki
+                // side is pushing events.  Without this, a paused
+                // playback pipeline (no frames, no wakeMainThread
+                // user events) leaves OS events stranded: the
+                // @c sdlEventWatch callback only fires when
+                // @c SDL_PushEvent or a pump pulls a new event
+                // in, so the watch → pipe → IoSource → pump chain
+                // deadlocks without an external driver.
+                int                     _pumpTimerId = -1;
 
                 static bool sdlEventWatch(void *userdata, SDL_Event *event);
 };

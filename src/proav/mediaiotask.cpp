@@ -91,6 +91,12 @@ Error MediaIOTask::proposeOutput(const MediaDesc &requested,
         return Error::NotSupported;
 }
 
+Clock *MediaIOTask::createClock() {
+        // Default: no device clock; MediaIO falls back to a
+        // MediaIOClock synthesized from frame position × frame rate.
+        return nullptr;
+}
+
 PixelDesc MediaIOTask::defaultUncompressedPixelDesc(const PixelDesc &source) {
         // Both fallbacks are registered in the PixelDesc well-known
         // table and carry paint engines, so the planner can splice a

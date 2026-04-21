@@ -17,6 +17,8 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+PROMEKI_DEBUG(MediaPipeline)
+
 // ============================================================================
 // Construction
 // ============================================================================
@@ -520,6 +522,8 @@ void MediaPipeline::initiateClose(bool clean) {
         for(size_t i = 0; i < triggers.size(); ++i) {
                 auto it = _stages.find(triggers[i]);
                 if(it == _stages.end() || it->second == nullptr) continue;
+                promekiDebug("MediaPipeline::initiateClose closing trigger '%s'",
+                             triggers[i].cstr());
                 Error err = it->second->close(false);
                 if(err.isError()) onStageClosed(triggers[i], err);
         }
@@ -623,6 +627,8 @@ void MediaPipeline::finalizeClose() {
 // ============================================================================
 
 void MediaPipeline::drainSource(const String &srcName) {
+        promekiDebug("MediaPipeline::drainSource[%s] ENTER state=%d closing=%d",
+                     srcName.cstr(), (int)_state, (int)_closing);
         // Allow drain to continue during an async close so the synthetic
         // EOS pushed by each stage's finalize step can propagate through
         // the graph.  Only stop hard after the pipeline has fully
@@ -641,25 +647,40 @@ void MediaPipeline::drainSource(const String &srcName) {
         // that as a spurious pipeline error.
         if(ss.upstreamDone) return;
 
-        // Back-pressure: we gate on @ref MediaIO::writesAccepted for
-        // every outgoing edge before pulling the next source frame.
-        // Under the documented single-threaded driving contract, a
-        // non-blocking @c writeFrame called after a positive
-        // @c writesAccepted can only return @c Error::Ok — anything
-        // else is a contract violation we want to hear about loudly,
-        // not silently absorb.  Async write failures still arrive on
-        // @c writeErrorSignal → @ref onWriteError.
         while(true) {
-                for(size_t i = 0; i < ss.edges.size(); ++i) {
-                        const EdgeState &e = ss.edges[i];
-                        if(e.to == nullptr) return;
-                        if(e.to->writesAccepted() <= 0) return;
+                // During close, skip the back-pressure gate so the
+                // source's synthetic EOS can be read even if every
+                // downstream's write queue is full — otherwise the
+                // cascade deadlocks: source is closed with the EOS
+                // waiting in its read queue, drainSource refuses to
+                // read because downstream is saturated, the sink's
+                // pull thread keeps consuming at nominal rate but
+                // the resulting writesAccepted>0 windows only fire
+                // frameWanted briefly (hard to synchronize with the
+                // EOS arrival), and the close watchdog ends up
+                // resolving the cascade instead of a clean finish.
+                // Frames we can't write during close are dropped;
+                // the stream is terminating anyway.
+                if(!_closing) {
+                        bool blocked = false;
+                        for(size_t i = 0; i < ss.edges.size(); ++i) {
+                                const EdgeState &e = ss.edges[i];
+                                if(e.to == nullptr) return;
+                                if(e.to->writesAccepted() <= 0) {
+                                        blocked = true;
+                                        break;
+                                }
+                        }
+                        if(blocked) return;
                 }
 
                 Frame::Ptr frame;
                 Error err = ss.from->readFrame(frame, false);
                 if(err == Error::TryAgain) return;
                 if(err == Error::EndOfFile) {
+                        promekiDebug("MediaPipeline::drainSource[%s] EOF; "
+                                     "cascading close to %zu downstream",
+                                     srcName.cstr(), ss.edges.size());
                         ss.upstreamDone = true;
                         // Arm (or join) the pipeline-level close
                         // cascade BEFORE touching downstream — the
@@ -680,6 +701,10 @@ void MediaPipeline::drainSource(const String &srcName) {
                                 if(to == nullptr) continue;
                                 if(!to->isOpen()) continue;
                                 if(to->isClosing()) continue;
+                                promekiDebug("MediaPipeline::drainSource[%s] "
+                                             "cascading close to '%s'",
+                                             srcName.cstr(),
+                                             ss.edges[i].toName.cstr());
                                 (void)to->close(false);
                         }
                         return;
@@ -700,7 +725,16 @@ void MediaPipeline::drainSource(const String &srcName) {
                         if(e.to == nullptr) continue;
                         Error werr = e.to->writeFrame(frame, false);
                         if(werr.isError()) {
+                                // During close the back-pressure gate
+                                // above is bypassed, so writeFrame may
+                                // legitimately come back @c TryAgain
+                                // (downstream is saturated).  Treat
+                                // that as an expected drop — the goal
+                                // of draining here is to reach the
+                                // source's synthetic EOS, not to
+                                // deliver every frame.
                                 if(werr == Error::TryAgain) {
+                                        if(_closing) continue;
                                         // writesAccepted said yes; the
                                         // backend said no.  That's a
                                         // contract violation worth

@@ -94,7 +94,7 @@ void TuiTextArea::paintEvent(TuiPaintEvent *) {
         }
 }
 
-void TuiTextArea::keyEvent(KeyEvent *e) {
+void TuiTextArea::keyPressEvent(KeyEvent *e) {
         if(_readOnly) return;
 
         // Let Ctrl-modified keys propagate (e.g. Ctrl+Left/Right for tab switching)

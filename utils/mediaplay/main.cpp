@@ -55,7 +55,7 @@
 #include <promeki/sdl/sdlsubsystem.h>
 #include <promeki/sdl/sdlaudiooutput.h>
 #include <promeki/sdl/sdlplayer.h>
-#include <promeki/sdl/sdlplayerold.h>
+#include <promeki/sdl/sdlplayerwidget.h>
 #include <promeki/sdl/sdlvideowidget.h>
 #include <promeki/sdl/sdlwindow.h>
 
@@ -182,35 +182,34 @@ Error buildConfigFromOptions(const Options &opts, MediaPipelineConfig &out) {
 }
 
 /**
- * @brief Lazily constructs the shared SDL window / video widget /
- *        audio output for the first SDL stage encountered, reusing
- *        them for later SDL stages that share the same pipeline.
+ * @brief Lazily constructs the shared SDL window / audio output for
+ *        the first SDL stage encountered, reusing them for later SDL
+ *        stages that share the same pipeline.  A fresh
+ *        @ref SDLPlayerWidget is created per stage.
  */
 struct SdlUi {
         SDLWindow       *window      = nullptr;
-        SDLVideoWidget  *videoWidget = nullptr;
         SDLAudioOutput  *audioOutput = nullptr;
 };
 
 /**
- * @brief Builds an @ref SDLPlayer MediaIO for @p stage and attaches it
- *        to the pipeline via @ref MediaPipeline::injectStage.
+ * @brief Builds an @ref SDLPlayerWidget-backed MediaIO for @p stage so
+ *        it can be injected into the pipeline.
  *
  * SDL requires widget pointers that live on the main thread, so it is
  * the one backend @ref MediaPipeline cannot instantiate through the
  * normal factory — callers pre-build it and inject it.  The first SDL
  * stage lazily allocates the shared window / audio output in @p ui;
  * every subsequent SDL stage reuses them, matching the pre-pipeline
- * mediaplay behaviour.
+ * mediaplay behaviour.  The returned MediaIO is owned by the widget
+ * (parented to @c ui.window), so the caller must NOT delete it —
+ * window deletion at shutdown frees everything in one shot.
  */
 MediaIO *createSdlStage(const MediaPipelineConfig::Stage &stage,
                         SdlUi &ui, bool enableBenchmark) {
         const String sdlTiming = stage.config.getAs<String>(
                 MediaConfig::SdlTimingSource, String("audio"));
         const bool useAudioClock = (sdlTiming == String("audio"));
-        const String sdlImpl = stage.config.getAs<String>(
-                MediaConfig::SdlPlayerImpl, String("framesync"));
-        const bool useFrameSync = (sdlImpl == String("framesync"));
         const Size2Du32 sdlWinSize = stage.config.getAs<Size2Du32>(
                 MediaConfig::SdlWindowSize, Size2Du32(1280, 720));
         const String sdlWinTitle = stage.config.getAs<String>(
@@ -224,24 +223,26 @@ MediaIO *createSdlStage(const MediaPipelineConfig::Stage &stage,
                 ui.window = new SDLWindow(sdlWinTitle,
                                           static_cast<int>(sdlWinSize.width()),
                                           static_cast<int>(sdlWinSize.height()));
-                ui.videoWidget = new SDLVideoWidget(ui.window);
-                ui.videoWidget->setGeometry(
-                        Rect2Di32(0, 0,
-                                  static_cast<int>(sdlWinSize.width()),
-                                  static_cast<int>(sdlWinSize.height())));
-                SDLVideoWidget *vw = ui.videoWidget;
-                ui.window->resizedSignal.connect([vw](Size2Di32 sz) {
-                        vw->setGeometry(Rect2Di32(0, 0, sz.width(), sz.height()));
-                });
                 ui.window->show();
-                ui.audioOutput = new SDLAudioOutput();
+                ui.audioOutput = new SDLAudioOutput(ui.window);
         }
 
-        MediaIO *player = useFrameSync
-                ? createSDLPlayer(ui.videoWidget, ui.audioOutput, useAudioClock)
-                : createSDLPlayerOld(ui.videoWidget, ui.audioOutput, useAudioClock);
+        const Rect2Di32 fullRect(
+                0, 0,
+                static_cast<int>(sdlWinSize.width()),
+                static_cast<int>(sdlWinSize.height()));
+
+        auto *w = new SDLPlayerWidget(ui.audioOutput, useAudioClock,
+                                      ui.window);
+        w->setGeometry(fullRect);
+        ui.window->resizedSignal.connect([w](Size2Di32 sz) {
+                w->setGeometry(Rect2Di32(0, 0, sz.width(), sz.height()));
+        });
+        w->setFocus();
+        SdlSubsystem::instance()->setFocusedWidget(w);
+        MediaIO *player = w->mediaIO();
         if(player == nullptr) {
-                fprintf(stderr, "Error: createSDLPlayer failed for stage '%s'\n",
+                fprintf(stderr, "Error: SDL player creation failed for stage '%s'\n",
                         stage.name.cstr());
                 return nullptr;
         }
@@ -334,28 +335,28 @@ int main(int argc, char **argv) {
         // an SDL stage) so both early-exit paths and the normal
         // build path see the same injected map.
         SdlUi ui;
-        List<MediaIO *> injectedSdl;
+        // Each injected SDL stage is owned by an SDLPlayerWidget
+        // parented to ui.window, so deleting the window at shutdown
+        // frees the whole chain.  We only need the name→MediaIO map
+        // so the planner and --describe paths can reach the live
+        // instances.
         promeki::Map<String, MediaIO *> injectedMap;
         for(size_t i = 0; i < pipelineCfg.stages().size(); ++i) {
                 const MediaPipelineConfig::Stage &s = pipelineCfg.stages()[i];
                 if(s.type != kStageSdl) continue;
                 MediaIO *player = createSdlStage(s, ui, statsEnabled);
                 if(player == nullptr) {
-                        for(auto *io : injectedSdl) delete io;
                         delete ui.audioOutput;
                         delete ui.window;
                         return 1;
                 }
-                injectedSdl.pushToBack(player);
                 injectedMap.insert(s.name, player);
         }
 
         // Cleanup helper for the --plan / --describe early-exit paths
         // — they don't transfer ownership to a MediaPipeline so they
-        // have to delete the injected stages themselves.
+        // have to tear down the injected window themselves.
         auto cleanupInjected = [&]() {
-                for(auto *io : injectedSdl) delete io;
-                injectedSdl.clear();
                 injectedMap.clear();
                 delete ui.audioOutput;
                 ui.audioOutput = nullptr;
@@ -500,7 +501,6 @@ int main(int argc, char **argv) {
                         berr.desc().cstr(),
                         opts.autoplan ? " (planner enabled — see logs above for details)"
                                        : "");
-                for(auto *io : injectedSdl) delete io;
                 delete ui.audioOutput;
                 delete ui.window;
                 return 1;
@@ -526,7 +526,6 @@ int main(int argc, char **argv) {
                         oerr.desc().cstr());
                 (void)pipeline.close();
                 for(auto *r : reporters) delete r;
-                for(auto *io : injectedSdl) delete io;
                 delete ui.audioOutput;
                 delete ui.window;
                 return 1;
@@ -674,7 +673,6 @@ int main(int argc, char **argv) {
                         statsThread.wait();
                 }
                 for(auto *r : reporters) delete r;
-                for(auto *io : injectedSdl) delete io;
                 delete ui.audioOutput;
                 delete ui.window;
                 if(statsFile != nullptr) {
@@ -712,7 +710,6 @@ int main(int argc, char **argv) {
         (void)pipeline.close();
 
         for(auto *r : reporters) delete r;
-        for(auto *io : injectedSdl) delete io;
         delete ui.audioOutput;
         delete ui.window;
 

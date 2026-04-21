@@ -268,8 +268,11 @@ class Widget : public ObjectBase {
                 /** @brief Called to paint the widget. Override in subclasses. */
                 virtual void paintEvent(PaintEvent *e);
 
-                /** @brief Called on keyboard input. Override in subclasses. */
-                virtual void keyEvent(KeyEvent *e);
+                /** @brief Called on key-down events. Override in subclasses. */
+                virtual void keyPressEvent(KeyEvent *e);
+
+                /** @brief Called on key-up events. Override in subclasses. */
+                virtual void keyReleaseEvent(KeyEvent *e);
 
                 /** @brief Called on mouse input. Override in subclasses. */
                 virtual void mouseEvent(MouseEvent *e);

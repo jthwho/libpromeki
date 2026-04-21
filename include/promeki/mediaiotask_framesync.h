@@ -10,6 +10,7 @@
 #include <promeki/namespace.h>
 #include <promeki/mediaiotask.h>
 #include <promeki/framesync.h>
+#include <promeki/clock.h>
 #include <promeki/syntheticclock.h>
 #include <promeki/list.h>
 
@@ -107,14 +108,13 @@ class MediaIOTask_FrameSync : public MediaIOTask {
                 /**
                  * @brief Sets the clock used for frame pacing.
                  *
-                 * Must be called before @c open().  The clock is not owned
-                 * by this task — the caller must keep it alive for the
-                 * task's lifetime.  Passing @c nullptr reverts to the
-                 * built-in @ref SyntheticClock.
+                 * Must be called before @c open().  Ownership is shared
+                 * via the @ref Clock::Ptr.  Passing a null Ptr reverts
+                 * to the built-in @ref SyntheticClock.
                  *
-                 * @param clock External clock, or nullptr for synthetic.
+                 * @param clock External clock, or null for synthetic.
                  */
-                void setClock(Clock *clock);
+                void setClock(const Clock::Ptr &clock);
 
                 /**
                  * @brief Returns the underlying FrameSync instance.
@@ -139,8 +139,8 @@ class MediaIOTask_FrameSync : public MediaIOTask {
                                     MediaDesc *achievable) const override;
 
                 FrameSync               _sync;
-                SyntheticClock          _ownedClock;
-                Clock                  *_externalClock = nullptr;
+                Clock::Ptr              _ownedClock;
+                Clock::Ptr              _externalClock;
                 int64_t                 _framesPushed = 0;
                 int64_t                 _framesPulled = 0;
 };

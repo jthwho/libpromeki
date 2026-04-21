@@ -21,10 +21,10 @@
 #include <promeki/list.h>
 #include <promeki/periodiccallback.h>
 #include <promeki/atomic.h>
+#include <promeki/clock.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-class Clock;
 class SyntheticClock;
 class AudioResampler;
 
@@ -172,14 +172,14 @@ class FrameSync {
                 /**
                  * @brief Sets the destination clock.
                  *
-                 * Not owned.  Must outlive the FrameSync.  Setting a
-                 * different clock mid-run requires a @ref reset to
-                 * re-anchor the timeline.
+                 * Ownership is shared via the @ref Clock::Ptr.
+                 * Setting a different clock mid-run requires a
+                 * @ref reset to re-anchor the timeline.
                  */
-                void setClock(Clock *clock);
+                void setClock(const Clock::Ptr &clock);
 
                 /** @brief Returns the configured clock (may be null). */
-                Clock *clock() const { return _clock; }
+                Clock::Ptr clock() const { return _clock; }
 
                 /**
                  * @brief Sets the maximum number of input frames to
@@ -281,6 +281,37 @@ class FrameSync {
                  */
                 void interrupt();
 
+                /**
+                 * @brief Clears a pending interrupt request.
+                 *
+                 * Callers that @c interrupt() to stop a pull thread
+                 * and then spin up a fresh one (e.g. a pause/resume
+                 * cycle) should clear the flag before the new
+                 * pullFrame call so the replacement thread doesn't
+                 * see a stale interrupt and exit immediately.  A
+                 * no-op if no interrupt is pending.
+                 */
+                void clearInterrupt();
+
+                /**
+                 * @brief Drops the source-rate estimator's most
+                 *        recent measurement so the next @c pushFrame
+                 *        establishes a fresh baseline.
+                 *
+                 * Callers that pause frame delivery for an extended
+                 * period should invoke this before resuming.  The
+                 * first post-resume push otherwise produces a
+                 * timestamp-delta vs previous-push-samples ratio
+                 * that straddles the paused interval — upstream
+                 * MediaTimeStamps may have advanced faster than the
+                 * sample count because the queue back-pressure
+                 * dropped whole chunks — and the EMA filter takes
+                 * that spurious ratio as an honest measurement,
+                 * silently biasing @c _sourceAudioRateHz (and with
+                 * it the audio resample ratio) until it reconverges.
+                 */
+                void resetSourceRateEstimator();
+
                 // ---- Stats ----
 
                 /** @brief Total frames pushed since reset. */
@@ -345,7 +376,7 @@ class FrameSync {
                 String      _name;
                 FrameRate   _targetFrameRate;
                 AudioDesc   _targetAudioDesc;
-                Clock      *_clock = nullptr;
+                Clock::Ptr  _clock;
                 SyntheticClock *_syntheticClock = nullptr;  // cached downcast
                 int                 _queueCapacity = 8;
                 InputOverflowPolicy _overflowPolicy = InputOverflowPolicy::DropOldest;

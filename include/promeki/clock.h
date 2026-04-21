@@ -7,14 +7,22 @@
 
 #pragma once
 
+#include <atomic>
+#include <cassert>
+#include <memory>
+#include <mutex>
 #include <promeki/namespace.h>
 #include <promeki/clockdomain.h>
 #include <promeki/duration.h>
+#include <promeki/error.h>
+#include <promeki/mediatimestamp.h>
+#include <promeki/result.h>
+#include <promeki/sharedptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief Asymmetric bound on the error envelope of a clock's nowNs()
+ * @brief Asymmetric bound on the error envelope of a clock's now()
  *        reading relative to ground truth.
  * @ingroup time
  *
@@ -32,11 +40,6 @@ PROMEKI_NAMESPACE_BEGIN
  * late (@c {0, bufferPeriod}) because the counter reads stale
  * between callbacks and jumps forward only when the device fires
  * its next callback.
- *
- * Both bounds are non-strict — a real clock may occasionally exceed
- * them — but they represent the expected operating envelope.  Code
- * that filters clock-derived signals (e.g. rate estimates) should
- * size its window according to @ref span.
  */
 struct ClockJitter {
         /** @brief Most negative expected value of @c reportedTime - trueTime. */
@@ -55,122 +58,311 @@ struct ClockJitter {
 };
 
 /**
+ * @brief Pluggable smoothing filter applied to a clock's raw ns reading.
+ * @ingroup time
+ *
+ * Clock takes ownership of the filter passed to its constructor and
+ * deletes it when the clock is destroyed.  Filters may hold internal
+ * state across calls and are invoked under the clock's internal mutex,
+ * so implementations do not need to be independently thread-safe.
+ *
+ * @par Example
+ * @code
+ * class ExponentialAverageFilter : public ClockFilter {
+ *         public:
+ *                 int64_t filter(int64_t rawNs) override {
+ *                         _acc = _acc + (rawNs - _acc) / 8;
+ *                         return _acc;
+ *                 }
+ *         private:
+ *                 int64_t _acc = 0;
+ * };
+ * @endcode
+ */
+class ClockFilter {
+        public:
+                virtual ~ClockFilter() = default;
+
+                /**
+                 * @brief Transforms a raw ns reading.
+                 * @param rawNs The raw value from the clock's @ref Clock::raw.
+                 * @return The filtered ns value.
+                 */
+                virtual int64_t filter(int64_t rawNs) = 0;
+};
+
+/**
+ * @brief Describes a clock's pause capability.
+ * @ingroup time
+ *
+ * The base @ref Clock applies the same delta-based pause accounting
+ * for both paused modes:  at pause it snapshots the filtered raw
+ * value; on resume it adds <tt>raw_now - raw_at_pause</tt> to the
+ * paused-offset accumulator.  The enum exists so callers can
+ * distinguish @c CannotPause (where @ref Clock::setPause will
+ * error) and so consumers can reason about whether the underlying
+ * clock source actually stops.
+ */
+enum class ClockPauseMode {
+        CannotPause,              ///< @ref Clock::setPause returns NotSupported.
+        PausesRawKeepsRunning,    ///< Pause is bookkeeping only; raw() keeps advancing.
+        PausesRawStops            ///< onPause(true) freezes raw(); onPause(false) resumes.
+};
+
+/**
  * @brief Abstract clock interface.
  * @ingroup time
  *
- * A Clock provides a time source (@ref nowNs) and a blocking wait
- * primitive (@ref sleepUntilNs), paired with enough self-description
- * for callers to reason about its accuracy:
+ * A Clock is a reference-counted, polymorphic time source with a
+ * managed @ref now that applies filtering, pause accounting, fixed
+ * offset and a monotonic clamp on top of the subclass's pure-virtual
+ * @ref raw reading.
  *
- * - @ref domain returns the @ref ClockDomain that owns this clock.
- *   Timestamps from two clocks in the same domain are comparable.
- * - @ref resolutionNs tells callers the smallest meaningful time step
- *   the clock can distinguish.
- * - @ref jitter returns an asymmetric error envelope callers should
- *   assume when filtering clock-derived signals.
- * - @ref rateRatio exposes the clock's measured rate relative to its
- *   nominal rate.  @c 1.0 for locked clocks; audio clocks report
- *   their actual drain rate relative to the rate the stream was
- *   configured for.  This is the primary drift-correction signal
- *   for media-rate converters built on top of the clock.
+ * @par Construction
  *
- * All times are in nanoseconds from the clock's own epoch.  The
- * epoch is opaque to callers — only deltas between @ref nowNs
- * readings and deadline values matter.
+ * Derived clocks pass their @ref ClockDomain, any fixed offset from
+ * that domain's epoch, their pause capability, and an optional
+ * @ref ClockFilter pointer.  The clock takes ownership of the filter
+ * and deletes it on destruction.  Pass @c nullptr for no filtering.
+ *
+ * @par Sharing
+ *
+ * Clocks are natively reference-counted.  Callers manage lifetime via
+ * @ref Clock::Ptr .  Clocks are not copyable — the internal clone
+ * helper asserts if invoked.
  *
  * @par Implementations
  *
  * - @ref WallClock — std::chrono::steady_clock, for local playback.
- * - @ref SyntheticClock — frame-count driven, for offline / test /
- *   "pristine rate" pipelines.
- * - @c SDLAudioClock — derives time from an SDL audio device's
- *   consumed-byte counter.
- * - PTP / hardware clocks (future).
+ * - @ref SyntheticClock — frame-count driven, for offline pipelines.
+ * - @c SDLAudioClock — derived from an SDL audio device's drain rate.
+ * - @c MediaIOClock — derived from a MediaIO's frame position.
  */
 class Clock {
         public:
-                virtual ~Clock() = default;
+                /**
+                 * @brief Shared-pointer alias for lifetime management.
+                 *
+                 * The third template parameter pins the storage type to
+                 * @ref Clock directly — without it, the SharedPtr
+                 * instantiation here inside the (still-incomplete)
+                 * Clock definition cannot see @ref _promeki_refct via
+                 * SFINAE and falls back to a heap-allocating
+                 * SharedPtrProxy wrapper.
+                 */
+                using Ptr = SharedPtr<Clock, /*CopyOnWrite=*/false, Clock>;
 
                 /**
-                 * @brief Returns the clock's identity domain.
-                 *
-                 * Timestamps produced by two clocks sharing the same
-                 * @ref ClockDomain can be compared directly; timestamps
-                 * from different domains may drift relative to each
-                 * other.
-                 *
-                 * @return The clock's @ref ClockDomain.
+                 * @brief Constructs a Clock.
+                 * @param domain     The clock's identity @ref ClockDomain.
+                 * @param fixedOffset Fixed delay applied on top of raw().
+                 *                    May be negative.  Mutable via
+                 *                    @ref setFixedOffset.
+                 * @param pauseMode  Pause capability (default CannotPause).
+                 * @param filter     Optional filter; the clock takes
+                 *                   ownership.  @c nullptr disables
+                 *                   filtering.
                  */
-                virtual ClockDomain domain() const = 0;
+                Clock(const ClockDomain &domain,
+                      const Duration &fixedOffset = Duration(),
+                      ClockPauseMode pauseMode = ClockPauseMode::CannotPause,
+                      ClockFilter *filter = nullptr);
+
+                /** @brief Virtual destructor. */
+                virtual ~Clock();
+
+                Clock(const Clock &) = delete;
+                Clock &operator=(const Clock &) = delete;
+                Clock(Clock &&) = delete;
+                Clock &operator=(Clock &&) = delete;
+
+                // ---- Identity / self-description ----
+
+                /** @brief Returns the clock's identity domain. */
+                ClockDomain domain() const { return _domain; }
+
+                /** @brief Returns the clock's pause capability. */
+                ClockPauseMode pauseMode() const { return _pauseMode; }
+
+                /** @brief True if @ref setPause will accept requests. */
+                bool canPause() const { return _pauseMode != ClockPauseMode::CannotPause; }
 
                 /**
                  * @brief Smallest meaningful time step in nanoseconds.
-                 *
-                 * The resolution tells callers what precision to expect
-                 * from @ref nowNs.  A 48 kHz audio clock has
-                 * @c ~20833 ns resolution (one sample period); a
-                 * steady_clock wall clock is near @c 1 ns; a PTP
-                 * hardware clock is also @c ~1 ns.
-                 *
                  * @return Resolution in nanoseconds (@c >= 1).
                  */
                 virtual int64_t resolutionNs() const = 0;
 
                 /**
-                 * @brief Expected asymmetric error envelope on @ref nowNs.
-                 *
-                 * Used by consumers that filter clock-derived rate or
-                 * offset estimates.  The filter window should cover at
-                 * least @ref ClockJitter::span so that one reading's
-                 * jitter is averaged out.
-                 *
+                 * @brief Expected asymmetric error envelope on @ref now.
                  * @return The envelope as a @ref ClockJitter.
                  */
                 virtual ClockJitter jitter() const = 0;
 
                 /**
-                 * @brief Returns the current time in nanoseconds.
-                 *
-                 * The epoch is clock-defined.  Only deltas between two
-                 * @ref nowNs readings, or between @ref nowNs and a
-                 * deadline supplied to @ref sleepUntilNs, are meaningful.
-                 *
-                 * @return Current time in nanoseconds from the clock's epoch.
-                 */
-                virtual int64_t nowNs() const = 0;
-
-                /**
-                 * @brief Blocks until the clock reaches @p targetNs.
-                 *
-                 * Implementation determines the waiting mechanism: an
-                 * OS sleep for wall clocks, polling a queue depth for
-                 * audio clocks, waiting on a hardware timer for PTP.
-                 *
-                 * If @p targetNs is in the past, the call returns
-                 * immediately.  A @ref SyntheticClock implements this
-                 * as a no-op — its notion of "now" is driven by
-                 * explicit @c advance calls, not by sleeping.
-                 *
-                 * @param targetNs Target time in nanoseconds from the
-                 *                 clock's epoch.
-                 */
-                virtual void sleepUntilNs(int64_t targetNs) = 0;
-
-                /**
                  * @brief Ratio of actual tick rate to nominal tick rate.
-                 *
-                 * For clocks that are their own nominal reference
-                 * (@ref WallClock, PTP, @ref SyntheticClock) the ratio
-                 * is @c 1.0.  For clocks derived from an external rate
-                 * source (audio device drain, a remote stream's packet
-                 * rate), the ratio reports the actual rate measured
-                 * against that reference, which callers can use as a
-                 * drift-correction signal (e.g. feeding an audio
-                 * resampler ratio).
-                 *
-                 * The default implementation returns @c 1.0.
+                 * @return The rate ratio (@c 1.0 for self-referenced clocks).
                  */
                 virtual double rateRatio() const { return 1.0; }
+
+                // ---- Managed readings ----
+
+                /**
+                 * @brief Returns the current time as a @ref MediaTimeStamp.
+                 *
+                 * Applies, in order: @ref raw, then the filter (if any),
+                 * then the paused-snapshot freeze (if paused), then the
+                 * combined fixed + paused offsets, then a monotonic clamp
+                 * against the last value returned.  The returned
+                 * @ref MediaTimeStamp carries this clock's domain and the
+                 * total offset that was in effect.
+                 *
+                 * @return The timestamp, or an error propagated from raw().
+                 */
+                Result<MediaTimeStamp> now() const;
+
+                /**
+                 * @brief Convenience: the ns value @ref now would carry.
+                 *
+                 * Equivalent to <tt>now()</tt> followed by extracting
+                 * <tt>timeStamp().nanoseconds()</tt>.  Errors propagate
+                 * identically.
+                 */
+                Result<int64_t> nowNs() const;
+
+                // ---- Offsets ----
+
+                /** @brief Returns the currently-set fixed offset. */
+                Duration fixedOffset() const;
+
+                /**
+                 * @brief Replaces the fixed offset.
+                 *
+                 * Subsequent @ref now calls apply the new offset.  The
+                 * monotonic clamp is not reset — changing the offset can
+                 * only increase the reported time, never decrease it.
+                 *
+                 * @param offset The new fixed offset (may be negative).
+                 */
+                void setFixedOffset(const Duration &offset);
+
+                // ---- Pause ----
+
+                /** @brief True if the clock is currently paused. */
+                bool isPaused() const;
+
+                /**
+                 * @brief Sets the pause state.
+                 *
+                 * Calls @ref onPause to let the subclass stop or resume
+                 * any underlying resource.  On pause, snapshots the
+                 * filtered raw value; on resume, adds the accumulated
+                 * raw delta to the paused-offset accumulator so that the
+                 * reported time resumes seamlessly.
+                 *
+                 * @param paused Target state.
+                 * @return Error::NotSupported if !canPause(), otherwise
+                 *         forwards the result of @ref onPause (which is
+                 *         typically Error::Ok).
+                 */
+                Error setPause(bool paused);
+
+                // ---- Wait primitives ----
+
+                /**
+                 * @brief Blocks until @ref now would return at or past @p deadline.
+                 *
+                 * Verifies @p deadline is in this clock's domain and
+                 * translates its value into the current raw timebase by
+                 * adding the clock's current fixed + paused offsets, so
+                 * a mid-wait offset change does what callers expect
+                 * ("wake when @ref now reads X").  The stored
+                 * @ref MediaTimeStamp::offset is informational.
+                 *
+                 * @param deadline When to wake, expressed in this clock's
+                 *                 domain.
+                 * @return Error::Ok on successful wake,
+                 *         Error::ClockDomainMismatch when the deadline
+                 *         belongs to another domain,
+                 *         Error::ClockPaused when the clock is paused
+                 *         (either at entry or during the wait — the
+                 *         caller should retry after resume), or
+                 *         whatever error the subclass's
+                 *         @ref sleepUntilNs produces.
+                 */
+                Error sleepUntil(const MediaTimeStamp &deadline) const;
+
+                // Native shared-pointer plumbing.  Clock is not copyable;
+                // _promeki_clone asserts if the SharedPtr ever tries to
+                // detach, which should be impossible for CopyOnWrite=false.
+                /** @brief Atomic reference count for @ref SharedPtr. */
+                RefCount _promeki_refct;
+
+                /**
+                 * @brief Clone hook for @ref SharedPtr.  Always asserts —
+                 *        Clock objects are not copyable.
+                 */
+                virtual Clock *_promeki_clone() const {
+                        assert(false && "Clock is not copyable");
+                        return nullptr;
+                }
+
+        protected:
+                /**
+                 * @brief Returns the raw clock value in nanoseconds.
+                 *
+                 * The epoch is clock-defined.  The base class applies
+                 * the filter, pause accounting, and offsets on top.
+                 * An error result indicates the clock has become
+                 * unavailable (for example, the underlying hardware or
+                 * owner went away); the error propagates from @ref now.
+                 */
+                virtual Result<int64_t> raw() const = 0;
+
+                /**
+                 * @brief Native blocking wait in raw clock nanoseconds.
+                 *
+                 * Invoked by @ref sleepUntil after domain validation
+                 * and offset translation.  If @p targetNs is in the
+                 * past, implementations should return Error::Ok
+                 * immediately.  Implementations backed by a
+                 * disappearing resource (audio device, remote clock)
+                 * return the relevant error when the wait cannot
+                 * complete.
+                 *
+                 * @param targetNs Raw deadline in this clock's epoch.
+                 * @return Error::Ok on successful wake.
+                 */
+                virtual Error sleepUntilNs(int64_t targetNs) const = 0;
+
+                /**
+                 * @brief Called when pause state changes.
+                 *
+                 * Subclasses whose underlying source actually stops on
+                 * pause (@ref ClockPauseMode::PausesRawStops) override
+                 * this to start and stop the hardware.  Called while
+                 * the Clock's internal pause mutex is held, so
+                 * implementations must not call back into the Clock's
+                 * public API.  Default returns @c Error::Ok.
+                 *
+                 * @param paused The new pause state.
+                 */
+                virtual Error onPause(bool paused);
+
+        private:
+                Result<int64_t> applyFilter(int64_t raw) const;
+
+                ClockDomain                   _domain;
+                ClockPauseMode                _pauseMode;
+                std::unique_ptr<ClockFilter>  _filter;
+
+                mutable std::mutex            _mutex;
+                int64_t                       _fixedOffsetNs;
+                int64_t                       _pausedOffsetNs;
+                int64_t                       _frozenFilteredNs;
+                bool                          _paused;
+
+                mutable std::atomic<int64_t>  _lastNowNs;
 };
 
 /**
@@ -180,15 +372,20 @@ class Clock {
  * Uses @c std::chrono::steady_clock for timing and
  * @c std::this_thread::sleep_until for waiting.  Its domain is
  * @ref ClockDomain::SystemMonotonic, its jitter envelope is
- * near-zero, and its rate ratio is @c 1.0.
+ * near-zero, and its rate ratio is @c 1.0.  Cannot be paused and
+ * applies no filtering by default.
  */
 class WallClock : public Clock {
         public:
-                ClockDomain domain() const override;
+                /** @brief Constructs a WallClock in the SystemMonotonic domain. */
+                WallClock();
+
                 int64_t     resolutionNs() const override;
                 ClockJitter jitter() const override;
-                int64_t     nowNs() const override;
-                void        sleepUntilNs(int64_t targetNs) override;
+
+        protected:
+                Result<int64_t> raw() const override;
+                Error           sleepUntilNs(int64_t targetNs) const override;
 };
 
 PROMEKI_NAMESPACE_END

@@ -61,7 +61,7 @@ void TuiCheckBox::paintEvent(TuiPaintEvent *) {
         painter.drawText(0, 0, indicator + _text);
 }
 
-void TuiCheckBox::keyEvent(KeyEvent *e) {
+void TuiCheckBox::keyPressEvent(KeyEvent *e) {
         if(e->key() == KeyEvent::Key_Enter || e->key() == KeyEvent::Key_Space) {
                 toggle();
                 e->accept();

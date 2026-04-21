@@ -43,7 +43,7 @@ class TuiSplitter : public TuiWidget {
         protected:
                 void paintEvent(TuiPaintEvent *e) override;
                 void resizeEvent(TuiResizeEvent *e) override;
-                void keyEvent(KeyEvent *e) override;
+                void keyPressEvent(KeyEvent *e) override;
                 void mouseEvent(MouseEvent *e) override;
 
         private:

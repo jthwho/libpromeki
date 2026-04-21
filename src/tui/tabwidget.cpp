@@ -127,7 +127,7 @@ void TuiTabWidget::paintEvent(TuiPaintEvent *) {
         }
 }
 
-void TuiTabWidget::keyEvent(KeyEvent *e) {
+void TuiTabWidget::keyPressEvent(KeyEvent *e) {
         // When focused, Left/Right/Enter/Space select tabs directly
         if(hasFocus()) {
                 if(e->key() == KeyEvent::Key_Left && _tabs.size() > 1) {

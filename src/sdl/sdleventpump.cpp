@@ -8,6 +8,7 @@
 #include <promeki/sdl/sdleventpump.h>
 #include <promeki/sdl/sdlwindow.h>
 #include <promeki/sdl/sdlsubsystem.h>
+#include <promeki/keyevent.h>
 #include <promeki/mouseevent.h>
 #include <promeki/logger.h>
 
@@ -145,14 +146,27 @@ void SDLEventPump::handleKeyEvent(const SDL_Event &e) {
                 }
         }
 
-        KeyEvent *keyEvent = new KeyEvent(type, key, mods, text);
-        EventLoop *loop = window->eventLoop();
-        if(loop != nullptr) {
-                loop->postEvent(window, keyEvent);
-        } else {
-                delete keyEvent;
+        // Qt-style dispatch: start at the subsystem's focused widget
+        // (falling back to the window root if none), then walk up the
+        // parent chain until a handler calls @c accept().  Default
+        // Widget behaviour is to leave the event unaccepted, so the
+        // propagation naturally reaches the window unless a specific
+        // handler claims it.
+        //
+        // Delivery is synchronous here — the SDL pump already runs on
+        // the main thread, so routing directly avoids an extra event
+        // loop round-trip without changing thread semantics.
+        KeyEvent keyEv(type, key, mods, text);
+        Widget *target = nullptr;
+        SdlSubsystem *sub = SdlSubsystem::instance();
+        if(sub != nullptr) target = sub->focusedWidget();
+        if(target == nullptr) target = window;
+
+        while(target != nullptr) {
+                target->sendEvent(&keyEv);
+                if(keyEv.isAccepted()) break;
+                target = dynamic_cast<Widget *>(target->parent());
         }
-        return;
 }
 
 void SDLEventPump::handleMouseEvent(const SDL_Event &e) {

@@ -49,11 +49,37 @@ SdlSubsystem::SdlSubsystem()
                                 _sdlPipe.drain();
                                 _eventPump.pumpEvents();
                         });
+
+                // OS events (keyboard, window, mouse) only enter
+                // SDL's queue when somebody calls SDL_PumpEvents —
+                // but the watch → pipe → IoSource wakeup chain only
+                // fires when something is *already* in the queue,
+                // so a quiescent pipeline (nothing pushing user
+                // events) leaves OS input stranded.  Run a short
+                // periodic pump on the main event loop to keep OS
+                // events flowing regardless of what the rest of
+                // the application is doing.
+                //
+                // FIXME: burning a 60 Hz wakeup forever is wasteful —
+                // it prevents the app from ever going idle even when
+                // nothing is happening.  Replace with a dedicated
+                // thread that blocks in SDL_WaitEventTimeout (or
+                // equivalent) and forwards into the main event loop
+                // only when OS events actually arrive, so the idle
+                // case costs nothing.
+                _pumpTimerId = _eventLoop->startTimer(16,
+                        [this]() {
+                                _eventPump.pumpEvents();
+                        });
         }
         return;
 }
 
 SdlSubsystem::~SdlSubsystem() {
+        if(_pumpTimerId >= 0 && _eventLoop != nullptr) {
+                _eventLoop->stopTimer(_pumpTimerId);
+                _pumpTimerId = -1;
+        }
         if(_sdlSourceHandle >= 0 && _eventLoop != nullptr) {
                 _eventLoop->removeIoSource(_sdlSourceHandle);
                 _sdlSourceHandle = -1;

@@ -141,7 +141,7 @@ class EventTestWidget : public TuiWidget {
                         if(_layout) _layout->calculateLayout(Rect2Di32(0, 0, width(), height()));
                 }
 
-                void keyEvent(KeyEvent *e) override {
+                void keyPressEvent(KeyEvent *e) override {
                         _keyNameLabel->setText(String("Key: ") + KeyEvent::keyName(e->key()));
                         String mods = KeyEvent::modifierString(e->modifiers());
                         _keyModLabel->setText(String("Modifiers: ") + (mods.isEmpty() ? "None" : mods));
@@ -156,7 +156,7 @@ class EventTestWidget : public TuiWidget {
                                 addLog(logEntry);
                         }
 
-                        TuiWidget::keyEvent(e);
+                        TuiWidget::keyPressEvent(e);
                 }
 
                 void mouseEvent(MouseEvent *e) override {

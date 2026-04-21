@@ -104,7 +104,10 @@ Size2Di32 Widget::minimumSizeHint() const {
 void Widget::paintEvent(PaintEvent *) {
 }
 
-void Widget::keyEvent(KeyEvent *) {
+void Widget::keyPressEvent(KeyEvent *) {
+}
+
+void Widget::keyReleaseEvent(KeyEvent *) {
 }
 
 void Widget::mouseEvent(MouseEvent *) {
@@ -129,8 +132,10 @@ void Widget::event(Event *e) {
         } else if(e->type() == ResizeEvent::Resize) {
                 resizeEvent(static_cast<ResizeEvent *>(e));
                 e->accept();
-        } else if(e->type() == KeyEvent::KeyPress || e->type() == KeyEvent::KeyRelease) {
-                keyEvent(static_cast<KeyEvent *>(e));
+        } else if(e->type() == KeyEvent::KeyPress) {
+                keyPressEvent(static_cast<KeyEvent *>(e));
+        } else if(e->type() == KeyEvent::KeyRelease) {
+                keyReleaseEvent(static_cast<KeyEvent *>(e));
         } else if(e->type() == MouseEvent::Mouse) {
                 mouseEvent(static_cast<MouseEvent *>(e));
         } else {

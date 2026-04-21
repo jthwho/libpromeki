@@ -39,7 +39,7 @@ class TuiTextArea : public TuiWidget {
 
         protected:
                 void paintEvent(TuiPaintEvent *e) override;
-                void keyEvent(KeyEvent *e) override;
+                void keyPressEvent(KeyEvent *e) override;
 
         private:
                 StringList      _lines;

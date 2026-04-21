@@ -6,19 +6,19 @@
  */
 
 #include <promeki/sdl/sdlaudiooutput.h>
+#include <promeki/sdl/sdlaudioclock.h>
+#include <promeki/string.h>
 #include <promeki/logger.h>
 
 #include <SDL3/SDL.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-SDLAudioOutput::SDLAudioOutput() {
-        return;
+SDLAudioOutput::SDLAudioOutput(ObjectBase *parent) : ObjectBase(parent) {
 }
 
 SDLAudioOutput::~SDLAudioOutput() {
         close();
-        return;
 }
 
 bool SDLAudioOutput::configure(const AudioDesc &desc) {
@@ -56,6 +56,24 @@ bool SDLAudioOutput::open() {
                 return false;
         }
 
+        // Register (or reuse) a ClockDomain keyed on the actual SDL
+        // device name.  PerStream epoch reflects that SDL audio
+        // devices are independent time sources, not comparable across
+        // hardware.  Multiple SDLAudioOutputs targeting the same
+        // device share this domain by construction, since
+        // ClockDomain::registerDomain dedupes by name.
+        SDL_AudioDeviceID devid = SDL_GetAudioStreamDevice(_stream);
+        const char *sdlName = (devid != 0) ? SDL_GetAudioDeviceName(devid) : nullptr;
+        String domainName = "sdl.audio";
+        if(sdlName != nullptr && sdlName[0] != '\0') {
+                domainName += ":";
+                domainName += sdlName;
+        }
+        _clockDomain = ClockDomain(ClockDomain::registerDomain(
+                domainName,
+                "SDL audio device consumption-rate clock",
+                ClockEpoch::PerStream));
+
         // Start playback
         SDL_ResumeAudioStreamDevice(_stream);
 
@@ -70,7 +88,6 @@ void SDLAudioOutput::close() {
         }
         _open = false;
         _totalBytesPushed = 0;
-        return;
 }
 
 bool SDLAudioOutput::pushAudio(const Audio &audio) {
@@ -102,6 +119,32 @@ bool SDLAudioOutput::pushAudio(const Audio &audio) {
 int SDLAudioOutput::queuedBytes() const {
         if(!_open || _stream == nullptr) return 0;
         return SDL_GetAudioStreamQueued(_stream);
+}
+
+Error SDLAudioOutput::setPaused(bool paused) {
+        if(!_open || _stream == nullptr) return Error::NotOpen;
+        bool ok = paused
+                ? SDL_PauseAudioStreamDevice(_stream)
+                : SDL_ResumeAudioStreamDevice(_stream);
+        if(!ok) {
+                promekiErr("SDLAudioOutput: SDL_%sAudioStreamDevice failed: %s",
+                           paused ? "Pause" : "Resume", SDL_GetError());
+                return Error::DeviceError;
+        }
+        return {};
+}
+
+bool SDLAudioOutput::isPaused() const {
+        if(!_open || _stream == nullptr) return false;
+        return SDL_AudioStreamDevicePaused(_stream);
+}
+
+Clock *SDLAudioOutput::createClock() {
+        if(!_open) {
+                promekiErr("SDLAudioOutput::createClock called before open");
+                return nullptr;
+        }
+        return new SDLAudioClock(this);
 }
 
 PROMEKI_NAMESPACE_END

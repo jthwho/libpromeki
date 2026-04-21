@@ -47,12 +47,6 @@ class Metadata;
  * details (PTP grandmaster ID, domain number, GPS lock status, etc.).
  * Include @c promeki/metadata.h to use the returned reference.
  *
- * @par Future
- * ClockDomain is intended to absorb the FramePacerClock interface
- * (nowNs, resolutionNs, sleepUntilNs) so that a single object
- * describes both the identity and the active capabilities of a clock
- * source.
- *
  * @par Example
  * @code
  * // Well-known domains

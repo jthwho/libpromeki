@@ -246,7 +246,7 @@ void TuiSubsystem::dispatchKeyEvent(const TuiInputParser::ParsedEvent &ev) {
                 // Try focused widget first, then propagate up to parents
                 TuiWidget *target = _focusWidget;
                 while(target) {
-                        target->keyEvent(&keyEv);
+                        target->sendEvent(&keyEv);
                         if(keyEv.isAccepted()) break;
                         target = dynamic_cast<TuiWidget *>(target->parent());
                 }
