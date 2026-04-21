@@ -1,5 +1,6 @@
 var NAVTREEINDEX33 =
 {
+"structdetail_1_1is__type__registry.html":[23,0,0,0],
 "structdetail_1_1is__type__registry_3_01AudioCodec_01_4.html":[23,0,0,1],
 "structdetail_1_1is__type__registry_3_01ColorModel_01_4.html":[23,0,0,2],
 "structdetail_1_1is__type__registry_3_01MemSpace_01_4.html":[23,0,0,3],

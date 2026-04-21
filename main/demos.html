@@ -103,32 +103,31 @@ $(document).ready(function(){initNavTree('demos.html',''); initResizable(); });
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p>Applications that demonstrate specific aspects of the promeki library.</p>
-<p>The <code>demos/</code> directory contains standalone demonstration applications that showcase the capabilities and usage patterns of the promeki library. Unlike the <a class="el" href="utils.html">utility applications</a> (which provide functional use beyond the library itself), demos exist purely to help users learn and understand specific library APIs.</p>
+<p>The <code>demos/</code> directory contains standalone demonstration applications that showcase the capabilities and usage patterns of the promeki library. Unlike the <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">utility applications</a> (which provide functional use beyond the library itself), demos exist purely to help users learn and understand specific library APIs.</p>
 <h1><a class="anchor" id="demos_building"></a>
 Building</h1>
 <p>Demos are built by default as part of the normal library build. The option <code>PROMEKI_BUILD_DEMOS</code> (default <code>ON</code>) controls this:</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">cmake</a> -<a class="code hl_class" href="classList.html">DPROMEKI_BUILD_DEMOS</a>=<a class="code hl_class" href="classList.html">OFF</a> ..   # <a class="code hl_class" href="classList.html">skip</a> building demos</div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-</div><!-- fragment --><p>When built, the demo executables are placed in the <code>bin/</code> directory of the build tree. They are also installed as part of <code>make</code> <code>install</code>.</p>
+<div class="fragment"><div class="line">cmake -DPROMEKI_BUILD_DEMOS=OFF ..   # skip building demos</div>
+</div><!-- fragment --><p>When built, the demo executables are placed in the <code>bin/</code> directory of the build tree. They are also installed as part of <code>make install</code>.</p>
 <h1><a class="anchor" id="demos_standalone"></a>
 Standalone Build</h1>
 <p>The <code>demos/</code> directory has its own top-level <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">CMakeLists.txt</a></code> and can be built independently against an installed copy of libpromeki, just like any external project:</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">cd</a> demos</div>
-<div class="line">mkdir build &amp;&amp; <a class="code hl_class" href="classList.html">cd</a> build</div>
-<div class="line"><a class="code hl_class" href="classList.html">cmake</a> -<a class="code hl_class" href="classList.html">DCMAKE_PREFIX_PATH</a>=/path/to/promeki/install ..</div>
+<div class="fragment"><div class="line">cd demos</div>
+<div class="line">mkdir build &amp;&amp; cd build</div>
+<div class="line">cmake -DCMAKE_PREFIX_PATH=/path/to/promeki/install ..</div>
 <div class="line">make</div>
 </div><!-- fragment --><p>This is exactly the workflow that any third-party consumer of the library would follow, making the demos a living reference for integration.</p>
 <h1><a class="anchor" id="demos_adding"></a>
 Adding a New Demo</h1>
 <p>Each demo lives in its own subdirectory under <code>demos/</code>:</p>
 <div class="fragment"><div class="line">demos/</div>
-<div class="line">  <a class="code hl_class" href="classList.html">CMakeLists</a>.txt          # top-level, <a class="code hl_class" href="classList.html">includes</a> <a class="code hl_class" href="classList.html">each</a> <a class="code hl_class" href="classList.html">subdirectory</a></div>
-<div class="line">  <a class="code hl_class" href="classList.html">tui</a>-<a class="code hl_class" href="classList.html">demo</a>/</div>
-<div class="line">    <a class="code hl_class" href="classList.html">CMakeLists</a>.txt         # <a class="code hl_class" href="classList.html">add_executable</a> + <a class="code hl_class" href="classList.html">target_link_libraries</a></div>
-<div class="line">    <a class="code hl_class" href="classList.html">main</a>.cpp</div>
-<div class="line">  <a class="code hl_class" href="classList.html">my</a>-<span class="keyword">new</span>-<a class="code hl_class" href="classList.html">demo</a>/</div>
-<div class="line">    <a class="code hl_class" href="classList.html">CMakeLists</a>.txt</div>
-<div class="line">    <a class="code hl_class" href="classList.html">main</a>.cpp</div>
+<div class="line">  CMakeLists.txt          # top-level, includes each subdirectory</div>
+<div class="line">  tui-demo/</div>
+<div class="line">    CMakeLists.txt         # add_executable + target_link_libraries</div>
+<div class="line">    main.cpp</div>
+<div class="line">  my-new-demo/</div>
+<div class="line">    CMakeLists.txt</div>
+<div class="line">    main.cpp</div>
 </div><!-- fragment --><p>To add a new demo:</p>
 <ol type="1">
 <li>Create a new subdirectory under <code>demos/</code> (e.g. <code>demos/my-new-demo/</code>).</li>
@@ -153,7 +152,7 @@ Current Demos</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-20 23:51:17 from commit 43d9012 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-21 00:53:11 from commit 3126200 (1.0.0).</li>
   </ul>
 </div>
 </body>

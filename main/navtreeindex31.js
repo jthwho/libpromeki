@@ -1,5 +1,6 @@
 var NAVTREEINDEX31 =
 {
+"structAudioDesc_1_1Format.html#af133ca4e1a0352333f30f2d87354bcec":[21,13,4,0,1],
 "structAudioGen_1_1Config.html":[21,13,6,0],
 "structAudioGen_1_1Config.html#a0f0b9fbb10fb92d510dff79e67e3f415":[21,13,6,0,2],
 "structAudioGen_1_1Config.html#a11b8635732e60f5c62990d69767f6d1f":[21,13,6,0,1],
@@ -248,6 +249,5 @@ var NAVTREEINDEX31 =
 "structInspectorSnapshot.html#a225b45a309ce24e4045590d7f1b3cb10":[21,13,55,15],
 "structInspectorSnapshot.html#a2fd6c744db0327d1d667eb9bbbedc224":[21,13,55,23],
 "structInspectorSnapshot.html#a45832a49039d8388b61cb31c72694ed6":[21,13,55,18],
-"structInspectorSnapshot.html#a4911bb8cb49245ba35bfa417d6c394a3":[21,13,55,2],
-"structInspectorSnapshot.html#a68bfbe4ff82667547a89335641df253d":[21,13,55,4]
+"structInspectorSnapshot.html#a4911bb8cb49245ba35bfa417d6c394a3":[21,13,55,2]
 };

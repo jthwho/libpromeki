@@ -36,7 +36,7 @@ var searchData=
   ['global_33',['global',['../classRandom.html#a0543016b80f333ade4769ce022937775',1,'Random']]],
   ['gmpercussion_34',['gmPercussion',['../classMidiNoteNames.html#a8733a11bd004d68fd532a47812ebfe7f',1,'MidiNoteNames']]],
   ['grabmouse_35',['grabMouse',['../classTuiSubsystem.html#a82feca864ec6a6bf1a0e928971de298c',1,'TuiSubsystem']]],
-  ['graphics_20promeki_20sdl_36',['SDL Graphics (promeki-sdl)',['../index.html#autotoc_md25',1,'']]],
+  ['graphics_20promeki_20sdl_36',['SDL Graphics (promeki-sdl)',['../index.html#autotoc_md26',1,'']]],
   ['grayscale16_37',['Grayscale16',['../classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6adf62871c321c6dad2a9aef1919e64385',1,'Terminal']]],
   ['grayscale256_38',['Grayscale256',['../classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6ae5ee2bf91a497feadd9fb38e42d93e4c',1,'Terminal']]],
   ['grayscaletrue_39',['GrayscaleTrue',['../classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a050c96373a5448ac4f89e8aaaf5ea0be',1,'Terminal']]],
@@ -48,6 +48,7 @@ var searchData=
   ['grouplist_45',['GroupList',['../classMulticastReceiver.html#a25807eb027d663ffeaa1d8c50ef0d7d5',1,'MulticastReceiver']]],
   ['groupname_46',['groupName',['../structFrameBridge_1_1Config.html#a051cb637cd8ae180df7e935c0dd14094',1,'FrameBridge::Config']]],
   ['groups_47',['groups',['../classMulticastReceiver.html#a0edec448bc795d802cc874182f843e84',1,'MulticastReceiver']]],
-  ['guards_48',['guards',['../typeregistry.html#tr_disambiguation',1,'ID Disambiguation Guards'],['../md_CODING__STANDARDS.html#autotoc_md79',1,'ID Disambiguation Guards'],['../md_CODING__STANDARDS.html#autotoc_md45',1,'Include Guards']]],
-  ['guidelines_49',['Design Guidelines',['../typeregistry.html#tr_guidelines',1,'']]]
+  ['guards_48',['guards',['../typeregistry.html#tr_disambiguation',1,'ID Disambiguation Guards'],['../md_CODING__STANDARDS.html#autotoc_md80',1,'ID Disambiguation Guards'],['../md_CODING__STANDARDS.html#autotoc_md46',1,'Include Guards']]],
+  ['guidelines_49',['Design Guidelines',['../typeregistry.html#tr_guidelines',1,'']]],
+  ['guides_50',['Guides',['../index.html#autotoc_md19',1,'']]]
 ];

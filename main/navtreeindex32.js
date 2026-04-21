@@ -1,5 +1,6 @@
 var NAVTREEINDEX32 =
 {
+"structInspectorSnapshot.html#a68bfbe4ff82667547a89335641df253d":[21,13,55,4],
 "structInspectorSnapshot.html#a74bf47a3d931b8120cb1e9dc765e1b45":[21,13,55,16],
 "structInspectorSnapshot.html#a90c7846312725d6ae5eb4b14ef4124b1":[21,13,55,22],
 "structInspectorSnapshot.html#aab78b4c6271d22bce133df411044285b":[21,13,55,13],
@@ -248,6 +249,5 @@ var NAVTREEINDEX32 =
 "structdetail_1_1VariantLookupSegment.html#ab98c85898ab4a6188b4916a60dd89176":[21,10,44,4],
 "structdetail_1_1VariantQueryContext.html":[23,0,0,9],
 "structdetail_1_1VariantQueryContext.html#a390ebeb7683519b4760dbab730d987d0":[23,0,0,9,1],
-"structdetail_1_1VariantQueryContext.html#a6ad2e5883ba11691cf88ab643e29075d":[23,0,0,9,0],
-"structdetail_1_1is__type__registry.html":[23,0,0,0]
+"structdetail_1_1VariantQueryContext.html#a6ad2e5883ba11691cf88ab643e29075d":[23,0,0,9,0]
 };

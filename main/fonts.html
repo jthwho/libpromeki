@@ -106,11 +106,11 @@ $(document).ready(function(){initNavTree('fonts.html',''); initResizable(); });
 <p>This page describes the font rendering system, the available renderers, and how to choose between them.</p>
 <h1><a class="anchor" id="font_hierarchy"></a>
 Class Hierarchy</h1>
-<p>All font renderers derive from the <a class="el" href="classFont.html">Font</a> abstract base class, which manages common state (font filename, size, colors, paint engine, kerning) and defines the rendering interface.</p>
+<p>All font renderers derive from the <code><a class="el" href="classFont.html" title="Abstract base class for font rendering.">Font</a></code> abstract base class, which manages common state (font filename, size, colors, paint engine, kerning) and defines the rendering interface.</p>
 <ul>
-<li><a class="el" href="classFont.html">Font</a> &ndash; Abstract base. Requires a <a class="el" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images.">PaintEngine</a> at construction. Provides setters, getters, and the pure virtual drawText() / measureText() / metrics interface.</li>
-<li><a class="el" href="classFastFont.html">FastFont</a> &ndash; Cached opaque renderer. Pre-renders each glyph into the target pixel format for maximum throughput.</li>
-<li><a class="el" href="classBasicFont.html">BasicFont</a> &ndash; Alpha-compositing renderer. Composites each glyph pixel-by-pixel for correct transparency.</li>
+<li><code><a class="el" href="classFont.html" title="Abstract base class for font rendering.">Font</a></code> — Abstract base. Requires a <a class="el" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images.">PaintEngine</a> at construction. Provides setters, getters, and the pure virtual drawText() / measureText() / metrics interface.</li>
+<li><code><a class="el" href="classFastFont.html" title="High-performance cached font renderer.">FastFont</a></code> — Cached opaque renderer. Pre-renders each glyph into the target pixel format for maximum throughput.</li>
+<li><code><a class="el" href="classBasicFont.html" title="Alpha-compositing font renderer.">BasicFont</a></code> — Alpha-compositing renderer. Composites each glyph pixel-by-pixel for correct transparency.</li>
 </ul>
 <h1><a class="anchor" id="font_choosing"></a>
 Choosing a Renderer</h1>
@@ -124,35 +124,35 @@ Choosing a Renderer</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">Memory   </td><td class="markdownTableBodyNone">Higher (per-glyph image cache)   </td><td class="markdownTableBodyNone">Minimal (no cache)    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">Transparency   </td><td class="markdownTableBodyNone">No &ndash; glyph cells are opaque   </td><td class="markdownTableBodyNone">Yes &ndash; composites over existing content    </td></tr>
+<td class="markdownTableBodyNone">Transparency   </td><td class="markdownTableBodyNone">No — glyph cells are opaque   </td><td class="markdownTableBodyNone">Yes — composites over existing content    </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">Background color   </td><td class="markdownTableBodyNone">Fills glyph cell   </td><td class="markdownTableBodyNone">Ignored    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">Best for   </td><td class="markdownTableBodyNone">HUD overlays, timecodes, titles   </td><td class="markdownTableBodyNone">Transparent overlays, one-off renders   </td></tr>
 </table>
-<p>Use <a class="el" href="classFastFont.html">FastFont</a> when the same text (or the same character set) is drawn many times at the same size and color, such as burning timecodes into a video stream. Use <a class="el" href="classBasicFont.html">BasicFont</a> when text must blend smoothly over a varying background, or when rendering is infrequent and memory matters more than speed.</p>
+<p>Use <code><a class="el" href="classFastFont.html" title="High-performance cached font renderer.">FastFont</a></code> when the same text (or the same character set) is drawn many times at the same size and color, such as burning timecodes into a video stream. Use <code><a class="el" href="classBasicFont.html" title="Alpha-compositing font renderer.">BasicFont</a></code> when text must blend smoothly over a varying background, or when rendering is infrequent and memory matters more than speed.</p>
 <h1><a class="anchor" id="font_colors"></a>
 Color Semantics</h1>
-<p>Both renderers accept foreground and background colors via the <a class="el" href="classFont.html">Font</a> base class. Their interpretation differs:</p>
+<p>Both renderers accept foreground and background colors via the <code><a class="el" href="classFont.html" title="Abstract base class for font rendering.">Font</a></code> base class. Their interpretation differs:</p>
 <ul>
 <li><b><a class="el" href="classFastFont.html" title="High-performance cached font renderer.">FastFont</a></b>: The foreground color is composited onto the background color to produce a fully opaque glyph cell image. The background fills the entire cell area.</li>
 <li><b><a class="el" href="classBasicFont.html" title="Alpha-compositing font renderer.">BasicFont</a></b>: Only the foreground color is used. Glyph pixels are composited with per-pixel alpha over whatever is already in the target image. The background color is ignored.</li>
 </ul>
 <h1><a class="anchor" id="font_kerning"></a>
 Kerning</h1>
-<p>Both renderers support optional kerning via <a class="el" href="classFont.html#a5221fd9da699cd1b56a8abb72b817f84">Font::setKerningEnabled()</a>. When enabled, the renderer queries FreeType's kerning tables to adjust horizontal spacing between glyph pairs. Kerning is disabled by default.</p>
+<p>Both renderers support optional kerning via <code><a class="el" href="classFont.html#a5221fd9da699cd1b56a8abb72b817f84" title="Enables or disables kerning.">Font::setKerningEnabled()</a></code>. When enabled, the renderer queries FreeType's kerning tables to adjust horizontal spacing between glyph pairs. Kerning is disabled by default.</p>
 <h1><a class="anchor" id="font_metrics"></a>
 Font Metrics</h1>
 <p>After configuring a font (filename, size, and paint engine), the following metrics are available via lazy loading:</p>
 <ul>
-<li><a class="el" href="classFont.html#a2888d3184af886df4360ca360b602cff">Font::ascender()</a> &ndash; distance from baseline to top of cell.</li>
-<li><a class="el" href="classFont.html#a6a95b6edf4c03bc8d25e17517dcf858f">Font::descender()</a> &ndash; distance from baseline to bottom of cell.</li>
-<li><a class="el" href="classFont.html#a441cbf4cbde1ceb2fc9a7ed118c2f558">Font::lineHeight()</a> &ndash; full cell height (ascender + descender).</li>
+<li><code><a class="el" href="classFont.html#a2888d3184af886df4360ca360b602cff" title="Returns the ascender in pixels.">Font::ascender()</a></code> — distance from baseline to top of cell.</li>
+<li><code><a class="el" href="classFont.html#a6a95b6edf4c03bc8d25e17517dcf858f" title="Returns the descender in pixels.">Font::descender()</a></code> — distance from baseline to bottom of cell.</li>
+<li><code><a class="el" href="classFont.html#a441cbf4cbde1ceb2fc9a7ed118c2f558" title="Returns the line height in pixels.">Font::lineHeight()</a></code> — full cell height (ascender + descender).</li>
 </ul>
 <p>These methods trigger font loading on first call. They return 0 if the font cannot be loaded.</p>
 <h1><a class="anchor" id="font_paintengine"></a>
 PaintEngine and Invalidation</h1>
-<p>A <a class="el" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images.">PaintEngine</a> is required at construction and determines the target pixel format. It can be changed later via <a class="el" href="classFont.html#aad4d87fe6324c409b8c4eae385056b86">Font::setPaintEngine()</a>. Switching to a <a class="el" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images.">PaintEngine</a> with the same pixel format pointer is cheap &ndash; no cache invalidation occurs. Switching pixel formats triggers a full invalidation in subclasses.</p>
+<p>A <a class="el" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images.">PaintEngine</a> is required at construction and determines the target pixel format. It can be changed later via <code><a class="el" href="classFont.html#aad4d87fe6324c409b8c4eae385056b86" title="Sets the paint engine used for rendering.">Font::setPaintEngine()</a></code>. Switching to a <a class="el" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images.">PaintEngine</a> with the same pixel format pointer is cheap — no cache invalidation occurs. Switching pixel formats triggers a full invalidation in subclasses.</p>
 <h1><a class="anchor" id="font_examples"></a>
 Examples</h1>
 <h2><a class="anchor" id="font_example_fast"></a>
@@ -193,7 +193,7 @@ BasicFont: Transparent Overlay</h2>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-20 23:51:17 from commit 43d9012 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-21 00:53:11 from commit 3126200 (1.0.0).</li>
   </ul>
 </div>
 </body>

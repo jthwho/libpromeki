@@ -102,29 +102,6 @@ $(document).ready(function(){initNavTree('building.html',''); initResizable(); }
   <div class="headertitle"><div class="title">Building and Installing libpromeki</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="toc"><h3>Table of Contents</h3>
-<ul><li class="level1"><a href="#building_requirements">Requirements</a></li>
-<li class="level1"><a href="#building_quickstart">Quick Start</a></li>
-<li class="level1"><a href="#building_build_types">Build Types</a></li>
-<li class="level1"><a href="#building_feature_flags">Feature Flags</a></li>
-<li class="level1"><a href="#building_system_deps">Vendored vs. System Dependencies</a></li>
-<li class="level1"><a href="#building_build_targets">Build Targets</a></li>
-<li class="level1"><a href="#building_perf_options">Build Performance Options</a></li>
-<li class="level1"><a href="#building_configurations">Common Configurations</a><ul><li class="level2"><a href="#building_config_minimal">Minimal core-only build</a></li>
-<li class="level2"><a href="#building_config_system_deps">System dependencies</a></li>
-<li class="level2"><a href="#building_config_release">Release packaging</a></li>
-</ul>
-</li>
-<li class="level1"><a href="#building_cleaning">Cleaning</a></li>
-<li class="level1"><a href="#building_tests">Running Tests</a></li>
-<li class="level1"><a href="#building_installing">Installing</a></li>
-<li class="level1"><a href="#building_downstream">Using libpromeki in Your Project</a><ul><li class="level2"><a href="#building_include_conventions">Include Conventions</a></li>
-</ul>
-</li>
-<li class="level1"><a href="#building_docs">Building the Documentation</a></li>
-<li class="level1"><a href="#building_see_also">See Also</a></li>
-</ul>
-</div>
 <div class="textblock"><p>Complete build, install, and downstream-integration guide.</p>
 <p>This page is the canonical reference for building libpromeki from source, configuring its feature flags, running its tests, installing it, and consuming it from a downstream CMake project. Every user-facing CMake option is documented here.</p>
 <h1><a class="anchor" id="building_requirements"></a>
@@ -148,7 +125,7 @@ Requirements</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">CUDA Toolkit   </td><td class="markdownTableBodyNone">Enables GPU MemSpaces and is required for NVENC / NVDEC    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">NVIDIA Video Codec SDK   </td><td class="markdownTableBodyNone">Enables NVENC / NVDEC — see <a class="el" href="nvenc.html">NVIDIA NVENC setup</a>   </td></tr>
+<td class="markdownTableBodyNone">NVIDIA Video Codec SDK   </td><td class="markdownTableBodyNone">Enables NVENC / NVDEC — see <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">NVENC setup</a>   </td></tr>
 </table>
 <hr  />
 <h1><a class="anchor" id="building_quickstart"></a>
@@ -161,17 +138,30 @@ Quick Start</h1>
 <hr  />
 <h1><a class="anchor" id="building_build_types"></a>
 Build Types</h1>
-<p>libpromeki recognises three CMake build types. The build type controls optimisation, debug symbols, and whether per-module debug logging (<code>promekiDebug()</code>) is compiled in. See <a class="el" href="debugging.html">Debugging and Diagnostics</a> for the full discussion; the short version is:</p>
-<table class="markdownTable">
-<tr class="markdownTableHead">
-<th class="markdownTableHeadNone">Build type   </th><th class="markdownTableHeadNone">Optimisation   </th><th class="markdownTableHeadNone">Debug symbols   </th><th class="markdownTableHeadNone"><code>promekiDebug()</code>   </th><th class="markdownTableHeadNone">Typical use    </th></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><b>Debug</b>   </td><td class="markdownTableBodyNone"><code>-O0</code>   </td><td class="markdownTableBodyNone">Yes   </td><td class="markdownTableBodyNone">Compiled in   </td><td class="markdownTableBodyNone">Step-through debugging, sanitizers    </td></tr>
-<tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><b>DevRelease</b> (default)   </td><td class="markdownTableBodyNone"><code>-O3</code>   </td><td class="markdownTableBodyNone">Yes (<code>-g</code>)   </td><td class="markdownTableBodyNone">Compiled in   </td><td class="markdownTableBodyNone">Day-to-day development, CI, profiling    </td></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><b>Release</b>   </td><td class="markdownTableBodyNone"><code>-O3</code>   </td><td class="markdownTableBodyNone">No   </td><td class="markdownTableBodyNone">Compiled out   </td><td class="markdownTableBodyNone">Distribution / final packaging   </td></tr>
-</table>
+<p>libpromeki recognises three CMake build types. The build type controls optimisation, debug symbols, and whether per-module debug logging (<code>promekiDebug()</code>) is compiled in. See <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">Debugging and</a>Diagnostics" for the full discussion; the short
+version is:
+
+&lt;table class="markdownTable"&gt;
+  &lt;tr class="markdownTableHead"&gt;    &lt;th class="markdownTableHeadNone"&gt; Build type   </p>
+<p>Optimisation   </p>
+<p>Debug symbols   </p>
+<p><code>promekiDebug()</code>   </p>
+<p>Typical use    </p>
+<p><b>Debug</b>   </p>
+<p><code>-O0</code>   </p>
+<p>Yes   </p>
+<p>Compiled in   </p>
+<p>Step-through debugging, sanitizers    </p>
+<p><b>DevRelease</b> (default)   </p>
+<p><code>-O3</code>   </p>
+<p>Yes (<code>-g</code>)   </p>
+<p>Compiled in   </p>
+<p>Day-to-day development, CI, profiling    </p>
+<p><b>Release</b>   </p>
+<p><code>-O3</code>   </p>
+<p>No   </p>
+<p>Compiled out   </p>
+<p>Distribution / final packaging   </p>
 <div class="fragment"><div class="line">cmake -B build -DCMAKE_BUILD_TYPE=Release</div>
 </div><!-- fragment --><hr  />
 <h1><a class="anchor" id="building_feature_flags"></a>
@@ -201,15 +191,15 @@ Feature Flags</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>PROMEKI_ENABLE_CSC</code>   </td><td class="markdownTableBodyNone"><code>ON</code>   </td><td class="markdownTableBodyNone">SIMD color-space conversion (Highway)    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>PROMEKI_ENABLE_CIRF</code>   </td><td class="markdownTableBodyNone"><code>ON</code>   </td><td class="markdownTableBodyNone">Compiled-in resource filesystem (<code></code>:/.PROMEKI/...)    </td></tr>
+<td class="markdownTableBodyNone"><code>PROMEKI_ENABLE_CIRF</code>   </td><td class="markdownTableBodyNone"><code>ON</code>   </td><td class="markdownTableBodyNone">Compiled-in resource filesystem (<code>:/.PROMEKI/...</code>)    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>PROMEKI_ENABLE_V4L2</code>   </td><td class="markdownTableBodyNone">auto   </td><td class="markdownTableBodyNone">V4L2 video capture + ALSA audio capture (Linux only; auto-enabled when the headers are present)    </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>PROMEKI_ENABLE_CUDA</code>   </td><td class="markdownTableBodyNone">auto   </td><td class="markdownTableBodyNone">CUDA support (device / pinned-host memspaces; prerequisite for NVENC / NVDEC)    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>PROMEKI_ENABLE_NVENC</code>   </td><td class="markdownTableBodyNone">auto   </td><td class="markdownTableBodyNone">NVIDIA NVENC <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a> / HEVC encoder — see <a class="el" href="nvenc.html">NVIDIA NVENC setup</a>    </td></tr>
+<td class="markdownTableBodyNone"><code>PROMEKI_ENABLE_NVENC</code>   </td><td class="markdownTableBodyNone">auto   </td><td class="markdownTableBodyNone">NVIDIA NVENC <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a> / HEVC encoder — see <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">NVENC setup</a>    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>PROMEKI_ENABLE_NVDEC</code>   </td><td class="markdownTableBodyNone">auto   </td><td class="markdownTableBodyNone">NVIDIA NVDEC <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a> / HEVC decoder — see <a class="el" href="nvenc.html">NVIDIA NVENC setup</a>   </td></tr>
+<td class="markdownTableBodyNone"><code>PROMEKI_ENABLE_NVDEC</code>   </td><td class="markdownTableBodyNone">auto   </td><td class="markdownTableBodyNone">NVIDIA NVDEC <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a> / HEVC decoder — see <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">NVENC setup</a>   </td></tr>
 </table>
 <p>Flags marked <em>auto</em> default <code>ON</code> when their prerequisites are detected and <code>OFF</code> otherwise. Pass an explicit <code>-DPROMEKI_ENABLE_X=ON</code> / <code>OFF</code> on the command line to override the probe.</p>
 <hr  />
@@ -336,13 +326,13 @@ Installing</h1>
 <li><code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">lib/libpromeki.so</a></code> (versioned, with SONAME), plus <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">libpromeki-tui.so</a></code> and <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">libpromeki-sdl.so</a></code> when enabled</li>
 <li><code>include/promeki/</code> — all public headers, including the generated <code>config.h</code> that records which features were compiled in</li>
 <li><code>include/promeki/thirdparty/</code> — bundled third-party headers (when the corresponding dependency was vendored)</li>
-<li><code>lib/cmake/promeki/</code> — CMake package-config files for <code>find_package(promeki)</code> </li>
+<li><code>lib/cmake/promeki/</code> — CMake package-config files for <code>find_package(promeki)</code></li>
 <li><code>share/doc/promeki/</code> — license and third-party attribution notices</li>
 </ul>
 <hr  />
 <h1><a class="anchor" id="building_downstream"></a>
 Using libpromeki in Your Project</h1>
-<p>After installing, add this to your project's <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">CMakeLists.txt:</a></code> </p>
+<p>After installing, add this to your project's <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">CMakeLists.txt</a></code>:</p>
 <div class="fragment"><div class="line">find_package(promeki REQUIRED)</div>
 <div class="line"> </div>
 <div class="line"># Link against the main library:</div>
@@ -385,14 +375,14 @@ Building the Documentation</h1>
 <p>The documentation you are reading is generated from the sources by Doxygen. To build it locally:</p>
 <div class="fragment"><div class="line">cmake -B build -DPROMEKI_BUILD_DOCS=ON</div>
 <div class="line">cmake --build build --target docs</div>
-</div><!-- fragment --><p>The HTML output is written to <code>build/doxygen/html/</code> ; open <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">build/doxygen/html/index.html</a></code> in a browser. A hosted copy of the <code>main</code> branch is available at <a href="https://jthwho.github.io/libpromeki/main/">jthwho.github.io/libpromeki/main/</a>.</p>
+</div><!-- fragment --><p>The HTML output is written to <code>build/doxygen/html/</code>; open <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">build/doxygen/html/index.html</a></code> in a browser. A hosted copy of the <code>main</code> branch is available at <a href="https://jthwho.github.io/libpromeki/main/">https://jthwho.github.io/libpromeki/main/</a>.</p>
 <p>The output directory can be overridden with <code>-DPROMEKI_DOCS_OUTPUT_DIR=/some/path</code> at configure time.</p>
 <hr  />
 <h1><a class="anchor" id="building_see_also"></a>
 See Also</h1>
 <ul>
-<li><a class="el" href="debugging.html">Debugging and Diagnostics</a> — build-type / debug-logging / crash-handler reference</li>
-<li><a class="el" href="nvenc.html">NVIDIA NVENC setup</a> — NVENC / NVDEC SDK setup and <code>PROMEKI_NVENC_SDK_DIR</code> </li>
+<li><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">Debugging and Diagnostics</a> — build-type / debug-logging / crash-handler reference</li>
+<li><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">NVENC setup</a> — NVENC / NVDEC SDK setup and <code>PROMEKI_NVENC_SDK_DIR</code> </li>
 </ul>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
@@ -401,7 +391,7 @@ See Also</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-20 23:51:17 from commit 43d9012 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-21 00:53:11 from commit 3126200 (1.0.0).</li>
   </ul>
 </div>
 </body>

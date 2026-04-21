@@ -102,140 +102,77 @@ $(document).ready(function(){initNavTree('inspector.html',''); initResizable(); 
   <div class="headertitle"><div class="title">Inspector — Frame validation and monitoring</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="toc"><h3>Table of Contents</h3>
-<ul><li class="level1"><a href="#inspector_quickstart">Quick start</a></li>
-<li class="level1"><a href="#inspector_checks">The inspector tests</a><ul><li class="level2"><a href="#inspector_check_picture">Picture data band decode</a></li>
-<li class="level2"><a href="#inspector_check_ltc">Audio LTC decode</a></li>
-<li class="level2"><a href="#inspector_check_avsync">A/V Sync</a></li>
-<li class="level2"><a href="#inspector_check_continuity">Continuity tracking</a></li>
+<div class="textblock"><p>QA-oriented user guide for <code><a class="el" href="classMediaIOTask__Inspector.html" title="MediaIO sink backend that decodes and validates a media stream.">MediaIOTask_Inspector</a></code> — what each check does, how to consume the results, what the log output means, and how to interpret the A/V sync values a real production stream will produce.</p>
+<p>The Inspector is the inverse of the <code><a class="el" href="classMediaIOTask__TPG.html" title="MediaIOTask backend that generates test patterns.">MediaIOTask_TPG</a></code> Test Pattern Generator: where the TPG <em>produces</em> synthetic frames with embedded validation signals, the Inspector <em>consumes</em> frames and runs a configurable set of checks on each one. It is a <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> <b>sink</b> — frames go in, no frames come out — designed to sit at the terminal end of a pipeline and tell you whether the stream still looks the way it should.</p>
+<h1><a class="anchor" id="inspector_quickstart"></a>
+Quick start</h1>
+<p>The fastest way to verify a TPG stream is to wire a default inspector to it. Both sides default to "full checks", so this is literally a two-factory-call setup with a frame loop:</p>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="mediaio_8h.html">promeki/mediaio.h</a>&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><a class="code hl_class" href="classMediaIO.html">MediaIO</a> *<a class="code hl_class" href="classList.html">src</a>  = <a class="code hl_function" href="classMediaIO.html#a594b8b55ae788efe104c871248d73808">MediaIO::create</a>(<a class="code hl_function" href="classMediaIO.html#a0cb498ce63da62e06f5f463c0b046d74">MediaIO::defaultConfig</a>(<span class="stringliteral">&quot;TPG&quot;</span>));</div>
+<div class="line"><a class="code hl_class" href="classMediaIO.html">MediaIO</a> *<a class="code hl_class" href="classList.html">sink</a> = <a class="code hl_function" href="classMediaIO.html#a594b8b55ae788efe104c871248d73808">MediaIO::create</a>(<a class="code hl_function" href="classMediaIO.html#a0cb498ce63da62e06f5f463c0b046d74">MediaIO::defaultConfig</a>(<span class="stringliteral">&quot;Inspector&quot;</span>));</div>
+<div class="line"> </div>
+<div class="line"><a class="code hl_class" href="classList.html">src</a>-&gt;open(<a class="code hl_variable" href="classMediaIO.html#aa4e38e7fc22ac0bbb0fb29fb8e8ae428">MediaIO::Source</a>);</div>
+<div class="line"><a class="code hl_class" href="classList.html">sink</a>-&gt;open(<a class="code hl_variable" href="classMediaIO.html#a54825254dffb007bc72929645024a495">MediaIO::Sink</a>);</div>
+<div class="line"> </div>
+<div class="line"><span class="keywordflow">for</span>(<span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">i</a> = 0; <a class="code hl_class" href="classList.html">i</a> &lt; 1000; <a class="code hl_class" href="classList.html">i</a>++) {</div>
+<div class="line">    <a class="code hl_class" href="classSharedPtr.html">Frame::Ptr</a> frame;</div>
+<div class="line">    <a class="code hl_class" href="classList.html">src</a>-&gt;readFrame(frame);</div>
+<div class="line">    <a class="code hl_class" href="classList.html">sink</a>-&gt;writeFrame(frame);</div>
+<div class="line">}</div>
+<div class="line"> </div>
+<div class="line"><a class="code hl_class" href="classList.html">src</a>-&gt;close();</div>
+<div class="line"><a class="code hl_class" href="classList.html">sink</a>-&gt;close();</div>
+<div class="line"><span class="keyword">delete</span> <a class="code hl_class" href="classList.html">src</a>;</div>
+<div class="line"><span class="keyword">delete</span> <a class="code hl_class" href="classList.html">sink</a>;</div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="ttc" id="aclassMediaIO_html"><div class="ttname"><a href="classMediaIO.html">MediaIO</a></div><div class="ttdoc">Controller for media I/O backends.</div><div class="ttdef"><b>Definition</b> mediaio.h:484</div></div>
+<div class="ttc" id="aclassMediaIO_html_a0cb498ce63da62e06f5f463c0b046d74"><div class="ttname"><a href="classMediaIO.html#a0cb498ce63da62e06f5f463c0b046d74">MediaIO::defaultConfig</a></div><div class="ttdeci">static Config defaultConfig(const String &amp;typeName)</div><div class="ttdoc">Returns the default configuration for the named backend.</div></div>
+<div class="ttc" id="aclassMediaIO_html_a54825254dffb007bc72929645024a495"><div class="ttname"><a href="classMediaIO.html#a54825254dffb007bc72929645024a495">MediaIO::Sink</a></div><div class="ttdeci">static constexpr Mode Sink</div><div class="ttdoc">Backend accepts frames from the caller.</div><div class="ttdef"><b>Definition</b> mediaio.h:492</div></div>
+<div class="ttc" id="aclassMediaIO_html_a594b8b55ae788efe104c871248d73808"><div class="ttname"><a href="classMediaIO.html#a594b8b55ae788efe104c871248d73808">MediaIO::create</a></div><div class="ttdeci">static MediaIO * create(const Config &amp;config, ObjectBase *parent=nullptr)</div><div class="ttdoc">Creates a MediaIO instance from a configuration.</div></div>
+<div class="ttc" id="aclassMediaIO_html_aa4e38e7fc22ac0bbb0fb29fb8e8ae428"><div class="ttname"><a href="classMediaIO.html#aa4e38e7fc22ac0bbb0fb29fb8e8ae428">MediaIO::Source</a></div><div class="ttdeci">static constexpr Mode Source</div><div class="ttdoc">Backend provides frames to the caller.</div><div class="ttdef"><b>Definition</b> mediaio.h:491</div></div>
+<div class="ttc" id="aclassSharedPtr_html"><div class="ttname"><a href="classSharedPtr.html">SharedPtr&lt; Frame &gt;</a></div></div>
+<div class="ttc" id="amediaio_8h_html"><div class="ttname"><a href="mediaio_8h.html">mediaio.h</a></div></div>
+</div><!-- fragment --><p>That's enough to get every check running:</p>
+<ul>
+<li>The TPG's default audio mode is <code>AudioPattern::AvSync</code>, which embeds <b>continuous LTC on channel 0</b> alongside the click marker on the other channels.</li>
+<li>The TPG's image data encoder pass is on by default and stamps two 64-bit payloads (frame ID + BCD timecode) into the top of every frame.</li>
+<li>The Inspector's default <code>MediaConfig::InspectorTests</code> list carries every test (<code>ImageData</code>, <code>Ltc</code>, <code>TcSync</code>, <code>Continuity</code>, <code>Timestamp</code>, <code>AudioSamples</code>), so the full suite runs out of the box.</li>
 </ul>
-</li>
-<li class="level1"><a href="#inspector_results">Consuming the results</a><ul><li class="level2"><a href="#inspector_callback">Per-frame callback</a></li>
-<li class="level2"><a href="#inspector_snapshot">Accumulator snapshot</a></li>
-<li class="level2"><a href="#inspector_log">Periodic log</a></li>
-</ul>
-</li>
-<li class="level1"><a href="#inspector_construct">Construction patterns</a><ul><li class="level2"><a href="#inspector_construct_factory">Standard factory (no callback)</a></li>
-<li class="level2"><a href="#inspector_construct_adopt">Adopt-task path (per-frame callback)</a></li>
-</ul>
-</li>
-<li class="level1"><a href="#inspector_what_to_look_for">What to look for in CI / QA</a></li>
-<li class="level1"><a href="#inspector_log_reference">Annotated log reference</a><ul><li class="level2"><a href="#inspector_log_config">At open time — configuration block</a></li>
-<li class="level2"><a href="#inspector_log_periodic">Periodic report (one block per interval)</a></li>
-<li class="level2"><a href="#inspector_log_warnings">Discontinuity warnings (immediate)</a></li>
-</ul>
-</li>
-<li class="level1"><a href="#inspector_known_limits">Known limits</a></li>
-<li class="level1"><a href="#inspector_see_also">See also</a></li>
-</ul>
-</div>
-<div class="textblock"><p>QA-oriented user guide for <a class="el" href="classMediaIOTask__Inspector.html">MediaIOTask_Inspector</a> — what each check does, how to consume the results, what the log output means, and how to interpret the A/V sync values a real production stream will produce.</p>
-<p>The Inspector is the inverse of the <a class="el" href="classMediaIOTask__TPG.html">Test</a> Pattern Generator": where the TPG @em produces synthetic frames
-  with embedded validation signals, the Inspector @em consumes frames
-  and runs a configurable set of checks on each one.  It is a
-  MediaIO &lt;strong&gt;sink&lt;/strong&gt; — frames go in, no frames come out — designed to
-  sit at the terminal end of a pipeline and tell you whether the
-  stream still looks the way it should.
-
-
-
-@section inspector_quickstart Quick start
-
-  The fastest way to verify a TPG stream is to wire a default
-  inspector to it.  Both sides default to "full checks", so this is
-  literally a two-factory-call setup with a frame loop:
-
-  @code 
-  #include &lt;promeki/mediaio.h&gt;
- 
-  MediaIO *src  = MediaIO::create(MediaIO::defaultConfig("TPG"));
-  MediaIO *sink = MediaIO::create(MediaIO::defaultConfig("Inspector"));
- 
-  src-&gt;open(MediaIO::Source);
-  sink-&gt;open(MediaIO::Sink);
- 
-  for(int i = 0; i &lt; 1000; i++) {
-      Frame::Ptr frame;
-      src-&gt;readFrame(frame);
-      sink-&gt;writeFrame(frame);
-  }
- 
-  src-&gt;close();
-  sink-&gt;close();
-  delete src;
-  delete sink;
-  @endcode
-
-  That's enough to get every check running:
-
-  - The TPG's default audio mode is @ref AudioPattern::AvSync, which
-    embeds &lt;strong&gt;continuous LTC on channel 0&lt;/strong&gt; alongside the click marker
-    on the other channels.
-  - The TPG's image data encoder pass is on by default and stamps two
-    64-bit payloads (frame ID + BCD timecode) into the top of every
-    frame.
-  - The Inspector's default @ref MediaConfig::InspectorTests list
-    carries every test (@c ImageData, @c Ltc, @c TcSync,
-    @c Continuity, @c Timestamp, @c AudioSamples), so the full
-    suite runs out of the box.
-
-  The default periodic log writes a multi-line report once per second
-  of wall time, plus immediate warnings whenever a discontinuity is
-  detected.  Sample output (1080p RGBA8 source, 30 fps, 48 kHz audio):
-
-  @verbatim 
-* config: image data decode  = enabled
-* config: LTC decode         = enabled
-* config: LTC channel        = 0
-* config: A/V sync check     = enabled (auto-enables image data + LTC decode)
-* config: A/V sync jitter tolerance = 0 samples (any frame-to-frame change beyond this fires a discontinuity warning; default = report any change at all)
-* config: continuity check    = enabled (auto-enables image data decode)
-* config: image data band    = 16 scan lines per item, TPG-convention 2 items at top of frame
-* config: drop frames         = yes (sink behaviour)
-* config: periodic log every  = 1.00 seconds (wall time)
-* Frame 30: report after 30 frames (1.00 s wall) — 30 total since open
-* Frame 30: picture data band: decoded 30 / 30 frames (100.0%) — most recent: streamID 0x00000000, frameNo 29, TC 01:00:00:29
-* Frame 30: audio LTC: decoded 30 / 30 frames (100.0%) — most recent: TC 01:00:00:29, sync word at sample 2 within chunk
-* Frame 30: A/V Sync: Video leads audio by 2 samples, 0.0013 frames
-* @endverbatim
-
-  The continuity line is intentionally absent on a clean stream — the
-  inspector stays silent when there is nothing to flag.  See
-  @ref inspector_log for a full annotation of every line.
-
-@section inspector_checks The inspector tests
-
-  The inspector runs an independently-selectable set of tests per
-  frame.  The selection is driven by a single config key,
-  @ref MediaConfig::InspectorTests — an @ref EnumList of
-  @ref InspectorTest values.  The default list carries every test
-  so the full suite runs out of the box; narrow the list to run a
-  subset.  The inspector resolves test dependencies at
-  @ref MediaIOTask_Inspector::executeCmd "open" time, so you never
-  have to list the upstream decoders explicitly.
-
-&lt;table class="markdownTable"&gt;
-  &lt;tr class="markdownTableHead"&gt;    &lt;th class="markdownTableHeadNone"&gt; Test   </p>
-<p><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> value   </p>
-<p>Auto-enables    </p>
-<p>Decode picture data band   </p>
-<p><code>InspectorTest::ImageData</code>   </p>
-<p>(no deps)    </p>
-<p>Decode audio LTC   </p>
-<p><code>InspectorTest::Ltc</code>   </p>
-<p>(no deps)    </p>
-<p>A/V Sync (TC offset, samples)   </p>
-<p><code>InspectorTest::TcSync</code>   </p>
-<p><code>ImageData</code> + <code>Ltc</code>    </p>
-<p>Continuity (TC / frame# / SID)   </p>
-<p><code>InspectorTest::Continuity</code>   </p>
-<p><code>ImageData</code>    </p>
-<p>Timestamp delta + actual FPS   </p>
-<p><code>InspectorTest::Timestamp</code>   </p>
-<p>(no deps)    </p>
-<p>Per-frame audio sample count   </p>
-<p><code>InspectorTest::AudioSamples</code>   </p>
-<p>(no deps)   </p>
+<p>The default periodic log writes a multi-line report once per second of wall time, plus immediate warnings whenever a discontinuity is detected. Sample output (1080p RGBA8 source, 30 fps, 48 kHz audio):</p>
+<div class="fragment"><div class="line">config: image data decode  = enabled</div>
+<div class="line">config: LTC decode         = enabled</div>
+<div class="line">config: LTC channel        = 0</div>
+<div class="line">config: A/V sync check     = enabled (auto-enables image data + LTC decode)</div>
+<div class="line">config: A/V sync jitter tolerance = 0 samples (any frame-to-frame change beyond this fires a discontinuity warning; default = report any change at all)</div>
+<div class="line">config: continuity check    = enabled (auto-enables image data decode)</div>
+<div class="line">config: image data band    = 16 scan lines per item, TPG-convention 2 items at top of frame</div>
+<div class="line">config: drop frames         = yes (sink behaviour)</div>
+<div class="line">config: periodic log every  = 1.00 seconds (wall time)</div>
+<div class="line">Frame 30: report after 30 frames (1.00 s wall) — 30 total since open</div>
+<div class="line">Frame 30: picture data band: decoded 30 / 30 frames (100.0%) — most recent: streamID 0x00000000, frameNo 29, TC 01:00:00:29</div>
+<div class="line">Frame 30: audio LTC: decoded 30 / 30 frames (100.0%) — most recent: TC 01:00:00:29, sync word at sample 2 within chunk</div>
+<div class="line">Frame 30: A/V Sync: Video leads audio by 2 samples, 0.0013 frames</div>
+</div><!-- fragment --><p>The continuity line is intentionally absent on a clean stream — the inspector stays silent when there is nothing to flag. See <a class="el" href="inspector.html#inspector_log_reference">Annotated log reference</a> for a full annotation of every line.</p>
+<h1><a class="anchor" id="inspector_checks"></a>
+The inspector tests</h1>
+<p>The inspector runs an independently-selectable set of tests per frame. The selection is driven by a single config key, <code>MediaConfig::InspectorTests</code> — an <code><a class="el" href="classEnumList.html" title="Ordered, duplicate-preserving list of Enum values sharing one type.">EnumList</a></code> of <code><a class="el" href="classInspectorTest.html" title="Well-known Enum type for MediaIOTask_Inspector test selection.">InspectorTest</a></code> values. The default list carries every test so the full suite runs out of the box; narrow the list to run a subset. The inspector resolves test dependencies at open time, so you never have to list the upstream decoders explicitly.</p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Test   </th><th class="markdownTableHeadNone"><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> value   </th><th class="markdownTableHeadNone">Auto-enables    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Decode picture data band   </td><td class="markdownTableBodyNone"><code>InspectorTest::ImageData</code>   </td><td class="markdownTableBodyNone">(no deps)    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Decode audio LTC   </td><td class="markdownTableBodyNone"><code>InspectorTest::Ltc</code>   </td><td class="markdownTableBodyNone">(no deps)    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">A/V Sync (TC offset, samples)   </td><td class="markdownTableBodyNone"><code>InspectorTest::TcSync</code>   </td><td class="markdownTableBodyNone"><code>ImageData</code> + <code>Ltc</code>    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Continuity (TC / frame# / SID)   </td><td class="markdownTableBodyNone"><code>InspectorTest::Continuity</code>   </td><td class="markdownTableBodyNone"><code>ImageData</code>    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Timestamp delta + actual FPS   </td><td class="markdownTableBodyNone"><code>InspectorTest::Timestamp</code>   </td><td class="markdownTableBodyNone">(no deps)    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Per-frame audio sample count   </td><td class="markdownTableBodyNone"><code>InspectorTest::AudioSamples</code>   </td><td class="markdownTableBodyNone">(no deps)   </td></tr>
+</table>
 <p>Example — only run the timestamp and A/V sync checks:</p>
 <div class="fragment"><div class="line"><a class="code hl_class" href="classEnumList.html">EnumList</a> <a class="code hl_class" href="classList.html">tests</a> = EnumList::forType&lt;InspectorTest&gt;();</div>
 <div class="line"><a class="code hl_class" href="classList.html">tests</a>.append(InspectorTest::Timestamp);</div>
@@ -244,83 +181,84 @@ $(document).ready(function(){initNavTree('inspector.html',''); initResizable(); 
 <div class="line"><span class="comment">// Or from the command line / string form:</span></div>
 <div class="line"><span class="comment">//   InspectorTests=Timestamp,TcSync</span></div>
 <div class="ttc" id="aclassEnumList_html"><div class="ttname"><a href="classEnumList.html">EnumList</a></div><div class="ttdoc">Ordered, duplicate-preserving list of Enum values sharing one type.</div><div class="ttdef"><b>Definition</b> enumlist.h:59</div></div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassList_html_ab5f4f4c756727be7a037ea66660a2fec"><div class="ttname"><a href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">List::set</a></div><div class="ttdeci">bool set(size_t index, const T &amp;val)</div><div class="ttdoc">Sets an item in the list by index.</div><div class="ttdef"><b>Definition</b> list.h:541</div></div>
 </div><!-- fragment --><h2><a class="anchor" id="inspector_check_picture"></a>
 Picture data band decode</h2>
-<p>Pulls the two 64-bit payloads written by <a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a> out of the top of every frame:</p>
+<p>Pulls the two 64-bit payloads written by <code><a class="el" href="classImageDataEncoder.html" title="Fast VITC-style binary data encoder for raster images.">ImageDataEncoder</a></code> out of the top of every frame:</p>
 <ul>
-<li><b>Band 1</b> (lines <code>0</code>..N-1): the <b>frame ID</b> word, encoded as <code>(streamID &lt;&lt; 32) | frameNumber</code>. StreamID is the upstream producer's identifier (set via MediaConfig::StreamID on the TPG); frameNumber is the producer's monotonic frame counter from when the source was opened.</li>
-<li><b>Band 2</b> (lines <code>N</code>..2N-1): the <b>BCD timecode</b> word, packed in the TimecodePackFormat::Vitc format that <a class="el" href="classTimecode.html#a0b6f9be97a95839c1677c5ce8f2f129b">Timecode::toBcd64</a> produces.</li>
+<li><b>Band 1</b> (lines <code>0..N-1</code>): the <b>frame ID</b> word, encoded as <code>(streamID &lt;&lt; 32) | frameNumber</code>. StreamID is the upstream producer's identifier (set via <code>MediaConfig::StreamID</code> on the TPG); frameNumber is the producer's monotonic frame counter from when the source was opened.</li>
+<li><b>Band 2</b> (lines <code>N..2N-1</code>): the <b>BCD timecode</b> word, packed in the <code>TimecodePackFormat::Vitc</code> format that <code><a class="el" href="classTimecode.html#a0b6f9be97a95839c1677c5ce8f2f129b" title="Packs the timecode into the 64-bit BCD time-address word.">Timecode::toBcd64</a></code> produces.</li>
 </ul>
-<p><code>N</code> is set by MediaConfig::InspectorImageDataRepeatLines and must match the producer's MediaConfig::TpgDataEncoderRepeatLines. The default is 16 — wide enough that the inspector can use multi-line averaging for SNR but cheap enough that the visible data band is unobtrusive.</p>
-<p>The decode is <b>all-or-nothing</b>: if either band fails to decode (sync nibble corruption, <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a> mismatch, missing image, decoder not yet initialised, etc.) the inspector reports <a class="el" href="structInspectorEvent.html#aa2ebde0796e9559d01964997e48fe949">InspectorEvent::pictureDecoded</a> as <code>false</code> and leaves all picture-side fields at their default values. This guarantees a callback consumer can never confuse a stale or partially-decoded reading with a real "frame 0, stream 0, TC 00:00:00:00" frame — always check <code>pictureDecoded</code> before reading the other fields.</p>
+<p><code>N</code> is set by <code>MediaConfig::InspectorImageDataRepeatLines</code> and must match the producer's <code>MediaConfig::TpgDataEncoderRepeatLines</code>. The default is 16 — wide enough that the inspector can use multi-line averaging for SNR but cheap enough that the visible data band is unobtrusive.</p>
+<p>The decode is <b>all-or-nothing</b>: if either band fails to decode (sync nibble corruption, <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a> mismatch, missing image, decoder not yet initialised, etc.) the inspector reports <code><a class="el" href="structInspectorEvent.html#aa2ebde0796e9559d01964997e48fe949" title="True if the picture data band was decoded for this frame.">InspectorEvent::pictureDecoded</a></code> as <code>false</code> and leaves all picture-side fields at their default values. This guarantees a callback consumer can never confuse a stale or partially-decoded reading with a real "frame 0, stream 0, TC 00:00:00:00" frame — always check <code>pictureDecoded</code> before reading the other fields.</p>
 <h2><a class="anchor" id="inspector_check_ltc"></a>
 Audio LTC decode</h2>
-<p>Pulls one channel of the frame's audio (selected by MediaConfig::InspectorLtcChannel, default channel 0) and feeds it through <a class="el" href="classLtcDecoder.html">LtcDecoder</a>. The decoder is format-agnostic: any <a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">AudioDesc::DataType</a> is accepted (PCMI_S8, PCMI_S16LE, PCMI_Float32LE, ...). The most recently recovered timecode is reported in <a class="el" href="structInspectorEvent.html#a3d9310b693eede6b1bd21fdbb16c9ae7">InspectorEvent::ltcTimecode</a> along with the within-chunk sample offset of the LTC sync word in <a class="el" href="structInspectorEvent.html#ab071023156ef6e16374ac59a360c987b">InspectorEvent::ltcSampleStart</a>.</p>
-<p>The LTC decoder is stateful and may need a few frames to lock onto a fresh stream — early frames will report <a class="el" href="structInspectorEvent.html#a9fa69f188068a68855a6b0ba94a4cf0c">InspectorEvent::ltcDecoded</a> as <code>false</code> until the decoder has accumulated enough biphase-mark transitions.</p>
+<p>Pulls one channel of the frame's audio (selected by <code>MediaConfig::InspectorLtcChannel</code>, default channel 0) and feeds it through <code><a class="el" href="classLtcDecoder.html" title="Decodes LTC (Linear Timecode) audio samples into timecode values.">LtcDecoder</a></code>. The decoder is format-agnostic: any <code><a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4" title="Enumeration of supported audio sample data types.">AudioDesc::DataType</a></code> is accepted (PCMI_S8, PCMI_S16LE, PCMI_Float32LE, ...). The most recently recovered timecode is reported in <code><a class="el" href="structInspectorEvent.html#a3d9310b693eede6b1bd21fdbb16c9ae7" title="Most recent timecode recovered from the audio LTC stream.">InspectorEvent::ltcTimecode</a></code> along with the within-chunk sample offset of the LTC sync word in <code><a class="el" href="structInspectorEvent.html#ab071023156ef6e16374ac59a360c987b">InspectorEvent::ltcSampleStart</a></code>.</p>
+<p>The LTC decoder is stateful and may need a few frames to lock onto a fresh stream — early frames will report <code><a class="el" href="structInspectorEvent.html#a9fa69f188068a68855a6b0ba94a4cf0c">InspectorEvent::ltcDecoded</a></code> as <code>false</code> until the decoder has accumulated enough biphase-mark transitions.</p>
 <h2><a class="anchor" id="inspector_check_avsync"></a>
 A/V Sync</h2>
-<p>The headline check. When both decoders are running and the LTC carries a known frame rate, the inspector computes the <b>instantaneous offset</b> between the picture timecode anchor and the audio LTC sync anchor on every frame, in audio samples. The value lives in <a class="el" href="structInspectorEvent.html#a5544cf6790c55253b8b4cac661e8cf6e">InspectorEvent::avSyncOffsetSamples</a>.</p>
-<dl class="section user"><dt>What this measures, exactly</dt><dd></dd></dl>
-<p>For picture frame N, the audio chunk for that frame spans absolute audio samples <code></code>[N*spf, (N+1)*spf), where <code>spf</code> is the average samples-per-frame (computed exactly from the LTC mode's rational frame rate, so <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">29.97</a> NDF and friends are accurate). The picture's "TC anchor" is sample 0 of that chunk: the picture says we are at <code>picTC</code> starting here. The LTC's "TC anchor" is the sample at which the LTC sync word is detected for the recovered LTC frame: the LTC says we are at <code>ltcTC</code> starting there.</p>
+<p>The headline check. When both decoders are running and the LTC carries a known frame rate, the inspector computes the <b>instantaneous offset</b> between the picture timecode anchor and the audio LTC sync anchor on every frame, in audio samples. The value lives in <code><a class="el" href="structInspectorEvent.html#a5544cf6790c55253b8b4cac661e8cf6e">InspectorEvent::avSyncOffsetSamples</a></code>.</p>
+<p><b>What this measures, exactly</b></p>
+<p>For picture frame N, the audio chunk for that frame spans absolute audio samples <code>[N*spf, (N+1)*spf)</code>, where <code>spf</code> is the average samples-per-frame (computed exactly from the LTC mode's rational frame rate, so <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">29.97</a> NDF and friends are accurate). The picture's "TC anchor" is sample 0 of that chunk: the picture says we are at <code>picTC</code> starting here. The LTC's "TC anchor" is the sample at which the LTC sync word is detected for the recovered LTC frame: the LTC says we are at <code>ltcTC</code> starting there.</p>
 <p>If the two streams are perfectly aligned, both should agree on the same TC at the same sample. The inspector measures:</p>
-<div class="fragment"><div class="line">offset = (ltcSampleStart - <a class="code hl_class" href="classList.html">chunkStart</a>) + (<a class="code hl_class" href="classList.html">picFrames</a> - <a class="code hl_class" href="classList.html">ltcFrames</a>) * <a class="code hl_class" href="classList.html">spf</a></div>
-</div><!-- fragment --><p>where <code>ltcSampleStart</code> - chunkStart is the LTC sync word's offset within this audio chunk and <code>picFrames</code> - ltcFrames is the difference between the two TCs converted to absolute frame counts.</p>
-<dl class="section user"><dt>Sign convention</dt><dd></dd></dl>
+<div class="fragment"><div class="line">offset = (ltcSampleStart - chunkStart) + (picFrames - ltcFrames) * spf</div>
+</div><!-- fragment --><p>where <code>ltcSampleStart - chunkStart</code> is the LTC sync word's offset within this audio chunk and <code>picFrames - ltcFrames</code> is the difference between the two TCs converted to absolute frame counts.</p>
+<p><b>Sign convention</b></p>
 <p>The inspector renders the offset in plain language so the sign convention isn't something a QA reader has to remember:</p>
-<pre class="fragment">* Frame N: A/V Sync: Video leads audio by 2 samples, 0.0013 frames
-* Frame N: A/V Sync: Audio leads video by 5 samples, 0.0031 frames
-* Frame N: A/V Sync: audio and video locked (0 samples)
-* </pre><p>Internally, positive <code>avSyncOffsetSamples</code> means <b>video leads audio</b> (the picture's TC anchor lands at an earlier wall-clock audio sample than the LTC's TC anchor) and negative means <b>audio leads video</b>.</p>
-<dl class="section user"><dt>What "in sync" actually looks like</dt><dd></dd></dl>
-<p>In professional video the audio and video are locked to a common reference, so a healthy stream's offset is <b>constant</b> across frames — not necessarily zero, but not changing. Any movement from one frame to the next is a real fault. The inspector enforces that contract via the change-detection check (see <a class="el" href="inspector.html#inspector_check_continuity">Continuity tracking</a> below) with a configurable tolerance via MediaConfig::InspectorSyncOffsetToleranceSamples.</p>
-<dl class="section user"><dt>The libvtc baseline</dt><dd></dd></dl>
-<dl class="section attention"><dt>Attention</dt><dd>When both encoder and decoder are libvtc (which is the case for any TPG → Inspector pipeline you set up using libpromeki factories), expect a <b>small constant offset</b> of 1-3 samples at common audio rates — typically <code>+2</code> at 48 kHz / 30 fps. This is not real misalignment. It comes from the libvtc encoder's raised-cosine transition ramp combined with the decoder's hysteresis threshold: the first detectable edge fires at the start of the encoder's first <b>steady-state</b> sample, which is one or two samples after the bit boundary. The same fixed phase relationship holds for every frame, so the change-detection check still passes (delta = 0 from frame to frame), and the absolute value is rendered honestly so you can see what your pipeline is actually doing.</dd></dl>
+<div class="fragment"><div class="line">Frame N: A/V Sync: Video leads audio by 2 samples, 0.0013 frames</div>
+<div class="line">Frame N: A/V Sync: Audio leads video by 5 samples, 0.0031 frames</div>
+<div class="line">Frame N: A/V Sync: audio and video locked (0 samples)</div>
+</div><!-- fragment --><p>Internally, positive <code>avSyncOffsetSamples</code> means <b>video leads audio</b> (the picture's TC anchor lands at an earlier wall-clock audio sample than the LTC's TC anchor) and negative means <b>audio leads video</b>.</p>
+<p><b>What "in sync" actually looks like</b></p>
+<p>In professional video the audio and video are locked to a common reference, so a healthy stream's offset is <b>constant</b> across frames — not necessarily zero, but not changing. Any movement from one frame to the next is a real fault. The inspector enforces that contract via the change-detection check (see <a class="el" href="inspector.html#inspector_check_continuity">Continuity tracking</a> below) with a configurable tolerance via <code>MediaConfig::InspectorSyncOffsetToleranceSamples</code>.</p>
+<p><b>The libvtc baseline</b></p>
+<blockquote class="doxtable">
+<p>&zwj;<b>Note:</b> When both encoder and decoder are libvtc (which is the case for any TPG → Inspector pipeline you set up using libpromeki factories), expect a <b>small constant offset</b> of 1-3 samples at common audio rates — typically <code>+2</code> at 48 kHz / 30 fps. This is not real misalignment. It comes from the libvtc encoder's raised-cosine transition ramp combined with the decoder's hysteresis threshold: the first detectable edge fires at the start of the encoder's first <b>steady-state</b> sample, which is one or two samples after the bit boundary. The same fixed phase relationship holds for every frame, so the change-detection check still passes (delta = 0 from frame to frame), and the absolute value is rendered honestly so you can see what your pipeline is actually doing. </p>
+</blockquote>
 <p>For real-world LTC sources (hardware generators, captured audio tracks, etc.), the libvtc decoder's edge-detection latency still applies but the encoder side is whatever the source happens to do, so the constant baseline will be different. Pick a tolerance band that matches your pipeline's known jitter and let the inspector flag deviations from that.</p>
 <h2><a class="anchor" id="inspector_check_continuity"></a>
 Continuity tracking</h2>
-<p>Compares this frame's picture-side metadata against the previous frame's and emits an <a class="el" href="structInspectorDiscontinuity.html">InspectorDiscontinuity</a> for every property that changed in an unexpected way. Tracked properties:</p>
+<p>Compares this frame's picture-side metadata against the previous frame's and emits an <code><a class="el" href="structInspectorDiscontinuity.html" title="One detected discontinuity in the inspector&#39;s frame stream.">InspectorDiscontinuity</a></code> for every property that changed in an unexpected way. Tracked properties:</p>
 <table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Property   </th><th class="markdownTableHeadNone">Discontinuity kind   </th><th class="markdownTableHeadNone">What "unexpected" means    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> number   </td><td class="markdownTableBodyNone"><a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da76f5a1985d93b6ebcd1b8de165efe65a">InspectorDiscontinuity::FrameNumberJump</a>   </td><td class="markdownTableBodyNone">Did not advance by exactly 1    </td></tr>
+<td class="markdownTableBodyNone"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> number   </td><td class="markdownTableBodyNone"><code><a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da76f5a1985d93b6ebcd1b8de165efe65a" title="Frame number from the picture data band did not advance by 1.">InspectorDiscontinuity::FrameNumberJump</a></code>   </td><td class="markdownTableBodyNone">Did not advance by exactly 1    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">Stream ID   </td><td class="markdownTableBodyNone"><a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da536ddcee17d16b4926db7438fb180c41">InspectorDiscontinuity::StreamIdChange</a>   </td><td class="markdownTableBodyNone">Changed at all    </td></tr>
+<td class="markdownTableBodyNone">Stream ID   </td><td class="markdownTableBodyNone"><code><a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da536ddcee17d16b4926db7438fb180c41" title="Stream ID from the picture data band changed between frames.">InspectorDiscontinuity::StreamIdChange</a></code>   </td><td class="markdownTableBodyNone">Changed at all    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">Picture timecode   </td><td class="markdownTableBodyNone"><a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daaf6f35ee9a1d7430e99f4f9e74e0c8c7">InspectorDiscontinuity::PictureTcJump</a>   </td><td class="markdownTableBodyNone">Did not advance by exactly 1 (uses LTC's mode if known, otherwise the check skips)    </td></tr>
+<td class="markdownTableBodyNone">Picture timecode   </td><td class="markdownTableBodyNone"><code><a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daaf6f35ee9a1d7430e99f4f9e74e0c8c7">InspectorDiscontinuity::PictureTcJump</a></code>   </td><td class="markdownTableBodyNone">Did not advance by exactly 1 (uses LTC's mode if known, otherwise the check skips)    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">LTC timecode   </td><td class="markdownTableBodyNone"><a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daec026ed8cf22df8bb7896c9dae32eb77">InspectorDiscontinuity::LtcTcJump</a>   </td><td class="markdownTableBodyNone">Did not advance by exactly 1    </td></tr>
+<td class="markdownTableBodyNone">LTC timecode   </td><td class="markdownTableBodyNone"><code><a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daec026ed8cf22df8bb7896c9dae32eb77">InspectorDiscontinuity::LtcTcJump</a></code>   </td><td class="markdownTableBodyNone">Did not advance by exactly 1    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">Picture decoded   </td><td class="markdownTableBodyNone"><a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da9ea6cad4db5d41e0d2b4662d696b5eaf">InspectorDiscontinuity::ImageDataDecodeFailure</a>   </td><td class="markdownTableBodyNone">Failed to decode after a previously successful frame    </td></tr>
+<td class="markdownTableBodyNone">Picture decoded   </td><td class="markdownTableBodyNone"><code><a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da9ea6cad4db5d41e0d2b4662d696b5eaf">InspectorDiscontinuity::ImageDataDecodeFailure</a></code>   </td><td class="markdownTableBodyNone">Failed to decode after a previously successful frame    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">LTC decoded   </td><td class="markdownTableBodyNone"><a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daaace8db4dbdeeafea92b6047beaaf7f6">InspectorDiscontinuity::LtcDecodeFailure</a>   </td><td class="markdownTableBodyNone">Failed to decode after a previously successful frame    </td></tr>
+<td class="markdownTableBodyNone">LTC decoded   </td><td class="markdownTableBodyNone"><code><a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daaace8db4dbdeeafea92b6047beaaf7f6">InspectorDiscontinuity::LtcDecodeFailure</a></code>   </td><td class="markdownTableBodyNone">Failed to decode after a previously successful frame    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">A/V sync offset   </td><td class="markdownTableBodyNone"><a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daf6c8f3df72441220403d04f3f581b260">InspectorDiscontinuity::SyncOffsetChange</a>   </td><td class="markdownTableBodyNone">Moved more than MediaConfig::InspectorSyncOffsetToleranceSamples   </td></tr>
+<td class="markdownTableBodyNone">A/V sync offset   </td><td class="markdownTableBodyNone"><code><a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daf6c8f3df72441220403d04f3f581b260">InspectorDiscontinuity::SyncOffsetChange</a></code>   </td><td class="markdownTableBodyNone">Moved more than <code>MediaConfig::InspectorSyncOffsetToleranceSamples</code>   </td></tr>
 </table>
 <p>Each discontinuity carries a pre-rendered description with the <b>previous and current values inline</b> so a QA reader can see the whole story in one log line:</p>
-<pre class="fragment">* Frame 4: discontinuity: Frame number jumped: was 3 (expected 4 next), got 5 (+1 frame relative to expected)
-* Frame 47: discontinuity: A/V sync offset moved: was +2 samples, now +1 samples (delta -1, tolerance 0) — audio and video are no longer locked
-* </pre><p>Discontinuities also accumulate into <a class="el" href="structInspectorSnapshot.html#ad25fb1797674f1e818153ae026815de5">InspectorSnapshot::totalDiscontinuities</a> so a polled consumer can see how many have occurred over the inspector's lifetime without having to subscribe to the per-frame stream.</p>
+<div class="fragment"><div class="line">Frame 4: discontinuity: Frame number jumped: was 3 (expected 4 next), got 5 (+1 frame relative to expected)</div>
+<div class="line">Frame 47: discontinuity: A/V sync offset moved: was +2 samples, now +1 samples (delta -1, tolerance 0) — audio and video are no longer locked</div>
+</div><!-- fragment --><p>Discontinuities also accumulate into <code><a class="el" href="structInspectorSnapshot.html#ad25fb1797674f1e818153ae026815de5">InspectorSnapshot::totalDiscontinuities</a></code> so a polled consumer can see how many have occurred over the inspector's lifetime without having to subscribe to the per-frame stream.</p>
 <h1><a class="anchor" id="inspector_results"></a>
 Consuming the results</h1>
 <p>The inspector exposes its measurements in three complementary ways. Pick whichever fits your consumer pattern:</p>
 <h2><a class="anchor" id="inspector_callback"></a>
 Per-frame callback</h2>
-<p><a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> via <a class="el" href="classMediaIOTask__Inspector.html#a3abd49175160a45874ffd09255598df2">MediaIOTask_Inspector::setEventCallback</a> before the inspector is opened. The callback receives a fully-populated <a class="el" href="structInspectorEvent.html">InspectorEvent</a> once per frame and is invoked from the <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> worker thread, so it must be thread-safe. This is the lowest-latency path — useful for real-time UIs or telemetry shipping.</p>
+<p><a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> via <code><a class="el" href="classMediaIOTask__Inspector.html#a3abd49175160a45874ffd09255598df2" title="Sets the per-frame event callback.">MediaIOTask_Inspector::setEventCallback</a></code> before the inspector is opened. The callback receives a fully-populated <code><a class="el" href="structInspectorEvent.html" title="Per-frame measurement record produced by MediaIOTask_Inspector.">InspectorEvent</a></code> once per frame and is invoked from the <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> worker thread, so it must be thread-safe. This is the lowest-latency path — useful for real-time UIs or telemetry shipping.</p>
 <p>Because <code><a class="el" href="classMediaIO.html#a594b8b55ae788efe104c871248d73808" title="Creates a MediaIO instance from a configuration.">MediaIO::create</a></code> returns a <code>MediaIO*</code> and hides the underlying task, callers that want to set a callback must construct the task themselves and adopt it. See <a class="el" href="inspector.html#inspector_construct">Construction patterns</a>.</p>
 <h2><a class="anchor" id="inspector_snapshot"></a>
 Accumulator snapshot</h2>
-<p><a class="el" href="classMediaIOTask__Inspector.html#a722864caa5ed43527b4fee9b93e03843">MediaIOTask_Inspector::snapshot</a> returns a thread-safe value copy of the running totals plus the most recent <a class="el" href="structInspectorEvent.html">InspectorEvent</a>. Useful for polled consumers — the test suite, a status bar, anything that wants "how is the stream
-  doing right now" without subscribing to every frame.</p>
+<p><code><a class="el" href="classMediaIOTask__Inspector.html#a722864caa5ed43527b4fee9b93e03843" title="Returns a thread-safe snapshot of the accumulator.">MediaIOTask_Inspector::snapshot</a></code> returns a thread-safe value copy of the running totals plus the most recent <code><a class="el" href="structInspectorEvent.html" title="Per-frame measurement record produced by MediaIOTask_Inspector.">InspectorEvent</a></code>. Useful for polled consumers — the test suite, a status bar, anything that wants "how is the stream
+doing right now" without subscribing to every frame.</p>
 <div class="fragment"><div class="line"><a class="code hl_struct" href="structInspectorSnapshot.html">InspectorSnapshot</a> <a class="code hl_class" href="classList.html">snap</a> = inspector-&gt;snapshot();</div>
 <div class="line"><span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">snap</a>.totalDiscontinuities &gt; 0) { <a class="code hl_class" href="classList.html">failed_check_count</a>++; }</div>
 <div class="line"><span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">snap</a>.lastEvent.avSyncValid) { <a class="code hl_class" href="classList.html">recordAvSync</a>(<a class="code hl_class" href="classList.html">snap</a>.lastEvent.avSyncOffsetSamples); }</div>
 <div class="ttc" id="astructInspectorSnapshot_html"><div class="ttname"><a href="structInspectorSnapshot.html">InspectorSnapshot</a></div><div class="ttdoc">Aggregate snapshot of the inspector's accumulated state.</div><div class="ttdef"><b>Definition</b> mediaiotask_inspector.h:214</div></div>
 </div><!-- fragment --><h2><a class="anchor" id="inspector_log"></a>
 Periodic log</h2>
-<p>The default delivery channel. At the cadence configured by MediaConfig::InspectorLogIntervalSec (default <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a> second of wall time), the inspector emits a multi-line summary via <code>promekiInfo</code> plus immediate warnings via <code>promekiWarn</code> for any discontinuities detected. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> the interval to <code>0</code> to disable the periodic summary entirely (immediate warnings still fire).</p>
+<p>The default delivery channel. At the cadence configured by <code>MediaConfig::InspectorLogIntervalSec</code> (default <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a> second of wall time), the inspector emits a multi-line summary via <code>promekiInfo</code> plus immediate warnings via <code>promekiWarn</code> for any discontinuities detected. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> the interval to <code>0</code> to disable the periodic summary entirely (immediate warnings still fire).</p>
 <p>Every line in a single periodic report shares the same <code>"Frame N:"</code> prefix where <code>N</code> is the inspector's monotonic frame counter at report time, so a log reader (or <code>grep</code>) can group the lines for a single report by string match. Discontinuity warnings emitted between periodic reports use the frame index of the frame on which the discontinuity was detected.</p>
 <p>Lines for <b>disabled</b> checks are silently elided so the log doesn't carry stale "n/a" placeholders. The continuity summary line is only emitted when the running total is non-zero — a clean stream produces a four-line periodic report (header + picture + audio + A/V sync), and only grows the continuity summary line when something needs attention.</p>
 <h1><a class="anchor" id="inspector_construct"></a>
@@ -334,14 +272,10 @@ Standard factory (no callback)</h2>
 <div class="line"><span class="comment">// ... query io-&gt;stats() or rely on the periodic log</span></div>
 <div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#af37ceef12934d2397a18c58d518c3489">close</a>();</div>
 <div class="line"><span class="keyword">delete</span> io;</div>
-<div class="ttc" id="aclassMediaIO_html"><div class="ttname"><a href="classMediaIO.html">MediaIO</a></div><div class="ttdoc">Controller for media I/O backends.</div><div class="ttdef"><b>Definition</b> mediaio.h:484</div></div>
 <div class="ttc" id="aclassMediaIO_html_a083b9e49f5f676da9066f084bfbd0f60"><div class="ttname"><a href="classMediaIO.html#a083b9e49f5f676da9066f084bfbd0f60">MediaIO::writeFrame</a></div><div class="ttdeci">Error writeFrame(const Frame::Ptr &amp;frame, bool block=true)</div><div class="ttdoc">Writes a frame to the media resource.</div></div>
-<div class="ttc" id="aclassMediaIO_html_a0cb498ce63da62e06f5f463c0b046d74"><div class="ttname"><a href="classMediaIO.html#a0cb498ce63da62e06f5f463c0b046d74">MediaIO::defaultConfig</a></div><div class="ttdeci">static Config defaultConfig(const String &amp;typeName)</div><div class="ttdoc">Returns the default configuration for the named backend.</div></div>
-<div class="ttc" id="aclassMediaIO_html_a54825254dffb007bc72929645024a495"><div class="ttname"><a href="classMediaIO.html#a54825254dffb007bc72929645024a495">MediaIO::Sink</a></div><div class="ttdeci">static constexpr Mode Sink</div><div class="ttdoc">Backend accepts frames from the caller.</div><div class="ttdef"><b>Definition</b> mediaio.h:492</div></div>
-<div class="ttc" id="aclassMediaIO_html_a594b8b55ae788efe104c871248d73808"><div class="ttname"><a href="classMediaIO.html#a594b8b55ae788efe104c871248d73808">MediaIO::create</a></div><div class="ttdeci">static MediaIO * create(const Config &amp;config, ObjectBase *parent=nullptr)</div><div class="ttdoc">Creates a MediaIO instance from a configuration.</div></div>
 <div class="ttc" id="aclassMediaIO_html_a6a601a20bd14d709a28e09e6165254d3"><div class="ttname"><a href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3">MediaIO::open</a></div><div class="ttdeci">Error open(Mode mode)</div><div class="ttdoc">Opens the media resource.</div></div>
 <div class="ttc" id="aclassMediaIO_html_af37ceef12934d2397a18c58d518c3489"><div class="ttname"><a href="classMediaIO.html#af37ceef12934d2397a18c58d518c3489">MediaIO::close</a></div><div class="ttdeci">Error close(bool block=true)</div><div class="ttdoc">Closes the media resource.</div></div>
-</div><!-- fragment --><p>The factory route is the right choice when you only care about the periodic log and the <a class="el" href="classMediaIOTask__Inspector.html#a722864caa5ed43527b4fee9b93e03843">MediaIOTask_Inspector::snapshot</a> accessor. The <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> factory hides the underlying task, so there's no pointer to set callbacks on.</p>
+</div><!-- fragment --><p>The factory route is the right choice when you only care about the periodic log and the <code><a class="el" href="classMediaIOTask__Inspector.html#a722864caa5ed43527b4fee9b93e03843" title="Returns a thread-safe snapshot of the accumulator.">MediaIOTask_Inspector::snapshot</a></code> accessor. The <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> factory hides the underlying task, so there's no pointer to set callbacks on.</p>
 <h2><a class="anchor" id="inspector_construct_adopt"></a>
 Adopt-task path (per-frame callback)</h2>
 <div class="fragment"><div class="line"><span class="keyword">auto</span> *<a class="code hl_class" href="classList.html">insp</a> = <span class="keyword">new</span> <a class="code hl_class" href="classMediaIOTask__Inspector.html">MediaIOTask_Inspector</a>();</div>
@@ -376,40 +310,40 @@ What to look for in CI / QA</h1>
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Pattern   </th><th class="markdownTableHeadNone">Meaning    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>"discontinuity:"</code>   </td><td class="markdownTableBodyNone">Something was unexpected. Always a warning.    </td></tr>
+<td class="markdownTableBodyNone"><code>discontinuity:</code>   </td><td class="markdownTableBodyNone">Something was unexpected. Always a warning.    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>"NOT DECODED"</code>   </td><td class="markdownTableBodyNone">The decoder lost lock mid-stream. Always a warning.    </td></tr>
+<td class="markdownTableBodyNone"><code>NOT DECODED</code>   </td><td class="markdownTableBodyNone">The decoder lost lock mid-stream. Always a warning.    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>"audio and video are no longer locked"</code>   </td><td class="markdownTableBodyNone">The A/V sync offset moved. Specific <code>SyncOffsetChange</code> wording.    </td></tr>
+<td class="markdownTableBodyNone"><code>audio and video are no longer locked</code>   </td><td class="markdownTableBodyNone">The A/V sync offset moved. Specific <code>SyncOffsetChange</code> wording.    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>"Frame number jumped"</code>   </td><td class="markdownTableBodyNone">The producer dropped or repeated a frame.    </td></tr>
+<td class="markdownTableBodyNone"><code><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> number jumped</code>   </td><td class="markdownTableBodyNone">The producer dropped or repeated a frame.    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>"Stream ID changed"</code>   </td><td class="markdownTableBodyNone">The producer was swapped mid-stream.   </td></tr>
+<td class="markdownTableBodyNone"><code>Stream ID changed</code>   </td><td class="markdownTableBodyNone">The producer was swapped mid-stream.   </td></tr>
 </table>
 <p>Use the periodic report's "X / Y frames (Z%)" decode percentages to drive a "did the inspector see anything at all?" sanity check — a 0% decode rate over a long run usually means the upstream producer isn't actually emitting the data band the inspector is looking for, or the band geometry doesn't match.</p>
-<p>The default sync-offset jitter tolerance is <b>0</b> — every sample-of-change is reported. In production this is the right default because in pro video audio and video are locked to the same reference and any drift is real. Pipelines with bounded jitter (e.g. resampler-induced phase wander) can raise the tolerance via MediaConfig::InspectorSyncOffsetToleranceSamples.</p>
+<p>The default sync-offset jitter tolerance is <b>0</b> — every sample-of-change is reported. In production this is the right default because in pro video audio and video are locked to the same reference and any drift is real. Pipelines with bounded jitter (e.g. resampler-induced phase wander) can raise the tolerance via <code>MediaConfig::InspectorSyncOffsetToleranceSamples</code>.</p>
 <h1><a class="anchor" id="inspector_log_reference"></a>
 Annotated log reference</h1>
 <p>Every line the inspector writes, in the order you'll see them.</p>
 <h2><a class="anchor" id="inspector_log_config"></a>
 At open time — configuration block</h2>
-<pre class="fragment">* config: image data decode  = enabled
-* config: LTC decode         = enabled
-* config: LTC channel        = 0
-* config: A/V sync check     = enabled (auto-enables image data + LTC decode)
-* config: A/V sync jitter tolerance = 0 samples (any frame-to-frame change beyond this fires a discontinuity warning; default = report any change at all)
-* config: continuity check    = enabled (auto-enables image data decode)
-* config: image data band    = 16 scan lines per item, TPG-convention 2 items at top of frame
-* config: drop frames         = yes (sink behaviour)
-* config: periodic log every  = 1.00 seconds (wall time)
-* </pre><p>Captured at <code>open()</code> so a post-mortem reader can interpret any later log lines in the right context. Lines for disabled checks still appear (so a forensics reader can see what wasn't enabled).</p>
+<div class="fragment"><div class="line">config: image data decode  = enabled</div>
+<div class="line">config: LTC decode         = enabled</div>
+<div class="line">config: LTC channel        = 0</div>
+<div class="line">config: A/V sync check     = enabled (auto-enables image data + LTC decode)</div>
+<div class="line">config: A/V sync jitter tolerance = 0 samples (any frame-to-frame change beyond this fires a discontinuity warning; default = report any change at all)</div>
+<div class="line">config: continuity check    = enabled (auto-enables image data decode)</div>
+<div class="line">config: image data band    = 16 scan lines per item, TPG-convention 2 items at top of frame</div>
+<div class="line">config: drop frames         = yes (sink behaviour)</div>
+<div class="line">config: periodic log every  = 1.00 seconds (wall time)</div>
+</div><!-- fragment --><p>Captured at <code>open()</code> so a post-mortem reader can interpret any later log lines in the right context. Lines for disabled checks still appear (so a forensics reader can see what wasn't enabled).</p>
 <h2><a class="anchor" id="inspector_log_periodic"></a>
 Periodic report (one block per interval)</h2>
-<pre class="fragment">* Frame 30: report after 30 frames (1.00 s wall) — 30 total since open
-* Frame 30: picture data band: decoded 30 / 30 frames (100.0%) — most recent: streamID 0xc0ffeeaa, frameNo 29, TC 01:00:00:29
-* Frame 30: audio LTC: decoded 30 / 30 frames (100.0%) — most recent: TC 01:00:00:29, sync word at sample 2 within chunk
-* Frame 30: A/V Sync: Video leads audio by 2 samples, 0.0013 frames
-* </pre><ul>
+<div class="fragment"><div class="line">Frame 30: report after 30 frames (1.00 s wall) — 30 total since open</div>
+<div class="line">Frame 30: picture data band: decoded 30 / 30 frames (100.0%) — most recent: streamID 0xc0ffeeaa, frameNo 29, TC 01:00:00:29</div>
+<div class="line">Frame 30: audio LTC: decoded 30 / 30 frames (100.0%) — most recent: TC 01:00:00:29, sync word at sample 2 within chunk</div>
+<div class="line">Frame 30: A/V Sync: Video leads audio by 2 samples, 0.0013 frames</div>
+</div><!-- fragment --><ul>
 <li><b>Header line</b>: how many frames were processed since the last report, the wall-clock window, and the running total since the inspector opened.</li>
 <li><b>picture data band</b>: cumulative decode rate (X of Y frames), the most recently recovered stream ID, frame number, and timecode. The TC is rendered using the LTC's mode if known (with the proper drop-frame separator), otherwise as bare digits. When the most recent frame failed to decode, the line becomes a warning instead of an info line.</li>
 <li><b>audio LTC</b>: same shape — cumulative decode rate plus the most recent timecode and the within-chunk sample offset of the sync word.</li>
@@ -418,27 +352,27 @@ Periodic report (one block per interval)</h2>
 <p>Lines that aren't relevant (decoders disabled, etc.) are elided.</p>
 <h2><a class="anchor" id="inspector_log_warnings"></a>
 Discontinuity warnings (immediate)</h2>
-<pre class="fragment">* Frame 4: discontinuity: Frame number jumped: was 3 (expected 4 next), got 5 (+1 frame relative to expected)
-* Frame 47: discontinuity: A/V sync offset moved: was +2 samples, now +1 samples (delta -1, tolerance 0) — audio and video are no longer locked
-* Frame 91: discontinuity: Stream ID changed: was 0x12345678, now 0xabcdef00
-* </pre><p>Fired the moment a discontinuity is detected, with the same <code>"Frame N:"</code> prefix as the periodic report so a log reader can tie them together. Always at warning level so log scrapers can pull them out separately from the routine info-level traffic.</p>
+<div class="fragment"><div class="line">Frame 4: discontinuity: Frame number jumped: was 3 (expected 4 next), got 5 (+1 frame relative to expected)</div>
+<div class="line">Frame 47: discontinuity: A/V sync offset moved: was +2 samples, now +1 samples (delta -1, tolerance 0) — audio and video are no longer locked</div>
+<div class="line">Frame 91: discontinuity: Stream ID changed: was 0x12345678, now 0xabcdef00</div>
+</div><!-- fragment --><p>Fired the moment a discontinuity is detected, with the same <code>"Frame N:"</code> prefix as the periodic report so a log reader can tie them together. Always at warning level so log scrapers can pull them out separately from the routine info-level traffic.</p>
 <h1><a class="anchor" id="inspector_known_limits"></a>
 Known limits</h1>
 <ul>
-<li><b>Picture TC continuity needs a frame rate.</b> The picture data band's wire format only carries digits + the DF flag, so the recovered TC has no native <a class="el" href="classTimecode_1_1Mode.html">Timecode::Mode</a>. The inspector latches the first <a class="el" href="classTimecode_1_1Mode.html">Timecode::Mode</a> it sees from any source (currently the LTC decoder) and attaches it to picture TCs from then on. When LTC is disabled, the picture TC continuity check is silently skipped — the frame number and stream ID continuity checks still run because they're just integer comparisons.</li>
+<li><b>Picture TC continuity needs a frame rate.</b> The picture data band's wire format only carries digits + the DF flag, so the recovered TC has no native <code><a class="el" href="classTimecode_1_1Mode.html" title="Describes the timecode mode (frame rate and drop-frame status).">Timecode::Mode</a></code>. The inspector latches the first <code><a class="el" href="classTimecode_1_1Mode.html" title="Describes the timecode mode (frame rate and drop-frame status).">Timecode::Mode</a></code> it sees from any source (currently the LTC decoder) and attaches it to picture TCs from then on. When LTC is disabled, the picture TC continuity check is silently skipped — the frame number and stream ID continuity checks still run because they're just integer comparisons.</li>
 <li><b>The LTC decoder needs a few frames to lock.</b> Early frames in a fresh stream report <code>ltcDecoded</code> as <code>false</code> until the biphase mark state machine has accumulated enough transitions. The inspector reports the cumulative percentage in the periodic log so you can see the decoder catch up.</li>
-<li><b>The image data decoder uses the slow CSC path.</b> The first implementation runs every band-decode through <a class="el" href="classImage.html#aaeb74cf6bc00468468d74fa278209f9d">Image::convert(RGBA8_sRGB)</a>, which works for every <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a> but isn't free. Hand-rolled fast paths per-format are a future enhancement; until then the inspector is fine for QA / monitoring use but not for fully-loaded production paths.</li>
+<li><b>The image data decoder uses the slow CSC path.</b> The first implementation runs every band-decode through <code>Image::convert(RGBA8_sRGB)</code>, which works for every <code><a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a></code> but isn't free. Hand-rolled fast paths per-format are a future enhancement; until then the inspector is fine for QA / monitoring use but not for fully-loaded production paths.</li>
 <li><b>One global continuity history.</b> The inspector tracks a single previous-frame snapshot for continuity, not per-stream. A stream-ID change is treated as its own discontinuity kind rather than as "switch tracking history".</li>
 </ul>
 <h1><a class="anchor" id="inspector_see_also"></a>
 See also</h1>
 <ul>
-<li><a class="el" href="classMediaIOTask__Inspector.html">MediaIOTask_Inspector</a> — the C++ API.</li>
-<li><a class="el" href="structInspectorEvent.html">InspectorEvent</a> / <a class="el" href="structInspectorSnapshot.html">InspectorSnapshot</a> / <a class="el" href="structInspectorDiscontinuity.html">InspectorDiscontinuity</a> — the result types.</li>
-<li><a class="el" href="classMediaIOTask__TPG.html">MediaIOTask_TPG</a> — the producer side designed to pair with the inspector for end-to-end QA.</li>
-<li><a class="el" href="imagedataencoder.html">Image Data Encoder Wire Format</a> — the wire format spec for the picture-side data band.</li>
-<li><a class="el" href="classTimecode.html#a0b6f9be97a95839c1677c5ce8f2f129b">Timecode::toBcd64</a> / <a class="el" href="classTimecode.html#a3b66b507b1249e7b9704ede346672d51">Timecode::fromBcd64</a> — the timecode encoding the picture data band carries.</li>
-<li><a class="el" href="classLtcDecoder.html">LtcDecoder</a> — the format-agnostic LTC decoder the inspector uses for the audio side. </li>
+<li><code><a class="el" href="classMediaIOTask__Inspector.html" title="MediaIO sink backend that decodes and validates a media stream.">MediaIOTask_Inspector</a></code> — the C++ API.</li>
+<li><code><a class="el" href="structInspectorEvent.html" title="Per-frame measurement record produced by MediaIOTask_Inspector.">InspectorEvent</a></code> / <code><a class="el" href="structInspectorSnapshot.html" title="Aggregate snapshot of the inspector&#39;s accumulated state.">InspectorSnapshot</a></code> / <code><a class="el" href="structInspectorDiscontinuity.html" title="One detected discontinuity in the inspector&#39;s frame stream.">InspectorDiscontinuity</a></code> — the result types.</li>
+<li><code><a class="el" href="classMediaIOTask__TPG.html" title="MediaIOTask backend that generates test patterns.">MediaIOTask_TPG</a></code> — the producer side designed to pair with the inspector for end-to-end QA.</li>
+<li><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">Image Data Encoder Wire Format</a> — the wire format spec for the picture-side data band.</li>
+<li><code><a class="el" href="classTimecode.html#a0b6f9be97a95839c1677c5ce8f2f129b" title="Packs the timecode into the 64-bit BCD time-address word.">Timecode::toBcd64</a></code> / <code><a class="el" href="classTimecode.html#a3b66b507b1249e7b9704ede346672d51" title="Unpacks a 64-bit BCD time-address word into a Timecode.">Timecode::fromBcd64</a></code> — the timecode encoding the picture data band carries.</li>
+<li><code><a class="el" href="classLtcDecoder.html" title="Decodes LTC (Linear Timecode) audio samples into timecode values.">LtcDecoder</a></code> — the format-agnostic LTC decoder the inspector uses for the audio side. </li>
 </ul>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
@@ -447,7 +381,7 @@ See also</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-20 23:51:17 from commit 43d9012 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-21 00:53:11 from commit 3126200 (1.0.0).</li>
   </ul>
 </div>
 </body>

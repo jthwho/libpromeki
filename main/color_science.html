@@ -102,63 +102,41 @@ $(document).ready(function(){initNavTree('color_science.html',''); initResizable
   <div class="headertitle"><div class="title">Color Science</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="toc"><h3>Table of Contents</h3>
-<ul><li class="level1"><a href="#cs_what">What Is a Color?</a></li>
-<li class="level1"><a href="#cs_cie">CIE XYZ: The Universal Color Space</a></li>
-<li class="level1"><a href="#cs_chromaticity">Chromaticity: Separating Color from Brightness</a></li>
-<li class="level1"><a href="#cs_rgb">RGB Color Spaces</a><ul><li class="level2"><a href="#cs_transfer">Transfer Functions (Gamma)</a></li>
-<li class="level2"><a href="#cs_prime">Prime Notation: R&#39;G&#39;B&#39; vs RGB</a></li>
-</ul>
-</li>
-<li class="level1"><a href="#cs_derived">Derived Color Models</a><ul><li class="level2"><a href="#cs_hsv">HSV and HSL</a></li>
-<li class="level2"><a href="#cs_ycbcr">YCbCr (Luma/Chroma)</a><ul><li class="level3"><a href="#cs_not_yuv">Why YCbCr, not YUV?</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="level1"><a href="#cs_cie_models">CIE Perceptual Models</a><ul><li class="level2"><a href="#cs_lab">CIE L*a*b*</a></li>
-</ul>
-</li>
-<li class="level1"><a href="#cs_normalization">Component Normalization</a></li>
-<li class="level1"><a href="#cs_conversion">How Conversion Works</a></li>
-<li class="level1"><a href="#cs_classes">Library Classes</a><ul><li class="level2"><a href="#cs_usage">Quick Start</a></li>
-</ul>
-</li>
-<li class="level1"><a href="#cs_further">Further Reading</a></li>
-</ul>
-</div>
 <div class="textblock"><p>How color works, and how promeki represents it.</p>
-<p>This page introduces the color science concepts behind the library's <a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a>, <a class="el" href="classColorModel.html" title="Single source of truth for a color model and its associated color space.">ColorModel</a>, <a class="el" href="classXYZColor.html" title="A color in the CIE 1931 XYZ color space.">XYZColor</a>, and <a class="el" href="classCIEPoint.html" title="A point in the CIE 1931 xy chromaticity diagram.">CIEPoint</a> classes. It is written for programmers who may not have a color science background and want to understand what these classes do and why they are designed the way they are.</p>
+<p>This page introduces the color science concepts behind the library's <code><a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a></code>, <code><a class="el" href="classColorModel.html" title="Single source of truth for a color model and its associated color space.">ColorModel</a></code>, <code><a class="el" href="classXYZColor.html" title="A color in the CIE 1931 XYZ color space.">XYZColor</a></code>, and <code><a class="el" href="classCIEPoint.html" title="A point in the CIE 1931 xy chromaticity diagram.">CIEPoint</a></code> classes. It is written for programmers who may not have a color science background and want to understand what these classes do and why they are designed the way they are.</p>
 <h1><a class="anchor" id="cs_what"></a>
 What Is a Color?</h1>
-<p>A color, at the physical level, is a distribution of electromagnetic energy across the visible spectrum (roughly 360&ndash;700 nm wavelength). The human eye has three types of cone cells, each sensitive to a different range of wavelengths. The brain combines the three cone responses into the sensation we perceive as "color."</p>
-<p>Because we only have three types of cones, any color perception can be described by three numbers &ndash; a <em>tristimulus</em> value. This is the foundation of all color science: three numbers are sufficient to describe any color a human can see.</p>
-<p>The fourth number the library stores &ndash; alpha &ndash; is not part of color science. It represents opacity (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a> = fully opaque, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a> = fully transparent) and is used by compositing and rendering systems.</p>
+<p>A color, at the physical level, is a distribution of electromagnetic energy across the visible spectrum (roughly 360–700 nm wavelength). The human eye has three types of cone cells, each sensitive to a different range of wavelengths. The brain combines the three cone responses into the sensation we perceive as "color."</p>
+<p>Because we only have three types of cones, any color perception can be described by three numbers — a <em>tristimulus</em> value. This is the foundation of all color science: three numbers are sufficient to describe any color a human can see.</p>
+<p>The fourth number the library stores — alpha — is not part of color science. It represents opacity (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a> = fully opaque, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a> = fully transparent) and is used by compositing and rendering systems.</p>
 <h1><a class="anchor" id="cs_cie"></a>
 CIE XYZ: The Universal Color Space</h1>
-<p>In 1931, the International Commission on Illumination (CIE) defined a set of <em>color matching functions</em> based on experiments with human observers. These functions map any spectral distribution to three numbers called <b>X</b>, <b>Y</b>, and <b>Z</b> &ndash; the CIE XYZ tristimulus values.</p>
+<p>In 1931, the International Commission on Illumination (CIE) defined a set of <em>color matching functions</em> based on experiments with human observers. These functions map any spectral distribution to three numbers called <b>X</b>, <b>Y</b>, and <b>Z</b> — the CIE XYZ tristimulus values.</p>
 <ul>
 <li><b>Y</b> is designed to equal luminance (perceived brightness).</li>
 <li><b>X</b> and <b>Z</b> encode chromaticity (the "colorful" part) and are chosen so that all visible colors have non-negative XYZ values.</li>
 </ul>
-<p>CIE XYZ is <em>device-independent</em>: it describes what a color looks like to a human observer, not how a particular monitor or camera represents it. For this reason, promeki uses XYZ as the "connection space" for all color conversions: to convert from any model A to any model B, the path is always A -&gt; XYZ -&gt; B.</p>
-<p>The library represents XYZ values with the <a class="el" href="classXYZColor.html">XYZColor</a> class.</p>
-<dl class="section user"><dt>Reference</dt><dd>CIE 015:2004, "Colorimetry" (the defining standard).</dd></dl>
+<p>CIE XYZ is <em>device-independent</em>: it describes what a color looks like to a human observer, not how a particular monitor or camera represents it. For this reason, promeki uses XYZ as the "connection space" for all color conversions: to convert from any model A to any model B, the path is always A → XYZ → B.</p>
+<p>The library represents XYZ values with the <code><a class="el" href="classXYZColor.html" title="A color in the CIE 1931 XYZ color space.">XYZColor</a></code> class.</p>
+<blockquote class="doxtable">
+<p>&zwj;<b>Reference:</b> CIE 015:2004, "Colorimetry" (the defining standard). </p>
+</blockquote>
 <h1><a class="anchor" id="cs_chromaticity"></a>
 Chromaticity: Separating Color from Brightness</h1>
-<p>XYZ has three dimensions, but often we want to talk about color independent of brightness. The CIE xy chromaticity diagram achieves this by projecting XYZ onto two dimensions: </p><pre class="fragment">x = X / (X + Y + Z)
-y = Y / (X + Y + Z)
-</pre><p> The resulting (x, y) point describes the <em>hue and saturation</em> of a color with no brightness information. The boundary of the chromaticity diagram &ndash; called the <em>spectral locus</em> &ndash; is a horseshoe shape corresponding to the pure spectral colors (single wavelengths). All real colors lie inside or on this boundary.</p>
+<p>XYZ has three dimensions, but often we want to talk about color independent of brightness. The CIE xy chromaticity diagram achieves this by projecting XYZ onto two dimensions:</p>
+<div class="fragment"><div class="line">x = X / (X + Y + Z)</div>
+<div class="line">y = Y / (X + Y + Z)</div>
+</div><!-- fragment --><p>The resulting (x, y) point describes the <em>hue and saturation</em> of a color with no brightness information. The boundary of the chromaticity diagram — called the <em>spectral locus</em> — is a horseshoe shape corresponding to the pure spectral colors (single wavelengths). All real colors lie inside or on this boundary.</p>
 <p>Chromaticity is how color space <em>primaries</em> and <em>white points</em> are specified. For instance, the sRGB red primary is at (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.64</a>, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.33</a>) and the D65 white point is at (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.3127</a>, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.3290</a>).</p>
-<p>The library represents chromaticity coordinates with the <a class="el" href="classCIEPoint.html">CIEPoint</a> class, which also provides utilities for converting between wavelengths, chromaticity, and correlated color temperature.</p>
+<p>The library represents chromaticity coordinates with the <code><a class="el" href="classCIEPoint.html" title="A point in the CIE 1931 xy chromaticity diagram.">CIEPoint</a></code> class, which also provides utilities for converting between wavelengths, chromaticity, and correlated color temperature.</p>
 <h1><a class="anchor" id="cs_rgb"></a>
 RGB Color Spaces</h1>
 <p>An RGB color space maps three numbers (Red, Green, Blue) to real-world colors. The mapping is defined by four things:</p>
 <ol type="1">
-<li><b>Three primaries</b> &ndash; the chromaticity (x, y) of the red, green, and blue lights used by the display. These define a triangle on the chromaticity diagram; any color inside the triangle can be reproduced. This triangle is the <em>gamut</em> of the color space.</li>
-<li><b>A white point</b> &ndash; the chromaticity of "white" (equal R=G=B). Most modern standards use D65 (~6504 K daylight).</li>
-<li><b>A transfer function</b> ("gamma curve") &ndash; a nonlinear mapping between encoded values (what gets stored in a file or sent to a display) and linear light intensity. This encoding improves perceptual uniformity for 8-bit and 10-bit storage.</li>
-<li><b>A luminance range</b> &ndash; typically Y = 0 to Y = 1 for SDR content.</li>
+<li><b>Three primaries</b> — the chromaticity (x, y) of the red, green, and blue lights used by the display. These define a triangle on the chromaticity diagram; any color inside the triangle can be reproduced. This triangle is the <em>gamut</em> of the color space.</li>
+<li><b>A white point</b> — the chromaticity of "white" (equal R=G=B). Most modern standards use D65 (~6504 K daylight).</li>
+<li><b>A transfer function</b> ("gamma curve") — a nonlinear mapping between encoded values (what gets stored in a file or sent to a display) and linear light intensity. This encoding improves perceptual uniformity for 8-bit and 10-bit storage.</li>
+<li><b>A luminance range</b> — typically Y = 0 to Y = 1 for SDR content.</li>
 </ol>
 <p>Different standards define different primaries and transfer functions:</p>
 <table class="markdownTable">
@@ -176,117 +154,125 @@ RGB Color Spaces</h1>
 <td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.2020</a>   </td><td class="markdownTableBodyNone">UHD/4K/8K video   </td><td class="markdownTableBodyNone">Wide gamut   </td><td class="markdownTableBodyNone">Similar to <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a>   </td></tr>
 </table>
 <p>Note that sRGB and <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a> share the same primaries and white point but have slightly different transfer functions. In practice the difference is small, but it matters for precise color work.</p>
-<p>Each of these is represented by a <a class="el" href="classColorModel.html">ColorModel</a> constant (e.g. <a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baab461b41b14d00c9f34acbe77a873e0c1">ColorModel::sRGB</a>, <a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baaa3d9da1d17fe8273bd39373d759a8762">ColorModel::Rec709</a>). Each also has a "Linear" variant (e.g. <a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa2fa242177f45bb8783e8da186d1b8579">ColorModel::LinearSRGB</a>) that uses the same primaries but an identity transfer function, for use in compositing or physically-based rendering where arithmetic must operate on linear light values.</p>
+<p>Each of these is represented by a <code><a class="el" href="classColorModel.html" title="Single source of truth for a color model and its associated color space.">ColorModel</a></code> constant (e.g. <code><a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baab461b41b14d00c9f34acbe77a873e0c1" title="sRGB (IEC 61966-2-1).">ColorModel::sRGB</a></code>, <code><a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baaa3d9da1d17fe8273bd39373d759a8762" title="ITU-R BT.709 (gamma-corrected).">ColorModel::Rec709</a></code>). Each also has a "Linear" variant (e.g. <code><a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa2fa242177f45bb8783e8da186d1b8579" title="Linear sRGB (scene-referred).">ColorModel::LinearSRGB</a></code>) that uses the same primaries but an identity transfer function, for use in compositing or physically-based rendering where arithmetic must operate on linear light values.</p>
 <h2><a class="anchor" id="cs_transfer"></a>
 Transfer Functions (Gamma)</h2>
 <p>If you store light intensity linearly in 8 bits, you get 256 levels from black to white. But the human eye is much more sensitive to differences in dark tones than in bright tones, so a linear encoding wastes most of its precision on bright values that all look the same. The transfer function (loosely called "gamma") warps the encoding so that more of the 256 levels are allocated to the dark end of the scale where the eye can tell the difference.</p>
-<p>The transfer function has two directions:</p><ul>
+<p>The transfer function has two directions:</p>
+<ul>
 <li>The <b>OETF</b> (Opto-Electronic Transfer Function) goes from linear light to encoded values. A camera applies this.</li>
 <li>The <b>EOTF</b> (Electro-Optical Transfer Function) goes from encoded values back to linear light. A display applies this.</li>
 </ul>
 <p>When converting a color to CIE XYZ, the library applies the EOTF (linearizes) first, then multiplies by the primary matrix. When converting from XYZ, it applies the inverse matrix, then the OETF.</p>
-<p><a class="el" href="classColorModel.html#ab82766e2df1cd9fe6b31192d6cd49c39">ColorModel::applyTransfer()</a> and <a class="el" href="classColorModel.html#a436a764a18fceb6461de1ee3a099a624">ColorModel::removeTransfer()</a> expose these functions directly. <a class="el" href="classColorModel.html#a81bdb81a566ed9ef6da7138f74e36e27">ColorModel::isLinear()</a> tells you whether a model has an identity transfer (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">i.e</a>. values are already linear).</p>
+<p><code><a class="el" href="classColorModel.html#ab82766e2df1cd9fe6b31192d6cd49c39" title="Applies the forward transfer function (OETF) to a linear value.">ColorModel::applyTransfer()</a></code> and <code><a class="el" href="classColorModel.html#a436a764a18fceb6461de1ee3a099a624" title="Removes the transfer function (EOTF) from an encoded value.">ColorModel::removeTransfer()</a></code> expose these functions directly. <code><a class="el" href="classColorModel.html#a81bdb81a566ed9ef6da7138f74e36e27" title="Returns true if this model uses a linear (identity) transfer function.">ColorModel::isLinear()</a></code> tells you whether a model has an identity transfer (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">i.e</a>. values are already linear).</p>
 <h2><a class="anchor" id="cs_prime"></a>
 Prime Notation: R'G'B' vs RGB</h2>
 <p>In color science literature, a prime symbol (') is used to distinguish between linear-light values and gamma-encoded values:</p>
 <ul>
-<li><b>R, G, B</b> (no prime) are <em>linear-light</em> intensities &ndash; physically proportional to the number of photons. Doubling R doubles the light output. These are what <a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa2fa242177f45bb8783e8da186d1b8579">ColorModel::LinearSRGB</a> stores.</li>
-<li><b>R', G', B'</b> (with prime) are <em>gamma-encoded</em> values &ndash; the result of applying the transfer function (OETF) to linear light. These are what you find in an sRGB JPEG or an 8-bit frame buffer. <a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baab461b41b14d00c9f34acbe77a873e0c1">ColorModel::sRGB</a> stores R'G'B' values.</li>
+<li><b>R, G, B</b> (no prime) are <em>linear-light</em> intensities — physically proportional to the number of photons. Doubling R doubles the light output. These are what <code><a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa2fa242177f45bb8783e8da186d1b8579" title="Linear sRGB (scene-referred).">ColorModel::LinearSRGB</a></code> stores.</li>
+<li><b>R', G', B'</b> (with prime) are <em>gamma-encoded</em> values — the result of applying the transfer function (OETF) to linear light. These are what you find in an sRGB JPEG or an 8-bit frame buffer. <code><a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baab461b41b14d00c9f34acbe77a873e0c1" title="sRGB (IEC 61966-2-1).">ColorModel::sRGB</a></code> stores R'G'B' values.</li>
 </ul>
-<p>The distinction matters because many operations (alpha compositing, lighting, blur) must be done in linear light to be physically correct. If you blend two R'G'B' values directly, you get visible darkening at the blend boundary because the gamma curve makes the math nonlinear. The correct approach is: remove gamma -&gt; blend in linear -&gt; reapply gamma.</p>
+<p>The distinction matters because many operations (alpha compositing, lighting, blur) must be done in linear light to be physically correct. If you blend two R'G'B' values directly, you get visible darkening at the blend boundary because the gamma curve makes the math nonlinear. The correct approach is: remove gamma → blend in linear → reapply gamma.</p>
 <p>The same notation applies to luma:</p>
 <ul>
-<li><b>Y</b> (no prime) is <em>linear-light luminance</em>, as defined by CIE: Y = <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.2126</a>*R + <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.7152</a>*G + <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0722</a>*B (for <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">BT.709</a> coefficients).</li>
-<li><b>Y'</b> (with prime) is <em>luma</em>, computed from gamma-encoded components: Y' = <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.2126</a>*R' + <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.7152</a>*G' + <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0722</a>*B'. This is what video systems actually transmit.</li>
+<li><b>Y</b> (no prime) is <em>linear-light luminance</em>, as defined by CIE: <code>Y = <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.2126</a>*R + <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.7152</a>*G + <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0722</a>*B</code> (for <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">BT.709</a> coefficients).</li>
+<li><b>Y'</b> (with prime) is <em>luma</em>, computed from gamma-encoded components: &lsquo;Y&rsquo; = <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.2126</a>*R' + <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.7152</a>*G' + <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0722</a>*B'`. This is what video systems actually transmit.</li>
 </ul>
-<p>In casual usage, "Y" is often used loosely to mean either. In the library, the YCbCr models operate on gamma-encoded (primed) components following standard broadcast practice: the luma Y' is computed from the parent model's R'G'B' values. The library's accessor is simply named y() since the context is unambiguous.</p>
-<dl class="section user"><dt>Reference</dt><dd>Charles Poynton, <em>Digital Video and HD</em>, Chapter 6 ("Luma and Color
-Differences") gives a thorough treatment of the distinction between luminance (Y) and luma (Y') and why it matters.</dd></dl>
+<p>In casual usage, "Y" is often used loosely to mean either. In the library, the YCbCr models operate on gamma-encoded (primed) components following standard broadcast practice: the luma Y' is computed from the parent model's R'G'B' values. The library's accessor is simply named <code>y()</code> since the context is unambiguous.</p>
+<blockquote class="doxtable">
+<p>&zwj;<b>Reference:</b> Charles Poynton, <em>Digital Video and HD</em>, Chapter 6 ("Luma and Color Differences") gives a thorough treatment of the distinction between luminance (Y) and luma (Y') and why it matters. </p>
+</blockquote>
 <h1><a class="anchor" id="cs_derived"></a>
 Derived Color Models</h1>
 <p>Some color representations are not independent color spaces but mathematical rearrangements of an RGB space.</p>
 <h2><a class="anchor" id="cs_hsv"></a>
 HSV and HSL</h2>
-<p><b>HSV</b> (Hue, Saturation, Value) and <b>HSL</b> (Hue, Saturation, Lightness) rearrange RGB into a cylindrical coordinate system:</p><ul>
-<li><b>Hue</b> is the "color" on a 0-360 degree wheel (red at 0, green at 120, blue at 240).</li>
+<p><b>HSV</b> (Hue, Saturation, Value) and <b>HSL</b> (Hue, Saturation, Lightness) rearrange RGB into a cylindrical coordinate system:</p>
+<ul>
+<li><b>Hue</b> is the "color" on a 0–360 degree wheel (red at 0, green at 120, blue at 240).</li>
 <li><b>Saturation</b> is how vivid the color is (0 = gray, 1 = pure color).</li>
 <li><b>Value</b> (HSV) or <b>Lightness</b> (HSL) is brightness.</li>
 </ul>
-<p>HSV and HSL are widely used in color pickers and artistic tools because adjusting hue, saturation, and brightness independently is intuitive. However, they are not perceptually uniform &ndash; "50% lightness" in HSL does not look equally bright across all hues.</p>
-<p>In the library, HSV and HSL are <em>derived from a parent RGB model</em> &ndash; currently sRGB. Converting between HSV and sRGB is a local mathematical transform that does not require going through XYZ, but the library routes through XYZ anyway for uniformity.</p>
-<p>See <a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa8e67296f20e43a5761f630b2d8215914">ColorModel::HSV_sRGB</a> and <a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baad39aebcecf02327dc7c664aef31b7729">ColorModel::HSL_sRGB</a>.</p>
+<p>HSV and HSL are widely used in color pickers and artistic tools because adjusting hue, saturation, and brightness independently is intuitive. However, they are not perceptually uniform — "50% lightness" in HSL does not look equally bright across all hues.</p>
+<p>In the library, HSV and HSL are <em>derived from a parent RGB model</em> — currently sRGB. Converting between HSV and sRGB is a local mathematical transform that does not require going through XYZ, but the library routes through XYZ anyway for uniformity.</p>
+<p>See <code><a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa8e67296f20e43a5761f630b2d8215914" title="HSV derived from sRGB.">ColorModel::HSV_sRGB</a></code> and <code><a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baad39aebcecf02327dc7c664aef31b7729" title="HSL derived from sRGB.">ColorModel::HSL_sRGB</a></code>.</p>
 <h2><a class="anchor" id="cs_ycbcr"></a>
 YCbCr (Luma/Chroma)</h2>
-<p><b>YCbCr</b> separates an image into luma (brightness) and two chroma-difference (color) signals:</p><ul>
+<p><b>YCbCr</b> separates an image into luma (brightness) and two chroma-difference (color) signals:</p>
+<ul>
 <li><b>Y'</b> (luma) is a weighted sum of R', G', B' (gamma-encoded).</li>
 <li><b>Cb</b> (blue-difference chroma) is proportional to B' - Y'.</li>
 <li><b>Cr</b> (red-difference chroma) is proportional to R' - Y'.</li>
 </ul>
 <p>This separation is fundamental to video compression. The human visual system is much less sensitive to spatial detail in color than in brightness, so Cb and Cr can be stored at lower resolution (chroma subsampling, e.g. 4:2:2 or 4:2:0) without visible quality loss.</p>
-<p>The exact Y'/Cb/Cr coefficients depend on which RGB space the signal came from:</p><ul>
-<li><a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa793b2029cecb7ba45dd5d7f22eb5891a">ColorModel::YCbCr_Rec709</a> uses <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">BT.709</a> luma coefficients (Y' = <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.2126R</a>' + <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.7152G</a>' + <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0722B</a>'), standard for HD video.</li>
-<li><a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa9a12ddc201146b5e634fa1b912f4c41a">ColorModel::YCbCr_Rec601</a> uses <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">BT.601</a> luma coefficients (Y' = <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.299R</a>' + <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.587G</a>' + <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.114B</a>'), standard for SD video.</li>
-<li><a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa891b1d7b38ff3dc93363c83b8bab8830">ColorModel::YCbCr_Rec2020</a> uses <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">BT.2020</a> luma coefficients (Y' = <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.2627R</a>' + <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.6780G</a>' + <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0593B</a>'), standard for UHD video.</li>
+<p>The exact Y'/Cb/Cr coefficients depend on which RGB space the signal came from:</p>
+<ul>
+<li><code><a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa793b2029cecb7ba45dd5d7f22eb5891a" title="YCbCr with BT.709 coefficients.">ColorModel::YCbCr_Rec709</a></code> uses <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">BT.709</a> luma coefficients (&lsquo;Y&rsquo; = <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.2126R</a>' + <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.7152G</a>' + <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0722B</a>'<code>), standard for HD video. -</code><a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa9a12ddc201146b5e634fa1b912f4c41a" title="YCbCr with BT.601 coefficients.">ColorModel::YCbCr_Rec601</a><code>uses <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">BT.601</a> luma coefficients (</code>Y' = <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.299R</a>' + <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.587G</a>' + <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.114B</a>'<code>), standard for SD video. -</code><a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa891b1d7b38ff3dc93363c83b8bab8830" title="YCbCr with BT.2020 coefficients.">ColorModel::YCbCr_Rec2020</a><code>uses <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">BT.2020</a> luma coefficients (</code>Y' = <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.2627R</a>' + <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.6780G</a>' + <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0593B</a>'`), standard for UHD video.</li>
 </ul>
 <h3><a class="anchor" id="cs_not_yuv"></a>
 Why YCbCr, not YUV?</h3>
 <p>The term "YUV" is widely but incorrectly used as a synonym for YCbCr in software and API documentation. They are actually different things:</p>
 <ul>
 <li><b>YUV</b> is an analog encoding defined for PAL composite video. U and V are continuous, unscaled chroma-difference signals with ranges that depend on the modulation standard. YUV is not used in any modern digital format.</li>
-<li><b>YCbCr</b> is the digital encoding defined by ITU-R <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">BT.601</a> and subsequent standards. Cb and Cr are scaled and offset to fit into a defined integer range (e.g. 16-240 for 8-bit studio levels). This is what JPEG, MPEG, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a>, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.265</a>, and every other modern codec actually uses.</li>
+<li><b>YCbCr</b> is the digital encoding defined by ITU-R <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">BT.601</a> and subsequent standards. Cb and Cr are scaled and offset to fit into a defined integer range (e.g. 16–240 for 8-bit studio levels). This is what JPEG, MPEG, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a>, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.265</a>, and every other modern codec actually uses.</li>
 <li><b>YPbPr</b> is the analog component video equivalent of YCbCr, carried on three separate wires (the red/green/blue component cables on older equipment).</li>
 </ul>
 <p>Many APIs (including V4L2, FFmpeg's naming, and DirectShow) label their pixel formats "YUV" when they are actually YCbCr. This library uses the correct term. If you encounter "YUV" in external code, it almost certainly means YCbCr.</p>
-<dl class="section user"><dt>Reference</dt><dd>Charles Poynton, <em>Digital Video and HD</em>, Section <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">7.4</a> ("YUV and
-luminance considered harmful") thoroughly explains this naming confusion and why the distinction matters.</dd></dl>
+<blockquote class="doxtable">
+<p>&zwj;<b>Reference:</b> Charles Poynton, <em>Digital Video and HD</em>, Section <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">7.4</a> ("YUV and luminance considered harmful") thoroughly explains this naming confusion and why the distinction matters. </p>
+</blockquote>
 <h1><a class="anchor" id="cs_cie_models"></a>
 CIE Perceptual Models</h1>
 <h2><a class="anchor" id="cs_lab"></a>
 CIE L*a*b*</h2>
-<p>**CIE L*a*b*** (often written "Lab") is a rearrangement of XYZ designed to be <em>perceptually uniform</em>: a numerical difference of, say, 5 units in Lab corresponds to roughly the same perceived color difference regardless of where in color space you are. This makes Lab ideal for:</p><ul>
+<p><b>CIE L*a*b*</b> (often written "Lab") is a rearrangement of XYZ designed to be <em>perceptually uniform</em>: a numerical difference of, say, 5 units in Lab corresponds to roughly the same perceived color difference regardless of where in color space you are. This makes Lab ideal for:</p>
+<ul>
 <li>Measuring color accuracy (Delta E calculations).</li>
 <li><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> processing operations like sharpening or noise reduction that should affect perceptual detail equally across colors.</li>
 </ul>
-<p>The three components are:</p><ul>
-<li>**L*** (Lightness): 0 = black, 100 = white.</li>
-<li>**a***: negative = green, positive = red.</li>
-<li>**b***: negative = blue, positive = yellow.</li>
+<p>The three components are:</p>
+<ul>
+<li><b>L*</b> (Lightness): 0 = black, 100 = white.</li>
+<li><b>a*</b>: negative = green, positive = red.</li>
+<li><b>b*</b>: negative = blue, positive = yellow.</li>
 </ul>
-<p>In the library, Lab components are stored normalized to <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">-1.0</a>. Use <a class="el" href="classColorModel.html#a6ebc6ceff4e5ad6e11349a6bca4ea5f9">ColorModel::toNative()</a> to get the conventional ranges, or <a class="el" href="classColor.html#a367c7f20f02bd94fca6c3baf3411aadb">Color::fromNative()</a> to construct a <a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a> from conventional values.</p>
-<p>See <a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baafd553f38473f395f21c58942098ab9e1">ColorModel::CIELab</a>.</p>
+<p>In the library, Lab components are stored normalized to <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a>–1.0. Use <code><a class="el" href="classColorModel.html#a6ebc6ceff4e5ad6e11349a6bca4ea5f9" title="Converts a normalized component value to native display units.">ColorModel::toNative()</a></code> to get the conventional ranges, or <code><a class="el" href="classColor.html#a367c7f20f02bd94fca6c3baf3411aadb" title="Creates a Color from native-range component values.">Color::fromNative()</a></code> to construct a <code><a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a></code> from conventional values.</p>
+<p>See <code><a class="el" href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baafd553f38473f395f21c58942098ab9e1" title="CIE L*a*b* (D65 white point).">ColorModel::CIELab</a></code>.</p>
 <h1><a class="anchor" id="cs_normalization"></a>
 Component Normalization</h1>
-<p>All color components in promeki are stored as normalized floats in the range <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">-1.0</a> (with the exception that linear-light HDR values may exceed <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>). This provides a uniform interface regardless of the color model.</p>
-<p>For models where the conventional range differs, the <a class="el" href="classColorModel.html">ColorModel</a> provides native range information via <a class="el" href="classColorModel.html#af7e1c8091b1bd0c94648f79624658493">ColorModel::compInfo()</a>, and the conversion helpers <a class="el" href="classColorModel.html#a6ebc6ceff4e5ad6e11349a6bca4ea5f9">ColorModel::toNative()</a> and <a class="el" href="classColorModel.html#a2889be3bd0de3ade11d1a0f654cccf47">ColorModel::fromNative()</a> (or their <a class="el" href="classColor.html">Color</a> counterparts).</p>
+<p>All color components in promeki are stored as normalized floats in the range <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a>–1.0 (with the exception that linear-light HDR values may exceed <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>). This provides a uniform interface regardless of the color model.</p>
+<p>For models where the conventional range differs, the <code><a class="el" href="classColorModel.html" title="Single source of truth for a color model and its associated color space.">ColorModel</a></code> provides native range information via <code><a class="el" href="classColorModel.html#af7e1c8091b1bd0c94648f79624658493" title="Returns descriptor for the given component index (0-2).">ColorModel::compInfo()</a></code>, and the conversion helpers <code><a class="el" href="classColorModel.html#a6ebc6ceff4e5ad6e11349a6bca4ea5f9" title="Converts a normalized component value to native display units.">ColorModel::toNative()</a></code> and <code><a class="el" href="classColorModel.html#a2889be3bd0de3ade11d1a0f654cccf47" title="Converts a native display value to normalized form.">ColorModel::fromNative()</a></code> (or their <code><a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a></code> counterparts).</p>
 <table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Model   </th><th class="markdownTableHeadNone">Component   </th><th class="markdownTableHeadNone">Normalized Range   </th><th class="markdownTableHeadNone">Native Range    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">RGB   </td><td class="markdownTableBodyNone">Red   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a> - <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a> - <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>    </td></tr>
+<td class="markdownTableBodyNone">RGB   </td><td class="markdownTableBodyNone">Red   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a> – <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a> – <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">HSV   </td><td class="markdownTableBodyNone">Hue   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a> - <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>   </td><td class="markdownTableBodyNone">0 - 360 degrees    </td></tr>
+<td class="markdownTableBodyNone">HSV   </td><td class="markdownTableBodyNone">Hue   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a> – <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>   </td><td class="markdownTableBodyNone">0 – 360 degrees    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">HSV   </td><td class="markdownTableBodyNone">Saturation   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a> - <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a> - <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>    </td></tr>
+<td class="markdownTableBodyNone">HSV   </td><td class="markdownTableBodyNone">Saturation   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a> – <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a> – <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">Lab   </td><td class="markdownTableBodyNone">L*   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a> - <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>   </td><td class="markdownTableBodyNone">0 - 100    </td></tr>
+<td class="markdownTableBodyNone">Lab   </td><td class="markdownTableBodyNone">L*   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a> – <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>   </td><td class="markdownTableBodyNone">0 – 100    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">Lab   </td><td class="markdownTableBodyNone">a*   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a> - <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>   </td><td class="markdownTableBodyNone">-128 - 127    </td></tr>
+<td class="markdownTableBodyNone">Lab   </td><td class="markdownTableBodyNone">a*   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a> – <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>   </td><td class="markdownTableBodyNone">-128 – 127    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">YCbCr   </td><td class="markdownTableBodyNone">Cb   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a> - <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">-0.5</a> - <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.5</a>   </td></tr>
+<td class="markdownTableBodyNone">YCbCr   </td><td class="markdownTableBodyNone">Cb   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a> – <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">-0.5</a> – <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.5</a>   </td></tr>
 </table>
 <h1><a class="anchor" id="cs_conversion"></a>
 How Conversion Works</h1>
-<p>To convert a <a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a> from model A to model B, the library performs:</p>
+<p>To convert a <code><a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a></code> from model A to model B, the library performs:</p>
 <div class="fragment"><div class="line"><span class="comment">// Pseudocode for Color::convert()</span></div>
 <div class="line"><span class="keywordtype">float</span> xyz[3];</div>
 <div class="line"><a class="code hl_class" href="classList.html">modelA</a>.toXYZ(<a class="code hl_class" href="classList.html">sourceComponents</a>, xyz);   <span class="comment">// A -&gt; XYZ</span></div>
 <div class="line"><a class="code hl_class" href="classList.html">modelB</a>.fromXYZ(xyz, <a class="code hl_class" href="classList.html">destComponents</a>);   <span class="comment">// XYZ -&gt; B</span></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-</div><!-- fragment --><p>For an RGB model, toXYZ() means:</p><ol type="1">
+</div><!-- fragment --><p>For an RGB model, <code>toXYZ()</code> means:</p>
+<ol type="1">
 <li>Remove the transfer function (EOTF) to get linear RGB.</li>
 <li>Multiply by the 3x3 RGB-to-XYZ matrix (the Normalized Primary <a class="el" href="classMatrix.html" title="Generic fixed-size matrix with compile-time dimensions.">Matrix</a>, computed from the primaries and white point).</li>
 </ol>
-<p>And fromXYZ() means:</p><ol type="1">
+<p>And <code>fromXYZ()</code> means:</p>
+<ol type="1">
 <li>Multiply by the inverse matrix (XYZ-to-RGB).</li>
 <li>Apply the transfer function (OETF).</li>
 </ol>
@@ -298,13 +284,13 @@ Library Classes</h1>
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Class   </th><th class="markdownTableHeadNone">Purpose    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><a class="el" href="classColor.html">Color</a>   </td><td class="markdownTableBodyNone">A color value: four float components + a <a class="el" href="classColorModel.html" title="Single source of truth for a color model and its associated color space.">ColorModel</a>. The main type you work with.    </td></tr>
+<td class="markdownTableBodyNone"><code><a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a></code>   </td><td class="markdownTableBodyNone">A color value: four float components + a <code><a class="el" href="classColorModel.html" title="Single source of truth for a color model and its associated color space.">ColorModel</a></code>. The main type you work with.    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><a class="el" href="classColorModel.html">ColorModel</a>   </td><td class="markdownTableBodyNone">Defines a color model/space: type, primaries, white point, transfer function. Lightweight value (just a pointer).    </td></tr>
+<td class="markdownTableBodyNone"><code><a class="el" href="classColorModel.html" title="Single source of truth for a color model and its associated color space.">ColorModel</a></code>   </td><td class="markdownTableBodyNone">Defines a color model/space: type, primaries, white point, transfer function. Lightweight value (just a pointer).    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><a class="el" href="classXYZColor.html">XYZColor</a>   </td><td class="markdownTableBodyNone">A color in the CIE 1931 XYZ color space. Three double-precision components.    </td></tr>
+<td class="markdownTableBodyNone"><code><a class="el" href="classXYZColor.html" title="A color in the CIE 1931 XYZ color space.">XYZColor</a></code>   </td><td class="markdownTableBodyNone">A color in the CIE 1931 XYZ color space. Three double-precision components.    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><a class="el" href="classCIEPoint.html">CIEPoint</a>   </td><td class="markdownTableBodyNone">A point in the CIE xy chromaticity diagram. Used to define primaries and white points.   </td></tr>
+<td class="markdownTableBodyNone"><code><a class="el" href="classCIEPoint.html" title="A point in the CIE 1931 xy chromaticity diagram.">CIEPoint</a></code>   </td><td class="markdownTableBodyNone">A point in the CIE xy chromaticity diagram. Used to define primaries and white points.   </td></tr>
 </table>
 <h2><a class="anchor" id="cs_usage"></a>
 Quick Start</h2>
@@ -370,7 +356,7 @@ Further Reading</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-20 23:51:17 from commit 43d9012 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-21 00:53:11 from commit 3126200 (1.0.0).</li>
   </ul>
 </div>
 </body>
