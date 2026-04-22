@@ -793,6 +793,8 @@ set(PROMEKI_HEADERS
     include/promeki/filepath.h
     include/promeki/fnv1a.h
     include/promeki/fourcc.h
+    include/promeki/framecount.h
+    include/promeki/framenumber.h
     include/promeki/framerate.h
     include/promeki/future.h
     include/promeki/h264bitstream.h
@@ -808,6 +810,7 @@ set(PROMEKI_HEADERS
     include/promeki/matrix.h
     include/promeki/matrix3x3.h
     include/promeki/md5.h
+    include/promeki/mediaduration.h
     include/promeki/mempool.h
     include/promeki/memspace.h
     include/promeki/metadata.h
@@ -913,6 +916,8 @@ set(PROMEKI_SOURCES
     src/core/fileinfo.cpp
     src/core/fileiodevice.cpp
     src/core/fourcc.cpp
+    src/core/framecount.cpp
+    src/core/framenumber.cpp
     src/core/framerate.cpp
     src/core/h264bitstream.cpp
     src/core/hevcbitstream.cpp
@@ -928,6 +933,7 @@ set(PROMEKI_SOURCES
     src/core/map.cpp
     src/core/matrix.cpp
     src/core/matrix3x3.cpp
+    src/core/mediaduration.cpp
     src/core/mediatimestamp.cpp
     src/core/md5.cpp
     src/core/mempool.cpp
@@ -1750,8 +1756,10 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/filepath.cpp
         tests/unit/fnv1a.cpp
         tests/unit/fourcc.cpp
-        tests/unit/framesync.cpp
+        tests/unit/framecount.cpp
+        tests/unit/framenumber.cpp
         tests/unit/framerate.cpp
+        tests/unit/framesync.cpp
         tests/unit/future.cpp
         tests/unit/h264bitstream.cpp
         tests/unit/hashmap.cpp
@@ -1767,6 +1775,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/map.cpp
         tests/unit/matrix.cpp
         tests/unit/matrix3x3.cpp
+        tests/unit/mediaduration.cpp
         tests/unit/mediatimestamp.cpp
         tests/unit/md5.cpp
         tests/unit/mempool.cpp

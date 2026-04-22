@@ -130,7 +130,7 @@ Error MediaIOTask_DebugMedia::executeCmd(MediaIOCommandRead &cmd) {
 
         ++_framesRead;
         cmd.frame        = std::move(frame);
-        cmd.currentFrame = _framesRead;
+        cmd.currentFrame = toFrameNumber(_framesRead);
         stampWorkEnd();
         return Error::Ok;
 }
@@ -144,7 +144,7 @@ Error MediaIOTask_DebugMedia::executeCmd(MediaIOCommandWrite &cmd) {
         if(e.isError()) { stampWorkEnd(); return e; }
 
         ++_framesWritten;
-        cmd.currentFrame = _framesWritten;
+        cmd.currentFrame = toFrameNumber(_framesWritten);
         cmd.frameCount   = _framesWritten;
         stampWorkEnd();
         return Error::Ok;
@@ -152,10 +152,11 @@ Error MediaIOTask_DebugMedia::executeCmd(MediaIOCommandWrite &cmd) {
 
 Error MediaIOTask_DebugMedia::executeCmd(MediaIOCommandSeek &cmd) {
         if(_mode != MediaIO::Source || !_file) return Error::NotOpen;
-        Error e = _file->seek(cmd.frameNumber);
+        FrameNumber target = cmd.frameNumber.isValid() ? cmd.frameNumber : FrameNumber(0);
+        Error e = _file->seek(target);
         if(e.isError()) return e;
         cmd.currentFrame = cmd.frameNumber;
-        _framesRead      = cmd.frameNumber;
+        _framesRead      = toFrameCount(target);
         return Error::Ok;
 }
 

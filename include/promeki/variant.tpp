@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include <limits>
 #include <promeki/variant.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -48,6 +49,8 @@ To VariantImpl<Types...>::get(Error *err) const {
                         if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
                         if constexpr (detail::is_type_registry_v<From>) return static_cast<To>(arg.id());
                         if constexpr (std::is_same_v<From, Enum>) return static_cast<To>(arg.value());
+                        if constexpr (std::is_same_v<From, FrameNumber> ||
+                                        std::is_same_v<From, FrameCount>) return static_cast<To>(arg.value());
 
                 } else if constexpr (std::is_same_v<To, float>) {
                         if constexpr (std::is_same_v<From, bool>) return !!arg;
@@ -56,6 +59,15 @@ To VariantImpl<Types...>::get(Error *err) const {
                         if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
                         if constexpr (std::is_same_v<From, Rational<int>>) return arg.toDouble();
                         if constexpr (std::is_same_v<From, FrameRate>) return static_cast<float>(arg.toDouble());
+                        if constexpr (std::is_same_v<From, FrameNumber>) {
+                                return arg.isValid() ? static_cast<float>(arg.value())
+                                                     : std::numeric_limits<float>::quiet_NaN();
+                        }
+                        if constexpr (std::is_same_v<From, FrameCount>) {
+                                if(arg.isUnknown())  return std::numeric_limits<float>::quiet_NaN();
+                                if(arg.isInfinite()) return std::numeric_limits<float>::infinity();
+                                return static_cast<float>(arg.value());
+                        }
 
                 } else if constexpr (std::is_same_v<To, double>) {
                         if constexpr (std::is_same_v<From, bool>) return !!arg;
@@ -64,6 +76,15 @@ To VariantImpl<Types...>::get(Error *err) const {
                         if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
                         if constexpr (std::is_same_v<From, Rational<int>>) return arg.toDouble();
                         if constexpr (std::is_same_v<From, FrameRate>) return arg.toDouble();
+                        if constexpr (std::is_same_v<From, FrameNumber>) {
+                                return arg.isValid() ? static_cast<double>(arg.value())
+                                                     : std::numeric_limits<double>::quiet_NaN();
+                        }
+                        if constexpr (std::is_same_v<From, FrameCount>) {
+                                if(arg.isUnknown())  return std::numeric_limits<double>::quiet_NaN();
+                                if(arg.isInfinite()) return std::numeric_limits<double>::infinity();
+                                return static_cast<double>(arg.value());
+                        }
 
                 } else if constexpr (std::is_same_v<To, DateTime>) {
                         if constexpr (std::is_same_v<From, String>) return DateTime::fromString(
@@ -190,6 +211,41 @@ To VariantImpl<Types...>::get(Error *err) const {
                                 return mts;
                         }
 
+                } else if constexpr (std::is_same_v<To, FrameNumber>) {
+                        if constexpr (std::is_same_v<From, String>) {
+                                Error e;
+                                FrameNumber fn = FrameNumber::fromString(arg, &e);
+                                if(e.isError()) {
+                                        if(err != nullptr) *err = Error::Invalid;
+                                        return FrameNumber::unknown();
+                                }
+                                return fn;
+                        }
+                        if constexpr (std::is_integral<From>::value) return FrameNumber(static_cast<int64_t>(arg));
+
+                } else if constexpr (std::is_same_v<To, FrameCount>) {
+                        if constexpr (std::is_same_v<From, String>) {
+                                Error e;
+                                FrameCount fc = FrameCount::fromString(arg, &e);
+                                if(e.isError()) {
+                                        if(err != nullptr) *err = Error::Invalid;
+                                        return FrameCount::unknown();
+                                }
+                                return fc;
+                        }
+                        if constexpr (std::is_integral<From>::value) return FrameCount(static_cast<int64_t>(arg));
+
+                } else if constexpr (std::is_same_v<To, MediaDuration>) {
+                        if constexpr (std::is_same_v<From, String>) {
+                                Error e;
+                                MediaDuration md = MediaDuration::fromString(arg, &e);
+                                if(e.isError()) {
+                                        if(err != nullptr) *err = Error::Invalid;
+                                        return MediaDuration();
+                                }
+                                return md;
+                        }
+
                 } else if constexpr (std::is_same_v<To, String>) {
                         if constexpr (std::is_same_v<From, bool>) return String::number(arg);
                         if constexpr (std::is_same_v<From, int8_t>) return String::number(arg);
@@ -209,6 +265,9 @@ To VariantImpl<Types...>::get(Error *err) const {
                         if constexpr (std::is_same_v<From, UUID>) return arg.toString();
                         if constexpr (std::is_same_v<From, UMID>) return arg.toString();
                         if constexpr (std::is_same_v<From, Timecode>) return arg.toString().first();
+                        if constexpr (std::is_same_v<From, FrameNumber>) return arg.toString();
+                        if constexpr (std::is_same_v<From, FrameCount>) return arg.toString();
+                        if constexpr (std::is_same_v<From, MediaDuration>) return arg.toString();
                         if constexpr (std::is_same_v<From, Rational<int>>) return arg.toString();
                         if constexpr (std::is_same_v<From, FrameRate>) return arg.toString();
                         if constexpr (std::is_same_v<From, VideoFormat>) return arg.toString();

@@ -148,9 +148,9 @@ class MediaIOTask_VideoEncoder : public MediaIOTask {
                 // NEED_MORE_INPUT case where submit N's packet emerges
                 // during submit N+1.
                 List<Frame::Ptr>      _pendingSrcFrames;
-                int64_t               _frameCount = 0;
+                FrameCount            _frameCount{0};
                 int64_t               _readCount = 0;
-                int64_t               _framesEncoded = 0;
+                FrameCount            _framesEncoded{0};
                 int64_t               _packetsOut = 0;
                 bool                  _capacityWarned = false;
                 bool                  _multiImageWarned = false;

@@ -856,7 +856,7 @@ void MediaIOTask_V4L2::closeVideo() {
                              "captured=%lld  delivered=%lld",
                              static_cast<long long>(
                                      _framesCaptured.load(std::memory_order_relaxed)),
-                             static_cast<long long>(_frameCount));
+                             static_cast<long long>(_frameCount.value()));
         }
         stopStreaming();
         for(int i = 0; i < _buffers.size(); i++) {
@@ -1367,11 +1367,11 @@ Error MediaIOTask_V4L2::executeCmd(MediaIOCommandOpen &cmd) {
 
                 // Long-term average fps from first timestamp
                 if(_firstCaptureFrame >= 0 &&
-                   _frameCount > _firstCaptureFrame + 1) {
+                   _frameCount.value() > _firstCaptureFrame + 1) {
                         double totalSec = (_lastCaptureTime - _firstCaptureTime)
                                           .toSecondsDouble();
                         if(totalSec > 0.0) {
-                                avgFps = (double)(_frameCount - _firstCaptureFrame) /
+                                avgFps = (double)(_frameCount.value() - _firstCaptureFrame) /
                                          totalSec;
                         }
                 }
@@ -1446,7 +1446,7 @@ Error MediaIOTask_V4L2::executeCmd(MediaIOCommandOpen &cmd) {
                                      "ravg=%.1f drift=%+.1f s/s "
                                      "seq=%u kdrop=%lld tssub=%lld "
                                      "loop=%.2f/%.2fms lag=%.2f/%.2fms",
-                                     static_cast<long long>(_frameCount),
+                                     static_cast<long long>(_frameCount.value()),
                                      static_cast<long long>(captured),
                                      qDepth, VideoQueueDepth,
                                      avgFps, periodFps, fpsChange,
@@ -1464,7 +1464,7 @@ Error MediaIOTask_V4L2::executeCmd(MediaIOCommandOpen &cmd) {
                                      "audio=off "
                                      "seq=%u kdrop=%lld tssub=%lld "
                                      "loop=%.2f/%.2fms lag=%.2f/%.2fms",
-                                     static_cast<long long>(_frameCount),
+                                     static_cast<long long>(_frameCount.value()),
                                      static_cast<long long>(captured),
                                      qDepth, VideoQueueDepth,
                                      avgFps, periodFps, fpsChange,
@@ -1559,7 +1559,7 @@ Error MediaIOTask_V4L2::executeCmd(MediaIOCommandRead &cmd) {
                 TimeStamp ct = ctMts.timeStamp();
                 if(_firstCaptureFrame < 0) {
                         _firstCaptureTime = ct;
-                        _firstCaptureFrame = _frameCount;
+                        _firstCaptureFrame = _frameCount.value();
                 } else if(_lastCaptureTime.nanoseconds() > 0) {
                         double delta = (ct - _lastCaptureTime).toSecondsDouble();
                         if(delta > 0.0) {
@@ -1703,9 +1703,9 @@ Error MediaIOTask_V4L2::executeCmd(MediaIOCommandRead &cmd) {
                 }
         }
 
-        _frameCount++;
+        ++_frameCount;
         cmd.frame = std::move(frame);
-        cmd.currentFrame = _frameCount;
+        cmd.currentFrame = toFrameNumber(_frameCount);
         stampWorkEnd();
         _debugReport.service();
         return Error::Ok;

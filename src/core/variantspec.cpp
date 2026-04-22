@@ -77,6 +77,9 @@ String singleTypeName(Variant::Type t, Enum::Type enumType) {
                 case Variant::TypeUUID:         return "UUID";
                 case Variant::TypeUMID:         return "UMID";
                 case Variant::TypeTimecode:     return "Timecode";
+                case Variant::TypeFrameNumber:  return "FrameNumber";
+                case Variant::TypeFrameCount:   return "FrameCount";
+                case Variant::TypeMediaDuration: return "MediaDuration";
                 case Variant::TypeRational:     return "Rational";
                 case Variant::TypeFrameRate:    return "FrameRate";
                 case Variant::TypeVideoFormat:  return "VideoFormat";
@@ -161,6 +164,24 @@ Variant parseAsType(Variant::Type type, Enum::Type enumType,
                         auto r = Timecode::fromString(str);
                         if(r.second().isError()) break;
                         return Variant(r.first());
+                }
+                case Variant::TypeFrameNumber: {
+                        Error pe;
+                        FrameNumber fn = FrameNumber::fromString(str, &pe);
+                        if(pe.isError()) break;
+                        return Variant(fn);
+                }
+                case Variant::TypeFrameCount: {
+                        Error pe;
+                        FrameCount fc = FrameCount::fromString(str, &pe);
+                        if(pe.isError()) break;
+                        return Variant(fc);
+                }
+                case Variant::TypeMediaDuration: {
+                        Error pe;
+                        MediaDuration md = MediaDuration::fromString(str, &pe);
+                        if(pe.isError()) break;
+                        return Variant(md);
                 }
                 case Variant::TypeDateTime: {
                         Error de;

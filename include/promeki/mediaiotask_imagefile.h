@@ -205,16 +205,16 @@ class MediaIOTask_ImageFile : public MediaIOTask {
 
                 // Single-file state
                 Frame::Ptr      _frame;
-                int64_t         _readCount = 0;
-                int64_t         _writeCount = 0;
+                FrameCount      _readCount{0};
+                FrameCount      _writeCount{0};
                 bool            _loaded = false;
 
                 // Sequence state
                 NumName         _seqName;            ///< @brief Filename pattern for the sequence.
                 FilePath        _seqDir;             ///< @brief Directory containing the sequence files.
-                int64_t         _seqHead = 0;        ///< @brief First frame number (inclusive).
-                int64_t         _seqTail = 0;        ///< @brief Last frame number (inclusive).
-                int64_t         _seqIndex = 0;       ///< @brief Current zero-based offset from head.
+                FrameNumber     _seqHead{0};        ///< @brief First frame number (inclusive).
+                FrameNumber     _seqTail{0};        ///< @brief Last frame number (inclusive).
+                FrameNumber     _seqIndex{0};       ///< @brief Current zero-based offset from head.
                 bool            _seqAtEnd = false;   ///< @brief True after the step-direction end was reached.
                 Metadata        _seqMetadata;        ///< @brief Sidecar-supplied metadata merged onto frames.
                 Size2Du32       _seqSize;            ///< @brief Size hint for headerless formats.

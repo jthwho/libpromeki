@@ -858,6 +858,24 @@ DataStream &DataStream::operator<<(const MediaTimeStamp &val) {
         return *this;
 }
 
+DataStream &DataStream::operator<<(const FrameNumber &val) {
+        writeTag(TypeFrameNumber);
+        writeStringData(val.toString());
+        return *this;
+}
+
+DataStream &DataStream::operator<<(const FrameCount &val) {
+        writeTag(TypeFrameCount);
+        writeStringData(val.toString());
+        return *this;
+}
+
+DataStream &DataStream::operator<<(const MediaDuration &val) {
+        writeTag(TypeMediaDuration);
+        writeStringData(val.toString());
+        return *this;
+}
+
 DataStream &DataStream::operator<<(const MacAddress &val) {
         writeTag(TypeMacAddress);
         writeStringData(val.toString());
@@ -915,6 +933,9 @@ DataStream &DataStream::operator<<(const Variant &val) {
                 case Variant::TypeEnum:       *this << val.get<Enum>(); break;
                 case Variant::TypeEnumList:   *this << val.get<EnumList>(); break;
                 case Variant::TypeMediaTimeStamp: *this << val.get<MediaTimeStamp>(); break;
+                case Variant::TypeFrameNumber:    *this << val.get<FrameNumber>(); break;
+                case Variant::TypeFrameCount:     *this << val.get<FrameCount>(); break;
+                case Variant::TypeMediaDuration:  *this << val.get<MediaDuration>(); break;
                 case Variant::TypeMasteringDisplay:
                         *this << val.get<MasteringDisplay>(); break;
                 case Variant::TypeContentLightLevel:
@@ -1146,6 +1167,54 @@ DataStream &DataStream::operator>>(MediaTimeStamp &val) {
         return *this;
 }
 
+DataStream &DataStream::operator>>(FrameNumber &val) {
+        if(!readTag(TypeFrameNumber)) { val = FrameNumber(); return *this; }
+        String s = readStringData();
+        if(_status != Ok) { val = FrameNumber(); return *this; }
+        Error pe;
+        FrameNumber fn = FrameNumber::fromString(s, &pe);
+        if(pe.isError()) {
+                setError(ReadCorruptData,
+                        String::sprintf("Failed to parse FrameNumber from '%s'", s.cstr()));
+                val = FrameNumber();
+                return *this;
+        }
+        val = fn;
+        return *this;
+}
+
+DataStream &DataStream::operator>>(FrameCount &val) {
+        if(!readTag(TypeFrameCount)) { val = FrameCount(); return *this; }
+        String s = readStringData();
+        if(_status != Ok) { val = FrameCount(); return *this; }
+        Error pe;
+        FrameCount fc = FrameCount::fromString(s, &pe);
+        if(pe.isError()) {
+                setError(ReadCorruptData,
+                        String::sprintf("Failed to parse FrameCount from '%s'", s.cstr()));
+                val = FrameCount();
+                return *this;
+        }
+        val = fc;
+        return *this;
+}
+
+DataStream &DataStream::operator>>(MediaDuration &val) {
+        if(!readTag(TypeMediaDuration)) { val = MediaDuration(); return *this; }
+        String s = readStringData();
+        if(_status != Ok) { val = MediaDuration(); return *this; }
+        Error pe;
+        MediaDuration md = MediaDuration::fromString(s, &pe);
+        if(pe.isError()) {
+                setError(ReadCorruptData,
+                        String::sprintf("Failed to parse MediaDuration from '%s'", s.cstr()));
+                val = MediaDuration();
+                return *this;
+        }
+        val = md;
+        return *this;
+}
+
 DataStream &DataStream::operator>>(MacAddress &val) {
         if(!readTag(TypeMacAddress)) { val = MacAddress(); return *this; }
         String s = readStringData();
@@ -1242,6 +1311,48 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                                 break;
                         }
                         val = mts;
+                        break;
+                }
+                case TypeFrameNumber: {
+                        String s = readStringData();
+                        if(_status != Ok) { val = Variant(); break; }
+                        Error pe;
+                        FrameNumber fn = FrameNumber::fromString(s, &pe);
+                        if(pe.isError()) {
+                                setError(ReadCorruptData,
+                                        String::sprintf("Failed to parse FrameNumber from '%s'", s.cstr()));
+                                val = Variant();
+                                break;
+                        }
+                        val = fn;
+                        break;
+                }
+                case TypeFrameCount: {
+                        String s = readStringData();
+                        if(_status != Ok) { val = Variant(); break; }
+                        Error pe;
+                        FrameCount fc = FrameCount::fromString(s, &pe);
+                        if(pe.isError()) {
+                                setError(ReadCorruptData,
+                                        String::sprintf("Failed to parse FrameCount from '%s'", s.cstr()));
+                                val = Variant();
+                                break;
+                        }
+                        val = fc;
+                        break;
+                }
+                case TypeMediaDuration: {
+                        String s = readStringData();
+                        if(_status != Ok) { val = Variant(); break; }
+                        Error pe;
+                        MediaDuration md = MediaDuration::fromString(s, &pe);
+                        if(pe.isError()) {
+                                setError(ReadCorruptData,
+                                        String::sprintf("Failed to parse MediaDuration from '%s'", s.cstr()));
+                                val = Variant();
+                                break;
+                        }
+                        val = md;
                         break;
                 }
                 case TypeStringList:  val = readStringListData(); break;

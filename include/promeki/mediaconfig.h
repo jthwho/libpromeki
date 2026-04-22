@@ -12,6 +12,8 @@
 #include <promeki/enums.h>
 #include <promeki/enumlist.h>
 #include <promeki/uuid.h>
+#include <promeki/mediaduration.h>
+#include <promeki/timecode.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -386,6 +388,19 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(false)
                                 .setDescription("Drop-frame flag for 29.97 / 59.94 timecode."));
+
+                /// @brief MediaDuration — playback in/out range (start frame plus length).
+                ///
+                /// When set, a backend that supports it should expose only
+                /// the requested range, returning EOF after the last frame
+                /// in the range.  An @c Unknown or default value disables
+                /// the limiter (full asset is read).  Range form
+                /// @c "<start>-<end>" inclusive is also accepted via the
+                /// MediaDuration string parser.
+                PROMEKI_DECLARE_ID(PlaybackRange,
+                        VariantSpec().setType(Variant::TypeMediaDuration)
+                                .setDefault(MediaDuration())
+                                .setDescription("Playback in/out range (start frame plus length)."));
 
                 // ============================================================
                 // Image data encoder (VITC-style binary stamp on top of video)

@@ -2106,7 +2106,7 @@ TEST_CASE("DataStream: round-trip Metadata via VariantDatabase template") {
         Metadata meta;
         meta.set(Metadata::Title, String("My Clip"));
         meta.set(Metadata::FrameRate, Rational<int>(24000, 1001));
-        meta.set(Metadata::FrameNumber, static_cast<int64_t>(42));
+        meta.set(Metadata::FrameNumber, FrameNumber(42));
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << meta;

@@ -188,7 +188,7 @@ TEST_CASE("FrameSync: 24->60 upsample repeats video frames") {
         for(int i = 0; i < pulls; i++) {
                 auto r = fs.pullFrame();
                 REQUIRE(r.second().isOk());
-                totalRepeats += (int)r.first().framesRepeated;
+                totalRepeats += (int)r.first().framesRepeated.value();
         }
         CHECK(fs.framesOut() == pulls);
         // 24→60 has roughly 2-3 repeats per 5 pulls (pull 0 consumes, 1-2
@@ -222,7 +222,7 @@ TEST_CASE("FrameSync: 60->24 downsample drops intermediate video frames") {
         for(int i = 0; i < 3; i++) {
                 auto r = fs.pullFrame();
                 REQUIRE(r.second().isOk());
-                totalDropped += (int)r.first().framesDropped;
+                totalDropped += (int)r.first().framesDropped.value();
         }
         CHECK(fs.framesOut() == 3);
         CHECK(totalDropped >= 2);
@@ -409,7 +409,7 @@ TEST_CASE("FrameSync: downsample reports FrameSyncDrop on the next fresh emit") 
                 const Metadata &m = r.first().frame->metadata();
                 CHECK(m.get(Metadata::FrameSyncRepeat).get<int32_t>() == 0);
                 CHECK(m.get(Metadata::FrameSyncDrop).get<int32_t>()
-                      == static_cast<int32_t>(r.first().framesDropped));
+                      == static_cast<int32_t>(r.first().framesDropped.value()));
                 CHECK(m.get(Metadata::FrameSyncDrop).get<int32_t>() >= 1);
         }
 }

@@ -198,7 +198,7 @@ Error MediaIOTask_Burn::executeCmd(MediaIOCommandWrite &cmd) {
         _outputQueue.pushToBack(std::move(outFrame));
         _frameCount++;
         _framesBurned++;
-        cmd.currentFrame = _frameCount;
+        cmd.currentFrame = toFrameNumber(_frameCount);
         cmd.frameCount = _frameCount;
         stampWorkEnd();
         return Error::Ok;

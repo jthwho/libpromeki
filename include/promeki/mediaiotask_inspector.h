@@ -91,7 +91,7 @@ struct InspectorDiscontinuity {
 struct InspectorEvent {
         /// Inspector's monotonic per-frame counter (0-based, increments
         /// once per @c executeCmd(MediaIOCommandWrite&) call).
-        int64_t  frameIndex = 0;
+        FrameNumber frameIndex{0};
 
         // ---- Picture data band decode ----
 
@@ -213,15 +213,15 @@ struct InspectorEvent {
  */
 struct InspectorSnapshot {
         /// Total number of frames the inspector has processed.
-        int64_t framesProcessed       = 0;
+        FrameCount framesProcessed{0};
         /// Total number of frames where the picture data band decoded.
-        int64_t framesWithPictureData = 0;
+        FrameCount framesWithPictureData{0};
         /// Total number of frames where at least one LTC frame decoded.
-        int64_t framesWithLtc         = 0;
+        FrameCount framesWithLtc{0};
         /// Total number of frames where the video MediaTimeStamp was valid.
-        int64_t framesWithVideoTimestamp = 0;
+        FrameCount framesWithVideoTimestamp{0};
         /// Total number of frames where the audio MediaTimeStamp was valid.
-        int64_t framesWithAudioTimestamp = 0;
+        FrameCount framesWithAudioTimestamp{0};
         /// Number of consecutive-pair video timestamp deltas measured.
         int64_t videoDeltaSamples     = 0;
         /// Number of consecutive-pair audio timestamp deltas measured.
@@ -502,15 +502,15 @@ class MediaIOTask_Inspector : public MediaIOTask {
                 int64_t       _audioSamplesCumulative      = 0;
 
                 // ---- Per-frame counter ----
-                int64_t  _frameIndex = 0;
+                FrameNumber _frameIndex{0};
 
                 // ---- Stats accumulator ----
                 mutable Mutex     _stateMutex;
                 InspectorSnapshot _stats;
 
                 // ---- Periodic log timing (wall time) ----
-                double   _lastLogWallSec = 0.0;
-                int64_t  _framesSinceLastLog = 0;
+                double      _lastLogWallSec = 0.0;
+                FrameCount  _framesSinceLastLog{0};
 
                 // ---- Per-frame callback ----
                 EventCallback _callback;

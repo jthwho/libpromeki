@@ -10,6 +10,7 @@
 #include <promeki/namespace.h>
 #include <promeki/datastream.h>
 #include <promeki/error.h>
+#include <promeki/framecount.h>
 #include <promeki/framerate.h>
 #include <promeki/json.h>
 #include <promeki/list.h>
@@ -65,13 +66,10 @@ class MediaIODescription {
                  * Mirrors @ref MediaIO::FrameCountUnknown so callers
                  * can compare against either constant interchangeably.
                  */
-                static constexpr int64_t FrameCountUnknown  = -1;
+                static constexpr FrameCount FrameCountUnknown  = FrameCount::unknown();
 
                 /** @brief Sentinel for an unbounded source (live device). */
-                static constexpr int64_t FrameCountInfinite = -2;
-
-                /** @brief Sentinel for a frame count unavailable due to error. */
-                static constexpr int64_t FrameCountError    = -3;
+                static constexpr FrameCount FrameCountInfinite = FrameCount::infinity();
 
                 /** @brief Constructs a default (empty / unknown) description. */
                 MediaIODescription() = default;
@@ -196,17 +194,16 @@ class MediaIODescription {
                 void setCanSeek(bool val) { _canSeek = val; }
 
                 /**
-                 * @brief Returns the frame count, or one of the sentinel values.
+                 * @brief Returns the frame count.
                  *
-                 * @retval >= 0                  Finite frame count
-                 * @retval FrameCountUnknown     Not yet known
-                 * @retval FrameCountInfinite    Unbounded source (live)
-                 * @retval FrameCountError       Unavailable due to error
+                 * The returned @ref FrameCount may be @c Unknown, @c Empty,
+                 * @c Infinite (live / unbounded sources), or a finite
+                 * positive count.
                  */
-                int64_t frameCount() const { return _frameCount; }
+                const FrameCount &frameCount() const { return _frameCount; }
 
-                /** @brief Sets the frame count (or a sentinel). */
-                void setFrameCount(int64_t val) { _frameCount = val; }
+                /** @brief Sets the frame count. */
+                void setFrameCount(const FrameCount &val) { _frameCount = val; }
 
                 /** @brief Returns the cached frame rate. */
                 const FrameRate &frameRate() const { return _frameRate; }
@@ -326,7 +323,7 @@ class MediaIODescription {
                 MediaDesc       _preferredFormat;
 
                 bool            _canSeek    = false;
-                int64_t         _frameCount = FrameCountUnknown;
+                FrameCount      _frameCount;
                 FrameRate       _frameRate;
                 Metadata        _containerMetadata;
 

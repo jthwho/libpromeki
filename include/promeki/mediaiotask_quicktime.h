@@ -93,7 +93,7 @@ class MediaIOTask_QuickTime : public MediaIOTask {
                 static PixelDesc pickSupportedPixelDesc(const PixelDesc &offered);
 
                 /** @brief Build a Frame for the requested video sample. */
-                Error readVideoFrame(uint64_t frameIndex, Frame::Ptr &outFrame);
+                Error readVideoFrame(const FrameNumber &frameIndex, Frame::Ptr &outFrame);
 
                 /** @brief Pulls @p samples samples for the current audio track into @p out. */
                 Error readAudioSlice(uint64_t startSample, size_t samples, Audio &out);
@@ -109,8 +109,8 @@ class MediaIOTask_QuickTime : public MediaIOTask {
                 String       _filename;
                 int          _videoTrackIndex = -1;   ///< Selected video track in the engine.
                 int          _audioTrackIndex = -1;   ///< Selected audio track in the engine.
-                int64_t      _currentFrame = 0;
-                int64_t      _frameCount = 0;
+                FrameNumber  _currentFrame{0};
+                FrameCount   _frameCount{0};
                 FrameRate    _frameRate;
                 Timecode     _anchorTimecode;
                 uint64_t     _audioSampleCursor = 0;  ///< Next audio sample index to read.
@@ -120,9 +120,9 @@ class MediaIOTask_QuickTime : public MediaIOTask {
                 uint32_t     _writerVideoTrackId = 0;
                 uint32_t     _writerAudioTrackId = 0;
                 uint32_t     _writerTimecodeTrackId = 0;
-                uint64_t     _writerFrameCount = 0;
+                FrameCount   _writerFrameCount{0};
                 int          _writerFragmentFrames = DefaultFragmentFrames;
-                uint64_t     _writerFramesSinceFlush = 0;
+                FrameCount   _writerFramesSinceFlush{0};
                 AudioBuffer  _writerAudioFifo;        ///< Bridges Frame audio to per-video-frame audio chunks.
                 AudioDesc    _writerAudioStorage;     ///< Storage format for the audio track.
 };

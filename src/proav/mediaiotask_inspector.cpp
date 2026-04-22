@@ -305,24 +305,24 @@ Error MediaIOTask_Inspector::executeCmd(MediaIOCommandClose &cmd) {
 
         promekiInfo("=== INSPECTOR FINAL REPORT ===");
         promekiInfo("  Total frames processed: %lld",
-                    static_cast<long long>(snap.framesProcessed));
+                    static_cast<long long>(snap.framesProcessed.value()));
 
         if(_decodeImageData) {
-                const double pct = snap.framesProcessed > 0
-                        ? 100.0 * snap.framesWithPictureData / snap.framesProcessed
+                const double pct = snap.framesProcessed.value() > 0
+                        ? 100.0 * snap.framesWithPictureData.value() / snap.framesProcessed.value()
                         : 0.0;
                 if(snap.framesWithPictureData == snap.framesProcessed) {
                         promekiInfo("  Image data band: decoded %lld / %lld frames (%.1f%%)",
-                                    static_cast<long long>(snap.framesWithPictureData),
-                                    static_cast<long long>(snap.framesProcessed),
+                                    static_cast<long long>(snap.framesWithPictureData.value()),
+                                    static_cast<long long>(snap.framesProcessed.value()),
                                     pct);
                 } else {
                         promekiWarn("  Image data band: decoded %lld / %lld frames (%.1f%%) — "
                                     "%lld frames failed to decode",
-                                    static_cast<long long>(snap.framesWithPictureData),
-                                    static_cast<long long>(snap.framesProcessed),
+                                    static_cast<long long>(snap.framesWithPictureData.value()),
+                                    static_cast<long long>(snap.framesProcessed.value()),
                                     pct,
-                                    static_cast<long long>(snap.framesProcessed - snap.framesWithPictureData));
+                                    static_cast<long long>((snap.framesProcessed - snap.framesWithPictureData).value()));
                 }
                 if(snap.hasLastEvent && snap.lastEvent.pictureDecoded) {
                         promekiInfo("  Last picture: streamID 0x%08X, frameNo %u, TC %s",
@@ -333,21 +333,21 @@ Error MediaIOTask_Inspector::executeCmd(MediaIOCommandClose &cmd) {
         }
 
         if(_decodeLtc) {
-                const double pct = snap.framesProcessed > 0
-                        ? 100.0 * snap.framesWithLtc / snap.framesProcessed
+                const double pct = snap.framesProcessed.value() > 0
+                        ? 100.0 * snap.framesWithLtc.value() / snap.framesProcessed.value()
                         : 0.0;
                 if(snap.framesWithLtc == snap.framesProcessed) {
                         promekiInfo("  LTC: decoded %lld / %lld frames (%.1f%%)",
-                                    static_cast<long long>(snap.framesWithLtc),
-                                    static_cast<long long>(snap.framesProcessed),
+                                    static_cast<long long>(snap.framesWithLtc.value()),
+                                    static_cast<long long>(snap.framesProcessed.value()),
                                     pct);
                 } else {
                         promekiWarn("  LTC: decoded %lld / %lld frames (%.1f%%) — "
                                     "%lld frames failed to decode",
-                                    static_cast<long long>(snap.framesWithLtc),
-                                    static_cast<long long>(snap.framesProcessed),
+                                    static_cast<long long>(snap.framesWithLtc.value()),
+                                    static_cast<long long>(snap.framesProcessed.value()),
                                     pct,
-                                    static_cast<long long>(snap.framesProcessed - snap.framesWithLtc));
+                                    static_cast<long long>((snap.framesProcessed - snap.framesWithLtc).value()));
                 }
                 if(snap.hasLastEvent && snap.lastEvent.ltcDecoded) {
                         promekiInfo("  Last LTC: TC %s",
@@ -377,14 +377,14 @@ Error MediaIOTask_Inspector::executeCmd(MediaIOCommandClose &cmd) {
         if(_checkTimestamp) {
                 if(snap.framesWithVideoTimestamp == snap.framesProcessed) {
                         promekiInfo("  Video timestamps: all %lld frames stamped",
-                                    static_cast<long long>(snap.framesProcessed));
+                                    static_cast<long long>(snap.framesProcessed.value()));
                 } else {
                         promekiWarn("  Video timestamps: %lld / %lld frames stamped "
                                     "(%lld missing)",
-                                    static_cast<long long>(snap.framesWithVideoTimestamp),
-                                    static_cast<long long>(snap.framesProcessed),
-                                    static_cast<long long>(snap.framesProcessed -
-                                                          snap.framesWithVideoTimestamp));
+                                    static_cast<long long>(snap.framesWithVideoTimestamp.value()),
+                                    static_cast<long long>(snap.framesProcessed.value()),
+                                    static_cast<long long>((snap.framesProcessed -
+                                                          snap.framesWithVideoTimestamp).value()));
                 }
                 if(snap.videoDeltaSamples > 0) {
                         promekiInfo("  Video delta: min %.3f ms / avg %.3f ms / max %.3f ms  "
@@ -397,14 +397,14 @@ Error MediaIOTask_Inspector::executeCmd(MediaIOCommandClose &cmd) {
                 }
                 if(snap.framesWithAudioTimestamp == snap.framesProcessed) {
                         promekiInfo("  Audio timestamps: all %lld frames stamped",
-                                    static_cast<long long>(snap.framesProcessed));
+                                    static_cast<long long>(snap.framesProcessed.value()));
                 } else if(snap.framesWithAudioTimestamp > 0) {
                         promekiWarn("  Audio timestamps: %lld / %lld frames stamped "
                                     "(%lld missing)",
-                                    static_cast<long long>(snap.framesWithAudioTimestamp),
-                                    static_cast<long long>(snap.framesProcessed),
-                                    static_cast<long long>(snap.framesProcessed -
-                                                          snap.framesWithAudioTimestamp));
+                                    static_cast<long long>(snap.framesWithAudioTimestamp.value()),
+                                    static_cast<long long>(snap.framesProcessed.value()),
+                                    static_cast<long long>((snap.framesProcessed -
+                                                          snap.framesWithAudioTimestamp).value()));
                 }
                 if(snap.audioDeltaSamples > 0) {
                         promekiInfo("  Audio delta: min %.3f ms / avg %.3f ms / max %.3f ms  "
@@ -481,7 +481,7 @@ void MediaIOTask_Inspector::decompressImages(Frame &frame) {
                                     "%s image on frame %lld — downstream checks "
                                     "may report failures",
                                     srcPd.name().cstr(),
-                                    static_cast<long long>(_frameIndex));
+                                    static_cast<long long>(_frameIndex.value()));
                         continue;
                 }
                 imgPtr = Image::Ptr::create(std::move(decoded));
@@ -647,9 +647,9 @@ void MediaIOTask_Inspector::runAvSyncCheck(const Frame &frame, InspectorEvent &e
         }
         if(ltcVtc == nullptr) return;
 
-        auto picFrames = pictureTc.toFrameNumber();
-        auto ltcFrames = event.ltcTimecode.toFrameNumber();
-        if(picFrames.second().isError() || ltcFrames.second().isError()) return;
+        FrameNumber picFrames = pictureTc.toFrameNumber();
+        FrameNumber ltcFrames = event.ltcTimecode.toFrameNumber();
+        if(!picFrames.isValid() || !ltcFrames.isValid()) return;
 
         // Average samples-per-frame from the LTC format's exact
         // rational rate.  For integer rates (24, 25, 30, 60, …) this
@@ -685,9 +685,7 @@ void MediaIOTask_Inspector::runAvSyncCheck(const Frame &frame, InspectorEvent &e
         // measurement on the current frame — it is not a delta
         // against a previous frame, so a constant non-zero value
         // indicates a fixed phase relationship rather than drift.
-        const int64_t tcOffsetFrames =
-                static_cast<int64_t>(picFrames.first()) -
-                static_cast<int64_t>(ltcFrames.first());
+        const int64_t tcOffsetFrames = picFrames.value() - ltcFrames.value();
         const double offsetSamples =
                 static_cast<double>(event.ltcSampleStart) +
                 static_cast<double>(tcOffsetFrames) * spf;
@@ -986,20 +984,20 @@ void MediaIOTask_Inspector::emitPeriodicLogIfDue() {
         }
 
         promekiInfo("[INSPECTOR REPORT] Frame %lld: %lld frames (%.2f s wall) since last report - %lld total",
-            static_cast<long long>(snap.framesProcessed),
-            static_cast<long long>(_framesSinceLastLog),
+            static_cast<long long>(snap.framesProcessed.value()),
+            static_cast<long long>(_framesSinceLastLog.value()),
             elapsed,
-            static_cast<long long>(snap.framesProcessed));
+            static_cast<long long>(snap.framesProcessed.value()));
 
         if(_decodeImageData) {
                 if(snap.lastEvent.pictureDecoded) {
                         promekiInfo("  Image data band: decoded %lld / %lld frames "
                                     "(%.1f%%) — most recent: streamID 0x%08X, "
                                     "frameNo %u, TC %s",
-                                    static_cast<long long>(snap.framesWithPictureData),
-                                    static_cast<long long>(snap.framesProcessed),
-                                    snap.framesProcessed > 0
-                                            ? 100.0 * snap.framesWithPictureData / snap.framesProcessed
+                                    static_cast<long long>(snap.framesWithPictureData.value()),
+                                    static_cast<long long>(snap.framesProcessed.value()),
+                                    snap.framesProcessed.value() > 0
+                                            ? 100.0 * snap.framesWithPictureData.value() / snap.framesProcessed.value()
                                             : 0.0,
                                     snap.lastEvent.pictureStreamId,
                                     snap.lastEvent.pictureFrameNumber,
@@ -1007,8 +1005,8 @@ void MediaIOTask_Inspector::emitPeriodicLogIfDue() {
                 } else {
                         promekiWarn("  Image data band: NOT DECODED in latest frame "
                                     "(decoded %lld / %lld frames since open)",
-                                    static_cast<long long>(snap.framesWithPictureData),
-                                    static_cast<long long>(snap.framesProcessed));
+                                    static_cast<long long>(snap.framesWithPictureData.value()),
+                                    static_cast<long long>(snap.framesProcessed.value()));
                 }
         }
 
@@ -1017,18 +1015,18 @@ void MediaIOTask_Inspector::emitPeriodicLogIfDue() {
                         promekiInfo("  LTC: decoded %lld / %lld frames (%.1f%%) — "
                                     "most recent: TC %s, sync word at sample %lld "
                                     "within chunk",
-                                    static_cast<long long>(snap.framesWithLtc),
-                                    static_cast<long long>(snap.framesProcessed),
-                                    snap.framesProcessed > 0
-                                            ? 100.0 * snap.framesWithLtc / snap.framesProcessed
+                                    static_cast<long long>(snap.framesWithLtc.value()),
+                                    static_cast<long long>(snap.framesProcessed.value()),
+                                    snap.framesProcessed.value() > 0
+                                            ? 100.0 * snap.framesWithLtc.value() / snap.framesProcessed.value()
                                             : 0.0,
                                     renderTc(snap.lastEvent.ltcTimecode).cstr(),
                                     static_cast<long long>(snap.lastEvent.ltcSampleStart));
                 } else {
                         promekiWarn("  LTC: NOT DECODED in latest frame "
                                     "(decoded %lld / %lld frames since open)",
-                                    static_cast<long long>(snap.framesWithLtc),
-                                    static_cast<long long>(snap.framesProcessed));
+                                    static_cast<long long>(snap.framesWithLtc.value()),
+                                    static_cast<long long>(snap.framesProcessed.value()));
                 }
         }
 
@@ -1072,13 +1070,13 @@ void MediaIOTask_Inspector::emitPeriodicLogIfDue() {
                                     snap.videoDeltaAvgNs / 1.0e6,
                                     snap.videoDeltaMaxNs / 1.0e6,
                                     snap.actualFps,
-                                    static_cast<long long>(snap.framesWithVideoTimestamp),
-                                    static_cast<long long>(snap.framesProcessed));
+                                    static_cast<long long>(snap.framesWithVideoTimestamp.value()),
+                                    static_cast<long long>(snap.framesProcessed.value()));
                 } else if(snap.framesWithVideoTimestamp > 0) {
                         promekiInfo("  Video timestamps: %lld / %lld frames stamped "
                                     "(no delta yet)",
-                                    static_cast<long long>(snap.framesWithVideoTimestamp),
-                                    static_cast<long long>(snap.framesProcessed));
+                                    static_cast<long long>(snap.framesWithVideoTimestamp.value()),
+                                    static_cast<long long>(snap.framesProcessed.value()));
                 } else {
                         promekiWarn("  Video timestamps: no stamped frames yet");
                 }
@@ -1088,13 +1086,13 @@ void MediaIOTask_Inspector::emitPeriodicLogIfDue() {
                                     snap.audioDeltaMinNs / 1.0e6,
                                     snap.audioDeltaAvgNs / 1.0e6,
                                     snap.audioDeltaMaxNs / 1.0e6,
-                                    static_cast<long long>(snap.framesWithAudioTimestamp),
-                                    static_cast<long long>(snap.framesProcessed));
+                                    static_cast<long long>(snap.framesWithAudioTimestamp.value()),
+                                    static_cast<long long>(snap.framesProcessed.value()));
                 } else if(snap.framesWithAudioTimestamp > 0) {
                         promekiInfo("  Audio timestamps: %lld / %lld frames stamped "
                                     "(no delta yet)",
-                                    static_cast<long long>(snap.framesWithAudioTimestamp),
-                                    static_cast<long long>(snap.framesProcessed));
+                                    static_cast<long long>(snap.framesWithAudioTimestamp.value()),
+                                    static_cast<long long>(snap.framesProcessed.value()));
                 }
         }
 
@@ -1303,7 +1301,7 @@ void MediaIOTask_Inspector::runCaptureStats(const Frame &frame,
                 "%s\t%s\t%s\t%s\t"
                 "%s\t%s\t%s\t%s\t"
                 "%s\t%s\t%s\t%s\t%s\n",
-                static_cast<long long>(event.frameIndex),
+                static_cast<long long>(event.frameIndex.value()),
                 static_cast<long long>(wallNs), wallIso,
                 videoTsNs.cstr(), videoClockName.cstr(),
                 videoDeltaNs.cstr(), videoDeltaMs.cstr(),
@@ -1317,7 +1315,7 @@ void MediaIOTask_Inspector::runCaptureStats(const Frame &frame,
                 promekiErr("MediaIOTask_Inspector: CaptureStats write "
                            "failed on frame %lld (%s) — further rows "
                            "will be dropped",
-                           static_cast<long long>(event.frameIndex),
+                           static_cast<long long>(event.frameIndex.value()),
                            std::strerror(errno));
                 _statsWriteError = true;
         }
@@ -1441,18 +1439,18 @@ Error MediaIOTask_Inspector::executeCmd(MediaIOCommandWrite &cmd) {
         // continuity is disabled) are never silent.
         if(_decodeImageData && !event.pictureDecoded) {
                 promekiWarn("Frame %lld: image data band decode failed",
-                            static_cast<long long>(event.frameIndex));
+                            static_cast<long long>(event.frameIndex.value()));
         }
         if(_decodeLtc && !event.ltcDecoded) {
                 promekiWarn("Frame %lld: LTC decode failed",
-                            static_cast<long long>(event.frameIndex));
+                            static_cast<long long>(event.frameIndex.value()));
         }
 
         // Discontinuities have pre-rendered descriptions courtesy of
         // runContinuityCheck / runAvSyncCheck, so we relay them here.
         for(const auto &d : event.discontinuities) {
                 promekiWarn("Frame %lld: discontinuity: %s",
-                            static_cast<long long>(event.frameIndex),
+                            static_cast<long long>(event.frameIndex.value()),
                             d.description.cstr());
         }
 
@@ -1462,10 +1460,10 @@ Error MediaIOTask_Inspector::executeCmd(MediaIOCommandWrite &cmd) {
                 _callback(event);
         }
 
-        _frameIndex++;
-        _framesSinceLastLog++;
+        ++_frameIndex;
+        ++_framesSinceLastLog;
         cmd.currentFrame = _frameIndex;
-        cmd.frameCount   = _frameIndex;
+        cmd.frameCount   = toFrameCount(_frameIndex);
 
         emitPeriodicLogIfDue();
         // _dropFrames is currently a no-op — the inspector is a sink so

@@ -102,15 +102,13 @@ StringList MediaIODescription::summary() const {
         // Capabilities
         String caps;
         caps += _canSeek ? "seekable" : "non-seekable";
-        if(_frameCount == FrameCountInfinite) {
+        if(_frameCount.isInfinite()) {
                 caps += ", infinite";
-        } else if(_frameCount == FrameCountUnknown) {
+        } else if(_frameCount.isUnknown()) {
                 caps += ", frame-count=unknown";
-        } else if(_frameCount == FrameCountError) {
-                caps += ", frame-count=error";
-        } else if(_frameCount >= 0) {
+        } else if(_frameCount.isFinite()) {
                 caps += ", frames=";
-                caps += String::number(_frameCount);
+                caps += String::number(_frameCount.value());
         }
         if(_frameRate.isValid()) {
                 caps += ", rate=";
@@ -207,7 +205,7 @@ JsonObject MediaIODescription::toJson() const {
         }
 
         if(_canSeek)                                j.set("canSeek", true);
-        if(_frameCount != FrameCountUnknown)        j.set("frameCount", _frameCount);
+        if(!_frameCount.isUnknown())                j.set("frameCount", _frameCount.toString());
         if(_frameRate.isValid())                    j.set("frameRate", _frameRate.toString());
         if(!_containerMetadata.isEmpty())           j.set("containerMetadata", _containerMetadata.toJson());
 
@@ -259,7 +257,9 @@ MediaIODescription MediaIODescription::fromJson(const JsonObject &obj, Error *er
         // them after a JSON round-trip.
 
         if(obj.contains("canSeek"))    d._canSeek    = obj.getBool("canSeek");
-        if(obj.contains("frameCount")) d._frameCount = obj.getInt("frameCount");
+        if(obj.contains("frameCount")) {
+                d._frameCount = FrameCount::fromString(obj.getString("frameCount"));
+        }
         if(obj.contains("frameRate")) {
                 Result<FrameRate> r = FrameRate::fromString(obj.getString("frameRate"));
                 if(r.second().isOk()) {
@@ -326,7 +326,7 @@ DataStream &operator<<(DataStream &stream, const MediaIODescription &d) {
         stream << d.acceptableFormats();
         stream << d.preferredFormat();
         stream << d.canSeek();
-        stream << static_cast<int64_t>(d.frameCount());
+        stream << d.frameCount();
         stream << d.frameRate();
         stream << d.containerMetadata();
         stream << static_cast<uint32_t>(d.probeStatus().code());
@@ -345,7 +345,7 @@ DataStream &operator>>(DataStream &stream, MediaIODescription &d) {
         MediaDesc::List producibleFormats, acceptableFormats;
         MediaDesc preferredFormat;
         bool canSeek = false;
-        int64_t frameCount = MediaIODescription::FrameCountUnknown;
+        FrameCount frameCount;
         FrameRate frameRate;
         Metadata containerMetadata;
         uint32_t probeStatusValue = 0;

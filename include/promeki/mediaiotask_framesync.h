@@ -141,8 +141,8 @@ class MediaIOTask_FrameSync : public MediaIOTask {
                 FrameSync               _sync;
                 Clock::Ptr              _ownedClock;
                 Clock::Ptr              _externalClock;
-                int64_t                 _framesPushed = 0;
-                int64_t                 _framesPulled = 0;
+                FrameCount              _framesPushed{0};
+                FrameCount              _framesPulled{0};
 };
 
 PROMEKI_NAMESPACE_END

@@ -78,7 +78,7 @@ TEST_CASE("MediaIODescription_Default") {
         CHECK(d.acceptableFormats().isEmpty());
         CHECK_FALSE(d.preferredFormat().isValid());
         CHECK_FALSE(d.canSeek());
-        CHECK(d.frameCount() == MediaIODescription::FrameCountUnknown);
+        CHECK(d.frameCount() == FrameCount::unknown());
         CHECK_FALSE(d.frameRate().isValid());
         CHECK(d.containerMetadata().isEmpty());
         CHECK(d.probeStatus() == Error::Ok);
@@ -108,7 +108,7 @@ TEST_CASE("MediaIODescription_Setters") {
         CHECK_FALSE(d.canBeSink());
         CHECK(d.canBeTransform());
         CHECK(d.canSeek());
-        CHECK(d.frameCount() == 1234);
+        CHECK(d.frameCount() == FrameCount(1234));
         CHECK(d.frameRate() == FrameRate(FrameRate::FPS_25));
 }
 
@@ -215,7 +215,7 @@ TEST_CASE("MediaIODescription_JsonShape") {
 
         // Capabilities surface only when non-default.
         CHECK(j.getBool("canSeek"));
-        CHECK(j.getInt("frameCount") == MediaIODescription::FrameCountInfinite);
+        CHECK(j.getString("frameCount") == FrameCount::infinity().toString());
         CHECK(!j.getString("frameRate").isEmpty());
 }
 
@@ -280,20 +280,15 @@ TEST_CASE("MediaIODescription_JsonScalarRoundTrip") {
 TEST_CASE("MediaIODescription_FrameCountSentinels") {
         MediaIODescription d;
 
-        d.setFrameCount(MediaIODescription::FrameCountUnknown);
-        // FrameCountUnknown is the default — JSON should omit it.
+        d.setFrameCount(FrameCount::unknown());
+        // Unknown is the default — JSON should omit it.
         CHECK_FALSE(d.toJson().contains("frameCount"));
 
-        d.setFrameCount(MediaIODescription::FrameCountInfinite);
-        CHECK(d.toJson().getInt("frameCount") ==
-              MediaIODescription::FrameCountInfinite);
+        d.setFrameCount(FrameCount::infinity());
+        CHECK(d.toJson().getString("frameCount") == FrameCount::infinity().toString());
 
-        d.setFrameCount(MediaIODescription::FrameCountError);
-        CHECK(d.toJson().getInt("frameCount") ==
-              MediaIODescription::FrameCountError);
-
-        d.setFrameCount(42);
-        CHECK(d.toJson().getInt("frameCount") == 42);
+        d.setFrameCount(FrameCount(42));
+        CHECK(d.toJson().getString("frameCount") == String("42f"));
 }
 
 TEST_CASE("MediaIODescription_ProbeFailure") {

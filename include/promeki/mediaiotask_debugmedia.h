@@ -63,8 +63,8 @@ class MediaIOTask_DebugMedia : public MediaIOTask {
                 std::unique_ptr<DebugMediaFile>  _file;
                 String                           _filename;
                 MediaIO::Mode                    _mode = MediaIO::NotOpen;
-                int64_t                          _framesWritten = 0;
-                int64_t                          _framesRead    = 0;
+                FrameCount                       _framesWritten{0};
+                FrameCount                       _framesRead{0};
 };
 
 PROMEKI_NAMESPACE_END

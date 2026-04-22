@@ -57,7 +57,7 @@ TEST_CASE("raw() reads currentFrame × framePeriod") {
         const int64_t periodNs = fps.frameDuration().nanoseconds();
         auto r1 = clock.nowNs();
         REQUIRE(isOk(r1));
-        CHECK(value(r1) == io->currentFrame() * periodNs);
+        CHECK(value(r1) == io->currentFrame().value() * periodNs);
 
         io->close();
         delete io;
@@ -121,7 +121,7 @@ TEST_CASE("falls back to MediaIOClock when task supplies none") {
         REQUIRE(isOk(r));
         const int64_t periodNs = FrameRate(FrameRate::FPS_25)
                 .frameDuration().nanoseconds();
-        CHECK(value(r) == io->currentFrame() * periodNs);
+        CHECK(value(r) == io->currentFrame().value() * periodNs);
 
         io->close();
         delete io;

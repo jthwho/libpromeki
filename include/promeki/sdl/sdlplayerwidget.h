@@ -11,6 +11,7 @@
 #include <promeki/sdl/sdlvideowidget.h>
 #include <promeki/mutex.h>
 #include <promeki/atomic.h>
+#include <promeki/framecount.h>
 #include <promeki/image.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -93,7 +94,7 @@ class SDLPlayerWidget : public SDLVideoWidget {
                 SDLPlayerTask *task() const { return _task; }
 
                 /** @brief Total frames the widget has presented since construction. */
-                int64_t framesPresented() const { return _framesPresented.value(); }
+                FrameCount framesPresented() const { return FrameCount(_framesPresented.value()); }
 
                 /**
                  * @brief Toggles the playback clock's pause state.

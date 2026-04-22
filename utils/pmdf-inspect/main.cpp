@@ -216,7 +216,7 @@ bool parseArgs(int argc, char **argv, Args &out) {
 
 int cmdSummary(DebugMediaFile &f) {
         std::printf("File: %s\n", f.filename().cstr());
-        std::printf("Frames: %lld\n", static_cast<long long>(f.frameCount()));
+        std::printf("Frames: %lld\n", static_cast<long long>(f.frameCount().value()));
         std::printf("Footer: %s\n", f.hasFooter() ? "present" : "missing (linear scan)");
         std::printf("Session info:\n");
         StringList lines = f.sessionInfo().dump();
@@ -254,7 +254,7 @@ int cmdFrame(DebugMediaFile &f, int64_t idx) {
 }
 
 int cmdFrames(DebugMediaFile &f, int64_t start, int64_t end) {
-        int64_t fc = f.frameCount();
+        int64_t fc = f.frameCount().value();
         if(end < 0) end = fc;
         if(start < 0) start = 0;
         if(end > fc) end = fc;
@@ -273,7 +273,7 @@ int cmdFind(DebugMediaFile &f, const Args &args) {
                 return 1;
         }
 
-        int64_t fc    = f.frameCount();
+        int64_t fc    = f.frameCount().value();
         int64_t start = args.fromFrame < 0 ? 0 : args.fromFrame;
         int64_t matches = 0;
         int64_t lastMatch = start - 1;  // for --minimal delta; first hit is i - start + 1 frames in
@@ -319,7 +319,7 @@ int cmdDumpToc(DebugMediaFile &f) {
         std::printf("# frame  offset            presentationUs\n");
         for(const auto &e : idx) {
                 std::printf("%-7lld  %-16lld  %lld\n",
-                            static_cast<long long>(e.frameNumber),
+                            static_cast<long long>(e.frameNumber.value()),
                             static_cast<long long>(e.fileOffset),
                             static_cast<long long>(e.presentationUs));
         }
@@ -387,10 +387,11 @@ int cmdExtract(const Args &args, bool isImage) {
                 return 1;
         }
 
-        int64_t fc    = src->frameCount();
+        const FrameCount srcCount = src->frameCount();
+        const int64_t fc = srcCount.isFinite() ? srcCount.value() : -1;
         int64_t start = args.rangeStart;
         int64_t end   = args.rangeEnd < 0 ? fc : args.rangeEnd;
-        if(end > fc) end = fc;
+        if(fc >= 0 && end > fc) end = fc;
         int64_t count = (end > start) ? (end - start) : 0;
 
         int imageIdx = args.imageIndex;
@@ -401,8 +402,7 @@ int cmdExtract(const Args &args, bool isImage) {
                                : trimForAudio(in, audioIdx);
         };
 
-        int64_t copied = 0;
-        Error ce = MediaIO::copyFrames(src, dst, start, count, mutate, &copied);
+        auto [copied, ce] = MediaIO::copyFrames(src, dst, start, count, mutate);
         src->close();
         dst->close();
         delete src; delete dst;
@@ -410,9 +410,10 @@ int cmdExtract(const Args &args, bool isImage) {
                 std::fprintf(stderr, "copyFrames: %s\n", ce.name().cstr());
                 return 1;
         }
+        const int64_t copiedInt = copied.isFinite() ? copied.value() : 0;
         std::printf("Wrote %lld frame%s to %s\n",
-                    static_cast<long long>(copied),
-                    copied == 1 ? "" : "s",
+                    static_cast<long long>(copiedInt),
+                    copiedInt == 1 ? "" : "s",
                     args.outputPath.cstr());
         return 0;
 }

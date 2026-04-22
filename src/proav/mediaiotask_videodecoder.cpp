@@ -293,7 +293,7 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandWrite &cmd) {
         }
 
         _frameCount++;
-        cmd.currentFrame = _frameCount;
+        cmd.currentFrame = toFrameNumber(_frameCount);
         cmd.frameCount   = _frameCount;
         stampWorkEnd();
         return Error::Ok;

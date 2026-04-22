@@ -33,6 +33,9 @@ reference counting.
 | `Stack` | LIFO stack (std::stack wrapper) |
 | `PriorityQueue` | Priority queue (std::priority_queue wrapper) |
 | `Duration` | Time duration value |
+| `FrameNumber` | Absolute frame index along a media timeline |
+| `FrameCount` | Frame count (with empty / unknown / infinity sentinels) |
+| `MediaDuration` | Start frame plus a frame count (defines `FrameRange`) |
 | `FrameRate` | Frame rate descriptor |
 | `AudioLevel` | Audio level in dBFS |
 | `InspectorEvent` | Per-frame measurement record produced by `MediaIOTask_Inspector` |

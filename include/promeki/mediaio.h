@@ -26,6 +26,9 @@
 #include <promeki/audiodesc.h>
 #include <promeki/metadata.h>
 #include <promeki/framerate.h>
+#include <promeki/framenumber.h>
+#include <promeki/framecount.h>
+#include <promeki/mediaduration.h>
 #include <promeki/variantdatabase.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/uuid.h>
@@ -115,18 +118,18 @@ class MediaIOStats : public VariantDatabase<"MediaIOStats"> {
                 using Base = VariantDatabase<"MediaIOStats">;
                 using Base::Base;
 
-                /// @brief int64_t — total frames dropped since open.
+                /// @brief FrameCount — total frames dropped since open.
                 PROMEKI_DECLARE_ID(FramesDropped,
-                        VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
-                                .setMin(int64_t(0)).setDescription("Total frames dropped since open."));
-                /// @brief int64_t — total frames repeated due to underrun.
+                        VariantSpec().setType(Variant::TypeFrameCount).setDefault(FrameCount(0))
+                                .setDescription("Total frames dropped since open."));
+                /// @brief FrameCount — total frames repeated due to underrun.
                 PROMEKI_DECLARE_ID(FramesRepeated,
-                        VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
-                                .setMin(int64_t(0)).setDescription("Total frames repeated due to underrun."));
-                /// @brief int64_t — total frames that arrived late.
+                        VariantSpec().setType(Variant::TypeFrameCount).setDefault(FrameCount(0))
+                                .setDescription("Total frames repeated due to underrun."));
+                /// @brief FrameCount — total frames that arrived late.
                 PROMEKI_DECLARE_ID(FramesLate,
-                        VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
-                                .setMin(int64_t(0)).setDescription("Total frames that arrived late."));
+                        VariantSpec().setType(Variant::TypeFrameCount).setDefault(FrameCount(0))
+                                .setDescription("Total frames that arrived late."));
                 /// @brief int64_t — current depth of internal buffer.
                 PROMEKI_DECLARE_ID(QueueDepth,
                         VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
@@ -316,7 +319,7 @@ class MediaIOCommandOpen : public MediaIOCommand {
                 Metadata                metadata;
                 FrameRate               frameRate;
                 bool                    canSeek = false;
-                int64_t                 frameCount = 0;
+                FrameCount              frameCount = FrameCount::unknown();
                 int                     defaultStep = 1;             ///< @brief Backend's preferred default step.
                 int                     defaultPrefetchDepth = 1;    ///< @brief Backend's preferred prefetch depth.
                 int                     defaultWriteDepth = 4;       ///< @brief Backend's preferred write pipeline depth.
@@ -343,7 +346,7 @@ class MediaIOCommandRead : public MediaIOCommand {
 
                 // ---- Outputs ----
                 Frame::Ptr              frame;
-                int64_t                 currentFrame = 0;
+                FrameNumber             currentFrame;
                 Error                   result;       ///< @brief Set by worker; carries success/error/EOF.
 
                 // ---- Optional outputs (mid-stream descriptor change) ----
@@ -373,8 +376,8 @@ class MediaIOCommandWrite : public MediaIOCommand {
                 Frame::Ptr              frame;
 
                 // ---- Outputs ----
-                int64_t                 currentFrame = 0;
-                int64_t                 frameCount = 0;
+                FrameNumber             currentFrame;
+                FrameCount              frameCount;
 };
 
 /**
@@ -385,11 +388,11 @@ class MediaIOCommandSeek : public MediaIOCommand {
         PROMEKI_MEDIAIO_COMMAND(MediaIOCommandSeek, Seek)
         public:
                 // ---- Inputs ----
-                int64_t                 frameNumber = 0;
+                FrameNumber             frameNumber;
                 MediaIOSeekMode         mode = MediaIO_SeekDefault;
 
                 // ---- Output ----
-                int64_t                 currentFrame = 0;
+                FrameNumber             currentFrame;
 };
 
 /**
@@ -509,13 +512,10 @@ class MediaIO : public ObjectBase {
                 using ConfigID = MediaConfigID;
 
                 /** @brief Frame count is not yet known. */
-                static constexpr int64_t FrameCountUnknown  = -1;
+                static constexpr FrameCount FrameCountUnknown  = FrameCount::unknown();
 
                 /** @brief Source is unbounded (generators, live devices). */
-                static constexpr int64_t FrameCountInfinite = -2;
-
-                /** @brief Frame count unavailable due to error. */
-                static constexpr int64_t FrameCountError    = -3;
+                static constexpr FrameCount FrameCountInfinite = FrameCount::infinity();
 
                 /**
                  * @brief Describes a registered media I/O backend.
@@ -853,15 +853,15 @@ class MediaIO : public ObjectBase {
                  *                   the write for that iteration.
                  *                   @c nullptr (default) forwards
                  *                   frames unchanged.
-                 * @param copied     Optional output: number of frames
-                 *                   actually written to the sink.
-                 * @return @ref Error::Ok on a clean copy (including
-                 *         clean EOF), or the first error encountered.
+                 * @return @ref Result holding the number of frames
+                 *         actually written and @ref Error::Ok on a
+                 *         clean copy (including clean EOF), or a
+                 *         zero-count value paired with the first error
+                 *         encountered.
                  */
-                static Error copyFrames(MediaIO *src, MediaIO *dst,
-                                        int64_t fromFrame = 0,
-                                        int64_t count     = FrameCountInfinite,
-                                        int64_t *copied   = nullptr);
+                static Result<FrameCount> copyFrames(MediaIO *src, MediaIO *dst,
+                                                     const FrameNumber &fromFrame = FrameNumber(0),
+                                                     const FrameCount &count      = FrameCount::infinity());
 
                 /**
                  * @brief Overload of @ref copyFrames with a per-frame @p mutate callback.
@@ -877,9 +877,9 @@ class MediaIO : public ObjectBase {
                  * into the copy loop.
                  */
                 template <typename Fn>
-                static Error copyFrames(MediaIO *src, MediaIO *dst,
-                                        int64_t fromFrame, int64_t count,
-                                        Fn &&mutate, int64_t *copied = nullptr);
+                static Result<FrameCount> copyFrames(MediaIO *src, MediaIO *dst,
+                                                     const FrameNumber &fromFrame, const FrameCount &count,
+                                                     Fn &&mutate);
 
                 /**
                  * @brief Creates a MediaIO reader for the given filename.
@@ -1601,13 +1601,13 @@ class MediaIO : public ObjectBase {
                  * @param mode How to interpret the seek target.
                  * @return Error::Ok or Error::IllegalSeek.
                  */
-                Error seekToFrame(int64_t frameNumber, SeekMode mode = SeekDefault);
+                Error seekToFrame(const FrameNumber &frameNumber, SeekMode mode = SeekDefault);
 
                 /** @brief Returns the cached frame count. */
-                int64_t frameCount() const { return _frameCount; }
+                FrameCount frameCount() const { return _frameCount; }
 
                 /** @brief Returns the cached current frame. */
-                int64_t currentFrame() const { return _currentFrame; }
+                FrameNumber currentFrame() const { return _currentFrame; }
 
                 /**
                  * @brief Returns a new @ref Clock for this MediaIO's
@@ -1866,10 +1866,10 @@ class MediaIO : public ObjectBase {
                 Metadata                    _metadata;
                 FrameRate                   _frameRate;
                 bool                        _canSeek = false;
-                int64_t                     _frameCount = 0;
-                int64_t                     _currentFrame = 0;
+                FrameCount                  _frameCount;
+                FrameNumber                 _currentFrame;
                 TimeStamp                   _originTime;
-                int64_t                     _writeFrameCount = 0;
+                FrameCount                  _writeFrameCount;
                 SeekMode                    _defaultSeekMode = SeekExact;
 
                 // Pre-open settings (passed into CmdOpen)
@@ -1913,34 +1913,33 @@ class MediaIO : public ObjectBase {
                  * before reaching @p fromFrame — callers treat that
                  * as a clean no-op completion.
                  */
-                static Error copyFramesSeekTo(MediaIO *src, int64_t fromFrame);
+                static Error copyFramesSeekTo(MediaIO *src, const FrameNumber &fromFrame);
 };
 
 template <typename Fn>
-Error MediaIO::copyFrames(MediaIO *src, MediaIO *dst,
-                          int64_t fromFrame, int64_t count,
-                          Fn &&mutate, int64_t *copied) {
-        if(copied != nullptr) *copied = 0;
-        if(src == nullptr || dst == nullptr) return Error::InvalidArgument;
+Result<FrameCount> MediaIO::copyFrames(MediaIO *src, MediaIO *dst,
+                                       const FrameNumber &fromFrame, const FrameCount &count,
+                                       Fn &&mutate) {
+        if(src == nullptr || dst == nullptr) return makeError<FrameCount>(Error::InvalidArgument);
 
-        if(fromFrame > 0) {
+        if(fromFrame.isValid() && fromFrame.value() > 0) {
                 Error se = copyFramesSeekTo(src, fromFrame);
-                if(se == Error::EndOfFile) return Error::Ok;
-                if(se.isError()) return se;
+                if(se == Error::EndOfFile) return makeResult(FrameCount(0));
+                if(se.isError()) return makeError<FrameCount>(se);
         }
 
         // remaining < 0 encodes the infinite-copy case; the
         // "if(remaining > 0) --remaining" branch below never fires in
         // that mode, so the loop runs until the source returns EOF.
-        int64_t remaining = (count == FrameCountInfinite) ? -1 : count;
+        int64_t remaining = count.isInfinite() ? -1 : count.value();
         int64_t written   = 0;
-        int64_t index     = fromFrame;
+        int64_t index     = fromFrame.isValid() ? fromFrame.value() : 0;
 
         while(remaining != 0) {
                 Frame::Ptr frame;
                 Error rerr = src->readFrame(frame);
                 if(rerr == Error::EndOfFile) break;
-                if(rerr.isError()) return rerr;
+                if(rerr.isError()) return makeError<FrameCount>(rerr);
                 if(!frame.isValid()) {
                         if(remaining > 0) --remaining;
                         ++index;
@@ -1950,15 +1949,18 @@ Error MediaIO::copyFrames(MediaIO *src, MediaIO *dst,
                 Frame::Ptr outFrame = mutate(frame, index);
                 if(outFrame.isValid()) {
                         Error werr = dst->writeFrame(outFrame);
-                        if(werr.isError()) return werr;
+                        if(werr.isError()) {
+                                Result<FrameCount> r = makeResult(FrameCount(written));
+                                r.second() = werr;
+                                return r;
+                        }
                         ++written;
                 }
                 ++index;
                 if(remaining > 0) --remaining;
         }
 
-        if(copied != nullptr) *copied = written;
-        return Error::Ok;
+        return makeResult(FrameCount(written));
 }
 
 PROMEKI_NAMESPACE_END

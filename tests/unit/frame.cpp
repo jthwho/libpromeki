@@ -112,7 +112,7 @@ TEST_CASE("Frame: makeString resolves metadata, frame scalars, and Image[N]/Audi
         ImageDesc imgDesc(Size2Du32(1920, 1080), PixelDesc::RGBA8_sRGB);
         imgDesc.setVideoScanMode(VideoScanMode::Progressive);
         Image::Ptr img = Image::Ptr::create(imgDesc);
-        img.modify()->metadata().set(Metadata::FrameNumber, int64_t(42));
+        img.modify()->metadata().set(Metadata::FrameNumber, FrameNumber(42));
         f.imageList().pushToBack(img);
 
         AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
@@ -212,7 +212,7 @@ TEST_CASE("Image: resolveKey returns typed Variant values") {
         desc.setLineAlign(16);
         desc.setVideoScanMode(VideoScanMode::Progressive);
         Image img(desc);
-        img.metadata().set(Metadata::FrameNumber, int64_t(42));
+        img.metadata().set(Metadata::FrameNumber, FrameNumber(42));
 
         auto width = VariantLookup<Image>::resolve(img, "Width");
         REQUIRE(width.has_value());
@@ -277,7 +277,7 @@ TEST_CASE("Frame: resolveKey returns typed Variant values and dispatches subscri
         ImageDesc imgDesc(Size2Du32(1920, 1080), PixelDesc::RGBA8_sRGB);
         imgDesc.setVideoScanMode(VideoScanMode::Progressive);
         Image::Ptr img = Image::Ptr::create(imgDesc);
-        img.modify()->metadata().set(Metadata::FrameNumber, int64_t(42));
+        img.modify()->metadata().set(Metadata::FrameNumber, FrameNumber(42));
         f.imageList().pushToBack(img);
 
         AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
@@ -416,7 +416,7 @@ TEST_CASE("Frame: dump includes scalar keys, metadata, images, audio") {
         ImageDesc idesc(Size2Du32(1920, 1080), PixelDesc::RGBA8_sRGB);
         idesc.setVideoScanMode(VideoScanMode::Progressive);
         Image::Ptr img = Image::Ptr::create(idesc);
-        img.modify()->metadata().set(Metadata::FrameNumber, int64_t(42));
+        img.modify()->metadata().set(Metadata::FrameNumber, FrameNumber(42));
         f.imageList().pushToBack(img);
 
         AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);

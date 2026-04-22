@@ -71,8 +71,8 @@ class MediaIOTask_AudioFile : public MediaIOTask {
                 AudioDesc       _audioDesc;
                 MediaIOMode     _mode = MediaIO_NotOpen;
                 size_t          _samplesPerFrame = 0;
-                int64_t         _currentFrame = 0;
-                int64_t         _totalFrames = 0;
+                FrameNumber     _currentFrame{0};
+                FrameCount      _totalFrames{0};
 };
 
 PROMEKI_NAMESPACE_END

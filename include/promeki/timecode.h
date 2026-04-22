@@ -14,6 +14,7 @@
 #include <promeki/error.h>
 #include <promeki/result.h>
 #include <promeki/enums.h>
+#include <promeki/framenumber.h>
 #include <vtc/vtc.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -47,7 +48,6 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class Timecode {
         public:
-                using FrameNumber = uint64_t;  ///< Type used to represent absolute frame numbers.
                 using DigitType = uint8_t;    ///< Type used for individual timecode digit fields.
                 using FlagsType = uint32_t;   ///< Type used for timecode flag bitmasks.
 
@@ -136,11 +136,16 @@ class Timecode {
 
                 /**
                  * @brief Constructs a Timecode from a mode and absolute frame number.
+                 *
+                 * If @p frameNumber is @c Unknown the result is a default
+                 * (invalid) Timecode.
+                 *
                  * @param mode        The timecode mode (frame rate / drop-frame).
                  * @param frameNumber The absolute frame number to convert.
-                 * @return A Timecode representing the given frame number.
+                 * @return A Timecode representing the given frame number,
+                 *         or an invalid Timecode if the frame number is @c Unknown.
                  */
-                static Timecode fromFrameNumber(const Mode &mode, FrameNumber frameNumber);
+                static Timecode fromFrameNumber(const Mode &mode, const FrameNumber &frameNumber);
 
                 /**
                  * @brief Parses a Timecode from its string representation.
@@ -223,22 +228,22 @@ class Timecode {
                  */
                 bool operator>(const Timecode &other) const {
                         if(compareByDigits(other)) return digitTuple() > other.digitTuple();
-                        return toFrameNumber().first() > other.toFrameNumber().first();
+                        return toFrameNumber() > other.toFrameNumber();
                 }
 
                 bool operator<(const Timecode &other) const {
                         if(compareByDigits(other)) return digitTuple() < other.digitTuple();
-                        return toFrameNumber().first() < other.toFrameNumber().first();
+                        return toFrameNumber() < other.toFrameNumber();
                 }
 
                 bool operator>=(const Timecode &other) const {
                         if(compareByDigits(other)) return digitTuple() >= other.digitTuple();
-                        return toFrameNumber().first() >= other.toFrameNumber().first();
+                        return toFrameNumber() >= other.toFrameNumber();
                 }
 
                 bool operator<=(const Timecode &other) const {
                         if(compareByDigits(other)) return digitTuple() <= other.digitTuple();
-                        return toFrameNumber().first() <= other.toFrameNumber().first();
+                        return toFrameNumber() <= other.toFrameNumber();
                 }
 
                 /** @brief Returns true if the timecode mode is valid. */
@@ -329,10 +334,14 @@ class Timecode {
                 Result<String> toString(const VtcStringFormat *fmt = &VTC_STR_FMT_SMPTE) const;
                 /**
                  * @brief Converts the timecode to an absolute frame number.
-                 * @return A @ref Result holding the frame number on success or
-                 *         zero and an error code on failure.
+                 *
+                 * Returns an @c Unknown @ref FrameNumber when the timecode
+                 * is invalid, has no associated frame rate, or libvtc
+                 * fails to convert it (rare).
+                 *
+                 * @return The absolute frame number, or @c Unknown on failure.
                  */
-                Result<FrameNumber> toFrameNumber() const;
+                FrameNumber toFrameNumber() const;
 
                 /**
                  * @brief Packs the timecode into the 64-bit BCD time-address word.

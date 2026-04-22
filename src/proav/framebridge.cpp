@@ -717,7 +717,7 @@ struct FrameBridge::Impl {
                         if(aud)  mut->audioList().pushToBack(aud);
                         mut->metadata() = meta;
                         mut->metadata().set(Metadata::FrameNumber,
-                                int64_t(frameNumber));
+                                FrameNumber(int64_t(frameNumber)));
                         if(errOut) *errOut = Error::Ok;
                         (void)ptsNum; (void)ptsDen; (void)flags;
                         return frame;

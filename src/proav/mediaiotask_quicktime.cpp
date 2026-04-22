@@ -251,7 +251,7 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandOpen &cmd) {
                         if(vt.frameRate().isValid()) {
                                 mediaDesc.setFrameRate(vt.frameRate());
                                 _frameRate = vt.frameRate();
-                                _frameCount = static_cast<int64_t>(vt.sampleCount());
+                                _frameCount = FrameCount(static_cast<int64_t>(vt.sampleCount()));
                         }
                 }
                 if(_audioTrackIndex >= 0) {
@@ -400,11 +400,13 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandClose & /*cmd*/) {
 // Read
 // ----------------------------------------------------------------------------
 
-Error MediaIOTask_QuickTime::readVideoFrame(uint64_t frameIndex, Frame::Ptr &outFrame) {
+Error MediaIOTask_QuickTime::readVideoFrame(const FrameNumber &frameIndex, Frame::Ptr &outFrame) {
         if(_videoTrackIndex < 0) return Error::NotSupported;
+        if(!frameIndex.isValid()) return Error::IllegalSeek;
 
         QuickTime::Sample s;
-        Error err = _qt.readSample(static_cast<size_t>(_videoTrackIndex), frameIndex, s);
+        Error err = _qt.readSample(static_cast<size_t>(_videoTrackIndex),
+                                   static_cast<uint64_t>(frameIndex.value()), s);
         if(err.isError()) return err;
         if(!s.data.isValid()) return Error::IOError;
 
@@ -453,8 +455,8 @@ Error MediaIOTask_QuickTime::readVideoFrame(uint64_t frameIndex, Frame::Ptr &out
                                         samplePd, vt.metadata());
         }
         if(!img.isValid()) {
-                promekiWarn("MediaIOTask_QuickTime: failed to wrap video sample %llu as Image",
-                            static_cast<unsigned long long>(frameIndex));
+                promekiWarn("MediaIOTask_QuickTime: failed to wrap video sample %lld as Image",
+                            static_cast<long long>(frameIndex.value()));
                 return Error::DecodeFailed;
         }
         Image::Ptr imgPtr = Image::Ptr::create(img);
@@ -479,8 +481,8 @@ Error MediaIOTask_QuickTime::readVideoFrame(uint64_t frameIndex, Frame::Ptr &out
                 Error cerr = H264Bitstream::avccToAnnexB(
                         BufferView(s.data, 0, s.data->size()), 4, annexB);
                 if(cerr.isError()) {
-                        promekiWarn("MediaIOTask_QuickTime: AVCC->Annex-B failed for sample %llu: %s",
-                                    static_cast<unsigned long long>(frameIndex),
+                        promekiWarn("MediaIOTask_QuickTime: AVCC->Annex-B failed for sample %lld: %s",
+                                    static_cast<long long>(frameIndex.value()),
                                     cerr.name().cstr());
                 } else {
                         Buffer::Ptr payload = annexB;
@@ -544,13 +546,13 @@ Error MediaIOTask_QuickTime::readVideoFrame(uint64_t frameIndex, Frame::Ptr &out
         // Frame metadata: timecode (anchor + frame offset), frame number,
         // keyframe flag.
         Metadata &fmeta = frame.modify()->metadata();
-        fmeta.set(Metadata::FrameNumber, static_cast<int64_t>(frameIndex));
+        fmeta.set(Metadata::FrameNumber, frameIndex);
         fmeta.set(Metadata::FrameKeyframe, s.keyframe);
         if(_anchorTimecode.isValid()) {
-                auto [anchorFrame, fnErr] = _anchorTimecode.toFrameNumber();
-                if(!fnErr.isError()) {
+                FrameNumber anchorFrame = _anchorTimecode.toFrameNumber();
+                if(anchorFrame.isValid()) {
                         Timecode tc = Timecode::fromFrameNumber(_anchorTimecode.mode(),
-                                anchorFrame + frameIndex);
+                                anchorFrame + frameIndex.value());
                         if(tc.isValid()) fmeta.set(Metadata::Timecode, tc);
                 }
         }
@@ -581,14 +583,15 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandRead &cmd) {
         if(_mode != MediaIO::Source) return Error::NotOpen;
         stampWorkBegin();
 
-        if(_currentFrame < 0 || _currentFrame >= _frameCount) {
+        if(!_currentFrame.isValid()
+                        || (_frameCount.isFinite() && _currentFrame.value() >= _frameCount.value())) {
                 cmd.result = Error::EndOfFile;
                 stampWorkEnd();
                 return Error::EndOfFile;
         }
 
         Frame::Ptr frame;
-        Error err = readVideoFrame(static_cast<uint64_t>(_currentFrame), frame);
+        Error err = readVideoFrame(_currentFrame, frame);
         if(err.isError()) {
                 cmd.result = err;
                 stampWorkEnd();
@@ -616,7 +619,7 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandRead &cmd) {
                         // PCM: samples-per-video-frame via FrameRate helper.
                         size_t want = _frameRate.samplesPerFrame(
                                 static_cast<int64_t>(_audioDesc.sampleRate()),
-                                _currentFrame);
+                                _currentFrame.value());
                         if(_audioSampleCursor + want > trackSamples) {
                                 want = (_audioSampleCursor < trackSamples)
                                         ? static_cast<size_t>(trackSamples - _audioSampleCursor)
@@ -640,7 +643,7 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandRead &cmd) {
         // Advance by the requested step.
         int s = cmd.step;
         _currentFrame += s;
-        if(_currentFrame < 0) _currentFrame = 0;
+        if(!_currentFrame.isValid()) _currentFrame = FrameNumber(0);
         stampWorkEnd();
         return Error::Ok;
 }
@@ -722,7 +725,7 @@ Error MediaIOTask_QuickTime::drainWriterAudio(bool flush) {
                 toEmit = _writerAudioFifo.available();
         } else {
                 // The video frame we just wrote has index (_writerFrameCount-1).
-                int64_t frameIdx = static_cast<int64_t>(_writerFrameCount) - 1;
+                int64_t frameIdx = _writerFrameCount.value() - 1;
                 if(frameIdx < 0) frameIdx = 0;
                 size_t want = _frameRate.samplesPerFrame(
                         static_cast<int64_t>(_writerAudioStorage.sampleRate()),
@@ -887,8 +890,8 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandWrite &cmd) {
                 }
         }
 
-        cmd.currentFrame = static_cast<int64_t>(_writerFrameCount);
-        cmd.frameCount   = static_cast<int64_t>(_writerFrameCount);
+        cmd.currentFrame = toFrameNumber(_writerFrameCount);
+        cmd.frameCount   = _writerFrameCount;
         stampWorkEnd();
         return Error::Ok;
 }
@@ -900,10 +903,12 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandWrite &cmd) {
 Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandSeek &cmd) {
         if(_mode != MediaIO::Source) return Error::IllegalSeek;
         if(_videoTrackIndex < 0) return Error::IllegalSeek;
-        int64_t target = cmd.frameNumber;
+        int64_t target = cmd.frameNumber.isValid() ? cmd.frameNumber.value() : 0;
         if(target < 0) target = 0;
-        if(target >= _frameCount) target = _frameCount - 1;
-        _currentFrame = target;
+        if(_frameCount.isFinite() && target >= _frameCount.value()) {
+                target = _frameCount.value() - 1;
+        }
+        _currentFrame = FrameNumber(target);
         cmd.currentFrame = _currentFrame;
         return Error::Ok;
 }

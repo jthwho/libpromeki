@@ -289,7 +289,7 @@ class MediaIOTask_V4L2 : public MediaIOTask {
 
                 // -- General state --
                 FrameRate               _frameRate;
-                int64_t                 _frameCount = 0;
+                FrameCount              _frameCount{0};
 };
 
 PROMEKI_NAMESPACE_END

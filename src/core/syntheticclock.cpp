@@ -26,16 +26,16 @@ void SyntheticClock::setFrameRate(const FrameRate &frameRate) {
         recomputePeriod();
 }
 
-void SyntheticClock::setCurrentFrame(int64_t frame) {
-        _currentFrame.store(frame, std::memory_order_relaxed);
+void SyntheticClock::setCurrentFrame(const FrameNumber &frame) {
+        _currentFrame.store(frame.isValid() ? frame.value() : 0, std::memory_order_relaxed);
 }
 
 void SyntheticClock::advance(int64_t frames) {
         _currentFrame.fetch_add(frames, std::memory_order_relaxed);
 }
 
-void SyntheticClock::reset(int64_t frame) {
-        _currentFrame.store(frame, std::memory_order_relaxed);
+void SyntheticClock::reset(const FrameNumber &frame) {
+        _currentFrame.store(frame.isValid() ? frame.value() : 0, std::memory_order_relaxed);
 }
 
 int64_t SyntheticClock::resolutionNs() const {

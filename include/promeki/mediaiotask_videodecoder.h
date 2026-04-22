@@ -137,7 +137,7 @@ class MediaIOTask_VideoDecoder : public MediaIOTask {
                 // metadata, which shows up as off-by-N timecode /
                 // audio after an encode/decode round trip.
                 List<Frame::Ptr>      _pendingSrcFrames;
-                int64_t               _frameCount = 0;
+                FrameCount            _frameCount{0};
                 int64_t               _readCount = 0;
                 int64_t               _packetsDecoded = 0;
                 int64_t               _imagesOut = 0;

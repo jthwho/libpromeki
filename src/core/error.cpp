@@ -98,7 +98,10 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(ParseFailed, NONE, "Text input failed to parse"),
         DEFINE_ERROR(ClockDomainMismatch, NONE, "Operation mixed MediaTimeStamps from different ClockDomains"),
         DEFINE_ERROR(ObjectGone, NONE, "Referenced object has been destroyed"),
-        DEFINE_ERROR(ClockPaused, NONE, "Clock is paused")
+        DEFINE_ERROR(ClockPaused, NONE, "Clock is paused"),
+        DEFINE_ERROR(DurationUnknown, NONE, "MediaDuration has one or more Unknown fields"),
+        DEFINE_ERROR(FrameRangeInfinite, NONE, "MediaDuration is infinite and has no bounded FrameRange"),
+        DEFINE_ERROR(NotAdjacent, NONE, "MediaDurations are not frame-adjacent and cannot be joined")
 };
 
 static StructDatabase<int, Error::Code> &posixErrorDb() {

@@ -182,10 +182,9 @@ TEST_CASE("MediaIOTask_DebugMedia: copyFrames through MediaIO") {
         REQUIRE(src->open(MediaIO::Source).isOk());
         REQUIRE(dst->open(MediaIO::Sink).isOk());
 
-        int64_t copied = 0;
-        Error err = MediaIO::copyFrames(src, dst, 1, 2, &copied);
+        auto [copied, err] = MediaIO::copyFrames(src, dst, 1, 2);
         CHECK(err.isOk());
-        CHECK(copied == 2);
+        CHECK(copied == FrameCount(2));
 
         src->close(); dst->close();
         delete src; delete dst;

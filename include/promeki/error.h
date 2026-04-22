@@ -103,7 +103,10 @@ class Error {
                         ParseFailed,             ///< Text input (expression, URL, etc.) failed to parse.
                         ClockDomainMismatch,     ///< Operation mixed MediaTimeStamps from different ClockDomains.
                         ObjectGone,              ///< Referenced object has been destroyed.
-                        ClockPaused              ///< Clock is paused; operation cannot complete until resumed.
+                        ClockPaused,             ///< Clock is paused; operation cannot complete until resumed.
+                        DurationUnknown,         ///< MediaDuration has one or more Unknown fields.
+                        FrameRangeInfinite,      ///< MediaDuration is infinite and cannot be expressed as a bounded FrameRange.
+                        NotAdjacent              ///< Two MediaDurations are not frame-adjacent and cannot be joined.
                 };
 
                 /**

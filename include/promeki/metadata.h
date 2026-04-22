@@ -230,10 +230,20 @@ class Metadata : public VariantDatabase<"Metadata"> {
 
                 /// @brief Frame sequence number within a stream.
                 PROMEKI_DECLARE_ID(FrameNumber,
-                        VariantSpec().setType(Variant::TypeS64)
-                                .setDefault(int64_t(0))
-                                .setMin(int64_t(0))
+                        VariantSpec().setType(Variant::TypeFrameNumber)
+                                .setDefault(promeki::FrameNumber())
                                 .setDescription("Frame sequence number within a stream."));
+
+                /// @brief Total media span as a (start, length) pair.
+                ///
+                /// Used at the container / clip level to record
+                /// "this asset covers @c length frames starting at frame
+                /// @c start".  Per-frame metadata should use
+                /// @ref FrameNumber instead.
+                PROMEKI_DECLARE_ID(Duration,
+                        VariantSpec().setType(Variant::TypeMediaDuration)
+                                .setDefault(promeki::MediaDuration())
+                                .setDescription("Clip-level duration: starting frame plus length."));
 
                 /// @brief Timestamp of when the library or device captured this data.
                 ///

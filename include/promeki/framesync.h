@@ -12,6 +12,8 @@
 #include <promeki/frame.h>
 #include <promeki/audio.h>
 #include <promeki/audiodesc.h>
+#include <promeki/framecount.h>
+#include <promeki/framenumber.h>
 #include <promeki/framerate.h>
 #include <promeki/duration.h>
 #include <promeki/error.h>
@@ -108,15 +110,15 @@ class FrameSync {
                         Frame::Ptr frame;
 
                         /** @brief Zero-based output frame index since reset. */
-                        int64_t    frameIndex = 0;
+                        FrameNumber frameIndex{0};
 
                         /** @brief Number of times the held source frame was
                          *         repeated to produce this output. */
-                        int64_t    framesRepeated = 0;
+                        FrameCount  framesRepeated{0};
 
                         /** @brief Number of source frames discarded to produce
                          *         this output (advanced past without use). */
-                        int64_t    framesDropped = 0;
+                        FrameCount  framesDropped{0};
 
                         /** @brief Wake-up error relative to the deadline. */
                         Duration   error;
@@ -315,19 +317,19 @@ class FrameSync {
                 // ---- Stats ----
 
                 /** @brief Total frames pushed since reset. */
-                int64_t framesIn() const { return _framesIn.value(); }
+                FrameCount framesIn() const { return FrameCount(_framesIn.value()); }
 
                 /** @brief Total output frames produced since reset. */
-                int64_t framesOut() const { return _framesOut.value(); }
+                FrameCount framesOut() const { return FrameCount(_framesOut.value()); }
 
                 /** @brief Total input frames repeated since reset. */
-                int64_t framesRepeated() const { return _framesRepeated.value(); }
+                FrameCount framesRepeated() const { return FrameCount(_framesRepeated.value()); }
 
                 /** @brief Total input frames dropped since reset. */
-                int64_t framesDropped() const { return _framesDropped.value(); }
+                FrameCount framesDropped() const { return FrameCount(_framesDropped.value()); }
 
                 /** @brief Total queue-overflow drops since reset. */
-                int64_t overflowDrops() const { return _overflowDrops.value(); }
+                FrameCount overflowDrops() const { return FrameCount(_overflowDrops.value()); }
 
                 /** @brief Last-measured wake-up error. */
                 Duration accumulatedError() const {
@@ -395,7 +397,7 @@ class FrameSync {
                 bool               _explicitOrigin = false;
                 int64_t            _originNs = 0;
                 int64_t            _framePeriodNs = 0;
-                int64_t            _frameCount = 0;
+                FrameCount         _frameCount{0};
 
                 // Source-origin anchoring — captured on first pushed frame.
                 bool               _sourceOriginValid = false;
@@ -437,8 +439,8 @@ class FrameSync {
                 // Error / logging.
                 int64_t            _accumulatedErrorNs = 0;
                 int64_t            _lastPeriodicLogNs  = 0;
-                int64_t            _frameCountAtLastLog = 0;
-                int64_t            _lastEmitFrameCount  = -1;  // debug only
+                FrameCount         _frameCountAtLastLog{0};
+                FrameCount         _lastEmitFrameCount = FrameCount::unknown();  // debug only
 
                 // PLL-style deadline bias.  The per-pull measured
                 // wake-error feeds this LPF; the next deadline is

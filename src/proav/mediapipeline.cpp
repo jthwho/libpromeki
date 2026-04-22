@@ -826,7 +826,7 @@ MediaPipelineStats MediaPipeline::stats() {
         // PausedEdges) are computed fresh on every call so callers get
         // a consistent view of the drain loop's current shape.
         PipelineStats &pp = out.pipeline();
-        pp.set(PipelineStats::FramesProduced, _framesProduced.value());
+        pp.set(PipelineStats::FramesProduced, FrameCount(_framesProduced.value()));
         pp.set(PipelineStats::WriteRetries,   _writeRetries.value());
         pp.set(PipelineStats::PipelineErrors, _pipelineErrors.value());
 

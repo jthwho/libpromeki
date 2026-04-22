@@ -190,7 +190,7 @@ Error MediaIOTask_FrameBridge::executeCmd(MediaIOCommandWrite &cmd) {
         Error err = _bridge->writeFrame(cmd.frame);
         if(err.isError()) return err;
         cmd.currentFrame++;
-        cmd.frameCount = cmd.currentFrame;
+        cmd.frameCount = FrameCount(cmd.currentFrame.value());
         return Error::Ok;
 }
 

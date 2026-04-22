@@ -40,7 +40,7 @@ Frame::Ptr makeTestFrame(int64_t frameNumber) {
         Frame::Ptr f = Frame::Ptr::create();
         Frame *raw = f.modify();
 
-        raw->metadata().set(Metadata::FrameNumber, frameNumber);
+        raw->metadata().set(Metadata::FrameNumber, FrameNumber(frameNumber));
         raw->metadata().set(Metadata::Timecode,
                             Timecode(Timecode::NDF24, 1, 0, 0,
                                      static_cast<uint8_t>(frameNumber)));
@@ -57,7 +57,7 @@ Frame::Ptr makeTestFrame(int64_t frameNumber) {
         }
 
         // Add image-level metadata too.
-        img.modify()->metadata().set(Metadata::FrameNumber, frameNumber);
+        img.modify()->metadata().set(Metadata::FrameNumber, FrameNumber(frameNumber));
         raw->imageList().pushToBack(img);
 
         // One PCM audio track.

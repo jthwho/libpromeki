@@ -35,6 +35,9 @@ class JsonArray;
 class MediaTimeStamp;
 class MacAddress;
 class EUI64;
+class FrameNumber;
+class FrameCount;
+class MediaDuration;
 // Forward-declared Variant-alternative types used only as `const T &` /
 // `T &` parameters on DataStream's operator overloads.  Full definitions
 // are included in datastream.cpp (via variant.h), so declarations here
@@ -270,7 +273,12 @@ class DataStream {
                         TypeContentLightLevel   = 0x41, ///< @brief ContentLightLevel (CTA-861.3): two tagged uint32
 
                         // MediaIO introspection ---------------------------------
-                        TypeMediaIODescription  = 0x42  ///< @brief MediaIODescription (identity + role + format landscape + capabilities)
+                        TypeMediaIODescription  = 0x42, ///< @brief MediaIODescription (identity + role + format landscape + capabilities)
+
+                        // Frame timeline types ----------------------------------
+                        TypeFrameNumber         = 0x43, ///< @brief FrameNumber (length-prefixed string round-trip)
+                        TypeFrameCount          = 0x44, ///< @brief FrameCount (length-prefixed string round-trip)
+                        TypeMediaDuration       = 0x45  ///< @brief MediaDuration (length-prefixed string round-trip)
                 };
 
                 /** @brief Current wire format version. */
@@ -475,6 +483,12 @@ class DataStream {
                 DataStream &operator<<(const EnumList &val);
                 /** @brief Writes a MediaTimeStamp as a length-prefixed string. */
                 DataStream &operator<<(const MediaTimeStamp &val);
+                /** @brief Writes a FrameNumber as a length-prefixed string. */
+                DataStream &operator<<(const FrameNumber &val);
+                /** @brief Writes a FrameCount as a length-prefixed string. */
+                DataStream &operator<<(const FrameCount &val);
+                /** @brief Writes a MediaDuration as a length-prefixed string. */
+                DataStream &operator<<(const MediaDuration &val);
                 /** @brief Writes a MacAddress as a length-prefixed string. */
                 DataStream &operator<<(const MacAddress &val);
                 /** @brief Writes an EUI64 as a length-prefixed string. */
@@ -551,6 +565,12 @@ class DataStream {
                 DataStream &operator>>(EnumList &val);
                 /** @brief Reads a MediaTimeStamp from a length-prefixed string. */
                 DataStream &operator>>(MediaTimeStamp &val);
+                /** @brief Reads a FrameNumber from a length-prefixed string. */
+                DataStream &operator>>(FrameNumber &val);
+                /** @brief Reads a FrameCount from a length-prefixed string. */
+                DataStream &operator>>(FrameCount &val);
+                /** @brief Reads a MediaDuration from a length-prefixed string. */
+                DataStream &operator>>(MediaDuration &val);
                 /** @brief Reads a MacAddress from a length-prefixed string. */
                 DataStream &operator>>(MacAddress &val);
                 /** @brief Reads an EUI64 from a length-prefixed string. */

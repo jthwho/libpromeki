@@ -473,9 +473,9 @@ Error QuickTimeWriter::addTimecodeTrack(const Timecode &startTimecode,
         // Translate the SMPTE digits + mode into an absolute frame number.
         // We construct a fresh Timecode in the same mode and ask libvtc.
         Timecode tc = startTimecode;
-        auto [fn, fnErr] = tc.toFrameNumber();
-        if(fnErr.isError()) return fnErr;
-        t.tcStartFrame = static_cast<uint32_t>(fn);
+        FrameNumber fn = tc.toFrameNumber();
+        if(!fn.isValid()) return Error::NoFrameRate;
+        t.tcStartFrame = static_cast<uint32_t>(fn.value());
         // Drop-frame and frame-count flags from the mode.
         bool dropFrame = false;
         switch(t.timescale / 1) {

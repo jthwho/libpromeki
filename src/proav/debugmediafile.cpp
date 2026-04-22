@@ -580,7 +580,7 @@ Error DebugMediaFile::writeFrame(const Frame::Ptr &frame) {
         if(Error e = dev.open(IODevice::WriteOnly); e.isError()) return e;
         DataStream s = DataStream::createWriter(&dev);
 
-        s << static_cast<uint64_t>(_framesWritten);
+        s << static_cast<uint64_t>(_framesWritten.value());
         s << frame->metadata();
         s << frame->configUpdate();
         s << static_cast<uint32_t>(frame->imageList().size());
@@ -666,7 +666,7 @@ Error DebugMediaFile::writeFrame(const Frame::Ptr &frame) {
         int64_t offset = _file->pos();
         FrameIndexEntry e{};
         e.fileOffset     = offset;
-        e.frameNumber    = _framesWritten;
+        e.frameNumber    = toFrameNumber(_framesWritten);
         e.presentationUs = 0; // Reserved for future use.
         _index.pushToBack(e);
         _indexBuilt = true;
@@ -694,7 +694,9 @@ Error DebugMediaFile::appendFooter() {
                 DataStream s = DataStream::createWriter(&dev);
                 s << static_cast<uint64_t>(_index.size());
                 for(const FrameIndexEntry &ent : _index) {
-                        s << ent.fileOffset << ent.frameNumber << ent.presentationUs;
+                        s << ent.fileOffset
+                          << static_cast<int64_t>(ent.frameNumber.value())
+                          << ent.presentationUs;
                 }
                 if(s.status() != DataStream::Ok) { dev.close(); return Error::IOError; }
                 dev.close();
@@ -886,7 +888,9 @@ Error DebugMediaFile::buildIndex() const {
                                 s >> count;
                                 for(uint64_t i = 0; i < count && s.status() == DataStream::Ok; ++i) {
                                         FrameIndexEntry ent;
-                                        s >> ent.fileOffset >> ent.frameNumber >> ent.presentationUs;
+                                        int64_t fnum = 0;
+                                        s >> ent.fileOffset >> fnum >> ent.presentationUs;
+                                        ent.frameNumber = FrameNumber(fnum);
                                         _index.pushToBack(ent);
                                 }
                                 dev.close();
@@ -948,7 +952,7 @@ Error DebugMediaFile::buildIndex() const {
                 if(fc == kFourCC_FRAM) {
                         FrameIndexEntry ent;
                         ent.fileOffset     = chunkStart;
-                        ent.frameNumber    = static_cast<int64_t>(_index.size());
+                        ent.frameNumber    = FrameNumber(static_cast<int64_t>(_index.size()));
                         ent.presentationUs = 0;
                         _index.pushToBack(ent);
                 }
@@ -961,28 +965,28 @@ Error DebugMediaFile::buildIndex() const {
         return Error::Ok;
 }
 
-Error DebugMediaFile::seek(int64_t frameNumber) {
+Error DebugMediaFile::seek(const FrameNumber &frameNumber) {
         if(_mode != Read) return Error::NotOpen;
         Error e = buildIndex();
         if(e.isError()) return e;
-        if(frameNumber < 0
-           || frameNumber >= static_cast<int64_t>(_index.size()))
+        if(!frameNumber.isValid()
+           || frameNumber.value() >= static_cast<int64_t>(_index.size()))
                 return Error::IllegalSeek;
-        Error se = _file->seek(_index[frameNumber].fileOffset);
+        Error se = _file->seek(_index[frameNumber.value()].fileOffset);
         if(se.isError()) return se;
         _readCursor = frameNumber;
         return Error::Ok;
 }
 
-Error DebugMediaFile::readFrameAt(int64_t frameNumber, Frame::Ptr &out) {
+Error DebugMediaFile::readFrameAt(const FrameNumber &frameNumber, Frame::Ptr &out) {
         if(Error e = seek(frameNumber); e.isError()) return e;
         return readFrame(out);
 }
 
-int64_t DebugMediaFile::frameCount() const {
+FrameCount DebugMediaFile::frameCount() const {
         if(_mode == Write) return _framesWritten;
-        if(buildIndex().isError()) return 0;
-        return static_cast<int64_t>(_index.size());
+        if(buildIndex().isError()) return FrameCount(0);
+        return FrameCount(static_cast<int64_t>(_index.size()));
 }
 
 const List<DebugMediaFile::FrameIndexEntry> &DebugMediaFile::index() const {

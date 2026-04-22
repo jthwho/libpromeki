@@ -343,73 +343,73 @@ TEST_CASE("Timecode toString") {
 TEST_CASE("Timecode toFrameNumber") {
         SUBCASE("Zero is zero") {
                 Timecode tc(Timecode::NDF30, 0, 0, 0, 0);
-                auto [fn, err] = tc.toFrameNumber();
-                CHECK(err.isOk());
-                CHECK(fn == 0);
+                FrameNumber fn = tc.toFrameNumber();
+                CHECK(fn.isValid());
+                CHECK(fn.value() == 0);
         }
 
         SUBCASE("One second at 30fps") {
                 Timecode tc(Timecode::NDF30, 0, 0, 1, 0);
-                auto [fn, err] = tc.toFrameNumber();
-                CHECK(err.isOk());
-                CHECK(fn == 30);
+                FrameNumber fn = tc.toFrameNumber();
+                CHECK(fn.isValid());
+                CHECK(fn.value() == 30);
         }
 
         SUBCASE("One second at 24fps") {
                 Timecode tc(Timecode::NDF24, 0, 0, 1, 0);
-                auto [fn, err] = tc.toFrameNumber();
-                CHECK(err.isOk());
-                CHECK(fn == 24);
+                FrameNumber fn = tc.toFrameNumber();
+                CHECK(fn.isValid());
+                CHECK(fn.value() == 24);
         }
 
         SUBCASE("One second at 25fps") {
                 Timecode tc(Timecode::NDF25, 0, 0, 1, 0);
-                auto [fn, err] = tc.toFrameNumber();
-                CHECK(err.isOk());
-                CHECK(fn == 25);
+                FrameNumber fn = tc.toFrameNumber();
+                CHECK(fn.isValid());
+                CHECK(fn.value() == 25);
         }
 
         SUBCASE("One minute NDF30") {
                 Timecode tc(Timecode::NDF30, 0, 1, 0, 0);
-                auto [fn, err] = tc.toFrameNumber();
-                CHECK(err.isOk());
-                CHECK(fn == 1800);
+                FrameNumber fn = tc.toFrameNumber();
+                CHECK(fn.isValid());
+                CHECK(fn.value() == 1800);
         }
 
         SUBCASE("One hour NDF30 = 108000 frames") {
                 Timecode tc(Timecode::NDF30, 1, 0, 0, 0);
-                auto [fn, err] = tc.toFrameNumber();
-                CHECK(err.isOk());
-                CHECK(fn == 108000);
+                FrameNumber fn = tc.toFrameNumber();
+                CHECK(fn.isValid());
+                CHECK(fn.value() == 108000);
         }
 
         SUBCASE("One hour DF30 = 107892 frames") {
                 // SMPTE: 30fps DF drops 2 frames/min except every 10th
                 // = 108000 - (54 * 2) = 108000 - 108 = 107892
                 Timecode tc(Timecode::DF30, 1, 0, 0, 0);
-                auto [fn, err] = tc.toFrameNumber();
-                CHECK(err.isOk());
-                CHECK(fn == 107892);
+                FrameNumber fn = tc.toFrameNumber();
+                CHECK(fn.isValid());
+                CHECK(fn.value() == 107892);
         }
 
         SUBCASE("24 hours DF30") {
                 // 24 * 107892 = 2589408
                 Timecode tc(Timecode::DF30, 24, 0, 0, 0);
-                auto [fn, err] = tc.toFrameNumber();
-                CHECK(err.isOk());
-                CHECK(fn == 24 * 107892);
+                FrameNumber fn = tc.toFrameNumber();
+                CHECK(fn.isValid());
+                CHECK(fn.value() == 24 * 107892);
         }
 
-        SUBCASE("Invalid timecode returns error") {
+        SUBCASE("Invalid timecode returns Unknown") {
                 Timecode tc;
-                auto [fn, err] = tc.toFrameNumber();
-                CHECK_FALSE(err.isOk());
+                FrameNumber fn = tc.toFrameNumber();
+                CHECK(fn.isUnknown());
         }
 
-        SUBCASE("No format returns NoFrameRate") {
+        SUBCASE("No format returns Unknown") {
                 Timecode tc(1, 2, 3, 4);
-                auto [fn, err] = tc.toFrameNumber();
-                CHECK(err == Error::NoFrameRate);
+                FrameNumber fn = tc.toFrameNumber();
+                CHECK(fn.isUnknown());
         }
 }
 
@@ -454,8 +454,8 @@ TEST_CASE("Timecode fromFrameNumber") {
                 };
                 for(auto &mode : modes) {
                         Timecode tc(mode, 1, 23, 45, 10);
-                        auto [fn, err] = tc.toFrameNumber();
-                        CHECK(err.isOk());
+                        FrameNumber fn = tc.toFrameNumber();
+                        CHECK(fn.isValid());
                         Timecode tc2 = Timecode::fromFrameNumber(mode, fn);
                         CHECK(tc == tc2);
                 }
@@ -634,13 +634,13 @@ TEST_CASE("Timecode NDF round trips") {
                 CAPTURE(fps);
 
                 Timecode tc(mode);
-                CHECK(tc.toFrameNumber().first() == 0);
+                CHECK(tc.toFrameNumber().value() == 0);
 
                 bool correct = true;
                 for(int i = 0; i < framesPerHour; i++) {
                         tc++;
-                        auto [fn, err] = tc.toFrameNumber();
-                        if(!err.isOk() || fn != (uint64_t)(i + 1)) {
+                        FrameNumber fn = tc.toFrameNumber();
+                        if(!fn.isValid() || fn.value() != int64_t(i + 1)) {
                                 correct = false;
                                 break;
                         }
@@ -657,7 +657,7 @@ TEST_CASE("Timecode NDF round trips") {
                 CHECK(tc.min() == 0);
                 CHECK(tc.sec() == 0);
                 CHECK(tc.frame() == 0);
-                CHECK(tc.toFrameNumber().first() == (uint64_t)framesPerHour);
+                CHECK(tc.toFrameNumber().value() == int64_t(framesPerHour));
         }
 }
 
@@ -665,18 +665,18 @@ TEST_CASE("Timecode DF30 full 24h round trip") {
         const int framesToTest = 24 * 60 * 60 * 30;
 
         Timecode tc(Timecode::DF30);
-        CHECK(tc.toFrameNumber().first() == 0);
+        CHECK(tc.toFrameNumber().value() == 0);
 
         bool fnumCorrect = true;
         int last = 0;
         for(int i = 0; i < framesToTest; i++) {
                 tc++;
-                int fnum = tc.toFrameNumber().first();
+                int fnum = static_cast<int>(tc.toFrameNumber().value());
                 if(fnum != i + 1 || last + 1 != fnum) {
                         fnumCorrect = false;
                         break;
                 }
-                Timecode rt = Timecode::fromFrameNumber(tc.mode(), fnum);
+                Timecode rt = Timecode::fromFrameNumber(tc.mode(), FrameNumber(fnum));
                 if(rt != tc) {
                         fnumCorrect = false;
                         break;
@@ -684,11 +684,11 @@ TEST_CASE("Timecode DF30 full 24h round trip") {
                 last = fnum;
         }
         CHECK(fnumCorrect);
-        CHECK(tc.toFrameNumber().first() == (uint64_t)framesToTest);
+        CHECK(tc.toFrameNumber().value() == int64_t(framesToTest));
 
         // Decrement all the way back
         for(int i = 0; i < framesToTest; i++) tc--;
-        CHECK(tc.toFrameNumber().first() == 0);
+        CHECK(tc.toFrameNumber().value() == 0);
         CHECK(tc.hour() == 0);
         CHECK(tc.min() == 0);
         CHECK(tc.sec() == 0);
@@ -766,9 +766,8 @@ TEST_CASE("Timecode fromBcd64 produces format-less digits when given no mode") {
         REQUIRE(rs.second().isOk());
         CHECK(rs.first() == String("01:23:45:12"));
 
-        auto rf = tc.toFrameNumber();
-        CHECK(rf.second().isError());
-        CHECK(rf.second().code() == Error::NoFrameRate);
+        FrameNumber rf = tc.toFrameNumber();
+        CHECK(rf.isUnknown());
 }
 
 // ============================================================================

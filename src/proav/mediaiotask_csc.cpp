@@ -314,7 +314,7 @@ Error MediaIOTask_CSC::executeCmd(MediaIOCommandWrite &cmd) {
         _outputQueue.pushToBack(std::move(outFrame));
         _frameCount++;
         _framesConverted++;
-        cmd.currentFrame = _frameCount;
+        cmd.currentFrame = toFrameNumber(_frameCount);
         cmd.frameCount = _frameCount;
         stampWorkEnd();
         return Error::Ok;

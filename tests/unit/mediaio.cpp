@@ -3411,10 +3411,9 @@ TEST_CASE("MediaIO::copyFrames: basic TPG -> DPX sequence") {
         MediaIO *src = makeTpgSource();
         MediaIO *dst = makeDpxSequenceSink(dir, "f_####.dpx");
 
-        int64_t copied = 0;
-        Error err = MediaIO::copyFrames(src, dst, 0, 5, &copied);
+        auto [copied, err] = MediaIO::copyFrames(src, dst, 0, 5);
         CHECK(err.isOk());
-        CHECK(copied == 5);
+        CHECK(copied == FrameCount(5));
 
         src->close(); dst->close();
         delete src; delete dst;
@@ -3428,10 +3427,9 @@ TEST_CASE("MediaIO::copyFrames: count limits output") {
         MediaIO *src = makeTpgSource();
         MediaIO *dst = makeDpxSequenceSink(dir, "f_####.dpx");
 
-        int64_t copied = 0;
-        Error err = MediaIO::copyFrames(src, dst, 0, 3, &copied);
+        auto [copied, err] = MediaIO::copyFrames(src, dst, 0, 3);
         CHECK(err.isOk());
-        CHECK(copied == 3);
+        CHECK(copied == FrameCount(3));
 
         src->close(); dst->close();
         delete src; delete dst;
@@ -3454,10 +3452,9 @@ TEST_CASE("MediaIO::copyFrames: mutate callback runs per frame") {
                 return f;
         };
 
-        int64_t copied = 0;
-        Error err = MediaIO::copyFrames(src, dst, 0, 4, mutate, &copied);
+        auto [copied, err] = MediaIO::copyFrames(src, dst, 0, 4, mutate);
         CHECK(err.isOk());
-        CHECK(copied == 4);
+        CHECK(copied == FrameCount(4));
         CHECK(mutateCalls == 4);
         CHECK(lastIndex == 3);
 
@@ -3476,10 +3473,9 @@ TEST_CASE("MediaIO::copyFrames: mutate returning invalid frame skips write") {
                 return (i % 2 == 0) ? f : Frame::Ptr();
         };
 
-        int64_t copied = 0;
-        Error err = MediaIO::copyFrames(src, dst, 0, 6, mutate, &copied);
+        auto [copied, err] = MediaIO::copyFrames(src, dst, 0, 6, mutate);
         CHECK(err.isOk());
-        CHECK(copied == 3); // indices 0, 2, 4
+        CHECK(copied == FrameCount(3)); // indices 0, 2, 4
 
         src->close(); dst->close();
         delete src; delete dst;
@@ -3499,10 +3495,9 @@ TEST_CASE("MediaIO::copyFrames: fromFrame on non-seekable source reads and disca
                 return f;
         };
 
-        int64_t copied = 0;
-        Error err = MediaIO::copyFrames(src, dst, 10, 3, mutate, &copied);
+        auto [copied, err] = MediaIO::copyFrames(src, dst, 10, 3, mutate);
         CHECK(err.isOk());
-        CHECK(copied == 3);
+        CHECK(copied == FrameCount(3));
         // First callback fires at index 10, last at 12.
         CHECK(lastIndex == 12);
 
@@ -3522,7 +3517,7 @@ TEST_CASE("MediaIO::copyFrames: reads real sequence back") {
         {
                 MediaIO *tpg = makeTpgSource();
                 MediaIO *seq = makeDpxSequenceSink(srcDir, "frame_####.dpx");
-                Error e = MediaIO::copyFrames(tpg, seq, 0, 6);
+                auto [_, e] = MediaIO::copyFrames(tpg, seq, 0, 6);
                 REQUIRE(e.isOk());
                 tpg->close(); seq->close();
                 delete tpg; delete seq;
@@ -3536,11 +3531,9 @@ TEST_CASE("MediaIO::copyFrames: reads real sequence back") {
 
         MediaIO *dst = makeDpxSequenceSink(dstDir, "copy_####.dpx");
 
-        int64_t copied = 0;
-        Error err = MediaIO::copyFrames(src, dst, 0, MediaIO::FrameCountInfinite,
-                                        &copied);
+        auto [copied, err] = MediaIO::copyFrames(src, dst, 0, MediaIO::FrameCountInfinite);
         CHECK(err.isOk());
-        CHECK(copied == 6);
+        CHECK(copied == FrameCount(6));
 
         src->close(); dst->close();
         delete src; delete dst;
@@ -3557,7 +3550,7 @@ TEST_CASE("MediaIO::copyFrames: seekable source uses seekToFrame for fromFrame")
         {
                 MediaIO *tpg = makeTpgSource();
                 MediaIO *seq = makeDpxSequenceSink(srcDir, "frame_####.dpx");
-                Error e = MediaIO::copyFrames(tpg, seq, 0, 10);
+                auto [_, e] = MediaIO::copyFrames(tpg, seq, 0, 10);
                 REQUIRE(e.isOk());
                 tpg->close(); seq->close();
                 delete tpg; delete seq;
@@ -3572,10 +3565,9 @@ TEST_CASE("MediaIO::copyFrames: seekable source uses seekToFrame for fromFrame")
         FilePath dstDir = Dir::temp().path() / "promeki_test_copyFrames_seek_dst";
         MediaIO *dst = makeDpxSequenceSink(dstDir, "out_####.dpx");
 
-        int64_t copied = 0;
-        Error err = MediaIO::copyFrames(src, dst, 5, 3, &copied);
+        auto [copied, err] = MediaIO::copyFrames(src, dst, 5, 3);
         CHECK(err.isOk());
-        CHECK(copied == 3);
+        CHECK(copied == FrameCount(3));
 
         src->close(); dst->close();
         delete src; delete dst;
@@ -3585,6 +3577,6 @@ TEST_CASE("MediaIO::copyFrames: seekable source uses seekToFrame for fromFrame")
 }
 
 TEST_CASE("MediaIO::copyFrames: null arguments fail cleanly") {
-        Error err = MediaIO::copyFrames(nullptr, nullptr);
+        auto [copied, err] = MediaIO::copyFrames(nullptr, nullptr);
         CHECK(err == Error::InvalidArgument);
 }

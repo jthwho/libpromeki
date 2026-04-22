@@ -157,9 +157,10 @@ Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandOpen &cmd) {
                 _samplesPerFrame = (size_t)std::round(_audioDesc.sampleRate() / fpsVal);
 
                 size_t totalSamples = _audioFile.sampleCount();
-                _totalFrames = (_samplesPerFrame > 0 && totalSamples > 0)
-                        ? (totalSamples + _samplesPerFrame - 1) / _samplesPerFrame
+                int64_t total = (_samplesPerFrame > 0 && totalSamples > 0)
+                        ? static_cast<int64_t>((totalSamples + _samplesPerFrame - 1) / _samplesPerFrame)
                         : 0;
+                _totalFrames = FrameCount(total);
 
                 mediaDesc.setFrameRate(_frameRate);
                 mediaDesc.audioList().pushToBack(_audioDesc);
@@ -256,15 +257,15 @@ Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandRead &cmd) {
 
         cmd.frame = Frame::Ptr::create();
         cmd.frame.modify()->audioList().pushToBack(Audio::Ptr::create(audio));
-        _currentFrame++;
+        ++_currentFrame;
 
         // Advance by step.  The read already moved forward by 1 frame,
         // so we seek by (step - 1) additional frames.
         int s = cmd.step;
         if(s != 1) {
-                int64_t target = _currentFrame + (s - 1);
-                if(target < 0) target = 0;
-                _audioFile.seekToSample((size_t)target * _samplesPerFrame);
+                FrameNumber target = _currentFrame + int64_t(s - 1);
+                if(!target.isValid()) target = FrameNumber(0);
+                _audioFile.seekToSample(static_cast<size_t>(target.value()) * _samplesPerFrame);
                 _currentFrame = target;
         }
         cmd.currentFrame = _currentFrame;
@@ -281,19 +282,20 @@ Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandWrite &cmd) {
         const Audio &audio = *cmd.frame->audioList()[0];
         Error err = _audioFile.write(audio);
         if(err.isError()) { stampWorkEnd(); return err; }
-        _currentFrame++;
+        ++_currentFrame;
         cmd.currentFrame = _currentFrame;
-        cmd.frameCount = _currentFrame;
+        cmd.frameCount = toFrameCount(_currentFrame);
         stampWorkEnd();
         return Error::Ok;
 }
 
 Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandSeek &cmd) {
         if(_mode != MediaIO::Source) return Error::IllegalSeek;
-        size_t targetSample = cmd.frameNumber * _samplesPerFrame;
+        FrameNumber target = cmd.frameNumber.isValid() ? cmd.frameNumber : FrameNumber(0);
+        size_t targetSample = static_cast<size_t>(target.value()) * _samplesPerFrame;
         Error err = _audioFile.seekToSample(targetSample);
         if(err.isError()) return err;
-        _currentFrame = cmd.frameNumber;
+        _currentFrame = target;
         cmd.currentFrame = _currentFrame;
         return Error::Ok;
 }

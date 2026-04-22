@@ -163,7 +163,7 @@ class MediaIOTask_TPG : public MediaIOTask {
 
                 // General state
                 FrameRate               _frameRate;
-                int64_t                 _frameCount = 0;
+                FrameCount              _frameCount{0};
 };
 
 PROMEKI_NAMESPACE_END

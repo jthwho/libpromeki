@@ -55,8 +55,9 @@ Result<int64_t> MediaIOClock::raw() const {
                 return makeResult<int64_t>(0);
         }
         int64_t period = fps.frameDuration().nanoseconds();
-        int64_t frame = io->currentFrame();
-        return makeResult<int64_t>(frame * period);
+        FrameNumber frame = io->currentFrame();
+        int64_t v = frame.isValid() ? frame.value() : 0;
+        return makeResult<int64_t>(v * period);
 }
 
 Error MediaIOClock::sleepUntilNs(int64_t) const {

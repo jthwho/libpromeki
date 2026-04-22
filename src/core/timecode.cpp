@@ -53,10 +53,12 @@ Timecode &Timecode::operator--() {
         return *this;
 }
 
-Timecode Timecode::fromFrameNumber(const Mode &mode, FrameNumber frameNumber) {
+Timecode Timecode::fromFrameNumber(const Mode &mode, const FrameNumber &frameNumber) {
         if(!mode.isValid() || mode.fps() == 0) return Timecode(mode);
+        if(!frameNumber.isValid()) return Timecode(mode);
         VtcTimecode vtc;
-        VtcError err = vtc_timecode_from_frames(&vtc, mode.vtcFormat(), frameNumber);
+        VtcError err = vtc_timecode_from_frames(&vtc, mode.vtcFormat(),
+                                                static_cast<uint64_t>(frameNumber.value()));
         if(err != VTC_ERR_OK) return Timecode(mode);
         Timecode tc(mode);
         tc._hour = vtc.hour;
@@ -327,17 +329,14 @@ Result<Timecode> Timecode::fromBcd64(uint64_t bcd, TimecodePackFormat fmt, const
         return makeResult(tc);
 }
 
-Result<Timecode::FrameNumber> Timecode::toFrameNumber() const {
-        if(!isValid()) return makeError<FrameNumber>(Error::Invalid);
-        if(!_mode.hasFormat()) return makeError<FrameNumber>(Error::NoFrameRate);
+FrameNumber Timecode::toFrameNumber() const {
+        if(!isValid()) return FrameNumber::unknown();
+        if(!_mode.hasFormat()) return FrameNumber::unknown();
         VtcTimecode vtc = toVtc();
         uint64_t frameNum;
         VtcError err = vtc_timecode_to_frames(&vtc, &frameNum);
-        if(err != VTC_ERR_OK) {
-                if(err == VTC_ERR_NO_FRAME_RATE) return makeError<FrameNumber>(Error::NoFrameRate);
-                return makeError<FrameNumber>(Error::Invalid);
-        }
-        return makeResult(static_cast<FrameNumber>(frameNum));
+        if(err != VTC_ERR_OK) return FrameNumber::unknown();
+        return FrameNumber(static_cast<int64_t>(frameNum));
 }
 
 PROMEKI_NAMESPACE_END

@@ -384,7 +384,7 @@ class MediaIOTask_Rtp : public MediaIOTask {
                         int64_t             bytesSent   = 0;
                         int64_t             packetsReceived = 0;
                         int64_t             bytesReceived   = 0;
-                        int64_t             framesReceived  = 0;
+                        FrameCount          framesReceived{0};
                         int64_t             packetsLost     = 0;
                         String              mediaType;    ///< @brief "video", "audio", "data"
                         String              rtpmap;       ///< @brief SDP a=rtpmap:... value
@@ -454,7 +454,7 @@ class MediaIOTask_Rtp : public MediaIOTask {
                  *                   the RTP timestamp via
                  *                   @ref FrameRate::cumulativeTicks.
                  */
-                Error sendVideo(const Image &image, int64_t frameIndex);
+                Error sendVideo(const Image &image, const FrameNumber &frameIndex);
 
                 /**
                  * @brief Sends one audio chunk on the @c _audio stream.
@@ -470,7 +470,7 @@ class MediaIOTask_Rtp : public MediaIOTask {
                  * @param metadata   The metadata to serialise.
                  * @param frameIndex Zero-based frame index for the RTP timestamp.
                  */
-                Error sendData(const Metadata &metadata, int64_t frameIndex);
+                Error sendData(const Metadata &metadata, const FrameNumber &frameIndex);
 
                 // Reader path.
                 Error applySdp(const SdpSession &sdp,
@@ -529,8 +529,8 @@ class MediaIOTask_Rtp : public MediaIOTask {
 
                 // Runtime
                 FrameRate       _frameRate;
-                int64_t         _frameCount = 0;
-                int64_t         _framesSent = 0;
+                FrameCount      _frameCount{0};
+                FrameCount      _framesSent{0};
 
                 // Mode
                 bool            _readerMode = false;
@@ -546,7 +546,7 @@ class MediaIOTask_Rtp : public MediaIOTask {
                 Queue<Frame::Ptr> _readerQueue;
                 int             _readerMaxDepth = 4;
                 int             _readerJitterMs = 50;
-                int64_t         _readerFramesReceived = 0;
+                FrameCount      _readerFramesReceived{0};
 
                 /**
                  * @brief Reader-side frame aggregator.
@@ -586,7 +586,7 @@ class MediaIOTask_Rtp : public MediaIOTask {
                         /// @brief True when @c pendingMetadata has been updated since the last video frame.
                         bool            hasMetadata = false;
                         /// @brief Zero-based frame index for @c samplesPerFrame.
-                        int64_t         videoFrameIndex = 0;
+                        FrameNumber     videoFrameIndex{0};
                         /// @brief Max wait (ms) for audio before emitting without it.
                         int             audioTimeoutMs = 50;
                 };

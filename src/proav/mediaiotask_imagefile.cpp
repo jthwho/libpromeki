@@ -999,8 +999,8 @@ Error MediaIOTask_ImageFile::writeImgSeqSidecar() {
         }
         ImgSeq seq;
         seq.setName(_seqName);
-        seq.setHead(static_cast<size_t>(_seqHead));
-        seq.setTail(static_cast<size_t>(_seqHead + _writeCount - 1));
+        seq.setHead(static_cast<size_t>(_seqHead.value()));
+        seq.setTail(static_cast<size_t>(_seqHead.value() + _writeCount.value() - 1));
         if(_writerFrameRate.isValid()) {
                 seq.setFrameRate(_writerFrameRate);
         }
@@ -1119,25 +1119,25 @@ Error MediaIOTask_ImageFile::readSingle(MediaIOCommandRead &cmd) {
         if(_loaded && cmd.step != 0) return Error::EndOfFile;
         cmd.frame = _frame;
         _loaded = true;
-        _readCount++;
-        cmd.currentFrame = _readCount;
+        ++_readCount;
+        cmd.currentFrame = toFrameNumber(_readCount);
         return Error::Ok;
 }
 
 Error MediaIOTask_ImageFile::readSequence(MediaIOCommandRead &cmd) {
         if(_seqAtEnd) return Error::EndOfFile;
 
-        const int64_t length = _seqTail - _seqHead + 1;
+        const int64_t length = _seqTail.value() - _seqHead.value() + 1;
         if(length <= 0) return Error::EndOfFile;
 
         // Clamp the current index — it may have been set out of range
         // by seek.  Bounds check before we load.
-        if(_seqIndex < 0 || _seqIndex >= length) {
+        if(!_seqIndex.isValid() || _seqIndex.value() >= length) {
                 _seqAtEnd = true;
                 return Error::EndOfFile;
         }
 
-        int64_t frameNum = _seqHead + _seqIndex;
+        int64_t frameNum = _seqHead.value() + _seqIndex.value();
         String fn = (_seqDir / _seqName.name(static_cast<int>(frameNum))).toString();
 
         ImageFile imgFile(_imageFileID);
@@ -1157,12 +1157,12 @@ Error MediaIOTask_ImageFile::readSequence(MediaIOCommandRead &cmd) {
         // Merge sequence-level metadata onto this frame.
         Metadata &fm = frame.modify()->metadata();
         fm.merge(_seqMetadata);
-        fm.set(Metadata::FrameNumber, frameNum);
+        fm.set(Metadata::FrameNumber, FrameNumber(frameNum));
 
         // Read sidecar audio for this frame.
         if(_sidecarAudioOpen) {
                 size_t spf = _sidecarFrameRate.samplesPerFrame(
-                        _sidecarSampleRate, _seqIndex);
+                        _sidecarSampleRate, _seqIndex.value());
                 Audio sidecarAudio;
                 Error audioErr = _sidecarAudio.read(sidecarAudio, spf);
                 if(audioErr.isError()) {
@@ -1176,7 +1176,7 @@ Error MediaIOTask_ImageFile::readSequence(MediaIOCommandRead &cmd) {
         }
 
         cmd.frame = frame;
-        cmd.currentFrame = _seqIndex + 1;
+        cmd.currentFrame = _seqIndex + int64_t(1);
 
         // Advance for the next read.  step==0 holds position, so we
         // intentionally don't latch EOF in that case.
@@ -1184,8 +1184,8 @@ Error MediaIOTask_ImageFile::readSequence(MediaIOCommandRead &cmd) {
         if(step == 0) {
                 // Stay on the same frame — no state change.
         } else {
-                _seqIndex += step;
-                if(_seqIndex < 0 || _seqIndex >= length) {
+                _seqIndex += int64_t(step);
+                if(!_seqIndex.isValid() || _seqIndex.value() >= length) {
                         _seqAtEnd = true;
                 }
         }
@@ -1216,14 +1216,14 @@ Error MediaIOTask_ImageFile::writeSingle(MediaIOCommandWrite &cmd) {
                         _filename.cstr(), err.name().cstr());
                 return err;
         }
-        _writeCount++;
-        cmd.currentFrame = _writeCount;
+        ++_writeCount;
+        cmd.currentFrame = toFrameNumber(_writeCount);
         cmd.frameCount = _writeCount;
         return Error::Ok;
 }
 
 Error MediaIOTask_ImageFile::writeSequence(MediaIOCommandWrite &cmd) {
-        int64_t frameNum = _seqHead + _writeCount;
+        int64_t frameNum = _seqHead.value() + _writeCount.value();
         String fn = (_seqDir / _seqName.name(static_cast<int>(frameNum))).toString();
 
         // Copy the frame so we can merge container metadata into its
@@ -1260,7 +1260,7 @@ Error MediaIOTask_ImageFile::writeSequence(MediaIOCommandWrite &cmd) {
                         // No audio on this frame — write silence to
                         // maintain frame-accurate sync.
                         size_t spf = _sidecarFrameRate.samplesPerFrame(
-                                _sidecarSampleRate, _writeCount);
+                                _sidecarSampleRate, _writeCount.value());
                         Audio silence(_sidecarAudioDesc, spf);
                         silence.zero();
                         Error audioErr = _sidecarAudio.write(silence);
@@ -1272,9 +1272,9 @@ Error MediaIOTask_ImageFile::writeSequence(MediaIOCommandWrite &cmd) {
                 }
         }
 
-        _writeCount++;
-        if(frameNum > _seqTail) _seqTail = frameNum;
-        cmd.currentFrame = _writeCount;
+        ++_writeCount;
+        if(frameNum > _seqTail.value()) _seqTail = FrameNumber(frameNum);
+        cmd.currentFrame = toFrameNumber(_writeCount);
         cmd.frameCount = _writeCount;
         return Error::Ok;
 }
@@ -1284,13 +1284,13 @@ Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandSeek &cmd) {
                 return Error::IllegalSeek;
         }
 
-        const int64_t length = _seqTail - _seqHead + 1;
+        const int64_t length = _seqTail.value() - _seqHead.value() + 1;
         if(length <= 0) return Error::IllegalSeek;
 
-        int64_t target = cmd.frameNumber;
+        int64_t target = cmd.frameNumber.isValid() ? cmd.frameNumber.value() : 0;
         if(target < 0) target = 0;
         if(target >= length) target = length - 1;
-        _seqIndex = target;
+        _seqIndex = FrameNumber(target);
         _seqAtEnd = false;
 
         // Seek the sidecar audio to the corresponding sample position.

@@ -160,8 +160,8 @@ void FrameSync::resetLocked(bool setExplicitOrigin, int64_t originNs) {
         _accumulatedErrorNs = 0;
         _deadlineBiasNs = 0;
         _lastPeriodicLogNs = 0;
-        _frameCountAtLastLog = 0;
-        _lastEmitFrameCount = -1;
+        _frameCountAtLastLog = FrameCount(0);
+        _lastEmitFrameCount = FrameCount::unknown();
 
         _framesIn.setValue(0);
         _framesOut.setValue(0);
@@ -655,7 +655,7 @@ Result<FrameSync::PullResult> FrameSync::pullFrame(bool blockOnEmpty) {
                         _frameCountAtLastLog = 0;
                 }
 
-                currentIndex = _frameCount;
+                currentIndex = _frameCount.value();
                 // Deadline is the ideal schedule minus the running
                 // bias from prior wake-errors.  This absorbs any
                 // systematic offset (kernel sleep latency, clock
@@ -784,7 +784,7 @@ Result<FrameSync::PullResult> FrameSync::pullFrame(bool blockOnEmpty) {
                 outFrame.modify()->audioList().pushToBack(outAudio);
         }
         outFrame.modify()->metadata().set(Metadata::MediaTimeStamp, outStamp);
-        outFrame.modify()->metadata().set(Metadata::FrameNumber, currentIndex);
+        outFrame.modify()->metadata().set(Metadata::FrameNumber, FrameNumber(currentIndex));
         // FrameSyncDrop/FrameSyncRepeat are declared as int32 in the
         // Metadata schema; clamp here so an unexpectedly large
         // accumulated drop count (e.g. a badly stalled pipeline) does
@@ -838,16 +838,17 @@ void FrameSync::resetSourceRateEstimator() {
 void FrameSync::periodicDebugLog(int64_t nowNs) {
         if(nowNs - _lastPeriodicLogNs < kPeriodicIntervalNs) return;
 
-        int64_t elapsedFrames = _frameCount - _frameCountAtLastLog;
-        double  elapsedSec    = (double)(nowNs - _lastPeriodicLogNs) / 1e9;
-        double  actualFps     = (elapsedSec > 0.0)
+        const FrameCount elapsed = _frameCount - _frameCountAtLastLog;
+        const int64_t elapsedFrames = elapsed.isFinite() ? elapsed.value() : 0;
+        const double  elapsedSec    = (double)(nowNs - _lastPeriodicLogNs) / 1e9;
+        const double  actualFps     = (elapsedSec > 0.0)
                 ? (double)elapsedFrames / elapsedSec : 0.0;
 
         promekiDebug("[%s] out=%lld fps=%.2f in=%lld rpt=%lld drp=%lld ovf=%lld "
                      "srcVHz=%.2f srcAHz=%.2f ratio=%.6f accErr=%.3fms bias=%.3fms "
                      "clk=%s rRatio=%.6f",
                      _name.cstr(),
-                     static_cast<long long>(_frameCount),
+                     static_cast<long long>(_frameCount.value()),
                      actualFps,
                      static_cast<long long>(_framesIn.value()),
                      static_cast<long long>(_framesRepeated.value()),

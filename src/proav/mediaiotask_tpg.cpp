@@ -388,7 +388,7 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandRead &cmd) {
         if(_audioEnabled && _audioPattern != nullptr) {
                 size_t samples = _frameRate.samplesPerFrame(
                         static_cast<int64_t>(_audioDesc.sampleRate()),
-                        _frameCount);
+                        _frameCount.value());
                 Audio audio = _audioPattern->create(samples, tc);
                 if(audio.isValid()) {
                         frame.modify()->audioList().pushToBack(Audio::Ptr::create(audio));
@@ -444,7 +444,7 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandRead &cmd) {
         if(_videoEnabled && _dataEncoderEnabled && _dataEncoder.isValid()) {
                 const uint64_t frameId =
                         (static_cast<uint64_t>(_streamId) << 32) |
-                        static_cast<uint32_t>(_frameCount & 0xffffffffu);
+                        static_cast<uint32_t>(_frameCount.value() & 0xffffffffu);
                 const uint64_t tcBcd =
                         (_timecodeEnabled && tc.isValid())
                                 ? tc.toBcd64()
@@ -475,8 +475,8 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandRead &cmd) {
         }
 
         cmd.frame = std::move(frame);
-        _frameCount++;
-        cmd.currentFrame = _frameCount;
+        ++_frameCount;
+        cmd.currentFrame = toFrameNumber(_frameCount);
         stampWorkEnd();
         return Error::Ok;
 }

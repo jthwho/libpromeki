@@ -8,6 +8,7 @@
 #pragma once
 
 #include <promeki/namespace.h>
+#include <promeki/framecount.h>
 #include <promeki/framerate.h>
 #include <promeki/timecode.h>
 
@@ -139,7 +140,7 @@ class TimecodeGenerator {
                  * @brief Returns the total number of frames advanced.
                  * @return The number of advance() calls since construction or reset.
                  */
-                uint64_t frameCount() const { return _frameCount; }
+                FrameCount frameCount() const { return _frameCount; }
 
                 /**
                  * @brief Resets the generator.
@@ -155,7 +156,7 @@ class TimecodeGenerator {
                 RunMode         _runMode = Forward;
                 Timecode        _timecode;
                 Timecode        _startTimecode;
-                uint64_t        _frameCount = 0;
+                FrameCount      _frameCount{0};
 
                 void deriveMode();
                 void applyMode();

@@ -46,12 +46,23 @@ T sumAs(const MediaIOStats &a, MediaIOStats::ID id) {
         return a.get(id).get<T>();
 }
 
+// FrameCount-typed counters carry sentinel states (Unknown, Infinity)
+// that must not leak into the aggregate as negative int64_t via
+// `.value()`.  Stages reporting Unknown or Infinity are treated as
+// contributing zero to the roll-up — callers that care about those
+// states should inspect per-stage stats directly.
+FrameCount sumFrameCount(const MediaIOStats &a, MediaIOStats::ID id) {
+        if(!a.contains(id)) return FrameCount(0);
+        const FrameCount fc = a.get(id).get<FrameCount>();
+        return fc.isFinite() ? fc : FrameCount(0);
+}
+
 } // namespace
 
 void MediaPipelineStats::recomputeAggregate() {
-        int64_t framesDropped   = 0;
-        int64_t framesRepeated  = 0;
-        int64_t framesLate      = 0;
+        FrameCount framesDropped  = FrameCount(0);
+        FrameCount framesRepeated = FrameCount(0);
+        FrameCount framesLate     = FrameCount(0);
         int64_t queueDepth      = 0;
         int64_t queueCapacity   = 0;
         int64_t pendingOps      = 0;
@@ -69,9 +80,9 @@ void MediaPipelineStats::recomputeAggregate() {
                 const String       &name  = it->first;
                 const MediaIOStats &stats = it->second;
 
-                framesDropped  += sumAs<int64_t>(stats, MediaIOStats::FramesDropped);
-                framesRepeated += sumAs<int64_t>(stats, MediaIOStats::FramesRepeated);
-                framesLate     += sumAs<int64_t>(stats, MediaIOStats::FramesLate);
+                framesDropped  += sumFrameCount(stats, MediaIOStats::FramesDropped);
+                framesRepeated += sumFrameCount(stats, MediaIOStats::FramesRepeated);
+                framesLate     += sumFrameCount(stats, MediaIOStats::FramesLate);
                 queueDepth     += sumAs<int64_t>(stats, MediaIOStats::QueueDepth);
                 queueCapacity  += sumAs<int64_t>(stats, MediaIOStats::QueueCapacity);
                 pendingOps     += sumAs<int64_t>(stats, MediaIOStats::PendingOperations);

@@ -331,7 +331,7 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandWrite &cmd) {
         _framesEncoded++;
         drainEncoderInto();
 
-        cmd.currentFrame = _frameCount;
+        cmd.currentFrame = toFrameNumber(_frameCount);
         cmd.frameCount   = _frameCount;
         stampWorkEnd();
         return Error::Ok;

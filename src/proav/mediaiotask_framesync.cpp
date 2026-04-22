@@ -229,8 +229,8 @@ Error MediaIOTask_FrameSync::executeCmd(MediaIOCommandWrite &cmd) {
         }
         stampWorkBegin();
         Error err = _sync.pushFrame(cmd.frame);
-        _framesPushed++;
-        cmd.currentFrame = _framesPushed;
+        ++_framesPushed;
+        cmd.currentFrame = toFrameNumber(_framesPushed);
         cmd.frameCount = _framesPushed;
         stampWorkEnd();
         return err;
@@ -252,12 +252,12 @@ Error MediaIOTask_FrameSync::executeCmd(MediaIOCommandRead &cmd) {
                 return Error::EndOfFile;
         }
 
-        if(pr.framesRepeated > 0) noteFrameRepeated();
-        if(pr.framesDropped > 0) noteFrameDropped();
+        if(pr.framesRepeated.value() > 0) noteFrameRepeated();
+        if(pr.framesDropped.value() > 0) noteFrameDropped();
 
-        _framesPulled++;
+        ++_framesPulled;
         cmd.frame = pr.frame;
-        cmd.currentFrame = _framesPulled;
+        cmd.currentFrame = toFrameNumber(_framesPulled);
         return Error::Ok;
 }
 

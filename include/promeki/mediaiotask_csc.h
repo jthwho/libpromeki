@@ -110,9 +110,9 @@ class MediaIOTask_CSC : public MediaIOTask {
                 int                             _capacity = 4;
 
                 List<Frame::Ptr>                _outputQueue;
-                int64_t                         _frameCount = 0;
+                FrameCount                      _frameCount{0};
                 int64_t                         _readCount = 0;
-                int64_t                         _framesConverted = 0;
+                FrameCount                      _framesConverted{0};
                 bool                            _capacityWarned = false;
 };
 

@@ -26,14 +26,14 @@ Frame::Ptr richFrame() {
         raw->metadata().set(Metadata::Timecode,
                             Timecode(Timecode::NDF24, 1, 0, 0, 0));
         raw->metadata().set(Metadata::FrameRate, FrameRate(FrameRate::FPS_24));
-        raw->metadata().set(Metadata::FrameNumber, int64_t(42));
+        raw->metadata().set(Metadata::FrameNumber, FrameNumber(42));
         raw->metadata().set(Metadata::Comment,
                             String("dropped 5 frames during capture"));
 
         ImageDesc idesc(Size2Du32(1920, 1080), PixelDesc::RGBA8_sRGB);
         idesc.setVideoScanMode(VideoScanMode::Progressive);
         Image::Ptr img = Image::Ptr::create(idesc);
-        img.modify()->metadata().set(Metadata::FrameNumber, int64_t(42));
+        img.modify()->metadata().set(Metadata::FrameNumber, FrameNumber(42));
         raw->imageList().pushToBack(img);
 
         AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
@@ -166,7 +166,7 @@ TEST_CASE("VariantQuery<Frame>: reusable across many frames") {
         for(int i = 0; i < 5; ++i) {
                 Frame::Ptr f = Frame::Ptr::create();
                 f.modify()->metadata().set(Metadata::FrameNumber,
-                                           int64_t(50 + i * 50));
+                                           FrameNumber(50 + i * 50));
                 bool expected = (50 + i * 50) > 100;
                 CHECK(q.match(*f) == expected);
         }
@@ -196,7 +196,7 @@ Image::Ptr richImage() {
         ImageDesc idesc(Size2Du32(1920, 1080), PixelDesc::RGBA8_sRGB);
         idesc.setVideoScanMode(VideoScanMode::Progressive);
         Image::Ptr img = Image::Ptr::create(idesc);
-        img.modify()->metadata().set(Metadata::FrameNumber, int64_t(7));
+        img.modify()->metadata().set(Metadata::FrameNumber, FrameNumber(7));
         img.modify()->metadata().set(Metadata::Title, String("hero"));
         return img;
 }
@@ -234,7 +234,7 @@ Audio::Ptr richAudio() {
         AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
         Audio::Ptr aud = Audio::Ptr::create(adesc, 1024);
         aud.modify()->metadata().set(Metadata::Album, String("LiveSet"));
-        aud.modify()->metadata().set(Metadata::FrameNumber, int64_t(11));
+        aud.modify()->metadata().set(Metadata::FrameNumber, FrameNumber(11));
         return aud;
 }
 

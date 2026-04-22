@@ -121,9 +121,9 @@ class MediaIOTask_Burn : public MediaIOTask {
                 int                             _capacity = 4;
 
                 List<Frame::Ptr>                _outputQueue;
-                int64_t                         _frameCount = 0;
+                FrameCount                      _frameCount{0};
                 int64_t                         _readCount = 0;
-                int64_t                         _framesBurned = 0;
+                FrameCount                      _framesBurned{0};
                 bool                            _capacityWarned = false;
                 bool                            _notPaintableWarned = false;
 };

@@ -11,6 +11,7 @@
 #include <promeki/string.h>
 #include <promeki/variantdatabase.h>
 #include <promeki/variantspec.h>
+#include <promeki/framecount.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -39,13 +40,12 @@ class PipelineStats : public VariantDatabase<"PipelineStats"> {
                 using Base::Base;
 
                 /**
-                 * @brief int64_t — total frames pulled from sources and
+                 * @brief FrameCount — total frames pulled from sources and
                  *        fanned out to their outgoing edges since the
                  *        pipeline started draining.
                  */
                 PROMEKI_DECLARE_ID(FramesProduced,
-                        VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
-                                .setMin(int64_t(0))
+                        VariantSpec().setType(Variant::TypeFrameCount).setDefault(FrameCount(0))
                                 .setDescription(
                                         "Total frames dispatched from sources to sinks."));
 

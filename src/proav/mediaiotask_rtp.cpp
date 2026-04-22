@@ -1352,7 +1352,7 @@ void MediaIOTask_Rtp::emitVideoFrame() {
         if(_audio.active && _audio.readerAudioDesc.isValid()) {
                 const size_t needed = _frameRate.samplesPerFrame(
                         static_cast<int64_t>(_audio.readerAudioDesc.sampleRate()),
-                        _readerAgg.videoFrameIndex);
+                        _readerAgg.videoFrameIndex.value());
                 if(needed > 0) {
                         Audio audio(_audio.readerAudioDesc, needed);
                         auto [got, err] = _readerAgg.audioFifo.popWait(
@@ -1902,14 +1902,15 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandRead &cmd) {
         }
         stampWorkBegin();
         cmd.frame = result.first();
-        cmd.currentFrame = ++_frameCount;
+        ++_frameCount;
+        cmd.currentFrame = toFrameNumber(_frameCount);
         stampWorkEnd();
         return Error::Ok;
 }
 
 // ----- Per-stream send helpers -----
 
-Error MediaIOTask_Rtp::sendVideo(const Image &image, int64_t frameIndex) {
+Error MediaIOTask_Rtp::sendVideo(const Image &image, const FrameNumber &frameIndex) {
         if(!_video.active || !image.isValid()) return Error::Ok;
         if(_video.session == nullptr || _video.payload == nullptr) return Error::Invalid;
 
@@ -1942,7 +1943,7 @@ Error MediaIOTask_Rtp::sendVideo(const Image &image, int64_t frameIndex) {
         // thread) so this worker thread can run in parallel with the
         // strand without racing on @c _frameCount.
         uint32_t ts = static_cast<uint32_t>(
-                _frameRate.cumulativeTicks(_video.clockRate, frameIndex));
+                _frameRate.cumulativeTicks(_video.clockRate, frameIndex.value()));
 
         // Grab plane 0 bytes — for MJPEG this is the compressed
         // bitstream; for RFC 4175 raw video it is the interleaved
@@ -2127,7 +2128,7 @@ Error MediaIOTask_Rtp::sendAudio(const Audio &audio) {
         return Error::Ok;
 }
 
-Error MediaIOTask_Rtp::sendData(const Metadata &metadata, int64_t frameIndex) {
+Error MediaIOTask_Rtp::sendData(const Metadata &metadata, const FrameNumber &frameIndex) {
         if(!_data.active) return Error::Ok;
         if(_data.session == nullptr || _data.payload == nullptr) return Error::Invalid;
 
@@ -2139,7 +2140,7 @@ Error MediaIOTask_Rtp::sendData(const Metadata &metadata, int64_t frameIndex) {
 
         double fps = _frameRate.isValid() ? _frameRate.toDouble() : 30.0;
         uint32_t ts = static_cast<uint32_t>(
-                static_cast<double>(frameIndex) *
+                static_cast<double>(frameIndex.value()) *
                 static_cast<double>(_data.clockRate) / fps);
 
         auto packets = _data.payload->pack(json.cstr(), json.size());
@@ -2161,8 +2162,11 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandWrite &cmd) {
         // Capture the current frame index up-front so each worker
         // sees the same value.  _frameCount is owned by this strand
         // thread and is only mutated below after all dispatched
-        // sends have completed.
-        const int64_t frameIndex = _frameCount;
+        // sends have completed.  Captured as FrameNumber (not the
+        // raw int64_t from .value()) so a poisoned Unknown count
+        // never silently surfaces as -1 in downstream RTP-timestamp
+        // math.
+        const FrameNumber frameIndex = toFrameNumber(_frameCount);
 
         // Dispatch each per-stream send to its own TX thread so the
         // three sends run in parallel.  Each worker independently
@@ -2239,9 +2243,9 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandWrite &cmd) {
                 return firstErr;
         }
 
-        _frameCount++;
+        ++_frameCount;
         _framesSent++;
-        cmd.currentFrame = _frameCount;
+        cmd.currentFrame = toFrameNumber(_frameCount);
         cmd.frameCount   = MediaIO::FrameCountInfinite;
         stampWorkEnd();
         return Error::Ok;

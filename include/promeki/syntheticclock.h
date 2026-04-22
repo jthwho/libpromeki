@@ -10,6 +10,7 @@
 #include <atomic>
 #include <promeki/namespace.h>
 #include <promeki/clock.h>
+#include <promeki/framenumber.h>
 #include <promeki/framerate.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -76,11 +77,11 @@ class SyntheticClock : public Clock {
                  * @brief Sets the current frame counter.
                  * @param frame The new counter value.
                  */
-                void setCurrentFrame(int64_t frame);
+                void setCurrentFrame(const FrameNumber &frame);
 
                 /** @brief Returns the current frame counter. */
-                int64_t currentFrame() const {
-                        return _currentFrame.load(std::memory_order_relaxed);
+                FrameNumber currentFrame() const {
+                        return FrameNumber(_currentFrame.load(std::memory_order_relaxed));
                 }
 
                 /**
@@ -93,7 +94,7 @@ class SyntheticClock : public Clock {
                  * @brief Resets the frame counter to @p frame.
                  * @param frame Starting frame counter (default 0).
                  */
-                void reset(int64_t frame = 0);
+                void reset(const FrameNumber &frame = FrameNumber(0));
 
                 int64_t     resolutionNs() const override;
                 ClockJitter jitter() const override;

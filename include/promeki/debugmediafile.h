@@ -12,6 +12,8 @@
 #include <promeki/string.h>
 #include <promeki/error.h>
 #include <promeki/frame.h>
+#include <promeki/framenumber.h>
+#include <promeki/framecount.h>
 #include <promeki/metadata.h>
 #include <promeki/list.h>
 
@@ -99,9 +101,9 @@ class DebugMediaFile : public ObjectBase {
 
                 /** @brief One entry in the frame index. */
                 struct FrameIndexEntry {
-                        int64_t fileOffset     = 0;  ///< Byte offset of the FRAM chunk header.
-                        int64_t frameNumber    = 0;  ///< Frame index recorded in the chunk.
-                        int64_t presentationUs = 0;  ///< @ref Metadata::PresentationTime in microseconds, or 0.
+                        int64_t     fileOffset     = 0;  ///< Byte offset of the FRAM chunk header.
+                        FrameNumber frameNumber;         ///< Frame index recorded in the chunk.
+                        int64_t     presentationUs = 0;  ///< @ref Metadata::PresentationTime in microseconds, or 0.
                 };
 
                 /** @brief The file-signature magic (8 bytes). */
@@ -180,7 +182,7 @@ class DebugMediaFile : public ObjectBase {
                 Error writeFrame(const Frame::Ptr &frame);
 
                 /** @brief Number of frames written since open, or the last read frame index + 1 on read. */
-                int64_t framesWritten() const { return _framesWritten; }
+                FrameCount framesWritten() const { return _framesWritten; }
 
                 // ---- Read API ----
 
@@ -209,7 +211,7 @@ class DebugMediaFile : public ObjectBase {
                  *         when @p frameNumber is past the end, or an
                  *         I/O / corruption error.
                  */
-                Error readFrameAt(int64_t frameNumber, Frame::Ptr &out);
+                Error readFrameAt(const FrameNumber &frameNumber, Frame::Ptr &out);
 
                 /**
                  * @brief Positions the next @ref readFrame at
@@ -220,13 +222,13 @@ class DebugMediaFile : public ObjectBase {
                  *         @c Error::IllegalSeek when the target is
                  *         past the last indexed frame.
                  */
-                Error seek(int64_t frameNumber);
+                Error seek(const FrameNumber &frameNumber);
 
                 /** @brief Session info from the @c SESN chunk (read mode). */
                 const Metadata &sessionInfo() const { return _sessionInfo; }
 
                 /** @brief Total frame count (uses TOC if present, else linear scan). */
-                int64_t frameCount() const;
+                FrameCount frameCount() const;
 
                 /** @brief True when the file signature indicates a TOC was written on close. */
                 bool hasFooter() const { return (_fileFlags & kFileFlagHasFooter) != 0; }
@@ -244,8 +246,8 @@ class DebugMediaFile : public ObjectBase {
                 uint32_t                      _fileFlags    = 0;
                 uint32_t                      _fileVersion  = 0;
                 int64_t                       _firstFramePos = 0;   ///< File position right after SESN chunk.
-                int64_t                       _framesWritten = 0;
-                mutable int64_t               _readCursor    = 0;   ///< Current frame index when reading.
+                FrameCount                    _framesWritten{0};
+                mutable FrameNumber           _readCursor{0};       ///< Current frame index when reading.
                 mutable bool                  _indexBuilt    = false;
                 mutable List<FrameIndexEntry> _index;
                 Metadata                      _sessionInfo;

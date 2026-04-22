@@ -296,12 +296,13 @@ MediaIO *MediaIO::createForFileWrite(const String &filename, ObjectBase *parent)
         return io;
 }
 
-Error MediaIO::copyFramesSeekTo(MediaIO *src, int64_t fromFrame) {
+Error MediaIO::copyFramesSeekTo(MediaIO *src, const FrameNumber &fromFrame) {
         // Prefer a single seek when the source supports it; otherwise
         // read-and-discard to advance (expensive for large offsets but
         // lets sequential-only sources still participate).
         if(src->canSeek()) return src->seekToFrame(fromFrame);
-        for(int64_t skipped = 0; skipped < fromFrame; ++skipped) {
+        const int64_t target = fromFrame.isValid() ? fromFrame.value() : 0;
+        for(int64_t skipped = 0; skipped < target; ++skipped) {
                 Frame::Ptr discard;
                 Error e = src->readFrame(discard);
                 if(e.isError()) return e;
@@ -309,16 +310,14 @@ Error MediaIO::copyFramesSeekTo(MediaIO *src, int64_t fromFrame) {
         return Error::Ok;
 }
 
-Error MediaIO::copyFrames(MediaIO *src, MediaIO *dst,
-                          int64_t fromFrame, int64_t count,
-                          int64_t *copied) {
+Result<FrameCount> MediaIO::copyFrames(MediaIO *src, MediaIO *dst,
+                                       const FrameNumber &fromFrame, const FrameCount &count) {
         // Delegates to the template overload with a trivial pass-through
         // mutate.  Each call site instantiates the template against the
         // same identity lambda, so there is no run-time cost to the
         // extra hop.
         return copyFrames(src, dst, fromFrame, count,
-                          [](const Frame::Ptr &f, int64_t) { return f; },
-                          copied);
+                          [](const Frame::Ptr &f, int64_t) { return f; });
 }
 
 StringList MediaIO::enumerate(const String &typeName) {
@@ -458,11 +457,11 @@ void MediaIO::populateStandardStats(MediaIOStats &stats) const {
         // these through the MediaIOTask::noteFrameDropped family of
         // protected helpers, which simply increment these atomics.
         stats.set(MediaIOStats::FramesDropped,
-                _framesDroppedTotal.value());
+                FrameCount(_framesDroppedTotal.value()));
         stats.set(MediaIOStats::FramesRepeated,
-                _framesRepeatedTotal.value());
+                FrameCount(_framesRepeatedTotal.value()));
         stats.set(MediaIOStats::FramesLate,
-                _framesLateTotal.value());
+                FrameCount(_framesLateTotal.value()));
 
         // Latency is only populated when the caller opted into
         // benchmarking and provided somewhere to aggregate the stamps.
@@ -1209,7 +1208,8 @@ Error MediaIO::readFrame(Frame::Ptr &frame, bool block) {
                         // backend did not provide one.
                         {
                                 int64_t ns = _frameRate.cumulativeTicks(
-                                        INT64_C(1000000000), _currentFrame);
+                                        INT64_C(1000000000),
+                                        _currentFrame.isValid() ? _currentFrame.value() : 0);
                                 TimeStamp synTs = _originTime +
                                         Duration::fromNanoseconds(ns);
                                 MediaTimeStamp synMts(synTs,
@@ -1303,7 +1303,8 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
         // did not provide one.
         if(cmdWrite->frame.isValid()) {
                 int64_t ns = _frameRate.cumulativeTicks(
-                        INT64_C(1000000000), _writeFrameCount);
+                        INT64_C(1000000000),
+                        _writeFrameCount.isFinite() ? _writeFrameCount.value() : 0);
                 TimeStamp synTs = _originTime +
                         Duration::fromNanoseconds(ns);
                 MediaTimeStamp synMts(synTs, ClockDomain::Synthetic);
@@ -1536,7 +1537,7 @@ void MediaIO::setStep(int val) {
         _step = val;
 }
 
-Error MediaIO::seekToFrame(int64_t frameNumber, SeekMode mode) {
+Error MediaIO::seekToFrame(const FrameNumber &frameNumber, SeekMode mode) {
         if(!isOpen() || _closing) return Error::NotOpen;
         if(!_canSeek) return Error::IllegalSeek;
 
