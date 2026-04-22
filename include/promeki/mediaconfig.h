@@ -12,6 +12,7 @@
 #include <promeki/enums.h>
 #include <promeki/enumlist.h>
 #include <promeki/uuid.h>
+#include <promeki/url.h>
 #include <promeki/mediaduration.h>
 #include <promeki/timecode.h>
 
@@ -64,11 +65,37 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                 // Common / core
                 // ============================================================
 
-                /// @brief String — path or URL to the media resource.
+                /// @brief String — filesystem path to the media resource.
+                ///
+                /// Set by @ref MediaIO::createForFileRead and
+                /// @ref MediaIO::createForFileWrite when the caller
+                /// passes a plain path.  When the caller passes a URL
+                /// it is handled via @ref MediaIO::createFromUrl
+                /// instead, which populates @ref Url rather than
+                /// @c Filename — so a MediaIO opened via URL has an
+                /// empty @c Filename and a populated @c Url, and
+                /// vice versa.
                 PROMEKI_DECLARE_ID(Filename,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
-                                .setDescription("Path or URL to the media resource."));
+                                .setDescription("Filesystem path to the media resource."));
+
+                /// @brief Url — URL the MediaIO was opened from.
+                ///
+                /// Populated by @ref MediaIO::createFromUrl (and by
+                /// the transparent URL handling in
+                /// @ref MediaIO::createForFileRead /
+                /// @ref MediaIO::createForFileWrite when the argument
+                /// parses as a URL with a registered scheme).  Left
+                /// invalid for MediaIOs opened via a plain path or
+                /// via @ref MediaIO::create with a Type-keyed
+                /// Config.  Useful for logging and for tools that
+                /// want to round-trip "show me the URL the user
+                /// passed" through @ref MediaIO::config.
+                PROMEKI_DECLARE_ID(Url,
+                        VariantSpec().setType(Variant::TypeUrl)
+                                .setDefault(promeki::Url())
+                                .setDescription("URL the MediaIO was opened from."));
 
                 /// @brief String — registered backend type name (e.g. "TPG", "ImageFile").
                 PROMEKI_DECLARE_ID(Type,

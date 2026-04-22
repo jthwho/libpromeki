@@ -41,6 +41,7 @@
 #include <promeki/point.h>
 #include <promeki/masteringdisplay.h>
 #include <promeki/contentlightlevel.h>
+#include <promeki/url.h>
 #include <promeki/ciepoint.h>
 
 using namespace promeki;
@@ -2771,6 +2772,28 @@ TEST_CASE("DataStream: round-trip Variant ContentLightLevel") {
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.type() == Variant::TypeContentLightLevel);
                 CHECK(out.get<ContentLightLevel>() == cll);
+        }
+}
+
+TEST_CASE("DataStream: round-trip Variant Url") {
+        WriterFixture f;
+        Url u = Url::fromString("pmfb://bridge?FrameBridgeRingDepth=4&FrameBridgeSyncMode=false");
+        REQUIRE(u.isValid());
+        Variant v(u);
+        REQUIRE(v.type() == Variant::TypeUrl);
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << v;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        {
+                DataStream rs = DataStream::createReader(&f.dev);
+                Variant out;
+                rs >> out;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK(out.type() == Variant::TypeUrl);
+                CHECK(out.get<Url>() == u);
         }
 }
 

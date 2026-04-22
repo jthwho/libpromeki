@@ -876,6 +876,16 @@ DataStream &DataStream::operator<<(const MediaDuration &val) {
         return *this;
 }
 
+DataStream &DataStream::operator<<(const Url &val) {
+        writeTag(TypeUrl);
+        // Serialize via the canonical string form — round-trips
+        // through Url::fromString/toString preserve every component
+        // we care about, and the string form is stable across
+        // library versions.
+        writeStringData(val.toString());
+        return *this;
+}
+
 DataStream &DataStream::operator<<(const MacAddress &val) {
         writeTag(TypeMacAddress);
         writeStringData(val.toString());
@@ -940,6 +950,7 @@ DataStream &DataStream::operator<<(const Variant &val) {
                         *this << val.get<MasteringDisplay>(); break;
                 case Variant::TypeContentLightLevel:
                         *this << val.get<ContentLightLevel>(); break;
+                case Variant::TypeUrl:        *this << val.get<Url>(); break;
 #if PROMEKI_ENABLE_NETWORK
                 case Variant::TypeMacAddress: *this << val.get<MacAddress>(); break;
                 case Variant::TypeEUI64:      *this << val.get<EUI64>(); break;
@@ -1376,6 +1387,21 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                         *this >> maxCLL >> maxFALL;
                         if(_status != Ok) { val = Variant(); break; }
                         val = ContentLightLevel(maxCLL, maxFALL);
+                        break;
+                }
+                case TypeUrl: {
+                        String s = readStringData();
+                        if(_status != Ok) { val = Variant(); break; }
+                        Error pe;
+                        Url u = Url::fromString(s, &pe);
+                        if(pe.isError() || !u.isValid()) {
+                                setError(ReadCorruptData,
+                                        String::sprintf("Failed to parse Url from '%s'",
+                                                s.cstr()));
+                                val = Variant();
+                                break;
+                        }
+                        val = u;
                         break;
                 }
 #if PROMEKI_ENABLE_NETWORK

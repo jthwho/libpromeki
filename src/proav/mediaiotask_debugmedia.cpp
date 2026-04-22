@@ -11,10 +11,43 @@
 #include <promeki/mediadesc.h>
 #include <promeki/frame.h>
 #include <promeki/logger.h>
+#include <promeki/url.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 PROMEKI_REGISTER_MEDIAIO(MediaIOTask_DebugMedia)
+
+// ---------------------------------------------------------------------------
+// pmdf:// URL → Config translator.
+//
+// Canonical forms:
+//   pmdf:/abs/path.pmdf              (opaque, absolute path)
+//   pmdf:rel/path.pmdf               (opaque, relative path)
+//   pmdf:///abs/path.pmdf            (authority form, empty host)
+//
+// The URL's path component becomes @ref MediaConfig::Filename;
+// authority must be empty (pmdf:// files are always local, so a host
+// component would be nonsense).  Query parameters are handled
+// generically by MediaIO::applyQueryToConfig after this callback
+// returns — today PMDF has no tunables beyond Filename but anything
+// added later picks up URL support for free.
+// ---------------------------------------------------------------------------
+static Error debugMediaUrlToConfig(const Url &url, MediaIO::Config *outConfig) {
+        if(!url.host().isEmpty()) {
+                promekiErr("pmdf URL rejects a non-empty host: '%s' "
+                           "(use pmdf:/path or pmdf:///path)",
+                           url.toString().cstr());
+                return Error::InvalidArgument;
+        }
+        const String path = url.path();
+        if(path.isEmpty()) {
+                promekiErr("pmdf URL requires a file path: '%s'",
+                           url.toString().cstr());
+                return Error::InvalidArgument;
+        }
+        outConfig->set(MediaConfig::Filename, path);
+        return Error::Ok;
+}
 
 MediaIO::FormatDesc MediaIOTask_DebugMedia::formatDesc() {
         MediaIO::FormatDesc desc;
@@ -37,6 +70,8 @@ MediaIO::FormatDesc MediaIOTask_DebugMedia::formatDesc() {
         desc.canHandlePath = [](const String &path) -> bool {
                 return path.toLower().endsWith(".pmdf");
         };
+        desc.schemes       = { "pmdf" };
+        desc.urlToConfig   = debugMediaUrlToConfig;
         return desc;
 }
 

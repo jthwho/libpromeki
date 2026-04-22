@@ -18,6 +18,8 @@
 #include <promeki/buffer.h>
 #include <promeki/stringlist.h>
 #include <promeki/units.h>
+#include <promeki/url.h>
+#include <promeki/variantspec.h>
 #include <atomic>
 #include <cstdint>
 
@@ -73,6 +75,97 @@ static const MediaIO::FormatDesc *findFormatByName(const String &name) {
                 if(desc.name == name) return &desc;
         }
         return nullptr;
+}
+
+const MediaIO::FormatDesc *MediaIO::findFormatByScheme(const String &scheme) {
+        if(scheme.isEmpty()) return nullptr;
+        // Compare case-insensitively on both sides.  The parser
+        // already lowercased the input scheme, but a backend's
+        // declaration could be in any case — normalizing here keeps
+        // registrations forgiving.
+        const String needle = scheme.toLower();
+        const FormatDescList &list = formatRegistry();
+        for(const auto &desc : list) {
+                for(const auto &s : desc.schemes) {
+                        if(s.toLower() == needle) return &desc;
+                }
+        }
+        return nullptr;
+}
+
+Error MediaIO::applyQueryToConfig(const Url &url,
+                                  const Config::SpecMap &specs,
+                                  Config *outConfig) {
+        if(outConfig == nullptr) return Error::Invalid;
+
+        // Iterate the query map in its natural (key-sorted) order
+        // so error messages are deterministic — tests and users
+        // see failures on a stable, lowest-key-first basis.
+        for(const auto &[name, rawValue] : url.query()) {
+                // ID::find does NOT register a new name — we want
+                // exactly the opposite of the PROMEKI_DECLARE_ID
+                // path, so unknown names stay unknown and surface
+                // as a caller error rather than silently creating a
+                // new entry in the global registry.
+                ConfigID id = ConfigID::find(name);
+                if(!id.isValid()) {
+                        promekiWarn("MediaIO::applyQueryToConfig: "
+                                    "unknown query key '%s'",
+                                    name.cstr());
+                        return Error::InvalidArgument;
+                }
+
+                // Key must also be part of the backend's declared
+                // spec map — a key that exists in the global
+                // registry but not in the backend's specs (for
+                // example, a key declared by a different backend)
+                // is still a caller error, because this backend
+                // makes no promise to honor it.
+                auto it = specs.find(id);
+                if(it == specs.cend()) {
+                        promekiWarn("MediaIO::applyQueryToConfig: "
+                                    "key '%s' is not part of this "
+                                    "backend's spec map",
+                                    name.cstr());
+                        return Error::InvalidArgument;
+                }
+                const VariantSpec &spec = it->second;
+
+                Error parseErr = Error::Ok;
+                Variant value = spec.parseString(rawValue, &parseErr);
+                if(parseErr.isError()) {
+                        promekiWarn("MediaIO::applyQueryToConfig: "
+                                    "failed to parse '%s=%s' as expected type",
+                                    name.cstr(), rawValue.cstr());
+                        // Normalize to ConversionFailed regardless of
+                        // which specific failure parseString raised
+                        // (bool path emits Invalid, numeric paths
+                        // emit ConversionFailed).  Callers of
+                        // applyQueryToConfig care about *that the
+                        // value could not be coerced* — the exact
+                        // sub-error is already in the warning.
+                        return Error::ConversionFailed;
+                }
+
+                // Validate explicitly (rather than relying on
+                // VariantDatabase::set's internal check) so we can
+                // distinguish OutOfRange from other failures in the
+                // caller's error code.  VariantDatabase::set's
+                // default Warn validation would otherwise store the
+                // bad value and only emit a log line.
+                Error validateErr = Error::Ok;
+                if(!spec.validate(value, &validateErr)) {
+                        promekiWarn("MediaIO::applyQueryToConfig: "
+                                    "'%s=%s' failed spec validation",
+                                    name.cstr(), rawValue.cstr());
+                        return validateErr.isError()
+                                ? validateErr
+                                : Error::InvalidArgument;
+                }
+
+                outConfig->set(id, value);
+        }
+        return Error::Ok;
 }
 
 static String extractExtension(const String &filename) {
@@ -246,7 +339,119 @@ MediaIO *MediaIO::create(const Config &config, ObjectBase *parent) {
         return io;
 }
 
+// Lightweight "does this look like a URL we can dispatch?" test used by
+// the file-oriented factories below.  A positive answer means the input
+// parses with a non-empty scheme AND we have a backend registered for
+// that scheme — so a path like "C:/foo" on Windows doesn't accidentally
+// get routed through URL dispatch just because it parses.
+static const MediaIO::FormatDesc *tryResolveAsUrl(const String &maybeUrl,
+                                                  Url *outUrl) {
+        // Fast path: a string with no ':' can never be a URL.
+        if(maybeUrl.find(':') == String::npos) return nullptr;
+        Error parseErr = Error::Ok;
+        Url url = Url::fromString(maybeUrl, &parseErr);
+        if(parseErr.isError() || !url.isValid()) return nullptr;
+        const MediaIO::FormatDesc *desc =
+                MediaIO::findFormatByScheme(url.scheme());
+        if(desc == nullptr) return nullptr;
+        if(outUrl != nullptr) *outUrl = url;
+        return desc;
+}
+
+MediaIO *MediaIO::createFromUrl(const Url &url, ObjectBase *parent) {
+        if(!url.isValid()) {
+                promekiWarn("MediaIO::createFromUrl: invalid URL");
+                return nullptr;
+        }
+        const FormatDesc *desc = findFormatByScheme(url.scheme());
+        if(desc == nullptr) {
+                promekiWarn("MediaIO::createFromUrl: no backend for scheme '%s'",
+                            url.scheme().cstr());
+                return nullptr;
+        }
+        if(!desc->urlToConfig) {
+                promekiWarn("MediaIO::createFromUrl: backend '%s' claims scheme '%s' "
+                            "but provides no urlToConfig callback",
+                            desc->name.cstr(), url.scheme().cstr());
+                return nullptr;
+        }
+        // Start from the backend's full default config so every spec
+        // key has a value, then let the URL translator overwrite the
+        // subset it cares about.  This matches the pattern used by
+        // createForFileRead / createForFileWrite.
+        Config cfg = desc->configSpecs ? defaultConfig(desc->name) : Config();
+        cfg.set(MediaConfig::Type, desc->name);
+        // Seed the live config with the parsed URL so downstream
+        // consumers (logs, --stats, introspection tools) can show
+        // the user "what URL opened this MediaIO" without the
+        // factory having to hang a parallel string field off the
+        // Config.
+        cfg.set(MediaConfig::Url, url);
+
+        // The backend's callback owns the authority / path translation
+        // — those bits are scheme-specific and cannot be generalized
+        // (pmfb://<name> ≠ rtp://<addr>:<port> ≠ file:///<path>).
+        Error err = desc->urlToConfig(url, &cfg);
+        if(err.isError()) {
+                promekiWarn("MediaIO::createFromUrl: '%s' rejected URL '%s'",
+                            desc->name.cstr(), url.toString().cstr());
+                return nullptr;
+        }
+
+        // Query parameters are handled generically: their keys are
+        // the canonical MediaConfig IDs and their values run through
+        // the same VariantSpec::parseString coercion as JSON / CLI
+        // entry.  Unknown keys, bad values, and out-of-range values
+        // all fail the open — the open() error path is the right
+        // place for URL-level bugs, not a silent default substitution.
+        if(desc->configSpecs && !url.query().isEmpty()) {
+                Error qerr = applyQueryToConfig(url, desc->configSpecs(), &cfg);
+                if(qerr.isError()) {
+                        promekiWarn("MediaIO::createFromUrl: '%s' query "
+                                    "application failed for '%s' (%s)",
+                                    desc->name.cstr(), url.toString().cstr(),
+                                    qerr.name().cstr());
+                        return nullptr;
+                }
+        }
+
+        MediaIOTask *task = desc->create();
+        if(task == nullptr) return nullptr;
+        MediaIO *io = new MediaIO(parent);
+        io->_task = task;
+        task->_owner = io;
+        io->_config = cfg;
+        return io;
+}
+
+MediaIO *MediaIO::createFromUrl(const String &url, ObjectBase *parent) {
+        Error err = Error::Ok;
+        Url parsed = Url::fromString(url, &err);
+        if(err.isError() || !parsed.isValid()) {
+                promekiWarn("MediaIO::createFromUrl: failed to parse '%s'",
+                            url.cstr());
+                return nullptr;
+        }
+        return createFromUrl(parsed, parent);
+}
+
 MediaIO *MediaIO::createForFileRead(const String &filename, ObjectBase *parent) {
+        // URL takeover: if the input is a recognized scheme, route
+        // through the URL factory.  Callers that need the file-based
+        // behavior for a path that happens to start with "<alpha>:"
+        // still get it, because findFormatByScheme returns nullptr for
+        // any scheme no backend claims.
+        Url url;
+        if(const FormatDesc *urlDesc = tryResolveAsUrl(filename, &url)) {
+                if(!urlDesc->canBeSource) {
+                        promekiWarn("MediaIO::createForFileRead: backend '%s' "
+                                    "claims scheme '%s' but cannot be a source",
+                                    urlDesc->name.cstr(), url.scheme().cstr());
+                        return nullptr;
+                }
+                return createFromUrl(url, parent);
+        }
+
         const FormatDesc *desc = findFormatForFileRead(filename);
         if(desc == nullptr) {
                 promekiWarn("MediaIO::createForFileRead: no backend for '%s'", filename.cstr());
@@ -272,6 +477,18 @@ MediaIO *MediaIO::createForFileRead(const String &filename, ObjectBase *parent) 
 }
 
 MediaIO *MediaIO::createForFileWrite(const String &filename, ObjectBase *parent) {
+        // Mirror the URL takeover behavior from createForFileRead.
+        Url url;
+        if(const FormatDesc *urlDesc = tryResolveAsUrl(filename, &url)) {
+                if(!urlDesc->canBeSink) {
+                        promekiWarn("MediaIO::createForFileWrite: backend '%s' "
+                                    "claims scheme '%s' but cannot be a sink",
+                                    urlDesc->name.cstr(), url.scheme().cstr());
+                        return nullptr;
+                }
+                return createFromUrl(url, parent);
+        }
+
         const FormatDesc *desc = findFormatByExtension(filename);
         if(desc == nullptr) {
                 promekiWarn("MediaIO::createForFileWrite: no backend for '%s'", filename.cstr());

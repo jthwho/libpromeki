@@ -12,6 +12,7 @@
 #include <promeki/mediatimestamp.h>
 #include <promeki/clockdomain.h>
 #include <promeki/logger.h>
+#include <promeki/url.h>
 #include <chrono>
 #include <thread>
 
@@ -19,40 +20,67 @@ PROMEKI_NAMESPACE_BEGIN
 
 PROMEKI_REGISTER_MEDIAIO(MediaIOTask_FrameBridge)
 
+// ---------------------------------------------------------------------------
+// pmfb:// URL → Config translator.
+//
+// Canonical form: pmfb://<name>[?FrameBridgeKey=value&...]
+//
+// The authority is the FrameBridge logical name (required).  All other
+// knobs travel through the URL query map with their canonical
+// MediaConfig key names (FrameBridgeRingDepth, FrameBridgeSyncMode,
+// ...) — MediaIO::applyQueryToConfig (called by createFromUrl after
+// this callback returns) handles the coercion and validation.  Keeping
+// one spelling across Config, JSON, CLI, and URL entry points means a
+// log line naming "FrameBridgeRingDepth" is searchable through every
+// layer without translation tables.
+// ---------------------------------------------------------------------------
+static Error frameBridgeUrlToConfig(const Url &url, MediaIO::Config *outConfig) {
+        if(url.host().isEmpty()) {
+                promekiErr("pmfb URL requires a non-empty name "
+                           "(e.g. pmfb://my-bridge): got '%s'",
+                           url.toString().cstr());
+                return Error::InvalidArgument;
+        }
+        outConfig->set(MediaConfig::FrameBridgeName, url.host());
+        return Error::Ok;
+}
+
 MediaIO::FormatDesc MediaIOTask_FrameBridge::formatDesc() {
-        return {
-                "FrameBridge",
-                "Cross-process shared-memory frame transport",
-                {},      // No file extensions
-                true,    // canBeSource — reads from bridge (consumer of the bridge)
-                true,    // canBeSink  — writes to bridge  (producer into the bridge)
-                false,   // canBeTransform
-                []() -> MediaIOTask * {
-                        return new MediaIOTask_FrameBridge();
-                },
-                []() -> MediaIO::Config::SpecMap {
-                        MediaIO::Config::SpecMap specs;
-                        auto s = [&specs](MediaConfig::ID id, const Variant &def) {
-                                const VariantSpec *gs = MediaConfig::spec(id);
-                                specs.insert(id, gs ? VariantSpec(*gs).setDefault(def)
-                                                    : VariantSpec().setDefault(def));
-                        };
-                        s(MediaConfig::FrameBridgeName, String());
-                        s(MediaConfig::FrameBridgeRingDepth, int32_t(2));
-                        s(MediaConfig::FrameBridgeMetadataReserveBytes,
-                          int32_t(64 * 1024));
-                        s(MediaConfig::FrameBridgeAudioHeadroomFraction, 0.20);
-                        s(MediaConfig::FrameBridgeAccessMode, int32_t(0600));
-                        s(MediaConfig::FrameBridgeGroupName, String());
-                        s(MediaConfig::FrameBridgeSyncMode, true);
-                        s(MediaConfig::FrameBridgeWaitForConsumer, true);
-                        return specs;
-                },
-                []() -> Metadata {
-                        Metadata m;
-                        return m;
-                }
+        MediaIO::FormatDesc desc{};
+        desc.name = "FrameBridge";
+        desc.description = "Cross-process shared-memory frame transport";
+        desc.extensions = {};
+        desc.canBeSource = true;   // reads from bridge (consumer)
+        desc.canBeSink = true;     // writes to bridge  (producer)
+        desc.canBeTransform = false;
+        desc.create = []() -> MediaIOTask * {
+                return new MediaIOTask_FrameBridge();
         };
+        desc.configSpecs = []() -> MediaIO::Config::SpecMap {
+                MediaIO::Config::SpecMap specs;
+                auto s = [&specs](MediaConfig::ID id, const Variant &def) {
+                        const VariantSpec *gs = MediaConfig::spec(id);
+                        specs.insert(id, gs ? VariantSpec(*gs).setDefault(def)
+                                            : VariantSpec().setDefault(def));
+                };
+                s(MediaConfig::FrameBridgeName, String());
+                s(MediaConfig::FrameBridgeRingDepth, int32_t(2));
+                s(MediaConfig::FrameBridgeMetadataReserveBytes,
+                  int32_t(64 * 1024));
+                s(MediaConfig::FrameBridgeAudioHeadroomFraction, 0.20);
+                s(MediaConfig::FrameBridgeAccessMode, int32_t(0600));
+                s(MediaConfig::FrameBridgeGroupName, String());
+                s(MediaConfig::FrameBridgeSyncMode, true);
+                s(MediaConfig::FrameBridgeWaitForConsumer, true);
+                return specs;
+        };
+        desc.defaultMetadata = []() -> Metadata {
+                Metadata m;
+                return m;
+        };
+        desc.schemes = { "pmfb" };
+        desc.urlToConfig = frameBridgeUrlToConfig;
+        return desc;
 }
 
 MediaIOTask_FrameBridge::MediaIOTask_FrameBridge()

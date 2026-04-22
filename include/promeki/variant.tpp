@@ -246,6 +246,17 @@ To VariantImpl<Types...>::get(Error *err) const {
                                 return md;
                         }
 
+                } else if constexpr (std::is_same_v<To, Url>) {
+                        if constexpr (std::is_same_v<From, String>) {
+                                Error e;
+                                Url u = Url::fromString(arg, &e);
+                                if(e.isError() || !u.isValid()) {
+                                        if(err != nullptr) *err = Error::Invalid;
+                                        return Url();
+                                }
+                                return u;
+                        }
+
                 } else if constexpr (std::is_same_v<To, String>) {
                         if constexpr (std::is_same_v<From, bool>) return String::number(arg);
                         if constexpr (std::is_same_v<From, int8_t>) return String::number(arg);
@@ -276,6 +287,7 @@ To VariantImpl<Types...>::get(Error *err) const {
                         if constexpr (detail::is_type_registry_v<From>) return arg.name();
                         if constexpr (std::is_same_v<From, Enum>) return arg.toString();
                         if constexpr (std::is_same_v<From, EnumList>) return arg.toString();
+                        if constexpr (std::is_same_v<From, Url>) return arg.toString();
 #if PROMEKI_ENABLE_NETWORK
                         if constexpr (std::is_same_v<From, SocketAddress>) return arg.toString();
                         if constexpr (std::is_same_v<From, SdpSession>) return arg.toString();

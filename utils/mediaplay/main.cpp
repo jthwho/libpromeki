@@ -40,6 +40,7 @@
 #include <promeki/mediadesc.h>
 #include <promeki/mediaio.h>
 #include <promeki/mediaiodescription.h>
+#include <promeki/url.h>
 #include <promeki/mediapipeline.h>
 #include <promeki/mediapipelineconfig.h>
 #include <promeki/mediapipelineplanner.h>
@@ -83,16 +84,53 @@ int runProbe(const Options &opts) {
         String probeName = opts.source.type;
         MediaIO::Config probeCfg;
         if(probeName == kStageFile) {
-                const MediaIO::FormatDesc *desc =
-                        MediaIO::findFormatForPath(opts.source.path);
-                if(desc == nullptr) {
-                        fprintf(stderr, "Error: no backend recognises '%s'\n",
-                                opts.source.path.cstr());
-                        return 1;
+                // URL-first: if the arg parses as a URL with a
+                // registered scheme, ask that backend to translate
+                // the URL into a Config (same path createFromUrl
+                // uses) so --probe works against pmfb://, pmdf:, etc.
+                // without the caller having to convert back to a
+                // fake filename.
+                Error urlErr = Error::Ok;
+                Url parsed = Url::fromString(opts.source.path, &urlErr);
+                const MediaIO::FormatDesc *urlDesc = nullptr;
+                if(urlErr.isOk() && parsed.isValid()) {
+                        urlDesc = MediaIO::findFormatByScheme(parsed.scheme());
                 }
-                probeName = desc->name;
-                probeCfg = MediaIO::defaultConfig(probeName);
-                probeCfg.set(MediaConfig::Filename, opts.source.path);
+                if(urlDesc != nullptr) {
+                        probeName = urlDesc->name;
+                        probeCfg = MediaIO::defaultConfig(probeName);
+                        probeCfg.set(MediaConfig::Url, parsed);
+                        if(urlDesc->urlToConfig) {
+                                Error e = urlDesc->urlToConfig(parsed, &probeCfg);
+                                if(e.isError()) {
+                                        fprintf(stderr, "Error: '%s' rejected URL '%s'\n",
+                                                urlDesc->name.cstr(),
+                                                opts.source.path.cstr());
+                                        return 1;
+                                }
+                        }
+                        if(urlDesc->configSpecs && !parsed.query().isEmpty()) {
+                                Error e = MediaIO::applyQueryToConfig(
+                                        parsed, urlDesc->configSpecs(), &probeCfg);
+                                if(e.isError()) {
+                                        fprintf(stderr,
+                                                "Error: query application failed for '%s'\n",
+                                                opts.source.path.cstr());
+                                        return 1;
+                                }
+                        }
+                } else {
+                        const MediaIO::FormatDesc *desc =
+                                MediaIO::findFormatForPath(opts.source.path);
+                        if(desc == nullptr) {
+                                fprintf(stderr, "Error: no backend recognises '%s'\n",
+                                        opts.source.path.cstr());
+                                return 1;
+                        }
+                        probeName = desc->name;
+                        probeCfg = MediaIO::defaultConfig(probeName);
+                        probeCfg.set(MediaConfig::Filename, opts.source.path);
+                }
         } else {
                 probeCfg = MediaIO::defaultConfig(probeName);
         }

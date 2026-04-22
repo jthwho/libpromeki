@@ -57,6 +57,7 @@ class PixelDesc;
 class Enum;
 class EnumList;
 class StringList;
+class Url;
 
 /**
  * @brief Binary stream for structured, portable serialization.
@@ -278,7 +279,8 @@ class DataStream {
                         // Frame timeline types ----------------------------------
                         TypeFrameNumber         = 0x43, ///< @brief FrameNumber (length-prefixed string round-trip)
                         TypeFrameCount          = 0x44, ///< @brief FrameCount (length-prefixed string round-trip)
-                        TypeMediaDuration       = 0x45  ///< @brief MediaDuration (length-prefixed string round-trip)
+                        TypeMediaDuration       = 0x45, ///< @brief MediaDuration (length-prefixed string round-trip)
+                        TypeUrl                 = 0x46  ///< @brief Url (length-prefixed string round-trip)
                 };
 
                 /** @brief Current wire format version. */
@@ -495,6 +497,8 @@ class DataStream {
                 DataStream &operator<<(const EUI64 &val);
                 /** @brief Writes a StringList as uint32 count + length-prefixed elements. */
                 DataStream &operator<<(const StringList &val);
+                /** @brief Writes a Url as a length-prefixed string (toString form). */
+                DataStream &operator<<(const Url &val);
 
                 // ============================================================
                 // Read operators — primitives

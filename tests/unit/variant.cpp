@@ -9,6 +9,8 @@
 #include <doctest/doctest.h>
 #include <promeki/variant.h>
 #include <promeki/sdpsession.h>
+#include <promeki/url.h>
+#include <promeki/variantspec.h>
 
 using namespace promeki;
 
@@ -915,4 +917,62 @@ TEST_CASE("Variant_Format_InvalidSpec_ReturnsDefault") {
 TEST_CASE("Variant_Format_Invalid_Variant_Empty") {
         Variant v;
         CHECK(v.format("smpte") == String());
+}
+
+// ============================================================================
+// Url
+// ============================================================================
+
+TEST_CASE("Variant_Url_RoundTrip") {
+        Url u = Url::fromString("pmfb://studio-a?FrameBridgeRingDepth=4");
+        Variant v(u);
+        CHECK(v.isValid());
+        CHECK(v.type() == Variant::TypeUrl);
+        Url out = v.get<Url>();
+        CHECK(out == u);
+}
+
+TEST_CASE("Variant_Url_ToString") {
+        Url u = Url::fromString("pmfb://studio-a");
+        Variant v(u);
+        CHECK(v.get<String>() == "pmfb://studio-a");
+}
+
+TEST_CASE("VariantSpec_Url_ParseString") {
+        VariantSpec spec = VariantSpec().setType(Variant::TypeUrl);
+        Error err;
+        Variant parsed = spec.parseString("pmfb://bridge", &err);
+        CHECK_FALSE(err.isError());
+        CHECK(parsed.type() == Variant::TypeUrl);
+        CHECK(parsed.get<Url>().scheme() == "pmfb");
+        CHECK(parsed.get<Url>().host() == "bridge");
+}
+
+TEST_CASE("VariantSpec_Url_ParseString_Rejects_Malformed") {
+        VariantSpec spec = VariantSpec().setType(Variant::TypeUrl);
+        Error err = Error::Ok;
+        Variant parsed = spec.parseString("no-scheme-here", &err);
+        CHECK(err.isError());
+        CHECK_FALSE(parsed.isValid());
+}
+
+TEST_CASE("Variant_Url_FromStringVariant") {
+        // Exercises the From==String branch in variant.tpp: converting a
+        // TypeString Variant to Url via get<Url>().
+        Variant sv(String("pmfb://relay"));
+        REQUIRE(sv.type() == Variant::TypeString);
+        Url u = sv.get<Url>();
+        CHECK(u.isValid());
+        CHECK(u.scheme() == "pmfb");
+        CHECK(u.host() == "relay");
+}
+
+TEST_CASE("Variant_Url_FromStringVariant_Malformed") {
+        // From==String branch must return invalid Url and set Error::Invalid
+        // when the string is not a parseable URL.
+        Variant sv(String("not-a-url"));
+        Error err = Error::Ok;
+        Url u = sv.get<Url>(&err);
+        CHECK_FALSE(u.isValid());
+        CHECK(err.isError());
 }

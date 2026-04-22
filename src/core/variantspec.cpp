@@ -21,6 +21,7 @@
 #include <promeki/size2d.h>
 #include <promeki/stringlist.h>
 #include <promeki/timecode.h>
+#include <promeki/url.h>
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_NETWORK
 #include <promeki/socketaddress.h>
@@ -99,6 +100,7 @@ String singleTypeName(Variant::Type t, Enum::Type enumType) {
                         if(enumType.isValid()) return String("EnumList ") + enumType.name();
                         return "EnumList";
                 }
+                case Variant::TypeUrl:          return "Url";
 #if PROMEKI_ENABLE_NETWORK
                 case Variant::TypeSocketAddress: return "SocketAddress";
                 case Variant::TypeSdpSession:    return "SdpSession";
@@ -239,6 +241,12 @@ Variant parseAsType(Variant::Type type, Enum::Type enumType,
                 }
                 case Variant::TypeStringList:
                         return Variant(str.split(","));
+                case Variant::TypeUrl: {
+                        Error urlErr;
+                        Url u = Url::fromString(str, &urlErr);
+                        if(urlErr.isError() || !u.isValid()) break;
+                        return Variant(u);
+                }
 #if PROMEKI_ENABLE_NETWORK
                 case Variant::TypeSocketAddress: {
                         auto r = SocketAddress::fromString(str);

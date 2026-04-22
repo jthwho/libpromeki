@@ -864,6 +864,7 @@ set(PROMEKI_HEADERS
     include/promeki/util.h
     include/promeki/umid.h
     include/promeki/units.h
+    include/promeki/url.h
     include/promeki/uuid.h
     include/promeki/variant.h
     include/promeki/variantdatabase.h
@@ -980,6 +981,7 @@ set(PROMEKI_SOURCES
     src/core/timestamp.cpp
     src/core/umid.cpp
     src/core/units.cpp
+    src/core/url.cpp
     src/core/util.cpp
     src/core/uuid.cpp
     src/core/variant.cpp
@@ -1831,6 +1833,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/timestamp.cpp
         tests/unit/umid.cpp
         tests/unit/units.cpp
+        tests/unit/url.cpp
         tests/unit/uuid.cpp
         tests/unit/variant.cpp
         tests/unit/variantdatabase.cpp

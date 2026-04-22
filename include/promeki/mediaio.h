@@ -32,6 +32,7 @@
 #include <promeki/variantdatabase.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/uuid.h>
+#include <promeki/url.h>
 #include <promeki/benchmark.h>
 #include <promeki/ratetracker.h>
 #include <promeki/mediatimestamp.h>
@@ -578,9 +579,10 @@ class MediaIO : public ObjectBase {
                          * Returns true if this backend can handle the
                          * given filesystem path (e.g. a V4L2 backend
                          * recognises @c "/dev/video0").  Checked by
-                         * @ref createForFileRead before extension or
-                         * content probes, so device nodes that are not
-                         * regular files are routed to the right backend.
+                         * @ref createForFileRead after URL scheme
+                         * dispatch but before extension or content
+                         * probes, so device nodes that are not regular
+                         * files are routed to the right backend.
                          *
                          * @param path The filesystem path to test.
                          * @return true if this backend claims the path.
@@ -652,6 +654,41 @@ class MediaIO : public ObjectBase {
                                      Config *outConfig,
                                      int *outCost)>;
 
+                        /**
+                         * @brief Optional URL → Config translator.
+                         *
+                         * Called when @ref createFromUrl (or the
+                         * transparent URL path in
+                         * @ref createForFileRead /
+                         * @ref createForFileWrite) dispatches to this
+                         * backend via its registered @ref schemes.
+                         * The backend should populate @p outConfig
+                         * from @p url's authority and path components
+                         * only — query parameters are applied
+                         * automatically by the factory via
+                         * @ref applyQueryToConfig against this
+                         * backend's @ref configSpecs, so the callback
+                         * body stays short.  @ref MediaConfig::Type
+                         * is set by the factory before the callback
+                         * runs, so the backend does not need to
+                         * populate it.
+                         *
+                         * @par Case sensitivity
+                         * Query keys are matched case-sensitively
+                         * against @ref configSpecs (see
+                         * @ref applyQueryToConfig).  Scheme and host
+                         * follow RFC 3986 — scheme is normalized to
+                         * lowercase by @ref Url::fromString, host is
+                         * preserved verbatim.
+                         *
+                         * A non-OK return causes the factory to fail
+                         * the open so the caller learns about
+                         * malformed URLs via the normal error path
+                         * rather than a silently-misconfigured MediaIO.
+                         */
+                        using UrlToConfigFunc = std::function<
+                                Error(const Url &url, Config *outConfig)>;
+
                         String              name;            ///< @brief Backend name (e.g. "MXF", "VideoDevice").
                         String              description;     ///< @brief Human-readable description.
                         StringList          extensions;      ///< @brief Supported file extensions (no dots).
@@ -667,6 +704,8 @@ class MediaIO : public ObjectBase {
                         QueryFunc           queryDevice;     ///< @brief Device capability query.
                         PrintDeviceInfoFunc printDeviceInfo; ///< @brief Device-info printer.
                         BridgeFunc          bridge;          ///< @brief Format-bridge declaration (planner-driven; may be null).
+                        StringList          schemes;         ///< @brief Claimed URL schemes (e.g. "pmfb").  Empty = no URL handling.
+                        UrlToConfigFunc     urlToConfig;     ///< @brief URL → Config translator (required if @c schemes is non-empty).
                 };
 
                 using FormatDescList = List<FormatDesc>;
@@ -883,7 +922,14 @@ class MediaIO : public ObjectBase {
 
                 /**
                  * @brief Creates a MediaIO reader for the given filename.
-                 * @param filename The path to the media file.
+                 *
+                 * If @p filename parses as a URL whose scheme matches a
+                 * registered backend, dispatches to @ref createFromUrl
+                 * in @ref Source mode.  Otherwise treats the argument
+                 * as a filesystem path and picks a backend by path
+                 * probe, extension, or content probe (in that order).
+                 *
+                 * @param filename The path or URL to the media resource.
                  * @param parent Optional parent object.
                  * @return A new MediaIO instance, or nullptr on failure.
                  */
@@ -891,11 +937,122 @@ class MediaIO : public ObjectBase {
 
                 /**
                  * @brief Creates a MediaIO writer for the given filename.
-                 * @param filename The path to the media file.
+                 *
+                 * URL strings are dispatched identically to
+                 * @ref createForFileRead but in @ref Sink mode.
+                 *
+                 * @param filename The path or URL to the media resource.
                  * @param parent Optional parent object.
                  * @return A new MediaIO instance, or nullptr on failure.
                  */
                 static MediaIO *createForFileWrite(const String &filename, ObjectBase *parent = nullptr);
+
+                /**
+                 * @brief Creates a MediaIO from a URL.
+                 *
+                 * Looks up the backend that registered @p url's scheme
+                 * (see @ref FormatDesc::schemes), runs its
+                 * @ref FormatDesc::UrlToConfigFunc callback to
+                 * translate the URL into a @ref Config, seeds
+                 * @ref MediaConfig::Type with the backend name, and
+                 * instantiates the task.  The returned MediaIO is not
+                 * yet opened — call @ref open with the desired mode.
+                 *
+                 * @param url    The parsed URL.
+                 * @param parent Optional parent object.
+                 * @return A new MediaIO instance, or nullptr on failure.
+                 */
+                static MediaIO *createFromUrl(const Url &url, ObjectBase *parent = nullptr);
+
+                /**
+                 * @brief Convenience overload that parses @p url first.
+                 * @param url    The URL string.
+                 * @param parent Optional parent object.
+                 * @return A new MediaIO instance, or nullptr if @p url
+                 *         fails to parse, has no known scheme, or the
+                 *         backend's URL translator reports an error.
+                 */
+                static MediaIO *createFromUrl(const String &url, ObjectBase *parent = nullptr);
+
+                /**
+                 * @brief Finds the backend that claims a URL scheme.
+                 *
+                 * Walks the format registry and returns the first
+                 * backend whose @ref FormatDesc::schemes list contains
+                 * @p scheme (case-insensitive).
+                 *
+                 * @param scheme The URL scheme (without the trailing colon).
+                 * @return The matching FormatDesc, or nullptr.
+                 */
+                static const FormatDesc *findFormatByScheme(const String &scheme);
+
+                /**
+                 * @brief Applies URL query parameters to a config via
+                 *        the backend's spec map.
+                 *
+                 * Every key in @p url.query() is looked up in @p specs
+                 * by its declared name (the identifier passed to
+                 * @ref PROMEKI_DECLARE_ID).  The associated raw string
+                 * value is coerced to the spec's expected Variant type
+                 * via @ref VariantSpec::parseString and range-checked
+                 * via @ref VariantSpec::validate before being written
+                 * to @p outConfig.  Values flow through the same
+                 * coercion path as JSON/CLI entry, so a URL, a JSON
+                 * config file, and a command-line flag all have
+                 * identical type rules.
+                 *
+                 * This is automatically invoked by @ref createFromUrl
+                 * after the backend's own
+                 * @ref FormatDesc::UrlToConfigFunc has handled the
+                 * authority / path components, so most backends never
+                 * need to call it directly.
+                 *
+                 * @par Case sensitivity
+                 * Query keys and values are matched
+                 * @b case-sensitively.  A URL like
+                 * @c "pmfb://x?framebridgeringdepth=4" is rejected
+                 * with @ref Error::InvalidArgument; the canonical
+                 * @c "FrameBridgeRingDepth" spelling is required.
+                 * This matches the formal RFC 3986 position (query
+                 * components are case-sensitive) and — more
+                 * importantly — closes the door on a class of silent
+                 * bugs where a near-match name could resolve to the
+                 * wrong key (e.g. @c FrameBridgeSynch vs
+                 * @c FrameBridgeSync).  The spec ID spelling is
+                 * canonical in log lines, JSON configs, and
+                 * @c --help output, so requiring the same spelling in
+                 * URLs keeps grep/search coherent across all four
+                 * layers.  Scheme and host remain case-insensitive
+                 * per RFC 3986 and are handled by @ref Url::fromString
+                 * itself.
+                 *
+                 * @par Failure cases
+                 * All failures are fatal — on the first bad key the
+                 * function logs a single warning and returns the
+                 * corresponding error without writing that key (or any
+                 * subsequent keys) to @p outConfig:
+                 *   - @c Error::Invalid &mdash; @p outConfig is null.
+                 *   - @c Error::InvalidArgument &mdash; a query key is
+                 *     not declared in any
+                 *     @ref PROMEKI_DECLARE_ID for this Config type
+                 *     (including case-variant spellings), or is
+                 *     declared globally but not present in @p specs
+                 *     (i.e. the backend does not honor it).
+                 *   - @c Error::ConversionFailed &mdash;
+                 *     @ref VariantSpec::parseString could not coerce
+                 *     the raw string into the spec's expected type.
+                 *   - @c Error::OutOfRange &mdash; the parsed value
+                 *     lies outside the spec's declared @c [min, max].
+                 *
+                 * @param url       The URL whose query map to apply.
+                 * @param specs     The spec map defining accepted keys.
+                 * @param outConfig Config to populate (must be non-null).
+                 * @return @c Error::Ok on success, or one of the error
+                 *         codes listed above.
+                 */
+                static Error applyQueryToConfig(const Url &url,
+                                                const Config::SpecMap &specs,
+                                                Config *outConfig);
 
                 /**
                  * @brief Returns the shared thread pool used for the worker.

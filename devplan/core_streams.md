@@ -5,7 +5,7 @@
 **Depends-on-this:** Phase 7 (ObjectBase saveState/loadState)
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
-`DataStream`, `TextStream`, and `StreamString` are implemented and used throughout the library. DataStream has full type coverage (primitives, containers, data objects, Variant symmetry, golden wire-format tests, `Result<T>` read API, extension API via `writeTag`/`readTag`/`setError`). See git history for the completed DataStream type expansion.
+`DataStream`, `TextStream`, and `StreamString` are implemented and used throughout the library. DataStream has full type coverage (primitives, containers, data objects, Variant symmetry, golden wire-format tests, `Result<T>` read API, extension API via `writeTag`/`readTag`/`setError`). `TypeUrl = 0x46` added (Phase 4r) for `Url` round-trip via string form. See git history for the completed DataStream type expansion.
 
 What remains: TextStream type operator overloads, and ObjectBase saveState/loadState.
 

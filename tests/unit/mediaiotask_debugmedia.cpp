@@ -194,3 +194,67 @@ TEST_CASE("MediaIOTask_DebugMedia: copyFrames through MediaIO") {
         REQUIRE(r.open(outFn, DebugMediaFile::Read).isOk());
         CHECK(r.frameCount() == 2);
 }
+
+TEST_CASE("MediaIOTask_DebugMedia: registers pmdf URL scheme") {
+        const MediaIO::FormatDesc *desc = MediaIO::findFormatByScheme("pmdf");
+        REQUIRE(desc != nullptr);
+        CHECK(desc->name == "PMDF");
+        CHECK(desc->schemes.contains(String("pmdf")));
+}
+
+TEST_CASE("MediaIOTask_DebugMedia: createFromUrl opaque absolute path") {
+        // pmdf:/abs/path.pmdf — opaque form, url.path() carries the
+        // leading slash so the filename comes out exactly as written.
+        MediaIO *io = MediaIO::createFromUrl(String("pmdf:/var/tmp/capture.pmdf"));
+        REQUIRE(io != nullptr);
+        CHECK(io->config().getAs<String>(MediaConfig::Type) == "PMDF");
+        CHECK(io->config().getAs<String>(MediaConfig::Filename) ==
+              "/var/tmp/capture.pmdf");
+        CHECK(io->config().getAs<Url>(MediaConfig::Url).scheme() == "pmdf");
+        delete io;
+}
+
+TEST_CASE("MediaIOTask_DebugMedia: createFromUrl authority-form with empty host") {
+        MediaIO *io = MediaIO::createFromUrl(
+                String("pmdf:///var/tmp/capture.pmdf"));
+        REQUIRE(io != nullptr);
+        CHECK(io->config().getAs<String>(MediaConfig::Filename) ==
+              "/var/tmp/capture.pmdf");
+        delete io;
+}
+
+TEST_CASE("MediaIOTask_DebugMedia: createFromUrl rejects non-empty host") {
+        // pmdf://host/... makes no sense for a local file capture —
+        // surface the nonsense as a hard error rather than silently
+        // dropping the host.
+        MediaIO *io = MediaIO::createFromUrl(
+                String("pmdf://somehost/tmp/capture.pmdf"));
+        CHECK(io == nullptr);
+}
+
+TEST_CASE("MediaIOTask_DebugMedia: createFromUrl rejects empty path") {
+        MediaIO *io = MediaIO::createFromUrl(String("pmdf:"));
+        CHECK(io == nullptr);
+}
+
+TEST_CASE("MediaIOTask_DebugMedia: createForFileRead takes pmdf URL") {
+        // Write a tiny real PMDF to a scratch path, then open it via
+        // URL — confirms the end-to-end URL path actually talks to the
+        // backend, not just populates a Config.
+        String outFn = (scratchDir() / "url-read.pmdf").toString();
+        {
+                DebugMediaFile w;
+                REQUIRE(w.open(outFn, DebugMediaFile::Write).isOk());
+                REQUIRE(w.writeFrame(sampleFrame(0)).isOk());
+                w.close();
+        }
+        String url = String("pmdf:") + outFn;
+        MediaIO *io = MediaIO::createForFileRead(url);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Source).isOk());
+        Frame::Ptr f;
+        CHECK(io->readFrame(f).isOk());
+        CHECK(f.isValid());
+        io->close();
+        delete io;
+}

@@ -43,6 +43,7 @@
 #include <promeki/contentlightlevel.h>
 #include <promeki/enum.h>
 #include <promeki/enumlist.h>
+#include <promeki/url.h>
 #if PROMEKI_ENABLE_NETWORK
 #include <promeki/socketaddress.h>
 #include <promeki/sdpsession.h>
@@ -162,6 +163,7 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeEnumList, EnumList)       \
         X(TypeMasteringDisplay, MasteringDisplay) \
         X(TypeContentLightLevel, ContentLightLevel) \
+        X(TypeUrl, Url)                 \
         PROMEKI_VARIANT_TYPES_NETWORK
 
 namespace detail {
@@ -348,6 +350,7 @@ template <typename... Types> class VariantImpl {
                                 case TypeAudioCodec:
                                 case TypeEnum:
                                 case TypeEnumList:
+                                case TypeUrl:
 #if PROMEKI_ENABLE_NETWORK
                                 case TypeSocketAddress:
                                 case TypeSdpSession:
