@@ -163,9 +163,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a35446bd21aa6aa7d35fc73bebccb0d55" id="r_a35446bd21aa6aa7d35fc73bebccb0d55"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classTimecode.html">Timecode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimecodeGenerator.html#a35446bd21aa6aa7d35fc73bebccb0d55">advance</a> ()</td></tr>
 <tr class="memdesc:a35446bd21aa6aa7d35fc73bebccb0d55"><td class="mdescLeft">&#160;</td><td class="mdescRight">Advances the generator by one frame.  <br /></td></tr>
 <tr class="separator:a35446bd21aa6aa7d35fc73bebccb0d55"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6c5e3a44d93ff7e19b838675a3983936" id="r_a6c5e3a44d93ff7e19b838675a3983936"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">uint64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimecodeGenerator.html#a6c5e3a44d93ff7e19b838675a3983936">frameCount</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a6c5e3a44d93ff7e19b838675a3983936"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the total number of frames advanced.  <br /></td></tr>
-<tr class="separator:a6c5e3a44d93ff7e19b838675a3983936"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab38437efc2c88e58d51a1c2b1fddc93a" id="r_ab38437efc2c88e58d51a1c2b1fddc93a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classFrameCount.html">FrameCount</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimecodeGenerator.html#ab38437efc2c88e58d51a1c2b1fddc93a">frameCount</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ab38437efc2c88e58d51a1c2b1fddc93a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the total number of frames advanced.  <br /></td></tr>
+<tr class="separator:ab38437efc2c88e58d51a1c2b1fddc93a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3a3033c684e6d6464f73d104f7c971f8" id="r_a3a3033c684e6d6464f73d104f7c971f8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimecodeGenerator.html#a3a3033c684e6d6464f73d104f7c971f8">reset</a> ()</td></tr>
 <tr class="memdesc:a3a3033c684e6d6464f73d104f7c971f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resets the generator.  <br /></td></tr>
 <tr class="separator:a3a3033c684e6d6464f73d104f7c971f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -183,8 +183,8 @@ Public Member Functions</h2></td></tr>
 <div class="line">}</div>
 <div class="ttc" id="aclassFrameRate_html"><div class="ttname"><a href="classFrameRate.html">FrameRate</a></div><div class="ttdoc">Represents a video frame rate as a rational number.</div><div class="ttdef"><b>Definition</b> framerate.h:101</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassTimecodeGenerator_html"><div class="ttname"><a href="classTimecodeGenerator.html">TimecodeGenerator</a></div><div class="ttdoc">General-purpose timecode generator.</div><div class="ttdef"><b>Definition</b> timecodegenerator.h:37</div></div>
-<div class="ttc" id="aclassTimecode_html"><div class="ttname"><a href="classTimecode.html">Timecode</a></div><div class="ttdoc">Class for holding and manipulating timecode.</div><div class="ttdef"><b>Definition</b> timecode.h:48</div></div>
+<div class="ttc" id="aclassTimecodeGenerator_html"><div class="ttname"><a href="classTimecodeGenerator.html">TimecodeGenerator</a></div><div class="ttdoc">General-purpose timecode generator.</div><div class="ttdef"><b>Definition</b> timecodegenerator.h:38</div></div>
+<div class="ttc" id="aclassTimecode_html"><div class="ttname"><a href="classTimecode.html">Timecode</a></div><div class="ttdoc">Class for holding and manipulating timecode.</div><div class="ttdef"><b>Definition</b> timecode.h:49</div></div>
 <div class="ttc" id="aclassTimecode_html_a5f71607fe05c9b37edcf0415f01bc623ac1c83207a69e1e4b00911635fbfdae55"><div class="ttname"><a href="classTimecode.html#a5f71607fe05c9b37edcf0415f01bc623ac1c83207a69e1e4b00911635fbfdae55">Timecode::NDF30</a></div><div class="ttdeci">@ NDF30</div><div class="ttdoc">30 fps non-drop-frame (maps to VTC_FORMAT_30_NDF)</div><div class="ttdef"><b>Definition</b> timecode.h:58</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
@@ -300,8 +300,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a6c5e3a44d93ff7e19b838675a3983936" name="a6c5e3a44d93ff7e19b838675a3983936"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6c5e3a44d93ff7e19b838675a3983936">&#9670;&#160;</a></span>frameCount()</h2>
+<a id="ab38437efc2c88e58d51a1c2b1fddc93a" name="ab38437efc2c88e58d51a1c2b1fddc93a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab38437efc2c88e58d51a1c2b1fddc93a">&#9670;&#160;</a></span>frameCount()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -310,7 +310,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">uint64_t</a> TimecodeGenerator::frameCount </td>
+          <td class="memname"><a class="el" href="classFrameCount.html">FrameCount</a> TimecodeGenerator::frameCount </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -611,7 +611,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classTimecodeGenerator.html">TimecodeGenerator</a></li>
-    <li class="footer">Generated on 2026-04-21 07:27:58 from commit 3f2d824 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
   </ul>
 </div>
 </body>

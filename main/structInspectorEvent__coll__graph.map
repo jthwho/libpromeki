@@ -1,7 +1,9 @@
 <map id="InspectorEvent" name="InspectorEvent">
-<area shape="rect" id="Node000001" title="Per&#45;frame measurement record produced by MediaIOTask_Inspector." alt="" coords="79,108,197,133"/>
-<area shape="rect" id="Node000002" href="$classTimecode.html" title="Class for holding and manipulating timecode." alt="" coords="5,5,92,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="63,41,91,82,120,106,117,110,87,86,58,44"/>
-<area shape="rect" id="Node000003" href="$classList.html" title=" " alt="" coords="117,5,338,31"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="223,45,214,66,200,86,184,100,166,110,164,106,181,95,196,82,209,63,218,43"/>
+<area shape="rect" id="Node000001" title="Per&#45;frame measurement record produced by MediaIOTask_Inspector." alt="" coords="129,108,247,133"/>
+<area shape="rect" id="Node000002" href="$classFrameNumber.html" title="Absolute frame index along a media timeline." alt="" coords="5,5,120,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="75,42,88,63,104,82,125,96,147,105,145,110,122,100,101,86,83,66,71,44"/>
+<area shape="rect" id="Node000003" href="$classTimecode.html" title="Class for holding and manipulating timecode." alt="" coords="145,5,231,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="191,45,191,108,185,108,185,45"/>
+<area shape="rect" id="Node000004" href="$classList.html" title=" " alt="" coords="256,5,477,31"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="351,44,330,66,304,86,275,100,245,111,243,105,273,96,301,82,327,62,347,40"/>
 </map>

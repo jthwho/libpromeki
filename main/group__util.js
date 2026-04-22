@@ -276,7 +276,10 @@ var group__util =
         [ "ParseFailed", "classError.html#ab5980e13b879db253df802b0950d1708ac5ee0586eea50614d95aea00d1eff4a9", null ],
         [ "ClockDomainMismatch", "classError.html#ab5980e13b879db253df802b0950d1708a7eb7c3167bbfd4848b72b843e36fc1f7", null ],
         [ "ObjectGone", "classError.html#ab5980e13b879db253df802b0950d1708a99cd04054fffa79f63c560723eb4ecfd", null ],
-        [ "ClockPaused", "classError.html#ab5980e13b879db253df802b0950d1708a472abb37baff1ed0725d1a8400e1ec1e", null ]
+        [ "ClockPaused", "classError.html#ab5980e13b879db253df802b0950d1708a472abb37baff1ed0725d1a8400e1ec1e", null ],
+        [ "DurationUnknown", "classError.html#ab5980e13b879db253df802b0950d1708ac3b0a5260c550da359ce21d5d2f4790f", null ],
+        [ "FrameRangeInfinite", "classError.html#ab5980e13b879db253df802b0950d1708a98240600c1b658add2e71f1dc7ec7e95", null ],
+        [ "NotAdjacent", "classError.html#ab5980e13b879db253df802b0950d1708a9027e04f1e22c093a246d518d805db28", null ]
       ] ],
       [ "Error", "classError.html#a83eaa8db2a6c22d6aff5758eea236a6e", null ],
       [ "~Error", "classError.html#a1a45d42a3a035d510333cdfeb36a0e93", null ],
@@ -552,6 +555,7 @@ var group__util =
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#af4e5b039cc17e4ed7b46859fad7f78b9", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a5a8083e08b3f8c5dfcb57d0eb6693a57", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a276ea936a7081ba34fc849355142887a", null ],
+      [ "PROMEKI_DECLARE_ID", "classMetadata.html#a9450a81c0836337aac4036bcf543469f", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a0165d77b62e215a24ca574aba410ba99", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a05e8f79884f6936c128b5279780d5d56", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a3c4fd6dbceb0c05173d346e72fa58667", null ],
@@ -574,7 +578,7 @@ var group__util =
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a7b81d8cc9483e120d8b4611940d22d6e", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a85c6ce09ec0c2a23472889bbfd67cbb2", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a2f4468cdc18f1061ab66cc125315614a", null ],
-      [ "PROMEKI_DECLARE_ID", "classMetadata.html#a9c092ba36f508317229924b530d1ca83", null ],
+      [ "PROMEKI_DECLARE_ID", "classMetadata.html#a641af02af52b67233acbda1fdcc5a853", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#abe3c960c587617b1d75750196185931a", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a4f0bd9b55aa58028fe48a625394658b9", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a575cf01d52d7a25317dbac328d48474d", null ],

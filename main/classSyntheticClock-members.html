@@ -112,7 +112,7 @@ $(document).ready(function(){initNavTree('classSyntheticClock.html',''); initRes
   <tr class="even"><td class="entry"><a class="el" href="classClock.html#a72a341cf79d5b0ac585c02e32bf360f3">Clock</a>(const ClockDomain &amp;domain, const Duration &amp;fixedOffset=Duration(), ClockPauseMode pauseMode=ClockPauseMode::CannotPause, ClockFilter *filter=nullptr)</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>Clock</b>(const Clock &amp;)=delete (defined in <a class="el" href="classClock.html">Clock</a>)</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>Clock</b>(Clock &amp;&amp;)=delete (defined in <a class="el" href="classClock.html">Clock</a>)</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="classSyntheticClock.html#a44d68359d40430a33612875464295379">currentFrame</a>() const</td><td class="entry"><a class="el" href="classSyntheticClock.html">SyntheticClock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classSyntheticClock.html#a09366f6fdf7795accd8df2a87ef4bf25">currentFrame</a>() const</td><td class="entry"><a class="el" href="classSyntheticClock.html">SyntheticClock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classClock.html#a1fb097d1e07fe5c1512ccce49f5d2cf1">domain</a>() const</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classClock.html#aaa1d16ed8b85ea43bb4e78a5d0ad4551">fixedOffset</a>() const</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classSyntheticClock.html#a35cefa6652cb657f2e6420396f10107f">frameRate</a>() const</td><td class="entry"><a class="el" href="classSyntheticClock.html">SyntheticClock</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
@@ -127,9 +127,9 @@ $(document).ready(function(){initNavTree('classSyntheticClock.html',''); initRes
   <tr class="odd"><td class="entry"><a class="el" href="classClock.html#a2515694aed5f821c7af75ab792d1a891">Ptr</a> typedef</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classClock.html#ac1e728a766b91f93239f74a206a16e97">rateRatio</a>() const</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">virtual</span></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classSyntheticClock.html#a58634cecade648e3d296ce58fb6b1449">raw</a>() const override</td><td class="entry"><a class="el" href="classSyntheticClock.html">SyntheticClock</a></td><td class="entry"><span class="mlabel">protected</span><span class="mlabel">virtual</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classSyntheticClock.html#a049095aab3c1d0c09acfba1815d31370">reset</a>(int64_t frame=0)</td><td class="entry"><a class="el" href="classSyntheticClock.html">SyntheticClock</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classSyntheticClock.html#a55fcbcf7f470b2a18f2e019c479bff41">reset</a>(const FrameNumber &amp;frame=FrameNumber(0))</td><td class="entry"><a class="el" href="classSyntheticClock.html">SyntheticClock</a></td><td class="entry"></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classSyntheticClock.html#aafa1481c3f32e84f2cd234b296aeb697">resolutionNs</a>() const override</td><td class="entry"><a class="el" href="classSyntheticClock.html">SyntheticClock</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classSyntheticClock.html#a120247c87195062e22070142ea279e15">setCurrentFrame</a>(int64_t frame)</td><td class="entry"><a class="el" href="classSyntheticClock.html">SyntheticClock</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classSyntheticClock.html#a315c3eba42a38f4aa2dffddf9dfb97d8">setCurrentFrame</a>(const FrameNumber &amp;frame)</td><td class="entry"><a class="el" href="classSyntheticClock.html">SyntheticClock</a></td><td class="entry"></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classClock.html#a7b040f874cc9aa23307448a3d4d99a46">setFixedOffset</a>(const Duration &amp;offset)</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classSyntheticClock.html#a2f203cffee58fa49b8027e3304735499">setFrameRate</a>(const FrameRate &amp;frameRate)</td><td class="entry"><a class="el" href="classSyntheticClock.html">SyntheticClock</a></td><td class="entry"></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classClock.html#acedc580419855c32366ce8347d6caec5">setPause</a>(bool paused)</td><td class="entry"><a class="el" href="classClock.html">Clock</a></td><td class="entry"></td></tr>
@@ -144,7 +144,7 @@ $(document).ready(function(){initNavTree('classSyntheticClock.html',''); initRes
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-21 07:27:58 from commit 3f2d824 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
   </ul>
 </div>
 </body>

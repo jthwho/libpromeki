@@ -15,7 +15,7 @@ var searchData=
   ['chromasitingv_12',['chromaSitingV',['../structPixelFormat_1_1Data.html#a3e8305c1646845407583d9267e29d6a6',1,'PixelFormat::Data']]],
   ['chromavratio_13',['chromaVRatio',['../structCSCPipeline_1_1Stage.html#a1b5612aee12a357fe5f441afc653a3b8',1,'CSCPipeline::Stage']]],
   ['clampedregressions_14',['clampedRegressions',['../structSDLAudioClock_1_1Stats.html#ac656ce327b0619dfd65a6e00c443ea4d',1,'SDLAudioClock::Stats']]],
-  ['clockrate_15',['clockrate',['../classRtpPayloadJpegXs.html#aaa645da7a296fdee6c65ae450e2238b9',1,'RtpPayloadJpegXs::ClockRate'],['../structSdpMediaDescription_1_1RtpMap.html#aa812cfaaae8a0ee42408e9367495b315',1,'SdpMediaDescription::RtpMap::clockRate']]],
+  ['clockrate_15',['clockrate',['../structSdpMediaDescription_1_1RtpMap.html#aa812cfaaae8a0ee42408e9367495b315',1,'SdpMediaDescription::RtpMap::clockRate'],['../classRtpPayloadJpegXs.html#aaa645da7a296fdee6c65ae450e2238b9',1,'RtpPayloadJpegXs::ClockRate']]],
   ['collate_16',['Collate',['../classRegEx.html#abecc66b192e56d7bd9764931a59d9e1a',1,'RegEx']]],
   ['colormodel_17',['colorModel',['../structPixelDesc_1_1Data.html#a5ea2388e93698a1cc1a4839bc76ebbf9',1,'PixelDesc::Data']]],
   ['compbits_18',['compBits',['../structCSCPipeline_1_1Stage.html#a16ff8bb57b46c3cf270d4f53326b232d',1,'CSCPipeline::Stage']]],

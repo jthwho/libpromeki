@@ -1,7 +1,7 @@
 var classSDLPlayerWidget =
 [
     [ "SDLPlayerWidget", "classSDLPlayerWidget.html#a365d03e6613034eaaf073fd50850de66", null ],
-    [ "framesPresented", "classSDLPlayerWidget.html#af431f91d5c28405392519517dfd4bdd3", null ],
+    [ "framesPresented", "classSDLPlayerWidget.html#ae5581eeb98d89ee46edfacfd8170dca2", null ],
     [ "isPaused", "classSDLPlayerWidget.html#a2e6ab2a2365d3be7a836502775af3c01", null ],
     [ "keyPressEvent", "classSDLPlayerWidget.html#a533102fd987f5c2f6dd5b61123e6d9a6", null ],
     [ "mediaIO", "classSDLPlayerWidget.html#a3f6217748dcf572fed47319bb677425b", null ],

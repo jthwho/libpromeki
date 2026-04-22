@@ -13,11 +13,12 @@ var searchData=
   ['none_10',['none',['../group__util.html#gga3e19f7ded49aac87704161e5d5b458dba6adf97f83acf6453d4a6a4b1070f3754',1,'None:&#160;variantdatabase.h'],['../classNetworkAddress.html#af8e7aa72337940d76d1095abe7a19982a9bc10ca1213d69380d6c95a98f8bbf89',1,'NetworkAddress::None'],['../classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39a72c16f74343dca5fd248d93c6ce1cc30',1,'MediaPacket::None']]],
   ['nopermission_11',['NoPermission',['../classError.html#ab5980e13b879db253df802b0950d1708ac48367ea433f3803331e95dd3641f5a4',1,'Error']]],
   ['nospace_12',['NoSpace',['../classError.html#ab5980e13b879db253df802b0950d1708a4b6f521d95a2728ad46bcec5c751ad07',1,'Error']]],
-  ['notdir_13',['NotDir',['../classError.html#ab5980e13b879db253df802b0950d1708afc03161dcb792e3e7e6dd39efcb32438',1,'Error']]],
-  ['notexist_14',['NotExist',['../classError.html#ab5980e13b879db253df802b0950d1708aa613e1e338d84e5ebd843bac6eb9d4c3',1,'Error']]],
-  ['nothostaccessible_15',['NotHostAccessible',['../classError.html#ab5980e13b879db253df802b0950d1708a6a4439b5905d9343e6851ada64dd7cf9',1,'Error']]],
-  ['notimplemented_16',['NotImplemented',['../classError.html#ab5980e13b879db253df802b0950d1708a618c5c9abd6638a820400e9948e6e737',1,'Error']]],
-  ['notopen_17',['notopen',['../classError.html#ab5980e13b879db253df802b0950d1708a36766448250f002cfab6d0d2c9268612',1,'Error::NotOpen'],['../classIODevice.html#ac12c287cd37708c10d6618d667a3147aa84e4448af6ff59ea244090f7126f7926',1,'IODevice::NotOpen']]],
-  ['notrunning_18',['NotRunning',['../classProcess.html#a29199d5fd3060da8da03649f06127847a70bbc400311496ddf01469785755f003',1,'Process']]],
-  ['notsupported_19',['NotSupported',['../classError.html#ab5980e13b879db253df802b0950d1708a43f2b142b3d7aca3163f2e36e12c8fde',1,'Error']]]
+  ['notadjacent_13',['NotAdjacent',['../classError.html#ab5980e13b879db253df802b0950d1708a9027e04f1e22c093a246d518d805db28',1,'Error']]],
+  ['notdir_14',['NotDir',['../classError.html#ab5980e13b879db253df802b0950d1708afc03161dcb792e3e7e6dd39efcb32438',1,'Error']]],
+  ['notexist_15',['NotExist',['../classError.html#ab5980e13b879db253df802b0950d1708aa613e1e338d84e5ebd843bac6eb9d4c3',1,'Error']]],
+  ['nothostaccessible_16',['NotHostAccessible',['../classError.html#ab5980e13b879db253df802b0950d1708a6a4439b5905d9343e6851ada64dd7cf9',1,'Error']]],
+  ['notimplemented_17',['NotImplemented',['../classError.html#ab5980e13b879db253df802b0950d1708a618c5c9abd6638a820400e9948e6e737',1,'Error']]],
+  ['notopen_18',['notopen',['../classError.html#ab5980e13b879db253df802b0950d1708a36766448250f002cfab6d0d2c9268612',1,'Error::NotOpen'],['../classIODevice.html#ac12c287cd37708c10d6618d667a3147aa84e4448af6ff59ea244090f7126f7926',1,'IODevice::NotOpen']]],
+  ['notrunning_19',['NotRunning',['../classProcess.html#a29199d5fd3060da8da03649f06127847a70bbc400311496ddf01469785755f003',1,'Process']]],
+  ['notsupported_20',['NotSupported',['../classError.html#ab5980e13b879db253df802b0950d1708a43f2b142b3d7aca3163f2e36e12c8fde',1,'Error']]]
 ];

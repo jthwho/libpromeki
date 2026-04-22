@@ -1,0 +1,5 @@
+<map id="MediaIODescription" name="MediaIODescription">
+<area shape="rect" id="Node000001" title="Self&#45;contained snapshot of a MediaIO&#39;s identity, role, and format landscape." alt="" coords="5,108,156,133"/>
+<area shape="rect" id="Node000002" href="$classFrameCount.html" title="Count of frames, optionally empty, unknown, or infinite." alt="" coords="30,5,131,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="83,45,83,108,78,108,78,45"/>
+</map>

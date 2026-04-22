@@ -130,13 +130,15 @@ Collaboration diagram for MediaIO:</div>
 <div class="dyncontent">
 <div class="center"><img src="classMediaIO__coll__graph.png" border="0" usemap="#aMediaIO_coll__map" alt="Collaboration graph"/></div>
 <map name="aMediaIO_coll__map" id="aMediaIO_coll__map">
-<area shape="rect" title="Controller for media I/O backends." alt="" coords="161,168,237,193"/>
+<area shape="rect" title="Controller for media I/O backends." alt="" coords="253,196,329,221"/>
 <area shape="rect" href="classObjectBase.html" title="Base object for promeki." alt="" coords="151,93,247,119"/>
-<area shape="poly" title=" " alt="" coords="202,133,202,168,197,168,197,133"/>
+<area shape="poly" title=" " alt="" coords="221,127,283,194,279,198,217,131"/>
 <area shape="rect" href="classObjectBase_1_1SignalMeta.html" title="Metadata entry describing a signal on an ObjectBase&#45;derived class." alt="" coords="5,5,183,31"/>
 <area shape="poly" title=" " alt="" coords="92,44,93,57,98,68,108,79,122,87,152,98,150,103,119,92,105,83,93,71,88,58,86,45"/>
 <area shape="rect" href="classSignal.html" title=" " alt="" coords="216,5,393,31"/>
 <area shape="poly" title=" " alt="" coords="297,45,277,71,258,85,236,96,234,91,255,81,273,67,292,42"/>
+<area shape="rect" href="classFrameCount.html" title="Count of frames, optionally empty, unknown, or infinite." alt="" coords="271,93,373,119"/>
+<area shape="poly" title=" " alt="" coords="317,133,297,197,292,195,312,131"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -330,17 +332,17 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>step</b> () <a class="
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>canSeek</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:afae845b4b2bae524405f1b6fc1c188ea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the cached canSeek flag. <br /></td></tr>
 <tr class="separator:afae845b4b2bae524405f1b6fc1c188ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4b2216ffe65f522fdb1d1e44d9053557" id="r_a4b2216ffe65f522fdb1d1e44d9053557"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a4b2216ffe65f522fdb1d1e44d9053557">seekToFrame</a> (<a class="el" href="classList.html">int64_t</a> frameNumber, <a class="el" href="mediaio_8h.html#a3252a63d4800a4d9d7a0d49231a68307">SeekMode</a> <a class="el" href="classMediaIO.html#a620ffa469a1531a177a4f642b98b83a9">mode</a>=SeekDefault)</td></tr>
-<tr class="memdesc:a4b2216ffe65f522fdb1d1e44d9053557"><td class="mdescLeft">&#160;</td><td class="mdescRight">Seeks to the given frame number.  <br /></td></tr>
-<tr class="separator:a4b2216ffe65f522fdb1d1e44d9053557"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab1fcdb0b24d7b4caf7ec2d926e6d9e67" id="r_ab1fcdb0b24d7b4caf7ec2d926e6d9e67"><td class="memItemLeft" align="right" valign="top"><a id="ab1fcdb0b24d7b4caf7ec2d926e6d9e67" name="ab1fcdb0b24d7b4caf7ec2d926e6d9e67"></a>
-<a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>frameCount</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:ab1fcdb0b24d7b4caf7ec2d926e6d9e67"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the cached frame count. <br /></td></tr>
-<tr class="separator:ab1fcdb0b24d7b4caf7ec2d926e6d9e67"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acf195589096aea9af346c71ba5ca47f1" id="r_acf195589096aea9af346c71ba5ca47f1"><td class="memItemLeft" align="right" valign="top"><a id="acf195589096aea9af346c71ba5ca47f1" name="acf195589096aea9af346c71ba5ca47f1"></a>
-<a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>currentFrame</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:acf195589096aea9af346c71ba5ca47f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the cached current frame. <br /></td></tr>
-<tr class="separator:acf195589096aea9af346c71ba5ca47f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac773ddf02f0a451efba0772dae794a6d" id="r_ac773ddf02f0a451efba0772dae794a6d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#ac773ddf02f0a451efba0772dae794a6d">seekToFrame</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classFrameNumber.html">FrameNumber</a> &amp;frameNumber, <a class="el" href="mediaio_8h.html#a3252a63d4800a4d9d7a0d49231a68307">SeekMode</a> <a class="el" href="classMediaIO.html#a620ffa469a1531a177a4f642b98b83a9">mode</a>=SeekDefault)</td></tr>
+<tr class="memdesc:ac773ddf02f0a451efba0772dae794a6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Seeks to the given frame number.  <br /></td></tr>
+<tr class="separator:ac773ddf02f0a451efba0772dae794a6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad0280c666154e38645ac24a06c7e8fca" id="r_ad0280c666154e38645ac24a06c7e8fca"><td class="memItemLeft" align="right" valign="top"><a id="ad0280c666154e38645ac24a06c7e8fca" name="ad0280c666154e38645ac24a06c7e8fca"></a>
+<a class="el" href="classFrameCount.html">FrameCount</a>&#160;</td><td class="memItemRight" valign="bottom"><b>frameCount</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ad0280c666154e38645ac24a06c7e8fca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the cached frame count. <br /></td></tr>
+<tr class="separator:ad0280c666154e38645ac24a06c7e8fca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0ebcf19afa44805c53d14693d0b21386" id="r_a0ebcf19afa44805c53d14693d0b21386"><td class="memItemLeft" align="right" valign="top"><a id="a0ebcf19afa44805c53d14693d0b21386" name="a0ebcf19afa44805c53d14693d0b21386"></a>
+<a class="el" href="classFrameNumber.html">FrameNumber</a>&#160;</td><td class="memItemRight" valign="bottom"><b>currentFrame</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a0ebcf19afa44805c53d14693d0b21386"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the cached current frame. <br /></td></tr>
+<tr class="separator:a0ebcf19afa44805c53d14693d0b21386"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5652901626615d71e95538b218e1fba0" id="r_a5652901626615d71e95538b218e1fba0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classClock.html">Clock</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a5652901626615d71e95538b218e1fba0">createClock</a> ()</td></tr>
 <tr class="memdesc:a5652901626615d71e95538b218e1fba0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a new <a class="el" href="classClock.html">Clock</a> for this <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a>'s timing source.  <br /></td></tr>
 <tr class="separator:a5652901626615d71e95538b218e1fba0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -433,13 +435,13 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a594b8b55ae788efe104c871248d73808" id="r_a594b8b55ae788efe104c871248d73808"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classMediaIO.html">MediaIO</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a594b8b55ae788efe104c871248d73808">create</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade">Config</a> &amp;<a class="el" href="classMediaIO.html#afd4dfa37eca8c62bb3bc6a3fb43bb0d9">config</a>, <a class="el" href="classObjectBase.html">ObjectBase</a> *<a class="el" href="classObjectBase.html#ad8a11dd19f4510f3ce38c779fc7911a8">parent</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
 <tr class="memdesc:a594b8b55ae788efe104c871248d73808"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> instance from a configuration.  <br /></td></tr>
 <tr class="separator:a594b8b55ae788efe104c871248d73808"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2eb6dca2311538766e98c7efab054dce" id="r_a2eb6dca2311538766e98c7efab054dce"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a2eb6dca2311538766e98c7efab054dce">copyFrames</a> (<a class="el" href="classMediaIO.html">MediaIO</a> *<a class="el" href="classList.html">src</a>, <a class="el" href="classMediaIO.html">MediaIO</a> *<a class="el" href="classList.html">dst</a>, <a class="el" href="classList.html">int64_t</a> <a class="el" href="classList.html">fromFrame</a>=0, <a class="el" href="classList.html">int64_t</a> count=<a class="el" href="classMediaIO.html#aa3092d5738e7949c2dd9a740c6de9bca">FrameCountInfinite</a>, <a class="el" href="classList.html">int64_t</a> *<a class="el" href="classList.html">copied</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
-<tr class="memdesc:a2eb6dca2311538766e98c7efab054dce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drains frames from <code>src</code> into <code>dst</code>.  <br /></td></tr>
-<tr class="separator:a2eb6dca2311538766e98c7efab054dce"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1b6235f6e777198abf4db89911b4c003" id="r_a1b6235f6e777198abf4db89911b4c003"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">Fn</a> &gt; </td></tr>
-<tr class="memitem:a1b6235f6e777198abf4db89911b4c003"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a1b6235f6e777198abf4db89911b4c003">copyFrames</a> (<a class="el" href="classMediaIO.html">MediaIO</a> *<a class="el" href="classList.html">src</a>, <a class="el" href="classMediaIO.html">MediaIO</a> *<a class="el" href="classList.html">dst</a>, <a class="el" href="classList.html">int64_t</a> <a class="el" href="classList.html">fromFrame</a>, <a class="el" href="classList.html">int64_t</a> count, <a class="el" href="classList.html">Fn</a> &amp;&amp;<a class="el" href="classList.html">mutate</a>, <a class="el" href="classList.html">int64_t</a> *<a class="el" href="classList.html">copied</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
-<tr class="memdesc:a1b6235f6e777198abf4db89911b4c003"><td class="mdescLeft">&#160;</td><td class="mdescRight">Overload of <a class="el" href="classMediaIO.html#a2eb6dca2311538766e98c7efab054dce">copyFrames</a> with a per-frame <code>mutate</code> callback.  <br /></td></tr>
-<tr class="separator:a1b6235f6e777198abf4db89911b4c003"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a098c467d9304e52ac4c62280b4111a6a" id="r_a098c467d9304e52ac4c62280b4111a6a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classFrameCount.html">FrameCount</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a098c467d9304e52ac4c62280b4111a6a">copyFrames</a> (<a class="el" href="classMediaIO.html">MediaIO</a> *<a class="el" href="classList.html">src</a>, <a class="el" href="classMediaIO.html">MediaIO</a> *<a class="el" href="classList.html">dst</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classFrameNumber.html">FrameNumber</a> &amp;<a class="el" href="classList.html">fromFrame</a>=<a class="el" href="classFrameNumber.html">FrameNumber</a>(0), <a class="el" href="classList.html">const</a> <a class="el" href="classFrameCount.html">FrameCount</a> &amp;count=<a class="el" href="classFrameCount.html#af1c3629a53cc839882105e2000e72e7a">FrameCount::infinity</a>())</td></tr>
+<tr class="memdesc:a098c467d9304e52ac4c62280b4111a6a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drains frames from <code>src</code> into <code>dst</code>.  <br /></td></tr>
+<tr class="separator:a098c467d9304e52ac4c62280b4111a6a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7795349e7b6d1d1293682827fb109745" id="r_a7795349e7b6d1d1293682827fb109745"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">Fn</a> &gt; </td></tr>
+<tr class="memitem:a7795349e7b6d1d1293682827fb109745"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classFrameCount.html">FrameCount</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a7795349e7b6d1d1293682827fb109745">copyFrames</a> (<a class="el" href="classMediaIO.html">MediaIO</a> *<a class="el" href="classList.html">src</a>, <a class="el" href="classMediaIO.html">MediaIO</a> *<a class="el" href="classList.html">dst</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classFrameNumber.html">FrameNumber</a> &amp;<a class="el" href="classList.html">fromFrame</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classFrameCount.html">FrameCount</a> &amp;count, <a class="el" href="classList.html">Fn</a> &amp;&amp;<a class="el" href="classList.html">mutate</a>)</td></tr>
+<tr class="memdesc:a7795349e7b6d1d1293682827fb109745"><td class="mdescLeft">&#160;</td><td class="mdescRight">Overload of <a class="el" href="classMediaIO.html#a098c467d9304e52ac4c62280b4111a6a">copyFrames</a> with a per-frame <code>mutate</code> callback.  <br /></td></tr>
+<tr class="separator:a7795349e7b6d1d1293682827fb109745"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af89231d60485661711ec7e11837a33d0" id="r_af89231d60485661711ec7e11837a33d0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classMediaIO.html">MediaIO</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#af89231d60485661711ec7e11837a33d0">createForFileRead</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;filename, <a class="el" href="classObjectBase.html">ObjectBase</a> *<a class="el" href="classObjectBase.html#ad8a11dd19f4510f3ce38c779fc7911a8">parent</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
 <tr class="memdesc:af89231d60485661711ec7e11837a33d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> reader for the given filename.  <br /></td></tr>
 <tr class="separator:af89231d60485661711ec7e11837a33d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -504,18 +506,14 @@ Static Public Attributes</h2></td></tr>
 <tr class="memitem:a9418299ad654628ecd45c43a71f21a44" id="r_a9418299ad654628ecd45c43a71f21a44"><td class="memItemLeft" align="right" valign="top"><a id="a9418299ad654628ecd45c43a71f21a44" name="a9418299ad654628ecd45c43a71f21a44"></a>
 <a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="mediaio_8h.html#a3252a63d4800a4d9d7a0d49231a68307">SeekMode</a>&#160;</td><td class="memItemRight" valign="bottom"><b>SeekKeyframeAfter</b> = <a class="el" href="mediaio_8h.html#a3252a63d4800a4d9d7a0d49231a68307aae7574f802c63f05835f250df01a991a">MediaIO_SeekKeyframeAfter</a></td></tr>
 <tr class="separator:a9418299ad654628ecd45c43a71f21a44"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abd2a1898794215ed7c0535f06ed86791" id="r_abd2a1898794215ed7c0535f06ed86791"><td class="memItemLeft" align="right" valign="top"><a id="abd2a1898794215ed7c0535f06ed86791" name="abd2a1898794215ed7c0535f06ed86791"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FrameCountUnknown</b> = -1</td></tr>
-<tr class="memdesc:abd2a1898794215ed7c0535f06ed86791"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> count is not yet known. <br /></td></tr>
-<tr class="separator:abd2a1898794215ed7c0535f06ed86791"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa3092d5738e7949c2dd9a740c6de9bca" id="r_aa3092d5738e7949c2dd9a740c6de9bca"><td class="memItemLeft" align="right" valign="top"><a id="aa3092d5738e7949c2dd9a740c6de9bca" name="aa3092d5738e7949c2dd9a740c6de9bca"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FrameCountInfinite</b> = -2</td></tr>
-<tr class="memdesc:aa3092d5738e7949c2dd9a740c6de9bca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Source is unbounded (generators, live devices). <br /></td></tr>
-<tr class="separator:aa3092d5738e7949c2dd9a740c6de9bca"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1e1d610c0b05a252c1b188fdee1f585f" id="r_a1e1d610c0b05a252c1b188fdee1f585f"><td class="memItemLeft" align="right" valign="top"><a id="a1e1d610c0b05a252c1b188fdee1f585f" name="a1e1d610c0b05a252c1b188fdee1f585f"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FrameCountError</b> = -3</td></tr>
-<tr class="memdesc:a1e1d610c0b05a252c1b188fdee1f585f"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> count unavailable due to error. <br /></td></tr>
-<tr class="separator:a1e1d610c0b05a252c1b188fdee1f585f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4488b402a1b19ae9c891564081264f09" id="r_a4488b402a1b19ae9c891564081264f09"><td class="memItemLeft" align="right" valign="top"><a id="a4488b402a1b19ae9c891564081264f09" name="a4488b402a1b19ae9c891564081264f09"></a>
+<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classFrameCount.html">FrameCount</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FrameCountUnknown</b> = <a class="el" href="classFrameCount.html#aa89aceb280b41d625d529a1d4b509f5d">FrameCount::unknown</a>()</td></tr>
+<tr class="memdesc:a4488b402a1b19ae9c891564081264f09"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> count is not yet known. <br /></td></tr>
+<tr class="separator:a4488b402a1b19ae9c891564081264f09"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af7d7c813ff545403b40b7f3d06495362" id="r_af7d7c813ff545403b40b7f3d06495362"><td class="memItemLeft" align="right" valign="top"><a id="af7d7c813ff545403b40b7f3d06495362" name="af7d7c813ff545403b40b7f3d06495362"></a>
+<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classFrameCount.html">FrameCount</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FrameCountInfinite</b> = <a class="el" href="classFrameCount.html#af1c3629a53cc839882105e2000e72e7a">FrameCount::infinity</a>()</td></tr>
+<tr class="memdesc:af7d7c813ff545403b40b7f3d06495362"><td class="mdescLeft">&#160;</td><td class="mdescRight">Source is unbounded (generators, live devices). <br /></td></tr>
+<tr class="separator:af7d7c813ff545403b40b7f3d06495362"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1378509b74f656a50aa8616f848613d9" id="r_a1378509b74f656a50aa8616f848613d9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="mediaio_8h.html#a218d9d799191abce354a7120ce37ebbe">MediaIOParamsID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a1378509b74f656a50aa8616f848613d9">ParamBenchmarkReport</a> {&quot;BenchmarkReport&quot;}</td></tr>
 <tr class="memdesc:a1378509b74f656a50aa8616f848613d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Params command: returns the attached reporter's summary text.  <br /></td></tr>
 <tr class="separator:a1378509b74f656a50aa8616f848613d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -770,8 +768,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a1b6235f6e777198abf4db89911b4c003" name="a1b6235f6e777198abf4db89911b4c003"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1b6235f6e777198abf4db89911b4c003">&#9670;&#160;</a></span>copyFrames() <span class="overload">[1/2]</span></h2>
+<a id="a7795349e7b6d1d1293682827fb109745" name="a7795349e7b6d1d1293682827fb109745"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7795349e7b6d1d1293682827fb109745">&#9670;&#160;</a></span>copyFrames() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -782,7 +780,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classError.html">Error</a> MediaIO::copyFrames </td>
+          <td class="memname"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classFrameCount.html">FrameCount</a> &gt; MediaIO::copyFrames </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classMediaIO.html">MediaIO</a> *&#160;</td>
           <td class="paramname"><em>src</em>, </td>
@@ -796,26 +794,20 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">int64_t</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classFrameNumber.html">FrameNumber</a> &amp;&#160;</td>
           <td class="paramname"><em>fromFrame</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">int64_t</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classFrameCount.html">FrameCount</a> &amp;&#160;</td>
           <td class="paramname"><em>count</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="classList.html">Fn</a> &amp;&amp;&#160;</td>
-          <td class="paramname"><em>mutate</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">int64_t</a> *&#160;</td>
-          <td class="paramname"><em>copied</em> = <code><a class="el" href="classList.html">nullptr</a></code>&#160;</td>
+          <td class="paramname"><em>mutate</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -830,7 +822,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 </table>
 </div><div class="memdoc">
 
-<p>Overload of <a class="el" href="classMediaIO.html#a2eb6dca2311538766e98c7efab054dce">copyFrames</a> with a per-frame <code>mutate</code> callback. </p>
+<p>Overload of <a class="el" href="classMediaIO.html#a098c467d9304e52ac4c62280b4111a6a">copyFrames</a> with a per-frame <code>mutate</code> callback. </p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">Fn</td><td>Callable with signature <code><a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a" title="Shared pointer type for Frame.">Frame::Ptr(const Frame::Ptr &amp;, int64_t)</a></code>. Returning an invalid <code><a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a" title="Shared pointer type for Frame.">Frame::Ptr</a></code> skips the write for that iteration.</td></tr>
@@ -841,8 +833,8 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 
 </div>
 </div>
-<a id="a2eb6dca2311538766e98c7efab054dce" name="a2eb6dca2311538766e98c7efab054dce"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2eb6dca2311538766e98c7efab054dce">&#9670;&#160;</a></span>copyFrames() <span class="overload">[2/2]</span></h2>
+<a id="a098c467d9304e52ac4c62280b4111a6a" name="a098c467d9304e52ac4c62280b4111a6a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a098c467d9304e52ac4c62280b4111a6a">&#9670;&#160;</a></span>copyFrames() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -851,7 +843,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classError.html">Error</a> MediaIO::copyFrames </td>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classFrameCount.html">FrameCount</a> &gt; MediaIO::copyFrames </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classMediaIO.html">MediaIO</a> *&#160;</td>
           <td class="paramname"><em>src</em>, </td>
@@ -865,20 +857,14 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">int64_t</a>&#160;</td>
-          <td class="paramname"><em>fromFrame</em> = <code>0</code>, </td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classFrameNumber.html">FrameNumber</a> &amp;&#160;</td>
+          <td class="paramname"><em>fromFrame</em> = <code><a class="el" href="classFrameNumber.html">FrameNumber</a>(0)</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">int64_t</a>&#160;</td>
-          <td class="paramname"><em>count</em> = <code><a class="el" href="classMediaIO.html#aa3092d5738e7949c2dd9a740c6de9bca">FrameCountInfinite</a></code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">int64_t</a> *&#160;</td>
-          <td class="paramname"><em>copied</em> = <code><a class="el" href="classList.html">nullptr</a></code>&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classFrameCount.html">FrameCount</a> &amp;&#160;</td>
+          <td class="paramname"><em>count</em> = <code><a class="el" href="classFrameCount.html#af1c3629a53cc839882105e2000e72e7a">FrameCount::infinity</a>()</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -902,13 +888,12 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
     <tr><td class="paramname">src</td><td>The source <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> (already open). </td></tr>
     <tr><td class="paramname">dst</td><td>The sink <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> (already open). </td></tr>
     <tr><td class="paramname">fromFrame</td><td>Starting frame number on the source (default 0). </td></tr>
-    <tr><td class="paramname">count</td><td>Maximum number of frames to copy; defaults to <a class="el" href="classMediaIO.html#aa3092d5738e7949c2dd9a740c6de9bca">FrameCountInfinite</a> which is interpreted as "until EOF". </td></tr>
+    <tr><td class="paramname">count</td><td>Maximum number of frames to copy; defaults to <a class="el" href="classMediaIO.html#af7d7c813ff545403b40b7f3d06495362">FrameCountInfinite</a> which is interpreted as "until EOF". </td></tr>
     <tr><td class="paramname">mutate</td><td>Optional per-frame transform. Receives the frame read from the source and the absolute frame number it was read at; returns the frame to hand to the sink. An invalid returned <a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a" title="Shared pointer type for Frame.">Frame::Ptr</a> skips the write for that iteration. <code>nullptr</code> (default) forwards frames unchanged. </td></tr>
-    <tr><td class="paramname">copied</td><td>Optional output: number of frames actually written to the sink. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34">Error::Ok</a> on a clean copy (including clean EOF), or the first error encountered. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a> holding the number of frames actually written and <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34">Error::Ok</a> on a clean copy (including clean EOF), or a zero-count value paired with the first error encountered. </dd></dl>
 
 </div>
 </div>
@@ -1168,7 +1153,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 </div><div class="memdoc">
 
 <p>Returns the task's preferred default seek mode. </p>
-<p>Captured from the backend during <a class="el" href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3" title="Opens the media resource.">open()</a>. Used to resolve <code>MediaIO::SeekDefault</code> into a concrete mode for each <a class="el" href="classMediaIO.html#a4b2216ffe65f522fdb1d1e44d9053557" title="Seeks to the given frame number.">seekToFrame()</a> call.</p>
+<p>Captured from the backend during <a class="el" href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3" title="Opens the media resource.">open()</a>. Used to resolve <code>MediaIO::SeekDefault</code> into a concrete mode for each <a class="el" href="classMediaIO.html#ac773ddf02f0a451efba0772dae794a6d" title="Seeks to the given frame number.">seekToFrame()</a> call.</p>
 <dl class="section return"><dt>Returns</dt><dd>The default seek mode for the current backend. </dd></dl>
 
 </div>
@@ -2110,8 +2095,8 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 
 </div>
 </div>
-<a id="a4b2216ffe65f522fdb1d1e44d9053557" name="a4b2216ffe65f522fdb1d1e44d9053557"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4b2216ffe65f522fdb1d1e44d9053557">&#9670;&#160;</a></span>seekToFrame()</h2>
+<a id="ac773ddf02f0a451efba0772dae794a6d" name="ac773ddf02f0a451efba0772dae794a6d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac773ddf02f0a451efba0772dae794a6d">&#9670;&#160;</a></span>seekToFrame()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -2119,7 +2104,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
         <tr>
           <td class="memname"><a class="el" href="classError.html">Error</a> MediaIO::seekToFrame </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">int64_t</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classFrameNumber.html">FrameNumber</a> &amp;&#160;</td>
           <td class="paramname"><em>frameNumber</em>, </td>
         </tr>
         <tr>
@@ -2786,7 +2771,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIO.html">MediaIO</a></li>
-    <li class="footer">Generated on 2026-04-21 07:27:58 from commit 3f2d824 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -11,7 +11,9 @@ var searchData=
   ['fourcc_2eh_8',['fourcc.h',['../fourcc_8h.html',1,'']]],
   ['frame_2eh_9',['frame.h',['../frame_8h.html',1,'(Global Namespace)'],['../tui_2frame_8h.html',1,'(Global Namespace)']]],
   ['framebridge_2eh_10',['framebridge.h',['../framebridge_8h.html',1,'']]],
-  ['framerate_2eh_11',['framerate.h',['../framerate_8h.html',1,'']]],
-  ['framesync_2eh_12',['framesync.h',['../framesync_8h.html',1,'']]],
-  ['future_2eh_13',['future.h',['../future_8h.html',1,'']]]
+  ['framecount_2eh_11',['framecount.h',['../framecount_8h.html',1,'']]],
+  ['framenumber_2eh_12',['framenumber.h',['../framenumber_8h.html',1,'']]],
+  ['framerate_2eh_13',['framerate.h',['../framerate_8h.html',1,'']]],
+  ['framesync_2eh_14',['framesync.h',['../framesync_8h.html',1,'']]],
+  ['future_2eh_15',['future.h',['../future_8h.html',1,'']]]
 ];

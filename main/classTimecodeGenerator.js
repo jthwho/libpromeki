@@ -9,7 +9,7 @@ var classTimecodeGenerator =
     [ "TimecodeGenerator", "classTimecodeGenerator.html#a30fe66cc697c0a2f018e8281dff4fcc0", null ],
     [ "advance", "classTimecodeGenerator.html#a35446bd21aa6aa7d35fc73bebccb0d55", null ],
     [ "dropFrame", "classTimecodeGenerator.html#a79007507ab0e7166fac22ba3e87ac2b4", null ],
-    [ "frameCount", "classTimecodeGenerator.html#a6c5e3a44d93ff7e19b838675a3983936", null ],
+    [ "frameCount", "classTimecodeGenerator.html#ab38437efc2c88e58d51a1c2b1fddc93a", null ],
     [ "frameRate", "classTimecodeGenerator.html#a2aa27395795eb81d7f56161ccfbe04cb", null ],
     [ "jam", "classTimecodeGenerator.html#abcc5a1c771597d61156267e6665cbe6d", null ],
     [ "reset", "classTimecodeGenerator.html#a3a3033c684e6d6464f73d104f7c971f8", null ],

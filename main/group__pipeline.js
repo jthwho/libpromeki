@@ -135,7 +135,7 @@ var group__pipeline =
     ] ],
     [ "PipelineStats", "classPipelineStats.html", [
       [ "Base", "classPipelineStats.html#a4577b1118e2d042c2185af8e445c2c93", null ],
-      [ "PROMEKI_DECLARE_ID", "classPipelineStats.html#a36dd405d9ec16957fe7d5719f00a9cd2", null ],
+      [ "PROMEKI_DECLARE_ID", "classPipelineStats.html#ae80c706dba4565f07b34dbffa32401ed", null ],
       [ "PROMEKI_DECLARE_ID", "classPipelineStats.html#a311dbe2c20de85f7ca1aae29e203357f", null ],
       [ "PROMEKI_DECLARE_ID", "classPipelineStats.html#ada5aa5b79e15cd985d7916f7488bac63", null ],
       [ "PROMEKI_DECLARE_ID", "classPipelineStats.html#a95254233430e3b024144b9478a21f681", null ],

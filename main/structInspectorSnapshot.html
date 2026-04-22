@@ -115,38 +115,42 @@ Collaboration diagram for InspectorSnapshot:</div>
 <div class="dyncontent">
 <div class="center"><img src="structInspectorSnapshot__coll__graph.png" border="0" usemap="#aInspectorSnapshot_coll__map" alt="Collaboration graph"/></div>
 <map name="aInspectorSnapshot_coll__map" id="aInspectorSnapshot_coll__map">
-<area shape="rect" title="Aggregate snapshot of the inspector&#39;s accumulated state." alt="" coords="67,196,209,221"/>
-<area shape="rect" href="structInspectorEvent.html" title="Per&#45;frame measurement record produced by MediaIOTask_Inspector." alt="" coords="79,108,197,133"/>
-<area shape="poly" title=" " alt="" coords="141,147,141,195,135,195,135,147"/>
-<area shape="rect" href="classTimecode.html" title="Class for holding and manipulating timecode." alt="" coords="5,5,92,31"/>
-<area shape="poly" title=" " alt="" coords="63,41,91,82,120,106,117,110,87,86,58,44"/>
-<area shape="rect" href="classList.html" title=" " alt="" coords="117,5,338,31"/>
-<area shape="poly" title=" " alt="" coords="223,45,214,66,200,86,184,100,166,110,164,106,181,95,196,82,209,63,218,43"/>
+<area shape="rect" title="Aggregate snapshot of the inspector&#39;s accumulated state." alt="" coords="94,255,237,280"/>
+<area shape="rect" href="classFrameCount.html" title="Count of frames, optionally empty, unknown, or infinite." alt="" coords="5,108,107,133"/>
+<area shape="poly" title=" " alt="" coords="51,147,47,188,50,210,59,229,75,244,95,254,93,259,72,248,55,232,45,211,42,189,46,146"/>
+<area shape="rect" href="structInspectorEvent.html" title="Per&#45;frame measurement record produced by MediaIOTask_Inspector." alt="" coords="215,108,334,133"/>
+<area shape="poly" title=" " alt="" coords="277,148,269,190,260,212,247,232,230,247,211,257,208,252,227,243,243,229,256,210,264,188,271,147"/>
+<area shape="rect" href="classFrameNumber.html" title="Absolute frame index along a media timeline." alt="" coords="92,5,207,31"/>
+<area shape="poly" title=" " alt="" coords="162,42,174,63,191,82,211,96,234,105,232,110,209,100,188,86,170,66,157,44"/>
+<area shape="rect" href="classTimecode.html" title="Class for holding and manipulating timecode." alt="" coords="231,5,318,31"/>
+<area shape="poly" title=" " alt="" coords="277,45,277,108,272,108,272,45"/>
+<area shape="rect" href="classList.html" title=" " alt="" coords="343,5,564,31"/>
+<area shape="poly" title=" " alt="" coords="438,44,417,66,391,86,362,100,332,111,330,105,360,96,388,82,413,62,434,40"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:a08ede529519f69748bff66171f431126" id="r_a08ede529519f69748bff66171f431126"><td class="memItemLeft" align="right" valign="top"><a id="a08ede529519f69748bff66171f431126" name="a08ede529519f69748bff66171f431126"></a>
-<a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>framesProcessed</b> = 0</td></tr>
-<tr class="memdesc:a08ede529519f69748bff66171f431126"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total number of frames the inspector has processed. <br /></td></tr>
-<tr class="separator:a08ede529519f69748bff66171f431126"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad0063a4655a21339e9ebe78ace4e96dc" id="r_ad0063a4655a21339e9ebe78ace4e96dc"><td class="memItemLeft" align="right" valign="top"><a id="ad0063a4655a21339e9ebe78ace4e96dc" name="ad0063a4655a21339e9ebe78ace4e96dc"></a>
-<a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>framesWithPictureData</b> = 0</td></tr>
-<tr class="memdesc:ad0063a4655a21339e9ebe78ace4e96dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total number of frames where the picture data band decoded. <br /></td></tr>
-<tr class="separator:ad0063a4655a21339e9ebe78ace4e96dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aab78b4c6271d22bce133df411044285b" id="r_aab78b4c6271d22bce133df411044285b"><td class="memItemLeft" align="right" valign="top"><a id="aab78b4c6271d22bce133df411044285b" name="aab78b4c6271d22bce133df411044285b"></a>
-<a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>framesWithLtc</b> = 0</td></tr>
-<tr class="memdesc:aab78b4c6271d22bce133df411044285b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total number of frames where at least one LTC frame decoded. <br /></td></tr>
-<tr class="separator:aab78b4c6271d22bce133df411044285b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a225b45a309ce24e4045590d7f1b3cb10" id="r_a225b45a309ce24e4045590d7f1b3cb10"><td class="memItemLeft" align="right" valign="top"><a id="a225b45a309ce24e4045590d7f1b3cb10" name="a225b45a309ce24e4045590d7f1b3cb10"></a>
-<a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>framesWithVideoTimestamp</b> = 0</td></tr>
-<tr class="memdesc:a225b45a309ce24e4045590d7f1b3cb10"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total number of frames where the video <a class="el" href="classMediaTimeStamp.html" title="Self-describing timestamp that pairs a time value with its clock domain and offset.">MediaTimeStamp</a> was valid. <br /></td></tr>
-<tr class="separator:a225b45a309ce24e4045590d7f1b3cb10"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab82630448d87916daf30d226fe2c9e2e" id="r_ab82630448d87916daf30d226fe2c9e2e"><td class="memItemLeft" align="right" valign="top"><a id="ab82630448d87916daf30d226fe2c9e2e" name="ab82630448d87916daf30d226fe2c9e2e"></a>
-<a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>framesWithAudioTimestamp</b> = 0</td></tr>
-<tr class="memdesc:ab82630448d87916daf30d226fe2c9e2e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total number of frames where the audio <a class="el" href="classMediaTimeStamp.html" title="Self-describing timestamp that pairs a time value with its clock domain and offset.">MediaTimeStamp</a> was valid. <br /></td></tr>
-<tr class="separator:ab82630448d87916daf30d226fe2c9e2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d069c452e2bffd3d9ef5f20562ede8d" id="r_a8d069c452e2bffd3d9ef5f20562ede8d"><td class="memItemLeft" align="right" valign="top"><a id="a8d069c452e2bffd3d9ef5f20562ede8d" name="a8d069c452e2bffd3d9ef5f20562ede8d"></a>
+<a class="el" href="classFrameCount.html">FrameCount</a>&#160;</td><td class="memItemRight" valign="bottom"><b>framesProcessed</b> {0}</td></tr>
+<tr class="memdesc:a8d069c452e2bffd3d9ef5f20562ede8d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total number of frames the inspector has processed. <br /></td></tr>
+<tr class="separator:a8d069c452e2bffd3d9ef5f20562ede8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adc614b6a06c3231ff5dc2279bc6abac9" id="r_adc614b6a06c3231ff5dc2279bc6abac9"><td class="memItemLeft" align="right" valign="top"><a id="adc614b6a06c3231ff5dc2279bc6abac9" name="adc614b6a06c3231ff5dc2279bc6abac9"></a>
+<a class="el" href="classFrameCount.html">FrameCount</a>&#160;</td><td class="memItemRight" valign="bottom"><b>framesWithPictureData</b> {0}</td></tr>
+<tr class="memdesc:adc614b6a06c3231ff5dc2279bc6abac9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total number of frames where the picture data band decoded. <br /></td></tr>
+<tr class="separator:adc614b6a06c3231ff5dc2279bc6abac9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0330cad7d3a353859d3653b33bf9af8d" id="r_a0330cad7d3a353859d3653b33bf9af8d"><td class="memItemLeft" align="right" valign="top"><a id="a0330cad7d3a353859d3653b33bf9af8d" name="a0330cad7d3a353859d3653b33bf9af8d"></a>
+<a class="el" href="classFrameCount.html">FrameCount</a>&#160;</td><td class="memItemRight" valign="bottom"><b>framesWithLtc</b> {0}</td></tr>
+<tr class="memdesc:a0330cad7d3a353859d3653b33bf9af8d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total number of frames where at least one LTC frame decoded. <br /></td></tr>
+<tr class="separator:a0330cad7d3a353859d3653b33bf9af8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a81a505868d8d5fd9ce80b6c2c2766b30" id="r_a81a505868d8d5fd9ce80b6c2c2766b30"><td class="memItemLeft" align="right" valign="top"><a id="a81a505868d8d5fd9ce80b6c2c2766b30" name="a81a505868d8d5fd9ce80b6c2c2766b30"></a>
+<a class="el" href="classFrameCount.html">FrameCount</a>&#160;</td><td class="memItemRight" valign="bottom"><b>framesWithVideoTimestamp</b> {0}</td></tr>
+<tr class="memdesc:a81a505868d8d5fd9ce80b6c2c2766b30"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total number of frames where the video <a class="el" href="classMediaTimeStamp.html" title="Self-describing timestamp that pairs a time value with its clock domain and offset.">MediaTimeStamp</a> was valid. <br /></td></tr>
+<tr class="separator:a81a505868d8d5fd9ce80b6c2c2766b30"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adc545bb5e7399da37010d86d5617f6ce" id="r_adc545bb5e7399da37010d86d5617f6ce"><td class="memItemLeft" align="right" valign="top"><a id="adc545bb5e7399da37010d86d5617f6ce" name="adc545bb5e7399da37010d86d5617f6ce"></a>
+<a class="el" href="classFrameCount.html">FrameCount</a>&#160;</td><td class="memItemRight" valign="bottom"><b>framesWithAudioTimestamp</b> {0}</td></tr>
+<tr class="memdesc:adc545bb5e7399da37010d86d5617f6ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total number of frames where the audio <a class="el" href="classMediaTimeStamp.html" title="Self-describing timestamp that pairs a time value with its clock domain and offset.">MediaTimeStamp</a> was valid. <br /></td></tr>
+<tr class="separator:adc545bb5e7399da37010d86d5617f6ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2fd6c744db0327d1d667eb9bbbedc224" id="r_a2fd6c744db0327d1d667eb9bbbedc224"><td class="memItemLeft" align="right" valign="top"><a id="a2fd6c744db0327d1d667eb9bbbedc224" name="a2fd6c744db0327d1d667eb9bbbedc224"></a>
 <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>videoDeltaSamples</b> = 0</td></tr>
 <tr class="memdesc:a2fd6c744db0327d1d667eb9bbbedc224"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of consecutive-pair video timestamp deltas measured. <br /></td></tr>
@@ -316,7 +320,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structInspectorSnapshot.html">InspectorSnapshot</a></li>
-    <li class="footer">Generated on 2026-04-21 07:27:58 from commit 3f2d824 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
   </ul>
 </div>
 </body>

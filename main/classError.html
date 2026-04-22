@@ -185,6 +185,10 @@ Public Types</h2></td></tr>
 , <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a7eb7c3167bbfd4848b72b843e36fc1f7">ClockDomainMismatch</a>
 , <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a99cd04054fffa79f63c560723eb4ecfd">ObjectGone</a>
 , <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a472abb37baff1ed0725d1a8400e1ec1e">ClockPaused</a>
+, <br />
+&#160;&#160;<a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ac3b0a5260c550da359ce21d5d2f4790f">DurationUnknown</a>
+, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a98240600c1b658add2e71f1dc7ec7e95">FrameRangeInfinite</a>
+, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a9027e04f1e22c093a246d518d805db28">NotAdjacent</a>
 <br />
  }</td></tr>
 <tr class="memdesc:ab5980e13b879db253df802b0950d1708"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> codes for the promeki library.  <a href="classError.html#ab5980e13b879db253df802b0950d1708">More...</a><br /></td></tr>
@@ -401,6 +405,12 @@ Static Public Member Functions</h2></td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a99cd04054fffa79f63c560723eb4ecfd" name="ab5980e13b879db253df802b0950d1708a99cd04054fffa79f63c560723eb4ecfd"></a>ObjectGone&#160;</td><td class="fielddoc"><p>Referenced object has been destroyed. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a472abb37baff1ed0725d1a8400e1ec1e" name="ab5980e13b879db253df802b0950d1708a472abb37baff1ed0725d1a8400e1ec1e"></a>ClockPaused&#160;</td><td class="fielddoc"><p><a class="el" href="classClock.html" title="Abstract clock interface.">Clock</a> is paused; operation cannot complete until resumed. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708ac3b0a5260c550da359ce21d5d2f4790f" name="ab5980e13b879db253df802b0950d1708ac3b0a5260c550da359ce21d5d2f4790f"></a>DurationUnknown&#160;</td><td class="fielddoc"><p><a class="el" href="classMediaDuration.html" title="A run of media frames described by a start frame plus a length.">MediaDuration</a> has one or more Unknown fields. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a98240600c1b658add2e71f1dc7ec7e95" name="ab5980e13b879db253df802b0950d1708a98240600c1b658add2e71f1dc7ec7e95"></a>FrameRangeInfinite&#160;</td><td class="fielddoc"><p><a class="el" href="classMediaDuration.html" title="A run of media frames described by a start frame plus a length.">MediaDuration</a> is infinite and cannot be expressed as a bounded FrameRange. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a9027e04f1e22c093a246d518d805db28" name="ab5980e13b879db253df802b0950d1708a9027e04f1e22c093a246d518d805db28"></a>NotAdjacent&#160;</td><td class="fielddoc"><p>Two MediaDurations are not frame-adjacent and cannot be joined. </p>
 </td></tr>
 </table>
 
@@ -715,7 +725,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classError.html">Error</a></li>
-    <li class="footer">Generated on 2026-04-21 07:27:58 from commit 3f2d824 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
   </ul>
 </div>
 </body>

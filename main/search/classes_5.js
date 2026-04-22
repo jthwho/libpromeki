@@ -23,9 +23,12 @@ var searchData=
   ['fourcc_20',['FourCC',['../classFourCC.html',1,'']]],
   ['frame_21',['Frame',['../classFrame.html',1,'']]],
   ['framebridge_22',['FrameBridge',['../classFrameBridge.html',1,'']]],
-  ['frameindexentry_23',['FrameIndexEntry',['../structDebugMediaFile_1_1FrameIndexEntry.html',1,'DebugMediaFile']]],
-  ['framerate_24',['FrameRate',['../classFrameRate.html',1,'']]],
-  ['framesync_25',['FrameSync',['../classFrameSync.html',1,'']]],
-  ['future_26',['Future',['../classFuture.html',1,'']]],
-  ['future_3c_20void_20_3e_27',['Future&lt; void &gt;',['../classFuture_3_01void_01_4.html',1,'']]]
+  ['framecount_23',['FrameCount',['../classFrameCount.html',1,'']]],
+  ['frameindexentry_24',['FrameIndexEntry',['../structDebugMediaFile_1_1FrameIndexEntry.html',1,'DebugMediaFile']]],
+  ['framenumber_25',['FrameNumber',['../classFrameNumber.html',1,'']]],
+  ['framerange_26',['FrameRange',['../structMediaDuration_1_1FrameRange.html',1,'MediaDuration']]],
+  ['framerate_27',['FrameRate',['../classFrameRate.html',1,'']]],
+  ['framesync_28',['FrameSync',['../classFrameSync.html',1,'']]],
+  ['future_29',['Future',['../classFuture.html',1,'']]],
+  ['future_3c_20void_20_3e_30',['Future&lt; void &gt;',['../classFuture_3_01void_01_4.html',1,'']]]
 ];

@@ -150,10 +150,10 @@ Public Types</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a36dd405d9ec16957fe7d5719f00a9cd2" id="r_a36dd405d9ec16957fe7d5719f00a9cd2"><td class="memItemLeft" align="right" valign="top"><a id="a36dd405d9ec16957fe7d5719f00a9cd2" name="a36dd405d9ec16957fe7d5719f00a9cd2"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">FramesProduced</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS64).setDefault(<a class="el" href="classList.html">int64_t</a>(0)) .setMin(<a class="el" href="classList.html">int64_t</a>(0)) .setDescription(&quot;Total frames <a class="el" href="classList.html">dispatched</a> from <a class="el" href="classList.html">sources</a> to <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">sinks.&quot;</a>))</td></tr>
-<tr class="memdesc:a36dd405d9ec16957fe7d5719f00a9cd2"><td class="mdescLeft">&#160;</td><td class="mdescRight">int64_t — total frames pulled from sources and fanned out to their outgoing edges since the pipeline started draining. <br /></td></tr>
-<tr class="separator:a36dd405d9ec16957fe7d5719f00a9cd2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae80c706dba4565f07b34dbffa32401ed" id="r_ae80c706dba4565f07b34dbffa32401ed"><td class="memItemLeft" align="right" valign="top"><a id="ae80c706dba4565f07b34dbffa32401ed" name="ae80c706dba4565f07b34dbffa32401ed"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">FramesProduced</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeFrameCount).setDefault(<a class="el" href="classFrameCount.html">FrameCount</a>(0)) .setDescription(&quot;Total frames <a class="el" href="classList.html">dispatched</a> from <a class="el" href="classList.html">sources</a> to <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">sinks.&quot;</a>))</td></tr>
+<tr class="memdesc:ae80c706dba4565f07b34dbffa32401ed"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFrameCount.html" title="Count of frames, optionally empty, unknown, or infinite.">FrameCount</a> — total frames pulled from sources and fanned out to their outgoing edges since the pipeline started draining. <br /></td></tr>
+<tr class="separator:ae80c706dba4565f07b34dbffa32401ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeb8a9d45ae11d9d77395cf7cbfbc2481" id="r_aeb8a9d45ae11d9d77395cf7cbfbc2481"><td class="memItemLeft" align="right" valign="top"><a id="aeb8a9d45ae11d9d77395cf7cbfbc2481" name="aeb8a9d45ae11d9d77395cf7cbfbc2481"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">WriteRetries</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS64).setDefault(<a class="el" href="classList.html">int64_t</a>(0)) .setMin(<a class="el" href="classList.html">int64_t</a>(0)) .setDescription(&quot;Non-<a class="el" href="classList.html">blocking</a> writeFrame TryAgain events <a class="el" href="classList.html">held</a> <a class="el" href="classList.html">for</a> <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">retry.&quot;</a>))</td></tr>
 <tr class="memdesc:aeb8a9d45ae11d9d77395cf7cbfbc2481"><td class="mdescLeft">&#160;</td><td class="mdescRight">int64_t — total times a non-blocking <a class="el" href="classMediaIO.html#a083b9e49f5f676da9066f084bfbd0f60">MediaIO::writeFrame</a> refused with <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708aa5758bc6cc59cd5dcedfb62d4cbbc76b" title="Resource temporarily unavailable (EAGAIN).">Error::TryAgain</a></code> and the pipeline stashed the frame for retry on the next drain. <br /></td></tr>
@@ -330,7 +330,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classPipelineStats.html">PipelineStats</a></li>
-    <li class="footer">Generated on 2026-04-21 07:27:58 from commit 3f2d824 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -126,19 +126,21 @@ Collaboration diagram for MediaIOCommandRead:</div>
 <div class="dyncontent">
 <div class="center"><img src="classMediaIOCommandRead__coll__graph.png" border="0" usemap="#aMediaIOCommandRead_coll__map" alt="Collaboration graph"/></div>
 <map name="aMediaIOCommandRead_coll__map" id="aMediaIOCommandRead_coll__map">
-<area shape="rect" title="Command to read the next frame." alt="" coords="263,181,439,207"/>
+<area shape="rect" title="Command to read the next frame." alt="" coords="351,181,527,207"/>
 <area shape="rect" href="classMediaIOCommand.html" title="Base class for MediaIO commands." alt="" coords="42,93,185,119"/>
-<area shape="poly" title=" " alt="" coords="159,121,320,179,318,184,158,126"/>
+<area shape="poly" title=" " alt="" coords="171,120,396,179,395,184,169,125"/>
 <area shape="rect" href="classRefCount.html" title="An atomic reference count object." alt="" coords="5,5,88,31"/>
 <area shape="poly" title=" " alt="" coords="45,45,46,57,50,68,62,81,78,91,76,95,59,85,46,71,41,58,40,45"/>
 <area shape="rect" href="classPromise.html" title=" " alt="" coords="112,5,248,31"/>
 <area shape="poly" title=" " alt="" coords="170,45,153,71,129,95,125,91,149,68,165,42"/>
 <area shape="rect" href="classSharedPtr.html" title=" " alt="" coords="209,93,365,119"/>
-<area shape="poly" title=" " alt="" coords="306,128,344,179,340,182,301,131"/>
-<area shape="rect" href="classError.html" title="Lightweight error code wrapper for the promeki library." alt="" coords="389,93,443,119"/>
-<area shape="poly" title=" " alt="" coords="401,131,362,182,358,179,397,128"/>
-<area shape="rect" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata." alt="" coords="467,93,562,119"/>
-<area shape="poly" title=" " alt="" coords="488,128,435,160,381,184,379,179,432,155,485,124"/>
+<area shape="poly" title=" " alt="" coords="320,123,419,179,417,183,318,128"/>
+<area shape="rect" href="classFrameNumber.html" title="Absolute frame index along a media timeline." alt="" coords="389,93,504,119"/>
+<area shape="poly" title=" " alt="" coords="444,133,443,143,441,181,436,181,437,142,439,132"/>
+<area shape="rect" href="classError.html" title="Lightweight error code wrapper for the promeki library." alt="" coords="535,93,588,119"/>
+<area shape="poly" title=" " alt="" coords="554,133,534,159,512,174,488,184,486,179,509,169,530,155,549,130"/>
+<area shape="rect" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata." alt="" coords="613,93,707,119"/>
+<area shape="poly" title=" " alt="" coords="638,130,592,160,554,174,515,184,513,179,552,169,589,155,635,126"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -171,9 +173,9 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>step</b> = 1</td></tr>
 <tr class="memitem:ad86974b8a3176355fe5fdb0fef25d08b" id="r_ad86974b8a3176355fe5fdb0fef25d08b"><td class="memItemLeft" align="right" valign="top"><a id="ad86974b8a3176355fe5fdb0fef25d08b" name="ad86974b8a3176355fe5fdb0fef25d08b"></a>
 <a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a">Frame::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><b>frame</b></td></tr>
 <tr class="separator:ad86974b8a3176355fe5fdb0fef25d08b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2029e17337d10ef42b5792ab877a5d89" id="r_a2029e17337d10ef42b5792ab877a5d89"><td class="memItemLeft" align="right" valign="top"><a id="a2029e17337d10ef42b5792ab877a5d89" name="a2029e17337d10ef42b5792ab877a5d89"></a>
-<a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>currentFrame</b> = 0</td></tr>
-<tr class="separator:a2029e17337d10ef42b5792ab877a5d89"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af8e03554b66109e8d4b62c45c31e2579" id="r_af8e03554b66109e8d4b62c45c31e2579"><td class="memItemLeft" align="right" valign="top"><a id="af8e03554b66109e8d4b62c45c31e2579" name="af8e03554b66109e8d4b62c45c31e2579"></a>
+<a class="el" href="classFrameNumber.html">FrameNumber</a>&#160;</td><td class="memItemRight" valign="bottom"><b>currentFrame</b></td></tr>
+<tr class="separator:af8e03554b66109e8d4b62c45c31e2579"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a141c78b1dc0b319e1ac71123fce7c884" id="r_a141c78b1dc0b319e1ac71123fce7c884"><td class="memItemLeft" align="right" valign="top"><a id="a141c78b1dc0b319e1ac71123fce7c884" name="a141c78b1dc0b319e1ac71123fce7c884"></a>
 <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><b>result</b></td></tr>
 <tr class="memdesc:a141c78b1dc0b319e1ac71123fce7c884"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> by worker; carries success/error/EOF. <br /></td></tr>
@@ -277,7 +279,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIOCommandRead.html">MediaIOCommandRead</a></li>
-    <li class="footer">Generated on 2026-04-21 07:27:58 from commit 3f2d824 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
   </ul>
 </div>
 </body>

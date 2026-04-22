@@ -1,3 +1,7 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$structImageDataDecoder_1_1Band.html" title="One scan&#45;line band the decoder should look at." alt="" coords="5,5,195,31"/>
+<area shape="rect" id="Node000000" href="$classImageCodec.html" title="Abstract base class for image codecs." alt="" coords="5,31,108,56"/>
+<area shape="rect" id="Node000001" href="$classJpegImageCodec.html" title="JPEG image codec using libjpeg&#45;turbo." alt="" coords="164,5,295,31"/>
+<area shape="poly" id="edge68_Node000000_Node000001" title=" " alt="" coords="121,31,163,25,164,30,122,37"/>
+<area shape="rect" id="Node000002" href="$classJpegXsImageCodec.html" title="JPEG XS image codec using SVT&#45;JPEG&#45;XS." alt="" coords="156,55,303,80"/>
+<area shape="poly" id="edge69_Node000000_Node000002" title=" " alt="" coords="122,50,156,54,155,60,121,55"/>
 </map>

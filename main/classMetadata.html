@@ -259,10 +259,13 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (EndOfStream, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool) .setDefault(<a class="el" href="classList.html">false</a>) .setDescription(&quot;Signals end-<a class="el" href="classList.html">of</a>-stream to <a class="el" href="classList.html">downstream</a> <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">nodes.&quot;</a>))</td></tr>
 <tr class="memdesc:a3c4fd6dbceb0c05173d346e72fa58667"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signals end-of-stream to downstream nodes. <br /></td></tr>
 <tr class="separator:a3c4fd6dbceb0c05173d346e72fa58667"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9c092ba36f508317229924b530d1ca83" id="r_a9c092ba36f508317229924b530d1ca83"><td class="memItemLeft" align="right" valign="top"><a id="a9c092ba36f508317229924b530d1ca83" name="a9c092ba36f508317229924b530d1ca83"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (FrameNumber, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS64) .setDefault(<a class="el" href="classList.html">int64_t</a>(0)) .setMin(<a class="el" href="classList.html">int64_t</a>(0)) .setDescription(&quot;Frame <a class="el" href="classList.html">sequence</a> number <a class="el" href="classList.html">within</a> a stream.&quot;))</td></tr>
-<tr class="memdesc:a9c092ba36f508317229924b530d1ca83"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> sequence number within a stream. <br /></td></tr>
-<tr class="separator:a9c092ba36f508317229924b530d1ca83"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a641af02af52b67233acbda1fdcc5a853" id="r_a641af02af52b67233acbda1fdcc5a853"><td class="memItemLeft" align="right" valign="top"><a id="a641af02af52b67233acbda1fdcc5a853" name="a641af02af52b67233acbda1fdcc5a853"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classFrameNumber.html">FrameNumber</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeFrameNumber) .setDefault(promeki::FrameNumber()) .setDescription(&quot;Frame <a class="el" href="classList.html">sequence</a> number <a class="el" href="classList.html">within</a> a stream.&quot;))</td></tr>
+<tr class="memdesc:a641af02af52b67233acbda1fdcc5a853"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> sequence number within a stream. <br /></td></tr>
+<tr class="separator:a641af02af52b67233acbda1fdcc5a853"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9450a81c0836337aac4036bcf543469f" id="r_a9450a81c0836337aac4036bcf543469f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a9450a81c0836337aac4036bcf543469f">PROMEKI_DECLARE_ID</a> (<a class="el" href="classDuration.html">Duration</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeMediaDuration) .setDefault(promeki::MediaDuration()) .setDescription(&quot;Clip-level <a class="el" href="classList.html">duration:</a> <a class="el" href="classList.html">starting</a> frame <a class="el" href="classList.html">plus</a> length.&quot;))</td></tr>
+<tr class="memdesc:a9450a81c0836337aac4036bcf543469f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total media span as a (start, length) pair.  <br /></td></tr>
+<tr class="separator:a9450a81c0836337aac4036bcf543469f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade696870d6c1a3460a25371a616290d3" id="r_ade696870d6c1a3460a25371a616290d3"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#ade696870d6c1a3460a25371a616290d3">PROMEKI_DECLARE_ID</a> (<a class="el" href="classList.html">CaptureTime</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeMediaTimeStamp) .setDefault(promeki::MediaTimeStamp()) .setDescription(&quot;Timestamp <a class="el" href="classList.html">when</a> <a class="el" href="classList.html">the</a> <a class="el" href="classList.html">library</a> <a class="el" href="classList.html">or</a> device <a class="el" href="classList.html">captured</a> <a class="el" href="classList.html">this</a> data.&quot;))</td></tr>
 <tr class="memdesc:ade696870d6c1a3460a25371a616290d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Timestamp of when the library or device captured this data.  <br /></td></tr>
 <tr class="separator:ade696870d6c1a3460a25371a616290d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -747,7 +750,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="ade696870d6c1a3460a25371a616290d3" name="ade696870d6c1a3460a25371a616290d3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ade696870d6c1a3460a25371a616290d3">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[1/7]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ade696870d6c1a3460a25371a616290d3">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[1/8]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -777,8 +780,40 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a9450a81c0836337aac4036bcf543469f" name="a9450a81c0836337aac4036bcf543469f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9450a81c0836337aac4036bcf543469f">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[2/8]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Metadata::PROMEKI_DECLARE_ID </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classDuration.html">Duration</a>&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeMediaDuration) .setDefault(promeki::MediaDuration()) .setDescription(&quot;Clip-level <a class="el" href="classList.html">duration:</a> <a class="el" href="classList.html">starting</a> frame <a class="el" href="classList.html">plus</a> length.&quot;)&#160;</td>
+          <td class="paramname">&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Total media span as a (start, length) pair. </p>
+<p>Used at the container / clip level to record "this asset covers @c length frames starting at frame
+@c start". Per-frame metadata should use <a class="el" href="classFrameNumber.html">FrameNumber</a> instead. </p>
+
+</div>
+</div>
 <a id="a50d5380637e810618ac86f0b6b5730c2" name="a50d5380637e810618ac86f0b6b5730c2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a50d5380637e810618ac86f0b6b5730c2">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[2/7]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a50d5380637e810618ac86f0b6b5730c2">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[3/8]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -809,7 +844,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="afb2fcf431ff9210de9dd71f7d0036c77" name="afb2fcf431ff9210de9dd71f7d0036c77"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afb2fcf431ff9210de9dd71f7d0036c77">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[3/7]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#afb2fcf431ff9210de9dd71f7d0036c77">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[4/8]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -840,7 +875,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="a7c7ae06b21b30e90eda28388bfee524a" name="a7c7ae06b21b30e90eda28388bfee524a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7c7ae06b21b30e90eda28388bfee524a">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[4/7]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a7c7ae06b21b30e90eda28388bfee524a">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[5/8]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -871,7 +906,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="ae1260a748fefec50e1d60f51c7baa8d8" name="ae1260a748fefec50e1d60f51c7baa8d8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae1260a748fefec50e1d60f51c7baa8d8">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[5/7]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1260a748fefec50e1d60f51c7baa8d8">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[6/8]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -902,7 +937,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="a2f3f23133d826559a7f03a257e6dfa7b" name="a2f3f23133d826559a7f03a257e6dfa7b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2f3f23133d826559a7f03a257e6dfa7b">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[6/7]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a2f3f23133d826559a7f03a257e6dfa7b">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[7/8]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -933,7 +968,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="ab694155f6292e23d4129efd3490cfe0b" name="ab694155f6292e23d4129efd3490cfe0b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab694155f6292e23d4129efd3490cfe0b">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[7/7]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ab694155f6292e23d4129efd3490cfe0b">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[8/8]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1008,7 +1043,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMetadata.html">Metadata</a></li>
-    <li class="footer">Generated on 2026-04-21 07:27:58 from commit 3f2d824 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
   </ul>
 </div>
 </body>

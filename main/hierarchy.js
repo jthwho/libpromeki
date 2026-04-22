@@ -219,7 +219,10 @@ var hierarchy =
     [ "std::formatter< promeki::VideoFormat >", "structstd_1_1formatter_3_01promeki_1_1VideoFormat_01_4.html", null ],
     [ "FourCC", "classFourCC.html", null ],
     [ "Frame", "classFrame.html", null ],
+    [ "FrameCount", "classFrameCount.html", null ],
     [ "DebugMediaFile::FrameIndexEntry", "structDebugMediaFile_1_1FrameIndexEntry.html", null ],
+    [ "FrameNumber", "classFrameNumber.html", null ],
+    [ "MediaDuration::FrameRange", "structMediaDuration_1_1FrameRange.html", null ],
     [ "FrameRate", "classFrameRate.html", null ],
     [ "FrameSync", "classFrameSync.html", null ],
     [ "Future< T >", "classFuture.html", null ],
@@ -227,6 +230,10 @@ var hierarchy =
     [ "MulticastReceiver::GroupEntry", "structMulticastReceiver_1_1GroupEntry.html", null ],
     [ "H264Bitstream", "classH264Bitstream.html", null ],
     [ "ColorModel::H273", "structColorModel_1_1H273.html", null ],
+    [ "std::hash< promeki::FrameCount >", "structstd_1_1hash_3_01promeki_1_1FrameCount_01_4.html", null ],
+    [ "std::hash< promeki::FrameNumber >", "structstd_1_1hash_3_01promeki_1_1FrameNumber_01_4.html", null ],
+    [ "std::hash< promeki::MediaDuration >", "structstd_1_1hash_3_01promeki_1_1MediaDuration_01_4.html", null ],
+    [ "std::hash< promeki::MediaDuration::FrameRange >", "structstd_1_1hash_3_01promeki_1_1MediaDuration_1_1FrameRange_01_4.html", null ],
     [ "HashMap< K, V >", "classHashMap.html", null ],
     [ "HashSet< T >", "classHashSet.html", null ],
     [ "HevcDecoderConfig", "structHevcDecoderConfig.html", null ],
@@ -254,6 +261,7 @@ var hierarchy =
     [ "ImageDataEncoder::Item", "structImageDataEncoder_1_1Item.html", null ],
     [ "StringRegistry< Name >::Item", "classStringRegistry_1_1Item.html", null ],
     [ "BenchmarkState::Iterator", "classBenchmarkState_1_1Iterator.html", null ],
+    [ "MediaDuration::FrameRange::Iterator", "classMediaDuration_1_1FrameRange_1_1Iterator.html", null ],
     [ "JsonArray", "classJsonArray.html", null ],
     [ "JsonObject", "classJsonObject.html", null ],
     [ "VariantLookup< T >::Key", "classVariantLookup_1_1Key.html", null ],
@@ -344,6 +352,7 @@ var hierarchy =
     [ "Matrix< T, W, H >", "classMatrix.html", null ],
     [ "Matrix3x3", "classMatrix3x3.html", null ],
     [ "MediaDesc", "classMediaDesc.html", null ],
+    [ "MediaDuration", "classMediaDuration.html", null ],
     [ "MediaIOCommand", "classMediaIOCommand.html", [
       [ "MediaIOCommandClose", "classMediaIOCommandClose.html", null ],
       [ "MediaIOCommandOpen", "classMediaIOCommandOpen.html", null ],
@@ -627,7 +636,7 @@ var hierarchy =
     ] ],
     [ "detail::VariantEnd", "structdetail_1_1VariantEnd.html", null ],
     [ "VariantImpl< Types >", "classVariantImpl.html", null ],
-    [ "VariantImpl< std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, Size2Du32, UUID, UMID, Timecode, Rational< int >, FrameRate, VideoFormat, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, VideoCodec, AudioCodec, Enum, EnumList, MasteringDisplay, ContentLightLevel, detail::VariantEnd >", "classVariantImpl.html", [
+    [ "VariantImpl< std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, FrameNumber, FrameCount, MediaDuration, Size2Du32, UUID, UMID, Timecode, Rational< int >, FrameRate, VideoFormat, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, VideoCodec, AudioCodec, Enum, EnumList, MasteringDisplay, ContentLightLevel, detail::VariantEnd >", "classVariantImpl.html", [
       [ "Variant", "classVariant.html", null ]
     ] ],
     [ "VariantLookup< T >", "classVariantLookup.html", null ],

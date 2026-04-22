@@ -21,5 +21,6 @@ var searchData=
   ['formatmismatch_18',['FormatMismatch',['../classError.html#ab5980e13b879db253df802b0950d1708a7e5b3da50016db37eaa13051d0ae32bf',1,'Error']]],
   ['forward_19',['Forward',['../classTimecodeGenerator.html#a4c4ad2cf7baea2f3f1e93dc3b68c0dbda03259fcbfc2c3849da9a6c0e9f28d009',1,'TimecodeGenerator']]],
   ['fps_5fnotwellknown_20',['FPS_NotWellKnown',['../classFrameRate.html#a0b03c0fe2f653ec8479d240690191b9ca678c03071e4d9a0c5df04d175257d202',1,'FrameRate']]],
-  ['framenumberjump_21',['FrameNumberJump',['../structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da76f5a1985d93b6ebcd1b8de165efe65a',1,'InspectorDiscontinuity']]]
+  ['framenumberjump_21',['FrameNumberJump',['../structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da76f5a1985d93b6ebcd1b8de165efe65a',1,'InspectorDiscontinuity']]],
+  ['framerangeinfinite_22',['FrameRangeInfinite',['../classError.html#ab5980e13b879db253df802b0950d1708a98240600c1b658add2e71f1dc7ec7e95',1,'Error']]]
 ];

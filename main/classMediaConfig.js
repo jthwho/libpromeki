@@ -74,6 +74,7 @@ var classMediaConfig =
     [ "PROMEKI_DECLARE_ID", "classMediaConfig.html#af04f9c77b76cff3ce4f4fb8b023cdea2", null ],
     [ "PROMEKI_DECLARE_ID", "classMediaConfig.html#abd4dee0f0e7d45f339e228a514ed1777", null ],
     [ "PROMEKI_DECLARE_ID", "classMediaConfig.html#a37c358a0c0b6882be27848b3d86690f5", null ],
+    [ "PROMEKI_DECLARE_ID", "classMediaConfig.html#ad91ffd107308d33818bfd788c6c77097", null ],
     [ "PROMEKI_DECLARE_ID", "classMediaConfig.html#a822d1644073a0e51566bee1f5c9d6e59", null ],
     [ "PROMEKI_DECLARE_ID", "classMediaConfig.html#adbd32c466fe9e97a096bb6e0065e3ccb", null ],
     [ "PROMEKI_DECLARE_ID", "classMediaConfig.html#a349318fa3039a0a0a712865e968f8e25", null ],

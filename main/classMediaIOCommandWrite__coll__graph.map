@@ -1,11 +1,15 @@
 <map id="MediaIOCommandWrite" name="MediaIOCommandWrite">
-<area shape="rect" id="Node000001" title="Command to write a frame." alt="" coords="153,181,332,207"/>
+<area shape="rect" id="Node000001" title="Command to write a frame." alt="" coords="277,181,456,207"/>
 <area shape="rect" id="Node000002" href="$classMediaIOCommand.html" title="Base class for MediaIO commands." alt="" coords="42,93,185,119"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="143,124,227,179,224,183,140,128"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="161,121,333,179,332,184,159,126"/>
 <area shape="rect" id="Node000003" href="$classRefCount.html" title="An atomic reference count object." alt="" coords="5,5,88,31"/>
 <area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="45,45,46,57,50,68,62,81,78,91,76,95,59,85,46,71,41,58,40,45"/>
 <area shape="rect" id="Node000004" href="$classPromise.html" title=" " alt="" coords="112,5,248,31"/>
 <area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="170,45,153,71,129,95,125,91,149,68,165,42"/>
 <area shape="rect" id="Node000005" href="$classSharedPtr.html" title=" " alt="" coords="209,93,365,119"/>
-<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="277,132,251,182,246,180,272,130"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="309,127,357,179,354,183,305,131"/>
+<area shape="rect" id="Node000006" href="$classFrameNumber.html" title="Absolute frame index along a media timeline." alt="" coords="389,93,504,119"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="429,131,380,183,376,179,425,127"/>
+<area shape="rect" id="Node000007" href="$classFrameCount.html" title="Count of frames, optionally empty, unknown, or infinite." alt="" coords="528,93,629,119"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="557,130,509,160,472,174,434,184,433,179,470,169,507,155,554,125"/>
 </map>

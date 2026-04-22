@@ -115,11 +115,15 @@ Collaboration diagram for FrameSync::PullResult:</div>
 <div class="dyncontent">
 <div class="center"><img src="structFrameSync_1_1PullResult__coll__graph.png" border="0" usemap="#aFrameSync_1_1PullResult_coll__map" alt="Collaboration graph"/></div>
 <map name="aFrameSync_1_1PullResult_coll__map" id="aFrameSync_1_1PullResult_coll__map">
-<area shape="rect" title="Result returned by pullFrame." alt="" coords="71,93,237,119"/>
+<area shape="rect" title="Result returned by pullFrame." alt="" coords="220,108,387,133"/>
 <area shape="rect" href="classSharedPtr.html" title=" " alt="" coords="5,5,161,31"/>
-<area shape="poly" title=" " alt="" coords="103,39,146,91,142,94,99,43"/>
-<area shape="rect" href="classDuration.html" title="Time duration with nanosecond precision." alt="" coords="185,5,264,31"/>
-<area shape="poly" title=" " alt="" coords="209,43,166,94,162,91,205,39"/>
+<area shape="poly" title=" " alt="" coords="114,36,196,82,262,105,261,110,194,86,111,41"/>
+<area shape="rect" href="classFrameNumber.html" title="Absolute frame index along a media timeline." alt="" coords="186,5,301,31"/>
+<area shape="poly" title=" " alt="" coords="246,44,250,64,258,83,269,95,282,106,279,110,265,99,253,85,245,65,241,45"/>
+<area shape="rect" href="classFrameCount.html" title="Count of frames, optionally empty, unknown, or infinite." alt="" coords="325,5,426,31"/>
+<area shape="poly" title=" " alt="" coords="365,44,337,86,317,109,313,106,333,82,360,41"/>
+<area shape="rect" href="classDuration.html" title="Time duration with nanosecond precision." alt="" coords="465,5,544,31"/>
+<area shape="poly" title=" " alt="" coords="499,45,488,67,470,86,430,107,387,118,386,113,429,102,467,82,484,64,495,42"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -129,18 +133,18 @@ Public Attributes</h2></td></tr>
 <a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a">Frame::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><b>frame</b></td></tr>
 <tr class="memdesc:a5fe50041d5ea53cff896ee22ba350777"><td class="mdescLeft">&#160;</td><td class="mdescRight">Synthesised output frame. <br /></td></tr>
 <tr class="separator:a5fe50041d5ea53cff896ee22ba350777"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac36e9cc3fd6e2813f1ecfaa5de569b93" id="r_ac36e9cc3fd6e2813f1ecfaa5de569b93"><td class="memItemLeft" align="right" valign="top"><a id="ac36e9cc3fd6e2813f1ecfaa5de569b93" name="ac36e9cc3fd6e2813f1ecfaa5de569b93"></a>
-<a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>frameIndex</b> = 0</td></tr>
-<tr class="memdesc:ac36e9cc3fd6e2813f1ecfaa5de569b93"><td class="mdescLeft">&#160;</td><td class="mdescRight">Zero-based output frame index since reset. <br /></td></tr>
-<tr class="separator:ac36e9cc3fd6e2813f1ecfaa5de569b93"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8c9286ab155f08814a96a6191d8f7058" id="r_a8c9286ab155f08814a96a6191d8f7058"><td class="memItemLeft" align="right" valign="top"><a id="a8c9286ab155f08814a96a6191d8f7058" name="a8c9286ab155f08814a96a6191d8f7058"></a>
-<a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>framesRepeated</b> = 0</td></tr>
-<tr class="memdesc:a8c9286ab155f08814a96a6191d8f7058"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of times the held source frame was repeated to produce this output. <br /></td></tr>
-<tr class="separator:a8c9286ab155f08814a96a6191d8f7058"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acd8a237a8bca7970942f220795930086" id="r_acd8a237a8bca7970942f220795930086"><td class="memItemLeft" align="right" valign="top"><a id="acd8a237a8bca7970942f220795930086" name="acd8a237a8bca7970942f220795930086"></a>
-<a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>framesDropped</b> = 0</td></tr>
-<tr class="memdesc:acd8a237a8bca7970942f220795930086"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of source frames discarded to produce this output (advanced past without use). <br /></td></tr>
-<tr class="separator:acd8a237a8bca7970942f220795930086"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d554945fc6b186c3a6da200c016af4a" id="r_a9d554945fc6b186c3a6da200c016af4a"><td class="memItemLeft" align="right" valign="top"><a id="a9d554945fc6b186c3a6da200c016af4a" name="a9d554945fc6b186c3a6da200c016af4a"></a>
+<a class="el" href="classFrameNumber.html">FrameNumber</a>&#160;</td><td class="memItemRight" valign="bottom"><b>frameIndex</b> {0}</td></tr>
+<tr class="memdesc:a9d554945fc6b186c3a6da200c016af4a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Zero-based output frame index since reset. <br /></td></tr>
+<tr class="separator:a9d554945fc6b186c3a6da200c016af4a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a700530c0d6702065785a0473fd62d83c" id="r_a700530c0d6702065785a0473fd62d83c"><td class="memItemLeft" align="right" valign="top"><a id="a700530c0d6702065785a0473fd62d83c" name="a700530c0d6702065785a0473fd62d83c"></a>
+<a class="el" href="classFrameCount.html">FrameCount</a>&#160;</td><td class="memItemRight" valign="bottom"><b>framesRepeated</b> {0}</td></tr>
+<tr class="memdesc:a700530c0d6702065785a0473fd62d83c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of times the held source frame was repeated to produce this output. <br /></td></tr>
+<tr class="separator:a700530c0d6702065785a0473fd62d83c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4b5c75f82d555c6e49d2b9ea9d3170e2" id="r_a4b5c75f82d555c6e49d2b9ea9d3170e2"><td class="memItemLeft" align="right" valign="top"><a id="a4b5c75f82d555c6e49d2b9ea9d3170e2" name="a4b5c75f82d555c6e49d2b9ea9d3170e2"></a>
+<a class="el" href="classFrameCount.html">FrameCount</a>&#160;</td><td class="memItemRight" valign="bottom"><b>framesDropped</b> {0}</td></tr>
+<tr class="memdesc:a4b5c75f82d555c6e49d2b9ea9d3170e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of source frames discarded to produce this output (advanced past without use). <br /></td></tr>
+<tr class="separator:a4b5c75f82d555c6e49d2b9ea9d3170e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac3c92d1fa6c695bf05effda92ec0ad0d" id="r_ac3c92d1fa6c695bf05effda92ec0ad0d"><td class="memItemLeft" align="right" valign="top"><a id="ac3c92d1fa6c695bf05effda92ec0ad0d" name="ac3c92d1fa6c695bf05effda92ec0ad0d"></a>
 <a class="el" href="classDuration.html">Duration</a>&#160;</td><td class="memItemRight" valign="bottom"><b>error</b></td></tr>
 <tr class="memdesc:ac3c92d1fa6c695bf05effda92ec0ad0d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wake-up error relative to the deadline. <br /></td></tr>
@@ -159,7 +163,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classFrameSync.html">FrameSync</a></li><li class="navelem"><a class="el" href="structFrameSync_1_1PullResult.html">PullResult</a></li>
-    <li class="footer">Generated on 2026-04-21 07:27:58 from commit 3f2d824 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
   </ul>
 </div>
 </body>

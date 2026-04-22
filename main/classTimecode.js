@@ -3,7 +3,6 @@ var classTimecode =
     [ "Mode", "classTimecode_1_1Mode.html", "classTimecode_1_1Mode" ],
     [ "DigitType", "classTimecode.html#acb246914c6e0334c2a524e303a971f64", null ],
     [ "FlagsType", "classTimecode.html#aeb7f5adf0dbdae49cb38579763b980c2", null ],
-    [ "FrameNumber", "classTimecode.html#a1eaa827f9244f0d4f00c6fd69878c496", null ],
     [ "Flags", "classTimecode.html#a0c1acba5a9446c8020cbaf07681c12b3", [
       [ "DropFrame", "classTimecode.html#a0c1acba5a9446c8020cbaf07681c12b3accb4a21551ab4373d6dcbc8a966d0582", null ],
       [ "FirstField", "classTimecode.html#a0c1acba5a9446c8020cbaf07681c12b3a5382ae29b7f8eb748bdbb0e2144e8b1f", null ]
@@ -37,7 +36,7 @@ var classTimecode =
     [ "set", "classTimecode.html#aa0f3e6aa1cc6828116515cbbaa7f501f", null ],
     [ "setMode", "classTimecode.html#a52245e2b5d56982b35a08e533dacd53b", null ],
     [ "toBcd64", "classTimecode.html#a0b6f9be97a95839c1677c5ce8f2f129b", null ],
-    [ "toFrameNumber", "classTimecode.html#a20c98fe7a64fd1a5ee877ff976769c85", null ],
+    [ "toFrameNumber", "classTimecode.html#aaf177d8ebc888884fbcb4d07bc0d9f52", null ],
     [ "toString", "classTimecode.html#ac3fe8478d926509d7c561d21b769e94c", null ],
     [ "vtcFormat", "classTimecode.html#a8b7cb5b642f7f2d0696b3315785f221b", null ]
 ];
