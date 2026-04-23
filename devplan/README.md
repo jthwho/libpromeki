@@ -52,7 +52,9 @@ All media work happens in the `MediaIO` framework and its backends. The legacy `
 | [music_midi.md](music_midi.md) | 6C, 6D | MIDI I/O and arrangement |
 | [logger_ring_buffer.md](logger_ring_buffer.md) | cross-cutting | Retain last N log messages in a lock-free ring for inclusion in crash reports |
 | [benchmarking.md](benchmarking.md) | cross-cutting | `BenchmarkRunner`, `promeki-bench` utility, MediaIO stamp hooks, live telemetry |
+| [core_ownership_migration.md](core_ownership_migration.md) | cross-cutting | Phase C heap-ownership migration (raw pointers → `UniquePtr`): SharedPtr+CoW conflict, ObjectBase parent/child overlap, singleton self-delete, factory cleanup patterns |
 | [fixme.md](fixme.md) | ongoing | Existing FIXME comments tracked across the tree |
+| [valgrind_cleanup.md](valgrind_cleanup.md) | cross-cutting | Memcheck findings from `unittest-promeki-valgrind.log` grouped into real bugs, likely false positives, and leak stacks to chase |
 | [ideas.md](ideas.md) | backlog | Exploratory ideas that need further design |
 
 ## Dependency Graph

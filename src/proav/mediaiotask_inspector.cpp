@@ -513,7 +513,7 @@ void MediaIOTask_Inspector::initDecoders(const Frame &frame) {
                         if(aud.isValid()) {
                                 const int rate = static_cast<int>(aud->desc().sampleRate());
                                 if(rate > 0) {
-                                        _ltcDecoder = std::make_unique<LtcDecoder>(rate);
+                                        _ltcDecoder = LtcDecoder::UPtr::create(rate);
                                 }
                         }
                 }

@@ -101,13 +101,11 @@ MediaIO::FormatDesc MediaIOTask_VideoDecoder::formatDesc() {
         return d;
 }
 
-MediaIOTask_VideoDecoder::~MediaIOTask_VideoDecoder() {
-        delete _decoder;
-}
+MediaIOTask_VideoDecoder::~MediaIOTask_VideoDecoder() = default;
 
 void MediaIOTask_VideoDecoder::configChanged(const MediaConfig &delta) {
         _config.merge(delta);
-        if(_decoder != nullptr) _decoder->configure(_config);
+        if(_decoder.isValid()) _decoder->configure(_config);
 }
 
 Error MediaIOTask_VideoDecoder::createDecoder(const VideoCodec &codec) {
@@ -123,7 +121,7 @@ Error MediaIOTask_VideoDecoder::createDecoder(const VideoCodec &codec) {
                            codec.name().cstr(), error(decResult).name().cstr());
                 return Error::NotSupported;
         }
-        VideoDecoder *dec = value(decResult);
+        VideoDecoder::UPtr dec = VideoDecoder::UPtr::takeOwnership(value(decResult));
 
         if(!_outputPixelFormatSet) {
                 List<PixelFormat> supported = dec->codec().decoderSupportedOutputs();
@@ -134,7 +132,7 @@ Error MediaIOTask_VideoDecoder::createDecoder(const VideoCodec &codec) {
         }
 
         _codec   = codec;
-        _decoder = dec;
+        _decoder = std::move(dec);
         return Error::Ok;
 }
 
@@ -154,7 +152,7 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandOpen &cmd) {
         if(_capacity < 1) _capacity = 1;
 
         _codec            = VideoCodec();
-        _decoder          = nullptr;
+        _decoder.clear();
         _frameCount       = 0;
         _readCount        = 0;
         _packetsDecoded   = 0;
@@ -198,11 +196,10 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandOpen &cmd) {
 
 Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandClose &cmd) {
         (void)cmd;
-        if(_decoder != nullptr) {
+        if(_decoder.isValid()) {
                 _decoder->flush();
                 drainDecoderInto();
-                delete _decoder;
-                _decoder = nullptr;
+                _decoder.clear();
         }
         _pendingSrcFrames.clear();
         _config = MediaConfig();
@@ -250,7 +247,7 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandWrite &cmd) {
                 return Error::InvalidArgument;
         }
 
-        if(_decoder == nullptr) {
+        if(_decoder.isNull()) {
                 const VideoPacket &pkt = *packets[0];
                 VideoCodec codec = VideoCodec::fromPixelFormat(pkt.pixelFormat());
                 if(!codec.isValid()) {
@@ -299,7 +296,7 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandWrite &cmd) {
 }
 
 void MediaIOTask_VideoDecoder::drainDecoderInto() {
-        if(_decoder == nullptr) return;
+        if(_decoder.isNull()) return;
         while(true) {
                 Image::Ptr imgPtr = _decoder->receiveFrame();
                 if(!imgPtr.isValid()) break;

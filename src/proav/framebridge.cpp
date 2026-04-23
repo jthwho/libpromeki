@@ -165,7 +165,7 @@ struct FrameBridge::Impl {
         // Output-only
         LocalServer    server;
         struct Client {
-                std::unique_ptr<LocalSocket> sock;
+                LocalSocket::UPtr sock;
                 bool                         syncMode = true;
         };
         std::vector<Client> clients;
@@ -808,7 +808,7 @@ struct FrameBridge::Impl {
                         // loop is the real disconnect tripwire.
                         const unsigned int pollMs = 100;
                         cl.sock->setReceiveTimeout(pollMs);
-                        KlvReader r(cl.sock.get());
+                        KlvReader r(cl.sock.ptr());
                         bool acked = false;
                         bool dead  = false;
                         const int maxAttempts = std::max(
@@ -856,7 +856,7 @@ struct FrameBridge::Impl {
                 while(server.hasPendingConnections()) {
                         LocalSocket *ps = server.nextPendingConnection();
                         if(ps == nullptr) break;
-                        std::unique_ptr<LocalSocket> s(ps);
+                        LocalSocket::UPtr s = LocalSocket::UPtr::takeOwnership(ps);
                         bool sync = true;
                         Error err = handshakeWithClient(*s, sync);
                         if(err.isError()) {
@@ -888,7 +888,7 @@ struct FrameBridge::Impl {
 // ============================================================================
 
 FrameBridge::FrameBridge(ObjectBase *parent)
-        : ObjectBase(parent), _d(std::make_unique<Impl>()) {
+        : ObjectBase(parent), _d(ImplPtr::create()) {
         _d->owner = this;
 }
 
@@ -1035,7 +1035,7 @@ void FrameBridge::close() {
                 // Say goodbye to each client (best-effort).
                 for(auto &c : _d->clients) {
                         if(c.sock) {
-                                KlvWriter w(c.sock.get());
+                                KlvWriter w(c.sock.ptr());
                                 (void)w.writeFrame(KeyBYE);
                                 c.sock->close();
                         }

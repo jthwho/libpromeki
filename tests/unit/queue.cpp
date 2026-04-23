@@ -11,6 +11,7 @@
 #include <doctest/doctest.h>
 #include <promeki/queue.h>
 #include <promeki/error.h>
+#include <promeki/uniqueptr.h>
 
 using namespace promeki;
 
@@ -308,8 +309,8 @@ TEST_CASE("Queue_MultipleProducers") {
 // ============================================================================
 
 TEST_CASE("Queue_MoveOnPop") {
-    Queue<std::unique_ptr<int>> q;
-    q.push(std::make_unique<int>(42));
+    Queue<UniquePtr<int>> q;
+    q.push(UniquePtr<int>::create(42));
     auto [val, err] = q.pop();
     CHECK(err.isOk());
     CHECK(val != nullptr);
@@ -317,9 +318,9 @@ TEST_CASE("Queue_MoveOnPop") {
 }
 
 TEST_CASE("Queue_MoveOnPopOrFail") {
-    Queue<std::unique_ptr<int>> q;
-    q.push(std::make_unique<int>(99));
-    std::unique_ptr<int> val;
+    Queue<UniquePtr<int>> q;
+    q.push(UniquePtr<int>::create(99));
+    UniquePtr<int> val;
     CHECK(q.popOrFail(val) == true);
     CHECK(val != nullptr);
     CHECK(*val == 99);

@@ -13,6 +13,7 @@
 #include <promeki/error.h>
 #include <promeki/result.h>
 #include <promeki/enums.h>
+#include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -46,6 +47,9 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class AudioResampler {
         public:
+                /** @brief Unique-ownership pointer to an AudioResampler. */
+                using UPtr = UniquePtr<AudioResampler>;
+
                 /** @brief Result type for process(): {output samples generated, Error}. */
                 using ProcessResult = Result<size_t>;
 
@@ -178,7 +182,8 @@ class AudioResampler {
 
         private:
                 struct Impl;
-                Impl *_impl = nullptr;
+                using ImplPtr = UniquePtr<Impl>;
+                ImplPtr _impl;
 };
 
 PROMEKI_NAMESPACE_END

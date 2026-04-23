@@ -12,6 +12,7 @@
 #include <promeki/objectbase.h>
 #include <promeki/error.h>
 #include <promeki/result.h>
+#include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -29,6 +30,9 @@ PROMEKI_NAMESPACE_BEGIN
 class IODevice : public ObjectBase {
         PROMEKI_OBJECT(IODevice, ObjectBase)
         public:
+                /** @brief Unique-ownership pointer to an IODevice. */
+                using UPtr = UniquePtr<IODevice>;
+
                 /** @brief Mode flags controlling how a device is opened. */
                 enum OpenMode {
                         NotOpen   = 0x00, ///< @brief Device is not open.

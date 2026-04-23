@@ -84,7 +84,7 @@ MediaIO::FormatDesc MediaIOTask_FrameBridge::formatDesc() {
 }
 
 MediaIOTask_FrameBridge::MediaIOTask_FrameBridge()
-        : _bridge(std::make_unique<FrameBridge>()) {
+        : _bridge(FrameBridge::UPtr::create()) {
 }
 
 MediaIOTask_FrameBridge::~MediaIOTask_FrameBridge() {

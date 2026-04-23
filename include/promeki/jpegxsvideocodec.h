@@ -12,6 +12,7 @@
 #include <promeki/videodecoder.h>
 #include <promeki/pixelformat.h>
 #include <promeki/deque.h>
+#include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -96,7 +97,8 @@ class JpegXsVideoEncoder : public VideoEncoder {
                 ///        All encode logic lives as member functions of
                 ///        Impl so this type can stay private.
                 struct Impl;
-                Impl                        *_impl   = nullptr;
+                using ImplPtr = UniquePtr<Impl>;
+                ImplPtr                      _impl;
 
                 int                          _bpp           = DefaultBpp;
                 int                          _decomposition = DefaultDecomposition;
@@ -139,7 +141,8 @@ class JpegXsVideoDecoder : public VideoDecoder {
                 ///        decoder context.  Defined in the .cpp so the
                 ///        SVT-JPEG-XS library headers don't leak.
                 struct Impl;
-                Impl                *_impl    = nullptr;
+                using ImplPtr = UniquePtr<Impl>;
+                ImplPtr                _impl;
 
                 PixelFormat            _outputPd;
                 int                    _capacity = 8;

@@ -119,8 +119,20 @@ struct CacheEntry {
         CSCPipeline::Ptr pipeline;
 };
 
-static Mutex                    g_cacheMutex;
-static Map<CacheKey, CacheEntry> g_cache;
+// Wrap the cache state in function-local statics so the destructors
+// run via atexit (before valgrind's leak check) instead of via
+// _dl_fini (after).  Otherwise the cached pipelines and the map
+// nodes that hold them show up as "still reachable" on every run
+// even though everything is freed at process exit.
+static Mutex &cacheMutex() {
+        static Mutex m;
+        return m;
+}
+
+static Map<CacheKey, CacheEntry> &cache() {
+        static Map<CacheKey, CacheEntry> c;
+        return c;
+}
 
 } // anonymous
 
@@ -132,9 +144,10 @@ CSCPipeline::Ptr CSCPipeline::cached(const PixelFormat &src, const PixelFormat &
         CacheKey key{src.data(), dst.data(), useSimd};
 
         {
-                Mutex::Locker lock(g_cacheMutex);
-                auto it = g_cache.find(key);
-                if(it != g_cache.end()) {
+                Mutex::Locker lock(cacheMutex());
+                auto &c = cache();
+                auto it = c.find(key);
+                if(it != c.end()) {
                         return it->second.pipeline;
                 }
         }
@@ -147,12 +160,13 @@ CSCPipeline::Ptr CSCPipeline::cached(const PixelFormat &src, const PixelFormat &
         Ptr fresh = Ptr::create(src, dst, config);
         if(!fresh.isValid()) return Ptr();
 
-        Mutex::Locker lock(g_cacheMutex);
-        auto it = g_cache.find(key);
-        if(it != g_cache.end()) {
+        Mutex::Locker lock(cacheMutex());
+        auto &c = cache();
+        auto it = c.find(key);
+        if(it != c.end()) {
                 return it->second.pipeline;
         }
-        g_cache.insert(key, CacheEntry{fresh});
+        c.insert(key, CacheEntry{fresh});
         return fresh;
 }
 

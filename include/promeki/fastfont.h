@@ -11,6 +11,7 @@
 #include <promeki/map.h>
 #include <promeki/image.h>
 #include <promeki/buffer.h>
+#include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -55,6 +56,9 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class FastFont : public Font {
         public:
+                /** @brief Unique-ownership pointer to a FastFont. */
+                using UPtr = UniquePtr<FastFont>;
+
                 /**
                  * @brief Constructs a FastFont with the given paint engine.
                  * @param pe The PaintEngine determining the target pixel format.

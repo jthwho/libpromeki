@@ -19,15 +19,14 @@ UdpSocketTransport::~UdpSocketTransport() {
 }
 
 Error UdpSocketTransport::open() {
-        if(_socket != nullptr) return Error::Busy;
+        if(_socket.isValid()) return Error::Busy;
 
-        _socket = new UdpSocket();
+        _socket = UdpSocket::UPtr::create();
         Error err = _ipv6
                 ? _socket->openIpv6(IODevice::ReadWrite)
                 : _socket->open(IODevice::ReadWrite);
         if(err.isError()) {
-                delete _socket;
-                _socket = nullptr;
+                _socket.clear();
                 return err;
         }
 
@@ -83,14 +82,13 @@ Error UdpSocketTransport::open() {
 }
 
 void UdpSocketTransport::close() {
-        if(_socket == nullptr) return;
+        if(_socket.isNull()) return;
         _socket->close();
-        delete _socket;
-        _socket = nullptr;
+        _socket.clear();
 }
 
 bool UdpSocketTransport::isOpen() const {
-        return _socket != nullptr && _socket->isOpen();
+        return _socket.isValid() && _socket->isOpen();
 }
 
 ssize_t UdpSocketTransport::sendPacket(const void *data, size_t size,

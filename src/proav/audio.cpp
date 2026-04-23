@@ -106,6 +106,9 @@ bool Audio::allocate(const MemSpace &ms) {
                         _desc.toString().cstr(), (int)_samples, (int)size);
                 return false;
         }
+        // Zero the backing allocation so partial fills and end-of-buffer
+        // slack don't flow into sf_write/write as uninit samples.
+        _buffer->fill(0);
         _buffer->setSize(size);
         return true;
 }

@@ -316,10 +316,15 @@ static Image encodeYCbCr(jpeg_compress_struct &cinfo, JpegErrorMgr &jerr,
         int mcuRows = DCTSIZE * cinfo.max_v_samp_factor;
         int chromaMcuRows = DCTSIZE;
 
-        // Row buffers for the MCU block
-        std::vector<std::vector<uint8_t>> yRowBufs(mcuRows, std::vector<uint8_t>(width));
-        std::vector<std::vector<uint8_t>> cbRowBufs(chromaMcuRows, std::vector<uint8_t>(chromaWidth));
-        std::vector<std::vector<uint8_t>> crRowBufs(chromaMcuRows, std::vector<uint8_t>(chromaWidth));
+        // libjpeg-turbo operates on whole MCUs, so its encoder reads past
+        // `width` / `chromaWidth` when those aren't a multiple of the MCU
+        // step (16 for 4:2:x luma, 8 for chroma).  Size each row buffer to
+        // the MCU-aligned width and zero-init so tail bytes are defined.
+        int yBufWidth  = (width + 15) & ~15;
+        int cBufWidth  = (chromaWidth + 7) & ~7;
+        std::vector<std::vector<uint8_t>> yRowBufs(mcuRows,       std::vector<uint8_t>(yBufWidth, 0));
+        std::vector<std::vector<uint8_t>> cbRowBufs(chromaMcuRows, std::vector<uint8_t>(cBufWidth, 0));
+        std::vector<std::vector<uint8_t>> crRowBufs(chromaMcuRows, std::vector<uint8_t>(cBufWidth, 0));
 
         std::vector<JSAMPROW> yRowPtrs(mcuRows);
         std::vector<JSAMPROW> cbRowPtrs(chromaMcuRows);
@@ -664,11 +669,9 @@ struct JpegVideoEncoder::Impl {
         }
 };
 
-JpegVideoEncoder::JpegVideoEncoder() : _impl(new Impl) {}
+JpegVideoEncoder::JpegVideoEncoder() : _impl(ImplPtr::create()) {}
 
-JpegVideoEncoder::~JpegVideoEncoder() {
-        delete _impl;
-}
+JpegVideoEncoder::~JpegVideoEncoder() = default;
 
 List<int> JpegVideoEncoder::supportedInputList() {
         // Mirror the input-format coverage the classify / encode paths
@@ -799,11 +802,9 @@ struct JpegVideoDecoder::Impl {
         }
 };
 
-JpegVideoDecoder::JpegVideoDecoder() : _impl(new Impl) {}
+JpegVideoDecoder::JpegVideoDecoder() : _impl(ImplPtr::create()) {}
 
-JpegVideoDecoder::~JpegVideoDecoder() {
-        delete _impl;
-}
+JpegVideoDecoder::~JpegVideoDecoder() = default;
 
 List<int> JpegVideoDecoder::supportedOutputList() {
         return {

@@ -16,10 +16,10 @@
 #include <promeki/duration.h>
 #include <promeki/socketaddress.h>
 #include <promeki/rtppacket.h>
+#include <promeki/packettransport.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-class PacketTransport;
 class Thread;
 
 /**
@@ -370,17 +370,18 @@ class RtpSession : public ObjectBase {
                                 uint32_t timestamp);
                 void generateSsrc();
 
-                PacketTransport *_transport = nullptr;
-                bool             _ownsTransport = false;
-                bool             _running = false;
-                SocketAddress    _remote;
-                uint32_t         _ssrc = 0;
-                uint16_t         _sequenceNumber = 0;
-                uint8_t          _payloadType = 96;
-                uint32_t         _clockRate = 90000;
+                PacketTransport        *_transport = nullptr;
+                PacketTransport::UPtr   _ownedTransport;
+                bool                    _running = false;
+                SocketAddress           _remote;
+                uint32_t                _ssrc = 0;
+                uint16_t                _sequenceNumber = 0;
+                uint8_t                 _payloadType = 96;
+                uint32_t                _clockRate = 90000;
 
                 // Receive path
-                ReceiveThread   *_receiveThread = nullptr;
+                using ReceiveThreadUPtr = UniquePtr<ReceiveThread>;
+                ReceiveThreadUPtr       _receiveThread;
                 PacketCallback   _receiveCallback;
                 Atomic<bool>     _receiving;
                 unsigned int     _receivePollMs = 200;

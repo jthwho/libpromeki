@@ -14,6 +14,7 @@
 #include <promeki/result.h>
 #include <promeki/logger.h>
 #include <promeki/util.h>
+#include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -69,9 +70,12 @@ class FileFormatFactory {
                         if(factory == nullptr) return -1;
                         auto &list = factoryList();
                         int ret = list.size();
-                        list += factory;
                         promekiLog(Logger::LogLevel::Debug, "Registered FileFormatFactory %s",
                                 factory->name().cstr());
+                        // Adopt the factory so the list owns it; otherwise
+                        // every PROMEKI_REGISTER_FILE_FORMAT_FACTORY(new Foo)
+                        // would leak a pointer for the lifetime of the process.
+                        list.pushToBack(UniquePtr<FileFormatFactory>::takeOwnership(factory));
                         return ret;
                 }
 
@@ -85,8 +89,8 @@ class FileFormatFactory {
                  */
                 static const FileFormatFactory *lookup(const Context &ctx) {
                         auto &list = factoryList();
-                        for(auto *f : list) {
-                                if(f->canDoOperation(ctx)) return f;
+                        for(const auto &f : list) {
+                                if(f->canDoOperation(ctx)) return f.get();
                         }
                         return nullptr;
                 }
@@ -165,8 +169,8 @@ class FileFormatFactory {
                 StringList _exts;  ///< @brief List of supported file extensions (no dots).
 
         private:
-                static List<FileFormatFactory *> &factoryList() {
-                        static List<FileFormatFactory *> list;
+                static List<UniquePtr<FileFormatFactory>> &factoryList() {
+                        static List<UniquePtr<FileFormatFactory>> list;
                         return list;
                 }
 };

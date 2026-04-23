@@ -16,6 +16,7 @@
 #include <promeki/list.h>
 #include <promeki/timestamp.h>
 #include <promeki/event.h>
+#include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -337,7 +338,8 @@ class EventLoop {
                 // postCallable / postEvent / quit / startTimer /
                 // stopTimer to unblock poll() in waitOnSources, and
                 // included in every poll set as index 0.
-                EventLoopWakeFd                 *_wake = nullptr;
+                using WakeFdUPtr = UniquePtr<EventLoopWakeFd>;
+                WakeFdUPtr                       _wake;
 
                 // I/O source registration.  Mutation under _ioMutex,
                 // poll set built under _ioMutex into a short-lived

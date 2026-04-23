@@ -180,18 +180,25 @@ Error Process::start() {
                         }
                 }
 
-                // Build argv
-                List<char *> argv;
-                argv += const_cast<char *>(_program.cstr());
-                for(size_t i = 0; i < _arguments.size(); i++) {
-                        argv += const_cast<char *>(_arguments[i].cstr());
-                }
-                argv += nullptr;
+                // Build argv and run execvp in a scope so, if exec fails,
+                // the vector destructor runs before _exit() (which skips
+                // it).  Otherwise the child's argv allocation leaks
+                // (harmless — the kernel reclaims the page — but it
+                // clutters valgrind reports of cross-fork tests).
+                int e = 0;
+                {
+                        List<char *> argv;
+                        argv += const_cast<char *>(_program.cstr());
+                        for(size_t i = 0; i < _arguments.size(); i++) {
+                                argv += const_cast<char *>(_arguments[i].cstr());
+                        }
+                        argv += nullptr;
 
-                ::execvp(_program.cstr(), argv.data());
+                        ::execvp(_program.cstr(), argv.data());
+                        e = errno;
+                }
 
                 // exec failed — notify parent via the exec pipe
-                int e = errno;
                 ssize_t dummy = ::write(execPipe[1], &e, sizeof(e));
                 (void)dummy;
                 _exit(127);

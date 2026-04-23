@@ -10,6 +10,7 @@
 #include <promeki/buffer.h>
 #include <promeki/list.h>
 #include <promeki/abstractsocket.h>
+#include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -48,6 +49,9 @@ PROMEKI_NAMESPACE_BEGIN
 class UdpSocket : public AbstractSocket {
         PROMEKI_OBJECT(UdpSocket, AbstractSocket)
         public:
+                /** @brief Unique-ownership pointer to a UdpSocket. */
+                using UPtr = UniquePtr<UdpSocket>;
+
                 /**
                  * @brief Describes a single datagram for batch-send APIs.
                  *

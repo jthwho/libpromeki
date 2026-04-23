@@ -9,11 +9,11 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <promeki/namespace.h>
 #include <promeki/objectbase.h>
 #include <promeki/error.h>
 #include <promeki/string.h>
+#include <promeki/uniqueptr.h>
 #include <promeki/uuid.h>
 #include <promeki/mediadesc.h>
 #include <promeki/audiodesc.h>
@@ -88,6 +88,9 @@ PROMEKI_NAMESPACE_BEGIN
 class FrameBridge : public ObjectBase {
         PROMEKI_OBJECT(FrameBridge, ObjectBase)
         public:
+                /** @brief Unique-ownership pointer to a FrameBridge. */
+                using UPtr = UniquePtr<FrameBridge>;
+
                 /** @brief Wire-protocol major version. Mismatches are rejected. */
                 static constexpr uint32_t WireMajor = 1;
 
@@ -346,7 +349,8 @@ class FrameBridge : public ObjectBase {
 
         private:
                 class Impl;
-                std::unique_ptr<Impl> _d;
+                using ImplPtr = UniquePtr<Impl>;
+                ImplPtr _d;
 };
 
 PROMEKI_NAMESPACE_END

@@ -947,9 +947,9 @@ class NvdecVideoDecoder::Impl {
 // ---------------------------------------------------------------------------
 
 NvdecVideoDecoder::NvdecVideoDecoder(Codec codec)
-        : _impl(new Impl(codec)), _codec(codec) {}
+        : _impl(ImplPtr::create(codec)), _codec(codec) {}
 
-NvdecVideoDecoder::~NvdecVideoDecoder() { delete _impl; }
+NvdecVideoDecoder::~NvdecVideoDecoder() = default;
 
 List<int> NvdecVideoDecoder::supportedOutputList() {
         return { static_cast<int>(PixelFormat::YUV8_420_SemiPlanar_Rec709) };

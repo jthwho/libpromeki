@@ -9,7 +9,6 @@
 
 #include <cstdio>
 #include <functional>
-#include <memory>
 #include <promeki/namespace.h>
 #include <promeki/mediaiotask.h>
 #include <promeki/imagedataencoder.h>
@@ -19,11 +18,10 @@
 #include <promeki/timecode.h>
 #include <promeki/mutex.h>
 #include <promeki/list.h>
+#include <promeki/ltcdecoder.h>
 #include <promeki/string.h>
 
 PROMEKI_NAMESPACE_BEGIN
-
-class LtcDecoder;
 
 /**
  * @brief One detected discontinuity in the inspector's frame stream.
@@ -442,7 +440,7 @@ class MediaIOTask_Inspector : public MediaIOTask {
                 // because we need the actual ImageDesc and AudioDesc to
                 // build them) ----
                 ImageDataDecoder            _imageDataDecoder;
-                std::unique_ptr<LtcDecoder> _ltcDecoder;
+                LtcDecoder::UPtr            _ltcDecoder;
                 bool                        _decodersInitialized = false;
                 /// Total audio samples fed to the LTC decoder so far.
                 /// Lets us turn the decoder's cumulative @c sampleStart

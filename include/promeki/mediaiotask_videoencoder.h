@@ -134,7 +134,7 @@ class MediaIOTask_VideoEncoder : public MediaIOTask {
 
                 MediaConfig           _config;
                 VideoCodec            _codec;
-                VideoEncoder         *_encoder = nullptr;
+                VideoEncoder::UPtr    _encoder;
                 int                   _capacity = 8;
                 List<Frame::Ptr>      _outputQueue;
 

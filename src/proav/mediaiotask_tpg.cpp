@@ -124,9 +124,7 @@ MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
         };
 }
 
-MediaIOTask_TPG::~MediaIOTask_TPG() {
-        delete _audioPattern;
-}
+MediaIOTask_TPG::~MediaIOTask_TPG() = default;
 
 Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
         if(cmd.mode != MediaIO::Source) return Error::NotSupported;
@@ -239,8 +237,7 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
 
                 mediaDesc.audioList().pushToBack(_audioDesc);
 
-                delete _audioPattern;
-                _audioPattern = new AudioTestPattern(_audioDesc);
+                _audioPattern = AudioTestPattern::UPtr::create(_audioDesc);
 
                 // Pull the per-channel mode list.  Fall back to a
                 // silent list when the config is missing so at least
@@ -254,8 +251,7 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
                 if(channelModes.elementType() != AudioPattern::Type) {
                         promekiErr("MediaIOTask_TPG: AudioChannelModes has wrong "
                                 "element type");
-                        delete _audioPattern;
-                        _audioPattern = nullptr;
+                        _audioPattern.clear();
                         return Error::InvalidArgument;
                 }
                 _audioPattern->setChannelModes(channelModes);
@@ -332,8 +328,7 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
 }
 
 Error MediaIOTask_TPG::executeCmd(MediaIOCommandClose &cmd) {
-        delete _audioPattern;
-        _audioPattern = nullptr;
+        _audioPattern.clear();
         _imageDesc = ImageDesc();
         _audioDesc = AudioDesc();
         _frameRate = FrameRate();
@@ -385,7 +380,7 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandRead &cmd) {
         // matches wall-clock time exactly.  The tc may be invalid
         // (timecode generation disabled) — the audio pattern handles
         // that gracefully (LTC and AvSync degrade to silence).
-        if(_audioEnabled && _audioPattern != nullptr) {
+        if(_audioEnabled && _audioPattern.isValid()) {
                 size_t samples = _frameRate.samplesPerFrame(
                         static_cast<int64_t>(_audioDesc.sampleRate()),
                         _frameCount.value());

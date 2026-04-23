@@ -203,7 +203,7 @@ TEST_CASE("VideoPacket: move ctor and assignment work") {
 TEST_CASE("VideoPacket: _promeki_clone returns VideoPacket subtype") {
         VideoPacket orig(makeBuf(12, 0x33), PixelFormat(PixelFormat::H264));
         orig.addFlag(VideoPacket::Keyframe);
-        std::unique_ptr<VideoPacket> cloned(orig._promeki_clone());
+        VideoPacket::UPtr cloned = VideoPacket::UPtr::takeOwnership(orig._promeki_clone());
         REQUIRE(cloned != nullptr);
         CHECK(cloned->kind() == MediaPacket::Video);
         CHECK(cloned->isValid());

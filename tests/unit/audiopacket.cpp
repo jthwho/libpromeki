@@ -142,7 +142,7 @@ TEST_CASE("AudioPacket: move ctor and assignment work") {
 TEST_CASE("AudioPacket: _promeki_clone returns AudioPacket subtype") {
         AudioPacket orig(makeBuf(12, 0x33), AudioCodec(AudioCodec::Opus));
         orig.setDuration(Duration::fromMilliseconds(10));
-        std::unique_ptr<AudioPacket> cloned(orig._promeki_clone());
+        AudioPacket::UPtr cloned = AudioPacket::UPtr::takeOwnership(orig._promeki_clone());
         REQUIRE(cloned != nullptr);
         CHECK(cloned->kind() == MediaPacket::Audio);
         CHECK(cloned->isValid());

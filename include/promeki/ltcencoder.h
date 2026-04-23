@@ -10,6 +10,7 @@
 #include <promeki/namespace.h>
 #include <promeki/timecode.h>
 #include <promeki/audio.h>
+#include <promeki/uniqueptr.h>
 #include <vtc/ltc_audio.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -34,6 +35,9 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class LtcEncoder {
         public:
+                /** @brief Unique-ownership pointer to an LtcEncoder. */
+                using UPtr = UniquePtr<LtcEncoder>;
+
                 /**
                  * @brief Constructs an LTC encoder.
                  * @param sampleRate Audio sample rate (e.g. 48000).

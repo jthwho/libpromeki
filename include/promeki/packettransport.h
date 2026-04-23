@@ -13,6 +13,7 @@
 #include <promeki/error.h>
 #include <promeki/list.h>
 #include <promeki/socketaddress.h>
+#include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -62,6 +63,9 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class PacketTransport {
         public:
+                /** @brief Unique-ownership pointer to a PacketTransport. */
+                using UPtr = UniquePtr<PacketTransport>;
+
                 /**
                  * @brief Describes one outbound datagram.
                  *

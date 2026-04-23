@@ -123,7 +123,7 @@ class MediaIOTask_VideoDecoder : public MediaIOTask {
 
                 MediaConfig           _config;
                 VideoCodec            _codec;
-                VideoDecoder         *_decoder = nullptr;
+                VideoDecoder::UPtr    _decoder;
                 PixelFormat             _outputPixelFormat;
                 bool                  _outputPixelFormatSet = false;
                 int                   _capacity = 8;

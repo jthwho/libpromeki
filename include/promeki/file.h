@@ -15,6 +15,7 @@
 #include <promeki/error.h>
 #include <promeki/result.h>
 #include <promeki/bufferediodevice.h>
+#include <promeki/uniqueptr.h>
 
 // Forward-declared so file.h does not need to pull <cirf/types.h>
 // into every consumer of File. The pointer is only ever stored as
@@ -45,6 +46,9 @@ PROMEKI_NAMESPACE_BEGIN
 class File : public BufferedIODevice {
         PROMEKI_OBJECT(File, BufferedIODevice)
         public:
+                /** @brief Unique-ownership pointer to a File. */
+                using UPtr = UniquePtr<File>;
+
                 /**
                  * @brief File-specific open flags.
                  *

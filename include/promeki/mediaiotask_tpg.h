@@ -153,7 +153,7 @@ class MediaIOTask_TPG : public MediaIOTask {
                 uint32_t                _streamId           = 0;
 
                 // Audio state
-                AudioTestPattern        *_audioPattern = nullptr;
+                AudioTestPattern::UPtr   _audioPattern;
                 AudioDesc               _audioDesc;
                 bool                    _audioEnabled = false;
 

@@ -55,6 +55,9 @@ class Clock;
 class SDLPlayerTask : public MediaIOTask {
         friend class SDLPlayerWidget;
         public:
+                /** @brief Unique-ownership pointer to an SDLPlayerTask. */
+                using UPtr = UniquePtr<SDLPlayerTask>;
+
                 ~SDLPlayerTask() override;
 
                 /** @brief Returns the widget that owns this task. */

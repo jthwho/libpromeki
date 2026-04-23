@@ -16,10 +16,9 @@
 #include <promeki/socketaddress.h>
 #include <promeki/string.h>
 #include <promeki/thread.h>
+#include <promeki/udpsocket.h>
 
 PROMEKI_NAMESPACE_BEGIN
-
-class UdpSocket;
 
 /**
  * @brief Standalone multicast datagram receiver with an owned worker thread.
@@ -281,7 +280,7 @@ class MulticastReceiver : public Thread {
                  *
                  * @return The @ref UdpSocket, or nullptr.
                  */
-                UdpSocket *socket() const { return _socket; }
+                UdpSocket *socket() const { return _socket.get(); }
 
                 /**
                  * @brief Returns the total number of datagrams delivered.
@@ -323,7 +322,7 @@ class MulticastReceiver : public Thread {
                 Error openAndJoin();
                 void  closeAndLeave();
 
-                UdpSocket              *_socket = nullptr;
+                UdpSocket::UPtr         _socket;
                 MulticastManager        _multicastManager;
                 SocketAddress           _localAddress;
                 String                  _interfaceName;

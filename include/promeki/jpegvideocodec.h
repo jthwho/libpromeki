@@ -12,6 +12,7 @@
 #include <promeki/videodecoder.h>
 #include <promeki/pixelformat.h>
 #include <promeki/deque.h>
+#include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -76,7 +77,8 @@ class JpegVideoEncoder : public VideoEncoder {
 
         private:
                 struct Impl;                          ///< pImpl shielding consumers from @c \<jpeglib.h\>.
-                Impl                        *_impl   = nullptr;
+                using ImplPtr = UniquePtr<Impl>;
+                ImplPtr                      _impl;
 
                 int                          _quality       = 85;
                 Subsampling                  _subsampling   = Subsampling422;
@@ -119,7 +121,8 @@ class JpegVideoDecoder : public VideoDecoder {
 
         private:
                 struct Impl;                          ///< pImpl shielding consumers from @c \<jpeglib.h\>.
-                Impl                *_impl    = nullptr;
+                using ImplPtr = UniquePtr<Impl>;
+                ImplPtr              _impl;
 
                 PixelFormat            _outputPd;
                 int                    _capacity = 8;

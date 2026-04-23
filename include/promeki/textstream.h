@@ -12,10 +12,10 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/variant_fwd.h>
+#include <promeki/iodevice.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-class IODevice;
 class Buffer;
 
 /**
@@ -371,7 +371,7 @@ class TextStream {
                 String readToken();
 
                 IODevice                *_device                = nullptr;
-                IODevice                *_ownedDevice           = nullptr;
+                IODevice::UPtr           _ownedDevice;
 
                 // Encoding
                 String                  _encoding{"UTF-8"};

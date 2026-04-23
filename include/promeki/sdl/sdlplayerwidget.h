@@ -13,10 +13,10 @@
 #include <promeki/atomic.h>
 #include <promeki/framecount.h>
 #include <promeki/image.h>
+#include <promeki/mediaio.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-class MediaIO;
 class SDLPlayerTask;
 class SDLAudioOutput;
 class KeyEvent;
@@ -88,7 +88,7 @@ class SDLPlayerWidget : public SDLVideoWidget {
                 SDLPlayerWidget &operator=(const SDLPlayerWidget &) = delete;
 
                 /** @brief Returns the MediaIO the widget consumes frames through. */
-                MediaIO *mediaIO() const { return _mediaIO; }
+                MediaIO *mediaIO() const { return _mediaIO.get(); }
 
                 /** @brief Returns the underlying task (may be useful for tests). */
                 SDLPlayerTask *task() const { return _task; }
@@ -132,8 +132,8 @@ class SDLPlayerWidget : public SDLVideoWidget {
                 void wakeMainThread();
                 static uint32_t userEventType();
 
-                MediaIO         *_mediaIO = nullptr;     ///< Owned.
-                SDLPlayerTask   *_task = nullptr;        ///< Owned via @ref _mediaIO.
+                MediaIO::UPtr    _mediaIO;               ///< Owned.
+                SDLPlayerTask   *_task = nullptr;        ///< Non-owning — lifetime tied to @ref _mediaIO.
 
                 // Main-thread render stash (written by the pull thread,
                 // drained by the main thread).

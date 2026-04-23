@@ -23,10 +23,9 @@
 #include <promeki/mediadesc.h>
 #include <promeki/metadata.h>
 #include <promeki/timecode.h>
+#include <promeki/iodevice.h>
 
 PROMEKI_NAMESPACE_BEGIN
-
-class IODevice;
 
 /**
  * @brief QuickTime / ISO-BMFF container reader and writer.

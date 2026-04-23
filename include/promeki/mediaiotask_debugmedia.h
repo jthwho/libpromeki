@@ -7,13 +7,11 @@
 
 #pragma once
 
-#include <memory>
 #include <promeki/namespace.h>
 #include <promeki/mediaiotask.h>
+#include <promeki/debugmediafile.h>
 
 PROMEKI_NAMESPACE_BEGIN
-
-class DebugMediaFile;
 
 /**
  * @brief MediaIO backend that captures a @ref Frame into a PMDF debug file.
@@ -60,7 +58,7 @@ class MediaIOTask_DebugMedia : public MediaIOTask {
                 Error proposeOutput(const MediaDesc &requested,
                                     MediaDesc *achievable) const override;
 
-                std::unique_ptr<DebugMediaFile>  _file;
+                DebugMediaFile::UPtr             _file;
                 String                           _filename;
                 MediaIO::Mode                    _mode = MediaIO::NotOpen;
                 FrameCount                       _framesWritten{0};

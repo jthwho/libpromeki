@@ -19,11 +19,11 @@
 #include <promeki/enums.h>
 #include <promeki/list.h>
 #include <promeki/map.h>
+#include <promeki/ltcencoder.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 class AudioGen;
-class LtcEncoder;
 class Timecode;
 
 /**
@@ -84,6 +84,9 @@ class Timecode;
  */
 class AudioTestPattern {
         public:
+                /** @brief Unique-ownership pointer to an AudioTestPattern. */
+                using UPtr = UniquePtr<AudioTestPattern>;
+
                 /**
                  * @brief Constructs an AudioTestPattern for the given stream.
                  * @param desc Audio format descriptor.  The channel count
@@ -427,7 +430,7 @@ class AudioTestPattern {
                 // persistent generator — e.g. LTC / AvSync / noise /
                 // chirp / PCM marker, which are synthesized per-call).
                 mutable List<AudioGen *> _chanGens;
-                LtcEncoder              *_ltcEncoder = nullptr;
+                LtcEncoder::UPtr         _ltcEncoder;
 
                 // AvSync tone burst cache: built lazily per requested
                 // sample count so the cadenced rates (29.97, 59.94)

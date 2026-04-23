@@ -75,9 +75,7 @@ FrameSync::FrameSync(const String &name) : FrameSync() {
         _name = name;
 }
 
-FrameSync::~FrameSync() {
-        delete _resampler;
-}
+FrameSync::~FrameSync() = default;
 
 // ============================================================================
 // Configuration
@@ -96,8 +94,7 @@ void FrameSync::setTargetAudioDesc(const AudioDesc &desc) {
         _targetAudioDesc = desc;
         // Teardown resampler on channel/rate change — lazy re-init on
         // the next pull.
-        delete _resampler;
-        _resampler = nullptr;
+        _resampler.clear();
 }
 
 void FrameSync::setClock(const Clock::Ptr &clock) {
@@ -169,7 +166,7 @@ void FrameSync::resetLocked(bool setExplicitOrigin, int64_t originNs) {
         _framesDropped.setValue(0);
         _overflowDrops.setValue(0);
 
-        if(_resampler != nullptr) _resampler->reset();
+        if(_resampler.isValid()) _resampler->reset();
 }
 
 void FrameSync::reset() {
@@ -499,14 +496,13 @@ Audio::Ptr FrameSync::produceAudio(int64_t targetSamples) {
         if(channels == 0 || targetRate <= 0.0f) return Audio::Ptr();
 
         // Lazy init the resampler once we know channel count.
-        if(_resampler == nullptr) {
-                _resampler = new AudioResampler();
+        if(_resampler.isNull()) {
+                _resampler = AudioResampler::UPtr::create();
                 Error err = _resampler->setup(channels);
                 if(err.isError()) {
                         promekiWarn("FrameSync[%s]: resampler setup failed",
                                     _name.cstr());
-                        delete _resampler;
-                        _resampler = nullptr;
+                        _resampler.clear();
                         return Audio::Ptr();
                 }
         }

@@ -32,26 +32,35 @@ SDLPlayerWidget::SDLPlayerWidget(SDLAudioOutput *audio,
         setFocusPolicy(StrongFocus);
         _renderScheduled.setValue(false);
 
-        _task = new SDLPlayerTask(this, audio, useAudioClock);
-        _mediaIO = new MediaIO(nullptr);
-        Error err = _mediaIO->adoptTask(_task);
+        // SDLPlayerTask's constructor is private; friendship lets this
+        // TU construct it directly, but UniquePtr::create cannot reach it,
+        // so wrap via takeOwnership from a raw allocation instead.
+        auto task = SDLPlayerTask::UPtr::takeOwnership(
+                new SDLPlayerTask(this, audio, useAudioClock));
+        _mediaIO = MediaIO::UPtr::create(nullptr);
+        SDLPlayerTask *taskRaw = task.ptr();
+        Error err = _mediaIO->adoptTask(taskRaw);
         if(err.isError()) {
                 promekiErr("SDLPlayerWidget: adoptTask failed: %s",
                            err.name().cstr());
-                delete _task;
                 _task = nullptr;
-                delete _mediaIO;
-                _mediaIO = nullptr;
+                _mediaIO.clear();
+                // task UniquePtr falls out of scope and deletes on failure.
+        } else {
+                // On success the MediaIO owns the task; disarm the local
+                // UniquePtr and keep a non-owning observer pointer for
+                // the widget's own use.
+                (void)task.release();
+                _task = taskRaw;
         }
 }
 
 SDLPlayerWidget::~SDLPlayerWidget() {
-        // Deleting the MediaIO tears down the task (which joins its
+        // Releasing the MediaIO tears down the task (which joins its
         // pull thread) before our SDLVideoWidget base is destroyed,
         // so the task's last call into presentImage / renderPending
         // is safe.
-        delete _mediaIO;
-        _mediaIO = nullptr;
+        _mediaIO.clear();
         _task = nullptr;
 }
 

@@ -16,10 +16,9 @@
 #include <promeki/image.h>
 #include <promeki/timecode.h>
 #include <promeki/enums.h>
+#include <promeki/fastfont.h>
 
 PROMEKI_NAMESPACE_BEGIN
-
-class FastFont;
 
 /**
  * @brief Standalone video test pattern generator.
@@ -304,7 +303,7 @@ class VideoTestPattern {
                 // Burn font — lazily constructed the first time burn
                 // actually runs, because FastFont needs a PaintEngine
                 // (and thus a pixel format) at construction time.
-                mutable FastFont *_burnFont = nullptr;
+                mutable FastFont::UPtr _burnFont;
                 mutable bool      _burnFontConfigDirty = true;
 
                 bool isStaticPattern() const;

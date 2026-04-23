@@ -90,15 +90,14 @@ Error MulticastReceiver::addSourceGroup(const SocketAddress &group,
 }
 
 Error MulticastReceiver::openAndJoin() {
-        if(_socket != nullptr) return Error::Busy;
+        if(_socket.isValid()) return Error::Busy;
 
-        _socket = new UdpSocket();
+        _socket = UdpSocket::UPtr::create();
         Error err = _socket->open(IODevice::ReadWrite);
         if(err.isError()) {
                 promekiErr("MulticastReceiver: failed to open socket: %s",
                            err.desc().cstr());
-                delete _socket;
-                _socket = nullptr;
+                _socket.clear();
                 return err;
         }
 
@@ -111,8 +110,7 @@ Error MulticastReceiver::openAndJoin() {
                 promekiErr("MulticastReceiver: setReuseAddress failed: %s",
                            err.desc().cstr());
                 _socket->close();
-                delete _socket;
-                _socket = nullptr;
+                _socket.clear();
                 return err;
         }
 
@@ -121,8 +119,7 @@ Error MulticastReceiver::openAndJoin() {
                 promekiErr("MulticastReceiver: bind to %s failed: %s",
                            _localAddress.toString().cstr(), err.desc().cstr());
                 _socket->close();
-                delete _socket;
-                _socket = nullptr;
+                _socket.clear();
                 return err;
         }
 
@@ -153,13 +150,13 @@ Error MulticastReceiver::openAndJoin() {
                 Error jerr;
                 if(entry.isSSM) {
                         jerr = _multicastManager.joinSourceGroup(
-                                entry.group, entry.source, _socket);
+                                entry.group, entry.source, _socket.ptr());
                 } else if(!_interfaceName.isEmpty()) {
                         jerr = _multicastManager.joinGroup(
-                                entry.group, _socket, _interfaceName);
+                                entry.group, _socket.ptr(), _interfaceName);
                 } else {
                         jerr = _multicastManager.joinGroup(
-                                entry.group, _socket);
+                                entry.group, _socket.ptr());
                 }
                 if(jerr.isError()) {
                         promekiErr("MulticastReceiver: join %s failed: %s",
@@ -174,14 +171,13 @@ Error MulticastReceiver::openAndJoin() {
 }
 
 void MulticastReceiver::closeAndLeave() {
-        if(_socket == nullptr) return;
+        if(_socket.isNull()) return;
         // Leave every joined group via MulticastManager so the
         // kernel emits IGMPv2 LEAVE_GROUP / MLDv1 DONE messages for
         // ASM memberships and IP_DROP_SOURCE_MEMBERSHIP for SSM.
         _multicastManager.leaveAllGroups();
         _socket->close();
-        delete _socket;
-        _socket = nullptr;
+        _socket.clear();
 }
 
 Error MulticastReceiver::start() {
@@ -208,7 +204,7 @@ Error MulticastReceiver::start() {
 }
 
 void MulticastReceiver::stop() {
-        if(!_active.value() && _socket == nullptr) return;
+        if(!_active.value() && _socket.isNull()) return;
         _stopRequested.setValue(true);
 
         // Wait for the receive thread to exit.  Thread::wait() is

@@ -11,10 +11,9 @@
 #include <promeki/packettransport.h>
 #include <promeki/socketaddress.h>
 #include <promeki/string.h>
+#include <promeki/udpsocket.h>
 
 PROMEKI_NAMESPACE_BEGIN
-
-class UdpSocket;
 
 /**
  * @brief UDP socket implementation of @ref PacketTransport.
@@ -52,6 +51,9 @@ class UdpSocket;
  */
 class UdpSocketTransport : public PacketTransport {
         public:
+                /** @brief Unique-ownership pointer to a UdpSocketTransport. */
+                using UPtr = UniquePtr<UdpSocketTransport>;
+
                 /** @brief Constructs an unopened UDP transport. */
                 UdpSocketTransport();
 
@@ -142,7 +144,7 @@ class UdpSocketTransport : public PacketTransport {
                  *
                  * @return The socket, or nullptr if not open.
                  */
-                UdpSocket *socket() const { return _socket; }
+                UdpSocket *socket() const { return _socket.get(); }
 
                 /** @copydoc PacketTransport::open() */
                 Error open() override;
@@ -171,7 +173,7 @@ class UdpSocketTransport : public PacketTransport {
                 Error setTxTime(bool enable) override;
 
         private:
-                UdpSocket      *_socket = nullptr;
+                UdpSocket::UPtr _socket;
                 SocketAddress   _localAddress;
                 String          _multicastInterface;
                 uint8_t         _dscp = 0;

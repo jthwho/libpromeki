@@ -11,12 +11,17 @@
 #include <promeki/mediaio.h>
 #include <promeki/mediaiotask_imagefile.h>
 #include <promeki/logger.h>
+#include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 PROMEKI_DEBUG(ImageFileIO)
 
-using ImageFileIOMap = Map<int, ImageFileIO *>;
+// Owning map: the registry adopts each backend (allocated via
+// PROMEKI_REGISTER_IMAGEFILEIO) and destroys it at process exit when
+// the function-local static unwinds.  Previously the map stored raw
+// pointers and the backends leaked for the lifetime of the process.
+using ImageFileIOMap = Map<int, UniquePtr<ImageFileIO>>;
 
 static ImageFileIOMap &imageFileIOMap() {
         static ImageFileIOMap ret;
@@ -35,7 +40,8 @@ int ImageFileIO::registerImageFileIO(ImageFileIO *p) {
         }
         ImageFileIOMap &map = imageFileIOMap();
         int ret = map.size();
-        map[p->id()] = p;
+        int id = p->id();
+        map[id] = UniquePtr<ImageFileIO>::takeOwnership(p);
         promekiDebug("Registered ImageFileIO %d '%s'", p->id(), p->name().cstr());
 
         // Piggy-back a MediaIO FormatDesc registration onto every
@@ -56,7 +62,7 @@ int ImageFileIO::registerImageFileIO(ImageFileIO *p) {
 const ImageFileIO *ImageFileIO::lookup(int id) {
         ImageFileIOMap &map = imageFileIOMap();
         auto it = map.find(id);
-        return it == map.end() ? &imageFileIOInvalid() : it->second;
+        return it == map.end() ? &imageFileIOInvalid() : it->second.get();
 }
 
 ImageFileIO::IDList ImageFileIO::registeredIDs() {

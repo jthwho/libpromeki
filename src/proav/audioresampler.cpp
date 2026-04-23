@@ -27,27 +27,24 @@ struct AudioResampler::Impl {
 AudioResampler::AudioResampler() = default;
 
 AudioResampler::~AudioResampler() {
-        if(_impl != nullptr) {
-                if(_impl->state != nullptr) src_delete(_impl->state);
-                delete _impl;
-        }
+        if(_impl.isValid() && _impl->state != nullptr) src_delete(_impl->state);
 }
 
 bool AudioResampler::isValid() const {
-        return _impl != nullptr && _impl->state != nullptr;
+        return _impl.isValid() && _impl->state != nullptr;
 }
 
 Error AudioResampler::setup(unsigned int channels, const SrcQuality &quality) {
         if(channels == 0) return Error::InvalidArgument;
 
         // Tear down any existing state.
-        if(_impl != nullptr) {
+        if(_impl.isValid()) {
                 if(_impl->state != nullptr) {
                         src_delete(_impl->state);
                         _impl->state = nullptr;
                 }
         } else {
-                _impl = new Impl;
+                _impl = ImplPtr::create();
         }
 
         int srcErr = 0;
@@ -68,15 +65,15 @@ Error AudioResampler::setup(unsigned int channels, const SrcQuality &quality) {
 // ---------------------------------------------------------------------------
 
 unsigned int AudioResampler::channels() const {
-        return _impl != nullptr ? _impl->channels : 0;
+        return _impl.isValid() ? _impl->channels : 0;
 }
 
 SrcQuality AudioResampler::quality() const {
-        return _impl != nullptr ? _impl->quality : SrcQuality::SincMedium;
+        return _impl.isValid() ? _impl->quality : SrcQuality::SincMedium;
 }
 
 double AudioResampler::ratio() const {
-        return _impl != nullptr ? _impl->ratio : 1.0;
+        return _impl.isValid() ? _impl->ratio : 1.0;
 }
 
 // ---------------------------------------------------------------------------

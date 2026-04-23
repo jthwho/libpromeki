@@ -11,6 +11,7 @@
 #include <promeki/audiodesc.h>
 #include <promeki/timestamp.h>
 #include <promeki/string.h>
+#include <promeki/uniqueptr.h>
 
 #include <atomic>
 #include <chrono>
@@ -329,9 +330,9 @@ TEST_CASE("reported time is frozen while paused, seamless on resume") {
 }
 
 TEST_CASE("raw returns ObjectGone after output destroyed") {
-        std::unique_ptr<TestAudioOutput> output(new TestAudioOutput());
-        SDLAudioClock clock(output.get());
-        output.reset();
+        UniquePtr<TestAudioOutput> output = UniquePtr<TestAudioOutput>::create();
+        SDLAudioClock clock(output.ptr());
+        output.clear();
 
         auto r = clock.nowNs();
         REQUIRE(isError(r));

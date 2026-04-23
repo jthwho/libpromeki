@@ -9,7 +9,6 @@
 
 #include <atomic>
 #include <cassert>
-#include <memory>
 #include <mutex>
 #include <promeki/namespace.h>
 #include <promeki/clockdomain.h>
@@ -18,6 +17,7 @@
 #include <promeki/mediatimestamp.h>
 #include <promeki/result.h>
 #include <promeki/sharedptr.h>
+#include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -81,6 +81,9 @@ struct ClockJitter {
  */
 class ClockFilter {
         public:
+                /** @brief Unique-ownership pointer to a ClockFilter. */
+                using UPtr = UniquePtr<ClockFilter>;
+
                 virtual ~ClockFilter() = default;
 
                 /**
@@ -354,7 +357,7 @@ class Clock {
 
                 ClockDomain                   _domain;
                 ClockPauseMode                _pauseMode;
-                std::unique_ptr<ClockFilter>  _filter;
+                ClockFilter::UPtr             _filter;
 
                 mutable std::mutex            _mutex;
                 int64_t                       _fixedOffsetNs;

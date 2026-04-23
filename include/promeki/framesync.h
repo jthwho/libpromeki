@@ -12,6 +12,7 @@
 #include <promeki/frame.h>
 #include <promeki/audio.h>
 #include <promeki/audiodesc.h>
+#include <promeki/audioresampler.h>
 #include <promeki/framecount.h>
 #include <promeki/framenumber.h>
 #include <promeki/framerate.h>
@@ -28,7 +29,6 @@
 PROMEKI_NAMESPACE_BEGIN
 
 class SyntheticClock;
-class AudioResampler;
 
 /**
  * @brief Resyncs a source media stream to a destination clock's cadence.
@@ -424,7 +424,7 @@ class FrameSync {
                 int64_t            _frameSyncRepeatIndex  = 0;
 
                 // Audio resampler pipeline.
-                AudioResampler    *_resampler = nullptr;
+                AudioResampler::UPtr _resampler;
                 List<Audio::Ptr>   _audioInput;        // pending input audio, FIFO
                 int64_t            _audioSamplesConsumed = 0;   // of current front audio
 

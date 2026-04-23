@@ -907,6 +907,7 @@ set(PROMEKI_HEADERS
     include/promeki/timestamp.h
     include/promeki/util.h
     include/promeki/umid.h
+    include/promeki/uniqueptr.h
     include/promeki/units.h
     include/promeki/url.h
     include/promeki/uuid.h
@@ -1025,6 +1026,7 @@ set(PROMEKI_SOURCES
     src/core/timecodegenerator.cpp
     src/core/timestamp.cpp
     src/core/umid.cpp
+    src/core/uniqueptr.cpp
     src/core/units.cpp
     src/core/url.cpp
     src/core/util.cpp
@@ -1417,6 +1419,7 @@ set(PROMEKI_PCH_HEADERS
     <promeki/char.h>
     <promeki/string.h>
     <promeki/sharedptr.h>
+    <promeki/uniqueptr.h>
     <promeki/list.h>
     <promeki/result.h>
     <promeki/pair.h>
@@ -1903,6 +1906,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/timecodegenerator.cpp
         tests/unit/timestamp.cpp
         tests/unit/umid.cpp
+        tests/unit/uniqueptr.cpp
         tests/unit/units.cpp
         tests/unit/url.cpp
         tests/unit/uuid.cpp

@@ -24,7 +24,7 @@ Clock::Clock(const ClockDomain &domain,
              ClockFilter *filter)
         : _domain(domain),
           _pauseMode(pauseMode),
-          _filter(filter),
+          _filter(ClockFilter::UPtr::takeOwnership(filter)),
           _fixedOffsetNs(fixedOffset.nanoseconds()),
           _pausedOffsetNs(0),
           _frozenFilteredNs(0),

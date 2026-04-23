@@ -66,6 +66,9 @@ class MediaDesc;
 class MediaIOTask {
         friend class MediaIO;
         public:
+                /** @brief Unique-ownership pointer to a MediaIOTask. */
+                using UPtr = UniquePtr<MediaIOTask>;
+
                 /** @brief Constructs a MediaIOTask. */
                 MediaIOTask() = default;
 

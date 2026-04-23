@@ -12,6 +12,7 @@
 #include <promeki/timecode.h>
 #include <promeki/list.h>
 #include <promeki/audio.h>
+#include <promeki/uniqueptr.h>
 #include <vtc/ltc_audio.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -43,6 +44,9 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class LtcDecoder {
         public:
+                /** @brief Unique-ownership pointer to an LtcDecoder. */
+                using UPtr = UniquePtr<LtcDecoder>;
+
                 /**
                  * @brief Result of decoding a single LTC frame.
                  */

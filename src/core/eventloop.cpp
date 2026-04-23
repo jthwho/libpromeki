@@ -134,7 +134,7 @@ EventLoop *EventLoop::current() {
 
 EventLoop::EventLoop() {
         _current = this;
-        _wake = new EventLoopWakeFd();
+        _wake = WakeFdUPtr::create();
         return;
 }
 
@@ -146,8 +146,7 @@ EventLoop::~EventLoop() {
                         delete std::get<EventItem>(item).event;
                 }
         }
-        delete _wake;
-        _wake = nullptr;
+        _wake.clear();
         if(_current == this) _current = nullptr;
         return;
 }
@@ -229,7 +228,7 @@ void EventLoop::postEvent(ObjectBase *receiver, Event *event) {
 }
 
 void EventLoop::wakeSelf() {
-        if(_wake) _wake->wake();
+        if(_wake.isValid()) _wake->wake();
         return;
 }
 
@@ -431,7 +430,7 @@ void EventLoop::removeIoSource(int handle) {
 
 void EventLoop::waitOnSources(unsigned int waitMs) {
 #if defined(PROMEKI_PLATFORM_POSIX)
-        if(_wake == nullptr || _wake->pollFd() < 0) {
+        if(_wake.isNull() || _wake->pollFd() < 0) {
                 // Wake fd setup failed; fall back to the condvar path
                 // so we at least block on the queue.
                 auto [val, err] = _queue.pop(waitMs);

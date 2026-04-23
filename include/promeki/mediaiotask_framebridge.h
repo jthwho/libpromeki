@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <memory>
 #include <promeki/namespace.h>
 #include <promeki/mediaiotask.h>
 #include <promeki/framebridge.h>
@@ -62,7 +61,7 @@ class MediaIOTask_FrameBridge : public MediaIOTask {
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 void  cancelBlockingWork() override;
 
-                std::unique_ptr<FrameBridge> _bridge;
+                FrameBridge::UPtr            _bridge;
                 bool                         _isOutput = false;
 };
 

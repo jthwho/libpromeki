@@ -24,29 +24,27 @@ PROMEKI_NAMESPACE_BEGIN
 TextStream::TextStream(IODevice *device) : _device(device) { }
 
 TextStream::TextStream(Buffer *buffer) {
-        auto *dev = new BufferIODevice(buffer);
+        auto dev = UniquePtr<BufferIODevice>::create(buffer);
         dev->setAutoGrow(true);
         dev->open(IODevice::ReadWrite);
-        _ownedDevice = dev;
-        _device = dev;
+        _device = dev.ptr();
+        _ownedDevice = std::move(dev);
 }
 
 TextStream::TextStream(String *string) {
-        auto *dev = new StringIODevice(string);
+        auto dev = UniquePtr<StringIODevice>::create(string);
         dev->open(IODevice::ReadWrite);
-        _ownedDevice = dev;
-        _device = dev;
+        _device = dev.ptr();
+        _ownedDevice = std::move(dev);
 }
 
 TextStream::TextStream(FILE *file) {
-        auto *dev = new FileIODevice(file, IODevice::ReadWrite);
-        _ownedDevice = dev;
-        _device = dev;
+        auto dev = UniquePtr<FileIODevice>::create(file, IODevice::ReadWrite);
+        _device = dev.ptr();
+        _ownedDevice = std::move(dev);
 }
 
-TextStream::~TextStream() {
-        delete _ownedDevice;
-}
+TextStream::~TextStream() = default;
 
 // ============================================================================
 // Status

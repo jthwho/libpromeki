@@ -8,12 +8,12 @@
 #pragma once
 
 #include <functional>
-#include <memory>
 #include <optional>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
 #include <promeki/result.h>
+#include <promeki/uniqueptr.h>
 #include <promeki/variant.h>
 #include <promeki/variantspec.h>
 #include <promeki/variantlookup.h>
@@ -31,12 +31,15 @@ namespace detail {
  *
  * The lexer, parser and concrete node subclasses live entirely in
  * @c variantquery.cpp.  The forward declaration here is enough to hold
- * a node in a @c std::unique_ptr because every @ref VariantQuery special
+ * a node in a @ref UniquePtr because every @ref VariantQuery special
  * member is explicit-instantiated in the same translation unit that
  * defines @ref VariantQueryNode, so the implicit destructor never
  * needs to see a complete type at a call site.
  */
 class VariantQueryNode;
+
+/** @brief Unique-ownership pointer to a @ref VariantQueryNode. */
+using VariantQueryNodeUPtr = UniquePtr<VariantQueryNode>;
 
 /**
  * @brief Evaluation inputs injected into the AST by @ref VariantQuery::match.
@@ -79,10 +82,10 @@ struct VariantQueryContext {
  * @param expr        The query source.
  * @param errorDetail Populated with a human-readable diagnostic
  *                    (column, token, reason) when parsing fails.
- * @return A unique_ptr to the parsed AST, or null on parse failure.
+ * @return A UniquePtr to the parsed AST, or null on parse failure.
  */
-std::unique_ptr<VariantQueryNode> parseVariantQueryExpr(const String &expr,
-                                                        String &errorDetail);
+VariantQueryNodeUPtr parseVariantQueryExpr(const String &expr,
+                                           String &errorDetail);
 
 /**
  * @brief Evaluates a parsed AST against @p ctx.
@@ -225,11 +228,11 @@ class VariantQuery {
                 const String &errorDetail() const;
 
         private:
-                VariantQuery(String source, std::unique_ptr<detail::VariantQueryNode> root);
+                VariantQuery(String source, detail::VariantQueryNodeUPtr root);
 
                 String                                         _source;
                 String                                         _errorDetail;
-                std::unique_ptr<detail::VariantQueryNode>      _root;
+                detail::VariantQueryNodeUPtr                   _root;
 };
 
 extern template class VariantQuery<Frame>;

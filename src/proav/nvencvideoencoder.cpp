@@ -1443,9 +1443,9 @@ class NvencVideoEncoder::Impl {
 // ---------------------------------------------------------------------------
 
 NvencVideoEncoder::NvencVideoEncoder(Codec codec)
-        : _impl(new Impl(codec)), _codec(codec) {}
+        : _impl(ImplPtr::create(codec)), _codec(codec) {}
 
-NvencVideoEncoder::~NvencVideoEncoder() { delete _impl; }
+NvencVideoEncoder::~NvencVideoEncoder() = default;
 
 List<int> NvencVideoEncoder::supportedInputList() {
         List<int> ret;

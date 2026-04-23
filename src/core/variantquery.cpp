@@ -12,6 +12,7 @@
 #include <optional>
 #include <regex>
 #include <string>
+#include <promeki/uniqueptr.h>
 #include <promeki/variantquery.h>
 #include <promeki/frame.h>
 #include <promeki/image.h>
@@ -381,32 +382,32 @@ namespace {
 
 class OrNode : public detail::VariantQueryNode {
         public:
-                OrNode(std::unique_ptr<detail::VariantQueryNode> l,
-                       std::unique_ptr<detail::VariantQueryNode> r) : lhs(std::move(l)), rhs(std::move(r)) {}
+                OrNode(detail::VariantQueryNodeUPtr l,
+                       detail::VariantQueryNodeUPtr r) : lhs(std::move(l)), rhs(std::move(r)) {}
                 bool eval(const detail::VariantQueryContext &ctx) const override {
                         return lhs->eval(ctx) || rhs->eval(ctx);
                 }
         private:
-                std::unique_ptr<detail::VariantQueryNode> lhs, rhs;
+                detail::VariantQueryNodeUPtr lhs, rhs;
 };
 
 class AndNode : public detail::VariantQueryNode {
         public:
-                AndNode(std::unique_ptr<detail::VariantQueryNode> l,
-                        std::unique_ptr<detail::VariantQueryNode> r) : lhs(std::move(l)), rhs(std::move(r)) {}
+                AndNode(detail::VariantQueryNodeUPtr l,
+                        detail::VariantQueryNodeUPtr r) : lhs(std::move(l)), rhs(std::move(r)) {}
                 bool eval(const detail::VariantQueryContext &ctx) const override {
                         return lhs->eval(ctx) && rhs->eval(ctx);
                 }
         private:
-                std::unique_ptr<detail::VariantQueryNode> lhs, rhs;
+                detail::VariantQueryNodeUPtr lhs, rhs;
 };
 
 class NotNode : public detail::VariantQueryNode {
         public:
-                explicit NotNode(std::unique_ptr<detail::VariantQueryNode> c) : child(std::move(c)) {}
+                explicit NotNode(detail::VariantQueryNodeUPtr c) : child(std::move(c)) {}
                 bool eval(const detail::VariantQueryContext &ctx) const override { return !child->eval(ctx); }
         private:
-                std::unique_ptr<detail::VariantQueryNode> child;
+                detail::VariantQueryNodeUPtr child;
 };
 
 class HasNode : public detail::VariantQueryNode {
@@ -515,7 +516,7 @@ class Parser {
                         advance();
                 }
 
-                std::unique_ptr<detail::VariantQueryNode> parseExpr() {
+                detail::VariantQueryNodeUPtr parseExpr() {
                         auto node = parseOr();
                         if(!_err.isEmpty()) return nullptr;
                         if(_cur.kind != Tok::End) {
@@ -552,39 +553,39 @@ class Parser {
                 }
                 void setErr(const String &msg) { if(_err.isEmpty()) _err = msg; }
 
-                std::unique_ptr<detail::VariantQueryNode> parseOr() {
+                detail::VariantQueryNodeUPtr parseOr() {
                         auto lhs = parseAnd();
                         while(lhs && _cur.kind == Tok::OrOr) {
                                 advance();
                                 auto rhs = parseAnd();
                                 if(!rhs) return nullptr;
-                                lhs = std::make_unique<OrNode>(std::move(lhs), std::move(rhs));
+                                lhs = UniquePtr<OrNode>::create(std::move(lhs), std::move(rhs));
                         }
                         return lhs;
                 }
 
-                std::unique_ptr<detail::VariantQueryNode> parseAnd() {
+                detail::VariantQueryNodeUPtr parseAnd() {
                         auto lhs = parseNot();
                         while(lhs && _cur.kind == Tok::AndAnd) {
                                 advance();
                                 auto rhs = parseNot();
                                 if(!rhs) return nullptr;
-                                lhs = std::make_unique<AndNode>(std::move(lhs), std::move(rhs));
+                                lhs = UniquePtr<AndNode>::create(std::move(lhs), std::move(rhs));
                         }
                         return lhs;
                 }
 
-                std::unique_ptr<detail::VariantQueryNode> parseNot() {
+                detail::VariantQueryNodeUPtr parseNot() {
                         if(_cur.kind == Tok::Bang) {
                                 advance();
                                 auto child = parseNot();
                                 if(!child) return nullptr;
-                                return std::make_unique<NotNode>(std::move(child));
+                                return UniquePtr<NotNode>::create(std::move(child));
                         }
                         return parsePrimary();
                 }
 
-                std::unique_ptr<detail::VariantQueryNode> parsePrimary() {
+                detail::VariantQueryNodeUPtr parsePrimary() {
                         if(_cur.kind == Tok::LParen) {
                                 advance();
                                 auto inner = parseOr();
@@ -603,13 +604,13 @@ class Parser {
                                 String key = _cur.text;
                                 advance();
                                 if(!expect(Tok::RParen, "')'")) return nullptr;
-                                return std::make_unique<HasNode>(std::move(key));
+                                return UniquePtr<HasNode>::create(std::move(key));
                         }
                         if(_cur.kind == Tok::BoolLit) {
                                 bool v = _cur.bval;
                                 advance();
                                 // A bare boolean can stand as a full expression.
-                                if(!isRelop(_cur.kind)) return std::make_unique<BoolNode>(v);
+                                if(!isRelop(_cur.kind)) return UniquePtr<BoolNode>::create(v);
                                 // Otherwise fall through as an operand — we rewind by
                                 // synthesising an Operand below.  Since the token is
                                 // already consumed, build LHS directly here.
@@ -629,12 +630,12 @@ class Parser {
                         // * key  => truthy when the resolver returns a value (delegate to HasNode)
                         // * literal (number / string / bool) => constant truth
                         if(lhs.kind == Operand::IsKey) {
-                                return std::make_unique<HasNode>(std::move(lhs.key));
+                                return UniquePtr<HasNode>::create(std::move(lhs.key));
                         }
                         if(lhs.kind == Operand::IsLiteral) {
                                 Error derr;
                                 bool bv = lhs.literal.get<bool>(&derr);
-                                if(derr.isOk()) return std::make_unique<BoolNode>(bv);
+                                if(derr.isOk()) return UniquePtr<BoolNode>::create(bv);
                                 setErr(String::sprintf(
                                         "literal value at col %d cannot stand alone as a boolean; "
                                         "use a relational operator (==, !=, <, ...) or has()",
@@ -646,7 +647,7 @@ class Parser {
                         return nullptr;
                 }
 
-                std::unique_ptr<detail::VariantQueryNode> parseComparisonTail(Operand lhs) {
+                detail::VariantQueryNodeUPtr parseComparisonTail(Operand lhs) {
                         CmpNode::Op op;
                         switch(_cur.kind) {
                         case Tok::Eq:         op = CmpNode::Eq;       break;
@@ -684,7 +685,7 @@ class Parser {
                         } else {
                                 if(!parseOperand(rhs)) return nullptr;
                         }
-                        return std::make_unique<CmpNode>(op, std::move(lhs), std::move(rhs));
+                        return UniquePtr<CmpNode>::create(op, std::move(lhs), std::move(rhs));
                 }
 
                 bool parseOperand(Operand &out) {
@@ -753,8 +754,8 @@ class Parser {
 
 namespace detail {
 
-std::unique_ptr<VariantQueryNode> parseVariantQueryExpr(const String &expr,
-                                                        String &errorDetail) {
+VariantQueryNodeUPtr parseVariantQueryExpr(const String &expr,
+                                           String &errorDetail) {
         errorDetail.clear();
         Parser p(expr);
         auto root = p.parseExpr();
@@ -789,7 +790,7 @@ template <typename T>
 VariantQuery<T> &VariantQuery<T>::operator=(VariantQuery &&) noexcept = default;
 
 template <typename T>
-VariantQuery<T>::VariantQuery(String source, std::unique_ptr<detail::VariantQueryNode> root)
+VariantQuery<T>::VariantQuery(String source, detail::VariantQueryNodeUPtr root)
         : _source(std::move(source)), _root(std::move(root)) {
         // Invariant: the success-path constructor is only reached from
         // parse() after a non-null root was produced.  The runtime
@@ -825,7 +826,7 @@ bool VariantQuery<T>::match(const T &instance) const {
         ctx.specFor = [](const String &key) -> const VariantSpec * {
                 return VariantLookup<T>::specFor(key);
         };
-        return detail::evalVariantQuery(_root.get(), ctx);
+        return detail::evalVariantQuery(_root.ptr(), ctx);
 }
 
 template <typename T>

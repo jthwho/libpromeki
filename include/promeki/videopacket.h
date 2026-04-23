@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
+#include <promeki/uniqueptr.h>
 #include <promeki/buffer.h>
 #include <promeki/bufferview.h>
 #include <promeki/pixelformat.h>
@@ -74,6 +75,9 @@ class VideoPacket : public MediaPacket {
 
                 /** @brief List of shared pointers to VideoPacket instances. */
                 using PtrList = promeki::List<Ptr>;
+
+                /** @brief Unique-ownership pointer to a VideoPacket. */
+                using UPtr = UniquePtr<VideoPacket>;
 
                 /**
                  * @brief Bit flags describing properties of a video packet.

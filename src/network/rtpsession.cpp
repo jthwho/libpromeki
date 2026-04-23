@@ -130,16 +130,13 @@ Error RtpSession::start(const SocketAddress &localAddr) {
         if(_running) return Error::Busy;
 
         // Build an owned UdpSocketTransport for the simple case.
-        auto *transport = new UdpSocketTransport();
-        transport->setLocalAddress(localAddr);
-        Error err = transport->open();
-        if(err.isError()) {
-                delete transport;
-                return err;
-        }
-        _transport     = transport;
-        _ownsTransport = true;
-        _running       = true;
+        auto owned = UdpSocketTransport::UPtr::create();
+        owned->setLocalAddress(localAddr);
+        Error err = owned->open();
+        if(err.isError()) return err;
+        _transport       = owned.ptr();
+        _ownedTransport  = std::move(owned);
+        _running         = true;
         return Error::Ok;
 }
 
@@ -147,22 +144,21 @@ Error RtpSession::start(PacketTransport *transport) {
         if(_running) return Error::Busy;
         if(transport == nullptr) return Error::InvalidArgument;
         if(!transport->isOpen()) return Error::NotOpen;
-        _transport     = transport;
-        _ownsTransport = false;
-        _running       = true;
+        _transport      = transport;
+        _ownedTransport.clear();
+        _running        = true;
         return Error::Ok;
 }
 
 void RtpSession::stop() {
         if(!_running) return;
         stopReceiving();
-        if(_ownsTransport && _transport != nullptr) {
-                _transport->close();
-                delete _transport;
+        if(_ownedTransport.isValid()) {
+                _ownedTransport->close();
+                _ownedTransport.clear();
         }
-        _transport     = nullptr;
-        _ownsTransport = false;
-        _running       = false;
+        _transport = nullptr;
+        _running   = false;
 }
 
 Error RtpSession::startReceiving(PacketCallback callback,
@@ -175,16 +171,16 @@ Error RtpSession::startReceiving(PacketCallback callback,
         }
 
         _receiveCallback = std::move(callback);
-        _receiveThread = new ReceiveThread(this, threadName);
+        _receiveThread = ReceiveThreadUPtr::create(this, threadName);
         _receiving.setValue(true);
         _receiveThread->start();
         return Error::Ok;
 }
 
 void RtpSession::stopReceiving() {
-        if(!_receiving.value() && _receiveThread == nullptr) return;
+        if(!_receiving.value() && _receiveThread.isNull()) return;
 
-        if(_receiveThread != nullptr) {
+        if(_receiveThread.isValid()) {
                 _receiveThread->requestStop();
                 // Delete the Thread object — Thread's destructor
                 // joins the underlying std::thread.  If we are
@@ -193,8 +189,7 @@ void RtpSession::stopReceiving() {
                 // destructor path will be reached after the callback
                 // unwinds and the loop checks the stop flag.
                 if(!_receiveThread->isCurrentThread()) {
-                        delete _receiveThread;
-                        _receiveThread = nullptr;
+                        _receiveThread.clear();
                 }
         }
         _receiving.setValue(false);

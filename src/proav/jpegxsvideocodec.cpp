@@ -433,11 +433,9 @@ Image JpegXsVideoDecoder::Impl::decodeFrame(
 // JpegXsVideoEncoder
 // ---------------------------------------------------------------------------
 
-JpegXsVideoEncoder::JpegXsVideoEncoder() : _impl(new Impl) {}
+JpegXsVideoEncoder::JpegXsVideoEncoder() : _impl(ImplPtr::create()) {}
 
-JpegXsVideoEncoder::~JpegXsVideoEncoder() {
-        delete _impl;
-}
+JpegXsVideoEncoder::~JpegXsVideoEncoder() = default;
 
 List<int> JpegXsVideoEncoder::supportedInputList() {
         return {
@@ -528,11 +526,9 @@ Error JpegXsVideoEncoder::reset() {
 // JpegXsVideoDecoder
 // ---------------------------------------------------------------------------
 
-JpegXsVideoDecoder::JpegXsVideoDecoder() : _impl(new Impl) {}
+JpegXsVideoDecoder::JpegXsVideoDecoder() : _impl(ImplPtr::create()) {}
 
-JpegXsVideoDecoder::~JpegXsVideoDecoder() {
-        delete _impl;
-}
+JpegXsVideoDecoder::~JpegXsVideoDecoder() = default;
 
 List<int> JpegXsVideoDecoder::supportedOutputList() {
         // Mirror the decodeTargets actually populated on each JPEG XS

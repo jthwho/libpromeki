@@ -89,7 +89,7 @@ Error MediaIOTask_DebugMedia::executeCmd(MediaIOCommandOpen &cmd) {
                 return Error::InvalidArgument;
         }
 
-        _file = std::make_unique<DebugMediaFile>();
+        _file = DebugMediaFile::UPtr::create();
 
         if(cmd.mode == MediaIO::Sink) {
                 DebugMediaFile::OpenOptions opts;

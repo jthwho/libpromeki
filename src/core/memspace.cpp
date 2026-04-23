@@ -112,11 +112,17 @@ void MemSpace::Stats::recordRelease(uint64_t bytes) {
 struct MemSpaceRegistry {
         Map<MemSpace::ID, MemSpace::Ops> entries;
 
-        // Stats are allocated with `new` and their addresses are
-        // stashed in Ops::stats; the registry is a function-local
-        // static that lives for the process lifetime, so the Stats
-        // objects are intentionally never freed.
+        // Stats are heap-allocated and stashed in Ops::stats; the
+        // registry owns them and frees them on destruction so a clean
+        // shutdown leaves no stranded allocations under valgrind.
         static MemSpace::Stats *makeStats() { return new MemSpace::Stats(); }
+
+        ~MemSpaceRegistry() {
+                for(auto it = entries.begin(); it != entries.end(); ++it) {
+                        delete it->second.stats;
+                        it->second.stats = nullptr;
+                }
+        }
 
         MemSpaceRegistry() {
                 entries[MemSpace::System] = {
@@ -124,16 +130,22 @@ struct MemSpaceRegistry {
                         .name = "System",
                         .isHostAccessible = [](const MemAllocation &) -> bool { return true; },
                         .alloc = [](MemAllocation &a) -> void {
+                                // Wrapper guarantees: a.size > 0.
+                                PROMEKI_ASSERT(a.size > 0);
                                 size_t allocSize = (a.size + a.align - 1) & ~(a.align - 1);
                                 a.ptr = std::aligned_alloc(a.align, allocSize);
                                 PROMEKI_ASSERT(a.ptr != nullptr);
                                 promekiDebug("%p: system allocate %d (aligned %d), align %d", a.ptr, (int)a.size, (int)allocSize, (int)a.align);
                         },
                         .release = [](MemAllocation &a) -> void {
+                                // Wrapper guarantees: a.ptr != nullptr.
+                                PROMEKI_ASSERT(a.ptr != nullptr);
                                 promekiDebug("%p: system free", a.ptr);
                                 std::free(a.ptr);
                         },
                         .copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> bool {
+                                // Wrapper guarantees: src.ptr and dst.ptr are non-null.
+                                PROMEKI_ASSERT(src.ptr != nullptr && dst.ptr != nullptr);
                                 MemSpace::ID did = dst.ms.id();
                                 if(did == MemSpace::System || did == MemSpace::SystemSecure) {
                                         std::memcpy(dst.ptr, src.ptr, bytes);
@@ -144,6 +156,7 @@ struct MemSpaceRegistry {
                                 return false;
                         },
                         .fill = [](void *ptr, size_t bytes, char value) -> Error {
+                                // Wrapper guarantees: ptr != nullptr.
                                 PROMEKI_ASSERT(ptr != nullptr);
                                 std::memset(ptr, value, bytes);
                                 return Error::Ok;
@@ -156,6 +169,8 @@ struct MemSpaceRegistry {
                         .name = "SystemSecure",
                         .isHostAccessible = [](const MemAllocation &) -> bool { return true; },
                         .alloc = [](MemAllocation &a) -> void {
+                                // Wrapper guarantees: a.size > 0.
+                                PROMEKI_ASSERT(a.size > 0);
                                 size_t allocSize = (a.size + a.align - 1) & ~(a.align - 1);
                                 a.ptr = std::aligned_alloc(a.align, allocSize);
                                 PROMEKI_ASSERT(a.ptr != nullptr);
@@ -167,6 +182,8 @@ struct MemSpaceRegistry {
                                 }
                         },
                         .release = [](MemAllocation &a) -> void {
+                                // Wrapper guarantees: a.ptr != nullptr.
+                                PROMEKI_ASSERT(a.ptr != nullptr);
                                 promekiDebug("%p: secure free", a.ptr);
                                 promeki::secureZero(a.ptr, a.size);
                                 Error err = promeki::secureUnlock(a.ptr, a.size);
@@ -176,6 +193,8 @@ struct MemSpaceRegistry {
                                 std::free(a.ptr);
                         },
                         .copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> bool {
+                                // Wrapper guarantees: src.ptr and dst.ptr are non-null.
+                                PROMEKI_ASSERT(src.ptr != nullptr && dst.ptr != nullptr);
                                 MemSpace::ID did = dst.ms.id();
                                 if(did == MemSpace::System || did == MemSpace::SystemSecure) {
                                         std::memcpy(dst.ptr, src.ptr, bytes);
@@ -186,6 +205,7 @@ struct MemSpaceRegistry {
                                 return false;
                         },
                         .fill = [](void *ptr, size_t bytes, char value) -> Error {
+                                // Wrapper guarantees: ptr != nullptr.
                                 PROMEKI_ASSERT(ptr != nullptr);
                                 std::memset(ptr, value, bytes);
                                 return Error::Ok;

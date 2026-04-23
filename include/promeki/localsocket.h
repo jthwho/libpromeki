@@ -10,6 +10,7 @@
 #include <promeki/iodevice.h>
 #include <promeki/error.h>
 #include <promeki/string.h>
+#include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -44,6 +45,9 @@ PROMEKI_NAMESPACE_BEGIN
 class LocalSocket : public IODevice {
         PROMEKI_OBJECT(LocalSocket, IODevice)
         public:
+                /** @brief Unique-ownership pointer to a LocalSocket. */
+                using UPtr = UniquePtr<LocalSocket>;
+
                 /** @brief Default receive timeout applied to newly connected sockets. */
                 static constexpr unsigned int DefaultReceiveTimeoutMs = 5000;
 

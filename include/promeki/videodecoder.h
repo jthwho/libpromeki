@@ -17,6 +17,7 @@
 #include <promeki/videocodec.h>
 #include <promeki/backendweight.h>
 #include <promeki/videopacket.h>
+#include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -58,6 +59,9 @@ class MediaConfig;
  */
 class VideoDecoder {
         public:
+                /** @brief Unique-ownership pointer to a VideoDecoder. */
+                using UPtr = UniquePtr<VideoDecoder>;
+
                 /** @brief Factory signature used by the decoder registry. */
                 using Factory = std::function<VideoDecoder *()>;
 

@@ -7,7 +7,7 @@ This document describes the coding conventions and design patterns used througho
 libpromeki provides Qt-inspired C++ core classes built on top of the C++ standard library. The goal is to offer friendlier, less verbose APIs than `std::` while retaining full interoperability. Key principles:
 
 - **Value semantics**: All data classes are plain value types. The layer above decides whether to use `MyClass::Ptr` (SharedPtr) for shared ownership.
-- **No raw ownership**: Memory is managed via `SharedPtr`, `Buffer`, or RAII. Raw pointers are only used for non-owning references (e.g., parent/child relationships in `ObjectBase`).
+- **No raw ownership**: Memory is managed via `SharedPtr`, `UniquePtr`, `Buffer`, or RAII. Raw pointers are only used for non-owning references (e.g., parent/child relationships in `ObjectBase`, observer pointers). See [Heap Ownership and Pointer Types](#heap-ownership-and-pointer-types) for the full policy.
 - **Error codes over exceptions**: Use the `Error` class and return values rather than throwing. Constructors never throw.
 - **Minimal abstraction**: Wrap `std::` types to improve ergonomics, but don't add layers of indirection for their own sake.
 - **Fix the library, don't work around it**: When library types have missing operators, conversions, or other ergonomic gaps that force awkward usage at call sites, fix the library type rather than scattering workarounds through application code. For example, if `"literal" + MyType(...)` doesn't compile, add a free `operator+` overload — don't require callers to write `MyType("literal") + ...`.
@@ -206,7 +206,65 @@ Use angle brackets for all includes: `<promeki/foo.h>`, not `"promeki/foo.h"`.
 
 ### Convenience Type Aliases for Templates
 
-When a template class is commonly instantiated with specific types, provide `using` aliases at namespace scope so callers never spell the template arguments directly. Every alias must include an explicit type suffix — there are no unsuffixed "default" aliases.
+Template types are never spelled directly at call sites. When a template class is used with specific instantiations, always define a `using` alias so callers write the concrete name, not the template arguments. Why:
+
+- Shorter, clearer signatures (`Buffer::Ptr` beats `SharedPtr<Buffer, true, Buffer>`).
+- A single authoritative spelling per type — no drift between files.
+- Changes to the underlying template (e.g. adding a template parameter with a default) don't force every call site to update.
+
+**Rules**:
+
+- If the same template instantiation appears in more than one place, define an alias.
+- In public headers, always use the alias — never the raw template.
+- The alias lives where the instantiation "belongs" (see the table below).
+- Any callers of the raw template form count as bugs to be fixed, not as an alternate style.
+
+#### Where the Alias Lives
+
+| Template shape | Alias location | Convention | Example |
+|---|---|---|---|
+| Smart pointer to a specific class | Inside the class (`public:`) | `Ptr`, `UPtr` | `using UPtr = UniquePtr<LtcDecoder>;` |
+| Container of a specific class | Inside the class (`public:`) | `List`, `PtrList` | `using PtrList = promeki::List<Ptr>;` |
+| Smart pointer to a private nested Impl | Inside the enclosing class (`private:`) | `ImplPtr` (or similar) | `using ImplPtr = UniquePtr<Impl>;` |
+| Smart pointer to a forward-declared opaque type | Same scope as the forward declaration | `{TypeName}UPtr` (or similar) | `using VariantQueryNodeUPtr = UniquePtr<VariantQueryNode>;` |
+| Generic numeric template | Namespace scope in the template's own header | Typed-suffix name (see table below) | `using Size2Du32 = Size2DTemplate<uint32_t>;` |
+
+#### Class-Scope Ownership Aliases
+
+Every heap-managed class defines its ownership aliases near the top of its `public:` section. See [Heap Ownership and Pointer Types](#heap-ownership-and-pointer-types) for the full policy on `Ptr` vs `UPtr`. The canonical set:
+
+- `using Ptr = SharedPtr<MyClass>;` — shared ownership (classes with `PROMEKI_SHARED_FINAL`).
+- `using UPtr = UniquePtr<MyClass>;` — unique ownership.
+- `using List = promeki::List<MyClass>;` — plain value list (for shareable classes also used by value).
+- `using PtrList = promeki::List<Ptr>;` — list of shared pointers (only for types that define `Ptr`).
+
+A class may define more than one of these when it is legitimately used in multiple ownership modes — e.g. `AudioPacket` exposes both `Ptr` and `UPtr`.
+
+#### Opaque Forward-Declared Types
+
+Forward-declared types — typically a private nested `Impl` class in a PIMPL pattern, or an opaque detail type defined in a `.cpp` — have no class body in which to declare a member alias. Place the alias next to the forward declaration instead:
+
+```cpp
+// Nested PIMPL — alias at enclosing class scope, next to the forward-decl.
+class FrameBridge {
+        private:
+                class Impl;
+                using ImplPtr = UniquePtr<Impl>;
+                ImplPtr _d;
+};
+
+// Opaque namespace-scope type — alias at the same namespace.
+namespace detail {
+class VariantQueryNode;
+using VariantQueryNodeUPtr = UniquePtr<VariantQueryNode>;
+}
+```
+
+The alias is always adjacent to the forward declaration so readers encounter both together.
+
+#### Numeric Template Aliases
+
+Template classes parameterized by numeric type get typed aliases at namespace scope in the template's own header. Every alias includes an explicit type suffix — there are no unsuffixed "default" aliases.
 
 | Suffix | Underlying type | Example |
 |---|---|---|
@@ -223,7 +281,7 @@ When a template class is commonly instantiated with specific types, provide `usi
 
 Dimensionality is part of the base name; the type suffix always comes last (e.g. `Point3Di32`, `Line4Df`). Choose signed vs. unsigned based on the domain: coordinates and offsets are typically signed (`i32`), dimensions and sizes are typically unsigned (`u32`).
 
-Always use the convenience alias in code, never the raw template instantiation. When adding a new template class, define aliases for all commonly used instantiations in the same header.
+When adding a new template class, define aliases for all commonly used instantiations in the same header.
 
 ### Methods
 
@@ -283,6 +341,8 @@ When a promeki wrapper exists for a `std::` type, always use the wrapper — eve
 | `std::map<K,V>` | `Map<K,V>` |
 | `std::set<K>` | `Set<K>` |
 | `std::string` | `String` |
+| `std::unique_ptr<T>` | `UniquePtr<T>` |
+| `std::shared_ptr<T>` | `SharedPtr<T>` (note: adds copy-on-write; different semantics) |
 
 Use the raw `std::` type only when no wrapper exists (e.g., `std::thread`, `std::packaged_task`) or when interfacing with third-party code that requires it.
 
@@ -316,6 +376,97 @@ Use the raw `std::` type only when no wrapper exists (e.g., `std::thread`, `std:
   uint32_t fps() const { return _format ? vtc_format_fps(_format) : 0; }
   ```
 - **Return statements**: Void functions end with `return;` on a separate line (Qt convention).
+
+---
+
+## Heap Ownership and Pointer Types
+
+libpromeki does not use raw `new`/`delete` for object lifetime. Every heap-allocated object is owned by one of two smart pointers, and raw pointers are reserved for non-owning references. The "No raw ownership" design principle above is enforced through the conventions below.
+
+### The Three Tools
+
+1. **`SharedPtr<T>`** — Shared, reference-counted ownership with optional copy-on-write. Use for shareable data objects (see [The SharedPtr / Copy-on-Write Pattern](#the-sharedptr--copy-on-write-pattern) below) and for any value that crosses thread boundaries via the handoff pattern.
+2. **`UniquePtr<T>`** — Exclusive, move-only ownership. No reference counting, no copy-on-write, no proxy wrapper. Use for PIMPL implementations, owned member resources, and anywhere a single owner at a time is the correct model.
+3. **Raw pointers** — Non-owning references only. Examples: parent/child back-pointers in `ObjectBase`, observer pointers to an object owned elsewhere, short-lived pointers obtained from `UniquePtr::ptr()` / `SharedPtr::ptr()`.
+
+### Never Use Raw `new` / `delete` for Ownership
+
+If you find yourself writing `delete _member;` in a destructor, stop and use `UniquePtr` instead. If you write `_member = new T(...);` outside of an initializer that feeds a smart pointer, the same rule applies. Manual lifetime management is reserved for the handful of cases covered under [Caveats and Limitations](#caveats-and-limitations) below.
+
+### Choosing Between SharedPtr and UniquePtr
+
+| Question | Answer |
+|---|---|
+| Is the type a shareable data object (`PROMEKI_SHARED_FINAL`)? | `MyClass::Ptr` (SharedPtr). Typical for `Image`, `Audio`, `Frame`, `Buffer`, `Metadata`, etc. |
+| Is there exactly one owner, with lifetime tied to an enclosing object? | `MyClass::UPtr` (UniquePtr). Typical for PIMPL (`_impl`), owned backends (`_decoder`, `_resampler`, `_bridge`), and owned file handles. |
+| Does ownership transfer through a pipeline (producer → consumer → release)? | `MyClass::UPtr` passed by `std::move`. |
+| Is the caller observing an object owned somewhere else? | Raw pointer. Document the non-ownership on the accessor. |
+
+When both could work, prefer `UniquePtr` — it is cheaper (no atomic refcount, no CoW check) and the exclusive-ownership contract is clearer at the call site.
+
+### Type Aliases for Heap-Managed Types
+
+Every heap-managed type exposes ownership aliases (`Ptr`, `UPtr`, `PtrList`, `ImplPtr`, `{TypeName}UPtr`) so callers never spell `SharedPtr<MyClass>` or `UniquePtr<MyClass>` directly. The placement rules — class scope vs. namespace scope, visible vs. forward-declared types — are documented once under [Convenience Type Aliases for Templates](#convenience-type-aliases-for-templates). Briefly:
+
+- `using Ptr = SharedPtr<MyClass>;` for shareable data objects (`PROMEKI_SHARED_FINAL`).
+- `using UPtr = UniquePtr<MyClass>;` for uniquely-owned classes.
+- `using ImplPtr = UniquePtr<Impl>;` next to the forward-declaration of a private nested `Impl`.
+- Namespace-scope `using FooUPtr = UniquePtr<Foo>;` for opaque forward-declared types defined in a `.cpp`.
+
+A class may define both `Ptr` and `UPtr` when it is legitimately used in both modes — e.g. `AudioPacket` is typically shared via `::Ptr` but may be owned uniquely through `::UPtr` in transient factory paths.
+
+### Conditional Ownership (Dual-Pointer Pattern)
+
+When an object may own a resource sometimes and reference an external one other times, use a *dual-pointer* pattern: a non-owning view pointer for access, plus a `UniquePtr` that is populated only when ownership is held. This supersedes the older `T *_x + bool _ownsX` pattern.
+
+```cpp
+class RtpSession {
+        // ...
+        private:
+                PacketTransport      *_transport = nullptr;  // always valid while running
+                PacketTransport::UPtr _ownedTransport;       // populated only when we own
+};
+
+// Owning path: create a transport we own.
+auto owned = UdpSocketTransport::UPtr::create();
+owned->setLocalAddress(localAddr);
+// ... configure / open ...
+_transport      = owned.ptr();
+_ownedTransport = std::move(owned);
+
+// Borrowing path: caller supplies an external transport.
+_transport = externalTransport;
+_ownedTransport.clear();
+```
+
+The owned-side destructor runs automatically when `_ownedTransport` goes out of scope — there is no `if(_ownsTransport) delete _transport;` branch to get wrong.
+
+### Caveats and Limitations
+
+- **UniquePtr does not support custom deleters.** For cases that need one (e.g. `std::unique_ptr<char, void(*)(void*)>` wrapping `strdup`'d memory with `free` as the deleter), use `std::unique_ptr` — this is the one context where bypassing the wrapper is appropriate.
+- **A type held via `SharedPtr<T>` with copy-on-write enabled must remain copyable.** `PROMEKI_SHARED(T)` / `PROMEKI_SHARED_FINAL(T)` emits a `_promeki_clone()` method whose default body is `new T(*this)`. Adding a `UniquePtr` member to `T` deletes its copy constructor and breaks the clone. Mitigations:
+  - Use `SharedPtr<T, /*CopyOnWrite=*/false>` on the holder so `_promeki_clone` is never instantiated, or
+  - Keep the raw-pointer + bool pattern for those specific members.
+- **Forward-declared PIMPL impls require out-of-line destructors.** `UniquePtr<Impl>::~UniquePtr` needs the complete `Impl` type at the point of instantiation. Declare the outer class destructor in the header and define it in the `.cpp` (typically `= default;`) so destruction happens where `Impl` is complete.
+- **Objects whose lifetime is managed by the ObjectBase parent/child tree stay on raw pointers.** Wrapping an `ObjectBase` child in a smart pointer would double-delete because the parent already destroys children in its destructor.
+
+### Accessors on UniquePtr / SharedPtr
+
+- `ptr()` — asserts non-null and returns the raw pointer. Use when the smart pointer is known to hold a value.
+- `get()` (UniquePtr only) — returns the raw pointer without asserting; returns `nullptr` when the UniquePtr is empty. Use when exposing the pointer through an accessor that may legitimately return null.
+- `isValid()` / `isNull()` — predicate checks before dereferencing.
+- `operator->` / `operator*` — standard dereference; both assert non-null.
+
+When exposing a heap-managed member through a public accessor that may return null, use `get()` to preserve the non-owning contract at the API boundary:
+
+```cpp
+class MulticastReceiver {
+        public:
+                UdpSocket *socket() const { return _socket.get(); }
+        private:
+                UdpSocket::UPtr _socket;
+};
+```
 
 ---
 

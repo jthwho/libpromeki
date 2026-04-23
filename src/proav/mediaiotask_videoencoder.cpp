@@ -127,9 +127,7 @@ MediaIO::FormatDesc MediaIOTask_VideoEncoder::formatDesc() {
         return d;
 }
 
-MediaIOTask_VideoEncoder::~MediaIOTask_VideoEncoder() {
-        delete _encoder;
-}
+MediaIOTask_VideoEncoder::~MediaIOTask_VideoEncoder() = default;
 
 Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandOpen &cmd) {
         if(cmd.mode != MediaIO::Transform) {
@@ -169,7 +167,7 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandOpen &cmd) {
                            _codec.name().cstr(), error(encResult).name().cstr());
                 return Error::NotSupported;
         }
-        VideoEncoder *enc = value(encResult);
+        VideoEncoder::UPtr enc = VideoEncoder::UPtr::takeOwnership(value(encResult));
 
         _capacity = cfg.getAs<int>(MediaConfig::Capacity, 8);
         if(_capacity < 1) _capacity = 1;
@@ -198,7 +196,7 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandOpen &cmd) {
                 outDesc.audioList().pushToBack(srcAudio);
         }
 
-        _encoder          = enc;
+        _encoder          = std::move(enc);
         _frameCount       = 0;
         _readCount        = 0;
         _framesEncoded    = 0;
@@ -223,7 +221,7 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandOpen &cmd) {
 
 Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandClose &cmd) {
         (void)cmd;
-        if(_encoder != nullptr) {
+        if(_encoder.isValid()) {
                 // Best-effort flush so anything the encoder has buffered
                 // makes it out before we tear the session down.  Because
                 // pipelines close us only after all reads have been
@@ -233,8 +231,7 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandClose &cmd) {
                 // contract stays honest either way.
                 _encoder->flush();
                 drainEncoderInto();
-                delete _encoder;
-                _encoder = nullptr;
+                _encoder.clear();
         }
         _pendingSrcFrames.clear();
         _config = MediaConfig();
@@ -252,7 +249,7 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandClose &cmd) {
 
 void MediaIOTask_VideoEncoder::configChanged(const MediaConfig &delta) {
         _config.merge(delta);
-        if(_encoder != nullptr) _encoder->configure(_config);
+        if(_encoder.isValid()) _encoder->configure(_config);
 }
 
 Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandWrite &cmd) {
@@ -260,7 +257,7 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandWrite &cmd) {
                 promekiErr("MediaIOTask_VideoEncoder: write with null frame");
                 return Error::InvalidArgument;
         }
-        if(_encoder == nullptr) {
+        if(_encoder.isNull()) {
                 return Error::NotSupported;
         }
         stampWorkBegin();
@@ -342,7 +339,7 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandWrite &cmd) {
 }
 
 void MediaIOTask_VideoEncoder::drainEncoderInto() {
-        if(_encoder == nullptr) return;
+        if(_encoder.isNull()) return;
         while(true) {
                 VideoPacket::Ptr pkt = _encoder->receivePacket();
                 if(!pkt) break;
@@ -495,7 +492,7 @@ Error MediaIOTask_VideoEncoder::proposeInput(const MediaDesc &offered,
         // encoder (and touch its GPU / libjpeg / SVT-JPEG-XS setup)
         // just to introspect supported inputs.
         List<PixelFormat> supported;
-        if(_encoder != nullptr) {
+        if(_encoder.isValid()) {
                 supported = _encoder->codec().encoderSupportedInputs();
         } else {
                 supported = codec.encoderSupportedInputs();

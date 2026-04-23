@@ -18,6 +18,7 @@
 #include <promeki/queue.h>
 #include <promeki/atomic.h>
 #include <promeki/sharedptr.h>
+#include <promeki/uniqueptr.h>
 #include <promeki/promise.h>
 #include <promeki/future.h>
 #include <promeki/strand.h>
@@ -489,6 +490,9 @@ class MediaIOCommandStats : public MediaIOCommand {
 class MediaIO : public ObjectBase {
         PROMEKI_OBJECT(MediaIO, ObjectBase)
         public:
+                /** @brief Unique-ownership pointer to a MediaIO. */
+                using UPtr = UniquePtr<MediaIO>;
+
                 /** @brief Open direction (alias for MediaIOMode). */
                 using Mode = MediaIOMode;
 
@@ -1968,7 +1972,7 @@ class MediaIO : public ObjectBase {
                  */
                 void populateStandardStats(MediaIOStats &stats) const;
 
-                MediaIOTask                *_task = nullptr;
+                UniquePtr<MediaIOTask>      _task;
                 Config                      _config;
                 Mode                        _mode = NotOpen;
                 int                         _step = 1;

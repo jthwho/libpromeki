@@ -13,6 +13,7 @@
 
 #include <promeki/quicktime.h>
 #include <promeki/list.h>
+#include <promeki/file.h>
 
 #include "quicktime_atom.h"
 

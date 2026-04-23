@@ -16,6 +16,7 @@
 #include <promeki/framecount.h>
 #include <promeki/metadata.h>
 #include <promeki/list.h>
+#include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -80,6 +81,9 @@ class File;
 class DebugMediaFile : public ObjectBase {
         PROMEKI_OBJECT(DebugMediaFile, ObjectBase)
         public:
+                /** @brief Unique-ownership pointer to a DebugMediaFile. */
+                using UPtr = UniquePtr<DebugMediaFile>;
+
                 /** @brief Open mode. */
                 enum Mode {
                         NotOpen = 0,

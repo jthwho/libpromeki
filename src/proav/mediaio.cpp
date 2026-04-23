@@ -49,12 +49,16 @@ static MediaIO::FormatDescList &formatRegistry() {
 }
 
 ThreadPool &MediaIO::pool() {
-        static ThreadPool *p = []() {
-                auto *tp = new ThreadPool;
-                tp->setNamePrefix("media");
-                return tp;
-        }();
-        return *p;
+        // Local static so the destructor runs at process exit and joins
+        // the worker threads; otherwise each std::thread's shared state
+        // is "definitely lost" under valgrind because the threads stay
+        // alive past main().
+        struct PoolHolder {
+                ThreadPool tp;
+                PoolHolder() { tp.setNamePrefix("media"); }
+        };
+        static PoolHolder h;
+        return h.tp;
 }
 
 int MediaIO::registerFormat(const FormatDesc &desc) {
@@ -333,8 +337,8 @@ MediaIO *MediaIO::create(const Config &config, ObjectBase *parent) {
                 return nullptr;
         }
         MediaIO *io = new MediaIO(parent);
-        io->_task = task;
         task->_owner = io;
+        io->_task = UniquePtr<MediaIOTask>::takeOwnership(task);
         io->_config = config;
         return io;
 }
@@ -418,8 +422,8 @@ MediaIO *MediaIO::createFromUrl(const Url &url, ObjectBase *parent) {
         MediaIOTask *task = desc->create();
         if(task == nullptr) return nullptr;
         MediaIO *io = new MediaIO(parent);
-        io->_task = task;
         task->_owner = io;
+        io->_task = UniquePtr<MediaIOTask>::takeOwnership(task);
         io->_config = cfg;
         return io;
 }
@@ -464,8 +468,8 @@ MediaIO *MediaIO::createForFileRead(const String &filename, ObjectBase *parent) 
         MediaIOTask *task = desc->create();
         if(task == nullptr) return nullptr;
         MediaIO *io = new MediaIO(parent);
-        io->_task = task;
         task->_owner = io;
+        io->_task = UniquePtr<MediaIOTask>::takeOwnership(task);
         // Seed the live config with the resolved backend name + the
         // file the caller passed in, so downstream consumers that
         // need to know "which backend is this?" can read it back
@@ -501,8 +505,8 @@ MediaIO *MediaIO::createForFileWrite(const String &filename, ObjectBase *parent)
         MediaIOTask *task = desc->create();
         if(task == nullptr) return nullptr;
         MediaIO *io = new MediaIO(parent);
-        io->_task = task;
         task->_owner = io;
+        io->_task = UniquePtr<MediaIOTask>::takeOwnership(task);
         // Same rationale as createForFileRead: seed the live config
         // with the backend's full default schema plus the type and
         // filename so callers that read io->config() back out see a
@@ -841,9 +845,9 @@ void MediaIO::submitBenchmarkIfSink(const Frame::Ptr &frame) {
 Error MediaIO::adoptTask(MediaIOTask *task) {
         if(isOpen()) return Error::AlreadyOpen;
         if(task == nullptr) return Error::Invalid;
-        if(_task != nullptr) return Error::Invalid;
-        _task = task;
+        if(_task.isValid()) return Error::Invalid;
         task->_owner = this;
+        _task = UniquePtr<MediaIOTask>::takeOwnership(task);
         return Error::Ok;
 }
 
@@ -851,7 +855,7 @@ Clock *MediaIO::createClock() {
         // Prefer the task's own device clock (audio drain, capture
         // hardware, PTP) when it supplies one — those track the real
         // timing source rather than a synthesized frame count.
-        if(_task != nullptr) {
+        if(_task.isValid()) {
                 Clock *taskClock = _task->createClock();
                 if(taskClock != nullptr) return taskClock;
         }
@@ -863,12 +867,12 @@ Clock *MediaIO::createClock() {
 
 MediaIO::~MediaIO() {
         if(isOpen()) close();
-        // Wait for any in-flight strand task to complete before deleting
-        // the task.  The Strand destructor would also wait, but doing it
-        // here makes the order explicit: drain the strand first, then
-        // delete the task.
+        // Wait for any in-flight strand task to complete before the
+        // _task UniquePtr destructor fires.  The Strand destructor would
+        // also wait, but doing it here makes the order explicit: drain
+        // the strand first, then let the task destructor run as _task
+        // unwinds.
         _strand.waitForIdle();
-        delete _task;
 }
 
 // ============================================================================
@@ -1042,7 +1046,7 @@ void MediaIO::submitReadCommand() {
 Error MediaIO::open(Mode mode) {
         if(isOpen()) return Error::AlreadyOpen;
         if(mode == NotOpen) return Error::InvalidArgument;
-        if(_task == nullptr) return Error::Invalid;
+        if(_task.isNull()) return Error::Invalid;
 
         // Defensive: drain any orphaned read results (e.g. an
         // unconsumed trailing EOS left behind when an async close
@@ -1153,7 +1157,7 @@ Error MediaIO::close(bool block) {
         // can block on external signals (for example, a FrameBridge
         // publisher waiting for a consumer) would otherwise keep the
         // strand busy and starve the Close we're about to submit.
-        if(_task) _task->cancelBlockingWork();
+        if(_task.isValid()) _task->cancelBlockingWork();
 
         // Graceful close: do NOT cancel pending strand work.  Any
         // reads/writes submitted before close() keep running to
@@ -1272,7 +1276,7 @@ Error MediaIO::describe(MediaIODescription *out) const {
 
         // Backend supplement.  Tasks fill in producibleFormats /
         // acceptableFormats and any pre-open probe results.
-        if(_task != nullptr) {
+        if(_task.isValid()) {
                 Error err = _task->describe(out);
                 if(err.isError()) {
                         out->setProbeStatus(err);
@@ -1283,7 +1287,7 @@ Error MediaIO::describe(MediaIODescription *out) const {
 }
 
 Error MediaIO::proposeInput(const MediaDesc &offered, MediaDesc *preferred) const {
-        if(_task == nullptr) {
+        if(_task.isNull()) {
                 if(preferred != nullptr) *preferred = MediaDesc();
                 return Error::NotSupported;
         }
@@ -1291,7 +1295,7 @@ Error MediaIO::proposeInput(const MediaDesc &offered, MediaDesc *preferred) cons
 }
 
 Error MediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievable) const {
-        if(_task == nullptr) {
+        if(_task.isNull()) {
                 if(achievable != nullptr) *achievable = MediaDesc();
                 return Error::NotSupported;
         }
@@ -1339,7 +1343,7 @@ int MediaIO::pendingWrites() const {
 
 int MediaIO::writesAccepted() const {
         int used = _pendingWriteCount.value();
-        if(_task != nullptr) used += _task->pendingOutput();
+        if(_task.isValid()) used += _task->pendingOutput();
         int avail = _writeDepth - used;
         return avail > 0 ? avail : 0;
 }

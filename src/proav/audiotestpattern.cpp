@@ -59,7 +59,6 @@ AudioTestPattern::AudioTestPattern(const AudioDesc &desc)
 
 AudioTestPattern::~AudioTestPattern() {
         clearGenerators();
-        delete _ltcEncoder;
 }
 
 void AudioTestPattern::clearGenerators() {
@@ -81,8 +80,7 @@ AudioPattern AudioTestPattern::modeForChannel(size_t channelIndex) const {
 
 Error AudioTestPattern::configure() {
         clearGenerators();
-        delete _ltcEncoder;
-        _ltcEncoder = nullptr;
+        _ltcEncoder.clear();
         _avSyncToneCache.clear();
         _whiteNoiseBuffer.clear();
         _pinkNoiseBuffer.clear();
@@ -125,7 +123,7 @@ Error AudioTestPattern::configure() {
         }
 
         if(needsLtc) {
-                _ltcEncoder = new LtcEncoder(
+                _ltcEncoder = LtcEncoder::UPtr::create(
                         static_cast<int>(_desc.sampleRate()),
                         _ltcLevel.toLinearFloat());
         }
@@ -437,7 +435,7 @@ Audio AudioTestPattern::create(size_t samples, const Timecode &tc) const {
         // to silence on those channels (the encoder returns an invalid
         // Audio in that case).
         Audio ltcAudio;
-        if(_ltcEncoder != nullptr && tc.isValid()) {
+        if(_ltcEncoder.isValid() && tc.isValid()) {
                 ltcAudio = _ltcEncoder->encode(tc);
         }
         const bool haveLtc = ltcAudio.isValid();

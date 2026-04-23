@@ -12,10 +12,9 @@
 #include <promeki/string.h>
 #include <promeki/error.h>
 #include <promeki/audio.h>
+#include <promeki/iodevice.h>
 
 PROMEKI_NAMESPACE_BEGIN
-
-class IODevice;
 
 /**
  * @brief Audio file reader and writer.

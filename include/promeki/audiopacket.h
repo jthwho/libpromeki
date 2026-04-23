@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
+#include <promeki/uniqueptr.h>
 #include <promeki/buffer.h>
 #include <promeki/bufferview.h>
 #include <promeki/audiocodec.h>
@@ -72,6 +73,9 @@ class AudioPacket : public MediaPacket {
 
                 /** @brief List of shared pointers to AudioPacket instances. */
                 using PtrList = promeki::List<Ptr>;
+
+                /** @brief Unique-ownership pointer to an AudioPacket. */
+                using UPtr = UniquePtr<AudioPacket>;
 
                 /** @brief Constructs an empty, invalid audio packet. */
                 AudioPacket() = default;

@@ -1,0 +1,279 @@
+# ============================================================================
+# libpromeki valgrind suppressions
+# ============================================================================
+#
+# Entries here silence errors we have decided are either:
+#   - in third-party code we cannot fix (NVIDIA proprietary drivers), or
+#   - in intentional process-lifetime resources (dlopen handles, thread
+#     pools whose workers outlive main()) that would be noise in every run.
+#
+# Auto-loaded by scripts/run-valgrind.sh when present.  If you're adding a
+# new suppression, keep it narrow — anchor on specific object files and
+# function frames — and explain in the comment *why* the error is OK.
+#
+# Format reference: https://valgrind.org/docs/manual/manual-core.html#manual-core.suppress
+
+# ----------------------------------------------------------------------------
+# NVIDIA proprietary drivers — libnvcuvid.so / libnvidia-encode.so / libcuda.so
+# ----------------------------------------------------------------------------
+#
+# These libraries ship without debug info and have well-known "use of
+# uninitialised value" and "definitely lost" findings in their own code
+# paths that we cannot fix.  Each entry is anchored on the NVIDIA .so so
+# we don't accidentally silence anything in our code.
+
+{
+   nvidia-nvcuvid-uninit
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libnvcuvid.so*
+   ...
+}
+
+{
+   nvidia-nvcuvid-uninit-value
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libnvcuvid.so*
+   ...
+}
+
+{
+   nvidia-nvenc-uninit
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libnvidia-encode.so*
+   ...
+}
+
+{
+   nvidia-nvenc-uninit-value
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libnvidia-encode.so*
+   ...
+}
+
+{
+   nvidia-libcuda-malloc-leak
+   Memcheck:Leak
+   match-leak-kinds: definite,possible,reachable
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libcuda.so*
+   ...
+}
+
+{
+   nvidia-libcuda-realloc-leak
+   Memcheck:Leak
+   match-leak-kinds: definite,possible,reachable
+   fun:realloc
+   obj:/usr/lib/x86_64-linux-gnu/libcuda.so*
+   ...
+}
+
+{
+   nvidia-libcuda-calloc-leak
+   Memcheck:Leak
+   match-leak-kinds: definite,possible,reachable
+   fun:calloc
+   obj:/usr/lib/x86_64-linux-gnu/libcuda.so*
+   ...
+}
+
+{
+   nvidia-libcudart-malloc-leak
+   Memcheck:Leak
+   match-leak-kinds: definite,possible,reachable
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libcudart.so*
+   ...
+}
+
+{
+   nvidia-libcudart-calloc-leak
+   Memcheck:Leak
+   match-leak-kinds: definite,possible,reachable
+   fun:calloc
+   obj:/usr/lib/x86_64-linux-gnu/libcudart.so*
+   ...
+}
+
+{
+   nvidia-libnvcuvid-malloc-leak
+   Memcheck:Leak
+   match-leak-kinds: definite,possible,reachable
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libnvcuvid.so*
+   ...
+}
+
+{
+   nvidia-libnvidia-encode-malloc-leak
+   Memcheck:Leak
+   match-leak-kinds: definite,possible,reachable
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libnvidia-encode.so*
+   ...
+}
+
+{
+   nvidia-libcuda-thread-start-leak
+   Memcheck:Leak
+   match-leak-kinds: definite,possible,reachable
+   ...
+   obj:/usr/lib/x86_64-linux-gnu/libcuda.so*
+   ...
+   fun:start_thread
+}
+
+# ----------------------------------------------------------------------------
+# Intentional dlopen handles — process-lifetime codec / driver libraries
+# ----------------------------------------------------------------------------
+#
+# We dlopen the NVIDIA codec libraries lazily on first use and deliberately
+# never dlclose them — the handle is kept for the lifetime of the process
+# so subsequent calls don't pay repeated dlopen cost.  glibc's loader
+# accounts the dlopen metadata as "definitely lost" at process exit.
+
+{
+   nvenc-dlopen-intentional
+   Memcheck:Leak
+   match-leak-kinds: definite,reachable
+   fun:malloc
+   ...
+   fun:_dl_open
+   ...
+   fun:loadNvencLocked
+   ...
+}
+
+# ----------------------------------------------------------------------------
+# Enum reflection metadata (process-lifetime)
+# ----------------------------------------------------------------------------
+#
+# Enum::registerDefinition / Enum::registerType allocate the backing
+# storage for enum type names, entry names, and "Type::Entry" qualified
+# strings on the heap.  The code explicitly marks these as intentional
+# leaks with PROMEKI_INTENTIONAL_LEAK — they live for the process
+# lifetime and are used for reflection and string conversion.  The
+# PROMEKI_INTENTIONAL_LEAK macro only quiets LSan; valgrind needs its
+# own suppression.
+
+{
+   enum-populate-string-literals
+   Memcheck:Leak
+   match-leak-kinds: reachable,definite
+   ...
+   fun:_ZN7promeki12_GLOBAL__N_1L22populateStringLiteralsEPNS_4Enum10DefinitionE
+   ...
+}
+
+{
+   enum-register-type-dynamic-storage
+   Memcheck:Leak
+   match-leak-kinds: reachable,definite
+   fun:_Znwm
+   fun:_ZN7promeki4Enum12registerTypeE*
+   ...
+}
+
+# ----------------------------------------------------------------------------
+# cirf resource mounts (process-lifetime)
+# ----------------------------------------------------------------------------
+#
+# Resource::registerRoot calls cirf_mount, which allocates a small
+# mount-record inside libcirf's internal linked list.  We never
+# unregister these — the resources live for the process lifetime — so
+# cirf's allocation shows up as reachable at exit.
+
+{
+   cirf-mount-reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable,definite
+   fun:malloc
+   fun:cirf_mount
+   ...
+}
+
+# ----------------------------------------------------------------------------
+# doctest test framework (header-only, inlined into the test binary)
+# ----------------------------------------------------------------------------
+#
+# doctest keeps registered test cases, the alt-stack for signal
+# handlers, and a few smaller bookkeeping containers in static state
+# inside the test binary.  These are reachable at exit but never
+# leaked in any real sense — the alt-stack alone is one 32 KB block.
+# Suppress everything whose allocation stack passes through doctest.h.
+
+{
+   doctest-context-run-leaks
+   Memcheck:Leak
+   match-leak-kinds: reachable,definite,indirect
+   ...
+   fun:_ZN7doctest7Context3runEv
+   ...
+}
+
+{
+   doctest-altstack
+   Memcheck:Leak
+   match-leak-kinds: reachable,definite
+   fun:_Znam
+   ...
+   fun:_ZN7doctest7Context3runEv
+}
+
+# ----------------------------------------------------------------------------
+# Process-lifetime singleton threads
+# ----------------------------------------------------------------------------
+#
+# The Logger and MediaIO::pool() singletons each own one-or-more worker
+# threads that run for the lifetime of the process.  Their destructors
+# set a shutdown flag, push a terminate command, and join; under clean
+# shutdown this drains everything.  In practice, under valgrind, the
+# final leak check occasionally runs before the last std::thread's
+# internal shared state is fully reclaimed by libstdc++, so each
+# long-running worker shows up as a "definitely lost" block of 32 or
+# 40 bytes.  These are not real leaks — the kernel reaps everything
+# at process exit — but they clutter every run.  Suppressions are
+# anchored on the specific allocation site (std_thread.h:175 "new
+# _State_impl") and the specific creator function frame so they don't
+# silence genuine leaks elsewhere.
+
+{
+   logger-worker-thread-state
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   ...
+   fun:_ZN7promeki6LoggerC*
+   ...
+}
+
+{
+   logger-worker-adopted-thread
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   fun:_ZN7promeki6Thread18adoptCurrentThreadEv
+   fun:_ZN7promeki6Logger6workerEv
+   ...
+}
+
+{
+   logger-worker-logfile
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   fun:_ZN7promeki6Logger11openLogFileE*
+   ...
+   fun:_ZN7promeki6Logger6workerEv
+   ...
+}
+
+{
+   mediaio-pool-worker-thread-state
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   ...
+   fun:_ZN7promeki10ThreadPool12spawnThreadsE*
+   ...
+}

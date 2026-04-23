@@ -32,6 +32,11 @@ bool Image::allocate(const MemSpace &ms) {
                         promekiErr("Image(%s) plane %d allocate failed", _desc.toString().cstr(), i);
                         return false;
                 }
+                // Zero the whole allocation (including any stride padding
+                // past width * pixelSize on each row, which codecs and
+                // serializers happily read).  Keeps uninit bytes out of
+                // DPX/PNG/JPEG/JPEG-XS encoders and out of disk writes.
+                buf->fill(0);
                 buf->setSize(size);
                 list.pushToBack(buf);
         }

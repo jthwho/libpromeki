@@ -148,15 +148,25 @@ class MemSpace {
                         void recordRelease(uint64_t bytes);
                 };
 
-                /** @brief Function table for memory space operations. */
+                /**
+                 * @brief Function table for memory space operations.
+                 *
+                 * The MemSpace wrapper handles trivial cases (zero-size
+                 * allocations, null-pointer release/copy/fill) before
+                 * dispatching, so backend lambdas may rely on:
+                 * - @c alloc:   @c a.size > 0.
+                 * - @c release: @c a.ptr != nullptr.
+                 * - @c copy:    both @c src.ptr and @c dst.ptr non-null.
+                 * - @c fill:    @c ptr != nullptr.
+                 */
                 struct Ops {
                         ID id;                                                              ///< The memory space identifier.
                         String name;                                                        ///< Human-readable name of the memory space.
                         bool (*isHostAccessible)(const MemAllocation &alloc);                ///< Returns true if the allocation is directly accessible from the host CPU.
-                        void (*alloc)(MemAllocation &alloc);                                ///< Allocate memory. Size and align are pre-filled.
-                        void (*release)(MemAllocation &alloc);                              ///< Release previously allocated memory.
-                        bool (*copy)(const MemAllocation &src, const MemAllocation &dst, size_t bytes); ///< Copy bytes from this space to another.
-                        Error (*fill)(void *ptr, size_t bytes, char value);                 ///< Fill memory with a byte value.
+                        void (*alloc)(MemAllocation &alloc);                                ///< Allocate memory. Size and align are pre-filled; size > 0 guaranteed.
+                        void (*release)(MemAllocation &alloc);                              ///< Release previously allocated memory. Called only when ptr != nullptr.
+                        bool (*copy)(const MemAllocation &src, const MemAllocation &dst, size_t bytes); ///< Copy bytes from this space to another. Both pointers non-null.
+                        Error (*fill)(void *ptr, size_t bytes, char value);                 ///< Fill memory with a byte value. Called only when ptr != nullptr.
                         Stats *stats = nullptr;                                             ///< Runtime counters; owned by the registry, auto-created by registerData() if null.
                 };
 
@@ -249,6 +259,14 @@ class MemSpace {
 
                 /**
                  * @brief Allocates memory in this memory space.
+                 *
+                 * A zero-byte allocation returns a valid MemAllocation with
+                 * @c ptr set to nullptr; registered backend alloc lambdas
+                 * are not invoked and stats counters are not updated.  This
+                 * lets callers express "empty buffer" without the backend
+                 * having to handle an implementation-defined
+                 * @c aligned_alloc(align, 0) corner case.
+                 *
                  * @param bytes Number of bytes to allocate.
                  * @param align Required alignment in bytes.
                  * @return A MemAllocation describing the allocated region.
@@ -400,6 +418,10 @@ inline MemAllocation MemSpace::alloc(size_t bytes, size_t align) const {
         a.size = bytes;
         a.align = align;
         a.ms = *this;
+        // A zero-byte allocation is valid (returns a.ptr == nullptr) but
+        // does not count as a failure. Skip stats so counters aren't
+        // polluted by the legitimate empty-buffer case.
+        if(bytes == 0) return a;
         d->alloc(a);
         if(a.ptr != nullptr) {
                 d->stats->recordAlloc(static_cast<uint64_t>(bytes));

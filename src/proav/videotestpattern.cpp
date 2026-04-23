@@ -45,9 +45,7 @@ void sdiPathStore16(uint8_t *dst, uint16_t val, bool be) {
 
 VideoTestPattern::VideoTestPattern() = default;
 
-VideoTestPattern::~VideoTestPattern() {
-        delete _burnFont;
-}
+VideoTestPattern::~VideoTestPattern() = default;
 
 void VideoTestPattern::setPattern(Pattern pattern) {
         if(_pattern == pattern) return;
@@ -208,7 +206,7 @@ Image VideoTestPattern::create(const ImageDesc &desc, double motionOffset,
 }
 
 void VideoTestPattern::applyBurnFontConfig() const {
-        if(_burnFont == nullptr) return;
+        if(_burnFont.isNull()) return;
         _burnFont->setFontFilename(_burnFontFilename);
         _burnFont->setFontSize(_burnEffectiveFontSize);
         _burnFont->setForegroundColor(_burnTextColor);
@@ -255,8 +253,8 @@ Error VideoTestPattern::applyBurn(Image &img, const String &burnText) const {
 
         // Lazy-create the FastFont bound to this image's paint engine.
         PaintEngine pe = img.createPaintEngine();
-        if(_burnFont == nullptr) {
-                _burnFont = new FastFont(pe);
+        if(_burnFont.isNull()) {
+                _burnFont = FastFont::UPtr::create(pe);
                 _burnFontConfigDirty = true;
         } else {
                 _burnFont->setPaintEngine(pe);

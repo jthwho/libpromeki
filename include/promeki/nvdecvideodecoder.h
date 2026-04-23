@@ -10,6 +10,7 @@
 #include <promeki/namespace.h>
 #include <promeki/config.h>
 #include <promeki/videodecoder.h>
+#include <promeki/uniqueptr.h>
 
 #if PROMEKI_ENABLE_NVDEC
 
@@ -93,7 +94,8 @@ class NvdecVideoDecoder : public VideoDecoder {
 
         private:
                 class Impl;
-                Impl *_impl;
+                using ImplPtr = UniquePtr<Impl>;
+                ImplPtr _impl;
                 Codec _codec;
 };
 
