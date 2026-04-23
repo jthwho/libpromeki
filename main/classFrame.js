@@ -3,6 +3,11 @@ var classFrame =
     [ "List", "classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808", null ],
     [ "Ptr", "classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a", null ],
     [ "PtrList", "classFrame.html#a59b79f2fc64b0774ac7ee5094c98a199", null ],
+    [ "CutPointScope", "classFrame.html#ad34e48250ed5a1901bacf84d71831217", [
+      [ "CutPointVideoOnly", "classFrame.html#ad34e48250ed5a1901bacf84d71831217a9ad35c2576696a5fd3324fbec3078384", null ],
+      [ "CutPointAudioOnly", "classFrame.html#ad34e48250ed5a1901bacf84d71831217abba814cbbc0a0e599bccbab105439c67", null ],
+      [ "CutPointAudioVideo", "classFrame.html#ad34e48250ed5a1901bacf84d71831217a37124117acbbf3a8836a1a3e962a5e34", null ]
+    ] ],
     [ "Frame", "classFrame.html#af859480e7bdedf343c1ad7d941106f26", null ],
     [ "audioList", "classFrame.html#a467f242201a17814c868b403ae7c421f", null ],
     [ "audioList", "classFrame.html#acd463c7e5ee785d13334c3e079cb23a3", null ],
@@ -13,6 +18,7 @@ var classFrame =
     [ "dump", "classFrame.html#a892dbdc2c358b5d85f4a2f58f5b841ae", null ],
     [ "imageList", "classFrame.html#a8d258b0e55414fc85257cb1784559db5", null ],
     [ "imageList", "classFrame.html#a8360d8a81a700a1b90cf6da71cd524e4", null ],
+    [ "isSafeCutPoint", "classFrame.html#a28b9871bbbc8d0e4419e4ccf213116c3", null ],
     [ "mediaDesc", "classFrame.html#afb948d42ec82b719221b60a1ce25926f", null ],
     [ "metadata", "classFrame.html#a4ff149c36694dcda0da237da9d454d39", null ],
     [ "metadata", "classFrame.html#a3029bf6f68d261411f9510536c1994d2", null ],

@@ -59,7 +59,7 @@ var group__paint =
         [ "fillCircle", "classPaintEngine_1_1Impl.html#af750ffa3bcc7c6236df78da1e6b760a5", null ],
         [ "fillEllipse", "classPaintEngine_1_1Impl.html#adf337a2874ecdde37f1a8fac0c8f26ab", null ],
         [ "fillRect", "classPaintEngine_1_1Impl.html#aa2745ee578e5d195adcca40f3a2f119e", null ],
-        [ "pixelDesc", "classPaintEngine_1_1Impl.html#a88e3389480c60f73ab310fa2ad6ae232", null ]
+        [ "pixelFormat", "classPaintEngine_1_1Impl.html#af1268fbeb0d60b8a402e2985acb7f85d", null ]
       ] ],
       [ "Pixel", "structPaintEngine_1_1Pixel.html", [
         [ "data", "structPaintEngine_1_1Pixel.html#a6ec5a04d72b13c4338b97f8a2002302e", null ],
@@ -95,6 +95,6 @@ var group__paint =
       [ "fillCircle", "classPaintEngine.html#a09ee73b28e43fbd785843d32121e64d5", null ],
       [ "fillEllipse", "classPaintEngine.html#a47860bee2d201a40204c7f6a9e9671f0", null ],
       [ "fillRect", "classPaintEngine.html#ab7ee459fa790ba346a045f5ff12c47a2", null ],
-      [ "pixelDesc", "classPaintEngine.html#a9750c5b92a12fe5fc30b443bab1d8d48", null ]
+      [ "pixelFormat", "classPaintEngine.html#aa675c184c11f2bb8654d9f95c5b45667", null ]
     ] ]
 ];

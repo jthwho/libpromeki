@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['datatype_0',['DataType',['../classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4',1,'AudioDesc']]]
+  ['encoding_0',['Encoding',['../classString.html#a9c3c4c0e2ff486a3f2c6c7f92540d310',1,'String']]]
 ];

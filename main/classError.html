@@ -189,6 +189,10 @@ Public Types</h2></td></tr>
 &#160;&#160;<a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ac3b0a5260c550da359ce21d5d2f4790f">DurationUnknown</a>
 , <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a98240600c1b658add2e71f1dc7ec7e95">FrameRangeInfinite</a>
 , <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a9027e04f1e22c093a246d518d805db28">NotAdjacent</a>
+, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a44668d412cf96d150adcfa317344e26b">PipelineBuildFailed</a>
+, <br />
+&#160;&#160;<a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a7d9fc03044568d076864360cba222720">PipelineRuntimeError</a>
+, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a6f93c8647382884e0ee13f21ce50a3cf">InspectorDiscontinuityDetected</a>
 <br />
  }</td></tr>
 <tr class="memdesc:ab5980e13b879db253df802b0950d1708"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> codes for the promeki library.  <a href="classError.html#ab5980e13b879db253df802b0950d1708">More...</a><br /></td></tr>
@@ -411,6 +415,12 @@ Static Public Member Functions</h2></td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a98240600c1b658add2e71f1dc7ec7e95" name="ab5980e13b879db253df802b0950d1708a98240600c1b658add2e71f1dc7ec7e95"></a>FrameRangeInfinite&#160;</td><td class="fielddoc"><p><a class="el" href="classMediaDuration.html" title="A run of media frames described by a start frame plus a length.">MediaDuration</a> is infinite and cannot be expressed as a bounded FrameRange. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a9027e04f1e22c093a246d518d805db28" name="ab5980e13b879db253df802b0950d1708a9027e04f1e22c093a246d518d805db28"></a>NotAdjacent&#160;</td><td class="fielddoc"><p>Two MediaDurations are not frame-adjacent and cannot be joined. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a44668d412cf96d150adcfa317344e26b" name="ab5980e13b879db253df802b0950d1708a44668d412cf96d150adcfa317344e26b"></a>PipelineBuildFailed&#160;</td><td class="fielddoc"><p><a class="el" href="classMediaPipeline.html" title="Data-driven builder and runtime for a DAG of MediaIO stages.">MediaPipeline</a> build step (including planner) could not resolve the requested pipeline. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a7d9fc03044568d076864360cba222720" name="ab5980e13b879db253df802b0950d1708a7d9fc03044568d076864360cba222720"></a>PipelineRuntimeError&#160;</td><td class="fielddoc"><p>A stage emitted a runtime error (pipelineErrorSignal) after start(). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a6f93c8647382884e0ee13f21ce50a3cf" name="ab5980e13b879db253df802b0950d1708a6f93c8647382884e0ee13f21ce50a3cf"></a>InspectorDiscontinuityDetected&#160;</td><td class="fielddoc"><p>Inspector observed at least one discontinuity during its run. </p>
 </td></tr>
 </table>
 
@@ -725,7 +735,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classError.html">Error</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

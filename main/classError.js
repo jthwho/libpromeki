@@ -59,7 +59,10 @@ var classError =
       [ "ClockPaused", "classError.html#ab5980e13b879db253df802b0950d1708a472abb37baff1ed0725d1a8400e1ec1e", null ],
       [ "DurationUnknown", "classError.html#ab5980e13b879db253df802b0950d1708ac3b0a5260c550da359ce21d5d2f4790f", null ],
       [ "FrameRangeInfinite", "classError.html#ab5980e13b879db253df802b0950d1708a98240600c1b658add2e71f1dc7ec7e95", null ],
-      [ "NotAdjacent", "classError.html#ab5980e13b879db253df802b0950d1708a9027e04f1e22c093a246d518d805db28", null ]
+      [ "NotAdjacent", "classError.html#ab5980e13b879db253df802b0950d1708a9027e04f1e22c093a246d518d805db28", null ],
+      [ "PipelineBuildFailed", "classError.html#ab5980e13b879db253df802b0950d1708a44668d412cf96d150adcfa317344e26b", null ],
+      [ "PipelineRuntimeError", "classError.html#ab5980e13b879db253df802b0950d1708a7d9fc03044568d076864360cba222720", null ],
+      [ "InspectorDiscontinuityDetected", "classError.html#ab5980e13b879db253df802b0950d1708a6f93c8647382884e0ee13f21ce50a3cf", null ]
     ] ],
     [ "Error", "classError.html#a83eaa8db2a6c22d6aff5758eea236a6e", null ],
     [ "~Error", "classError.html#a1a45d42a3a035d510333cdfeb36a0e93", null ],

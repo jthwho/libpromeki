@@ -199,14 +199,14 @@ Static Public Attributes</h2></td></tr>
 <li><b>Padding</b>: any pixels left over after <code>76</code> cells fit in the image width are filled with black on the luma plane (and the format's neutral gray on chroma planes).</li>
 </ul>
 <p>The bit-cell width is chosen at construction time as the largest value such that <code>76</code> cells fit on the scan line <em>and</em> the cell width in pixels is a multiple of the format's natural alignment quantum (e.g. v210's 6-pixel block, 4:2:2 chroma subsampling's 2-pixel quantum). This guarantees that adjacent cells start at properly-aligned byte offsets and lets the hot path use a single <code>memcpy</code> per cell.</p>
-<dl class="section user"><dt>Per-format value mapping</dt><dd>The encoder uses libpromeki's CSC pipeline to render its three "primer" cells (one full-white pixel cell, one full-black pixel cell, and one neutral / padding cell) into the target <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a> once at construction time. This means:</dd></dl>
+<dl class="section user"><dt>Per-format value mapping</dt><dd>The encoder uses libpromeki's CSC pipeline to render its three "primer" cells (one full-white pixel cell, one full-black pixel cell, and one neutral / padding cell) into the target <a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a> once at construction time. This means:</dd></dl>
 <ul>
 <li>For RGB formats, "white" is the format's per-component max, "black" is the per-component min.</li>
 <li>For YCbCr formats, "white" is luma at <code>rangeMax</code> and chroma at the per-component midpoint (so the bit pattern only modulates luma, never chroma).</li>
 <li>For planar / semi-planar formats, the chroma planes are filled with neutral gray throughout the encoded scan-line range — both the bit cells and the padding region.</li>
 </ul>
 <p>After construction the only work the encoder does per scan line is a fixed sequence of <code>memcpy</code> calls — 76 per scan line per plane, plus one for the trailing padding. At 1080p60 with 32 stamped scan lines per frame and a 4-byte-per-pixel format, that's roughly <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">2.4M</a></code> memcpy bytes per second — comfortably below the noise floor of any modern memory subsystem.</p>
-<dl class="section user"><dt>Lifetime and reuse</dt><dd>Construct one encoder per (<a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a>, image dimensions) pair and reuse it across many frames. The encoder owns its primer cells and <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a> state internally; <a class="el" href="classImageDataEncoder.html#a5e4b771019f7fff9664c070e25ca4d2f">encode</a> is reentrant on a single instance only with respect to itself (do not call <code>encode</code> from two threads on the same instance simultaneously). Use <a class="el" href="classImageDataEncoder.html#a22cc4c9e0d401f83e2363c764cb21a1d">isValid</a> to detect a construction failure (image too narrow for any cell width, format unsupported by CSC, etc.).</dd></dl>
+<dl class="section user"><dt>Lifetime and reuse</dt><dd>Construct one encoder per (<a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a>, image dimensions) pair and reuse it across many frames. The encoder owns its primer cells and <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a> state internally; <a class="el" href="classImageDataEncoder.html#a5e4b771019f7fff9664c070e25ca4d2f">encode</a> is reentrant on a single instance only with respect to itself (do not call <code>encode</code> from two threads on the same instance simultaneously). Use <a class="el" href="classImageDataEncoder.html#a22cc4c9e0d401f83e2363c764cb21a1d">isValid</a> to detect a construction failure (image too narrow for any cell width, format unsupported by CSC, etc.).</dd></dl>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classImageDataEncoder.html">ImageDataEncoder</a> <a class="code hl_class" href="classList.html">enc</a>(<a class="code hl_class" href="classList.html">img</a>.desc());</div>
 <div class="line"><span class="keywordflow">if</span>(!<a class="code hl_class" href="classList.html">enc</a>.isValid()) {</div>
 <div class="line">    <span class="comment">// image too narrow for any bit cell — bail out</span></div>
@@ -321,7 +321,7 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Maximum number of planes the encoder supports. </p>
-<p>Matches <code><a class="el" href="classPixelFormat.html#af952151e830901156bf5cf475e9a4f62" title="Maximum number of planes per format.">PixelFormat::MaxPlanes</a></code>. </p>
+<p>Matches <code><a class="el" href="classPixelMemLayout.html#a1c88cabefc5c05557d16ad916c822472" title="Maximum number of planes per format.">PixelMemLayout::MaxPlanes</a></code>. </p>
 
 </div>
 </div>
@@ -335,7 +335,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -9,6 +9,7 @@ var structMediaIO_1_1FormatDesc =
     [ "PrintDeviceInfoFunc", "structMediaIO_1_1FormatDesc.html#aa338f9de74f324830d6141b057e0a343", null ],
     [ "ProbeFunc", "structMediaIO_1_1FormatDesc.html#a2e385efad181e8f44c6369104c832f54", null ],
     [ "QueryFunc", "structMediaIO_1_1FormatDesc.html#a55e421a8b85374224d2793b44073c15f", null ],
+    [ "UrlToConfigFunc", "structMediaIO_1_1FormatDesc.html#acd3320538abdc5210a4b35fb9de89259", null ],
     [ "bridge", "structMediaIO_1_1FormatDesc.html#a9ccaa0a3dc78045bcec0c9d0380df06c", null ],
     [ "canBeSink", "structMediaIO_1_1FormatDesc.html#aed6bdae65e139ba21bf986d70061447c", null ],
     [ "canBeSource", "structMediaIO_1_1FormatDesc.html#ae460e82536a21fb89a1a9c3062a0e423", null ],
@@ -23,5 +24,7 @@ var structMediaIO_1_1FormatDesc =
     [ "extensions", "structMediaIO_1_1FormatDesc.html#a3a4e3a7d574e1195b535b9f13e583aaa", null ],
     [ "name", "structMediaIO_1_1FormatDesc.html#ab5897abedebdee3978485f689ae8eee5", null ],
     [ "printDeviceInfo", "structMediaIO_1_1FormatDesc.html#a777e7032562afbf4fb040df2692dcb9b", null ],
-    [ "queryDevice", "structMediaIO_1_1FormatDesc.html#ae18bcfbdca5fb3a179340131c60da710", null ]
+    [ "queryDevice", "structMediaIO_1_1FormatDesc.html#ae18bcfbdca5fb3a179340131c60da710", null ],
+    [ "schemes", "structMediaIO_1_1FormatDesc.html#a7133c4f7ccd09b18771197ce8369616b", null ],
+    [ "urlToConfig", "structMediaIO_1_1FormatDesc.html#a3d852b5c010a8852252f20e8271f210f", null ]
 ];

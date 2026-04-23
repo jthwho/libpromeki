@@ -1,7 +1,13 @@
 <map id="AudioCodec::Data" name="AudioCodec::Data">
-<area shape="rect" id="Node000001" title="Immutable descriptor for an audio codec." alt="" coords="23,108,162,133"/>
+<area shape="rect" id="Node000001" title="Immutable descriptor for an audio codec." alt="" coords="259,123,398,148"/>
 <area shape="rect" id="Node000002" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,5,65,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="51,42,88,107,84,109,47,44"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="60,37,101,68,151,96,206,114,260,124,259,130,204,119,149,101,98,73,57,42"/>
 <area shape="rect" id="Node000003" href="$classList.html" title=" " alt="" coords="89,5,211,31"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="140,44,116,85,102,109,98,106,112,83,135,42"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="176,38,213,67,257,96,303,120,301,125,254,101,210,71,172,42"/>
+<area shape="rect" id="Node000004" href="$classList.html" title=" " alt="" coords="235,5,423,31"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="331,44,331,123,326,123,326,44"/>
+<area shape="rect" id="Node000005" href="$classList.html" title=" " alt="" coords="447,5,539,31"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="489,45,478,74,457,101,429,118,399,128,397,123,427,113,454,97,473,71,484,43"/>
+<area shape="rect" id="Node000006" href="$classList.html" title=" " alt="" coords="633,5,737,31"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="685,45,676,74,668,89,657,101,638,111,611,120,544,131,468,136,398,137,398,132,468,131,543,125,610,114,636,106,654,97,664,86,671,72,680,43"/>
 </map>

@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['h264_0',['h264',['../classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa5ee8334d39e47fc8d9c55bbf2e4a1216',1,'PixelDesc::H264'],['../classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca48919d6ed222bf6aed61e664ac1e3350',1,'VideoCodec::H264']]],
-  ['hevc_1',['hevc',['../classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa4a171b5dd0af777e03264653659a0258',1,'PixelDesc::HEVC'],['../classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca309b5ca153afdcc40cc5bbff97a94d4e',1,'VideoCodec::HEVC']]],
+  ['h264_0',['h264',['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda5dc43323749c2d0cbfabdd52c436e7e5',1,'PixelFormat::H264'],['../classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca48919d6ed222bf6aed61e664ac1e3350',1,'VideoCodec::H264']]],
+  ['hevc_1',['hevc',['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda5a120c4e001a184fa0dc7769370d9834',1,'PixelFormat::HEVC'],['../classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca309b5ca153afdcc40cc5bbff97a94d4e',1,'VideoCodec::HEVC']]],
   ['hexformat_2',['HexFormat',['../classColor.html#a96af432bfa4a82d9c30f787fb1e5a066a8ec07d9fa2597ce4e15c87ab54ed57c2',1,'Color']]],
   ['hidden_3',['Hidden',['../classAnsiStream.html#a7e20231eb70e71674e8522796a2b784bac6576bd3bf9616b783e03c9f893f32e9',1,'AnsiStream']]],
   ['highest_4',['Highest',['../classMediaPipelinePlanner.html#aaf285578c78fd4dd66fe8cafa7835277a582996407922dab08d5cf2b3d2a7c1c9',1,'MediaPipelinePlanner']]],

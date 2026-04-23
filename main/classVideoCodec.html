@@ -109,13 +109,16 @@ $(document).ready(function(){initNavTree('classVideoCodec.html',''); initResizab
 </div><!--header-->
 <div class="contents">
 
-<p>First-class identifier for a video / still-image codec family.  
+<p>First-class identifier for a video codec family.  
  <a href="classVideoCodec.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="videocodec_8h_source.html">videocodec.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec_1_1Backend.html">Backend</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Typed handle for a concrete codec backend.  <a href="classVideoCodec_1_1Backend.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structVideoCodec_1_1Data.html">Data</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Immutable descriptor for a video codec.  <a href="structVideoCodec_1_1Data.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -144,24 +147,32 @@ Public Types</h2></td></tr>
  }</td></tr>
 <tr class="memdesc:af5d21a83ef1d943e8ad2d3e9b041b5dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Identifies a video codec family.  <a href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dc">More...</a><br /></td></tr>
 <tr class="separator:af5d21a83ef1d943e8ad2d3e9b041b5dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae7b43fab2a9f161059e260f40df1979f" id="r_ae7b43fab2a9f161059e260f40df1979f"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#ae7b43fab2a9f161059e260f40df1979f">CodingType</a> { <a class="el" href="classVideoCodec.html#ae7b43fab2a9f161059e260f40df1979faa6e36bc79fc422894ab7bf1c573f3707">CodingInvalid</a> = 0
+, <a class="el" href="classVideoCodec.html#ae7b43fab2a9f161059e260f40df1979fa8b7dd8c6b278fa30d8a3c31bd55bb242">CodingIntraOnly</a> = 1
+, <a class="el" href="classVideoCodec.html#ae7b43fab2a9f161059e260f40df1979fa04ba43a934fdc8c3dd7e969147329265">CodingTemporal</a> = 2
+ }</td></tr>
+<tr class="memdesc:ae7b43fab2a9f161059e260f40df1979f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes a codec's inter-frame coding behaviour.  <a href="classVideoCodec.html#ae7b43fab2a9f161059e260f40df1979f">More...</a><br /></td></tr>
+<tr class="separator:ae7b43fab2a9f161059e260f40df1979f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad71bbc3d1ef9ec60df583e75b2b584c5" id="r_ad71bbc3d1ef9ec60df583e75b2b584c5"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#ad71bbc3d1ef9ec60df583e75b2b584c5">RandomAccessGranularity</a> { <a class="el" href="classVideoCodec.html#ad71bbc3d1ef9ec60df583e75b2b584c5ab0be935cdaf29d04cf9c01af3b32ebe1">AccessInvalid</a> = 0
+, <a class="el" href="classVideoCodec.html#ad71bbc3d1ef9ec60df583e75b2b584c5aeda92a98fde43eff4dde84c0b5c26153">AccessFrame</a> = 1
+, <a class="el" href="classVideoCodec.html#ad71bbc3d1ef9ec60df583e75b2b584c5ab6b76508965a5b6d9f9964799f12c004">AccessGOP</a> = 2
+ }</td></tr>
+<tr class="memdesc:ad71bbc3d1ef9ec60df583e75b2b584c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Granularity at which a stream can be randomly accessed.  <a href="classVideoCodec.html#ad71bbc3d1ef9ec60df583e75b2b584c5">More...</a><br /></td></tr>
+<tr class="separator:ad71bbc3d1ef9ec60df583e75b2b584c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4592805075cb09835e61af5106205b71" id="r_a4592805075cb09835e61af5106205b71"><td class="memItemLeft" align="right" valign="top"><a id="a4592805075cb09835e61af5106205b71" name="a4592805075cb09835e61af5106205b71"></a>
 <a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>IDList</b> = <a class="el" href="classList.html">List</a>&lt; <a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dc">ID</a> &gt;</td></tr>
-<tr class="memdesc:a4592805075cb09835e61af5106205b71"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of <a class="el" href="classVideoCodec.html" title="First-class identifier for a video / still-image codec family.">VideoCodec</a> IDs. <br /></td></tr>
+<tr class="memdesc:a4592805075cb09835e61af5106205b71"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of <a class="el" href="classVideoCodec.html" title="First-class identifier for a video codec family.">VideoCodec</a> IDs. <br /></td></tr>
 <tr class="separator:a4592805075cb09835e61af5106205b71"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9784efc47e55a62866ce7605107fdc52" id="r_a9784efc47e55a62866ce7605107fdc52"><td class="memItemLeft" align="right" valign="top"><a id="a9784efc47e55a62866ce7605107fdc52" name="a9784efc47e55a62866ce7605107fdc52"></a>
-<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>EncoderFactory</b> = std::function&lt; <a class="el" href="classVideoEncoder.html">VideoEncoder</a> *()&gt;</td></tr>
-<tr class="memdesc:a9784efc47e55a62866ce7605107fdc52"><td class="mdescLeft">&#160;</td><td class="mdescRight">Factory for a new <a class="el" href="classVideoEncoder.html" title="Abstract base class for stateful video encoders.">VideoEncoder</a> session (may be null). <br /></td></tr>
-<tr class="separator:a9784efc47e55a62866ce7605107fdc52"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4ea3cd4bb3c561497bd7f446606ed12a" id="r_a4ea3cd4bb3c561497bd7f446606ed12a"><td class="memItemLeft" align="right" valign="top"><a id="a4ea3cd4bb3c561497bd7f446606ed12a" name="a4ea3cd4bb3c561497bd7f446606ed12a"></a>
-<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>DecoderFactory</b> = std::function&lt; <a class="el" href="classVideoDecoder.html">VideoDecoder</a> *()&gt;</td></tr>
-<tr class="memdesc:a4ea3cd4bb3c561497bd7f446606ed12a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Factory for a new <a class="el" href="classVideoDecoder.html" title="Abstract base class for stateful video decoders.">VideoDecoder</a> session (may be null). <br /></td></tr>
-<tr class="separator:a4ea3cd4bb3c561497bd7f446606ed12a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1fccd459f626e5b6d9eef80e4d616428" id="r_a1fccd459f626e5b6d9eef80e4d616428"><td class="memItemLeft" align="right" valign="top"><a id="a1fccd459f626e5b6d9eef80e4d616428" name="a1fccd459f626e5b6d9eef80e4d616428"></a>
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>BackendList</b> = <a class="el" href="classList.html">List</a>&lt; <a class="el" href="classVideoCodec_1_1Backend.html">Backend</a> &gt;</td></tr>
+<tr class="memdesc:a1fccd459f626e5b6d9eef80e4d616428"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of codec backend handles. <br /></td></tr>
+<tr class="separator:a1fccd459f626e5b6d9eef80e4d616428"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a4786b245d957788dec65332337a40f7c" id="r_a4786b245d957788dec65332337a40f7c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#a4786b245d957788dec65332337a40f7c">VideoCodec</a> (<a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dc">ID</a> <a class="el" href="classVideoCodec.html#a970be6fa47cc0934f92c20493ac96b37">id</a>=<a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca87e5acce5d36534159db13a2c635e101">Invalid</a>)</td></tr>
-<tr class="memdesc:a4786b245d957788dec65332337a40f7c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classVideoCodec.html" title="First-class identifier for a video / still-image codec family.">VideoCodec</a> from an ID.  <br /></td></tr>
-<tr class="separator:a4786b245d957788dec65332337a40f7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e012bdd83a91cf464b01020dc1b60ef" id="r_a2e012bdd83a91cf464b01020dc1b60ef"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#a2e012bdd83a91cf464b01020dc1b60ef">VideoCodec</a> (<a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dc">ID</a> <a class="el" href="classVideoCodec.html#a970be6fa47cc0934f92c20493ac96b37">id</a>=<a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca87e5acce5d36534159db13a2c635e101">Invalid</a>, <a class="el" href="classVideoCodec_1_1Backend.html">Backend</a> <a class="el" href="classVideoCodec.html#a907a75ff8c9a058e2768bf19e5c6d3d1">backend</a>=<a class="el" href="classVideoCodec_1_1Backend.html">Backend</a>())</td></tr>
+<tr class="memdesc:a2e012bdd83a91cf464b01020dc1b60ef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classVideoCodec.html" title="First-class identifier for a video codec family.">VideoCodec</a> from an ID and optional pinned backend.  <br /></td></tr>
+<tr class="separator:a2e012bdd83a91cf464b01020dc1b60ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a14acda48f4792085f9668b7b53183b89" id="r_a14acda48f4792085f9668b7b53183b89"><td class="memItemLeft" align="right" valign="top"><a id="a14acda48f4792085f9668b7b53183b89" name="a14acda48f4792085f9668b7b53183b89"></a>
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isValid</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a14acda48f4792085f9668b7b53183b89"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when this wrapper references a registered codec. <br /></td></tr>
@@ -182,29 +193,105 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">const</a> <a class="el" href="fourcc_8h.html#a7273afc33a6e1d395b0fdd32265996f0">FourCCList</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>fourccList</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ade6c014445b3fb804e8dc8429b7c76d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of FourCCs associated with this codec. <br /></td></tr>
 <tr class="separator:ade6c014445b3fb804e8dc8429b7c76d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ade010cc2b86711df7f74aa216342991a" id="r_ade010cc2b86711df7f74aa216342991a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classList.html">List</a>&lt; int &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#ade010cc2b86711df7f74aa216342991a">compressedPixelDescs</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:ade010cc2b86711df7f74aa216342991a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of compressed <a class="el" href="classPixelDesc.html">PixelDesc</a> IDs this codec covers.  <br /></td></tr>
-<tr class="separator:ade010cc2b86711df7f74aa216342991a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4cc563e65ece0d30e679767b1b6025ee" id="r_a4cc563e65ece0d30e679767b1b6025ee"><td class="memItemLeft" align="right" valign="top"><a id="a4cc563e65ece0d30e679767b1b6025ee" name="a4cc563e65ece0d30e679767b1b6025ee"></a>
+<a class="el" href="classList.html">List</a>&lt; <a class="el" href="classPixelFormat.html">PixelFormat</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>compressedPixelFormats</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a4cc563e65ece0d30e679767b1b6025ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of compressed <a class="el" href="classPixelFormat.html">PixelFormat</a> values this codec covers. <br /></td></tr>
+<tr class="separator:a4cc563e65ece0d30e679767b1b6025ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a181dcf0a175c70137fd503d0924a3929" id="r_a181dcf0a175c70137fd503d0924a3929"><td class="memItemLeft" align="right" valign="top"><a id="a181dcf0a175c70137fd503d0924a3929" name="a181dcf0a175c70137fd503d0924a3929"></a>
+<a class="el" href="classVideoCodec.html#ae7b43fab2a9f161059e260f40df1979f">CodingType</a>&#160;</td><td class="memItemRight" valign="bottom"><b>codingType</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a181dcf0a175c70137fd503d0924a3929"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the codec's inter-frame coding classification. <br /></td></tr>
+<tr class="separator:a181dcf0a175c70137fd503d0924a3929"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a312c940eeff1b6eb6c04213bc6329198" id="r_a312c940eeff1b6eb6c04213bc6329198"><td class="memItemLeft" align="right" valign="top"><a id="a312c940eeff1b6eb6c04213bc6329198" name="a312c940eeff1b6eb6c04213bc6329198"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isIntraOnly</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a312c940eeff1b6eb6c04213bc6329198"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shorthand for <code><a class="el" href="classVideoCodec.html#a181dcf0a175c70137fd503d0924a3929" title="Returns the codec&#39;s inter-frame coding classification.">codingType()</a> == CodingIntraOnly</code>. <br /></td></tr>
+<tr class="separator:a312c940eeff1b6eb6c04213bc6329198"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aff52ed10822c0c461ee35089760419f0" id="r_aff52ed10822c0c461ee35089760419f0"><td class="memItemLeft" align="right" valign="top"><a id="aff52ed10822c0c461ee35089760419f0" name="aff52ed10822c0c461ee35089760419f0"></a>
+<a class="el" href="classVideoCodec.html#ad71bbc3d1ef9ec60df583e75b2b584c5">RandomAccessGranularity</a>&#160;</td><td class="memItemRight" valign="bottom"><b>randomAccessGranularity</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aff52ed10822c0c461ee35089760419f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the codec's random-access granularity. <br /></td></tr>
+<tr class="separator:aff52ed10822c0c461ee35089760419f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9dcda2d9bf33fedddcf4e69cccf86093" id="r_a9dcda2d9bf33fedddcf4e69cccf86093"><td class="memItemLeft" align="right" valign="top"><a id="a9dcda2d9bf33fedddcf4e69cccf86093" name="a9dcda2d9bf33fedddcf4e69cccf86093"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>supportsBFrames</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a9dcda2d9bf33fedddcf4e69cccf86093"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when the codec spec permits B-frames. <br /></td></tr>
+<tr class="separator:a9dcda2d9bf33fedddcf4e69cccf86093"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a950c397e751db8123485c10241b0c6bb" id="r_a950c397e751db8123485c10241b0c6bb"><td class="memItemLeft" align="right" valign="top"><a id="a950c397e751db8123485c10241b0c6bb" name="a950c397e751db8123485c10241b0c6bb"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>supportsLossless</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a950c397e751db8123485c10241b0c6bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when the codec has a lossless mode. <br /></td></tr>
+<tr class="separator:a950c397e751db8123485c10241b0c6bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa4260c6209ae610057ad2282f7482773" id="r_aa4260c6209ae610057ad2282f7482773"><td class="memItemLeft" align="right" valign="top"><a id="aa4260c6209ae610057ad2282f7482773" name="aa4260c6209ae610057ad2282f7482773"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>supportsAlpha</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aa4260c6209ae610057ad2282f7482773"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when the codec encodes alpha. <br /></td></tr>
+<tr class="separator:aa4260c6209ae610057ad2282f7482773"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a494c3757b24c557d0165e220d475c643" id="r_a494c3757b24c557d0165e220d475c643"><td class="memItemLeft" align="right" valign="top"><a id="a494c3757b24c557d0165e220d475c643" name="a494c3757b24c557d0165e220d475c643"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>supportsVariableFrameSize</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a494c3757b24c557d0165e220d475c643"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when each frame may declare new dimensions. <br /></td></tr>
+<tr class="separator:a494c3757b24c557d0165e220d475c643"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adfd9f50e17f0e9c4317b47cd49a8de4e" id="r_adfd9f50e17f0e9c4317b47cd49a8de4e"><td class="memItemLeft" align="right" valign="top"><a id="adfd9f50e17f0e9c4317b47cd49a8de4e" name="adfd9f50e17f0e9c4317b47cd49a8de4e"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>supportsHDRMetadata</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:adfd9f50e17f0e9c4317b47cd49a8de4e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when the bitstream natively carries HDR mastering / CLL metadata. <br /></td></tr>
+<tr class="separator:adfd9f50e17f0e9c4317b47cd49a8de4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a14c455ea37623ccc0eebf6099f0921" id="r_a6a14c455ea37623ccc0eebf6099f0921"><td class="memItemLeft" align="right" valign="top"><a id="a6a14c455ea37623ccc0eebf6099f0921" name="a6a14c455ea37623ccc0eebf6099f0921"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>supportsInterlaced</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a6a14c455ea37623ccc0eebf6099f0921"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when the codec natively signals interlaced scan. <br /></td></tr>
+<tr class="separator:a6a14c455ea37623ccc0eebf6099f0921"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad22a793ed554855334697e9aad3d44f1" id="r_ad22a793ed554855334697e9aad3d44f1"><td class="memItemLeft" align="right" valign="top"><a id="ad22a793ed554855334697e9aad3d44f1" name="ad22a793ed554855334697e9aad3d44f1"></a>
+<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">List</a>&lt; int &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>supportedBitDepths</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ad22a793ed554855334697e9aad3d44f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the bit depths permitted by the codec spec. <br /></td></tr>
+<tr class="separator:ad22a793ed554855334697e9aad3d44f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acfdad633716b56ca0dbbcfb8c2a4e21e" id="r_acfdad633716b56ca0dbbcfb8c2a4e21e"><td class="memItemLeft" align="right" valign="top"><a id="acfdad633716b56ca0dbbcfb8c2a4e21e" name="acfdad633716b56ca0dbbcfb8c2a4e21e"></a>
+<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">List</a>&lt; <a class="el" href="classRateControlMode.html">RateControlMode</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>rateControlModes</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:acfdad633716b56ca0dbbcfb8c2a4e21e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the rate-control modes the codec can be driven in. <br /></td></tr>
+<tr class="separator:acfdad633716b56ca0dbbcfb8c2a4e21e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae81895e0ea2b14373e2be771792feda5" id="r_ae81895e0ea2b14373e2be771792feda5"><td class="memItemLeft" align="right" valign="top"><a id="ae81895e0ea2b14373e2be771792feda5" name="ae81895e0ea2b14373e2be771792feda5"></a>
+<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">List</a>&lt; <a class="el" href="classFrameRate.html">FrameRate</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>supportedFrameRates</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ae81895e0ea2b14373e2be771792feda5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the frame rates the codec spec permits (empty = any). <br /></td></tr>
+<tr class="separator:ae81895e0ea2b14373e2be771792feda5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aea047d8e5130356c053fc9ec5ce552db" id="r_aea047d8e5130356c053fc9ec5ce552db"><td class="memItemLeft" align="right" valign="top"><a id="aea047d8e5130356c053fc9ec5ce552db" name="aea047d8e5130356c053fc9ec5ce552db"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>maxWidth</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aea047d8e5130356c053fc9ec5ce552db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the spec's maximum supported width (0 = unlimited). <br /></td></tr>
+<tr class="separator:aea047d8e5130356c053fc9ec5ce552db"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac7be661d14fa95ba8d9c2b99b79dbe78" id="r_ac7be661d14fa95ba8d9c2b99b79dbe78"><td class="memItemLeft" align="right" valign="top"><a id="ac7be661d14fa95ba8d9c2b99b79dbe78" name="ac7be661d14fa95ba8d9c2b99b79dbe78"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>maxHeight</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ac7be661d14fa95ba8d9c2b99b79dbe78"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the spec's maximum supported height (0 = unlimited). <br /></td></tr>
+<tr class="separator:ac7be661d14fa95ba8d9c2b99b79dbe78"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a907a75ff8c9a058e2768bf19e5c6d3d1" id="r_a907a75ff8c9a058e2768bf19e5c6d3d1"><td class="memItemLeft" align="right" valign="top"><a id="a907a75ff8c9a058e2768bf19e5c6d3d1" name="a907a75ff8c9a058e2768bf19e5c6d3d1"></a>
+<a class="el" href="classVideoCodec_1_1Backend.html">Backend</a>&#160;</td><td class="memItemRight" valign="bottom"><b>backend</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a907a75ff8c9a058e2768bf19e5c6d3d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the pinned backend handle, or an invalid handle when unpinned. <br /></td></tr>
+<tr class="separator:a907a75ff8c9a058e2768bf19e5c6d3d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a14c8d67776034db62d543f0b2b57a610" id="r_a14c8d67776034db62d543f0b2b57a610"><td class="memItemLeft" align="right" valign="top"><a id="a14c8d67776034db62d543f0b2b57a610" name="a14c8d67776034db62d543f0b2b57a610"></a>
+<a class="el" href="classVideoCodec.html#a1fccd459f626e5b6d9eef80e4d616428">BackendList</a>&#160;</td><td class="memItemRight" valign="bottom"><b>availableEncoderBackends</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a14c8d67776034db62d543f0b2b57a610"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns every backend with an encoder implementation registered for this codec. <br /></td></tr>
+<tr class="separator:a14c8d67776034db62d543f0b2b57a610"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a27c9703ffd490df358c853461bf81d88" id="r_a27c9703ffd490df358c853461bf81d88"><td class="memItemLeft" align="right" valign="top"><a id="a27c9703ffd490df358c853461bf81d88" name="a27c9703ffd490df358c853461bf81d88"></a>
+<a class="el" href="classVideoCodec.html#a1fccd459f626e5b6d9eef80e4d616428">BackendList</a>&#160;</td><td class="memItemRight" valign="bottom"><b>availableDecoderBackends</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a27c9703ffd490df358c853461bf81d88"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns every backend with a decoder implementation registered for this codec. <br /></td></tr>
+<tr class="separator:a27c9703ffd490df358c853461bf81d88"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad23ab65be10033eac314bc83c720ea48" id="r_ad23ab65be10033eac314bc83c720ea48"><td class="memItemLeft" align="right" valign="top"><a id="ad23ab65be10033eac314bc83c720ea48" name="ad23ab65be10033eac314bc83c720ea48"></a>
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>canEncode</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:ad23ab65be10033eac314bc83c720ea48"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when this codec has a registered encoder factory. <br /></td></tr>
+<tr class="memdesc:ad23ab65be10033eac314bc83c720ea48"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when at least one encoder backend is registered for this codec. <br /></td></tr>
 <tr class="separator:ad23ab65be10033eac314bc83c720ea48"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8d2e4a95f049e022364873463c8baac2" id="r_a8d2e4a95f049e022364873463c8baac2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classList.html">List</a>&lt; int &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#a8d2e4a95f049e022364873463c8baac2">encoderSupportedInputs</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a8d2e4a95f049e022364873463c8baac2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of uncompressed <a class="el" href="classPixelDesc.html">PixelDesc</a> IDs the encoder accepts.  <br /></td></tr>
-<tr class="separator:a8d2e4a95f049e022364873463c8baac2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5e1441f143e81ceab7b1e0076e1f8bda" id="r_a5e1441f143e81ceab7b1e0076e1f8bda"><td class="memItemLeft" align="right" valign="top"><a id="a5e1441f143e81ceab7b1e0076e1f8bda" name="a5e1441f143e81ceab7b1e0076e1f8bda"></a>
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>canDecode</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a5e1441f143e81ceab7b1e0076e1f8bda"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when this codec has a registered decoder factory. <br /></td></tr>
+<tr class="memdesc:a5e1441f143e81ceab7b1e0076e1f8bda"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when at least one decoder backend is registered for this codec. <br /></td></tr>
 <tr class="separator:a5e1441f143e81ceab7b1e0076e1f8bda"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2277de00627b09dababfa87743ce81d6" id="r_a2277de00627b09dababfa87743ce81d6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classVideoEncoder.html">VideoEncoder</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#a2277de00627b09dababfa87743ce81d6">createEncoder</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a2277de00627b09dababfa87743ce81d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a new <a class="el" href="classVideoEncoder.html">VideoEncoder</a> session for this codec.  <br /></td></tr>
-<tr class="separator:a2277de00627b09dababfa87743ce81d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad9515fca6ee6958ce5078249c3592bf2" id="r_ad9515fca6ee6958ce5078249c3592bf2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classVideoDecoder.html">VideoDecoder</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#ad9515fca6ee6958ce5078249c3592bf2">createDecoder</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:ad9515fca6ee6958ce5078249c3592bf2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a new <a class="el" href="classVideoDecoder.html">VideoDecoder</a> session for this codec.  <br /></td></tr>
-<tr class="separator:ad9515fca6ee6958ce5078249c3592bf2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a23972db97d81f0ee81ee35e1b5d7fd10" id="r_a23972db97d81f0ee81ee35e1b5d7fd10"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">List</a>&lt; <a class="el" href="classPixelFormat.html">PixelFormat</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#a23972db97d81f0ee81ee35e1b5d7fd10">encoderSupportedInputs</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a23972db97d81f0ee81ee35e1b5d7fd10"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the uncompressed <a class="el" href="classPixelFormat.html">PixelFormat</a> values the encoder accepts.  <br /></td></tr>
+<tr class="separator:a23972db97d81f0ee81ee35e1b5d7fd10"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4cfded8270c3f5866573ced3ccd5442f" id="r_a4cfded8270c3f5866573ced3ccd5442f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">List</a>&lt; <a class="el" href="classPixelFormat.html">PixelFormat</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#a4cfded8270c3f5866573ced3ccd5442f">decoderSupportedOutputs</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a4cfded8270c3f5866573ced3ccd5442f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the uncompressed <a class="el" href="classPixelFormat.html">PixelFormat</a> values the decoder can emit.  <br /></td></tr>
+<tr class="separator:a4cfded8270c3f5866573ced3ccd5442f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abf05fe27153e1a251178fa2be6632894" id="r_abf05fe27153e1a251178fa2be6632894"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classVideoEncoder.html">VideoEncoder</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#abf05fe27153e1a251178fa2be6632894">createEncoder</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaConfig.html">MediaConfig</a> *config=<a class="el" href="classList.html">nullptr</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:abf05fe27153e1a251178fa2be6632894"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a new <a class="el" href="classVideoEncoder.html">VideoEncoder</a> session for this codec.  <br /></td></tr>
+<tr class="separator:abf05fe27153e1a251178fa2be6632894"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a357995988d59375f894365924f5043f4" id="r_a357995988d59375f894365924f5043f4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classVideoDecoder.html">VideoDecoder</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#a357995988d59375f894365924f5043f4">createDecoder</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaConfig.html">MediaConfig</a> *config=<a class="el" href="classList.html">nullptr</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a357995988d59375f894365924f5043f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a new <a class="el" href="classVideoDecoder.html">VideoDecoder</a> session for this codec.  <br /></td></tr>
+<tr class="separator:a357995988d59375f894365924f5043f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a440a169ae5ad6cb128d65224405abdd4" id="r_a440a169ae5ad6cb128d65224405abdd4"><td class="memItemLeft" align="right" valign="top"><a id="a440a169ae5ad6cb128d65224405abdd4" name="a440a169ae5ad6cb128d65224405abdd4"></a>
+<a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><b>toString</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a440a169ae5ad6cb128d65224405abdd4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the canonical string form: <code>"Name"</code> or <code>"Name:Backend"</code>. <br /></td></tr>
+<tr class="separator:a440a169ae5ad6cb128d65224405abdd4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae5ec2be9928da8f33e9c5a4bfda9c015" id="r_ae5ec2be9928da8f33e9c5a4bfda9c015"><td class="memItemLeft" align="right" valign="top"><a id="ae5ec2be9928da8f33e9c5a4bfda9c015" name="ae5ec2be9928da8f33e9c5a4bfda9c015"></a>
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator==</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classVideoCodec.html">VideoCodec</a> &amp;<a class="el" href="classList.html">o</a>) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:ae5ec2be9928da8f33e9c5a4bfda9c015"><td class="mdescLeft">&#160;</td><td class="mdescRight">Equality compares the underlying <a class="el" href="structVideoCodec_1_1Data.html" title="Immutable descriptor for a video codec.">Data</a> pointer. <br /></td></tr>
+<tr class="memdesc:ae5ec2be9928da8f33e9c5a4bfda9c015"><td class="mdescLeft">&#160;</td><td class="mdescRight">Equality compares (underlying <a class="el" href="structVideoCodec_1_1Data.html" title="Immutable descriptor for a video codec.">Data</a>, pinned backend). <br /></td></tr>
 <tr class="separator:ae5ec2be9928da8f33e9c5a4bfda9c015"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5432d11dbef4867725eab449ea3736b0" id="r_a5432d11dbef4867725eab449ea3736b0"><td class="memItemLeft" align="right" valign="top"><a id="a5432d11dbef4867725eab449ea3736b0" name="a5432d11dbef4867725eab449ea3736b0"></a>
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator!=</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classVideoCodec.html">VideoCodec</a> &amp;<a class="el" href="classList.html">o</a>) <a class="el" href="classList.html">const</a></td></tr>
@@ -221,52 +308,93 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memdesc:ac65dfa614612f894845a63b9f8f2cfdc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocates and returns a unique ID for a user-defined codec.  <br /></td></tr>
 <tr class="separator:ac65dfa614612f894845a63b9f8f2cfdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0fd5f4f981aa720fda1bae1e1c696794" id="r_a0fd5f4f981aa720fda1bae1e1c696794"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#a0fd5f4f981aa720fda1bae1e1c696794">registerData</a> (<a class="el" href="structVideoCodec_1_1Data.html">Data</a> &amp;&amp;<a class="el" href="classVideoCodec.html#a7a7e8243e92c5f3781e1a2231427e243">data</a>)</td></tr>
-<tr class="memdesc:a0fd5f4f981aa720fda1bae1e1c696794"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers a <a class="el" href="structVideoCodec_1_1Data.html" title="Immutable descriptor for a video codec.">Data</a> record in the registry.  <br /></td></tr>
+<tr class="memdesc:a0fd5f4f981aa720fda1bae1e1c696794"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers a <a class="el" href="structVideoCodec_1_1Data.html" title="Immutable descriptor for a video codec.">Data</a> record in the codec-family registry.  <br /></td></tr>
 <tr class="separator:a0fd5f4f981aa720fda1bae1e1c696794"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af4357a36493df9baa4fbbf61521af7aa" id="r_af4357a36493df9baa4fbbf61521af7aa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVideoCodec.html#a4592805075cb09835e61af5106205b71">IDList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#af4357a36493df9baa4fbbf61521af7aa">registeredIDs</a> ()</td></tr>
 <tr class="memdesc:af4357a36493df9baa4fbbf61521af7aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of every registered codec's ID.  <br /></td></tr>
 <tr class="separator:af4357a36493df9baa4fbbf61521af7aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa1f92d9b38d8df12dd699d8463f2f56a" id="r_aa1f92d9b38d8df12dd699d8463f2f56a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVideoCodec.html">VideoCodec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#aa1f92d9b38d8df12dd699d8463f2f56a">lookup</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classVideoCodec.html#a597f740cf04497f4bc1df65508a11d79">name</a>)</td></tr>
-<tr class="memdesc:aa1f92d9b38d8df12dd699d8463f2f56a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Looks up a codec by its registered name.  <br /></td></tr>
-<tr class="separator:aa1f92d9b38d8df12dd699d8463f2f56a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a22154f4816e2e7d96bd75f6d2963f7b8" id="r_a22154f4816e2e7d96bd75f6d2963f7b8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVideoCodec.html">VideoCodec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#a22154f4816e2e7d96bd75f6d2963f7b8">fromPixelDesc</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;<a class="el" href="classList.html">pd</a>)</td></tr>
-<tr class="memdesc:a22154f4816e2e7d96bd75f6d2963f7b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finds the codec whose <a class="el" href="classVideoCodec.html#ade010cc2b86711df7f74aa216342991a">compressedPixelDescs</a> list contains <code>pd</code>.  <br /></td></tr>
-<tr class="separator:a22154f4816e2e7d96bd75f6d2963f7b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4c0cdfe34389d731d62b9190949a0c08" id="r_a4c0cdfe34389d731d62b9190949a0c08"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classVideoCodec.html">VideoCodec</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#a4c0cdfe34389d731d62b9190949a0c08">lookup</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classVideoCodec.html#a597f740cf04497f4bc1df65508a11d79">name</a>)</td></tr>
+<tr class="memdesc:a4c0cdfe34389d731d62b9190949a0c08"><td class="mdescLeft">&#160;</td><td class="mdescRight">Looks up a codec by its registered name.  <br /></td></tr>
+<tr class="separator:a4c0cdfe34389d731d62b9190949a0c08"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abc5c859bb8ee4c2dc9c33d45e3fdf526" id="r_abc5c859bb8ee4c2dc9c33d45e3fdf526"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVideoCodec.html">VideoCodec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#abc5c859bb8ee4c2dc9c33d45e3fdf526">fromPixelFormat</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classPixelFormat.html">PixelFormat</a> &amp;<a class="el" href="classList.html">pd</a>)</td></tr>
+<tr class="memdesc:abc5c859bb8ee4c2dc9c33d45e3fdf526"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finds the codec whose <a class="el" href="classVideoCodec.html#a4cc563e65ece0d30e679767b1b6025ee">compressedPixelFormats</a> list contains <code>pd</code>.  <br /></td></tr>
+<tr class="separator:abc5c859bb8ee4c2dc9c33d45e3fdf526"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a31121faf6e5cb7f066bef6e98916756e" id="r_a31121faf6e5cb7f066bef6e98916756e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classVideoCodec.html">VideoCodec</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#a31121faf6e5cb7f066bef6e98916756e">fromString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;spec)</td></tr>
+<tr class="memdesc:a31121faf6e5cb7f066bef6e98916756e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a string of the form <code>"Codec"</code> or <code>"Codec:Backend"</code>.  <br /></td></tr>
+<tr class="separator:a31121faf6e5cb7f066bef6e98916756e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a28d13fdb0f61e851c9a0f5f83855a720" id="r_a28d13fdb0f61e851c9a0f5f83855a720"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classVideoCodec_1_1Backend.html">Backend</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#a28d13fdb0f61e851c9a0f5f83855a720">registerBackend</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classVideoCodec.html#a597f740cf04497f4bc1df65508a11d79">name</a>)</td></tr>
+<tr class="memdesc:a28d13fdb0f61e851c9a0f5f83855a720"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers a backend name and returns its typed handle.  <br /></td></tr>
+<tr class="separator:a28d13fdb0f61e851c9a0f5f83855a720"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a557c7e0f9af2557bf7dacb55659b746f" id="r_a557c7e0f9af2557bf7dacb55659b746f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classVideoCodec_1_1Backend.html">Backend</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#a557c7e0f9af2557bf7dacb55659b746f">lookupBackend</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classVideoCodec.html#a597f740cf04497f4bc1df65508a11d79">name</a>)</td></tr>
+<tr class="memdesc:a557c7e0f9af2557bf7dacb55659b746f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Looks up an already-registered backend by name.  <br /></td></tr>
+<tr class="separator:a557c7e0f9af2557bf7dacb55659b746f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aacd92f20640b410723a231315369cf47" id="r_aacd92f20640b410723a231315369cf47"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVideoCodec.html#a1fccd459f626e5b6d9eef80e4d616428">BackendList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html#aacd92f20640b410723a231315369cf47">registeredBackends</a> ()</td></tr>
+<tr class="memdesc:aacd92f20640b410723a231315369cf47"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns every backend that has a registered encoder or decoder implementation.  <br /></td></tr>
+<tr class="separator:aacd92f20640b410723a231315369cf47"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>First-class identifier for a video / still-image codec family. </p>
+<div class="textblock"><p>First-class identifier for a video codec family. </p>
 <p>Uses the <a class="el" href="typeregistry.html">TypeRegistry pattern</a>: a lightweight inline wrapper around an immutable <a class="el" href="structVideoCodec_1_1Data.html">Data</a> record, identified by an integer ID. Well-known codecs are provided as named enum constants; applications and third-party backends can register additional codecs at runtime via <a class="el" href="classVideoCodec.html#ac65dfa614612f894845a63b9f8f2cfdc">registerType</a> and <a class="el" href="classVideoCodec.html#a0fd5f4f981aa720fda1bae1e1c696794">registerData</a>.</p>
-<p>A <a class="el" href="classVideoCodec.html">VideoCodec</a> entry is the central place where everything the library needs to know about a codec lives:</p>
+<dl class="section user"><dt>Multi-backend support</dt><dd></dd></dl>
+<p>Every codec family can have any number of concrete backends (NVIDIA NVENC/NVDEC, libjpeg-turbo, SVT-JPEG-XS, vendored native implementations, application-supplied overrides, …). Backends are identified by a typed <a class="el" href="classVideoCodec_1_1Backend.html">Backend</a> handle rather than naked strings, registered in a process-wide <a class="el" href="group__proav.html#ga3b56f86d9f1d2a1dc4e46368b79d4ac0">VideoCodecBackendRegistry</a> via <a class="el" href="classVideoCodec.html#a28d13fdb0f61e851c9a0f5f83855a720">registerBackend</a> / <a class="el" href="classVideoCodec.html#a557c7e0f9af2557bf7dacb55659b746f">lookupBackend</a>, and attached to specific (codec, backend) pairs by the concrete <a class="el" href="classVideoEncoder.html">VideoEncoder</a> / <a class="el" href="classVideoDecoder.html">VideoDecoder</a> factory registration.</p>
+<p>The wrapper can optionally carry a pinned <code><a class="el" href="classVideoCodec_1_1Backend.html" title="Typed handle for a concrete codec backend.">Backend</a>:</code> </p>
 <ul>
-<li>Human-readable name + description (what the CLI, logs, and stats reports display).</li>
-<li><a class="el" href="classFourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a> list (identifiers for sample-entry / ISO-BMFF boxes, RTP payloads, etc.).</li>
-<li>Compressed <a class="el" href="classPixelDesc.html">PixelDesc</a> IDs the codec produces / consumes (so introspection can answer "what PixelDescs does the h264
-   codec cover?" without hard-coding the list at each callsite).</li>
-<li>Factory pointers that create new <a class="el" href="classVideoEncoder.html">VideoEncoder</a> / <a class="el" href="classVideoDecoder.html">VideoDecoder</a> session objects — either can be null for decode- or encode-only codecs.</li>
+<li><code><a class="el" href="classVideoCodec.html" title="First-class identifier for a video codec family.">VideoCodec(VideoCodec::H264)</a></code> — unpinned; <a class="el" href="classVideoCodec.html#abf05fe27153e1a251178fa2be6632894">createEncoder</a> picks the highest-weight available backend (further overridden by <code>MediaConfig::CodecBackend</code> when that key is present).</li>
+<li><code><a class="el" href="classVideoCodec.html" title="First-class identifier for a video codec family.">VideoCodec(VideoCodec::H264, nvidiaBackend)</a></code> — pinned specifically to the NVIDIA backend; <a class="el" href="classVideoCodec.html#abf05fe27153e1a251178fa2be6632894">createEncoder</a> fails with <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a0efebc1e22f971143b7b60506091f9d6" title="Requested ID was not found in the database.">Error::IdNotFound</a></code> if the NVIDIA backend is not registered for <code>H264</code>.</li>
 </ul>
-<p>The factory fields are the replacement for the string-keyed <code><a class="el" href="classVideoEncoder.html#aaf3309fc45bd95ad44c57c6116b9fd0e" title="Registers a video encoder factory.">VideoEncoder::registerEncoder</a></code> / <code><a class="el" href="classVideoDecoder.html#a9a0c680011fc31343e26b0427302a3c9" title="Registers a video decoder factory.">VideoDecoder::registerDecoder</a></code> registries. Instead of looking up a codec by string, callers construct a <a class="el" href="classVideoCodec.html">VideoCodec</a> (either from a well-known ID or wrapping a user-registered ID) and call <a class="el" href="classVideoCodec.html#a2277de00627b09dababfa87743ce81d6">createEncoder</a> / <a class="el" href="classVideoCodec.html#ad9515fca6ee6958ce5078249c3592bf2">createDecoder</a> on it.</p>
-<p>Temporal codecs (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a>, HEVC, AV1, VP9, ProRes) and I-frame codecs (JPEG, JPEG XS) share the same interface: every codec produces a stateful session via its encoder / decoder factory, even when that session's state is just a reusable allocation context for the next frame. Unifying them through <a class="el" href="classVideoEncoder.html">VideoEncoder</a> / <a class="el" href="classVideoDecoder.html">VideoDecoder</a> (instead of the old <code><a class="el" href="classImageCodec.html" title="Abstract base class for image codecs.">ImageCodec</a></code> stateless contract) lets I-frame codecs amortise libjpeg-turbo / SVT-JPEG-XS allocation across frames and keeps exactly one compression entry point in the pipeline.</p>
+<dl class="section user"><dt>String form</dt><dd></dd></dl>
+<p>Serialized codec values travel as <code>"&lt;CodecName&gt;"</code> or <code>"&lt;CodecName&gt;:&lt;BackendName&gt;"</code> — e.g. <code>"H264"</code> for unpinned, or <code>"H264:Nvidia"</code> to pin the NVIDIA backend. <a class="el" href="classVideoCodec.html#a31121faf6e5cb7f066bef6e98916756e">fromString</a> parses both forms into a fully resolved wrapper and returns <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a0efebc1e22f971143b7b60506091f9d6" title="Requested ID was not found in the database.">Error::IdNotFound</a></code> when the codec or backend is unknown. <a class="el" href="classVideoCodec.html#a440a169ae5ad6cb128d65224405abdd4">toString</a> emits the canonical form.</p>
+<dl class="section user"><dt>Capability introspection</dt><dd></dd></dl>
+<p><a class="el" href="structVideoCodec_1_1Data.html">Data</a> exposes rich codec-family metadata — inter- vs intra-frame coding, lossless capability, bit-depth support, HDR metadata support, rate-control modes, and more — to let pipeline planners reason about codec suitability before instantiating any session. Per-backend capabilities (specific input PixelFormats, bitrate ceilings, …) live on the backend record and are queried via <a class="el" href="classVideoCodec.html#a23972db97d81f0ee81ee35e1b5d7fd10">encoderSupportedInputs</a> / <a class="el" href="classVideoCodec.html#a4cfded8270c3f5866573ced3ccd5442f">decoderSupportedOutputs</a>.</p>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><span class="comment">// Look up by ID and create a session:</span></div>
 <div class="line"><a class="code hl_class" href="classVideoCodec.html">VideoCodec</a> codec(<a class="code hl_enumvalue" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca48919d6ed222bf6aed61e664ac1e3350">VideoCodec::H264</a>);</div>
-<div class="line"><a class="code hl_class" href="classVideoEncoder.html">VideoEncoder</a> *<a class="code hl_class" href="classList.html">enc</a> = codec.createEncoder();</div>
+<div class="line"><span class="keyword">auto</span> result = codec.createEncoder();</div>
+<div class="line"><span class="keywordflow">if</span>(<a class="code hl_function" href="result_8h.html#ab362f59a9636e1f1649a8554d4d2c808">isOk</a>(result)) { <a class="code hl_class" href="classVideoEncoder.html">VideoEncoder</a> *<a class="code hl_class" href="classList.html">enc</a> = <a class="code hl_function" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>(result); <a class="code hl_class" href="classList.html">…</a> }</div>
 <div class="line"> </div>
-<div class="line"><span class="comment">// Look up by string name (CLI flow):</span></div>
-<div class="line"><a class="code hl_class" href="classVideoCodec.html">VideoCodec</a> <a class="code hl_class" href="classList.html">fromCli</a> = <a class="code hl_function" href="classVideoCodec.html#aa1f92d9b38d8df12dd699d8463f2f56a">VideoCodec::lookup</a>(<span class="stringliteral">&quot;H264&quot;</span>);</div>
-<div class="line"><a class="code hl_class" href="classList.html">assert</a>(<a class="code hl_class" href="classList.html">fromCli</a> == codec);</div>
+<div class="line"><span class="comment">// Look up by string name, with optional backend pin:</span></div>
+<div class="line"><span class="keyword">auto</span> <a class="code hl_class" href="classList.html">parsed</a> = <a class="code hl_function" href="classVideoCodec.html#a31121faf6e5cb7f066bef6e98916756e">VideoCodec::fromString</a>(<span class="stringliteral">&quot;H264:Nvidia&quot;</span>);</div>
+<div class="line"><span class="keywordflow">if</span>(<a class="code hl_function" href="result_8h.html#ab362f59a9636e1f1649a8554d4d2c808">isOk</a>(<a class="code hl_class" href="classList.html">parsed</a>)) { <a class="code hl_class" href="classVideoCodec.html">VideoCodec</a> <a class="code hl_class" href="classList.html">pinned</a> = <a class="code hl_function" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>(<a class="code hl_class" href="classList.html">parsed</a>); <a class="code hl_class" href="classList.html">…</a> }</div>
 <div class="line"> </div>
-<div class="line"><span class="comment">// Enumerate every registered codec (--cc VideoCodec:list):</span></div>
+<div class="line"><span class="comment">// Enumerate every registered codec:</span></div>
 <div class="line"><span class="keywordflow">for</span>(<span class="keyword">auto</span> <span class="keywordtype">id</span> : <a class="code hl_class" href="classVideoCodec.html">VideoCodec</a>::<a class="code hl_function" href="classVideoCodec.html#af4357a36493df9baa4fbbf61521af7aa">registeredIDs</a>()) {</div>
 <div class="line">        <a class="code hl_class" href="classVideoCodec.html">VideoCodec</a> <a class="code hl_class" href="classList.html">vc</a>(<span class="keywordtype">id</span>);</div>
 <div class="line">        <a class="code hl_class" href="classList.html">printf</a>(<span class="stringliteral">&quot;%s — %s\n&quot;</span>, <a class="code hl_class" href="classList.html">vc</a>.name().cstr(), <a class="code hl_class" href="classList.html">vc</a>.description().cstr());</div>
 <div class="line">}</div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassVideoCodec_html"><div class="ttname"><a href="classVideoCodec.html">VideoCodec</a></div><div class="ttdoc">First-class identifier for a video / still-image codec family.</div><div class="ttdef"><b>Definition</b> videocodec.h:81</div></div>
-<div class="ttc" id="aclassVideoCodec_html_aa1f92d9b38d8df12dd699d8463f2f56a"><div class="ttname"><a href="classVideoCodec.html#aa1f92d9b38d8df12dd699d8463f2f56a">VideoCodec::lookup</a></div><div class="ttdeci">static VideoCodec lookup(const String &amp;name)</div><div class="ttdoc">Looks up a codec by its registered name.</div></div>
+<div class="ttc" id="aclassVideoCodec_html"><div class="ttname"><a href="classVideoCodec.html">VideoCodec</a></div><div class="ttdoc">First-class identifier for a video codec family.</div><div class="ttdef"><b>Definition</b> videocodec.h:108</div></div>
+<div class="ttc" id="aclassVideoCodec_html_a31121faf6e5cb7f066bef6e98916756e"><div class="ttname"><a href="classVideoCodec.html#a31121faf6e5cb7f066bef6e98916756e">VideoCodec::fromString</a></div><div class="ttdeci">static Result&lt; VideoCodec &gt; fromString(const String &amp;spec)</div><div class="ttdoc">Parses a string of the form &quot;Codec&quot; or &quot;Codec:Backend&quot;.</div></div>
 <div class="ttc" id="aclassVideoCodec_html_af4357a36493df9baa4fbbf61521af7aa"><div class="ttname"><a href="classVideoCodec.html#af4357a36493df9baa4fbbf61521af7aa">VideoCodec::registeredIDs</a></div><div class="ttdeci">static IDList registeredIDs()</div><div class="ttdoc">Returns the list of every registered codec's ID.</div></div>
-<div class="ttc" id="aclassVideoCodec_html_af5d21a83ef1d943e8ad2d3e9b041b5dca48919d6ed222bf6aed61e664ac1e3350"><div class="ttname"><a href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca48919d6ed222bf6aed61e664ac1e3350">VideoCodec::H264</a></div><div class="ttdeci">@ H264</div><div class="ttdoc">H.264 / MPEG-4 AVC.</div><div class="ttdef"><b>Definition</b> videocodec.h:92</div></div>
-<div class="ttc" id="aclassVideoEncoder_html"><div class="ttname"><a href="classVideoEncoder.html">VideoEncoder</a></div><div class="ttdoc">Abstract base class for stateful video encoders.</div><div class="ttdef"><b>Definition</b> codec.h:204</div></div>
+<div class="ttc" id="aclassVideoCodec_html_af5d21a83ef1d943e8ad2d3e9b041b5dca48919d6ed222bf6aed61e664ac1e3350"><div class="ttname"><a href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca48919d6ed222bf6aed61e664ac1e3350">VideoCodec::H264</a></div><div class="ttdeci">@ H264</div><div class="ttdoc">H.264 / MPEG-4 AVC.</div><div class="ttdef"><b>Definition</b> videocodec.h:119</div></div>
+<div class="ttc" id="aclassVideoEncoder_html"><div class="ttname"><a href="classVideoEncoder.html">VideoEncoder</a></div><div class="ttdoc">Abstract base class for stateful video encoders.</div><div class="ttdef"><b>Definition</b> videoencoder.h:95</div></div>
+<div class="ttc" id="aresult_8h_html_a3cb138b5e2739be6ec1340a22bbac91f"><div class="ttname"><a href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a></div><div class="ttdeci">const T &amp; value(const Result&lt; T &gt; &amp;r)</div><div class="ttdoc">Returns the value from a Result.</div><div class="ttdef"><b>Definition</b> result.h:56</div></div>
+<div class="ttc" id="aresult_8h_html_ab362f59a9636e1f1649a8554d4d2c808"><div class="ttname"><a href="result_8h.html#ab362f59a9636e1f1649a8554d4d2c808">isOk</a></div><div class="ttdeci">bool isOk(const Result&lt; T &gt; &amp;r)</div><div class="ttdoc">Returns true if the Result is successful (Error::Ok).</div><div class="ttdef"><b>Definition</b> result.h:74</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
+<a id="ae7b43fab2a9f161059e260f40df1979f" name="ae7b43fab2a9f161059e260f40df1979f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae7b43fab2a9f161059e260f40df1979f">&#9670;&#160;</a></span>CodingType</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">enum</a> <a class="el" href="classVideoCodec.html#ae7b43fab2a9f161059e260f40df1979f">VideoCodec::CodingType</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Describes a codec's inter-frame coding behaviour. </p>
+<p>Drives planner decisions about random access, seek latency, error-recovery strategy, and whether a pipe may safely drop packets mid-stream. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ae7b43fab2a9f161059e260f40df1979faa6e36bc79fc422894ab7bf1c573f3707" name="ae7b43fab2a9f161059e260f40df1979faa6e36bc79fc422894ab7bf1c573f3707"></a>CodingInvalid&#160;</td><td class="fielddoc"><p>Unknown / not classified. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae7b43fab2a9f161059e260f40df1979fa8b7dd8c6b278fa30d8a3c31bd55bb242" name="ae7b43fab2a9f161059e260f40df1979fa8b7dd8c6b278fa30d8a3c31bd55bb242"></a>CodingIntraOnly&#160;</td><td class="fielddoc"><p>Every frame is independently decodable (JPEG, JPEG XS, ProRes, Motion JPEG). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae7b43fab2a9f161059e260f40df1979fa04ba43a934fdc8c3dd7e969147329265" name="ae7b43fab2a9f161059e260f40df1979fa04ba43a934fdc8c3dd7e969147329265"></a>CodingTemporal&#160;</td><td class="fielddoc"><p>Frames may reference other frames (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a>, HEVC, AV1, VP9). </p>
+</td></tr>
+</table>
+
+</div>
+</div>
 <a id="af5d21a83ef1d943e8ad2d3e9b041b5dc" name="af5d21a83ef1d943e8ad2d3e9b041b5dc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af5d21a83ef1d943e8ad2d3e9b041b5dc">&#9670;&#160;</a></span>ID</h2>
 
@@ -314,9 +442,34 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="ad71bbc3d1ef9ec60df583e75b2b584c5" name="ad71bbc3d1ef9ec60df583e75b2b584c5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad71bbc3d1ef9ec60df583e75b2b584c5">&#9670;&#160;</a></span>RandomAccessGranularity</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">enum</a> <a class="el" href="classVideoCodec.html#ad71bbc3d1ef9ec60df583e75b2b584c5">VideoCodec::RandomAccessGranularity</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Granularity at which a stream can be randomly accessed. </p>
+<p>Intra-only codecs are random-access on every frame. Temporal codecs support random access only at GOP boundaries (IDR / keyframe). </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ad71bbc3d1ef9ec60df583e75b2b584c5ab0be935cdaf29d04cf9c01af3b32ebe1" name="ad71bbc3d1ef9ec60df583e75b2b584c5ab0be935cdaf29d04cf9c01af3b32ebe1"></a>AccessInvalid&#160;</td><td class="fielddoc"><p>Unknown / not classified. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ad71bbc3d1ef9ec60df583e75b2b584c5aeda92a98fde43eff4dde84c0b5c26153" name="ad71bbc3d1ef9ec60df583e75b2b584c5aeda92a98fde43eff4dde84c0b5c26153"></a>AccessFrame&#160;</td><td class="fielddoc"><p>Every coded frame is a random-access point. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ad71bbc3d1ef9ec60df583e75b2b584c5ab6b76508965a5b6d9f9964799f12c004" name="ad71bbc3d1ef9ec60df583e75b2b584c5ab6b76508965a5b6d9f9964799f12c004"></a>AccessGOP&#160;</td><td class="fielddoc"><p><a class="el" href="classRandom.html" title="Pseudo-random number generator wrapping std::mt19937_64.">Random</a> access at GOP / keyframe boundaries only. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a4786b245d957788dec65332337a40f7c" name="a4786b245d957788dec65332337a40f7c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4786b245d957788dec65332337a40f7c">&#9670;&#160;</a></span>VideoCodec()</h2>
+<a id="a2e012bdd83a91cf464b01020dc1b60ef" name="a2e012bdd83a91cf464b01020dc1b60ef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2e012bdd83a91cf464b01020dc1b60ef">&#9670;&#160;</a></span>VideoCodec()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -328,8 +481,18 @@ Static Public Member Functions</h2></td></tr>
           <td class="memname">VideoCodec::VideoCodec </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dc">ID</a>&#160;</td>
-          <td class="paramname"><em>id</em> = <code><a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca87e5acce5d36534159db13a2c635e101">Invalid</a></code></td><td>)</td>
+          <td class="paramname"><em>id</em> = <code><a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca87e5acce5d36534159db13a2c635e101">Invalid</a></code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype"><a class="el" href="classVideoCodec_1_1Backend.html">Backend</a>&#160;</td>
+          <td class="paramname"><em>backend</em> = <code><a class="el" href="classVideoCodec_1_1Backend.html">Backend</a>()</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -339,10 +502,11 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Constructs a <a class="el" href="classVideoCodec.html" title="First-class identifier for a video / still-image codec family.">VideoCodec</a> from an ID. </p>
+<p>Constructs a <a class="el" href="classVideoCodec.html" title="First-class identifier for a video codec family.">VideoCodec</a> from an ID and optional pinned backend. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">id</td><td>The codec ID (default: <a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca87e5acce5d36534159db13a2c635e101">Invalid</a>). </td></tr>
+    <tr><td class="paramname">backend</td><td>Optional pinned backend handle; default is an invalid handle ("unpinned"). </td></tr>
   </table>
   </dd>
 </dl>
@@ -350,120 +514,108 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="ade010cc2b86711df7f74aa216342991a" name="ade010cc2b86711df7f74aa216342991a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ade010cc2b86711df7f74aa216342991a">&#9670;&#160;</a></span>compressedPixelDescs()</h2>
+<a id="a357995988d59375f894365924f5043f4" name="a357995988d59375f894365924f5043f4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a357995988d59375f894365924f5043f4">&#9670;&#160;</a></span>createDecoder()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classList.html">List</a>&lt; int &gt; &amp; VideoCodec::compressedPixelDescs </td>
+          <td class="memname"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classVideoDecoder.html">VideoDecoder</a> * &gt; VideoCodec::createDecoder </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classMediaConfig.html">MediaConfig</a> *&#160;</td>
+          <td class="paramname"><em>config</em> = <code><a class="el" href="classList.html">nullptr</a></code></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns the list of compressed <a class="el" href="classPixelDesc.html">PixelDesc</a> IDs this codec covers. </p>
-<p>For <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a> / HEVC this is a single entry matching the same-named <a class="el" href="classPixelDesc.html">PixelDesc</a>. For codecs that represent multiple compressed variants (the ProRes family, JPEG XS <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a> / <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.2020</a>, …) every covered <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a> appears in the list. </p>
-
-</div>
-</div>
-<a id="ad9515fca6ee6958ce5078249c3592bf2" name="ad9515fca6ee6958ce5078249c3592bf2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad9515fca6ee6958ce5078249c3592bf2">&#9670;&#160;</a></span>createDecoder()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classVideoDecoder.html">VideoDecoder</a> * VideoCodec::createDecoder </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Creates a new <a class="el" href="classVideoDecoder.html">VideoDecoder</a> session for this codec. </p>
-<dl class="section return"><dt>Returns</dt><dd>A freshly-allocated decoder (caller owns), or nullptr when decode is not supported by this codec. </dd></dl>
+<p>Mirrors <a class="el" href="classVideoCodec.html#abf05fe27153e1a251178fa2be6632894">createEncoder</a>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">config</td><td>Optional caller-supplied configuration. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The session, owned by the caller, or an error Result. </dd></dl>
 
 </div>
 </div>
-<a id="a2277de00627b09dababfa87743ce81d6" name="a2277de00627b09dababfa87743ce81d6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2277de00627b09dababfa87743ce81d6">&#9670;&#160;</a></span>createEncoder()</h2>
+<a id="abf05fe27153e1a251178fa2be6632894" name="abf05fe27153e1a251178fa2be6632894"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abf05fe27153e1a251178fa2be6632894">&#9670;&#160;</a></span>createEncoder()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classVideoEncoder.html">VideoEncoder</a> * VideoCodec::createEncoder </td>
+          <td class="memname"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classVideoEncoder.html">VideoEncoder</a> * &gt; VideoCodec::createEncoder </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classMediaConfig.html">MediaConfig</a> *&#160;</td>
+          <td class="paramname"><em>config</em> = <code><a class="el" href="classList.html">nullptr</a></code></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Creates a new <a class="el" href="classVideoEncoder.html">VideoEncoder</a> session for this codec. </p>
-<dl class="section return"><dt>Returns</dt><dd>A freshly-allocated encoder (caller owns), or nullptr when encode is not supported by this codec. </dd></dl>
+<p><a class="el" href="classVideoCodec_1_1Backend.html" title="Typed handle for a concrete codec backend.">Backend</a> resolution order:</p><ol type="1">
+<li>The wrapper's pinned backend (<a class="el" href="classVideoCodec.html#a907a75ff8c9a058e2768bf19e5c6d3d1">backend</a>), when valid.</li>
+<li><code>MediaConfig::CodecBackend</code> on <code>config</code>, when set and parses as a registered backend.</li>
+<li>The highest-weight registered encoder backend for this codec.</li>
+</ol>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">config</td><td>Optional caller-supplied configuration. Read-only here — the returned encoder has had <a class="el" href="classVideoEncoder.html#a783883c096c4fe7ff5a3742f8bb270d9">VideoEncoder::configure</a> called on it automatically when <code>config</code> is non-null. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The session on success. <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> values: <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85" title="Invalid value or argument (EINVAL).">Error::Invalid</a></code> when the codec is invalid, <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a0efebc1e22f971143b7b60506091f9d6" title="Requested ID was not found in the database.">Error::IdNotFound</a></code> when no backend can satisfy the pinned selection. The encoder is owned by the caller. </dd></dl>
 
 </div>
 </div>
-<a id="a8d2e4a95f049e022364873463c8baac2" name="a8d2e4a95f049e022364873463c8baac2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8d2e4a95f049e022364873463c8baac2">&#9670;&#160;</a></span>encoderSupportedInputs()</h2>
+<a id="a4cfded8270c3f5866573ced3ccd5442f" name="a4cfded8270c3f5866573ced3ccd5442f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4cfded8270c3f5866573ced3ccd5442f">&#9670;&#160;</a></span>decoderSupportedOutputs()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classList.html">List</a>&lt; int &gt; &amp; VideoCodec::encoderSupportedInputs </td>
+          <td class="memname"><a class="el" href="classList.html">List</a>&lt; <a class="el" href="classPixelFormat.html">PixelFormat</a> &gt; VideoCodec::decoderSupportedOutputs </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
-<p>Returns the list of uncompressed <a class="el" href="classPixelDesc.html">PixelDesc</a> IDs the encoder accepts. </p>
-<p>Mirrors <a class="el" href="classVideoEncoder.html#a2bd3da8445225cb50ed7665dec93b425">VideoEncoder::supportedInputs</a> without requiring an encoder instance — safe to call from the planner during plan() without side effects. Empty when the backend accepts any uncompressed input (matches the <a class="el" href="classVideoEncoder.html#a2bd3da8445225cb50ed7665dec93b425">VideoEncoder::supportedInputs</a> contract) or when encode is not supported. </p>
+<p>Returns the uncompressed <a class="el" href="classPixelFormat.html">PixelFormat</a> values the decoder can emit. </p>
+<p>Same semantics as <a class="el" href="classVideoCodec.html#a23972db97d81f0ee81ee35e1b5d7fd10">encoderSupportedInputs</a> — pinned backend wins when set, otherwise union across registered decoder backends. </p>
 
 </div>
 </div>
-<a id="a22154f4816e2e7d96bd75f6d2963f7b8" name="a22154f4816e2e7d96bd75f6d2963f7b8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a22154f4816e2e7d96bd75f6d2963f7b8">&#9670;&#160;</a></span>fromPixelDesc()</h2>
+<a id="a23972db97d81f0ee81ee35e1b5d7fd10" name="a23972db97d81f0ee81ee35e1b5d7fd10"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a23972db97d81f0ee81ee35e1b5d7fd10">&#9670;&#160;</a></span>encoderSupportedInputs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">List</a>&lt; <a class="el" href="classPixelFormat.html">PixelFormat</a> &gt; VideoCodec::encoderSupportedInputs </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the uncompressed <a class="el" href="classPixelFormat.html">PixelFormat</a> values the encoder accepts. </p>
+<p>When this wrapper pins a specific backend, returns the pinned backend's list. Otherwise returns the union across every registered encoder backend. Empty means "the relevant backend accepts any uncompressed input". </p>
+
+</div>
+</div>
+<a id="abc5c859bb8ee4c2dc9c33d45e3fdf526" name="abc5c859bb8ee4c2dc9c33d45e3fdf526"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abc5c859bb8ee4c2dc9c33d45e3fdf526">&#9670;&#160;</a></span>fromPixelFormat()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -472,9 +624,9 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classVideoCodec.html">VideoCodec</a> VideoCodec::fromPixelDesc </td>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classVideoCodec.html">VideoCodec</a> VideoCodec::fromPixelFormat </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classPixelFormat.html">PixelFormat</a> &amp;&#160;</td>
           <td class="paramname"><em>pd</em></td><td>)</td>
           <td></td>
         </tr>
@@ -486,10 +638,10 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Finds the codec whose <a class="el" href="classVideoCodec.html#ade010cc2b86711df7f74aa216342991a">compressedPixelDescs</a> list contains <code>pd</code>. </p>
+<p>Finds the codec whose <a class="el" href="classVideoCodec.html#a4cc563e65ece0d30e679767b1b6025ee">compressedPixelFormats</a> list contains <code>pd</code>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">pd</td><td>A compressed <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a> (e.g. <code><a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa5ee8334d39e47fc8d9c55bbf2e4a1216" title="H.264 / AVC compressed video (avc1/avc3).">PixelDesc::H264</a></code>). </td></tr>
+    <tr><td class="paramname">pd</td><td>A compressed <a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a> (e.g. <code><a class="el" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda5dc43323749c2d0cbfabdd52c436e7e5" title="H.264 / AVC compressed video (avc1/avc3).">PixelFormat::H264</a></code>). </td></tr>
   </table>
   </dd>
 </dl>
@@ -497,8 +649,8 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="aa1f92d9b38d8df12dd699d8463f2f56a" name="aa1f92d9b38d8df12dd699d8463f2f56a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa1f92d9b38d8df12dd699d8463f2f56a">&#9670;&#160;</a></span>lookup()</h2>
+<a id="a31121faf6e5cb7f066bef6e98916756e" name="a31121faf6e5cb7f066bef6e98916756e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a31121faf6e5cb7f066bef6e98916756e">&#9670;&#160;</a></span>fromString()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -507,7 +659,43 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classVideoCodec.html">VideoCodec</a> VideoCodec::lookup </td>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classVideoCodec.html">VideoCodec</a> &gt; VideoCodec::fromString </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>spec</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Parses a string of the form <code>"Codec"</code> or <code>"Codec:Backend"</code>. </p>
+<p>When the backend suffix is present, the backend must already be registered (via a call to <a class="el" href="classVideoCodec.html#a28d13fdb0f61e851c9a0f5f83855a720">registerBackend</a> at static-init time by the relevant backend provider). Returns <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a0efebc1e22f971143b7b60506091f9d6">Error::IdNotFound</a> when the codec name or backend name is unknown, and <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85">Error::Invalid</a> when the overall string shape is malformed.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">spec</td><td>The string to parse. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A resolved <a class="el" href="classVideoCodec.html">VideoCodec</a> on success, or an error Result. </dd></dl>
+
+</div>
+</div>
+<a id="a4c0cdfe34389d731d62b9190949a0c08" name="a4c0cdfe34389d731d62b9190949a0c08"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4c0cdfe34389d731d62b9190949a0c08">&#9670;&#160;</a></span>lookup()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classVideoCodec.html">VideoCodec</a> &gt; VideoCodec::lookup </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
           <td class="paramname"><em>name</em></td><td>)</td>
@@ -528,7 +716,79 @@ Static Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>The matching codec, or an invalid codec if not found. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The matching codec on success, or <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a0efebc1e22f971143b7b60506091f9d6">Error::IdNotFound</a> if no registered codec carries that name. The returned wrapper is unpinned (no specific backend). Use <a class="el" href="classVideoCodec.html#a31121faf6e5cb7f066bef6e98916756e">fromString</a> when parsing user input that may contain a <code>":&lt;BackendName&gt;"</code> suffix. </dd></dl>
+
+</div>
+</div>
+<a id="a557c7e0f9af2557bf7dacb55659b746f" name="a557c7e0f9af2557bf7dacb55659b746f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a557c7e0f9af2557bf7dacb55659b746f">&#9670;&#160;</a></span>lookupBackend()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classVideoCodec_1_1Backend.html">Backend</a> &gt; VideoCodec::lookupBackend </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Looks up an already-registered backend by name. </p>
+<p>Does not register the name. Returns <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a0efebc1e22f971143b7b60506091f9d6">Error::IdNotFound</a> if the name is not present in the registry.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>The backend name to look up. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The typed <a class="el" href="classVideoCodec_1_1Backend.html">Backend</a> handle on success. </dd></dl>
+
+</div>
+</div>
+<a id="a28d13fdb0f61e851c9a0f5f83855a720" name="a28d13fdb0f61e851c9a0f5f83855a720"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a28d13fdb0f61e851c9a0f5f83855a720">&#9670;&#160;</a></span>registerBackend()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classVideoCodec_1_1Backend.html">Backend</a> &gt; VideoCodec::registerBackend </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Registers a backend name and returns its typed handle. </p>
+<p>Idempotent — re-registering the same name returns the existing handle. Rejects names that are not valid C identifiers (see <a class="el" href="classString.html#a41864bcae69a2c7569c3ae01aacdecbd">String::isIdentifier</a>) with <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85">Error::Invalid</a>. Hash collisions with an already- registered backend are handled transparently via the underlying <a class="el" href="classStringRegistry.html">StringRegistry</a>'s probing registration.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>The backend name to register (e.g. <code>"Nvidia"</code>, <code>"Turbo"</code>). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The typed <a class="el" href="classVideoCodec_1_1Backend.html">Backend</a> handle on success. </dd></dl>
 
 </div>
 </div>
@@ -556,14 +816,42 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Registers a <a class="el" href="structVideoCodec_1_1Data.html" title="Immutable descriptor for a video codec.">Data</a> record in the registry. </p>
-<p>After this call, constructing a <a class="el" href="classVideoCodec.html">VideoCodec</a> from <code>data.id</code> resolves to the registered data.</p>
+<p>Registers a <a class="el" href="structVideoCodec_1_1Data.html" title="Immutable descriptor for a video codec.">Data</a> record in the codec-family registry. </p>
+<p>After this call, constructing a <a class="el" href="classVideoCodec.html">VideoCodec</a> from <code>data.id</code> resolves to the registered data. <code>data.name</code> must be a valid C identifier (<a class="el" href="classString.html#a41864bcae69a2c7569c3ae01aacdecbd">String::isIdentifier</a>); registrations with malformed names abort in debug builds and are dropped (with a warning) in release builds.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">data</td><td>The populated <a class="el" href="structVideoCodec_1_1Data.html" title="Immutable descriptor for a video codec.">Data</a> struct with id set to a value from <a class="el" href="classVideoCodec.html#ac65dfa614612f894845a63b9f8f2cfdc">registerType</a> (or one of the well-known IDs — backends commonly register factories against those directly). </td></tr>
+    <tr><td class="paramname">data</td><td>The populated <a class="el" href="structVideoCodec_1_1Data.html" title="Immutable descriptor for a video codec.">Data</a> struct with id set to a value from <a class="el" href="classVideoCodec.html#ac65dfa614612f894845a63b9f8f2cfdc">registerType</a> (or one of the well-known IDs — backends commonly re-register the well-known record to adjust metadata). </td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="aacd92f20640b410723a231315369cf47" name="aacd92f20640b410723a231315369cf47"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aacd92f20640b410723a231315369cf47">&#9670;&#160;</a></span>registeredBackends()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classVideoCodec.html#a1fccd459f626e5b6d9eef80e4d616428">BackendList</a> VideoCodec::registeredBackends </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns every backend that has a registered encoder or decoder implementation. </p>
+<p>The list is deduplicated across encoder and decoder registrations and ordered arbitrarily — callers that care about determinism should sort by <code><a class="el" href="classVideoCodec.html#a597f740cf04497f4bc1df65508a11d79" title="Returns the codec&#39;s short registered name.">name()</a></code>. </p>
 
 </div>
 </div>
@@ -591,7 +879,7 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Returns the list of every registered codec's ID. </p>
-<p>Excludes <a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca87e5acce5d36534159db13a2c635e101">Invalid</a>. Includes well-known and user-registered codecs alike. Useful for <code>--cc</code> <a class="el" href="classVideoCodec.html" title="First-class identifier for a video / still-image codec family.">VideoCodec</a>:list CLI enumeration. </p>
+<p>Excludes <a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca87e5acce5d36534159db13a2c635e101">Invalid</a>. Includes well-known and user-registered codecs alike. </p>
 
 </div>
 </div>
@@ -633,7 +921,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classVideoCodec.html">VideoCodec</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

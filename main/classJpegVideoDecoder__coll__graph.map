@@ -1,5 +1,5 @@
 <map id="JpegVideoDecoder" name="JpegVideoDecoder">
-<area shape="rect" id="Node000001" title="JPEG VideoDecoder built on JpegImageCodec." alt="" coords="9,168,151,193"/>
+<area shape="rect" id="Node000001" title="JPEG VideoDecoder built on libjpeg&#45;turbo." alt="" coords="9,168,151,193"/>
 <area shape="rect" id="Node000002" href="$classVideoDecoder.html" title="Abstract base class for stateful video decoders." alt="" coords="23,93,137,119"/>
 <area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="83,133,83,168,77,168,77,133"/>
 <area shape="rect" id="Node000003" href="$classError.html" title="Lightweight error code wrapper for the promeki library." alt="" coords="5,5,59,31"/>

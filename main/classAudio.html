@@ -144,6 +144,9 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isCompressed</b> () <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a></td></tr>
 <tr class="memdesc:a8e9c3df3874362b193f445ad6d4dd525"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if this <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> carries a compressed bitstream. <br /></td></tr>
 <tr class="separator:a8e9c3df3874362b193f445ad6d4dd525"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acaf304a39691dec6d3d656e35d053aef" id="r_acaf304a39691dec6d3d656e35d053aef"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#acaf304a39691dec6d3d656e35d053aef">isSafeCutPoint</a> () <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a></td></tr>
+<tr class="memdesc:acaf304a39691dec6d3d656e35d053aef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when stopping the stream before this audio unit leaves the decoded output intact.  <br /></td></tr>
+<tr class="separator:acaf304a39691dec6d3d656e35d053aef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abd163d788ec2350cd61ee8e4cfe8c6ba" id="r_abd163d788ec2350cd61ee8e4cfe8c6ba"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#abd163d788ec2350cd61ee8e4cfe8c6ba">compressedSize</a> () <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a></td></tr>
 <tr class="memdesc:abd163d788ec2350cd61ee8e4cfe8c6ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of bytes in the compressed bitstream.  <br /></td></tr>
 <tr class="separator:abd163d788ec2350cd61ee8e4cfe8c6ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -151,7 +154,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a06acc626e1be46c11183951b474af0cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the audio is in the native float32 format for this system.  <br /></td></tr>
 <tr class="separator:a06acc626e1be46c11183951b474af0cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af4c906c113ec44e511a595637482367c" id="r_af4c906c113ec44e511a595637482367c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#af4c906c113ec44e511a595637482367c">desc</a> () <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a></td></tr>
-<tr class="memdesc:af4c906c113ec44e511a595637482367c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a> that describes the audio contained in this object.  <br /></td></tr>
+<tr class="memdesc:af4c906c113ec44e511a595637482367c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classAudioDesc.html" title="Describes a concrete audio stream — format plus sample rate and channel count.">AudioDesc</a> that describes the audio contained in this object.  <br /></td></tr>
 <tr class="separator:af4c906c113ec44e511a595637482367c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a08645d1308d88192f68851fbd1d44d04" id="r_a08645d1308d88192f68851fbd1d44d04"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a> <a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#a08645d1308d88192f68851fbd1d44d04">metadata</a> () <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a></td></tr>
 <tr class="memdesc:a08645d1308d88192f68851fbd1d44d04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const reference to the audio metadata.  <br /></td></tr>
@@ -159,12 +162,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a4d444aebd87bc49e59eac89ef0441d16" id="r_a4d444aebd87bc49e59eac89ef0441d16"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#a4d444aebd87bc49e59eac89ef0441d16">metadata</a> ()</td></tr>
 <tr class="memdesc:a4d444aebd87bc49e59eac89ef0441d16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reference to the audio metadata.  <br /></td></tr>
 <tr class="separator:a4d444aebd87bc49e59eac89ef0441d16"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2067dbdb24ad25991da81764635ff7bb" id="r_a2067dbdb24ad25991da81764635ff7bb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a> <a class="el" href="classMediaPacket.html#a0d042c1f6143d734c401c0de3927ddb0">MediaPacket::Ptr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#a2067dbdb24ad25991da81764635ff7bb">packet</a> () <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a></td></tr>
-<tr class="memdesc:a2067dbdb24ad25991da81764635ff7bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the compressed bitstream packet attached to this <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a>.  <br /></td></tr>
-<tr class="separator:a2067dbdb24ad25991da81764635ff7bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeea98aa01c4dfc85ec01fe5c18eced06" id="r_aeea98aa01c4dfc85ec01fe5c18eced06"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#aeea98aa01c4dfc85ec01fe5c18eced06">setPacket</a> (<a class="el" href="classMediaPacket.html#a0d042c1f6143d734c401c0de3927ddb0">MediaPacket::Ptr</a> <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">pkt</a>)</td></tr>
-<tr class="memdesc:aeea98aa01c4dfc85ec01fe5c18eced06"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replaces the attached compressed-bitstream packet.  <br /></td></tr>
-<tr class="separator:aeea98aa01c4dfc85ec01fe5c18eced06"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a661ef3e8723ffda850d2d9c99437a4f7" id="r_a661ef3e8723ffda850d2d9c99437a4f7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a> <a class="el" href="classAudioPacket.html#a3dcc8525a6f1d71b65dfa25a17981301">AudioPacket::Ptr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#a661ef3e8723ffda850d2d9c99437a4f7">packet</a> () <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a></td></tr>
+<tr class="memdesc:a661ef3e8723ffda850d2d9c99437a4f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the compressed bitstream packet attached to this <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a>.  <br /></td></tr>
+<tr class="separator:a661ef3e8723ffda850d2d9c99437a4f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a361424171f5188a0e4e311cafd02b03d" id="r_a361424171f5188a0e4e311cafd02b03d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#a361424171f5188a0e4e311cafd02b03d">setPacket</a> (<a class="el" href="classAudioPacket.html#a3dcc8525a6f1d71b65dfa25a17981301">AudioPacket::Ptr</a> <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">pkt</a>)</td></tr>
+<tr class="memdesc:a361424171f5188a0e4e311cafd02b03d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replaces the attached compressed-bitstream packet.  <br /></td></tr>
+<tr class="separator:a361424171f5188a0e4e311cafd02b03d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0ec5c30a7e45cc01dc9eeffe033cd2e3" id="r_a0ec5c30a7e45cc01dc9eeffe033cd2e3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#a0ec5c30a7e45cc01dc9eeffe033cd2e3">samples</a> () <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a></td></tr>
 <tr class="memdesc:a0ec5c30a7e45cc01dc9eeffe033cd2e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of samples, irrespective of the channel count.  <br /></td></tr>
 <tr class="separator:a0ec5c30a7e45cc01dc9eeffe033cd2e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -184,9 +187,9 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>zero</b> () <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a></td></tr>
 <tr class="memdesc:a07a3d3807c2d71f5ef1fa7be0c97d219"><td class="mdescLeft">&#160;</td><td class="mdescRight">Zeros out all the audio data in the buffer. <br /></td></tr>
 <tr class="separator:a07a3d3807c2d71f5ef1fa7be0c97d219"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a639fd47cab076652c462e7a42c7d5de0" id="r_a639fd47cab076652c462e7a42c7d5de0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html">Audio</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#a639fd47cab076652c462e7a42c7d5de0">convertTo</a> (<a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">AudioDesc::DataType</a> format) <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a></td></tr>
-<tr class="memdesc:a639fd47cab076652c462e7a42c7d5de0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts this <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> to a different sample format.  <br /></td></tr>
-<tr class="separator:a639fd47cab076652c462e7a42c7d5de0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a24815117e64346a57ba1686e3ae2837e" id="r_a24815117e64346a57ba1686e3ae2837e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html">Audio</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#a24815117e64346a57ba1686e3ae2837e">convert</a> (<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a> <a class="el" href="classAudioFormat.html">AudioFormat</a> &amp;format) <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a></td></tr>
+<tr class="memdesc:a24815117e64346a57ba1686e3ae2837e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts this <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> to a different sample format.  <br /></td></tr>
+<tr class="separator:a24815117e64346a57ba1686e3ae2837e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abc2ac90f3453dd40c349fecfd37739fb" id="r_abc2ac90f3453dd40c349fecfd37739fb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#abc2ac90f3453dd40c349fecfd37739fb">resize</a> (<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">size_t</a> <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">val</a>)</td></tr>
 <tr class="memdesc:abc2ac90f3453dd40c349fecfd37739fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resizes the sample count to a value between 0 and <a class="el" href="classAudio.html#ac108341b8923cec805d8a5bd926ed657" title="Returns the maximum number of samples this object can contain.">maxSamples()</a>.  <br /></td></tr>
 <tr class="separator:abc2ac90f3453dd40c349fecfd37739fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -209,18 +212,19 @@ Static Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Object to hold some number of audio samples. </p>
-<p>This object is meant to hold some number of audio samples described by an <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a>. The sample data is stored in a shared <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>. When shared ownership is needed, use <a class="el" href="classAudio.html#a5a5464f78ba10693bf958d4b2b9c7351" title="Shared pointer type for Audio.">Audio::Ptr</a>.</p>
-<dl class="section user"><dt>Compressed audio</dt><dd>An <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> object can also carry a compressed bitstream such as AAC, Opus, or MP3. A compressed <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> uses an <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a> whose <code>codecFourCC()</code> is non-zero (and whose <code>dataType()</code> is typically <code>Invalid</code> since the encoded stream has no single bit depth). The raw encoded bytes live in the object's single buffer. Use <code><a class="el" href="classAudio.html#a8e9c3df3874362b193f445ad6d4dd525" title="Returns true if this Audio carries a compressed bitstream.">isCompressed()</a></code> to test, <code><a class="el" href="classAudio.html#abd163d788ec2350cd61ee8e4cfe8c6ba" title="Returns the number of bytes in the compressed bitstream.">compressedSize()</a></code> to get the byte count, and <code><a class="el" href="classAudio.html#ac9799d8cc724b784d5b4a661b8314e51" title="Zero-copy factory: adopts buffer as the audio&#39;s data.">Audio::fromBuffer()</a></code> to adopt an existing <code><a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3" title="Shared pointer type for Buffer.">Buffer::Ptr</a></code> without copying.</dd></dl>
-<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classAudioDesc.html">AudioDesc</a> <a class="code hl_function" href="classAudio.html#af4c906c113ec44e511a595637482367c">desc</a>(48000, 2, <a class="code hl_typedef" href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">AudioDesc::Float32</a>);</div>
+<p>This object is meant to hold some number of audio samples described by an <a class="el" href="classAudioDesc.html" title="Describes a concrete audio stream — format plus sample rate and channel count.">AudioDesc</a>. The sample data is stored in a shared <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>. When shared ownership is needed, use <a class="el" href="classAudio.html#a5a5464f78ba10693bf958d4b2b9c7351" title="Shared pointer type for Audio.">Audio::Ptr</a>.</p>
+<dl class="section user"><dt>Compressed audio</dt><dd>An <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> object can also carry a compressed bitstream such as AAC, Opus, or MP3. A compressed <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> uses an <a class="el" href="classAudioDesc.html">AudioDesc</a> whose <a class="el" href="classAudioFormat.html">AudioFormat</a> is one of the compressed entries (e.g. <code><a class="el" href="classAudioFormat.html#a0f380d5e097ec56ab78e4781729113ada74733002447113eff68219387876e840" title="Opus compressed bitstream (RFC 6716).">AudioFormat::Opus</a></code>) — <a class="el" href="classAudioFormat.html#a7b9100a76b47b761e69de0a057dd63ab">AudioFormat::isCompressed</a> is true for those. The raw encoded bytes live in the object's single buffer. Use <code><a class="el" href="classAudio.html#a8e9c3df3874362b193f445ad6d4dd525" title="Returns true if this Audio carries a compressed bitstream.">isCompressed()</a></code> to test, <code><a class="el" href="classAudio.html#abd163d788ec2350cd61ee8e4cfe8c6ba" title="Returns the number of bytes in the compressed bitstream.">compressedSize()</a></code> to get the byte count, and <code><a class="el" href="classAudio.html#ac9799d8cc724b784d5b4a661b8314e51" title="Zero-copy factory: adopts buffer as the audio&#39;s data.">Audio::fromBuffer()</a></code> to adopt an existing <code><a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3" title="Shared pointer type for Buffer.">Buffer::Ptr</a></code> without copying.</dd></dl>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classAudioDesc.html">AudioDesc</a> <a class="code hl_function" href="classAudio.html#af4c906c113ec44e511a595637482367c">desc</a>(<a class="code hl_class" href="classAudioFormat.html">AudioFormat</a>(<a class="code hl_enumvalue" href="classAudioFormat.html#a0f380d5e097ec56ab78e4781729113ada63c8b8ca3f8cdc8aae6204ca6f99ae52">AudioFormat::PCMI_Float32LE</a>), 48000, 2);</div>
 <div class="line"><a class="code hl_class" href="classAudio.html">Audio</a> audio(<a class="code hl_function" href="classAudio.html#af4c906c113ec44e511a595637482367c">desc</a>, 1024);  <span class="comment">// 1024 samples</span></div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Shared ownership for pipeline passing</span></div>
 <div class="line"><a class="code hl_class" href="classSharedPtr.html">Audio::Ptr</a> <a class="code hl_typedef" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">shared</a> = Audio::Ptr::create(<a class="code hl_function" href="classAudio.html#af4c906c113ec44e511a595637482367c">desc</a>, 1024);</div>
-<div class="ttc" id="aclassAudioDesc_html"><div class="ttname"><a href="classAudioDesc.html">AudioDesc</a></div><div class="ttdoc">Describes an audio format including sample type, rate, and channel count.</div><div class="ttdef"><b>Definition</b> audiodesc.h:31</div></div>
-<div class="ttc" id="aclassAudioDesc_html_a23a000bc02ee59a4a67e3a88b20c80a9"><div class="ttname"><a href="classAudioDesc.html#a23a000bc02ee59a4a67e3a88b20c80a9">AudioDesc::List</a></div><div class="ttdeci">promeki::List&lt; AudioDesc &gt; List</div><div class="ttdoc">List of AudioDesc values.</div><div class="ttdef"><b>Definition</b> audiodesc.h:38</div></div>
+<div class="ttc" id="aclassAudioDesc_html"><div class="ttname"><a href="classAudioDesc.html">AudioDesc</a></div><div class="ttdoc">Describes a concrete audio stream — format plus sample rate and channel count.</div><div class="ttdef"><b>Definition</b> audiodesc.h:39</div></div>
+<div class="ttc" id="aclassAudioFormat_html"><div class="ttname"><a href="classAudioFormat.html">AudioFormat</a></div><div class="ttdoc">First-class audio sample-format descriptor.</div><div class="ttdef"><b>Definition</b> audioformat.h:87</div></div>
+<div class="ttc" id="aclassAudioFormat_html_a0f380d5e097ec56ab78e4781729113ada63c8b8ca3f8cdc8aae6204ca6f99ae52"><div class="ttname"><a href="classAudioFormat.html#a0f380d5e097ec56ab78e4781729113ada63c8b8ca3f8cdc8aae6204ca6f99ae52">AudioFormat::PCMI_Float32LE</a></div><div class="ttdeci">@ PCMI_Float32LE</div><div class="ttdoc">Interleaved 32-bit IEEE 754 float, little-endian.</div><div class="ttdef"><b>Definition</b> audioformat.h:109</div></div>
 <div class="ttc" id="aclassAudio_html"><div class="ttname"><a href="classAudio.html">Audio</a></div><div class="ttdoc">Object to hold some number of audio samples.</div><div class="ttdef"><b>Definition</b> audio.h:50</div></div>
 <div class="ttc" id="aclassAudio_html_a7028fbb9df7a2d8b59cc5018940aeed2"><div class="ttname"><a href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">Audio::List</a></div><div class="ttdeci">promeki::List&lt; Audio &gt; List</div><div class="ttdoc">List of Audio values.</div><div class="ttdef"><b>Definition</b> audio.h:57</div></div>
-<div class="ttc" id="aclassAudio_html_af4c906c113ec44e511a595637482367c"><div class="ttname"><a href="classAudio.html#af4c906c113ec44e511a595637482367c">Audio::desc</a></div><div class="ttdeci">const AudioDesc &amp; desc() const</div><div class="ttdoc">Returns the AudioDesc that describes the audio contained in this object.</div><div class="ttdef"><b>Definition</b> audio.h:134</div></div>
+<div class="ttc" id="aclassAudio_html_af4c906c113ec44e511a595637482367c"><div class="ttname"><a href="classAudio.html#af4c906c113ec44e511a595637482367c">Audio::desc</a></div><div class="ttdeci">const AudioDesc &amp; desc() const</div><div class="ttdoc">Returns the AudioDesc that describes the audio contained in this object.</div><div class="ttdef"><b>Definition</b> audio.h:163</div></div>
 <div class="ttc" id="aclassSharedPtr_html"><div class="ttname"><a href="classSharedPtr.html">SharedPtr</a></div><div class="ttdoc">A smart pointer class with reference counting and optional copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> sharedptr.h:252</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
@@ -353,16 +357,16 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a639fd47cab076652c462e7a42c7d5de0" name="a639fd47cab076652c462e7a42c7d5de0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a639fd47cab076652c462e7a42c7d5de0">&#9670;&#160;</a></span>convertTo()</h2>
+<a id="a24815117e64346a57ba1686e3ae2837e" name="a24815117e64346a57ba1686e3ae2837e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a24815117e64346a57ba1686e3ae2837e">&#9670;&#160;</a></span>convert()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classAudio.html">Audio</a> Audio::convertTo </td>
+          <td class="memname"><a class="el" href="classAudio.html">Audio</a> Audio::convert </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">AudioDesc::DataType</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a> <a class="el" href="classAudioFormat.html">AudioFormat</a> &amp;&#160;</td>
           <td class="paramname"><em>format</em></td><td>)</td>
           <td> const</td>
         </tr>
@@ -373,7 +377,7 @@ Static Public Member Functions</h2></td></tr>
 <p>Returns a new <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> object with the same sample rate, channel count, and sample count but with audio data converted to the target format. When the source is native float, this is a single-pass conversion.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">format</td><td>The target <a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4" title="Enumeration of supported audio sample data types.">AudioDesc::DataType</a>. </td></tr>
+    <tr><td class="paramname">format</td><td>The target <a class="el" href="classAudioFormat.html">AudioFormat</a>. Must be a PCM format — compressed formats are not valid conversion targets. </td></tr>
   </table>
   </dd>
 </dl>
@@ -440,8 +444,8 @@ template&lt;<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed
 </table>
 </div><div class="memdoc">
 
-<p>Returns the <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a> that describes the audio contained in this object. </p>
-<dl class="section return"><dt>Returns</dt><dd>A const reference to the <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a>. </dd></dl>
+<p>Returns the <a class="el" href="classAudioDesc.html" title="Describes a concrete audio stream — format plus sample rate and channel count.">AudioDesc</a> that describes the audio contained in this object. </p>
+<dl class="section return"><dt>Returns</dt><dd>A const reference to the <a class="el" href="classAudioDesc.html" title="Describes a concrete audio stream — format plus sample rate and channel count.">AudioDesc</a>. </dd></dl>
 
 </div>
 </div>
@@ -462,7 +466,7 @@ template&lt;<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed
 </div><div class="memdoc">
 
 <p>Returns a human-readable multi-line dump of this audio buffer's structure and contents. </p>
-<p>Emits the scalar-key block registered with <code>VariantLookup&lt;Audio&gt;</code> (sample rate, channels, data type, sample / frame counts, compression flags), the backing <a class="el" href="classBuffer.html">Buffer</a> summary, metadata entries via <a class="el" href="classMetadata.html#a0439b960456c3aeb5e295e0be54eebc9">Metadata::dump</a>, and a single line about the attached <a class="el" href="classMediaPacket.html">MediaPacket</a> when present.</p>
+<p>Emits the scalar-key block registered with <code>VariantLookup&lt;Audio&gt;</code> (sample rate, channels, data type, sample / frame counts, compression flags), the backing <a class="el" href="classBuffer.html">Buffer</a> summary, metadata entries via <a class="el" href="classMetadata.html#a0439b960456c3aeb5e295e0be54eebc9">Metadata::dump</a>, and a single line about the attached <a class="el" href="classAudioPacket.html">AudioPacket</a> when present.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">indent</td><td>Leading whitespace to prefix every line. </td></tr>
@@ -536,7 +540,7 @@ template&lt;<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed
 </div><div class="memdoc">
 
 <p>Zero-copy factory: adopts <code>buffer</code> as the audio's data. </p>
-<p>Used for both compressed bitstreams and PCM where the caller already has the bytes in a <code><a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3" title="Shared pointer type for Buffer.">Buffer::Ptr</a></code> (e.g. from <code><a class="el" href="classFile.html#ad8250f53607cae7768d22f9ec4adda97" title="Reads bulk data from the current file position using direct I/O.">File::readBulk</a></code>). For compressed audio, <code>desc</code> must have a non-zero <code>codecFourCC()</code>; for PCM audio, the buffer size must be a whole multiple of the PCM frame size (channels × bytesPerSample).</p>
+<p>Used for both compressed bitstreams and PCM where the caller already has the bytes in a <code><a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3" title="Shared pointer type for Buffer.">Buffer::Ptr</a></code> (e.g. from <code><a class="el" href="classFile.html#ad8250f53607cae7768d22f9ec4adda97" title="Reads bulk data from the current file position using direct I/O.">File::readBulk</a></code>). For compressed audio, <code>desc</code> must use a compressed <a class="el" href="classAudioFormat.html">AudioFormat</a> (one where <code><a class="el" href="classAudioFormat.html#a7b9100a76b47b761e69de0a057dd63ab" title="Returns true if this is a compressed bitstream format.">AudioFormat::isCompressed</a></code> is true); for PCM audio, the buffer size must be a whole multiple of the PCM frame size (channels × bytesPerSample).</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">buffer</td><td>The buffer to adopt. </td></tr>
@@ -589,7 +593,7 @@ template&lt;<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed
 </div><div class="memdoc">
 
 <p>Creates a compressed audio object from pre-encoded data. </p>
-<p>Allocates a buffer and copies <code>data</code> into it. Mirror of <code><a class="el" href="classImage.html#ad8c8a9a259f95054f6622bcf992d40c5" title="Creates a compressed image from pre-encoded data.">Image::fromCompressedData</a></code> for audio. Prefer <code><a class="el" href="classAudio.html#ac9799d8cc724b784d5b4a661b8314e51" title="Zero-copy factory: adopts buffer as the audio&#39;s data.">fromBuffer()</a></code> when the data is already in a <code><a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3" title="Shared pointer type for Buffer.">Buffer::Ptr</a></code> to avoid the copy. </p>
+<p>Allocates a buffer and copies <code>data</code> into it. Mirror of <code><a class="el" href="classImage.html#a167a66cd85db60aa9d5996d441b5d61a" title="Creates a compressed image from pre-encoded data.">Image::fromCompressedData</a></code> for audio. Prefer <code><a class="el" href="classAudio.html#ac9799d8cc724b784d5b4a661b8314e51" title="Zero-copy factory: adopts buffer as the audio&#39;s data.">fromBuffer()</a></code> when the data is already in a <code><a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3" title="Shared pointer type for Buffer.">Buffer::Ptr</a></code> to avoid the copy. </p>
 
 </div>
 </div>
@@ -618,6 +622,28 @@ template&lt;<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed
 
 <p>Returns true if the audio is in the native float32 format for this system. </p>
 <dl class="section return"><dt>Returns</dt><dd>true if the format is native float32. </dd></dl>
+
+</div>
+</div>
+<a id="acaf304a39691dec6d3d656e35d053aef" name="acaf304a39691dec6d3d656e35d053aef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acaf304a39691dec6d3d656e35d053aef">&#9670;&#160;</a></span>isSafeCutPoint()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">bool</a> Audio::isSafeCutPoint </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns true when stopping the stream before this audio unit leaves the decoded output intact. </p>
+<p>Uncompressed PCM is always a safe cut. A compressed unit is safe when the codec's <a class="el" href="classAudioCodec.html#a484908c0e4c5512c775a99a01c47df54">AudioCodec::packetIndependence</a> is <a class="el" href="classAudioCodec.html#afded4f901c3fa3722a6c7a8090dd8f32ae52c679434b459837d41352cffdf3daa">AudioCodec::PacketIndependenceEvery</a> (every packet decodes standalone — e.g. Opus); otherwise the unit carries no safe cut point — audio packets do not use per-packet keyframe flags, so codecs whose independence is <code>PacketIndependenceKeyframe</code> cannot be safely cut from an <code>Audio-level</code> query. A codec with <a class="el" href="classAudioCodec.html#afded4f901c3fa3722a6c7a8090dd8f32a65658b2b0a70101cc5f1ad51c813231f">AudioCodec::PacketIndependenceInvalid</a> returns <code>false</code> — we have no evidence the stream can be safely truncated here.</p>
+<p>Used by <a class="el" href="classFrame.html#a28b9871bbbc8d0e4419e4ccf213116c3">Frame::isSafeCutPoint</a> and by <a class="el" href="classMediaPipeline.html">MediaPipeline</a> to honour a pipeline-wide frame count without leaving an audio packet that won't decode on its own.</p>
+<dl class="section return"><dt>Returns</dt><dd><code>true</code> when stopping before this audio unit is safe, <code>false</code> when prior packets would be needed to decode it. </dd></dl>
 
 </div>
 </div>
@@ -733,8 +759,8 @@ template&lt;<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed
 
 </div>
 </div>
-<a id="a2067dbdb24ad25991da81764635ff7bb" name="a2067dbdb24ad25991da81764635ff7bb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2067dbdb24ad25991da81764635ff7bb">&#9670;&#160;</a></span>packet()</h2>
+<a id="a661ef3e8723ffda850d2d9c99437a4f7" name="a661ef3e8723ffda850d2d9c99437a4f7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a661ef3e8723ffda850d2d9c99437a4f7">&#9670;&#160;</a></span>packet()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -743,7 +769,7 @@ template&lt;<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a> <a class="el" href="classMediaPacket.html#a0d042c1f6143d734c401c0de3927ddb0">MediaPacket::Ptr</a> &amp; Audio::packet </td>
+          <td class="memname"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a> <a class="el" href="classAudioPacket.html#a3dcc8525a6f1d71b65dfa25a17981301">AudioPacket::Ptr</a> &amp; Audio::packet </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -824,8 +850,8 @@ template&lt;<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed
 
 </div>
 </div>
-<a id="aeea98aa01c4dfc85ec01fe5c18eced06" name="aeea98aa01c4dfc85ec01fe5c18eced06"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aeea98aa01c4dfc85ec01fe5c18eced06">&#9670;&#160;</a></span>setPacket()</h2>
+<a id="a361424171f5188a0e4e311cafd02b03d" name="a361424171f5188a0e4e311cafd02b03d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a361424171f5188a0e4e311cafd02b03d">&#9670;&#160;</a></span>setPacket()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -836,7 +862,7 @@ template&lt;<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed
         <tr>
           <td class="memname"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">void</a> Audio::setPacket </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classMediaPacket.html#a0d042c1f6143d734c401c0de3927ddb0">MediaPacket::Ptr</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classAudioPacket.html#a3dcc8525a6f1d71b65dfa25a17981301">AudioPacket::Ptr</a>&#160;</td>
           <td class="paramname"><em>pkt</em></td><td>)</td>
           <td></td>
         </tr>
@@ -849,7 +875,7 @@ template&lt;<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed
 </div><div class="memdoc">
 
 <p>Replaces the attached compressed-bitstream packet. </p>
-<p>Pass a null <a class="el" href="classMediaPacket.html#a0d042c1f6143d734c401c0de3927ddb0">MediaPacket::Ptr</a> to clear. </p>
+<p>Pass a null <a class="el" href="classAudioPacket.html#a3dcc8525a6f1d71b65dfa25a17981301">AudioPacket::Ptr</a> to clear. </p>
 
 </div>
 </div>
@@ -863,7 +889,7 @@ template&lt;<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudio.html">Audio</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

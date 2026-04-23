@@ -1,5 +1,10 @@
 var namespaces_dup =
 [
+    [ "BackendWeight", "namespaceBackendWeight.html", [
+      [ "System", "namespaceBackendWeight.html#a9e8449fcb169836418a15bdfaf002e87", null ],
+      [ "User", "namespaceBackendWeight.html#a83927f1d5098859c1e5da3c39aefff4b", null ],
+      [ "Vendored", "namespaceBackendWeight.html#a706a55db9ff0e191e865e4263ece9b85", null ]
+    ] ],
     [ "CrcParams", "namespaceCrcParams.html", [
       [ "Crc16CcittFalse", "namespaceCrcParams.html#af9660285a80465edcfd84a8aa3ead0b8", null ],
       [ "Crc16Kermit", "namespaceCrcParams.html#aaa6c08610a8b3af4d9348e5a8b81e37d", null ],

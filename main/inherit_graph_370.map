@@ -1,3 +1,11 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classTimecode_1_1Mode.html" title="Describes the timecode mode (frame rate and drop&#45;frame status)." alt="" coords="5,5,136,31"/>
+<area shape="rect" id="Node000000" href="$classStringData.html" title="Pure virtual interface for String storage backends." alt="" coords="5,80,96,105"/>
+<area shape="rect" id="Node000001" href="$classStringLatin1Data.html" title="Latin1 string storage. One byte = one character." alt="" coords="171,5,302,31"/>
+<area shape="poly" id="edge174_Node000000_Node000001" title=" " alt="" coords="82,70,143,40,177,28,179,33,145,44,85,75"/>
+<area shape="rect" id="Node000002" href="$classStringLiteralData.html" title="Immutable string storage wrapping a string literal pointer." alt="" coords="171,55,303,80"/>
+<area shape="poly" id="edge175_Node000000_Node000002" title=" " alt="" coords="110,82,170,74,171,79,110,87"/>
+<area shape="rect" id="Node000003" href="$classStringUnicodeData.html" title="Unicode string storage. Decoded codepoints in a List&lt;Char&gt;." alt="" coords="165,104,309,129"/>
+<area shape="poly" id="edge176_Node000000_Node000003" title=" " alt="" coords="110,98,165,105,164,110,109,103"/>
+<area shape="rect" id="Node000004" href="$classStringUnicodeLiteralData.html" title="Immutable Unicode string storage wrapping compile&#45;time decoded data." alt="" coords="144,153,329,179"/>
+<area shape="poly" id="edge177_Node000000_Node000004" title=" " alt="" coords="86,110,145,138,183,151,181,156,143,143,84,114"/>
 </map>

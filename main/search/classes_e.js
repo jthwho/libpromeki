@@ -7,5 +7,6 @@ var searchData=
   ['objectbaseptr_3c_20sdlaudiooutput_20_3e_4',['ObjectBasePtr&lt; SDLAudioOutput &gt;',['../classObjectBasePtr.html',1,'']]],
   ['openoptions_5',['OpenOptions',['../structDebugMediaFile_1_1OpenOptions.html',1,'DebugMediaFile']]],
   ['ops_6',['Ops',['../structMemSpace_1_1Ops.html',1,'MemSpace']]],
-  ['option_7',['Option',['../classCmdLineParser_1_1Option.html',1,'CmdLineParser']]]
+  ['option_7',['Option',['../classCmdLineParser_1_1Option.html',1,'CmdLineParser']]],
+  ['opusapplication_8',['OpusApplication',['../classOpusApplication.html',1,'']]]
 ];

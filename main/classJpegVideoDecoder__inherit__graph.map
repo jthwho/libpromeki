@@ -1,5 +1,5 @@
 <map id="JpegVideoDecoder" name="JpegVideoDecoder">
-<area shape="rect" id="Node000001" title="JPEG VideoDecoder built on JpegImageCodec." alt="" coords="5,79,147,104"/>
+<area shape="rect" id="Node000001" title="JPEG VideoDecoder built on libjpeg&#45;turbo." alt="" coords="5,79,147,104"/>
 <area shape="rect" id="Node000002" href="$classVideoDecoder.html" title="Abstract base class for stateful video decoders." alt="" coords="19,5,133,31"/>
 <area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="79,44,79,79,73,79,73,44"/>
 </map>

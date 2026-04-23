@@ -182,14 +182,14 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setVideoSize</b> (<a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
 <tr class="memdesc:afee9941b9baf620350b598cffc927c5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the optional size hint. <br /></td></tr>
 <tr class="separator:afee9941b9baf620350b598cffc927c5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a06041490e0764b6fa9fb2fc25230f2ce" id="r_a06041490e0764b6fa9fb2fc25230f2ce"><td class="memItemLeft" align="right" valign="top"><a id="a06041490e0764b6fa9fb2fc25230f2ce" name="a06041490e0764b6fa9fb2fc25230f2ce"></a>
-<a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>pixelDesc</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a06041490e0764b6fa9fb2fc25230f2ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the optional pixel descriptor (for headerless formats). <br /></td></tr>
-<tr class="separator:a06041490e0764b6fa9fb2fc25230f2ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5b3d023855fb3d95cac7af93dc57f23e" id="r_a5b3d023855fb3d95cac7af93dc57f23e"><td class="memItemLeft" align="right" valign="top"><a id="a5b3d023855fb3d95cac7af93dc57f23e" name="a5b3d023855fb3d95cac7af93dc57f23e"></a>
-<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setPixelDesc</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
-<tr class="memdesc:a5b3d023855fb3d95cac7af93dc57f23e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the optional pixel descriptor. <br /></td></tr>
-<tr class="separator:a5b3d023855fb3d95cac7af93dc57f23e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae2bcaa690bec75e76618d04d78ca99e4" id="r_ae2bcaa690bec75e76618d04d78ca99e4"><td class="memItemLeft" align="right" valign="top"><a id="ae2bcaa690bec75e76618d04d78ca99e4" name="ae2bcaa690bec75e76618d04d78ca99e4"></a>
+<a class="el" href="classList.html">const</a> <a class="el" href="classPixelFormat.html">PixelFormat</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>pixelFormat</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ae2bcaa690bec75e76618d04d78ca99e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the optional pixel descriptor (for headerless formats). <br /></td></tr>
+<tr class="separator:ae2bcaa690bec75e76618d04d78ca99e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae0ada181f8990cb26450f9d264d68ead" id="r_ae0ada181f8990cb26450f9d264d68ead"><td class="memItemLeft" align="right" valign="top"><a id="ae0ada181f8990cb26450f9d264d68ead" name="ae0ada181f8990cb26450f9d264d68ead"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setPixelFormat</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classPixelFormat.html">PixelFormat</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
+<tr class="memdesc:ae0ada181f8990cb26450f9d264d68ead"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the optional pixel descriptor. <br /></td></tr>
+<tr class="separator:ae0ada181f8990cb26450f9d264d68ead"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aac2eb5a1791195aa8dbade250517163d" id="r_aac2eb5a1791195aa8dbade250517163d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImgSeq.html#aac2eb5a1791195aa8dbade250517163d">audioFile</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:aac2eb5a1791195aa8dbade250517163d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the sidecar audio file path.  <br /></td></tr>
 <tr class="separator:aac2eb5a1791195aa8dbade250517163d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -244,7 +244,7 @@ Static Public Attributes</h2></td></tr>
 <ul>
 <li>The filename pattern (a <code><a class="el" href="classNumName.html" title="Deconstructs a numbered name into its prefix, number, and suffix components.">NumName</a></code> — e.g. <code>"shot_####.dpx"</code>)</li>
 <li>The head and tail frame numbers (inclusive range)</li>
-<li>Optional <code><a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a></code>, <code>Size2Du32</code> "videoSize" hint, and <code><a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a></code> for headerless formats</li>
+<li>Optional <code><a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a></code>, <code>Size2Du32</code> "videoSize" hint, and <code><a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a></code> for headerless formats</li>
 <li>Optional <code><a class="el" href="classMetadata.html" title="Key-value metadata container using typed Variant values.">Metadata</a></code> passthrough carried alongside each frame</li>
 </ul>
 <p>The class is also the in-memory representation of the <code></code>.imgseq JSON sidecar format. An <code></code>.imgseq file is a small JSON document sitting next to the actual image files in the same directory, and is used to describe one specific sequence's intended configuration (including things the image files themselves cannot carry, such as a frame rate). Multiple <code></code>.imgseq files may sit in the same directory, each describing a different sequence.</p>
@@ -256,7 +256,7 @@ Static Public Attributes</h2></td></tr>
 <div class="line">    <span class="stringliteral">&quot;tail&quot;</span>:      100,</div>
 <div class="line">    <span class="stringliteral">&quot;frameRate&quot;</span>: <span class="stringliteral">&quot;24/1&quot;</span>,</div>
 <div class="line">    <span class="stringliteral">&quot;videoSize&quot;</span>: <span class="stringliteral">&quot;1920x1080&quot;</span>,</div>
-<div class="line">    <span class="stringliteral">&quot;pixelDesc&quot;</span>: <span class="stringliteral">&quot;YUV_10_422_DPX&quot;</span>,</div>
+<div class="line">    <span class="stringliteral">&quot;pixelFormat&quot;</span>: <span class="stringliteral">&quot;YUV_10_422_DPX&quot;</span>,</div>
 <div class="line">    <span class="stringliteral">&quot;metadata&quot;</span>:  { <span class="stringliteral">&quot;Title&quot;</span>: <span class="stringliteral">&quot;Shot 01&quot;</span> }</div>
 <div class="line">}</div>
 </div><!-- fragment --><p>All fields except <code>type</code> are optional: the bare minimum for a valid sidecar is a <code>name</code> field, everything else is filled in from the directory scan or defaulted.</p>
@@ -655,7 +655,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classImgSeq.html">ImgSeq</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

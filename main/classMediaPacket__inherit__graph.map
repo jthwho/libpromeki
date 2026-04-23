@@ -1,0 +1,7 @@
+<map id="MediaPacket" name="MediaPacket">
+<area shape="rect" id="Node000001" title="Abstract polymorphic base for any encoded bitstream packet." alt="" coords="67,5,171,31"/>
+<area shape="rect" id="Node000002" href="$classAudioPacket.html" title="Encoded audio access unit produced by an AudioEncoder or consumed by an AudioDecoder." alt="" coords="5,79,107,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="101,43,68,80,64,77,97,39"/>
+<area shape="rect" id="Node000003" href="$classVideoPacket.html" title="Encoded video access unit produced by a VideoEncoder or consumed by a VideoDecoder." alt="" coords="131,79,232,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="140,39,173,77,169,80,136,43"/>
+</map>

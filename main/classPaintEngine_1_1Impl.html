@@ -153,9 +153,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:adf337a2874ecdde37f1a8fac0c8f26ab" id="r_adf337a2874ecdde37f1a8fac0c8f26ab"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#adf337a2874ecdde37f1a8fac0c8f26ab">fillEllipse</a> (<a class="el" href="classList.html">const</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> &amp;<a class="el" href="classList.html">pixel</a>, <a class="el" href="classList.html">const</a> <a class="el" href="point_8h.html#a559444f073d8a5f68fdebd61c5663f56">Point2Di32</a> &amp;<a class="el" href="textstream_8h.html#a65c3368133a343323aab71b735dba472">center</a>, <a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;size) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:adf337a2874ecdde37f1a8fac0c8f26ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fills an ellipse with a solid color.  <br /></td></tr>
 <tr class="separator:adf337a2874ecdde37f1a8fac0c8f26ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a88e3389480c60f73ab310fa2ad6ae232" id="r_a88e3389480c60f73ab310fa2ad6ae232"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#a88e3389480c60f73ab310fa2ad6ae232">pixelDesc</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a88e3389480c60f73ab310fa2ad6ae232"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the pixel description associated with this implementation.  <br /></td></tr>
-<tr class="separator:a88e3389480c60f73ab310fa2ad6ae232"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af1268fbeb0d60b8a402e2985acb7f85d" id="r_af1268fbeb0d60b8a402e2985acb7f85d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">const</a> <a class="el" href="classPixelFormat.html">PixelFormat</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#af1268fbeb0d60b8a402e2985acb7f85d">pixelFormat</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:af1268fbeb0d60b8a402e2985acb7f85d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the pixel description associated with this implementation.  <br /></td></tr>
+<tr class="separator:af1268fbeb0d60b8a402e2985acb7f85d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Abstract implementation backend for <a class="el" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images.">PaintEngine</a>. </p>
@@ -772,8 +772,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a88e3389480c60f73ab310fa2ad6ae232" name="a88e3389480c60f73ab310fa2ad6ae232"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a88e3389480c60f73ab310fa2ad6ae232">&#9670;&#160;</a></span>pixelDesc()</h2>
+<a id="af1268fbeb0d60b8a402e2985acb7f85d" name="af1268fbeb0d60b8a402e2985acb7f85d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af1268fbeb0d60b8a402e2985acb7f85d">&#9670;&#160;</a></span>pixelFormat()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -782,7 +782,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp; PaintEngine::Impl::pixelDesc </td>
+          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">const</a> <a class="el" href="classPixelFormat.html">PixelFormat</a> &amp; PaintEngine::Impl::pixelFormat </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -796,7 +796,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Returns the pixel description associated with this implementation. </p>
-<dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a>, or an invalid <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a> if unset. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a>, or an invalid <a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a> if unset. </dd></dl>
 
 </div>
 </div>
@@ -810,7 +810,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classPaintEngine.html">PaintEngine</a></li><li class="navelem"><a class="el" href="classPaintEngine_1_1Impl.html">Impl</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -1,21 +1,23 @@
 var searchData=
 [
-  ['id_0',['id',['../structAudioDesc_1_1Format.html#a0100d32e3eb4192b11bc068deec16ebd',1,'AudioDesc::Format::id'],['../structBenchmark_1_1Entry.html#a8d386500fc2e05df7f6d465e3d8842de',1,'Benchmark::Entry::id'],['../structColorModel_1_1Data.html#a72309359c2f54a37027da9332ba0d450',1,'ColorModel::Data::id'],['../structMemSpace_1_1Ops.html#a7a7e9ef4d1620037b707cb932238a07b',1,'MemSpace::Ops::id'],['../structPixelDesc_1_1Data.html#a5a40d17198925ae278e33a8aa3821b6a',1,'PixelDesc::Data::id'],['../structPixelFormat_1_1Data.html#a3048aa927f0d16d2a106a3142cabb860',1,'PixelFormat::Data::id'],['../structVideoCodec_1_1Data.html#a8822e30f4d315abda4a19562a1917f1d',1,'VideoCodec::Data::id'],['../structAudioCodec_1_1Data.html#a69fa93e952c266440140bd36e456a3b8',1,'AudioCodec::Data::id']]],
+  ['id_0',['id',['../structAudioFormat_1_1Data.html#aca254e676e4e3044a3431375489e1ef6',1,'AudioFormat::Data::id'],['../structBenchmark_1_1Entry.html#a8d386500fc2e05df7f6d465e3d8842de',1,'Benchmark::Entry::id'],['../structColorModel_1_1Data.html#a72309359c2f54a37027da9332ba0d450',1,'ColorModel::Data::id'],['../structMemSpace_1_1Ops.html#a7a7e9ef4d1620037b707cb932238a07b',1,'MemSpace::Ops::id'],['../structPixelFormat_1_1Data.html#a3048aa927f0d16d2a106a3142cabb860',1,'PixelFormat::Data::id'],['../structPixelMemLayout_1_1Data.html#a3a1f7d097ead3b8a2671273ece9a1534',1,'PixelMemLayout::Data::id'],['../structVideoCodec_1_1Data.html#a8822e30f4d315abda4a19562a1917f1d',1,'VideoCodec::Data::id'],['../structAudioCodec_1_1Data.html#a69fa93e952c266440140bd36e456a3b8',1,'AudioCodec::Data::id']]],
   ['identitymatrix_1',['IdentityMatrix',['../classMatrix3x3.html#a35f0721c7d2bf9440176650127d63a4c',1,'Matrix3x3']]],
   ['ignorecase_2',['IgnoreCase',['../classRegEx.html#a806993bea0df1df722e8c11e6b1e8386',1,'RegEx']]],
   ['ignored_3',['Ignored',['../classColor.html#a6254012fff6f277c0ee9644c503d07a4',1,'Color']]],
   ['immortal_4',['Immortal',['../classRefCount.html#afd7613e556915ae757e649ced31c4d52',1,'RefCount']]],
-  ['index_5',['index',['../structdetail_1_1VariantLookupSegment.html#a58c19b4ed715ef3675da9a864b228911',1,'detail::VariantLookupSegment::index'],['../structQuickTime_1_1Sample.html#a4e8893f078bf578b7b2fd13c5783df17',1,'QuickTime::Sample::index']]],
+  ['index_5',['index',['../structQuickTime_1_1Sample.html#a4e8893f078bf578b7b2fd13c5783df17',1,'QuickTime::Sample::index'],['../structdetail_1_1VariantLookupSegment.html#a58c19b4ed715ef3675da9a864b228911',1,'detail::VariantLookupSegment::index']]],
   ['infinityvalue_6',['InfinityValue',['../classFrameCount.html#ad595699a368bc8df357bed331aeab6a9',1,'FrameCount']]],
   ['init_7',['init',['../structCRC_1_1Params.html#a0825a80179aea2e80c7c9af867428220',1,'CRC::Params']]],
   ['invalidid_8',['InvalidID',['../classStringRegistry.html#a2c016fcc1fc5e2d94a689c15c0e41413',1,'StringRegistry']]],
   ['invalidtype_9',['InvalidType',['../classEvent.html#a2a00f0f8b16ce09158f46406cbbcc1fe',1,'Event']]],
   ['invalidvalue_10',['InvalidValue',['../classEnum.html#a1089877eae42ae3ead6bae910ffd6d69',1,'Enum']]],
-  ['isbigendian_11',['isBigEndian',['../structAudioDesc_1_1Format.html#ab1cbf8a01efd7507da784998693b3acd',1,'AudioDesc::Format']]],
-  ['ishostaccessible_12',['isHostAccessible',['../structMemSpace_1_1Ops.html#a9670bbc91982b48085224fc1d2d153a0',1,'MemSpace::Ops']]],
-  ['isplanar_13',['isPlanar',['../structAudioDesc_1_1Format.html#a14b8529ec8b94e934d260722cb8a33ac',1,'AudioDesc::Format']]],
-  ['issigned_14',['isSigned',['../structAudioDesc_1_1Format.html#aa2a20adf8c327c2a16f7fee8f1159530',1,'AudioDesc::Format']]],
-  ['isssm_15',['isSSM',['../structMulticastReceiver_1_1GroupEntry.html#a11002158042a330f72446f2210ca6cac',1,'MulticastReceiver::GroupEntry']]],
-  ['itemspersecond_16',['itemsPerSecond',['../classBenchmarkResult.html#a99080c317d73cd928e7208f55f6f5752',1,'BenchmarkResult']]],
-  ['iterations_17',['iterations',['../classBenchmarkResult.html#ac9dbdb26aeca62c1b5913afb17d2a63c',1,'BenchmarkResult']]]
+  ['isbigendian_11',['isBigEndian',['../structAudioFormat_1_1Data.html#a9971c08cfc068bee0358b053079d670d',1,'AudioFormat::Data']]],
+  ['isfloat_12',['isFloat',['../structAudioFormat_1_1Data.html#a5b4280dbc45a3222c5a4409f15adbf67',1,'AudioFormat::Data']]],
+  ['ishostaccessible_13',['isHostAccessible',['../structMemSpace_1_1Ops.html#a9670bbc91982b48085224fc1d2d153a0',1,'MemSpace::Ops']]],
+  ['isplanar_14',['isPlanar',['../structAudioFormat_1_1Data.html#a5fbabbe0a236b2d89b903873b6899056',1,'AudioFormat::Data']]],
+  ['issigned_15',['isSigned',['../structAudioFormat_1_1Data.html#aeaf7e3c0217530799dc8bdbc7166164c',1,'AudioFormat::Data']]],
+  ['isssm_16',['isSSM',['../structMulticastReceiver_1_1GroupEntry.html#a11002158042a330f72446f2210ca6cac',1,'MulticastReceiver::GroupEntry']]],
+  ['isstreamable_17',['isStreamable',['../structAudioCodec_1_1Data.html#a2b0b4479629df92222c76be4a4f638cc',1,'AudioCodec::Data']]],
+  ['itemspersecond_18',['itemsPerSecond',['../classBenchmarkResult.html#a99080c317d73cd928e7208f55f6f5752',1,'BenchmarkResult']]],
+  ['iterations_19',['iterations',['../classBenchmarkResult.html#ac9dbdb26aeca62c1b5913afb17d2a63c',1,'BenchmarkResult']]]
 ];

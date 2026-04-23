@@ -100,6 +100,8 @@ $(document).ready(function(){initNavTree('classVideoDecoder.html',''); initResiz
 
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pro-methods">Protected Member Functions</a> &#124;
@@ -112,16 +114,16 @@ $(document).ready(function(){initNavTree('classVideoDecoder.html',''); initResiz
 <p>Abstract base class for stateful video decoders.  
  <a href="classVideoDecoder.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="codec_8h_source.html">codec.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="videodecoder_8h_source.html">videodecoder.h</a>&gt;</code></p>
 <div class="dynheader">
 Inheritance diagram for VideoDecoder:</div>
 <div class="dyncontent">
 <div class="center"><img src="classVideoDecoder__inherit__graph.png" border="0" usemap="#aVideoDecoder_inherit__map" alt="Inheritance graph"/></div>
 <map name="aVideoDecoder_inherit__map" id="aVideoDecoder_inherit__map">
 <area shape="rect" title="Abstract base class for stateful video decoders." alt="" coords="106,5,219,31"/>
-<area shape="rect" href="classJpegVideoDecoder.html" title="JPEG VideoDecoder built on JpegImageCodec." alt="" coords="5,79,147,104"/>
+<area shape="rect" href="classJpegVideoDecoder.html" title="JPEG VideoDecoder built on libjpeg&#45;turbo." alt="" coords="5,79,147,104"/>
 <area shape="poly" title=" " alt="" coords="140,41,92,81,88,76,137,37"/>
-<area shape="rect" href="classJpegXsVideoDecoder.html" title="JPEG XS VideoDecoder built on JpegXsImageCodec." alt="" coords="171,79,328,104"/>
+<area shape="rect" href="classJpegXsVideoDecoder.html" title="JPEG XS VideoDecoder built on SVT&#45;JPEG&#45;XS." alt="" coords="171,79,328,104"/>
 <area shape="poly" title=" " alt="" coords="189,37,237,76,233,81,185,41"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
@@ -138,35 +140,40 @@ Collaboration diagram for VideoDecoder:</div>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structVideoDecoder_1_1BackendRecord.html">BackendRecord</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registration record attaching a concrete decoder to a (codec, backend) pair.  <a href="structVideoDecoder_1_1BackendRecord.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:aa111274a2b1d955fe253183a7c99b379" id="r_aa111274a2b1d955fe253183a7c99b379"><td class="memItemLeft" align="right" valign="top"><a id="aa111274a2b1d955fe253183a7c99b379" name="aa111274a2b1d955fe253183a7c99b379"></a>
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Factory</b> = std::function&lt; <a class="el" href="classVideoDecoder.html">VideoDecoder</a> *()&gt;</td></tr>
+<tr class="memdesc:aa111274a2b1d955fe253183a7c99b379"><td class="mdescLeft">&#160;</td><td class="mdescRight">Factory signature used by the decoder registry. <br /></td></tr>
+<tr class="separator:aa111274a2b1d955fe253183a7c99b379"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a985e1a71aa7503979cac3736b8b34838" id="r_a985e1a71aa7503979cac3736b8b34838"><td class="memItemLeft" align="right" valign="top"><a id="a985e1a71aa7503979cac3736b8b34838" name="a985e1a71aa7503979cac3736b8b34838"></a>
 <a class="el" href="classList.html">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><b>~VideoDecoder</b> ()</td></tr>
 <tr class="memdesc:a985e1a71aa7503979cac3736b8b34838"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual destructor. <br /></td></tr>
 <tr class="separator:a985e1a71aa7503979cac3736b8b34838"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac420417732f3412a4847a9e9e1821e59" id="r_ac420417732f3412a4847a9e9e1821e59"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoDecoder.html#ac420417732f3412a4847a9e9e1821e59">name</a> () <a class="el" href="classList.html">const</a> =0</td></tr>
-<tr class="memdesc:ac420417732f3412a4847a9e9e1821e59"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the codec name (e.g. <code>"H264"</code>, <code>"HEVC"</code>).  <br /></td></tr>
-<tr class="separator:ac420417732f3412a4847a9e9e1821e59"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a68d268b3ec414cdd458938ec03b25ab8" id="r_a68d268b3ec414cdd458938ec03b25ab8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoDecoder.html#a68d268b3ec414cdd458938ec03b25ab8">description</a> () <a class="el" href="classList.html">const</a> =0</td></tr>
-<tr class="memdesc:a68d268b3ec414cdd458938ec03b25ab8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a human-readable description.  <br /></td></tr>
-<tr class="separator:a68d268b3ec414cdd458938ec03b25ab8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a81d7cfaec1f812770baacacd4cc24719" id="r_a81d7cfaec1f812770baacacd4cc24719"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classPixelDesc.html">PixelDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoDecoder.html#a81d7cfaec1f812770baacacd4cc24719">inputPixelDesc</a> () <a class="el" href="classList.html">const</a> =0</td></tr>
-<tr class="memdesc:a81d7cfaec1f812770baacacd4cc24719"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the compressed <a class="el" href="classPixelDesc.html">PixelDesc</a> this decoder accepts.  <br /></td></tr>
-<tr class="separator:a81d7cfaec1f812770baacacd4cc24719"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7f4c09061943cddbc982c746300191fd" id="r_a7f4c09061943cddbc982c746300191fd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">List</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoDecoder.html#a7f4c09061943cddbc982c746300191fd">supportedOutputs</a> () <a class="el" href="classList.html">const</a> =0</td></tr>
-<tr class="memdesc:a7f4c09061943cddbc982c746300191fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the uncompressed <a class="el" href="classPixelDesc.html">PixelDesc</a> IDs this decoder can emit.  <br /></td></tr>
-<tr class="separator:a7f4c09061943cddbc982c746300191fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af52fbfbb66838e32ac0826d5d756f426" id="r_af52fbfbb66838e32ac0826d5d756f426"><td class="memItemLeft" align="right" valign="top"><a id="af52fbfbb66838e32ac0826d5d756f426" name="af52fbfbb66838e32ac0826d5d756f426"></a>
+<a class="el" href="classVideoCodec.html">VideoCodec</a>&#160;</td><td class="memItemRight" valign="bottom"><b>codec</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:af52fbfbb66838e32ac0826d5d756f426"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the codec this session decodes, with backend pinned. <br /></td></tr>
+<tr class="separator:af52fbfbb66838e32ac0826d5d756f426"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adce7b8d7def1b75cb70d8229c010bd45" id="r_adce7b8d7def1b75cb70d8229c010bd45"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoDecoder.html#adce7b8d7def1b75cb70d8229c010bd45">configure</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaConfig.html">MediaConfig</a> &amp;config)</td></tr>
 <tr class="memdesc:adce7b8d7def1b75cb70d8229c010bd45"><td class="mdescLeft">&#160;</td><td class="mdescRight">Applies decoder parameters from a <a class="el" href="classMediaConfig.html">MediaConfig</a>.  <br /></td></tr>
 <tr class="separator:adce7b8d7def1b75cb70d8229c010bd45"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad15702190e962a93215c27b65ca55d08" id="r_ad15702190e962a93215c27b65ca55d08"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoDecoder.html#ad15702190e962a93215c27b65ca55d08">submitPacket</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaPacket.html">MediaPacket</a> &amp;packet)=0</td></tr>
-<tr class="memdesc:ad15702190e962a93215c27b65ca55d08"><td class="mdescLeft">&#160;</td><td class="mdescRight">Submits one encoded packet for decoding.  <br /></td></tr>
-<tr class="separator:ad15702190e962a93215c27b65ca55d08"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9c0bb30ed2e9736b48fb6ecfaf0a034b" id="r_a9c0bb30ed2e9736b48fb6ecfaf0a034b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classImage.html">Image</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoDecoder.html#a9c0bb30ed2e9736b48fb6ecfaf0a034b">receiveFrame</a> ()=0</td></tr>
-<tr class="memdesc:a9c0bb30ed2e9736b48fb6ecfaf0a034b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dequeues one decoded frame.  <br /></td></tr>
-<tr class="separator:a9c0bb30ed2e9736b48fb6ecfaf0a034b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a373c89520c6cce9d18d53e4bcd867733" id="r_a373c89520c6cce9d18d53e4bcd867733"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoDecoder.html#a373c89520c6cce9d18d53e4bcd867733">submitPacket</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classVideoPacket.html#acd061b0a22f40e1b25f19743f9d5025f">VideoPacket::Ptr</a> &amp;packet)=0</td></tr>
+<tr class="memdesc:a373c89520c6cce9d18d53e4bcd867733"><td class="mdescLeft">&#160;</td><td class="mdescRight">Submits one encoded packet for decoding.  <br /></td></tr>
+<tr class="separator:a373c89520c6cce9d18d53e4bcd867733"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7a70c55e9ac80b2f1b02eea76427be70" id="r_a7a70c55e9ac80b2f1b02eea76427be70"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classImage.html#a38745cfc2762b9f0aeaaba861098b852">Image::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoDecoder.html#a7a70c55e9ac80b2f1b02eea76427be70">receiveFrame</a> ()=0</td></tr>
+<tr class="memdesc:a7a70c55e9ac80b2f1b02eea76427be70"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dequeues one decoded frame.  <br /></td></tr>
+<tr class="separator:a7a70c55e9ac80b2f1b02eea76427be70"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a82c34ac191eaa96b73b095580f98dd12" id="r_a82c34ac191eaa96b73b095580f98dd12"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoDecoder.html#a82c34ac191eaa96b73b095580f98dd12">flush</a> ()=0</td></tr>
-<tr class="memdesc:a82c34ac191eaa96b73b095580f98dd12"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signals end-of-stream; remaining frames can be drained with <a class="el" href="classVideoDecoder.html#a9c0bb30ed2e9736b48fb6ecfaf0a034b">receiveFrame</a>.  <br /></td></tr>
+<tr class="memdesc:a82c34ac191eaa96b73b095580f98dd12"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signals end-of-stream; remaining frames can be drained with <a class="el" href="classVideoDecoder.html#a7a70c55e9ac80b2f1b02eea76427be70">receiveFrame</a>.  <br /></td></tr>
 <tr class="separator:a82c34ac191eaa96b73b095580f98dd12"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aada047e2a17a4ce70577915019e7a6c4" id="r_aada047e2a17a4ce70577915019e7a6c4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoDecoder.html#aada047e2a17a4ce70577915019e7a6c4">reset</a> ()=0</td></tr>
 <tr class="memdesc:aada047e2a17a4ce70577915019e7a6c4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Discards any pending packets / frames.  <br /></td></tr>
@@ -182,21 +189,29 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a9a0c680011fc31343e26b0427302a3c9" id="r_a9a0c680011fc31343e26b0427302a3c9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoDecoder.html#a9a0c680011fc31343e26b0427302a3c9">registerDecoder</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classVideoDecoder.html#ac420417732f3412a4847a9e9e1821e59">name</a>, std::function&lt; <a class="el" href="classVideoDecoder.html">VideoDecoder</a> *()&gt; <a class="el" href="classList.html">factory</a>)</td></tr>
-<tr class="memdesc:a9a0c680011fc31343e26b0427302a3c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers a video decoder factory.  <br /></td></tr>
-<tr class="separator:a9a0c680011fc31343e26b0427302a3c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a74d28d125acba9219d3badf6ca985479" id="r_a74d28d125acba9219d3badf6ca985479"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVideoDecoder.html">VideoDecoder</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoDecoder.html#a74d28d125acba9219d3badf6ca985479">createDecoder</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classVideoDecoder.html#ac420417732f3412a4847a9e9e1821e59">name</a>)</td></tr>
-<tr class="memdesc:a74d28d125acba9219d3badf6ca985479"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a video decoder instance by name.  <br /></td></tr>
-<tr class="separator:a74d28d125acba9219d3badf6ca985479"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae808e679b08c6a25423eb649f1f54e85" id="r_ae808e679b08c6a25423eb649f1f54e85"><td class="memItemLeft" align="right" valign="top"><a id="ae808e679b08c6a25423eb649f1f54e85" name="ae808e679b08c6a25423eb649f1f54e85"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">List</a>&lt; <a class="el" href="classString.html">String</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>registeredDecoders</b> ()</td></tr>
-<tr class="memdesc:ae808e679b08c6a25423eb649f1f54e85"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of all registered decoder codec names. <br /></td></tr>
-<tr class="separator:ae808e679b08c6a25423eb649f1f54e85"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a813605800d7f78c5ddddfa3962196110" id="r_a813605800d7f78c5ddddfa3962196110"><td class="memItemLeft" align="right" valign="top"><a id="a813605800d7f78c5ddddfa3962196110" name="a813605800d7f78c5ddddfa3962196110"></a>
+<a class="el" href="classList.html">static</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><b>registerBackend</b> (<a class="el" href="structVideoDecoder_1_1BackendRecord.html">BackendRecord</a> record)</td></tr>
+<tr class="memdesc:a813605800d7f78c5ddddfa3962196110"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers a concrete decoder backend for a (codec, backend) pair. See <a class="el" href="classVideoEncoder.html#a9c0a2730ff8dbfbb453122a8d4f8dcdf">VideoEncoder::registerBackend</a> for the symmetric contract. <br /></td></tr>
+<tr class="separator:a813605800d7f78c5ddddfa3962196110"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50e353747f10ff11f808e788d32c5b4b" id="r_a50e353747f10ff11f808e788d32c5b4b"><td class="memItemLeft" align="right" valign="top"><a id="a50e353747f10ff11f808e788d32c5b4b" name="a50e353747f10ff11f808e788d32c5b4b"></a>
+<a class="el" href="classList.html">static</a> <a class="el" href="classVideoCodec.html#a1fccd459f626e5b6d9eef80e4d616428">VideoCodec::BackendList</a>&#160;</td><td class="memItemRight" valign="bottom"><b>availableBackends</b> (<a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dc">VideoCodec::ID</a> codecId)</td></tr>
+<tr class="separator:a50e353747f10ff11f808e788d32c5b4b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5de20d986a17a148dde7dec1a756ab00" id="r_a5de20d986a17a148dde7dec1a756ab00"><td class="memItemLeft" align="right" valign="top"><a id="a5de20d986a17a148dde7dec1a756ab00" name="a5de20d986a17a148dde7dec1a756ab00"></a>
+<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">List</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>supportedOutputsFor</b> (<a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dc">VideoCodec::ID</a> codecId, <a class="el" href="classVideoCodec_1_1Backend.html">VideoCodec::Backend</a> backend)</td></tr>
+<tr class="separator:a5de20d986a17a148dde7dec1a756ab00"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0d7cdfbd490389ff7f3a2a447d253d58" id="r_a0d7cdfbd490389ff7f3a2a447d253d58"><td class="memItemLeft" align="right" valign="top"><a id="a0d7cdfbd490389ff7f3a2a447d253d58" name="a0d7cdfbd490389ff7f3a2a447d253d58"></a>
+<a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classVideoDecoder.html">VideoDecoder</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>create</b> (<a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dc">VideoCodec::ID</a> codecId, <a class="el" href="classVideoCodec_1_1Backend.html">VideoCodec::Backend</a> <a class="el" href="classList.html">pinned</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classMediaConfig.html">MediaConfig</a> *config)</td></tr>
+<tr class="separator:a0d7cdfbd490389ff7f3a2a447d253d58"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:a87125a1d9e2e69e7c44a0e968b4f2ae5" id="r_a87125a1d9e2e69e7c44a0e968b4f2ae5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoDecoder.html#a87125a1d9e2e69e7c44a0e968b4f2ae5">setError</a> (<a class="el" href="classError.html">Error</a> <a class="el" href="classList.html">err</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;msg=<a class="el" href="classString.html">String</a>())</td></tr>
-<tr class="memdesc:a87125a1d9e2e69e7c44a0e968b4f2ae5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Records a new error state.  <br /></td></tr>
+<tr class="memitem:a0c31215472c1d153813bf4f2cdde49f1" id="r_a0c31215472c1d153813bf4f2cdde49f1"><td class="memItemLeft" align="right" valign="top"><a id="a0c31215472c1d153813bf4f2cdde49f1" name="a0c31215472c1d153813bf4f2cdde49f1"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setCodec</b> (<a class="el" href="classVideoCodec.html">VideoCodec</a> <a class="el" href="classVideoDecoder.html#af52fbfbb66838e32ac0826d5d756f426">codec</a>)</td></tr>
+<tr class="memdesc:a0c31215472c1d153813bf4f2cdde49f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Records the codec + backend this session implements. <br /></td></tr>
+<tr class="separator:a0c31215472c1d153813bf4f2cdde49f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a87125a1d9e2e69e7c44a0e968b4f2ae5" id="r_a87125a1d9e2e69e7c44a0e968b4f2ae5"><td class="memItemLeft" align="right" valign="top"><a id="a87125a1d9e2e69e7c44a0e968b4f2ae5" name="a87125a1d9e2e69e7c44a0e968b4f2ae5"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setError</b> (<a class="el" href="classError.html">Error</a> <a class="el" href="classList.html">err</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;msg=<a class="el" href="classString.html">String</a>())</td></tr>
+<tr class="memdesc:a87125a1d9e2e69e7c44a0e968b4f2ae5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Records a new error state. <br /></td></tr>
 <tr class="separator:a87125a1d9e2e69e7c44a0e968b4f2ae5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a03c0ce8380b2ccf56ba419d16d632040" id="r_a03c0ce8380b2ccf56ba419d16d632040"><td class="memItemLeft" align="right" valign="top"><a id="a03c0ce8380b2ccf56ba419d16d632040" name="a03c0ce8380b2ccf56ba419d16d632040"></a>
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>clearError</b> ()</td></tr>
@@ -214,13 +229,16 @@ Protected Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Abstract base class for stateful video decoders. </p>
-<p><a class="el" href="classVideoDecoder.html" title="Abstract base class for stateful video decoders.">VideoDecoder</a> is the inverse of VideoEncoder: packets submitted via <a class="el" href="classVideoDecoder.html#ad15702190e962a93215c27b65ca55d08">submitPacket</a> feed an internal decode pipeline and uncompressed frames come back out of <a class="el" href="classVideoDecoder.html#a9c0bb30ed2e9736b48fb6ecfaf0a034b">receiveFrame</a>. The decoder may buffer several packets before producing its first frame (B-frame reordering, reference-frame dependencies).</p>
+<p>A <a class="el" href="classVideoDecoder.html" title="Abstract base class for stateful video decoders.">VideoDecoder</a> is the inverse of VideoEncoder: packets submitted via <a class="el" href="classVideoDecoder.html#a373c89520c6cce9d18d53e4bcd867733">submitPacket</a> feed an internal decode pipeline and uncompressed frames come back out of <a class="el" href="classVideoDecoder.html#a7a70c55e9ac80b2f1b02eea76427be70">receiveFrame</a>. The decoder may buffer several packets before producing its first frame (B-frame reordering, reference-frame dependencies).</p>
+<p>Codec-family metadata lives on the <a class="el" href="classVideoCodec.html">VideoCodec</a> wrapper returned by <a class="el" href="classVideoDecoder.html#af52fbfbb66838e32ac0826d5d756f426">codec()</a>; per-backend facts (supported output PixelFormats, bitrate limits, …) live on the registered <a class="el" href="structVideoDecoder_1_1BackendRecord.html">BackendRecord</a> and are reachable via <a class="el" href="classVideoCodec.html#a4cfded8270c3f5866573ced3ccd5442f">VideoCodec::decoderSupportedOutputs</a>.</p>
+<dl class="section user"><dt>Backend registration</dt><dd></dd></dl>
+<p>Same idiom as <a class="el" href="classVideoEncoder.html#a9c0a2730ff8dbfbb453122a8d4f8dcdf">VideoEncoder::registerBackend</a>, but using this class's <a class="el" href="structVideoDecoder_1_1BackendRecord.html">BackendRecord</a> — see that method's documentation for the full registration example.</p>
 <dl class="section user"><dt>Session lifecycle</dt><dd></dd></dl>
 <ol type="1">
-<li>Create an instance via <a class="el" href="classVideoDecoder.html#a74d28d125acba9219d3badf6ca985479">createDecoder</a>.</li>
+<li>Resolve a session via <a class="el" href="classVideoCodec.html#a357995988d59375f894365924f5043f4">VideoCodec::createDecoder</a>.</li>
 <li>Optionally call <a class="el" href="classVideoDecoder.html#adce7b8d7def1b75cb70d8229c010bd45">configure</a> (most decoders infer parameters from the bitstream and need no explicit configuration).</li>
-<li>For each encoded packet, call <a class="el" href="classVideoDecoder.html#ad15702190e962a93215c27b65ca55d08">submitPacket</a>.</li>
-<li>After each submit, drain with <a class="el" href="classVideoDecoder.html#a9c0bb30ed2e9736b48fb6ecfaf0a034b">receiveFrame</a> until it returns an invalid <a class="el" href="classImage.html">Image</a>.</li>
+<li>For each encoded packet, call <a class="el" href="classVideoDecoder.html#a373c89520c6cce9d18d53e4bcd867733">submitPacket</a>.</li>
+<li>After each submit, drain with <a class="el" href="classVideoDecoder.html#a7a70c55e9ac80b2f1b02eea76427be70">receiveFrame</a> until it returns an invalid <a class="el" href="classImage.html">Image</a>.</li>
 <li>Call <a class="el" href="classVideoDecoder.html#a82c34ac191eaa96b73b095580f98dd12">flush</a> when the input stream ends, then drain again.</li>
 <li>Destroy the decoder.</li>
 </ol>
@@ -251,79 +269,9 @@ Protected Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Applies decoder parameters from a <a class="el" href="classMediaConfig.html">MediaConfig</a>. </p>
-<p>Same semantics as VideoEncoder::configure: reads known keys, ignores the rest.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">config</td><td>Caller-supplied configuration database. </td></tr>
-  </table>
-  </dd>
-</dl>
+<p>Same semantics as <a class="el" href="classVideoEncoder.html#a783883c096c4fe7ff5a3742f8bb270d9">VideoEncoder::configure</a> — reads known keys, ignores the rest. The default implementation is a no-op. </p>
 
 <p>Reimplemented in <a class="el" href="classJpegVideoDecoder.html#ab6faf81799dad0265e302711715876c6">JpegVideoDecoder</a>, and <a class="el" href="classJpegXsVideoDecoder.html#a9ea854572897cd70ef6362ee2b303657">JpegXsVideoDecoder</a>.</p>
-
-</div>
-</div>
-<a id="a74d28d125acba9219d3badf6ca985479" name="a74d28d125acba9219d3badf6ca985479"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a74d28d125acba9219d3badf6ca985479">&#9670;&#160;</a></span>createDecoder()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classVideoDecoder.html">VideoDecoder</a> * VideoDecoder::createDecoder </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
-          <td class="paramname"><em>name</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Creates a video decoder instance by name. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">name</td><td>The codec name. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>A new decoder instance, or <code>nullptr</code> if not registered. </dd></dl>
-
-</div>
-</div>
-<a id="a68d268b3ec414cdd458938ec03b25ab8" name="a68d268b3ec414cdd458938ec03b25ab8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a68d268b3ec414cdd458938ec03b25ab8">&#9670;&#160;</a></span>description()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classString.html">String</a> VideoDecoder::description </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns a human-readable description. </p>
-
-<p>Implemented in <a class="el" href="classJpegVideoDecoder.html#a04ba7e0c57fe544cb45a8b893ba5b68f">JpegVideoDecoder</a>, and <a class="el" href="classJpegXsVideoDecoder.html#ab88eacd8381e67243c996f5443710a12">JpegXsVideoDecoder</a>.</p>
 
 </div>
 </div>
@@ -350,14 +298,14 @@ Protected Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Signals end-of-stream; remaining frames can be drained with <a class="el" href="classVideoDecoder.html#a9c0bb30ed2e9736b48fb6ecfaf0a034b">receiveFrame</a>. </p>
+<p>Signals end-of-stream; remaining frames can be drained with <a class="el" href="classVideoDecoder.html#a7a70c55e9ac80b2f1b02eea76427be70">receiveFrame</a>. </p>
 
 <p>Implemented in <a class="el" href="classJpegVideoDecoder.html#a4f13cc7f32554700715b502e2b670929">JpegVideoDecoder</a>, and <a class="el" href="classJpegXsVideoDecoder.html#a916d0bdfb1f850c0e4d0bd4cf9e8f31b">JpegXsVideoDecoder</a>.</p>
 
 </div>
 </div>
-<a id="a81d7cfaec1f812770baacacd4cc24719" name="a81d7cfaec1f812770baacacd4cc24719"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a81d7cfaec1f812770baacacd4cc24719">&#9670;&#160;</a></span>inputPixelDesc()</h2>
+<a id="a7a70c55e9ac80b2f1b02eea76427be70" name="a7a70c55e9ac80b2f1b02eea76427be70"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7a70c55e9ac80b2f1b02eea76427be70">&#9670;&#160;</a></span>receiveFrame()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -366,65 +314,7 @@ Protected Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> VideoDecoder::inputPixelDesc </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns the compressed <a class="el" href="classPixelDesc.html">PixelDesc</a> this decoder accepts. </p>
-
-<p>Implemented in <a class="el" href="classJpegVideoDecoder.html#a4bc382582c2dbdd7568f4085b710182f">JpegVideoDecoder</a>, and <a class="el" href="classJpegXsVideoDecoder.html#abe79968285c2501310328723ebf08dc4">JpegXsVideoDecoder</a>.</p>
-
-</div>
-</div>
-<a id="ac420417732f3412a4847a9e9e1821e59" name="ac420417732f3412a4847a9e9e1821e59"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac420417732f3412a4847a9e9e1821e59">&#9670;&#160;</a></span>name()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classString.html">String</a> VideoDecoder::name </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns the codec name (e.g. <code>"H264"</code>, <code>"HEVC"</code>). </p>
-
-<p>Implemented in <a class="el" href="classJpegVideoDecoder.html#a84f50fb1f2d634231c6df862357f5727">JpegVideoDecoder</a>, and <a class="el" href="classJpegXsVideoDecoder.html#ae914b3becbfe8319f47e6c9a064ede06">JpegXsVideoDecoder</a>.</p>
-
-</div>
-</div>
-<a id="a9c0bb30ed2e9736b48fb6ecfaf0a034b" name="a9c0bb30ed2e9736b48fb6ecfaf0a034b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9c0bb30ed2e9736b48fb6ecfaf0a034b">&#9670;&#160;</a></span>receiveFrame()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classImage.html">Image</a> VideoDecoder::receiveFrame </td>
+          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classImage.html#a38745cfc2762b9f0aeaaba861098b852">Image::Ptr</a> VideoDecoder::receiveFrame </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -438,54 +328,9 @@ Protected Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Dequeues one decoded frame. </p>
-<dl class="section return"><dt>Returns</dt><dd>A valid <a class="el" href="classImage.html">Image</a> on success, or an invalid <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> if no frame is ready yet. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A valid <a class="el" href="classImage.html#a38745cfc2762b9f0aeaaba861098b852">Image::Ptr</a>, or a null Ptr when no frame is ready. </dd></dl>
 
-<p>Implemented in <a class="el" href="classJpegVideoDecoder.html#a9212e40a486a04b0936c4611efa40493">JpegVideoDecoder</a>, and <a class="el" href="classJpegXsVideoDecoder.html#a403d32f6b029a102647f3ad839ea16bb">JpegXsVideoDecoder</a>.</p>
-
-</div>
-</div>
-<a id="a9a0c680011fc31343e26b0427302a3c9" name="a9a0c680011fc31343e26b0427302a3c9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9a0c680011fc31343e26b0427302a3c9">&#9670;&#160;</a></span>registerDecoder()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a> VideoDecoder::registerDecoder </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
-          <td class="paramname"><em>name</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">std::function&lt; <a class="el" href="classVideoDecoder.html">VideoDecoder</a> *()&gt;&#160;</td>
-          <td class="paramname"><em>factory</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Registers a video decoder factory. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">name</td><td>Unique codec name (matches PixelDesc::Data::codecName). </td></tr>
-    <tr><td class="paramname">factory</td><td>Factory function that creates a new instance. </td></tr>
-  </table>
-  </dd>
-</dl>
+<p>Implemented in <a class="el" href="classJpegVideoDecoder.html#af5cd8f14be71050ef2092c06514f66d0">JpegVideoDecoder</a>, and <a class="el" href="classJpegXsVideoDecoder.html#afbc3d01c52997278763fa15eaef18bfd">JpegXsVideoDecoder</a>.</p>
 
 </div>
 </div>
@@ -518,53 +363,8 @@ Protected Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a87125a1d9e2e69e7c44a0e968b4f2ae5" name="a87125a1d9e2e69e7c44a0e968b4f2ae5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a87125a1d9e2e69e7c44a0e968b4f2ae5">&#9670;&#160;</a></span>setError()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> VideoDecoder::setError </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classError.html">Error</a>&#160;</td>
-          <td class="paramname"><em>err</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
-          <td class="paramname"><em>msg</em> = <code><a class="el" href="classString.html">String</a>()</code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Records a new error state. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">err</td><td>The error code. </td></tr>
-    <tr><td class="paramname">msg</td><td>Human-readable message. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="ad15702190e962a93215c27b65ca55d08" name="ad15702190e962a93215c27b65ca55d08"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad15702190e962a93215c27b65ca55d08">&#9670;&#160;</a></span>submitPacket()</h2>
+<a id="a373c89520c6cce9d18d53e4bcd867733" name="a373c89520c6cce9d18d53e4bcd867733"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a373c89520c6cce9d18d53e4bcd867733">&#9670;&#160;</a></span>submitPacket()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -575,7 +375,7 @@ Protected Attributes</h2></td></tr>
         <tr>
           <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a> VideoDecoder::submitPacket </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classMediaPacket.html">MediaPacket</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classVideoPacket.html#acd061b0a22f40e1b25f19743f9d5025f">VideoPacket::Ptr</a> &amp;&#160;</td>
           <td class="paramname"><em>packet</em></td><td>)</td>
           <td></td>
         </tr>
@@ -590,48 +390,18 @@ Protected Attributes</h2></td></tr>
 <p>Submits one encoded packet for decoding. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">packet</td><td>The packet to decode. Its <a class="el" href="classMediaPacket.html#a56035fad1d51bc0bd4a45ea341fdbea8">MediaPacket::pixelDesc</a> must match <a class="el" href="classVideoDecoder.html#a81d7cfaec1f812770baacacd4cc24719">inputPixelDesc</a>. </td></tr>
+    <tr><td class="paramname">packet</td><td>The packet to decode, passed as a shared <a class="el" href="classVideoPacket.html#acd061b0a22f40e1b25f19743f9d5025f">VideoPacket::Ptr</a> so the decoder can retain the packet without copying its payload. Its <a class="el" href="classVideoPacket.html#ad6619b342601024077ba710795e81f17">VideoPacket::pixelFormat</a> should fall within this codec's compressed <a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a> set (see <a class="el" href="classVideoCodec.html#a4cc563e65ece0d30e679767b1b6025ee">VideoCodec::compressedPixelFormats</a>). A null Ptr is treated as <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85">Error::Invalid</a>. </td></tr>
   </table>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a></code> on success. </dd></dl>
 
-<p>Implemented in <a class="el" href="classJpegVideoDecoder.html#aec5afc09134aff59c78a91765227a46d">JpegVideoDecoder</a>, and <a class="el" href="classJpegXsVideoDecoder.html#a0943bd34d0bcf5ed0952bae784b2d42f">JpegXsVideoDecoder</a>.</p>
-
-</div>
-</div>
-<a id="a7f4c09061943cddbc982c746300191fd" name="a7f4c09061943cddbc982c746300191fd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7f4c09061943cddbc982c746300191fd">&#9670;&#160;</a></span>supportedOutputs()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">List</a>&lt; int &gt; VideoDecoder::supportedOutputs </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns the uncompressed <a class="el" href="classPixelDesc.html">PixelDesc</a> IDs this decoder can emit. </p>
-<p>Callers can use <a class="el" href="classVideoDecoder.html#adce7b8d7def1b75cb70d8229c010bd45">configure</a> with <code>MediaConfig::OutputPixelDesc</code> to request a specific output; decoders that only support a single native output may ignore the request. </p>
-
-<p>Implemented in <a class="el" href="classJpegVideoDecoder.html#a697ae7716f018f9a9e842dc682b332cb">JpegVideoDecoder</a>, and <a class="el" href="classJpegXsVideoDecoder.html#a2e9506adab32d16e5d0f837561649db0">JpegXsVideoDecoder</a>.</p>
+<p>Implemented in <a class="el" href="classJpegVideoDecoder.html#ad975e0c51647406d1ede7f2fe3833c5a">JpegVideoDecoder</a>, and <a class="el" href="classJpegXsVideoDecoder.html#a9a18c52b15aab7b75aa6b0cb2da1ca2e">JpegXsVideoDecoder</a>.</p>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/<a class="el" href="codec_8h_source.html">codec.h</a></li>
+<li>include/promeki/<a class="el" href="videodecoder_8h_source.html">videodecoder.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -640,7 +410,7 @@ Protected Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classVideoDecoder.html">VideoDecoder</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

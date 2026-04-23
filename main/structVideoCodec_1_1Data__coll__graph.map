@@ -1,9 +1,13 @@
 <map id="VideoCodec::Data" name="VideoCodec::Data">
-<area shape="rect" id="Node000001" title="Immutable descriptor for a video codec." alt="" coords="81,108,219,133"/>
+<area shape="rect" id="Node000001" title="Immutable descriptor for a video codec." alt="" coords="195,108,334,133"/>
 <area shape="rect" id="Node000002" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,5,65,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="60,38,109,82,137,106,134,110,106,86,56,42"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="60,38,89,61,124,82,160,95,197,105,196,111,159,101,122,86,86,65,56,42"/>
 <area shape="rect" id="Node000003" href="$classList.html" title=" " alt="" coords="89,5,211,31"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="153,45,153,108,147,108,147,45"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="162,42,174,63,190,82,209,95,230,106,228,110,207,100,187,86,170,66,158,44"/>
 <area shape="rect" id="Node000004" href="$classList.html" title=" " alt="" coords="235,5,327,31"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="266,44,248,65,225,86,182,110,179,106,222,82,244,62,262,40"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="272,44,269,55,266,83,266,108,261,108,260,83,263,54,267,43"/>
+<area shape="rect" id="Node000005" href="$classList.html" title=" " alt="" coords="369,5,557,31"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="460,45,451,67,436,86,418,95,394,103,335,114,334,109,392,98,416,90,432,82,447,64,456,43"/>
+<area shape="rect" id="Node000006" href="$classList.html" title=" " alt="" coords="582,5,729,31"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="639,43,613,66,580,86,535,99,471,108,334,119,334,114,470,103,534,94,578,82,610,62,635,39"/>
 </map>

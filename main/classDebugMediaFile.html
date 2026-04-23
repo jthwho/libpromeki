@@ -307,7 +307,7 @@ template&lt;typename... Args&gt; </td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Debug-grade media container that captures a <a class="el" href="classFrame.html">Frame</a> byte-for-byte. </p>
-<p>PMDF (ProMEKI Debug <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a>) is a bespoke container built for debugging: the intent is to capture every bit of information a <a class="el" href="classFrame.html">Frame</a> carries — every image plane, every audio sample, every metadata key, every attached <a class="el" href="classMediaPacket.html">MediaPacket</a> — and then read it back producing a structurally identical <a class="el" href="classFrame.html">Frame</a>. It is <em>not</em> an interoperable format; even between promeki versions the reader enforces the major-version field on the file signature.</p>
+<p>PMDF (ProMEKI Debug <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a>) is a bespoke container built for debugging: the intent is to capture every bit of information a <a class="el" href="classFrame.html">Frame</a> carries — every image plane, every audio sample, every metadata key, every attached packet — and then read it back producing a structurally identical <a class="el" href="classFrame.html">Frame</a>. It is <em>not</em> an interoperable format; even between promeki versions the reader enforces the major-version field on the file signature.</p>
 <p>The class is usable standalone — open a file for Mode::Write, push frames through <a class="el" href="classDebugMediaFile.html#a6d105a65de193efa818eb8e37f9a9d29">writeFrame</a>, and call <a class="el" href="classDebugMediaFile.html#afdbee41ff0151d98002c86177af318a6">close</a> on shutdown. The <a class="el" href="classMediaIOTask__DebugMedia.html">MediaIOTask_DebugMedia</a> adapter wraps it for the <a class="el" href="classMediaIO.html">MediaIO</a> framework.</p>
 <dl class="section user"><dt>File layout (current version = 1)</dt><dd></dd></dl>
 <div class="fragment"><div class="line">[32-<span class="keywordtype">byte</span> file <a class="code hl_class" href="classList.html">signature</a>]</div>
@@ -502,7 +502,7 @@ template&lt;typename... Args&gt; </td></tr>
 </div><div class="memdoc">
 
 <p>Appends <code>frame</code> to the file. </p>
-<p>Serialises the frame's metadata, config update, every image (with <a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a>, <a class="el" href="classMediaPacket.html" title="Encoded bitstream access unit produced by a VideoEncoder or consumed by a VideoDecoder.">MediaPacket</a>, and raw plane bytes) and every audio track (<a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a>, <a class="el" href="classMediaPacket.html" title="Encoded bitstream access unit produced by a VideoEncoder or consumed by a VideoDecoder.">MediaPacket</a>, raw sample bytes) into a single FRAM chunk. Valid only in <code>Mode::Write</code>.</p>
+<p>Serialises the frame's metadata, config update, every image (with <a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a>, <a class="el" href="classVideoPacket.html" title="Encoded video access unit produced by a VideoEncoder or consumed by a VideoDecoder.">VideoPacket</a>, and raw plane bytes) and every audio track (<a class="el" href="classAudioDesc.html" title="Describes a concrete audio stream — format plus sample rate and channel count.">AudioDesc</a>, <a class="el" href="classAudioPacket.html" title="Encoded audio access unit produced by an AudioEncoder or consumed by an AudioDecoder.">AudioPacket</a>, raw sample bytes) into a single FRAM chunk. Valid only in <code>Mode::Write</code>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">frame</td><td>The frame to write. Must be valid. </td></tr>
@@ -551,7 +551,7 @@ template&lt;typename... Args&gt; </td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classDebugMediaFile.html">DebugMediaFile</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

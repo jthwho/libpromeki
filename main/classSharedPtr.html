@@ -103,6 +103,7 @@ $(document).ready(function(){initNavTree('classSharedPtr.html',''); initResizabl
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pub-static-attribs">Static Public Attributes</a> &#124;
+<a href="#friends">Friends</a> &#124;
 <a href="classSharedPtr-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">SharedPtr&lt; T, CopyOnWrite, ST &gt; Class Template Reference</div></div>
 </div><!--header-->
@@ -121,6 +122,14 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a0a1e745da1fd2ece256fbef5bf0bde88" id="r_a0a1e745da1fd2ece256fbef5bf0bde88"><td class="memItemLeft" align="right" valign="top"><a id="a0a1e745da1fd2ece256fbef5bf0bde88" name="a0a1e745da1fd2ece256fbef5bf0bde88"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>SharedPtr</b> (<a class="el" href="classSharedPtr.html">SharedPtr</a> &amp;&amp;<a class="el" href="classList.html">sp</a>) <a class="el" href="classList.html">noexcept</a></td></tr>
 <tr class="separator:a0a1e745da1fd2ece256fbef5bf0bde88"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25c21ef0cc346bc461efd96efd6ee3ae" id="r_a25c21ef0cc346bc461efd96efd6ee3ae"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">U</a> , <a class="el" href="classList.html">bool</a> UCoW, <a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">UST</a> , <a class="el" href="classList.html">typename</a>  = std::enable_if_t&lt;                     std::is_base_of_v&lt;T, U&gt; &amp;&amp;                     !std::is_same_v&lt;T, U&gt; &amp;&amp;                     IsSharedObject&lt;T&gt;::value &amp;&amp;                     IsSharedObject&lt;U&gt;::value &amp;&amp;                     std::is_same_v&lt;UST, U&gt;&gt;&gt; </td></tr>
+<tr class="memitem:a25c21ef0cc346bc461efd96efd6ee3ae"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classSharedPtr.html#a25c21ef0cc346bc461efd96efd6ee3ae">SharedPtr</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classSharedPtr.html">SharedPtr</a>&lt; <a class="el" href="classList.html">U</a>, <a class="el" href="classList.html">UCoW</a>, <a class="el" href="classList.html">UST</a> &gt; &amp;<a class="el" href="classList.html">sp</a>)</td></tr>
+<tr class="memdesc:a25c21ef0cc346bc461efd96efd6ee3ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implicit upcast from <a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a> of a derived native type.  <br /></td></tr>
+<tr class="separator:a25c21ef0cc346bc461efd96efd6ee3ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af7cf5f3c8a3b6d86bc547cab1137c3ec" id="r_af7cf5f3c8a3b6d86bc547cab1137c3ec"><td class="memTemplParams" colspan="2"><a id="af7cf5f3c8a3b6d86bc547cab1137c3ec" name="af7cf5f3c8a3b6d86bc547cab1137c3ec"></a>
+template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">U</a> , <a class="el" href="classList.html">bool</a> UCoW, <a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">UST</a> , <a class="el" href="classList.html">typename</a>  = std::enable_if_t&lt;                     std::is_base_of_v&lt;T, U&gt; &amp;&amp;                     !std::is_same_v&lt;T, U&gt; &amp;&amp;                     IsSharedObject&lt;T&gt;::value &amp;&amp;                     IsSharedObject&lt;U&gt;::value &amp;&amp;                     std::is_same_v&lt;UST, U&gt;&gt;&gt; </td></tr>
+<tr class="memitem:af7cf5f3c8a3b6d86bc547cab1137c3ec"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>SharedPtr</b> (<a class="el" href="classSharedPtr.html">SharedPtr</a>&lt; <a class="el" href="classList.html">U</a>, <a class="el" href="classList.html">UCoW</a>, <a class="el" href="classList.html">UST</a> &gt; &amp;&amp;<a class="el" href="classList.html">sp</a>) <a class="el" href="classList.html">noexcept</a></td></tr>
+<tr class="separator:af7cf5f3c8a3b6d86bc547cab1137c3ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad966e228b6412d869e4375a9ca74bd43" id="r_ad966e228b6412d869e4375a9ca74bd43"><td class="memItemLeft" align="right" valign="top"><a id="ad966e228b6412d869e4375a9ca74bd43" name="ad966e228b6412d869e4375a9ca74bd43"></a>
 <a class="el" href="classSharedPtr.html">SharedPtr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classSharedPtr.html">SharedPtr</a> &amp;<a class="el" href="classList.html">sp</a>)</td></tr>
 <tr class="separator:ad966e228b6412d869e4375a9ca74bd43"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -191,6 +200,13 @@ Static Public Attributes</h2></td></tr>
 <tr class="memitem:a653a5c172857c38a8c4794d136bc7181" id="r_a653a5c172857c38a8c4794d136bc7181"><td class="memItemLeft" align="right" valign="top"><a id="a653a5c172857c38a8c4794d136bc7181" name="a653a5c172857c38a8c4794d136bc7181"></a>
 <a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isCopyOnWrite</b> = <a class="el" href="classList.html">CopyOnWrite</a></td></tr>
 <tr class="separator:a653a5c172857c38a8c4794d136bc7181"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:a180454268b006be517553b43e413f0ad" id="r_a180454268b006be517553b43e413f0ad"><td class="memTemplParams" colspan="2"><a id="a180454268b006be517553b43e413f0ad" name="a180454268b006be517553b43e413f0ad"></a>
+template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">DerivedT</a> , <a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">BaseT</a> , <a class="el" href="classList.html">bool</a> CoWT, <a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">STT</a> &gt; </td></tr>
+<tr class="memitem:a180454268b006be517553b43e413f0ad"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classSharedPtr.html">SharedPtr</a>&lt; <a class="el" href="classList.html">DerivedT</a>, <a class="el" href="classList.html">CoWT</a>, <a class="el" href="classList.html">DerivedT</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>sharedPointerCast</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classSharedPtr.html">SharedPtr</a>&lt; <a class="el" href="classList.html">BaseT</a>, <a class="el" href="classList.html">CoWT</a>, <a class="el" href="classList.html">STT</a> &gt; &amp;<a class="el" href="classList.html">sp</a>)</td></tr>
+<tr class="separator:a180454268b006be517553b43e413f0ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">T</a>, <a class="el" href="classList.html">bool</a> CopyOnWrite = true, <a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">ST</a> = std::conditional_t&lt;IsSharedObject&lt;T&gt;::value, T, SharedPtrProxy&lt;T&gt;&gt;&gt;<br />
@@ -243,7 +259,41 @@ class SharedPtr&lt; T, CopyOnWrite, ST &gt;</div><p>A smart pointer class with r
   </table>
   </dd>
 </dl>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="a25c21ef0cc346bc461efd96efd6ee3ae" name="a25c21ef0cc346bc461efd96efd6ee3ae"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a25c21ef0cc346bc461efd96efd6ee3ae">&#9670;&#160;</a></span>SharedPtr()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">T</a> , <a class="el" href="classList.html">bool</a> CopyOnWrite = true, <a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">ST</a>  = std::conditional_t&lt;IsSharedObject&lt;T&gt;::value, T, SharedPtrProxy&lt;T&gt;&gt;&gt; </div>
+<div class="memtemplate">
+template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">U</a> , <a class="el" href="classList.html">bool</a> UCoW, <a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">UST</a> , <a class="el" href="classList.html">typename</a>  = std::enable_if_t&lt;                     std::is_base_of_v&lt;T, U&gt; &amp;&amp;                     !std::is_same_v&lt;T, U&gt; &amp;&amp;                     IsSharedObject&lt;T&gt;::value &amp;&amp;                     IsSharedObject&lt;U&gt;::value &amp;&amp;                     std::is_same_v&lt;UST, U&gt;&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSharedPtr.html">SharedPtr</a>&lt; <a class="el" href="classList.html">T</a>, <a class="el" href="classList.html">CopyOnWrite</a>, <a class="el" href="classList.html">ST</a> &gt;<a class="el" href="classSharedPtr.html">::SharedPtr</a> </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classSharedPtr.html">SharedPtr</a>&lt; <a class="el" href="classList.html">U</a>, <a class="el" href="classList.html">UCoW</a>, <a class="el" href="classList.html">UST</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>sp</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implicit upcast from <a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a> of a derived native type. </p>
+<p>Only participates in overload resolution when <code>U</code> publicly derives from <code>T</code>, <code>U</code> != <code>T</code>, both types are native shared objects, and both use the default storage type (storage = the object itself). This lets a <code>SharedPtr&lt;VideoPacket&gt;</code> convert to a <code>SharedPtr&lt;MediaPacket&gt;</code> without cloning, with the refcount sitting on the shared base's <code>_promeki_refct</code>. </p>
+
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="sharedptr_8h_source.html">sharedptr.h</a></li>
 </ul>
 </div><!-- contents -->
@@ -253,7 +303,7 @@ class SharedPtr&lt; T, CopyOnWrite, ST &gt;</div><p>A smart pointer class with r
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classSharedPtr.html">SharedPtr</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

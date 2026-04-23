@@ -102,218 +102,222 @@ $(document).ready(function(){initNavTree('classMediaPacket.html',''); initResiza
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="classMediaPacket-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">MediaPacket Class Reference<div class="ingroups"><a class="el" href="group__proav.html">ProAV Media</a></div></div></div>
+  <div class="headertitle"><div class="title">MediaPacket Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span><div class="ingroups"><a class="el" href="group__proav.html">ProAV Media</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Encoded bitstream access unit produced by a <a class="el" href="classVideoEncoder.html">VideoEncoder</a> or consumed by a <a class="el" href="classVideoDecoder.html">VideoDecoder</a>.  
+<p>Abstract polymorphic base for any encoded bitstream packet.  
  <a href="classMediaPacket.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="mediapacket_8h_source.html">mediapacket.h</a>&gt;</code></p>
+<div class="dynheader">
+Inheritance diagram for MediaPacket:</div>
+<div class="dyncontent">
+<div class="center"><img src="classMediaPacket__inherit__graph.png" border="0" usemap="#aMediaPacket_inherit__map" alt="Inheritance graph"/></div>
+<map name="aMediaPacket_inherit__map" id="aMediaPacket_inherit__map">
+<area shape="rect" title="Abstract polymorphic base for any encoded bitstream packet." alt="" coords="67,5,171,31"/>
+<area shape="rect" href="classAudioPacket.html" title="Encoded audio access unit produced by an AudioEncoder or consumed by an AudioDecoder." alt="" coords="5,79,107,104"/>
+<area shape="poly" title=" " alt="" coords="101,43,68,80,64,77,97,39"/>
+<area shape="rect" href="classVideoPacket.html" title="Encoded video access unit produced by a VideoEncoder or consumed by a VideoDecoder." alt="" coords="131,79,232,104"/>
+<area shape="poly" title=" " alt="" coords="140,39,173,77,169,80,136,43"/>
+</map>
+<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
+<div class="dynheader">
+Collaboration diagram for MediaPacket:</div>
+<div class="dyncontent">
+<div class="center"><img src="classMediaPacket__coll__graph.png" border="0" usemap="#aMediaPacket_coll__map" alt="Collaboration graph"/></div>
+<map name="aMediaPacket_coll__map" id="aMediaPacket_coll__map">
+<area shape="rect" title="Abstract polymorphic base for any encoded bitstream packet." alt="" coords="5,93,109,119"/>
+<area shape="rect" href="classRefCount.html" title="An atomic reference count object." alt="" coords="16,5,99,31"/>
+<area shape="poly" title=" " alt="" coords="60,45,60,93,55,93,55,45"/>
+</map>
+<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a6d228cbf2421239a345b8ce28dfc8c39" id="r_a6d228cbf2421239a345b8ce28dfc8c39"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39">Flag</a> : uint32_t { <br />
-&#160;&#160;<a class="el" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39a72c16f74343dca5fd248d93c6ce1cc30">None</a> = 0
-, <a class="el" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39a646639ca574bacfd258ebcc900a0feb7">Keyframe</a> = 1u &lt;&lt; 0
-, <a class="el" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39a7fa263cbbcf9fb005e8011f00c493ce3">EndOfStream</a> = 1u &lt;&lt; 1
-, <a class="el" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39a77accc5b152b86374612d2da95df2acc">Discardable</a> = 1u &lt;&lt; 2
-, <br />
-&#160;&#160;<a class="el" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39a0772c5bc4099a915b3640d5c821d008c">Corrupt</a> = 1u &lt;&lt; 3
-, <a class="el" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39a242744ea06c5d2680399014299d27878">ParameterSet</a> = 1u &lt;&lt; 4
-<br />
+<tr class="memitem:ac0fa97cdaa7566c7743659e925698673" id="r_ac0fa97cdaa7566c7743659e925698673"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html#ac0fa97cdaa7566c7743659e925698673">Kind</a> { <a class="el" href="classMediaPacket.html#ac0fa97cdaa7566c7743659e925698673a8f6283a2d952d86236a44d89ffffd1f3">Video</a>
+, <a class="el" href="classMediaPacket.html#ac0fa97cdaa7566c7743659e925698673aa16516efdefa71e14227552a3c2f197e">Audio</a>
+, <a class="el" href="classMediaPacket.html#ac0fa97cdaa7566c7743659e925698673aaf99be43b5763785b4db0e2e274ca01b">Ancillary</a>
  }</td></tr>
-<tr class="memdesc:a6d228cbf2421239a345b8ce28dfc8c39"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bit flags describing properties of a packet.  <a href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39">More...</a><br /></td></tr>
-<tr class="separator:a6d228cbf2421239a345b8ce28dfc8c39"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0d042c1f6143d734c401c0de3927ddb0" id="r_a0d042c1f6143d734c401c0de3927ddb0"><td class="memItemLeft" align="right" valign="top"><a id="a0d042c1f6143d734c401c0de3927ddb0" name="a0d042c1f6143d734c401c0de3927ddb0"></a>
-<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Ptr</b> = <a class="el" href="classSharedPtr.html">SharedPtr</a>&lt; <a class="el" href="classMediaPacket.html">MediaPacket</a> &gt;</td></tr>
-<tr class="memdesc:a0d042c1f6143d734c401c0de3927ddb0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shared pointer type for <a class="el" href="classMediaPacket.html" title="Encoded bitstream access unit produced by a VideoEncoder or consumed by a VideoDecoder.">MediaPacket</a>. <br /></td></tr>
-<tr class="separator:a0d042c1f6143d734c401c0de3927ddb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae017d26c149228d8f5c566a5bb1b3b04" id="r_ae017d26c149228d8f5c566a5bb1b3b04"><td class="memItemLeft" align="right" valign="top"><a id="ae017d26c149228d8f5c566a5bb1b3b04" name="ae017d26c149228d8f5c566a5bb1b3b04"></a>
-<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>List</b> = promeki::List&lt; <a class="el" href="classMediaPacket.html">MediaPacket</a> &gt;</td></tr>
-<tr class="memdesc:ae017d26c149228d8f5c566a5bb1b3b04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Plain value list of <a class="el" href="classMediaPacket.html" title="Encoded bitstream access unit produced by a VideoEncoder or consumed by a VideoDecoder.">MediaPacket</a> objects. <br /></td></tr>
-<tr class="separator:ae017d26c149228d8f5c566a5bb1b3b04"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memdesc:ac0fa97cdaa7566c7743659e925698673"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enumerates the concrete packet families the library models.  <a href="classMediaPacket.html#ac0fa97cdaa7566c7743659e925698673">More...</a><br /></td></tr>
+<tr class="separator:ac0fa97cdaa7566c7743659e925698673"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9cce91f035b478332bf08730929487f0" id="r_a9cce91f035b478332bf08730929487f0"><td class="memItemLeft" align="right" valign="top"><a id="a9cce91f035b478332bf08730929487f0" name="a9cce91f035b478332bf08730929487f0"></a>
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Ptr</b> = <a class="el" href="classSharedPtr.html">SharedPtr</a>&lt; <a class="el" href="classMediaPacket.html">MediaPacket</a>, <a class="el" href="classList.html">true</a>, <a class="el" href="classMediaPacket.html">MediaPacket</a> &gt;</td></tr>
+<tr class="memdesc:a9cce91f035b478332bf08730929487f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shared-pointer alias for pipeline-wide packet handoff. <br /></td></tr>
+<tr class="separator:a9cce91f035b478332bf08730929487f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9e7dbe394d90e21ff81d069531d729a8" id="r_a9e7dbe394d90e21ff81d069531d729a8"><td class="memItemLeft" align="right" valign="top"><a id="a9e7dbe394d90e21ff81d069531d729a8" name="a9e7dbe394d90e21ff81d069531d729a8"></a>
-<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>PtrList</b> = promeki::List&lt; <a class="el" href="classMediaPacket.html#a0d042c1f6143d734c401c0de3927ddb0">Ptr</a> &gt;</td></tr>
-<tr class="memdesc:a9e7dbe394d90e21ff81d069531d729a8"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of shared pointers to <a class="el" href="classMediaPacket.html" title="Encoded bitstream access unit produced by a VideoEncoder or consumed by a VideoDecoder.">MediaPacket</a> objects. <br /></td></tr>
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>PtrList</b> = promeki::List&lt; <a class="el" href="classMediaPacket.html#a9cce91f035b478332bf08730929487f0">Ptr</a> &gt;</td></tr>
+<tr class="memdesc:a9e7dbe394d90e21ff81d069531d729a8"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of shared pointers to base <code><a class="el" href="classMediaPacket.html" title="Abstract polymorphic base for any encoded bitstream packet.">MediaPacket</a></code> instances. <br /></td></tr>
 <tr class="separator:a9e7dbe394d90e21ff81d069531d729a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:aa0f3e009ec48e609b46980212bdfee40" id="r_aa0f3e009ec48e609b46980212bdfee40"><td class="memItemLeft" align="right" valign="top"><a id="aa0f3e009ec48e609b46980212bdfee40" name="aa0f3e009ec48e609b46980212bdfee40"></a>
+<a class="el" href="classList.html">virtual</a> <a class="el" href="classMediaPacket.html">MediaPacket</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>_promeki_clone</b> () <a class="el" href="classList.html">const</a> =0</td></tr>
+<tr class="separator:aa0f3e009ec48e609b46980212bdfee40"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acca7a5712ef95cc71bca57a2fce90aa3" id="r_acca7a5712ef95cc71bca57a2fce90aa3"><td class="memItemLeft" align="right" valign="top"><a id="acca7a5712ef95cc71bca57a2fce90aa3" name="acca7a5712ef95cc71bca57a2fce90aa3"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>MediaPacket</b> ()=<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">default</a></td></tr>
-<tr class="memdesc:acca7a5712ef95cc71bca57a2fce90aa3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an empty, invalid packet. <br /></td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>MediaPacket</b> ()=<a class="el" href="classList.html">default</a></td></tr>
+<tr class="memdesc:acca7a5712ef95cc71bca57a2fce90aa3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an empty packet (no payload, invalid timestamps). <br /></td></tr>
 <tr class="separator:acca7a5712ef95cc71bca57a2fce90aa3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1a2d5b39d3f29920fd0d0c75f7eb8162" id="r_a1a2d5b39d3f29920fd0d0c75f7eb8162"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html#a1a2d5b39d3f29920fd0d0c75f7eb8162">MediaPacket</a> (<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classBufferView.html">BufferView</a> &amp;<a class="el" href="classMediaPacket.html#a729697af537c09caacbc837b4a6859a3">view</a>, <a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;<a class="el" href="classMediaPacket.html#a56035fad1d51bc0bd4a45ea341fdbea8">pixelDesc</a>)</td></tr>
-<tr class="memdesc:a1a2d5b39d3f29920fd0d0c75f7eb8162"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a packet from a pre-built view and a pixel description.  <br /></td></tr>
-<tr class="separator:a1a2d5b39d3f29920fd0d0c75f7eb8162"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad812c6698c695e7952fd64982c2d44c1" id="r_ad812c6698c695e7952fd64982c2d44c1"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html#ad812c6698c695e7952fd64982c2d44c1">MediaPacket</a> (<a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3">Buffer::Ptr</a> <a class="el" href="classMediaPacket.html#a8f7aa84ac2d306d6dbd36584394a7479">buffer</a>, <a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;<a class="el" href="classMediaPacket.html#a56035fad1d51bc0bd4a45ea341fdbea8">pixelDesc</a>)</td></tr>
-<tr class="memdesc:ad812c6698c695e7952fd64982c2d44c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a packet that owns a whole buffer as its payload.  <br /></td></tr>
-<tr class="separator:ad812c6698c695e7952fd64982c2d44c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afc6f8ef79aa633e8e33df35e771a07c1" id="r_afc6f8ef79aa633e8e33df35e771a07c1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html#afc6f8ef79aa633e8e33df35e771a07c1">isValid</a> () <a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a></td></tr>
-<tr class="memdesc:afc6f8ef79aa633e8e33df35e771a07c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when the packet has a backing buffer and a valid <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a>.  <br /></td></tr>
-<tr class="separator:afc6f8ef79aa633e8e33df35e771a07c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac42feb969a8a5b9962c2d1088f7d94de" id="r_ac42feb969a8a5b9962c2d1088f7d94de"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html#ac42feb969a8a5b9962c2d1088f7d94de">MediaPacket</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classBufferView.html">BufferView</a> &amp;<a class="el" href="classMediaPacket.html#a729697af537c09caacbc837b4a6859a3">view</a>)</td></tr>
+<tr class="memdesc:ac42feb969a8a5b9962c2d1088f7d94de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a packet that wraps an explicit view.  <br /></td></tr>
+<tr class="separator:ac42feb969a8a5b9962c2d1088f7d94de"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a00011532c42f37102a5c7bec407eca6c" id="r_a00011532c42f37102a5c7bec407eca6c"><td class="memItemLeft" align="right" valign="top"><a id="a00011532c42f37102a5c7bec407eca6c" name="a00011532c42f37102a5c7bec407eca6c"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>MediaPacket</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaPacket.html">MediaPacket</a> &amp;)=<a class="el" href="classList.html">default</a></td></tr>
+<tr class="separator:a00011532c42f37102a5c7bec407eca6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a406084d2145732bb3ec8c8bc4cb89f1f" id="r_a406084d2145732bb3ec8c8bc4cb89f1f"><td class="memItemLeft" align="right" valign="top"><a id="a406084d2145732bb3ec8c8bc4cb89f1f" name="a406084d2145732bb3ec8c8bc4cb89f1f"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>MediaPacket</b> (<a class="el" href="classMediaPacket.html">MediaPacket</a> &amp;&amp;)=<a class="el" href="classList.html">default</a></td></tr>
+<tr class="separator:a406084d2145732bb3ec8c8bc4cb89f1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3864d259f4e863237b4ccee7910ecd3f" id="r_a3864d259f4e863237b4ccee7910ecd3f"><td class="memItemLeft" align="right" valign="top"><a id="a3864d259f4e863237b4ccee7910ecd3f" name="a3864d259f4e863237b4ccee7910ecd3f"></a>
+<a class="el" href="classMediaPacket.html">MediaPacket</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaPacket.html">MediaPacket</a> &amp;)=<a class="el" href="classList.html">default</a></td></tr>
+<tr class="separator:a3864d259f4e863237b4ccee7910ecd3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a732f8cdae5ccfa831e618f8ea62cc781" id="r_a732f8cdae5ccfa831e618f8ea62cc781"><td class="memItemLeft" align="right" valign="top"><a id="a732f8cdae5ccfa831e618f8ea62cc781" name="a732f8cdae5ccfa831e618f8ea62cc781"></a>
+<a class="el" href="classMediaPacket.html">MediaPacket</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classMediaPacket.html">MediaPacket</a> &amp;&amp;)=<a class="el" href="classList.html">default</a></td></tr>
+<tr class="separator:a732f8cdae5ccfa831e618f8ea62cc781"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a441421461d4ba988aef3016b057d9697" id="r_a441421461d4ba988aef3016b057d9697"><td class="memItemLeft" align="right" valign="top"><a id="a441421461d4ba988aef3016b057d9697" name="a441421461d4ba988aef3016b057d9697"></a>
+<a class="el" href="classList.html">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><b>~MediaPacket</b> ()=<a class="el" href="classList.html">default</a></td></tr>
+<tr class="memdesc:a441421461d4ba988aef3016b057d9697"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual destructor; subclasses manage their own fields. <br /></td></tr>
+<tr class="separator:a441421461d4ba988aef3016b057d9697"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2ce4b451030085e6c05c1d6e201568ab" id="r_a2ce4b451030085e6c05c1d6e201568ab"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classMediaPacket.html#ac0fa97cdaa7566c7743659e925698673">Kind</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html#a2ce4b451030085e6c05c1d6e201568ab">kind</a> () <a class="el" href="classList.html">const</a> =0</td></tr>
+<tr class="memdesc:a2ce4b451030085e6c05c1d6e201568ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the concrete packet kind for dispatch.  <br /></td></tr>
+<tr class="separator:a2ce4b451030085e6c05c1d6e201568ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a809beff7e57ba0ff5c62ccb97411965f" id="r_a809beff7e57ba0ff5c62ccb97411965f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html#a809beff7e57ba0ff5c62ccb97411965f">isValid</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a809beff7e57ba0ff5c62ccb97411965f"><td class="mdescLeft">&#160;</td><td class="mdescRight">True when the packet has a payload worth dispatching.  <br /></td></tr>
+<tr class="separator:a809beff7e57ba0ff5c62ccb97411965f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a729697af537c09caacbc837b4a6859a3" id="r_a729697af537c09caacbc837b4a6859a3"><td class="memItemLeft" align="right" valign="top"><a id="a729697af537c09caacbc837b4a6859a3" name="a729697af537c09caacbc837b4a6859a3"></a>
-<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classBufferView.html">BufferView</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>view</b> () <a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a></td></tr>
+<a class="el" href="classList.html">const</a> <a class="el" href="classBufferView.html">BufferView</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>view</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a729697af537c09caacbc837b4a6859a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the view onto the encoded bytes. <br /></td></tr>
 <tr class="separator:a729697af537c09caacbc837b4a6859a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad50258bd27d117ede7d43faa87945566" id="r_ad50258bd27d117ede7d43faa87945566"><td class="memItemLeft" align="right" valign="top"><a id="ad50258bd27d117ede7d43faa87945566" name="ad50258bd27d117ede7d43faa87945566"></a>
 <a class="el" href="classBufferView.html">BufferView</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>view</b> ()</td></tr>
 <tr class="memdesc:ad50258bd27d117ede7d43faa87945566"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reference to the view. <br /></td></tr>
 <tr class="separator:ad50258bd27d117ede7d43faa87945566"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a286c0b0c213e06e4924f792171465314" id="r_a286c0b0c213e06e4924f792171465314"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html#a286c0b0c213e06e4924f792171465314">setView</a> (<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classBufferView.html">BufferView</a> &amp;v)</td></tr>
-<tr class="memdesc:a286c0b0c213e06e4924f792171465314"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replaces the view onto the encoded bytes.  <br /></td></tr>
+<tr class="memitem:a286c0b0c213e06e4924f792171465314" id="r_a286c0b0c213e06e4924f792171465314"><td class="memItemLeft" align="right" valign="top"><a id="a286c0b0c213e06e4924f792171465314" name="a286c0b0c213e06e4924f792171465314"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setView</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classBufferView.html">BufferView</a> &amp;v)</td></tr>
+<tr class="memdesc:a286c0b0c213e06e4924f792171465314"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replaces the view onto the encoded bytes. <br /></td></tr>
 <tr class="separator:a286c0b0c213e06e4924f792171465314"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8f7aa84ac2d306d6dbd36584394a7479" id="r_a8f7aa84ac2d306d6dbd36584394a7479"><td class="memItemLeft" align="right" valign="top"><a id="a8f7aa84ac2d306d6dbd36584394a7479" name="a8f7aa84ac2d306d6dbd36584394a7479"></a>
-<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3">Buffer::Ptr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>buffer</b> () <a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a></td></tr>
-<tr class="memdesc:a8f7aa84ac2d306d6dbd36584394a7479"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the underlying shared buffer (may be null for an empty packet). <br /></td></tr>
+<a class="el" href="classList.html">const</a> <a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3">Buffer::Ptr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>buffer</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a8f7aa84ac2d306d6dbd36584394a7479"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the underlying shared buffer (may be null). <br /></td></tr>
 <tr class="separator:a8f7aa84ac2d306d6dbd36584394a7479"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa23a95db89d494d72b174f030abbb110" id="r_aa23a95db89d494d72b174f030abbb110"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html#aa23a95db89d494d72b174f030abbb110">setBuffer</a> (<a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3">Buffer::Ptr</a> b)</td></tr>
-<tr class="memdesc:aa23a95db89d494d72b174f030abbb110"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replaces the payload with a view spanning the entire given buffer.  <br /></td></tr>
+<tr class="memitem:aa23a95db89d494d72b174f030abbb110" id="r_aa23a95db89d494d72b174f030abbb110"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html#aa23a95db89d494d72b174f030abbb110">setBuffer</a> (<a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3">Buffer::Ptr</a> b)</td></tr>
+<tr class="memdesc:aa23a95db89d494d72b174f030abbb110"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replaces the payload with a view spanning the whole given buffer.  <br /></td></tr>
 <tr class="separator:aa23a95db89d494d72b174f030abbb110"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aed413b91743bb7ab923e74175d86678a" id="r_aed413b91743bb7ab923e74175d86678a"><td class="memItemLeft" align="right" valign="top"><a id="aed413b91743bb7ab923e74175d86678a" name="aed413b91743bb7ab923e74175d86678a"></a>
-<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>size</b> () <a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a></td></tr>
+<a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>size</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:aed413b91743bb7ab923e74175d86678a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the logical payload size in bytes. <br /></td></tr>
 <tr class="separator:aed413b91743bb7ab923e74175d86678a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a56035fad1d51bc0bd4a45ea341fdbea8" id="r_a56035fad1d51bc0bd4a45ea341fdbea8"><td class="memItemLeft" align="right" valign="top"><a id="a56035fad1d51bc0bd4a45ea341fdbea8" name="a56035fad1d51bc0bd4a45ea341fdbea8"></a>
-<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>pixelDesc</b> () <a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a></td></tr>
-<tr class="memdesc:a56035fad1d51bc0bd4a45ea341fdbea8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the pixel description identifying the codec format. <br /></td></tr>
-<tr class="separator:a56035fad1d51bc0bd4a45ea341fdbea8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a618e96abde6cde7c40b46c34374e7758" id="r_a618e96abde6cde7c40b46c34374e7758"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html#a618e96abde6cde7c40b46c34374e7758">setPixelDesc</a> (<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">pd</a>)</td></tr>
-<tr class="memdesc:a618e96abde6cde7c40b46c34374e7758"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the pixel description.  <br /></td></tr>
-<tr class="separator:a618e96abde6cde7c40b46c34374e7758"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af989050a9b0cd799b67686d325db33f7" id="r_af989050a9b0cd799b67686d325db33f7"><td class="memItemLeft" align="right" valign="top"><a id="af989050a9b0cd799b67686d325db33f7" name="af989050a9b0cd799b67686d325db33f7"></a>
-<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>pts</b> () <a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a></td></tr>
+<a class="el" href="classList.html">const</a> <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>pts</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:af989050a9b0cd799b67686d325db33f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the presentation timestamp. <br /></td></tr>
 <tr class="separator:af989050a9b0cd799b67686d325db33f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4705ef65c75c2a8f259fbbe902dd1043" id="r_a4705ef65c75c2a8f259fbbe902dd1043"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html#a4705ef65c75c2a8f259fbbe902dd1043">setPts</a> (<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> &amp;ts)</td></tr>
-<tr class="memdesc:a4705ef65c75c2a8f259fbbe902dd1043"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the presentation timestamp.  <br /></td></tr>
+<tr class="memitem:a4705ef65c75c2a8f259fbbe902dd1043" id="r_a4705ef65c75c2a8f259fbbe902dd1043"><td class="memItemLeft" align="right" valign="top"><a id="a4705ef65c75c2a8f259fbbe902dd1043" name="a4705ef65c75c2a8f259fbbe902dd1043"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setPts</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> &amp;ts)</td></tr>
+<tr class="memdesc:a4705ef65c75c2a8f259fbbe902dd1043"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the presentation timestamp. <br /></td></tr>
 <tr class="separator:a4705ef65c75c2a8f259fbbe902dd1043"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad9c70404d3863d64be52b8e71c29cad6" id="r_ad9c70404d3863d64be52b8e71c29cad6"><td class="memItemLeft" align="right" valign="top"><a id="ad9c70404d3863d64be52b8e71c29cad6" name="ad9c70404d3863d64be52b8e71c29cad6"></a>
-<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>dts</b> () <a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a></td></tr>
-<tr class="memdesc:ad9c70404d3863d64be52b8e71c29cad6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the decode timestamp. <br /></td></tr>
+<tr class="memitem:ad9c70404d3863d64be52b8e71c29cad6" id="r_ad9c70404d3863d64be52b8e71c29cad6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html#ad9c70404d3863d64be52b8e71c29cad6">dts</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ad9c70404d3863d64be52b8e71c29cad6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the decode timestamp.  <br /></td></tr>
 <tr class="separator:ad9c70404d3863d64be52b8e71c29cad6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a458df8aca0e3e5f9c1a442db682141ff" id="r_a458df8aca0e3e5f9c1a442db682141ff"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html#a458df8aca0e3e5f9c1a442db682141ff">setDts</a> (<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> &amp;ts)</td></tr>
-<tr class="memdesc:a458df8aca0e3e5f9c1a442db682141ff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the decode timestamp.  <br /></td></tr>
+<tr class="memitem:a458df8aca0e3e5f9c1a442db682141ff" id="r_a458df8aca0e3e5f9c1a442db682141ff"><td class="memItemLeft" align="right" valign="top"><a id="a458df8aca0e3e5f9c1a442db682141ff" name="a458df8aca0e3e5f9c1a442db682141ff"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setDts</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> &amp;ts)</td></tr>
+<tr class="memdesc:a458df8aca0e3e5f9c1a442db682141ff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the decode timestamp. <br /></td></tr>
 <tr class="separator:a458df8aca0e3e5f9c1a442db682141ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a76a91339be896c63c3e684251f51ff87" id="r_a76a91339be896c63c3e684251f51ff87"><td class="memItemLeft" align="right" valign="top"><a id="a76a91339be896c63c3e684251f51ff87" name="a76a91339be896c63c3e684251f51ff87"></a>
-<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classDuration.html">Duration</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>duration</b> () <a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a></td></tr>
+<a class="el" href="classList.html">const</a> <a class="el" href="classDuration.html">Duration</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>duration</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a76a91339be896c63c3e684251f51ff87"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the nominal duration of the packet. <br /></td></tr>
 <tr class="separator:a76a91339be896c63c3e684251f51ff87"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab43eef2c57efcffea125cec230bb5775" id="r_ab43eef2c57efcffea125cec230bb5775"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html#ab43eef2c57efcffea125cec230bb5775">setDuration</a> (<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classDuration.html">Duration</a> &amp;d)</td></tr>
-<tr class="memdesc:ab43eef2c57efcffea125cec230bb5775"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the nominal duration of the packet.  <br /></td></tr>
+<tr class="memitem:ab43eef2c57efcffea125cec230bb5775" id="r_ab43eef2c57efcffea125cec230bb5775"><td class="memItemLeft" align="right" valign="top"><a id="ab43eef2c57efcffea125cec230bb5775" name="ab43eef2c57efcffea125cec230bb5775"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setDuration</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classDuration.html">Duration</a> &amp;d)</td></tr>
+<tr class="memdesc:ab43eef2c57efcffea125cec230bb5775"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the nominal duration of the packet. <br /></td></tr>
 <tr class="separator:ab43eef2c57efcffea125cec230bb5775"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2dbab8f4836fc1fa52e3f090ca5a2358" id="r_a2dbab8f4836fc1fa52e3f090ca5a2358"><td class="memItemLeft" align="right" valign="top"><a id="a2dbab8f4836fc1fa52e3f090ca5a2358" name="a2dbab8f4836fc1fa52e3f090ca5a2358"></a>
-<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">uint32_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>flags</b> () <a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a></td></tr>
-<tr class="memdesc:a2dbab8f4836fc1fa52e3f090ca5a2358"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the raw flag bitmask. <br /></td></tr>
-<tr class="separator:a2dbab8f4836fc1fa52e3f090ca5a2358"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a32d5bbce95cd56b95e4e7dce9ee3c310" id="r_a32d5bbce95cd56b95e4e7dce9ee3c310"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html#a32d5bbce95cd56b95e4e7dce9ee3c310">setFlags</a> (<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">uint32_t</a> <a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">f</a>)</td></tr>
-<tr class="memdesc:a32d5bbce95cd56b95e4e7dce9ee3c310"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replaces the entire flag bitmask.  <br /></td></tr>
-<tr class="separator:a32d5bbce95cd56b95e4e7dce9ee3c310"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9a2301a691e0c0e5fd1d21a7f72cb12a" id="r_a9a2301a691e0c0e5fd1d21a7f72cb12a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html#a9a2301a691e0c0e5fd1d21a7f72cb12a">addFlag</a> (<a class="el" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39">Flag</a> <a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">f</a>)</td></tr>
-<tr class="memdesc:a9a2301a691e0c0e5fd1d21a7f72cb12a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets a single flag in the bitmask.  <br /></td></tr>
-<tr class="separator:a9a2301a691e0c0e5fd1d21a7f72cb12a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6e9eea9adb8949ec746f6e9b9c41cf64" id="r_a6e9eea9adb8949ec746f6e9b9c41cf64"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html#a6e9eea9adb8949ec746f6e9b9c41cf64">removeFlag</a> (<a class="el" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39">Flag</a> <a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">f</a>)</td></tr>
-<tr class="memdesc:a6e9eea9adb8949ec746f6e9b9c41cf64"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears a single flag from the bitmask.  <br /></td></tr>
-<tr class="separator:a6e9eea9adb8949ec746f6e9b9c41cf64"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acebd75ed63f00360b83c465e8ecd5ade" id="r_acebd75ed63f00360b83c465e8ecd5ade"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html#acebd75ed63f00360b83c465e8ecd5ade">hasFlag</a> (<a class="el" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39">Flag</a> <a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">f</a>) <a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a></td></tr>
-<tr class="memdesc:acebd75ed63f00360b83c465e8ecd5ade"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when the given flag is set.  <br /></td></tr>
-<tr class="separator:acebd75ed63f00360b83c465e8ecd5ade"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1b30f2a0f1e70687e0b5a0cca6b1fa92" id="r_a1b30f2a0f1e70687e0b5a0cca6b1fa92"><td class="memItemLeft" align="right" valign="top"><a id="a1b30f2a0f1e70687e0b5a0cca6b1fa92" name="a1b30f2a0f1e70687e0b5a0cca6b1fa92"></a>
-<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isKeyframe</b> () <a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a></td></tr>
-<tr class="memdesc:a1b30f2a0f1e70687e0b5a0cca6b1fa92"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience: true when the <code>Keyframe</code> flag is set. <br /></td></tr>
-<tr class="separator:a1b30f2a0f1e70687e0b5a0cca6b1fa92"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a237687349b662d0117b4d87056d2ce35" id="r_a237687349b662d0117b4d87056d2ce35"><td class="memItemLeft" align="right" valign="top"><a id="a237687349b662d0117b4d87056d2ce35" name="a237687349b662d0117b4d87056d2ce35"></a>
-<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isEndOfStream</b> () <a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a></td></tr>
-<tr class="memdesc:a237687349b662d0117b4d87056d2ce35"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience: true when the <code>EndOfStream</code> flag is set. <br /></td></tr>
-<tr class="separator:a237687349b662d0117b4d87056d2ce35"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1ab46cdbdf2a091a6bb902a70f720a8f" id="r_a1ab46cdbdf2a091a6bb902a70f720a8f"><td class="memItemLeft" align="right" valign="top"><a id="a1ab46cdbdf2a091a6bb902a70f720a8f" name="a1ab46cdbdf2a091a6bb902a70f720a8f"></a>
-<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isParameterSet</b> () <a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a></td></tr>
-<tr class="memdesc:a1ab46cdbdf2a091a6bb902a70f720a8f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience: true when the <code>ParameterSet</code> flag is set. <br /></td></tr>
-<tr class="separator:a1ab46cdbdf2a091a6bb902a70f720a8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4d41782765e1368dcce9e2aac800a00c" id="r_a4d41782765e1368dcce9e2aac800a00c"><td class="memItemLeft" align="right" valign="top"><a id="a4d41782765e1368dcce9e2aac800a00c" name="a4d41782765e1368dcce9e2aac800a00c"></a>
-<a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>metadata</b> () <a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a></td></tr>
+<a class="el" href="classList.html">const</a> <a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>metadata</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a4d41782765e1368dcce9e2aac800a00c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the metadata container. <br /></td></tr>
 <tr class="separator:a4d41782765e1368dcce9e2aac800a00c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adfdd26d10ac22d903d50c0a3499e7df9" id="r_adfdd26d10ac22d903d50c0a3499e7df9"><td class="memItemLeft" align="right" valign="top"><a id="adfdd26d10ac22d903d50c0a3499e7df9" name="adfdd26d10ac22d903d50c0a3499e7df9"></a>
 <a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>metadata</b> ()</td></tr>
 <tr class="memdesc:adfdd26d10ac22d903d50c0a3499e7df9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reference to the metadata container. <br /></td></tr>
 <tr class="separator:adfdd26d10ac22d903d50c0a3499e7df9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a237687349b662d0117b4d87056d2ce35" id="r_a237687349b662d0117b4d87056d2ce35"><td class="memItemLeft" align="right" valign="top"><a id="a237687349b662d0117b4d87056d2ce35" name="a237687349b662d0117b4d87056d2ce35"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isEndOfStream</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a237687349b662d0117b4d87056d2ce35"><td class="mdescLeft">&#160;</td><td class="mdescRight">True when <code>Metadata::EndOfStream</code> is set on this packet. <br /></td></tr>
+<tr class="separator:a237687349b662d0117b4d87056d2ce35"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad77327bebde639d597ac12fc0e198134" id="r_ad77327bebde639d597ac12fc0e198134"><td class="memItemLeft" align="right" valign="top"><a id="ad77327bebde639d597ac12fc0e198134" name="ad77327bebde639d597ac12fc0e198134"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>markEndOfStream</b> (<a class="el" href="classList.html">bool</a> v=<a class="el" href="classList.html">true</a>)</td></tr>
+<tr class="memdesc:ad77327bebde639d597ac12fc0e198134"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets <code>Metadata::EndOfStream</code> to <code>v</code> (default true). <br /></td></tr>
+<tr class="separator:ad77327bebde639d597ac12fc0e198134"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a05f1fd1ac223816ca6c288b1d7f53d09" id="r_a05f1fd1ac223816ca6c288b1d7f53d09"><td class="memItemLeft" align="right" valign="top"><a id="a05f1fd1ac223816ca6c288b1d7f53d09" name="a05f1fd1ac223816ca6c288b1d7f53d09"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isCorrupt</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a05f1fd1ac223816ca6c288b1d7f53d09"><td class="mdescLeft">&#160;</td><td class="mdescRight">True when <code>Metadata::Corrupt</code> is set on this packet. <br /></td></tr>
+<tr class="separator:a05f1fd1ac223816ca6c288b1d7f53d09"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a28ed23b30f1907669b8081bb4a5cc9b7" id="r_a28ed23b30f1907669b8081bb4a5cc9b7"><td class="memItemLeft" align="right" valign="top"><a id="a28ed23b30f1907669b8081bb4a5cc9b7" name="a28ed23b30f1907669b8081bb4a5cc9b7"></a>
+<a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><b>corruptReason</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a28ed23b30f1907669b8081bb4a5cc9b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the human-readable corruption reason, or an empty string. <br /></td></tr>
+<tr class="separator:a28ed23b30f1907669b8081bb4a5cc9b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a570bb073d9e5996744e2c6ba13cd3955" id="r_a570bb073d9e5996744e2c6ba13cd3955"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html#a570bb073d9e5996744e2c6ba13cd3955">markCorrupt</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">reason</a>=<a class="el" href="classString.html">String</a>())</td></tr>
+<tr class="memdesc:a570bb073d9e5996744e2c6ba13cd3955"><td class="mdescLeft">&#160;</td><td class="mdescRight">Marks the packet as corrupt with an optional explanation.  <br /></td></tr>
+<tr class="separator:a570bb073d9e5996744e2c6ba13cd3955"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
+Public Attributes</h2></td></tr>
+<tr class="memitem:a25cf53a08e53ae9e8ff7a4bd20eccff9" id="r_a25cf53a08e53ae9e8ff7a4bd20eccff9"><td class="memItemLeft" align="right" valign="top"><a id="a25cf53a08e53ae9e8ff7a4bd20eccff9" name="a25cf53a08e53ae9e8ff7a4bd20eccff9"></a>
+<a class="el" href="classRefCount.html">RefCount</a>&#160;</td><td class="memItemRight" valign="bottom"><b>_promeki_refct</b></td></tr>
+<tr class="separator:a25cf53a08e53ae9e8ff7a4bd20eccff9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Encoded bitstream access unit produced by a <a class="el" href="classVideoEncoder.html">VideoEncoder</a> or consumed by a <a class="el" href="classVideoDecoder.html">VideoDecoder</a>. </p>
-<p>A <a class="el" href="classMediaPacket.html">MediaPacket</a> represents one compressed access unit (AU) in a video or audio bitstream. For video codecs this is typically one encoded frame — one or more concatenated NAL units for <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a> / HEVC, or one coded picture for any other frame-based codec. For block-based audio codecs it is one encoded audio frame.</p>
-<p>A packet carries:</p><ul>
-<li>A <a class="el" href="classBufferView.html">BufferView</a> onto the raw encoded bytes. The view owns a shared <a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3">Buffer::Ptr</a> internally, so the single-allocation path (whole buffer = one packet) is as cheap as wrapping a <code><a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3" title="Shared pointer type for Buffer.">Buffer::Ptr</a></code> directly. The view form additionally lets several packets reference non-overlapping regions of one buffer — what an NVENC output access-unit with concatenated SPS / PPS / IDR NAL units naturally produces, and what MP4 sample reads and RTP fragmentation both want.</li>
-<li>A <a class="el" href="classPixelDesc.html">PixelDesc</a> identifying the codec format (e.g. <code><a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa5ee8334d39e47fc8d9c55bbf2e4a1216" title="H.264 / AVC compressed video (avc1/avc3).">PixelDesc::H264</a></code>, <code><a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa4a171b5dd0af777e03264653659a0258" title="H.265 / HEVC compressed video (hvc1/hev1).">PixelDesc::HEVC</a></code>). The <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a>'s <code>codecName</code> field is what the <a class="el" href="classVideoEncoder.html">VideoEncoder</a> / <a class="el" href="classVideoDecoder.html">VideoDecoder</a> registries key off.</li>
-<li>Separate presentation and decode <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> values. With B-frames the decode order differs from the presentation order, so both are recorded; callers that only care about PTS can ignore DTS.</li>
-<li>A nominal <a class="el" href="classDuration.html">Duration</a> for the packet (one frame period for video, the sample-count duration for audio).</li>
-<li>A bitmask of <a class="el" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39">Flag</a> values (keyframe / end-of-stream / discardable / corrupt / parameter-set).</li>
-<li>A freeform <a class="el" href="classMetadata.html">Metadata</a> container for codec-specific annotations such as out-of-band SPS / PPS / VPS, HDR metadata, or private extradata.</li>
+<div class="textblock"><p>Abstract polymorphic base for any encoded bitstream packet. </p>
+<p>A <a class="el" href="classMediaPacket.html">MediaPacket</a> represents one compressed access unit (AU) flowing through a pipeline. The common fields — a byte range on a shared <a class="el" href="classBuffer.html">Buffer</a>, presentation / decode timestamps, nominal duration, and a <a class="el" href="classMetadata.html">Metadata</a> container — apply to every kind of packet we model; codec-identity, keyframe/parameter-set/etc. flags, sample counts, and other per-family properties live on concrete subclasses such as <a class="el" href="classVideoPacket.html">VideoPacket</a>, <a class="el" href="classAudioPacket.html">AudioPacket</a>, and future Ancillary/SDI/ST2110 packet types.</p>
+<dl class="section user"><dt>Subclassing</dt><dd></dd></dl>
+<p>Subclasses use <a class="el" href="sharedptr_8h.html#a60b00ce3287916679cab881cc182d143">PROMEKI_SHARED_DERIVED</a> to participate in <code>SharedPtr-based</code> ownership, override <a class="el" href="classMediaPacket.html#a2ce4b451030085e6c05c1d6e201568ab">kind()</a> to identify themselves for cheap dispatch without RTTI, and override clone() to return the correct derived type during copy-on-write. Concrete subclasses are <em>not</em> marked <code>final</code> — further specialization (for example, <code>H264VideoPacket</code> or <code>MpegVideoPacket</code> deriving from <a class="el" href="classVideoPacket.html">VideoPacket</a>) is an intentional extension point.</p>
+<dl class="section user"><dt>Stream-level metadata</dt><dd></dd></dl>
+<p>End-of-stream and corruption marking are carried in <a class="el" href="classMediaPacket.html#adfdd26d10ac22d903d50c0a3499e7df9">metadata()</a> rather than as per-packet flags so that the same keys work uniformly across packets, <a class="el" href="classFrame.html">Frame</a>, <a class="el" href="classImage.html">Image</a>, and Audio:</p>
+<ul>
+<li><code>Metadata::EndOfStream</code> (bool) — terminal packet in the stream.</li>
+<li><code>Metadata::Corrupt</code> (bool) — payload is known to be corrupt.</li>
+<li><code>Metadata::CorruptReason</code> (<a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>) — human-readable explanation.</li>
 </ul>
-<p><a class="el" href="classMediaPacket.html" title="Encoded bitstream access unit produced by a VideoEncoder or consumed by a VideoDecoder.">MediaPacket</a> follows the library's shareable data-object convention: instances are plain values by default, and a <a class="el" href="classMediaPacket.html#a0d042c1f6143d734c401c0de3927ddb0">MediaPacket::Ptr</a> alias is provided when shared ownership is desired (typical in pipelines that queue packets across threads).</p>
-<dl class="section user"><dt>Example — single-allocation case</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classSharedPtr.html">MediaPacket::Ptr</a> <a class="code hl_typedef" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">pkt</a> = MediaPacket::Ptr::create();</div>
-<div class="line"><a class="code hl_typedef" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">pkt</a>.modify()-&gt;setBuffer(<a class="code hl_typedef" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">encodedBuffer</a>);   <span class="comment">// whole buffer == one packet</span></div>
-<div class="line"><a class="code hl_typedef" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">pkt</a>.modify()-&gt;setPixelDesc(<a class="code hl_enumvalue" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa5ee8334d39e47fc8d9c55bbf2e4a1216">PixelDesc::H264</a>);</div>
-<div class="line"><a class="code hl_typedef" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">pkt</a>.modify()-&gt;setPts(<a class="code hl_function" href="classMediaPacket.html#af989050a9b0cd799b67686d325db33f7">pts</a>);</div>
-<div class="line"><a class="code hl_typedef" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">pkt</a>.modify()-&gt;setDuration(<a class="code hl_function" href="classDuration.html#a6e99cef7b082933b9a9e7825f2c81f52">Duration::fromSeconds</a>(1) / 30);</div>
-<div class="line"><a class="code hl_typedef" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">pkt</a>.modify()-&gt;addFlag(<a class="code hl_enumvalue" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39a646639ca574bacfd258ebcc900a0feb7">MediaPacket::Keyframe</a>);</div>
-<div class="ttc" id="aclassDuration_html_a6e99cef7b082933b9a9e7825f2c81f52"><div class="ttname"><a href="classDuration.html#a6e99cef7b082933b9a9e7825f2c81f52">Duration::fromSeconds</a></div><div class="ttdeci">static Duration fromSeconds(int64_t s)</div><div class="ttdoc">Creates a Duration from seconds.</div><div class="ttdef"><b>Definition</b> duration.h:54</div></div>
-<div class="ttc" id="aclassMediaPacket_html_a6d228cbf2421239a345b8ce28dfc8c39a646639ca574bacfd258ebcc900a0feb7"><div class="ttname"><a href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39a646639ca574bacfd258ebcc900a0feb7">MediaPacket::Keyframe</a></div><div class="ttdeci">@ Keyframe</div><div class="ttdoc">IDR / I-frame; a self-contained decode entry point.</div><div class="ttdef"><b>Definition</b> mediapacket.h:105</div></div>
-<div class="ttc" id="aclassMediaPacket_html_ae017d26c149228d8f5c566a5bb1b3b04"><div class="ttname"><a href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">MediaPacket::List</a></div><div class="ttdeci">promeki::List&lt; MediaPacket &gt; List</div><div class="ttdoc">Plain value list of MediaPacket objects.</div><div class="ttdef"><b>Definition</b> mediapacket.h:91</div></div>
-<div class="ttc" id="aclassMediaPacket_html_af989050a9b0cd799b67686d325db33f7"><div class="ttname"><a href="classMediaPacket.html#af989050a9b0cd799b67686d325db33f7">MediaPacket::pts</a></div><div class="ttdeci">const MediaTimeStamp &amp; pts() const</div><div class="ttdoc">Returns the presentation timestamp.</div><div class="ttdef"><b>Definition</b> mediapacket.h:187</div></div>
-<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafa5ee8334d39e47fc8d9c55bbf2e4a1216"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa5ee8334d39e47fc8d9c55bbf2e4a1216">PixelDesc::H264</a></div><div class="ttdeci">@ H264</div><div class="ttdoc">H.264 / AVC compressed video (avc1/avc3).</div><div class="ttdef"><b>Definition</b> pixeldesc.h:326</div></div>
-<div class="ttc" id="aclassSharedPtr_html"><div class="ttname"><a href="classSharedPtr.html">SharedPtr&lt; MediaPacket &gt;</a></div></div>
-</div><!-- fragment --></dd></dl>
-<dl class="section user"><dt>Example — one buffer shared by three packets</dt><dd><div class="fragment"><div class="line"><span class="comment">// NVENC emitted a single locked bitstream buffer that actually</span></div>
-<div class="line"><span class="comment">// contains three concatenated NAL units: SPS, PPS, and an IDR</span></div>
-<div class="line"><span class="comment">// slice.  Each one becomes its own MediaPacket as a view.</span></div>
-<div class="line"><a class="code hl_class" href="classMediaPacket.html">MediaPacket</a> sps (<a class="code hl_class" href="classBufferView.html">BufferView</a>(<a class="code hl_typedef" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">au</a>, 0,           <a class="code hl_typedef" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">spsLen</a>), <a class="code hl_enumvalue" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa5ee8334d39e47fc8d9c55bbf2e4a1216">PixelDesc::H264</a>);</div>
-<div class="line"><a class="code hl_class" href="classMediaPacket.html">MediaPacket</a> pps (<a class="code hl_class" href="classBufferView.html">BufferView</a>(<a class="code hl_typedef" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">au</a>, <a class="code hl_typedef" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">spsLen</a>,      <a class="code hl_typedef" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">ppsLen</a>), <a class="code hl_enumvalue" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa5ee8334d39e47fc8d9c55bbf2e4a1216">PixelDesc::H264</a>);</div>
-<div class="line"><a class="code hl_class" href="classMediaPacket.html">MediaPacket</a> <a class="code hl_typedef" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">idr</a> (<a class="code hl_class" href="classBufferView.html">BufferView</a>(<a class="code hl_typedef" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">au</a>, <a class="code hl_typedef" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">spsLen</a>+<a class="code hl_typedef" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">ppsLen</a>, <a class="code hl_typedef" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">sliceLen</a>), <a class="code hl_enumvalue" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa5ee8334d39e47fc8d9c55bbf2e4a1216">PixelDesc::H264</a>);</div>
-<div class="line">sps.addFlag(<a class="code hl_enumvalue" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39a242744ea06c5d2680399014299d27878">MediaPacket::ParameterSet</a>);</div>
-<div class="line">pps.addFlag(<a class="code hl_enumvalue" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39a242744ea06c5d2680399014299d27878">MediaPacket::ParameterSet</a>);</div>
-<div class="line"><a class="code hl_typedef" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">idr</a>.addFlag(<a class="code hl_enumvalue" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39a646639ca574bacfd258ebcc900a0feb7">MediaPacket::Keyframe</a>);</div>
-<div class="ttc" id="aclassBufferView_html"><div class="ttname"><a href="classBufferView.html">BufferView</a></div><div class="ttdoc">Lightweight view into a region of a shared Buffer.</div><div class="ttdef"><b>Definition</b> bufferview.h:41</div></div>
-<div class="ttc" id="aclassMediaPacket_html"><div class="ttname"><a href="classMediaPacket.html">MediaPacket</a></div><div class="ttdoc">Encoded bitstream access unit produced by a VideoEncoder or consumed by a VideoDecoder.</div><div class="ttdef"><b>Definition</b> mediapacket.h:84</div></div>
-<div class="ttc" id="aclassMediaPacket_html_a6d228cbf2421239a345b8ce28dfc8c39a242744ea06c5d2680399014299d27878"><div class="ttname"><a href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39a242744ea06c5d2680399014299d27878">MediaPacket::ParameterSet</a></div><div class="ttdeci">@ ParameterSet</div><div class="ttdoc">Packet carries only parameter sets (SPS / PPS / VPS / etc.).</div><div class="ttdef"><b>Definition</b> mediapacket.h:109</div></div>
-</div><!-- fragment --> </dd></dl>
+<p>Convenience accessors <a class="el" href="classMediaPacket.html#a237687349b662d0117b4d87056d2ce35">isEndOfStream</a>, <a class="el" href="classMediaPacket.html#a05f1fd1ac223816ca6c288b1d7f53d09">isCorrupt</a>, <a class="el" href="classMediaPacket.html#a28ed23b30f1907669b8081bb4a5cc9b7">corruptReason</a>, <a class="el" href="classMediaPacket.html#ad77327bebde639d597ac12fc0e198134">markEndOfStream</a>, and <a class="el" href="classMediaPacket.html#a570bb073d9e5996744e2c6ba13cd3955">markCorrupt</a> are provided so callers don't need to remember the keys.</p>
+<dl class="section user"><dt>Ownership</dt><dd></dd></dl>
+<p><a class="el" href="classMediaPacket.html" title="Abstract polymorphic base for any encoded bitstream packet.">MediaPacket</a> uses the library's native shared-object pattern (<a class="el" href="group__util.html#ga171ec9034fbfc2c134195af18ea762e7">PROMEKI_SHARED</a>). Callers manage lifetime via <a class="el" href="classMediaPacket.html#a9cce91f035b478332bf08730929487f0">MediaPacket::Ptr</a> . Polymorphic construction goes through <code>takeOwnership:</code> </p>
+<div class="fragment"><div class="line"><a class="code hl_class" href="classSharedPtr.html">MediaPacket::Ptr</a> <a class="code hl_class" href="classList.html">pkt</a> = MediaPacket::Ptr::takeOwnership(</div>
+<div class="line">        <span class="keyword">new</span> <a class="code hl_class" href="classVideoPacket.html">VideoPacket</a>(<a class="code hl_function" href="classMediaPacket.html#a729697af537c09caacbc837b4a6859a3">view</a>, <a class="code hl_enumvalue" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda5dc43323749c2d0cbfabdd52c436e7e5">PixelFormat::H264</a>));</div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="ttc" id="aclassMediaPacket_html_a729697af537c09caacbc837b4a6859a3"><div class="ttname"><a href="classMediaPacket.html#a729697af537c09caacbc837b4a6859a3">MediaPacket::view</a></div><div class="ttdeci">const BufferView &amp; view() const</div><div class="ttdoc">Returns the view onto the encoded bytes.</div><div class="ttdef"><b>Definition</b> mediapacket.h:135</div></div>
+<div class="ttc" id="aclassPixelFormat_html_a7ae7d8a6cf46a5c9947b72d5ec9d4deda5dc43323749c2d0cbfabdd52c436e7e5"><div class="ttname"><a href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda5dc43323749c2d0cbfabdd52c436e7e5">PixelFormat::H264</a></div><div class="ttdeci">@ H264</div><div class="ttdoc">H.264 / AVC compressed video (avc1/avc3).</div><div class="ttdef"><b>Definition</b> pixelformat.h:326</div></div>
+<div class="ttc" id="aclassSharedPtr_html"><div class="ttname"><a href="classSharedPtr.html">SharedPtr</a></div><div class="ttdoc">A smart pointer class with reference counting and optional copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> sharedptr.h:252</div></div>
+<div class="ttc" id="aclassVideoPacket_html"><div class="ttname"><a href="classVideoPacket.html">VideoPacket</a></div><div class="ttdoc">Encoded video access unit produced by a VideoEncoder or consumed by a VideoDecoder.</div><div class="ttdef"><b>Definition</b> videopacket.h:66</div></div>
+</div><!-- fragment --><p>Concrete subclasses also expose their own <code>Ptr</code> alias and <code>Ptr::create</code> helpers; the converting constructor on <a class="el" href="classSharedPtr.html">SharedPtr</a> lets you hand a <code><a class="el" href="classVideoPacket.html#acd061b0a22f40e1b25f19743f9d5025f" title="Shared-pointer alias for VideoPacket ownership.">VideoPacket::Ptr</a></code> into code that accepts <code><a class="el" href="classMediaPacket.html#a9cce91f035b478332bf08730929487f0" title="Shared-pointer alias for pipeline-wide packet handoff.">MediaPacket::Ptr</a></code> without cloning. </p>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
-<a id="a6d228cbf2421239a345b8ce28dfc8c39" name="a6d228cbf2421239a345b8ce28dfc8c39"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6d228cbf2421239a345b8ce28dfc8c39">&#9670;&#160;</a></span>Flag</h2>
+<a id="ac0fa97cdaa7566c7743659e925698673" name="ac0fa97cdaa7566c7743659e925698673"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac0fa97cdaa7566c7743659e925698673">&#9670;&#160;</a></span>Kind</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">enum</a> <a class="el" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39">MediaPacket::Flag</a> : <a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">uint32_t</a></td>
+          <td class="memname"><a class="el" href="classList.html">enum</a> <a class="el" href="classMediaPacket.html#ac0fa97cdaa7566c7743659e925698673">MediaPacket::Kind</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Bit flags describing properties of a packet. </p>
-<p>Values are bitwise-OR'able; store the combined mask via <a class="el" href="classMediaPacket.html#a32d5bbce95cd56b95e4e7dce9ee3c310">setFlags</a> or manipulate individual bits via <a class="el" href="classMediaPacket.html#a9a2301a691e0c0e5fd1d21a7f72cb12a">addFlag</a> / <a class="el" href="classMediaPacket.html#a6e9eea9adb8949ec746f6e9b9c41cf64">removeFlag</a> / <a class="el" href="classMediaPacket.html#acebd75ed63f00360b83c465e8ecd5ade">hasFlag</a>. </p>
+<p>Enumerates the concrete packet families the library models. </p>
+<p>Returned by <a class="el" href="classMediaPacket.html#a2ce4b451030085e6c05c1d6e201568ab">kind()</a> for cheap type dispatch without RTTI. Subclasses pick a value here and surface it so pipeline glue can <code>switch</code> on the kind before falling back to <code>sharedPointerCast</code> for field access. </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a6d228cbf2421239a345b8ce28dfc8c39a72c16f74343dca5fd248d93c6ce1cc30" name="a6d228cbf2421239a345b8ce28dfc8c39a72c16f74343dca5fd248d93c6ce1cc30"></a>None&#160;</td><td class="fielddoc"><p>No flags set. </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ac0fa97cdaa7566c7743659e925698673a8f6283a2d952d86236a44d89ffffd1f3" name="ac0fa97cdaa7566c7743659e925698673a8f6283a2d952d86236a44d89ffffd1f3"></a>Video&#160;</td><td class="fielddoc"><p>Encoded video access unit; see <a class="el" href="classVideoPacket.html">VideoPacket</a>. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a6d228cbf2421239a345b8ce28dfc8c39a646639ca574bacfd258ebcc900a0feb7" name="a6d228cbf2421239a345b8ce28dfc8c39a646639ca574bacfd258ebcc900a0feb7"></a>Keyframe&#160;</td><td class="fielddoc"><p>IDR / I-frame; a self-contained decode entry point. </p>
+<tr><td class="fieldname"><a id="ac0fa97cdaa7566c7743659e925698673aa16516efdefa71e14227552a3c2f197e" name="ac0fa97cdaa7566c7743659e925698673aa16516efdefa71e14227552a3c2f197e"></a>Audio&#160;</td><td class="fielddoc"><p>Encoded audio access unit; see <a class="el" href="classAudioPacket.html">AudioPacket</a>. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a6d228cbf2421239a345b8ce28dfc8c39a7fa263cbbcf9fb005e8011f00c493ce3" name="a6d228cbf2421239a345b8ce28dfc8c39a7fa263cbbcf9fb005e8011f00c493ce3"></a>EndOfStream&#160;</td><td class="fielddoc"><p>Final packet in the stream (emitted after <code><a class="el" href="textstream_8h.html#af9d7c2c4afcd27e0017d5654336b4edd" title="Flushes the stream.">flush()</a></code>). </p>
-</td></tr>
-<tr><td class="fieldname"><a id="a6d228cbf2421239a345b8ce28dfc8c39a77accc5b152b86374612d2da95df2acc" name="a6d228cbf2421239a345b8ce28dfc8c39a77accc5b152b86374612d2da95df2acc"></a>Discardable&#160;</td><td class="fielddoc"><p>Non-reference (e.g. B-frame); safe to drop. </p>
-</td></tr>
-<tr><td class="fieldname"><a id="a6d228cbf2421239a345b8ce28dfc8c39a0772c5bc4099a915b3640d5c821d008c" name="a6d228cbf2421239a345b8ce28dfc8c39a0772c5bc4099a915b3640d5c821d008c"></a>Corrupt&#160;</td><td class="fielddoc"><p>Bitstream is known to be corrupt. </p>
-</td></tr>
-<tr><td class="fieldname"><a id="a6d228cbf2421239a345b8ce28dfc8c39a242744ea06c5d2680399014299d27878" name="a6d228cbf2421239a345b8ce28dfc8c39a242744ea06c5d2680399014299d27878"></a>ParameterSet&#160;</td><td class="fielddoc"><p>Packet carries only parameter sets (SPS / PPS / VPS / etc.). </p>
+<tr><td class="fieldname"><a id="ac0fa97cdaa7566c7743659e925698673aaf99be43b5763785b4db0e2e274ca01b" name="ac0fa97cdaa7566c7743659e925698673aaf99be43b5763785b4db0e2e274ca01b"></a>Ancillary&#160;</td><td class="fielddoc"><p>Reserved for future SDI / ST2110 / HDMI ancillary data. </p>
 </td></tr>
 </table>
 
 </div>
 </div>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a1a2d5b39d3f29920fd0d0c75f7eb8162" name="a1a2d5b39d3f29920fd0d0c75f7eb8162"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1a2d5b39d3f29920fd0d0c75f7eb8162">&#9670;&#160;</a></span>MediaPacket() <span class="overload">[1/2]</span></h2>
+<a id="ac42feb969a8a5b9962c2d1088f7d94de" name="ac42feb969a8a5b9962c2d1088f7d94de"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac42feb969a8a5b9962c2d1088f7d94de">&#9670;&#160;</a></span>MediaPacket()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -324,80 +328,22 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname">MediaPacket::MediaPacket </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classBufferView.html">BufferView</a> &amp;&#160;</td>
-          <td class="paramname"><em>view</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classBufferView.html">BufferView</a> &amp;&#160;</td>
+          <td class="paramname"><em>view</em></td><td>)</td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;&#160;</td>
-          <td class="paramname"><em>pixelDesc</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">explicit</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Constructs a packet from a pre-built view and a pixel description. </p>
-<p>The common case for backends that slice one backing buffer into multiple logical packets.</p>
+<p>Constructs a packet that wraps an explicit view. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">view</td><td>Byte range on a shared buffer. </td></tr>
-    <tr><td class="paramname">pixelDesc</td><td>Codec identity (e.g. <code><a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa5ee8334d39e47fc8d9c55bbf2e4a1216" title="H.264 / AVC compressed video (avc1/avc3).">PixelDesc::H264</a></code>). </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="ad812c6698c695e7952fd64982c2d44c1" name="ad812c6698c695e7952fd64982c2d44c1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad812c6698c695e7952fd64982c2d44c1">&#9670;&#160;</a></span>MediaPacket() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">MediaPacket::MediaPacket </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3">Buffer::Ptr</a>&#160;</td>
-          <td class="paramname"><em>buffer</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;&#160;</td>
-          <td class="paramname"><em>pixelDesc</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Constructs a packet that owns a whole buffer as its payload. </p>
-<p>Convenience overload for the "one allocation per packet" case — internally wraps <code>buffer</code> as a <a class="el" href="classBufferView.html">BufferView</a> spanning <code></code>[0, buffer-&gt;<a class="el" href="classMediaPacket.html#aed413b91743bb7ab923e74175d86678a" title="Returns the logical payload size in bytes.">size()</a>).</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">buffer</td><td>Encoded-byte payload. </td></tr>
-    <tr><td class="paramname">pixelDesc</td><td>Codec identity (e.g. <code><a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa5ee8334d39e47fc8d9c55bbf2e4a1216" title="H.264 / AVC compressed video (avc1/avc3).">PixelDesc::H264</a></code>). </td></tr>
+    <tr><td class="paramname">view</td><td>Byte range on a shared buffer; may be invalid. </td></tr>
   </table>
   </dd>
 </dl>
@@ -405,8 +351,8 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a9a2301a691e0c0e5fd1d21a7f72cb12a" name="a9a2301a691e0c0e5fd1d21a7f72cb12a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9a2301a691e0c0e5fd1d21a7f72cb12a">&#9670;&#160;</a></span>addFlag()</h2>
+<a id="ad9c70404d3863d64be52b8e71c29cad6" name="ad9c70404d3863d64be52b8e71c29cad6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad9c70404d3863d64be52b8e71c29cad6">&#9670;&#160;</a></span>dts()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -415,75 +361,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">void</a> MediaPacket::addFlag </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39">Flag</a>&#160;</td>
-          <td class="paramname"><em>f</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Sets a single flag in the bitmask. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">f</td><td>Flag to set. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="acebd75ed63f00360b83c465e8ecd5ade" name="acebd75ed63f00360b83c465e8ecd5ade"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acebd75ed63f00360b83c465e8ecd5ade">&#9670;&#160;</a></span>hasFlag()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">bool</a> MediaPacket::hasFlag </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39">Flag</a>&#160;</td>
-          <td class="paramname"><em>f</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns true when the given flag is set. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">f</td><td>Flag to test. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="afc6f8ef79aa633e8e33df35e771a07c1" name="afc6f8ef79aa633e8e33df35e771a07c1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afc6f8ef79aa633e8e33df35e771a07c1">&#9670;&#160;</a></span>isValid()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">bool</a> MediaPacket::isValid </td>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> &amp; MediaPacket::dts </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -496,13 +374,13 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Returns true when the packet has a backing buffer and a valid <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a>. </p>
-<dl class="section return"><dt>Returns</dt><dd>True when the packet is ready to use. </dd></dl>
+<p>Returns the decode timestamp. </p>
+<p>For codecs without B-frame reorder (audio, intra-only video, ancillary data) the DTS normally equals the PTS. B-frame-capable video codecs record the actual decode order here. </p>
 
 </div>
 </div>
-<a id="a6e9eea9adb8949ec746f6e9b9c41cf64" name="a6e9eea9adb8949ec746f6e9b9c41cf64"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6e9eea9adb8949ec746f6e9b9c41cf64">&#9670;&#160;</a></span>removeFlag()</h2>
+<a id="a809beff7e57ba0ff5c62ccb97411965f" name="a809beff7e57ba0ff5c62ccb97411965f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a809beff7e57ba0ff5c62ccb97411965f">&#9670;&#160;</a></span>isValid()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -511,10 +389,69 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">void</a> MediaPacket::removeFlag </td>
+          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">bool</a> MediaPacket::isValid </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39">Flag</a>&#160;</td>
-          <td class="paramname"><em>f</em></td><td>)</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>True when the packet has a payload worth dispatching. </p>
+<p>Subclasses may tighten this (e.g. <a class="el" href="classVideoPacket.html">VideoPacket</a> also checks that a pixel format is attached), but the base predicate is simply "has bytes." </p>
+
+<p>Reimplemented in <a class="el" href="classAudioPacket.html#aac186daf4a21aa695ac1d7cf1bf76df6">AudioPacket</a>, and <a class="el" href="classVideoPacket.html#a4743566c75765561b8f559d0013c6ce0">VideoPacket</a>.</p>
+
+</div>
+</div>
+<a id="a2ce4b451030085e6c05c1d6e201568ab" name="a2ce4b451030085e6c05c1d6e201568ab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2ce4b451030085e6c05c1d6e201568ab">&#9670;&#160;</a></span>kind()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classMediaPacket.html#ac0fa97cdaa7566c7743659e925698673">Kind</a> MediaPacket::kind </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the concrete packet kind for dispatch. </p>
+
+<p>Implemented in <a class="el" href="classAudioPacket.html#a43c56b80cd845c2cf9e11e2650306861">AudioPacket</a>, and <a class="el" href="classVideoPacket.html#af05f745faacb60ff4428c33a7e7ade7b">VideoPacket</a>.</p>
+
+</div>
+</div>
+<a id="a570bb073d9e5996744e2c6ba13cd3955" name="a570bb073d9e5996744e2c6ba13cd3955"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a570bb073d9e5996744e2c6ba13cd3955">&#9670;&#160;</a></span>markCorrupt()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> MediaPacket::markCorrupt </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>reason</em> = <code><a class="el" href="classString.html">String</a>()</code></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -525,13 +462,8 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Clears a single flag from the bitmask. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">f</td><td>Flag to clear. </td></tr>
-  </table>
-  </dd>
-</dl>
+<p>Marks the packet as corrupt with an optional explanation. </p>
+<p>Sets <code>Metadata::Corrupt</code> to <code>true</code> and — when <code>reason</code> is non-empty — <code>Metadata::CorruptReason</code> to the supplied string. </p>
 
 </div>
 </div>
@@ -545,7 +477,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">void</a> MediaPacket::setBuffer </td>
+          <td class="memname"><a class="el" href="classList.html">void</a> MediaPacket::setBuffer </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3">Buffer::Ptr</a>&#160;</td>
           <td class="paramname"><em>b</em></td><td>)</td>
@@ -559,218 +491,8 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Replaces the payload with a view spanning the entire given buffer. </p>
-<p>Shorthand for <code>setView</code>(<a class="el" href="classBufferView.html" title="Lightweight view into a region of a shared Buffer.">BufferView</a>(b, 0, b-&gt;<a class="el" href="classMediaPacket.html#aed413b91743bb7ab923e74175d86678a" title="Returns the logical payload size in bytes.">size()</a>)) — the one-allocation-per-packet form that matches the pre-BufferView API.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">b</td><td>New buffer pointer (may be null to clear the payload). </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a458df8aca0e3e5f9c1a442db682141ff" name="a458df8aca0e3e5f9c1a442db682141ff"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a458df8aca0e3e5f9c1a442db682141ff">&#9670;&#160;</a></span>setDts()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">void</a> MediaPacket::setDts </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> &amp;&#160;</td>
-          <td class="paramname"><em>ts</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Sets the decode timestamp. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">ts</td><td>The new DTS. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="ab43eef2c57efcffea125cec230bb5775" name="ab43eef2c57efcffea125cec230bb5775"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab43eef2c57efcffea125cec230bb5775">&#9670;&#160;</a></span>setDuration()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">void</a> MediaPacket::setDuration </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classDuration.html">Duration</a> &amp;&#160;</td>
-          <td class="paramname"><em>d</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Sets the nominal duration of the packet. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">d</td><td>The new duration. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a32d5bbce95cd56b95e4e7dce9ee3c310" name="a32d5bbce95cd56b95e4e7dce9ee3c310"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a32d5bbce95cd56b95e4e7dce9ee3c310">&#9670;&#160;</a></span>setFlags()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">void</a> MediaPacket::setFlags </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">uint32_t</a>&#160;</td>
-          <td class="paramname"><em>f</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Replaces the entire flag bitmask. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">f</td><td>New bitmask value. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a618e96abde6cde7c40b46c34374e7758" name="a618e96abde6cde7c40b46c34374e7758"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a618e96abde6cde7c40b46c34374e7758">&#9670;&#160;</a></span>setPixelDesc()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">void</a> MediaPacket::setPixelDesc </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;&#160;</td>
-          <td class="paramname"><em>pd</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Sets the pixel description. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">pd</td><td>The new pixel description. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a4705ef65c75c2a8f259fbbe902dd1043" name="a4705ef65c75c2a8f259fbbe902dd1043"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4705ef65c75c2a8f259fbbe902dd1043">&#9670;&#160;</a></span>setPts()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">void</a> MediaPacket::setPts </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> &amp;&#160;</td>
-          <td class="paramname"><em>ts</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Sets the presentation timestamp. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">ts</td><td>The new PTS. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a286c0b0c213e06e4924f792171465314" name="a286c0b0c213e06e4924f792171465314"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a286c0b0c213e06e4924f792171465314">&#9670;&#160;</a></span>setView()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">void</a> MediaPacket::setView </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classMediaPacket.html#ae017d26c149228d8f5c566a5bb1b3b04">const</a> <a class="el" href="classBufferView.html">BufferView</a> &amp;&#160;</td>
-          <td class="paramname"><em>v</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Replaces the view onto the encoded bytes. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">v</td><td>New view. </td></tr>
-  </table>
-  </dd>
-</dl>
+<p>Replaces the payload with a view spanning the whole given buffer. </p>
+<p>Shorthand for <code>setView</code>(<a class="el" href="classBufferView.html" title="Lightweight view into a region of a shared Buffer.">BufferView</a>(b, 0, b-&gt;<a class="el" href="classMediaPacket.html#aed413b91743bb7ab923e74175d86678a" title="Returns the logical payload size in bytes.">size()</a>)) — the one-allocation-per-packet form. Null <code>b</code> clears the payload. </p>
 
 </div>
 </div>
@@ -784,7 +506,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaPacket.html">MediaPacket</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

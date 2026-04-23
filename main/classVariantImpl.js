@@ -31,14 +31,16 @@ var classVariantImpl =
       [ "TypeColor", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea940225dbb925f9abc0c7afd8ec3536f6", null ],
       [ "TypeColorModel", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea74ca6a294cb38d8ec36b099493169fff", null ],
       [ "TypeMemSpace", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beadb96303e23ff4b5384a2d3ba92a7fc95", null ],
+      [ "TypePixelMemLayout", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beadd914e739401a5e8b64f3a41d84ac5f5", null ],
       [ "TypePixelFormat", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beae39a5463a67d70abd2a146b27cad765d", null ],
-      [ "TypePixelDesc", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beaaf564e8299d384638847a668232a7006", null ],
       [ "TypeVideoCodec", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beaa6958fbf0d25c61f20a0b75e24cd2a74", null ],
       [ "TypeAudioCodec", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beaae84250f4a8d9045e14c7b4eb1732829", null ],
+      [ "TypeAudioFormat", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea7daa5d9eeec0d0821d03cbbed06b4947", null ],
       [ "TypeEnum", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea2dc3aac74c412cdc14d408e9592d704c", null ],
       [ "TypeEnumList", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea34b1ec2f84f9074aa6a1f9aac48c23d7", null ],
       [ "TypeMasteringDisplay", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea05bb5e0e23b06a589cd30179f6f9f104", null ],
-      [ "TypeContentLightLevel", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea7acc453d2785a0a138c93608b5b402be", null ]
+      [ "TypeContentLightLevel", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea7acc453d2785a0a138c93608b5b402be", null ],
+      [ "TypeUrl", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea7ab9571e3f65b72e6a6b507841fc068c", null ]
     ] ],
     [ "VariantImpl", "classVariantImpl.html#a95a5de6be579c9c432a3d7c4e8e96868", null ],
     [ "VariantImpl", "classVariantImpl.html#a12812ac638c2da0ded51d7552a29edf3", null ],

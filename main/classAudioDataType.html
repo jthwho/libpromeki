@@ -304,8 +304,8 @@ Additional Inherited Members</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Well-known <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> type for audio sample formats. </p>
-<p>Mirrors <code><a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4" title="Enumeration of supported audio sample data types.">AudioDesc::DataType</a></code> in value and order. Used as the value type for any config key that selects an audio sample format (e.g. <code>MediaConfig::OutputAudioDataType</code>).</p>
-<p>The integer values match the <code><a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4" title="Enumeration of supported audio sample data types.">AudioDesc::DataType</a></code> enumeration so callers can convert in either direction via a plain <code>static_cast</code> on <code><a class="el" href="classEnum.html#a64baa605793d6a57d99ab2800768f38f" title="Returns the integer value of this enum.">Enum::value()</a></code>. The string names also match — e.g. <code>"PCMI_S16LE"</code>, <code>"PCMI_Float32LE"</code> — so legacy code that still passes strings through <code><a class="el" href="classAudioDesc.html#abe205f6720fd6198eacaf796c3c3db2e" title="Converts a string name to its corresponding DataType enum value.">AudioDesc::stringToDataType</a></code> keeps working when the same string is fed through the <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> lookup path. </p>
+<p>Mirrors <code><a class="el" href="classAudioFormat.html#a0f380d5e097ec56ab78e4781729113ad" title="Identifies an audio format.">AudioFormat::ID</a></code> in value and order. Used as the value type for any config key that selects an audio sample format (e.g. <code>MediaConfig::OutputAudioDataType</code>).</p>
+<p>The integer values match the <code><a class="el" href="classAudioFormat.html#a0f380d5e097ec56ab78e4781729113ad" title="Identifies an audio format.">AudioFormat::ID</a></code> enumeration for PCM interleaved formats so callers can convert in either direction via a plain <code>static_cast</code> on <code><a class="el" href="classEnum.html#a64baa605793d6a57d99ab2800768f38f" title="Returns the integer value of this enum.">Enum::value()</a></code>. The string names also match — e.g. <code>"PCMI_S16LE"</code>, <code>"PCMI_Float32LE"</code> — so code that round-trips through <code><a class="el" href="classAudioFormat.html#af15fdd6faa25da338954f34db162dc44" title="Looks up an AudioFormat by its registered name.">AudioFormat::lookup</a></code> keeps working when the same string is fed through the <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> lookup path. </p>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="enums_8h_source.html">enums.h</a></li>
 </ul>
@@ -316,7 +316,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudioDataType.html">AudioDataType</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -16,7 +16,7 @@
 <area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="529,234,717,251,717,257,528,239"/>
 <area shape="rect" id="Node000009" href="$classVariantDatabase.html" title=" " alt="" coords="15,219,241,244"/>
 <area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="255,229,431,229,431,234,255,234"/>
-<area shape="rect" id="Node000010" href="$classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count." alt="" coords="427,279,518,304"/>
+<area shape="rect" id="Node000010" href="$classAudioDesc.html" title="Describes a concrete audio stream — format plus sample rate and channel count." alt="" coords="427,279,518,304"/>
 <area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="532,292,609,293,693,287,763,272,764,277,694,293,609,298,532,297"/>
 <area shape="rect" id="Node000011" href="$classList.html" title=" " alt="" coords="427,336,519,361"/>
 <area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="532,348,610,344,652,338,692,327,746,301,788,272,791,277,749,306,694,333,653,343,610,350,532,354"/>

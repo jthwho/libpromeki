@@ -156,6 +156,9 @@ Public Types</h2></td></tr>
 <tr class="memitem:a020dad6e31213909fdabdba0efa56e2e" id="r_a020dad6e31213909fdabdba0efa56e2e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMediaIO_1_1FormatDesc.html#a020dad6e31213909fdabdba0efa56e2e">BridgeFunc</a> = std::function&lt; <a class="el" href="classList.html">bool</a>(<a class="el" href="classList.html">const</a> <a class="el" href="classMediaDesc.html">MediaDesc</a> &amp;from, <a class="el" href="classList.html">const</a> <a class="el" href="classMediaDesc.html">MediaDesc</a> &amp;to, <a class="el" href="classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade">Config</a> *<a class="el" href="classList.html">outConfig</a>, int *<a class="el" href="classList.html">outCost</a>)&gt;</td></tr>
 <tr class="memdesc:a020dad6e31213909fdabdba0efa56e2e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optional bridge declaration for transform backends.  <br /></td></tr>
 <tr class="separator:a020dad6e31213909fdabdba0efa56e2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acd3320538abdc5210a4b35fb9de89259" id="r_acd3320538abdc5210a4b35fb9de89259"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMediaIO_1_1FormatDesc.html#acd3320538abdc5210a4b35fb9de89259">UrlToConfigFunc</a> = std::function&lt; <a class="el" href="classError.html">Error</a>(<a class="el" href="classList.html">const</a> <a class="el" href="classUrl.html">Url</a> &amp;<a class="el" href="classList.html">url</a>, <a class="el" href="classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade">Config</a> *<a class="el" href="classList.html">outConfig</a>)&gt;</td></tr>
+<tr class="memdesc:acd3320538abdc5210a4b35fb9de89259"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optional URL → Config translator.  <br /></td></tr>
+<tr class="separator:acd3320538abdc5210a4b35fb9de89259"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -219,6 +222,14 @@ Public Attributes</h2></td></tr>
 <a class="el" href="structMediaIO_1_1FormatDesc.html#a020dad6e31213909fdabdba0efa56e2e">BridgeFunc</a>&#160;</td><td class="memItemRight" valign="bottom"><b>bridge</b></td></tr>
 <tr class="memdesc:a9ccaa0a3dc78045bcec0c9d0380df06c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Format-bridge declaration (planner-driven; may be null). <br /></td></tr>
 <tr class="separator:a9ccaa0a3dc78045bcec0c9d0380df06c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7133c4f7ccd09b18771197ce8369616b" id="r_a7133c4f7ccd09b18771197ce8369616b"><td class="memItemLeft" align="right" valign="top"><a id="a7133c4f7ccd09b18771197ce8369616b" name="a7133c4f7ccd09b18771197ce8369616b"></a>
+<a class="el" href="classStringList.html">StringList</a>&#160;</td><td class="memItemRight" valign="bottom"><b>schemes</b></td></tr>
+<tr class="memdesc:a7133c4f7ccd09b18771197ce8369616b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Claimed URL schemes (e.g. "pmfb"). Empty = no URL handling. <br /></td></tr>
+<tr class="separator:a7133c4f7ccd09b18771197ce8369616b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3d852b5c010a8852252f20e8271f210f" id="r_a3d852b5c010a8852252f20e8271f210f"><td class="memItemLeft" align="right" valign="top"><a id="a3d852b5c010a8852252f20e8271f210f" name="a3d852b5c010a8852252f20e8271f210f"></a>
+<a class="el" href="structMediaIO_1_1FormatDesc.html#acd3320538abdc5210a4b35fb9de89259">UrlToConfigFunc</a>&#160;</td><td class="memItemRight" valign="bottom"><b>urlToConfig</b></td></tr>
+<tr class="memdesc:a3d852b5c010a8852252f20e8271f210f"><td class="mdescLeft">&#160;</td><td class="mdescRight">URL → Config translator (required if <code>schemes</code> is non-empty). <br /></td></tr>
+<tr class="separator:a3d852b5c010a8852252f20e8271f210f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Describes a registered media I/O backend. </p>
@@ -238,7 +249,7 @@ Public Attributes</h2></td></tr>
 <p>Optional bridge declaration for transform backends. </p>
 <p>When set, this backend declares that an instance of itself can convert from one <a class="el" href="classMediaDesc.html">MediaDesc</a> shape to another. The pipeline planner uses this to automatically insert bridging stages (CSC, decoder, frame-rate sync, etc.) when a route's source and sink are not directly format-compatible.</p>
 <p>The callback returns <code>true</code> if the bridge is applicable, in which case it must:</p><ul>
-<li>Populate <code>outConfig</code> with the <a class="el" href="classMediaConfig.html">MediaConfig</a> the planner should use when instantiating the bridge stage (e.g. set <code>OutputPixelDesc</code> on a CSC bridge).</li>
+<li>Populate <code>outConfig</code> with the <a class="el" href="classMediaConfig.html">MediaConfig</a> the planner should use when instantiating the bridge stage (e.g. set <code>OutputPixelFormat</code> on a CSC bridge).</li>
 <li><a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> <code>outCost</code> to the unitless quality cost of the conversion (lower = higher quality). The planner uses costs to pick among multiple valid bridges.</li>
 </ul>
 <p>Cost bands (unitless):</p><ul>
@@ -266,7 +277,7 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Optional path-based probe. </p>
-<p>Returns true if this backend can handle the given filesystem path (e.g. a V4L2 backend recognises <code>"/dev/video0"</code>). Checked by <a class="el" href="classMediaIO.html#af89231d60485661711ec7e11837a33d0">createForFileRead</a> before extension or content probes, so device nodes that are not regular files are routed to the right backend.</p>
+<p>Returns true if this backend can handle the given filesystem path (e.g. a V4L2 backend recognises <code>"/dev/video0"</code>). Checked by <a class="el" href="classMediaIO.html#af89231d60485661711ec7e11837a33d0">createForFileRead</a> after URL scheme dispatch but before extension or content probes, so device nodes that are not regular files are routed to the right backend.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">path</td><td>The filesystem path to test. </td></tr>
@@ -399,6 +410,25 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="acd3320538abdc5210a4b35fb9de89259" name="acd3320538abdc5210a4b35fb9de89259"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acd3320538abdc5210a4b35fb9de89259">&#9670;&#160;</a></span>UrlToConfigFunc</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="structMediaIO_1_1FormatDesc.html#acd3320538abdc5210a4b35fb9de89259">MediaIO::FormatDesc::UrlToConfigFunc</a> =  std::function&lt; <a class="el" href="classError.html">Error</a>(<a class="el" href="classList.html">const</a> <a class="el" href="classUrl.html">Url</a> &amp;<a class="el" href="classList.html">url</a>, <a class="el" href="classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade">Config</a> *<a class="el" href="classList.html">outConfig</a>)&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Optional URL → Config translator. </p>
+<p>Called when <a class="el" href="classMediaIO.html#af815be2deeca0303581c454567df8357">createFromUrl</a> (or the transparent URL path in <a class="el" href="classMediaIO.html#af89231d60485661711ec7e11837a33d0">createForFileRead</a> / <a class="el" href="classMediaIO.html#acab99958892f50469f2c4f0386121dab">createForFileWrite</a>) dispatches to this backend via its registered <a class="el" href="structMediaIO_1_1FormatDesc.html#a7133c4f7ccd09b18771197ce8369616b">schemes</a>. The backend should populate <code>outConfig</code> from <code>url's</code> authority and path components only — query parameters are applied automatically by the factory via <a class="el" href="classMediaIO.html#a9c487b5372a503379b0c79776b4104d3">applyQueryToConfig</a> against this backend's <a class="el" href="structMediaIO_1_1FormatDesc.html#a33c29ac64149cabee55431e220323f47">configSpecs</a>, so the callback body stays short. MediaConfig::Type is set by the factory before the callback runs, so the backend does not need to populate it.</p>
+<dl class="section user"><dt>Case sensitivity</dt><dd>Query keys are matched case-sensitively against <a class="el" href="structMediaIO_1_1FormatDesc.html#a33c29ac64149cabee55431e220323f47">configSpecs</a> (see <a class="el" href="classMediaIO.html#a9c487b5372a503379b0c79776b4104d3">applyQueryToConfig</a>). Scheme and host follow RFC 3986 — scheme is normalized to lowercase by <a class="el" href="classUrl.html#af54be878d0ac228d9e8b22f6ac2c7d98">Url::fromString</a>, host is preserved verbatim.</dd></dl>
+<p>A non-OK return causes the factory to fail the open so the caller learns about malformed URLs via the normal error path rather than a silently-misconfigured <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a>. </p>
+
+</div>
+</div>
 <hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="mediaio_8h_source.html">mediaio.h</a></li>
 </ul>
@@ -409,7 +439,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIO.html">MediaIO</a></li><li class="navelem"><a class="el" href="structMediaIO_1_1FormatDesc.html">FormatDesc</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

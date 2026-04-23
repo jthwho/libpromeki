@@ -106,7 +106,7 @@ $(document).ready(function(){initNavTree('structPixelFormat_1_1Data.html',''); i
 </div><!--header-->
 <div class="contents">
 
-<p>Immutable data record for a pixel format.  
+<p>Immutable data record for a pixel description.  
  <a href="structPixelFormat_1_1Data.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="pixelformat_8h_source.html">pixelformat.h</a>&gt;</code></p>
@@ -115,14 +115,31 @@ Collaboration diagram for PixelFormat::Data:</div>
 <div class="dyncontent">
 <div class="center"><img src="structPixelFormat_1_1Data__coll__graph.png" border="0" usemap="#aPixelFormat_1_1Data_coll__map" alt="Collaboration graph"/></div>
 <map name="aPixelFormat_1_1Data_coll__map" id="aPixelFormat_1_1Data_coll__map">
-<area shape="rect" title="Immutable data record for a pixel format." alt="" coords="94,185,233,211"/>
-<area shape="rect" href="classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,5,65,31"/>
-<area shape="poly" title=" " alt="" coords="28,45,20,83,21,103,28,121,46,143,68,160,118,183,116,188,66,165,42,147,24,124,16,104,15,83,23,44"/>
-<area shape="rect" href="structPixelFormat_1_1PlaneDesc.html" title="Describes a single image plane." alt="" coords="76,95,251,121"/>
-<area shape="poly" title=" " alt="" coords="65,36,148,93,145,97,62,41"/>
-<area shape="rect" href="structPixelFormat_1_1CompDesc.html" title="Describes a single component within the pixel format." alt="" coords="275,95,452,121"/>
-<area shape="poly" title=" " alt="" coords="326,129,191,188,188,183,323,124"/>
-<area shape="poly" title=" " alt="" coords="166,134,166,185,161,185,161,134"/>
+<area shape="rect" title="Immutable data record for a pixel description." alt="" coords="823,250,961,275"/>
+<area shape="rect" href="classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="186,70,246,95"/>
+<area shape="poly" title=" " alt="" coords="259,68,362,46,429,36,502,31,579,32,656,42,731,63,766,78,800,96,820,112,838,131,864,174,881,217,890,249,885,251,876,219,859,177,833,134,817,116,797,101,764,83,729,68,655,47,578,38,502,37,429,42,363,51,260,73"/>
+<area shape="rect" href="structPixelFormat_1_1CompSemantic.html" title="Describes the semantic meaning and value range of a single component." alt="" coords="416,106,623,131"/>
+<area shape="poly" title=" " alt="" coords="260,89,343,103,416,110,416,115,342,108,259,94"/>
+<area shape="rect" href="classPixelMemLayout.html" title="Describes the memory layout of pixel data without color semantics." alt="" coords="454,155,585,181"/>
+<area shape="poly" title=" " alt="" coords="599,169,696,181,748,192,800,207,841,226,875,248,872,252,838,231,798,212,747,197,695,186,598,174"/>
+<area shape="rect" href="classColorModel.html" title="Single source of truth for a color model and its associated color space." alt="" coords="471,205,567,230"/>
+<area shape="poly" title=" " alt="" coords="581,220,799,244,823,248,822,253,798,249,581,225"/>
+<area shape="rect" href="classVideoCodec.html" title="First&#45;class identifier for a video codec family." alt="" coords="470,254,569,279"/>
+<area shape="poly" title=" " alt="" coords="583,263,822,261,823,266,583,269"/>
+<area shape="rect" href="classList.html" title=" " alt="" coords="475,306,564,331"/>
+<area shape="poly" title=" " alt="" coords="577,317,681,314,740,308,798,297,833,286,865,273,867,278,835,291,799,303,741,313,681,319,578,323"/>
+<area shape="rect" href="classList.html" title=" " alt="" coords="459,355,580,381"/>
+<area shape="poly" title=" " alt="" coords="593,369,693,363,746,353,798,336,822,323,844,306,878,274,882,277,848,310,825,328,800,341,748,358,693,368,594,374"/>
+<area shape="poly" title=" " alt="" coords="637,114,720,126,761,138,800,155,829,176,853,201,886,248,881,251,849,205,825,180,797,160,759,143,718,131,637,119"/>
+<area shape="rect" href="classVideoRange.html" title="Well&#45;known Enum type for video value range (aka quantization range / full&#45;range flag)." alt="" coords="469,473,569,498"/>
+<area shape="poly" title=" " alt="" coords="582,473,632,461,688,444,745,420,797,389,827,361,851,329,882,274,887,277,855,332,830,365,800,393,747,425,690,449,634,467,584,478"/>
+<area shape="poly" title=" " alt="" coords="489,458,498,449,519,446,537,448,548,455,550,464,545,474,540,471,545,464,543,458,535,453,519,451,501,454,493,462"/>
+<area shape="rect" href="classTypedEnum.html" title=" " alt="" coords="113,473,319,498"/>
+<area shape="poly" title=" " alt="" coords="333,483,469,483,469,488,333,488"/>
+<area shape="rect" href="classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="5,473,64,498"/>
+<area shape="poly" title=" " alt="" coords="78,483,113,483,113,488,78,488"/>
+<area shape="rect" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images." alt="" coords="470,522,569,547"/>
+<area shape="poly" title=" " alt="" coords="582,536,633,534,690,525,747,508,773,495,797,478,820,455,838,429,865,371,880,315,887,275,892,276,885,316,870,372,843,432,824,459,800,482,776,499,749,513,691,531,634,539,583,541"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -130,114 +147,88 @@ Collaboration diagram for PixelFormat::Data:</div>
 Public Attributes</h2></td></tr>
 <tr class="memitem:a3048aa927f0d16d2a106a3142cabb860" id="r_a3048aa927f0d16d2a106a3142cabb860"><td class="memItemLeft" align="right" valign="top"><a id="a3048aa927f0d16d2a106a3142cabb860" name="a3048aa927f0d16d2a106a3142cabb860"></a>
 <a class="el" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4ded">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>id</b> = <a class="el" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda9ee039b9848b08d28b606c4e542f17c3">Invalid</a></td></tr>
-<tr class="memdesc:a3048aa927f0d16d2a106a3142cabb860"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unique format identifier. <br /></td></tr>
+<tr class="memdesc:a3048aa927f0d16d2a106a3142cabb860"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unique description identifier. <br /></td></tr>
 <tr class="separator:a3048aa927f0d16d2a106a3142cabb860"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7497eeacdf82ce3356ef7b48fc47bd2a" id="r_a7497eeacdf82ce3356ef7b48fc47bd2a"><td class="memItemLeft" align="right" valign="top"><a id="a7497eeacdf82ce3356ef7b48fc47bd2a" name="a7497eeacdf82ce3356ef7b48fc47bd2a"></a>
 <a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><b>name</b></td></tr>
-<tr class="memdesc:a7497eeacdf82ce3356ef7b48fc47bd2a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Short format name (e.g. "I_4x8"). <br /></td></tr>
+<tr class="memdesc:a7497eeacdf82ce3356ef7b48fc47bd2a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Short name (e.g. "RGBA8"). <br /></td></tr>
 <tr class="separator:a7497eeacdf82ce3356ef7b48fc47bd2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae3970f8a7f46fa320bee9a15069b3bf9" id="r_ae3970f8a7f46fa320bee9a15069b3bf9"><td class="memItemLeft" align="right" valign="top"><a id="ae3970f8a7f46fa320bee9a15069b3bf9" name="ae3970f8a7f46fa320bee9a15069b3bf9"></a>
 <a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><b>desc</b></td></tr>
 <tr class="memdesc:ae3970f8a7f46fa320bee9a15069b3bf9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Human-readable description. <br /></td></tr>
 <tr class="separator:ae3970f8a7f46fa320bee9a15069b3bf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ade327745be9ce4ab778ba2e89e2ba19d" id="r_ade327745be9ce4ab778ba2e89e2ba19d"><td class="memItemLeft" align="right" valign="top"><a id="ade327745be9ce4ab778ba2e89e2ba19d" name="ade327745be9ce4ab778ba2e89e2ba19d"></a>
-<a class="el" href="classPixelFormat.html#a85ea5c79ba2eb68e0bf4613d9524612b">Sampling</a>&#160;</td><td class="memItemRight" valign="bottom"><b>sampling</b> = <a class="el" href="classPixelFormat.html#a85ea5c79ba2eb68e0bf4613d9524612bacf4a4339ca78da3e0d0a41327e688871">SamplingUndefined</a></td></tr>
-<tr class="memdesc:ade327745be9ce4ab778ba2e89e2ba19d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Chroma subsampling mode. <br /></td></tr>
-<tr class="separator:ade327745be9ce4ab778ba2e89e2ba19d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a662801ce412e7a7d22bc2b10d8a8f958" id="r_a662801ce412e7a7d22bc2b10d8a8f958"><td class="memItemLeft" align="right" valign="top"><a id="a662801ce412e7a7d22bc2b10d8a8f958" name="a662801ce412e7a7d22bc2b10d8a8f958"></a>
-<a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>pixelsPerBlock</b> = 0</td></tr>
-<tr class="memdesc:a662801ce412e7a7d22bc2b10d8a8f958"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of pixels in one encoded block. <br /></td></tr>
-<tr class="separator:a662801ce412e7a7d22bc2b10d8a8f958"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a109116d35ea10928b055cba775a1d29f" id="r_a109116d35ea10928b055cba775a1d29f"><td class="memItemLeft" align="right" valign="top"><a id="a109116d35ea10928b055cba775a1d29f" name="a109116d35ea10928b055cba775a1d29f"></a>
-<a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>bytesPerBlock</b> = 0</td></tr>
-<tr class="memdesc:a109116d35ea10928b055cba775a1d29f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of bytes in one encoded block. <br /></td></tr>
-<tr class="separator:a109116d35ea10928b055cba775a1d29f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afc146466565af3f2956477628c887fde" id="r_afc146466565af3f2956477628c887fde"><td class="memItemLeft" align="right" valign="top"><a id="afc146466565af3f2956477628c887fde" name="afc146466565af3f2956477628c887fde"></a>
-<a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>compCount</b> = 0</td></tr>
-<tr class="memdesc:afc146466565af3f2956477628c887fde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of components per pixel. <br /></td></tr>
-<tr class="separator:afc146466565af3f2956477628c887fde"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae63285000844ba24eabd3f3fb9fe4a4a" id="r_ae63285000844ba24eabd3f3fb9fe4a4a"><td class="memItemLeft" align="right" valign="top"><a id="ae63285000844ba24eabd3f3fb9fe4a4a" name="ae63285000844ba24eabd3f3fb9fe4a4a"></a>
-<a class="el" href="structPixelFormat_1_1CompDesc.html">CompDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><b>comps</b> [<a class="el" href="classPixelFormat.html#a1419408ed305410e631fb2b100c2f881">MaxComps</a>] = {}</td></tr>
-<tr class="memdesc:ae63285000844ba24eabd3f3fb9fe4a4a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Component descriptors. <br /></td></tr>
-<tr class="separator:ae63285000844ba24eabd3f3fb9fe4a4a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae4baee14e2cb7389de771ec21d51fcd8" id="r_ae4baee14e2cb7389de771ec21d51fcd8"><td class="memItemLeft" align="right" valign="top"><a id="ae4baee14e2cb7389de771ec21d51fcd8" name="ae4baee14e2cb7389de771ec21d51fcd8"></a>
-<a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>planeCount</b> = 0</td></tr>
-<tr class="memdesc:ae4baee14e2cb7389de771ec21d51fcd8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of planes. <br /></td></tr>
-<tr class="separator:ae4baee14e2cb7389de771ec21d51fcd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a581ee5cc47bc70c76df8118c60a81ce7" id="r_a581ee5cc47bc70c76df8118c60a81ce7"><td class="memItemLeft" align="right" valign="top"><a id="a581ee5cc47bc70c76df8118c60a81ce7" name="a581ee5cc47bc70c76df8118c60a81ce7"></a>
-<a class="el" href="structPixelFormat_1_1PlaneDesc.html">PlaneDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><b>planes</b> [<a class="el" href="classPixelFormat.html#af952151e830901156bf5cf475e9a4f62">MaxPlanes</a>] = {}</td></tr>
-<tr class="memdesc:a581ee5cc47bc70c76df8118c60a81ce7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Plane descriptors. <br /></td></tr>
-<tr class="separator:a581ee5cc47bc70c76df8118c60a81ce7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af94f78a88c59bdf01af9d06ba9a5f323" id="r_af94f78a88c59bdf01af9d06ba9a5f323"><td class="memItemLeft" align="right" valign="top"><a id="af94f78a88c59bdf01af9d06ba9a5f323" name="af94f78a88c59bdf01af9d06ba9a5f323"></a>
-<a class="el" href="classPixelFormat.html#a11a3e3912eb14b53e4a16818cc841990">ChromaSitingH</a>&#160;</td><td class="memItemRight" valign="bottom"><b>chromaSitingH</b> = <a class="el" href="classPixelFormat.html#a11a3e3912eb14b53e4a16818cc841990a0dc3671e183894e9efd6d552f7165579">ChromaHUndefined</a></td></tr>
-<tr class="memdesc:af94f78a88c59bdf01af9d06ba9a5f323"><td class="mdescLeft">&#160;</td><td class="mdescRight">Horizontal chroma siting. <br /></td></tr>
-<tr class="separator:af94f78a88c59bdf01af9d06ba9a5f323"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3e8305c1646845407583d9267e29d6a6" id="r_a3e8305c1646845407583d9267e29d6a6"><td class="memItemLeft" align="right" valign="top"><a id="a3e8305c1646845407583d9267e29d6a6" name="a3e8305c1646845407583d9267e29d6a6"></a>
-<a class="el" href="classPixelFormat.html#a481b110c7c7acb5dffd9d04e281c6462">ChromaSitingV</a>&#160;</td><td class="memItemRight" valign="bottom"><b>chromaSitingV</b> = <a class="el" href="classPixelFormat.html#a481b110c7c7acb5dffd9d04e281c6462a41d644ba32d8d240c0146c96c13a6e0c">ChromaVUndefined</a></td></tr>
-<tr class="memdesc:a3e8305c1646845407583d9267e29d6a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Vertical chroma siting. <br /></td></tr>
-<tr class="separator:a3e8305c1646845407583d9267e29d6a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af41bc2f98070946b026a8f4d96d16336" id="r_af41bc2f98070946b026a8f4d96d16336"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structPixelFormat_1_1Data.html#af41bc2f98070946b026a8f4d96d16336">lineStrideFunc</a> )(<a class="el" href="classList.html">const</a> <a class="el" href="structPixelFormat_1_1Data.html">Data</a> *d, <a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">planeIdx</a>, <a class="el" href="classList.html">size_t</a> width, <a class="el" href="classList.html">size_t</a> linePad, <a class="el" href="classList.html">size_t</a> lineAlign) = <a class="el" href="classList.html">nullptr</a></td></tr>
-<tr class="memdesc:af41bc2f98070946b026a8f4d96d16336"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the line stride for a given plane.  <br /></td></tr>
-<tr class="separator:af41bc2f98070946b026a8f4d96d16336"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5d4d86c88496035d9ed210d994245142" id="r_a5d4d86c88496035d9ed210d994245142"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structPixelFormat_1_1Data.html#a5d4d86c88496035d9ed210d994245142">planeSizeFunc</a> )(<a class="el" href="classList.html">const</a> <a class="el" href="structPixelFormat_1_1Data.html">Data</a> *d, <a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">planeIdx</a>, <a class="el" href="classList.html">size_t</a> width, <a class="el" href="classList.html">size_t</a> height, <a class="el" href="classList.html">size_t</a> linePad, <a class="el" href="classList.html">size_t</a> lineAlign) = <a class="el" href="classList.html">nullptr</a></td></tr>
-<tr class="memdesc:a5d4d86c88496035d9ed210d994245142"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the total byte size of a given plane.  <br /></td></tr>
-<tr class="separator:a5d4d86c88496035d9ed210d994245142"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af4440baceb3b5ee814d0c232c243f53a" id="r_af4440baceb3b5ee814d0c232c243f53a"><td class="memItemLeft" align="right" valign="top"><a id="af4440baceb3b5ee814d0c232c243f53a" name="af4440baceb3b5ee814d0c232c243f53a"></a>
+<a class="el" href="classPixelMemLayout.html">PixelMemLayout</a>&#160;</td><td class="memItemRight" valign="bottom"><b>memLayout</b></td></tr>
+<tr class="memdesc:af4440baceb3b5ee814d0c232c243f53a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memory layout (by value). <br /></td></tr>
+<tr class="separator:af4440baceb3b5ee814d0c232c243f53a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa224c7bb5ec4f430e39687e63be073e2" id="r_aa224c7bb5ec4f430e39687e63be073e2"><td class="memItemLeft" align="right" valign="top"><a id="aa224c7bb5ec4f430e39687e63be073e2" name="aa224c7bb5ec4f430e39687e63be073e2"></a>
+<a class="el" href="classColorModel.html">ColorModel</a>&#160;</td><td class="memItemRight" valign="bottom"><b>colorModel</b></td></tr>
+<tr class="memdesc:aa224c7bb5ec4f430e39687e63be073e2"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a> semantics (by value). <br /></td></tr>
+<tr class="separator:aa224c7bb5ec4f430e39687e63be073e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98aa2378e3654f7f3256f865846815f0" id="r_a98aa2378e3654f7f3256f865846815f0"><td class="memItemLeft" align="right" valign="top"><a id="a98aa2378e3654f7f3256f865846815f0" name="a98aa2378e3654f7f3256f865846815f0"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>hasAlpha</b> = <a class="el" href="classList.html">false</a></td></tr>
+<tr class="memdesc:a98aa2378e3654f7f3256f865846815f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether this description includes alpha. <br /></td></tr>
+<tr class="separator:a98aa2378e3654f7f3256f865846815f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55e2ac3d556b4aaeed6467447ed4b577" id="r_a55e2ac3d556b4aaeed6467447ed4b577"><td class="memItemLeft" align="right" valign="top"><a id="a55e2ac3d556b4aaeed6467447ed4b577" name="a55e2ac3d556b4aaeed6467447ed4b577"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>alphaCompIndex</b> = -1</td></tr>
+<tr class="memdesc:a55e2ac3d556b4aaeed6467447ed4b577"><td class="mdescLeft">&#160;</td><td class="mdescRight">Component index for alpha (-1 = none). <br /></td></tr>
+<tr class="separator:a55e2ac3d556b4aaeed6467447ed4b577"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa9bffccf680bd3ac061d244507fe8ed" id="r_aaa9bffccf680bd3ac061d244507fe8ed"><td class="memItemLeft" align="right" valign="top"><a id="aaa9bffccf680bd3ac061d244507fe8ed" name="aaa9bffccf680bd3ac061d244507fe8ed"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>compressed</b> = <a class="el" href="classList.html">false</a></td></tr>
+<tr class="memdesc:aaa9bffccf680bd3ac061d244507fe8ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether this is a compressed format. <br /></td></tr>
+<tr class="separator:aaa9bffccf680bd3ac061d244507fe8ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3bc3ac1f530f90a6557e37aab0133efc" id="r_a3bc3ac1f530f90a6557e37aab0133efc"><td class="memItemLeft" align="right" valign="top"><a id="a3bc3ac1f530f90a6557e37aab0133efc" name="a3bc3ac1f530f90a6557e37aab0133efc"></a>
+<a class="el" href="classVideoCodec.html">VideoCodec</a>&#160;</td><td class="memItemRight" valign="bottom"><b>videoCodec</b></td></tr>
+<tr class="memdesc:a3bc3ac1f530f90a6557e37aab0133efc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Codec identity for compressed formats (e.g. <code><a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca48919d6ed222bf6aed61e664ac1e3350" title="H.264 / MPEG-4 AVC.">VideoCodec::H264</a></code>). <br /></td></tr>
+<tr class="separator:a3bc3ac1f530f90a6557e37aab0133efc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a27de228224f4b034fdd1fcd97067c121" id="r_a27de228224f4b034fdd1fcd97067c121"><td class="memItemLeft" align="right" valign="top"><a id="a27de228224f4b034fdd1fcd97067c121" name="a27de228224f4b034fdd1fcd97067c121"></a>
+<a class="el" href="classList.html">List</a>&lt; <a class="el" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4ded">ID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>encodeSources</b></td></tr>
+<tr class="memdesc:a27de228224f4b034fdd1fcd97067c121"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uncompressed PixelFormats the codec can encode from. <br /></td></tr>
+<tr class="separator:a27de228224f4b034fdd1fcd97067c121"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad35fc46f8e7b60b5f486f7aebe3e7667" id="r_ad35fc46f8e7b60b5f486f7aebe3e7667"><td class="memItemLeft" align="right" valign="top"><a id="ad35fc46f8e7b60b5f486f7aebe3e7667" name="ad35fc46f8e7b60b5f486f7aebe3e7667"></a>
+<a class="el" href="classList.html">List</a>&lt; <a class="el" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4ded">ID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>decodeTargets</b></td></tr>
+<tr class="memdesc:ad35fc46f8e7b60b5f486f7aebe3e7667"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uncompressed PixelFormats the codec can decode to. <br /></td></tr>
+<tr class="separator:ad35fc46f8e7b60b5f486f7aebe3e7667"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a90e03af73b5c8a4222193d125e6ea74d" id="r_a90e03af73b5c8a4222193d125e6ea74d"><td class="memItemLeft" align="right" valign="top"><a id="a90e03af73b5c8a4222193d125e6ea74d" name="a90e03af73b5c8a4222193d125e6ea74d"></a>
+<a class="el" href="fourcc_8h.html#a7273afc33a6e1d395b0fdd32265996f0">FourCCList</a>&#160;</td><td class="memItemRight" valign="bottom"><b>fourccList</b></td></tr>
+<tr class="memdesc:a90e03af73b5c8a4222193d125e6ea74d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Associated <a class="el" href="classFourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a> codes. <br /></td></tr>
+<tr class="separator:a90e03af73b5c8a4222193d125e6ea74d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af1f40d1b84f411764b682cb50b2b31e5" id="r_af1f40d1b84f411764b682cb50b2b31e5"><td class="memItemLeft" align="right" valign="top"><a id="af1f40d1b84f411764b682cb50b2b31e5" name="af1f40d1b84f411764b682cb50b2b31e5"></a>
+<a class="el" href="structPixelFormat_1_1CompSemantic.html">CompSemantic</a>&#160;</td><td class="memItemRight" valign="bottom"><b>compSemantics</b> [<a class="el" href="classPixelFormat.html#a1419408ed305410e631fb2b100c2f881">MaxComps</a>] = {}</td></tr>
+<tr class="memdesc:af1f40d1b84f411764b682cb50b2b31e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Per-component semantics. <br /></td></tr>
+<tr class="separator:af1f40d1b84f411764b682cb50b2b31e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a825d5c7d976661ccd460857828abe8a5" id="r_a825d5c7d976661ccd460857828abe8a5"><td class="memItemLeft" align="right" valign="top"><a id="a825d5c7d976661ccd460857828abe8a5" name="a825d5c7d976661ccd460857828abe8a5"></a>
+<a class="el" href="classVideoRange.html">VideoRange</a>&#160;</td><td class="memItemRight" valign="bottom"><b>videoRange</b></td></tr>
+<tr class="memdesc:a825d5c7d976661ccd460857828abe8a5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Y'CbCr / RGB quantization range. Left at VideoRange::Unknown by default; <a class="el" href="classPixelFormat.html#a532d25364208c2faf63f01fb76d4906b">registerData</a> auto-derives from <code>compSemantics</code>[0] when possible. <br /></td></tr>
+<tr class="separator:a825d5c7d976661ccd460857828abe8a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa8ecf0168083f70fdbe03edbc328b8f1" id="r_aa8ecf0168083f70fdbe03edbc328b8f1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classPaintEngine.html">PaintEngine</a>(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structPixelFormat_1_1Data.html#aa8ecf0168083f70fdbe03edbc328b8f1">createPaintEngineFunc</a> )(<a class="el" href="classList.html">const</a> <a class="el" href="structPixelFormat_1_1Data.html">Data</a> *d, <a class="el" href="classList.html">const</a> <a class="el" href="classImage.html">Image</a> &amp;<a class="el" href="classList.html">img</a>) = <a class="el" href="classList.html">nullptr</a></td></tr>
+<tr class="memdesc:aa8ecf0168083f70fdbe03edbc328b8f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a <a class="el" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images.">PaintEngine</a> for drawing on the given image.  <br /></td></tr>
+<tr class="separator:aa8ecf0168083f70fdbe03edbc328b8f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Immutable data record for a pixel format. </p>
+<div class="textblock"><p>Immutable data record for a pixel description. </p>
 </div><h2 class="groupheader">Member Data Documentation</h2>
-<a id="af41bc2f98070946b026a8f4d96d16336" name="af41bc2f98070946b026a8f4d96d16336"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af41bc2f98070946b026a8f4d96d16336">&#9670;&#160;</a></span>lineStrideFunc</h2>
+<a id="aa8ecf0168083f70fdbe03edbc328b8f1" name="aa8ecf0168083f70fdbe03edbc328b8f1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa8ecf0168083f70fdbe03edbc328b8f1">&#9670;&#160;</a></span>createPaintEngineFunc</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">size_t</a>(* PixelFormat::Data::lineStrideFunc) (<a class="el" href="classList.html">const</a> <a class="el" href="structPixelFormat_1_1Data.html">Data</a> *d, <a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">planeIdx</a>, <a class="el" href="classList.html">size_t</a> width, <a class="el" href="classList.html">size_t</a> linePad, <a class="el" href="classList.html">size_t</a> lineAlign) = <a class="el" href="classList.html">nullptr</a></td>
+          <td class="memname"><a class="el" href="classPaintEngine.html">PaintEngine</a>(* PixelFormat::Data::createPaintEngineFunc) (<a class="el" href="classList.html">const</a> <a class="el" href="structPixelFormat_1_1Data.html">Data</a> *d, <a class="el" href="classList.html">const</a> <a class="el" href="classImage.html">Image</a> &amp;<a class="el" href="classList.html">img</a>) = <a class="el" href="classList.html">nullptr</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Computes the line stride for a given plane. </p>
+<p>Creates a <a class="el" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images.">PaintEngine</a> for drawing on the given image. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">d</td><td>Pointer to this <a class="el" href="structPixelFormat_1_1Data.html" title="Immutable data record for a pixel format.">Data</a> record. </td></tr>
-    <tr><td class="paramname">planeIdx</td><td>Zero-based plane index. </td></tr>
-    <tr><td class="paramname">width</td><td><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> width in pixels. </td></tr>
-    <tr><td class="paramname">linePad</td><td>Padding bytes appended to each scanline. </td></tr>
-    <tr><td class="paramname">lineAlign</td><td>Alignment requirement in bytes. </td></tr>
+    <tr><td class="paramname">d</td><td>Pointer to this <a class="el" href="structPixelFormat_1_1Data.html" title="Immutable data record for a pixel description.">Data</a> record. </td></tr>
+    <tr><td class="paramname">img</td><td>The image to create a paint engine for. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classLine.html" title="N-dimensional line segment defined by a start and end point.">Line</a> stride in bytes, or 0 if not applicable. </dd></dl>
-
-</div>
-</div>
-<a id="a5d4d86c88496035d9ed210d994245142" name="a5d4d86c88496035d9ed210d994245142"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5d4d86c88496035d9ed210d994245142">&#9670;&#160;</a></span>planeSizeFunc</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">size_t</a>(* PixelFormat::Data::planeSizeFunc) (<a class="el" href="classList.html">const</a> <a class="el" href="structPixelFormat_1_1Data.html">Data</a> *d, <a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">planeIdx</a>, <a class="el" href="classList.html">size_t</a> width, <a class="el" href="classList.html">size_t</a> height, <a class="el" href="classList.html">size_t</a> linePad, <a class="el" href="classList.html">size_t</a> lineAlign) = <a class="el" href="classList.html">nullptr</a></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Computes the total byte size of a given plane. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">d</td><td>Pointer to this <a class="el" href="structPixelFormat_1_1Data.html" title="Immutable data record for a pixel format.">Data</a> record. </td></tr>
-    <tr><td class="paramname">planeIdx</td><td>Zero-based plane index. </td></tr>
-    <tr><td class="paramname">width</td><td><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> width in pixels. </td></tr>
-    <tr><td class="paramname">height</td><td><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> height in pixels. </td></tr>
-    <tr><td class="paramname">linePad</td><td>Padding bytes appended to each scanline. </td></tr>
-    <tr><td class="paramname">lineAlign</td><td>Alignment requirement in bytes. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Plane size in bytes, or 0 if not applicable. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images.">PaintEngine</a>, or an invalid <a class="el" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images.">PaintEngine</a> if not supported. </dd></dl>
 
 </div>
 </div>
@@ -251,7 +242,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classPixelFormat.html">PixelFormat</a></li><li class="navelem"><a class="el" href="structPixelFormat_1_1Data.html">Data</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

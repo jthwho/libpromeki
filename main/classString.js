@@ -48,6 +48,7 @@ var classString =
     [ "hash", "classString.html#a47f6bbd03b6c4f15e3ea6225baf99d5a", null ],
     [ "insert", "classString.html#a1e8c2d90022b6f00844c7964fba94353", null ],
     [ "isEmpty", "classString.html#a47438e7b744f5b96be767302c525b351", null ],
+    [ "isIdentifier", "classString.html#a41864bcae69a2c7569c3ae01aacdecbd", null ],
     [ "isLiteral", "classString.html#a5be11cc83ab50f24267a2bb90bc19550", null ],
     [ "isNumeric", "classString.html#abb1b1b976e950ab51ff6ffa5d30ec6c0", null ],
     [ "left", "classString.html#a75c2ab1ddb88a4e8acfb683b3fd3636f", null ],

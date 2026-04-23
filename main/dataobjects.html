@@ -133,9 +133,9 @@ Simple</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code><a class="el" href="classMemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a></code>   </td><td class="markdownTableBodyNone">Memory space descriptor (TypeRegistry)    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classPixelFormat.html" title="Describes the memory layout of pixel data without color semantics.">PixelFormat</a></code>   </td><td class="markdownTableBodyNone">Pixel memory layout descriptor (TypeRegistry)    </td></tr>
+<td class="markdownTableBodyNone"><code><a class="el" href="classPixelMemLayout.html" title="Describes the memory layout of pixel data without color semantics.">PixelMemLayout</a></code>   </td><td class="markdownTableBodyNone">Pixel memory layout descriptor (TypeRegistry)    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a></code>   </td><td class="markdownTableBodyNone">Full pixel description: format + color model + ranges (TypeRegistry)    </td></tr>
+<td class="markdownTableBodyNone"><code><a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a></code>   </td><td class="markdownTableBodyNone">Full pixel description: format + color model + ranges (TypeRegistry)    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code><a class="el" href="classPair.html" title="Typed pair container wrapping std::pair.">Pair</a></code>   </td><td class="markdownTableBodyNone">Typed pair of two values    </td></tr>
 <tr class="markdownTableRowOdd">
@@ -191,7 +191,7 @@ Shareable</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code><a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a></code>   </td><td class="markdownTableBodyNone">Aligned memory buffer    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a></code>   </td><td class="markdownTableBodyNone"><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> format descriptor    </td></tr>
+<td class="markdownTableBodyNone"><code><a class="el" href="classAudioDesc.html" title="Describes a concrete audio stream — format plus sample rate and channel count.">AudioDesc</a></code>   </td><td class="markdownTableBodyNone"><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> format descriptor    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code><a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a></code>   </td><td class="markdownTableBodyNone"><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> format descriptor    </td></tr>
 <tr class="markdownTableRowOdd">
@@ -217,13 +217,17 @@ Shareable</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code><a class="el" href="classArray.html" title="Fixed-size array container wrapping std::array.">Array</a></code>   </td><td class="markdownTableBodyNone">Fixed-size array (std::array wrapper)    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a></code>   </td><td class="markdownTableBodyNone"><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> descriptor + pixel buffer planes (compressed images carry an attached <code><a class="el" href="classMediaPacket.html" title="Encoded bitstream access unit produced by a VideoEncoder or consumed by a VideoDecoder.">MediaPacket</a></code>)    </td></tr>
+<td class="markdownTableBodyNone"><code><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a></code>   </td><td class="markdownTableBodyNone"><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> descriptor + pixel buffer planes (compressed images carry an attached <code><a class="el" href="classVideoPacket.html" title="Encoded video access unit produced by a VideoEncoder or consumed by a VideoDecoder.">VideoPacket</a></code>)    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a></code>   </td><td class="markdownTableBodyNone"><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> descriptor + sample buffer (compressed audio carries an attached <code><a class="el" href="classMediaPacket.html" title="Encoded bitstream access unit produced by a VideoEncoder or consumed by a VideoDecoder.">MediaPacket</a></code>)    </td></tr>
+<td class="markdownTableBodyNone"><code><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a></code>   </td><td class="markdownTableBodyNone"><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> descriptor + sample buffer (compressed audio carries an attached <code><a class="el" href="classAudioPacket.html" title="Encoded audio access unit produced by an AudioEncoder or consumed by an AudioDecoder.">AudioPacket</a></code>)    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a></code>   </td><td class="markdownTableBodyNone">Container of images, audio, and metadata    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code><a class="el" href="classMediaPacket.html" title="Encoded bitstream access unit produced by a VideoEncoder or consumed by a VideoDecoder.">MediaPacket</a></code>   </td><td class="markdownTableBodyNone">Encoded bitstream access unit — attached to its owning <code><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a></code> or <code><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a></code>    </td></tr>
+<td class="markdownTableBodyNone"><code><a class="el" href="classMediaPacket.html" title="Abstract polymorphic base for any encoded bitstream packet.">MediaPacket</a></code>   </td><td class="markdownTableBodyNone">Abstract polymorphic base for encoded bitstream access units    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code><a class="el" href="classVideoPacket.html" title="Encoded video access unit produced by a VideoEncoder or consumed by a VideoDecoder.">VideoPacket</a></code>   </td><td class="markdownTableBodyNone">Encoded video access unit — attached to a compressed <code><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a></code>    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code><a class="el" href="classAudioPacket.html" title="Encoded audio access unit produced by an AudioEncoder or consumed by an AudioDecoder.">AudioPacket</a></code>   </td><td class="markdownTableBodyNone">Encoded audio access unit — attached to a compressed <code><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a></code>    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code><a class="el" href="classEncodedDesc.html" title="Describes a compressed or encoded media format.">EncodedDesc</a></code>   </td><td class="markdownTableBodyNone">Compressed/encoded media descriptor   </td></tr>
 </table>
@@ -293,7 +297,7 @@ Avoid: Mutex around data objects</h2>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -182,9 +182,9 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a750931ea2502dc99a36e6a83dd4fad73" id="r_a750931ea2502dc99a36e6a83dd4fad73"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classMediaDesc.html">MediaDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask.html#a750931ea2502dc99a36e6a83dd4fad73">applyOutputOverrides</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaDesc.html">MediaDesc</a> &amp;<a class="el" href="classList.html">input</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classMediaConfig.html">MediaConfig</a> &amp;config)</td></tr>
 <tr class="memdesc:a750931ea2502dc99a36e6a83dd4fad73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Applies the standard <code>Output*</code> overrides from <code>config</code> to <code>input</code>, returning the resulting <a class="el" href="classMediaDesc.html">MediaDesc</a>.  <br /></td></tr>
 <tr class="separator:a750931ea2502dc99a36e6a83dd4fad73"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad897243f4bd298e1a84adf641332854e" id="r_ad897243f4bd298e1a84adf641332854e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classPixelDesc.html">PixelDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask.html#ad897243f4bd298e1a84adf641332854e">defaultUncompressedPixelDesc</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;source)</td></tr>
-<tr class="memdesc:ad897243f4bd298e1a84adf641332854e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a canonical uncompressed <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a> that stays in the same family as <code>source</code>.  <br /></td></tr>
-<tr class="separator:ad897243f4bd298e1a84adf641332854e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a17bd185004a46b374bb099ed025561b5" id="r_a17bd185004a46b374bb099ed025561b5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classPixelFormat.html">PixelFormat</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask.html#a17bd185004a46b374bb099ed025561b5">defaultUncompressedPixelFormat</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classPixelFormat.html">PixelFormat</a> &amp;source)</td></tr>
+<tr class="memdesc:a17bd185004a46b374bb099ed025561b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a canonical uncompressed <a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a> that stays in the same family as <code>source</code>.  <br /></td></tr>
+<tr class="separator:a17bd185004a46b374bb099ed025561b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
@@ -267,13 +267,13 @@ Friends</h2></td></tr>
 <p>Every transform backend (CSC, <a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a>, SRC, <a class="el" href="classVideoEncoder.html" title="Abstract base class for stateful video encoders.">VideoEncoder</a>, <a class="el" href="classVideoDecoder.html" title="Abstract base class for stateful video decoders.">VideoDecoder</a>) consumes the same family of <a class="el" href="classMediaConfig.html">MediaConfig</a> keys to express "given this input
 shape, produce this output":</p>
 <ul>
-<li>MediaConfig::OutputPixelDesc — replaces the <a class="el" href="classImageDesc.html#a8fd13b343836d8b7465a6da4ae3ecd2e">ImageDesc::pixelDesc</a> of every video image.</li>
+<li>MediaConfig::OutputPixelFormat — replaces the <a class="el" href="classImageDesc.html#aa6a9779872d4e539ed58795bb28c12c9">ImageDesc::pixelFormat</a> of every video image.</li>
 <li>MediaConfig::OutputFrameRate — replaces <a class="el" href="classMediaDesc.html#a1e97279a95a210a57927c4a44d4d83f7">MediaDesc::frameRate</a>.</li>
 <li>MediaConfig::OutputAudioRate — replaces <a class="el" href="classAudioDesc.html#a76e846fe714813ae7d9255818012aa95">AudioDesc::sampleRate</a> on every audio entry.</li>
 <li>MediaConfig::OutputAudioChannels — replaces <a class="el" href="classAudioDesc.html#a28ace60e735420592c1cc45eede92700">AudioDesc::channels</a> on every audio entry.</li>
-<li>MediaConfig::OutputAudioDataType — replaces <a class="el" href="classAudioDesc.html#aed77bd03c20f0e1b332243412bc6cb76">AudioDesc::dataType</a> on every audio entry.</li>
+<li>MediaConfig::OutputAudioDataType — replaces <a class="el" href="classAudioDesc.html#a5d96f167a5bff3c66d6f9cc7a6e84e30">AudioDesc::format</a> on every audio entry.</li>
 </ul>
-<p>Keys at their default (invalid <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a>, invalid <a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a>, zero audio rate / channels, invalid <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a>) mean "inherit from input" — the corresponding field passes through unchanged.</p>
+<p>Keys at their default (invalid <a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a>, invalid <a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a>, zero audio rate / channels, invalid <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a>) mean "inherit from input" — the corresponding field passes through unchanged.</p>
 <p>The pipeline planner uses this helper to compute what shape a configured transform will produce without instantiating it. Backend authors call it from MediaIOTask::proposeOutput / MediaIOTask::describe so every transform answers the planner uniformly.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -286,8 +286,8 @@ shape, produce this output":</p>
 
 </div>
 </div>
-<a id="ad897243f4bd298e1a84adf641332854e" name="ad897243f4bd298e1a84adf641332854e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad897243f4bd298e1a84adf641332854e">&#9670;&#160;</a></span>defaultUncompressedPixelDesc()</h2>
+<a id="a17bd185004a46b374bb099ed025561b5" name="a17bd185004a46b374bb099ed025561b5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a17bd185004a46b374bb099ed025561b5">&#9670;&#160;</a></span>defaultUncompressedPixelFormat()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -296,9 +296,9 @@ shape, produce this output":</p>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> MediaIOTask::defaultUncompressedPixelDesc </td>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classPixelFormat.html">PixelFormat</a> MediaIOTask::defaultUncompressedPixelFormat </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classPixelFormat.html">PixelFormat</a> &amp;&#160;</td>
           <td class="paramname"><em>source</em></td><td>)</td>
           <td></td>
         </tr>
@@ -310,19 +310,19 @@ shape, produce this output":</p>
 </table>
 </div><div class="memdoc">
 
-<p>Returns a canonical uncompressed <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a> that stays in the same family as <code>source</code>. </p>
+<p>Returns a canonical uncompressed <a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a> that stays in the same family as <code>source</code>. </p>
 <p>Transform backends that refuse compressed or paint-engine-less input (Burn, <a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a>, ...) use this to ask the pipeline planner for a same-family uncompressed substitute in <code>proposeInput</code>. The planner's <a class="el" href="classVideoDecoder.html" title="Abstract base class for stateful video decoders.">VideoDecoder</a> / CSC bridges then close the gap. The helper keeps the mapping in one place so the fallback does not drift between backends.</p>
 <ul>
-<li>YCbCr sources → <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa88e27d485713c3085560fa0589da842f">PixelDesc::YUV8_422_Rec709</a></li>
-<li>RGB / other → <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00">PixelDesc::RGBA8_sRGB</a></li>
+<li>YCbCr sources → <a class="el" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda283722f72d07988ea5b3bb19b236cfe9">PixelFormat::YUV8_422_Rec709</a></li>
+<li>RGB / other → <a class="el" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4dedac09d859f4e4dc0d747afe58c98dae903">PixelFormat::RGBA8_sRGB</a></li>
 </ul>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">source</td><td>The compressed or paint-engine-less input <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a>. </td></tr>
+    <tr><td class="paramname">source</td><td>The compressed or paint-engine-less input <a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a>. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A canonical uncompressed <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a>. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A canonical uncompressed <a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a>. </dd></dl>
 
 </div>
 </div>
@@ -422,7 +422,7 @@ shape, produce this output":</p>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIOTask.html">MediaIOTask</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

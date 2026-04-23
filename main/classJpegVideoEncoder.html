@@ -100,6 +100,7 @@ $(document).ready(function(){initNavTree('classJpegVideoEncoder.html',''); initR
 
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classJpegVideoEncoder-members.html">List of all members</a>  </div>
@@ -107,7 +108,7 @@ $(document).ready(function(){initNavTree('classJpegVideoEncoder.html',''); initR
 </div><!--header-->
 <div class="contents">
 
-<p>JPEG <a class="el" href="classVideoEncoder.html">VideoEncoder</a> built on <a class="el" href="classJpegImageCodec.html">JpegImageCodec</a>.  
+<p>JPEG <a class="el" href="classVideoEncoder.html">VideoEncoder</a> built on libjpeg-turbo.  
  <a href="classJpegVideoEncoder.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="jpegvideocodec_8h_source.html">jpegvideocodec.h</a>&gt;</code></p>
@@ -116,7 +117,7 @@ Inheritance diagram for JpegVideoEncoder:</div>
 <div class="dyncontent">
 <div class="center"><img src="classJpegVideoEncoder__inherit__graph.png" border="0" usemap="#aJpegVideoEncoder_inherit__map" alt="Inheritance graph"/></div>
 <map name="aJpegVideoEncoder_inherit__map" id="aJpegVideoEncoder_inherit__map">
-<area shape="rect" title="JPEG VideoEncoder built on JpegImageCodec." alt="" coords="5,79,144,104"/>
+<area shape="rect" title="JPEG VideoEncoder built on libjpeg&#45;turbo." alt="" coords="5,79,144,104"/>
 <area shape="rect" href="classVideoEncoder.html" title="Abstract base class for stateful video encoders." alt="" coords="19,5,130,31"/>
 <area shape="poly" title=" " alt="" coords="77,44,77,79,72,79,72,44"/>
 </map>
@@ -126,7 +127,7 @@ Collaboration diagram for JpegVideoEncoder:</div>
 <div class="dyncontent">
 <div class="center"><img src="classJpegVideoEncoder__coll__graph.png" border="0" usemap="#aJpegVideoEncoder_coll__map" alt="Collaboration graph"/></div>
 <map name="aJpegVideoEncoder_coll__map" id="aJpegVideoEncoder_coll__map">
-<area shape="rect" title="JPEG VideoEncoder built on JpegImageCodec." alt="" coords="11,168,149,193"/>
+<area shape="rect" title="JPEG VideoEncoder built on libjpeg&#45;turbo." alt="" coords="11,168,149,193"/>
 <area shape="rect" href="classVideoEncoder.html" title="Abstract base class for stateful video encoders." alt="" coords="25,93,135,119"/>
 <area shape="poly" title=" " alt="" coords="83,133,83,168,77,168,77,133"/>
 <area shape="rect" href="classError.html" title="Lightweight error code wrapper for the promeki library." alt="" coords="5,5,59,31"/>
@@ -136,43 +137,56 @@ Collaboration diagram for JpegVideoEncoder:</div>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a6729d4444adbb298f8ed418604f7bf4d" id="r_a6729d4444adbb298f8ed418604f7bf4d"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegVideoEncoder.html#a6729d4444adbb298f8ed418604f7bf4d">Subsampling</a> { <a class="el" href="classJpegVideoEncoder.html#a6729d4444adbb298f8ed418604f7bf4da00be0359df0c203441a8cc3f7883f323">Subsampling444</a>
+, <a class="el" href="classJpegVideoEncoder.html#a6729d4444adbb298f8ed418604f7bf4dacb63b2cac16d86590f761fbf17df19be">Subsampling422</a>
+, <a class="el" href="classJpegVideoEncoder.html#a6729d4444adbb298f8ed418604f7bf4da81999ab09d679a33f6ea67c85d44e073">Subsampling420</a>
+ }</td></tr>
+<tr class="memdesc:a6729d4444adbb298f8ed418604f7bf4d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Chroma subsampling mode for JPEG encoding.  <a href="classJpegVideoEncoder.html#a6729d4444adbb298f8ed418604f7bf4d">More...</a><br /></td></tr>
+<tr class="separator:a6729d4444adbb298f8ed418604f7bf4d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_types_classVideoEncoder"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classVideoEncoder')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classVideoEncoder.html">VideoEncoder</a></td></tr>
+<tr class="memitem:a4cad3dde3d9c6f42d32590347a36713e inherit pub_types_classVideoEncoder" id="r_a4cad3dde3d9c6f42d32590347a36713e"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Factory</b> = std::function&lt; <a class="el" href="classVideoEncoder.html">VideoEncoder</a> *()&gt;</td></tr>
+<tr class="memdesc:a4cad3dde3d9c6f42d32590347a36713e inherit pub_types_classVideoEncoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Factory signature used by the encoder registry. <br /></td></tr>
+<tr class="separator:a4cad3dde3d9c6f42d32590347a36713e inherit pub_types_classVideoEncoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a272b7822075417da255dcb3ac731bc9f" id="r_a272b7822075417da255dcb3ac731bc9f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegVideoEncoder.html#a272b7822075417da255dcb3ac731bc9f">name</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:a272b7822075417da255dcb3ac731bc9f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the codec name (e.g. <code>"H264"</code>, <code>"HEVC"</code>).  <br /></td></tr>
-<tr class="separator:a272b7822075417da255dcb3ac731bc9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4fdcdbcb2ebaf5a16603c40483224fb3" id="r_a4fdcdbcb2ebaf5a16603c40483224fb3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegVideoEncoder.html#a4fdcdbcb2ebaf5a16603c40483224fb3">description</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:a4fdcdbcb2ebaf5a16603c40483224fb3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a human-readable description.  <br /></td></tr>
-<tr class="separator:a4fdcdbcb2ebaf5a16603c40483224fb3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aed0c8149bf6abe35eee6e3395726f14e" id="r_aed0c8149bf6abe35eee6e3395726f14e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classPixelDesc.html">PixelDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegVideoEncoder.html#aed0c8149bf6abe35eee6e3395726f14e">outputPixelDesc</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:aed0c8149bf6abe35eee6e3395726f14e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the compressed <a class="el" href="classPixelDesc.html">PixelDesc</a> this encoder produces.  <br /></td></tr>
-<tr class="separator:aed0c8149bf6abe35eee6e3395726f14e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac46e257a01fb134905a39b542b24b0ae" id="r_ac46e257a01fb134905a39b542b24b0ae"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">List</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegVideoEncoder.html#ac46e257a01fb134905a39b542b24b0ae">supportedInputs</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:ac46e257a01fb134905a39b542b24b0ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the uncompressed <a class="el" href="classPixelDesc.html">PixelDesc</a> IDs this encoder accepts.  <br /></td></tr>
-<tr class="separator:ac46e257a01fb134905a39b542b24b0ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abdbf7a047cf028bdcabf06ec8c4852d9" id="r_abdbf7a047cf028bdcabf06ec8c4852d9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegVideoEncoder.html#abdbf7a047cf028bdcabf06ec8c4852d9">configure</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaConfig.html">MediaConfig</a> &amp;config) <a class="el" href="classList.html">override</a></td></tr>
 <tr class="memdesc:abdbf7a047cf028bdcabf06ec8c4852d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Applies encoder parameters from a <a class="el" href="classMediaConfig.html">MediaConfig</a>.  <br /></td></tr>
 <tr class="separator:abdbf7a047cf028bdcabf06ec8c4852d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a492a58771ef638d253fab9038715ec33" id="r_a492a58771ef638d253fab9038715ec33"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegVideoEncoder.html#a492a58771ef638d253fab9038715ec33">submitFrame</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classImage.html">Image</a> &amp;frame, <a class="el" href="classList.html">const</a> <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> &amp;pts=<a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a>()) <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:a492a58771ef638d253fab9038715ec33"><td class="mdescLeft">&#160;</td><td class="mdescRight">Submits one uncompressed frame for encoding.  <br /></td></tr>
-<tr class="separator:a492a58771ef638d253fab9038715ec33"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8963f1650825d82cf3681016719e7820" id="r_a8963f1650825d82cf3681016719e7820"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaPacket.html#a0d042c1f6143d734c401c0de3927ddb0">MediaPacket::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegVideoEncoder.html#a8963f1650825d82cf3681016719e7820">receivePacket</a> () <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:a8963f1650825d82cf3681016719e7820"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dequeues one encoded packet from the encoder's output queue.  <br /></td></tr>
-<tr class="separator:a8963f1650825d82cf3681016719e7820"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a22d88551e54252ebf88d2373cada79" id="r_a3a22d88551e54252ebf88d2373cada79"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegVideoEncoder.html#a3a22d88551e54252ebf88d2373cada79">submitFrame</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classImage.html#a38745cfc2762b9f0aeaaba861098b852">Image::Ptr</a> &amp;frame, <a class="el" href="classList.html">const</a> <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> &amp;pts=<a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a>()) <a class="el" href="classList.html">override</a></td></tr>
+<tr class="memdesc:a3a22d88551e54252ebf88d2373cada79"><td class="mdescLeft">&#160;</td><td class="mdescRight">Submits one uncompressed frame for encoding.  <br /></td></tr>
+<tr class="separator:a3a22d88551e54252ebf88d2373cada79"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeaf9daa46e46fe753fc41ee26e5ca32b" id="r_aeaf9daa46e46fe753fc41ee26e5ca32b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classVideoPacket.html#acd061b0a22f40e1b25f19743f9d5025f">VideoPacket::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegVideoEncoder.html#aeaf9daa46e46fe753fc41ee26e5ca32b">receivePacket</a> () <a class="el" href="classList.html">override</a></td></tr>
+<tr class="memdesc:aeaf9daa46e46fe753fc41ee26e5ca32b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dequeues one encoded packet, or a null Ptr when none is ready.  <br /></td></tr>
+<tr class="separator:aeaf9daa46e46fe753fc41ee26e5ca32b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad5d2516eb5752e734afc172e2d2d356e" id="r_ad5d2516eb5752e734afc172e2d2d356e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegVideoEncoder.html#ad5d2516eb5752e734afc172e2d2d356e">flush</a> () <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:ad5d2516eb5752e734afc172e2d2d356e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signals end-of-stream to the encoder and asks it to emit remaining packets.  <br /></td></tr>
+<tr class="memdesc:ad5d2516eb5752e734afc172e2d2d356e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signals end-of-stream and asks the encoder to drain remaining packets.  <br /></td></tr>
 <tr class="separator:ad5d2516eb5752e734afc172e2d2d356e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab85cb06ff67889e41de0a2276c744862" id="r_ab85cb06ff67889e41de0a2276c744862"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegVideoEncoder.html#ab85cb06ff67889e41de0a2276c744862">reset</a> () <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:ab85cb06ff67889e41de0a2276c744862"><td class="mdescLeft">&#160;</td><td class="mdescRight">Discards any pending frames / packets and returns the encoder to a fresh state.  <br /></td></tr>
+<tr class="memdesc:ab85cb06ff67889e41de0a2276c744862"><td class="mdescLeft">&#160;</td><td class="mdescRight">Discards any pending frames / packets and returns to a fresh state.  <br /></td></tr>
 <tr class="separator:ab85cb06ff67889e41de0a2276c744862"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abf5a2ce1f84d09c78b24e2864c9cb120" id="r_abf5a2ce1f84d09c78b24e2864c9cb120"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegVideoEncoder.html#abf5a2ce1f84d09c78b24e2864c9cb120">requestKeyframe</a> () <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:abf5a2ce1f84d09c78b24e2864c9cb120"><td class="mdescLeft">&#160;</td><td class="mdescRight">Forces the next submitted frame to be coded as a keyframe.  <br /></td></tr>
-<tr class="separator:abf5a2ce1f84d09c78b24e2864c9cb120"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a43c9ec370bd280e2ea2034babd5008c1" id="r_a43c9ec370bd280e2ea2034babd5008c1"><td class="memItemLeft" align="right" valign="top"><a id="a43c9ec370bd280e2ea2034babd5008c1" name="a43c9ec370bd280e2ea2034babd5008c1"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>quality</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a43c9ec370bd280e2ea2034babd5008c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the JPEG quality (1-100). <br /></td></tr>
+<tr class="separator:a43c9ec370bd280e2ea2034babd5008c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a34d1b848ba7c57256372ae8a3d376eb9" id="r_a34d1b848ba7c57256372ae8a3d376eb9"><td class="memItemLeft" align="right" valign="top"><a id="a34d1b848ba7c57256372ae8a3d376eb9" name="a34d1b848ba7c57256372ae8a3d376eb9"></a>
+<a class="el" href="classJpegVideoEncoder.html#a6729d4444adbb298f8ed418604f7bf4d">Subsampling</a>&#160;</td><td class="memItemRight" valign="bottom"><b>subsampling</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a34d1b848ba7c57256372ae8a3d376eb9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the chroma subsampling mode. <br /></td></tr>
+<tr class="separator:a34d1b848ba7c57256372ae8a3d376eb9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classVideoEncoder"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classVideoEncoder')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classVideoEncoder.html">VideoEncoder</a></td></tr>
 <tr class="memitem:adc5f7db2760b8095e86d6e55b9cab3e9 inherit pub_methods_classVideoEncoder" id="r_adc5f7db2760b8095e86d6e55b9cab3e9"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classList.html">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><b>~VideoEncoder</b> ()</td></tr>
 <tr class="memdesc:adc5f7db2760b8095e86d6e55b9cab3e9 inherit pub_methods_classVideoEncoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual destructor. <br /></td></tr>
 <tr class="separator:adc5f7db2760b8095e86d6e55b9cab3e9 inherit pub_methods_classVideoEncoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa71dff6ef0672eb00b8c6a2c4884fda2 inherit pub_methods_classVideoEncoder" id="r_aa71dff6ef0672eb00b8c6a2c4884fda2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classVideoCodec.html">VideoCodec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoEncoder.html#aa71dff6ef0672eb00b8c6a2c4884fda2">codec</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aa71dff6ef0672eb00b8c6a2c4884fda2 inherit pub_methods_classVideoEncoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the codec this session encodes.  <br /></td></tr>
+<tr class="separator:aa71dff6ef0672eb00b8c6a2c4884fda2 inherit pub_methods_classVideoEncoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a68382ed9c6f57080f72f04961525997b inherit pub_methods_classVideoEncoder" id="r_a68382ed9c6f57080f72f04961525997b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoEncoder.html#a68382ed9c6f57080f72f04961525997b">requestKeyframe</a> ()</td></tr>
+<tr class="memdesc:a68382ed9c6f57080f72f04961525997b inherit pub_methods_classVideoEncoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Asks the encoder to mark the next packet as an independently decodable random-access point.  <br /></td></tr>
+<tr class="separator:a68382ed9c6f57080f72f04961525997b inherit pub_methods_classVideoEncoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a60b05cab20c035dcb633d27520e2c5f3 inherit pub_methods_classVideoEncoder" id="r_a60b05cab20c035dcb633d27520e2c5f3"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><b>lastError</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a60b05cab20c035dcb633d27520e2c5f3 inherit pub_methods_classVideoEncoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the last error produced by the encoder. <br /></td></tr>
@@ -185,25 +199,32 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a7a417703400cc4206304317429432363" id="r_a7a417703400cc4206304317429432363"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">List</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegVideoEncoder.html#a7a417703400cc4206304317429432363">supportedInputList</a> ()</td></tr>
-<tr class="memdesc:a7a417703400cc4206304317429432363"><td class="mdescLeft">&#160;</td><td class="mdescRight">Static view of the encoder's <a class="el" href="classJpegVideoEncoder.html#ac46e257a01fb134905a39b542b24b0ae">supportedInputs</a> list.  <br /></td></tr>
+<tr class="memdesc:a7a417703400cc4206304317429432363"><td class="mdescLeft">&#160;</td><td class="mdescRight">Static view of the encoder's accepted uncompressed input list.  <br /></td></tr>
 <tr class="separator:a7a417703400cc4206304317429432363"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_static_methods_classVideoEncoder"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classVideoEncoder')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classVideoEncoder.html">VideoEncoder</a></td></tr>
-<tr class="memitem:aaf3309fc45bd95ad44c57c6116b9fd0e inherit pub_static_methods_classVideoEncoder" id="r_aaf3309fc45bd95ad44c57c6116b9fd0e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoEncoder.html#aaf3309fc45bd95ad44c57c6116b9fd0e">registerEncoder</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classVideoEncoder.html#a458f5a446eb61370897560bd14653c4d">name</a>, std::function&lt; <a class="el" href="classVideoEncoder.html">VideoEncoder</a> *()&gt; <a class="el" href="classList.html">factory</a>)</td></tr>
-<tr class="memdesc:aaf3309fc45bd95ad44c57c6116b9fd0e inherit pub_static_methods_classVideoEncoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers a video encoder factory.  <br /></td></tr>
-<tr class="separator:aaf3309fc45bd95ad44c57c6116b9fd0e inherit pub_static_methods_classVideoEncoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8ca3a8ef4f0df40a895ec2638d007e48 inherit pub_static_methods_classVideoEncoder" id="r_a8ca3a8ef4f0df40a895ec2638d007e48"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVideoEncoder.html">VideoEncoder</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoEncoder.html#a8ca3a8ef4f0df40a895ec2638d007e48">createEncoder</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classVideoEncoder.html#a458f5a446eb61370897560bd14653c4d">name</a>)</td></tr>
-<tr class="memdesc:a8ca3a8ef4f0df40a895ec2638d007e48 inherit pub_static_methods_classVideoEncoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a video encoder instance by name.  <br /></td></tr>
-<tr class="separator:a8ca3a8ef4f0df40a895ec2638d007e48 inherit pub_static_methods_classVideoEncoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abc96287cc4e49ea25195746df5cd060b inherit pub_static_methods_classVideoEncoder" id="r_abc96287cc4e49ea25195746df5cd060b"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">List</a>&lt; <a class="el" href="classString.html">String</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>registeredEncoders</b> ()</td></tr>
-<tr class="memdesc:abc96287cc4e49ea25195746df5cd060b inherit pub_static_methods_classVideoEncoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of all registered encoder codec names. <br /></td></tr>
-<tr class="separator:abc96287cc4e49ea25195746df5cd060b inherit pub_static_methods_classVideoEncoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c0a2730ff8dbfbb453122a8d4f8dcdf inherit pub_static_methods_classVideoEncoder" id="r_a9c0a2730ff8dbfbb453122a8d4f8dcdf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoEncoder.html#a9c0a2730ff8dbfbb453122a8d4f8dcdf">registerBackend</a> (<a class="el" href="structVideoEncoder_1_1BackendRecord.html">BackendRecord</a> record)</td></tr>
+<tr class="memdesc:a9c0a2730ff8dbfbb453122a8d4f8dcdf inherit pub_static_methods_classVideoEncoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers a concrete encoder backend for a (codec, backend) pair.  <br /></td></tr>
+<tr class="separator:a9c0a2730ff8dbfbb453122a8d4f8dcdf inherit pub_static_methods_classVideoEncoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a47d16c5d122e401b2f54e65b5ea9fc7c inherit pub_static_methods_classVideoEncoder" id="r_a47d16c5d122e401b2f54e65b5ea9fc7c"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">static</a> <a class="el" href="classVideoCodec.html#a1fccd459f626e5b6d9eef80e4d616428">VideoCodec::BackendList</a>&#160;</td><td class="memItemRight" valign="bottom"><b>availableBackends</b> (<a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dc">VideoCodec::ID</a> codecId)</td></tr>
+<tr class="memdesc:a47d16c5d122e401b2f54e65b5ea9fc7c inherit pub_static_methods_classVideoEncoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns every backend that has registered an encoder for <code>codecId</code>. <br /></td></tr>
+<tr class="separator:a47d16c5d122e401b2f54e65b5ea9fc7c inherit pub_static_methods_classVideoEncoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3c4fea3a910df4d6e74146198a590e2f inherit pub_static_methods_classVideoEncoder" id="r_a3c4fea3a910df4d6e74146198a590e2f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">List</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoEncoder.html#a3c4fea3a910df4d6e74146198a590e2f">supportedInputsFor</a> (<a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dc">VideoCodec::ID</a> codecId, <a class="el" href="classVideoCodec_1_1Backend.html">VideoCodec::Backend</a> backend)</td></tr>
+<tr class="memdesc:a3c4fea3a910df4d6e74146198a590e2f inherit pub_static_methods_classVideoEncoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the supportedInputs list of a specific (codec, backend) pair.  <br /></td></tr>
+<tr class="separator:a3c4fea3a910df4d6e74146198a590e2f inherit pub_static_methods_classVideoEncoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2cbac6a8fc06f10ae483bea4fd82206c inherit pub_static_methods_classVideoEncoder" id="r_a2cbac6a8fc06f10ae483bea4fd82206c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classVideoEncoder.html">VideoEncoder</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoEncoder.html#a2cbac6a8fc06f10ae483bea4fd82206c">create</a> (<a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dc">VideoCodec::ID</a> codecId, <a class="el" href="classVideoCodec_1_1Backend.html">VideoCodec::Backend</a> <a class="el" href="classList.html">pinned</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classMediaConfig.html">MediaConfig</a> *config)</td></tr>
+<tr class="memdesc:a2cbac6a8fc06f10ae483bea4fd82206c inherit pub_static_methods_classVideoEncoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resolves a backend and invokes its factory.  <br /></td></tr>
+<tr class="separator:a2cbac6a8fc06f10ae483bea4fd82206c inherit pub_static_methods_classVideoEncoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pro_methods_classVideoEncoder"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classVideoEncoder')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classVideoEncoder.html">VideoEncoder</a></td></tr>
-<tr class="memitem:a911b6f13999a5ef3ca614cce6677cb74 inherit pro_methods_classVideoEncoder" id="r_a911b6f13999a5ef3ca614cce6677cb74"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoEncoder.html#a911b6f13999a5ef3ca614cce6677cb74">setError</a> (<a class="el" href="classError.html">Error</a> <a class="el" href="classList.html">err</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;msg=<a class="el" href="classString.html">String</a>())</td></tr>
-<tr class="memdesc:a911b6f13999a5ef3ca614cce6677cb74 inherit pro_methods_classVideoEncoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Records a new error state.  <br /></td></tr>
+<tr class="memitem:a227997ca73d32702a3ac52d96cf14d5f inherit pro_methods_classVideoEncoder" id="r_a227997ca73d32702a3ac52d96cf14d5f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoEncoder.html#a227997ca73d32702a3ac52d96cf14d5f">setCodec</a> (<a class="el" href="classVideoCodec.html">VideoCodec</a> <a class="el" href="classVideoEncoder.html#aa71dff6ef0672eb00b8c6a2c4884fda2">codec</a>)</td></tr>
+<tr class="memdesc:a227997ca73d32702a3ac52d96cf14d5f inherit pro_methods_classVideoEncoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Records the codec + backend this session implements.  <br /></td></tr>
+<tr class="separator:a227997ca73d32702a3ac52d96cf14d5f inherit pro_methods_classVideoEncoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a911b6f13999a5ef3ca614cce6677cb74 inherit pro_methods_classVideoEncoder" id="r_a911b6f13999a5ef3ca614cce6677cb74"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setError</b> (<a class="el" href="classError.html">Error</a> <a class="el" href="classList.html">err</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;msg=<a class="el" href="classString.html">String</a>())</td></tr>
+<tr class="memdesc:a911b6f13999a5ef3ca614cce6677cb74 inherit pro_methods_classVideoEncoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Records a new error state. <br /></td></tr>
 <tr class="separator:a911b6f13999a5ef3ca614cce6677cb74 inherit pro_methods_classVideoEncoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a118ebebcfebdd2f5e93f3db0d79db4d5 inherit pro_methods_classVideoEncoder" id="r_a118ebebcfebdd2f5e93f3db0d79db4d5"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>clearError</b> ()</td></tr>
@@ -218,24 +239,49 @@ Additional Inherited Members</h2></td></tr>
 <tr class="separator:a7ca68d48bc79d9e26af6b8aef329aa4a inherit pro_attribs_classVideoEncoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>JPEG <a class="el" href="classVideoEncoder.html">VideoEncoder</a> built on <a class="el" href="classJpegImageCodec.html">JpegImageCodec</a>. </p>
-<p>Adapts the existing intra-only <a class="el" href="classJpegImageCodec.html">JpegImageCodec</a> into the stateful push-frame / pull-packet <a class="el" href="classVideoEncoder.html">VideoEncoder</a> contract that the unified codec subsystem expects. Each call to <a class="el" href="classJpegVideoEncoder.html#a492a58771ef638d253fab9038715ec33">submitFrame</a> runs one JPEG encode through the underlying <a class="el" href="classJpegImageCodec.html">JpegImageCodec</a> instance and queues the resulting compressed bytes as a <a class="el" href="classMediaPacket.html">MediaPacket</a>; <a class="el" href="classJpegVideoEncoder.html#a8963f1650825d82cf3681016719e7820">receivePacket</a> pops the head of that queue.</p>
-<p>Holding an instance of <a class="el" href="classJpegImageCodec.html">JpegImageCodec</a> across calls is what lets future revisions of <code><a class="el" href="classJpegImageCodec.html" title="JPEG image codec using libjpeg-turbo.">JpegImageCodec</a></code> reuse the libjpeg <code>jpeg_compress_struct</code> between frames — the wrapper itself is stateless beyond the output FIFO.</p>
-<p>Registered against <a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dcafabdbb7faf996c7b3dd1dbdf0cd8bfc6">VideoCodec::JPEG</a>. Every emitted packet is flagged <a class="el" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39a646639ca574bacfd258ebcc900a0feb7">MediaPacket::Keyframe</a> because every JPEG bitstream is independently decodable.</p>
+<div class="textblock"><p>JPEG <a class="el" href="classVideoEncoder.html">VideoEncoder</a> built on libjpeg-turbo. </p>
+<p>Encodes uncompressed images (RGB8, RGBA8, YCbCr 4:2:2 YUYV/UYVY/planar, YCbCr 4:2:0 planar/NV12) to JPEG compressed form. Each call to <a class="el" href="classJpegVideoEncoder.html#a3a22d88551e54252ebf88d2373cada79">submitFrame</a> runs one JPEG encode through libjpeg-turbo and queues the resulting compressed bytes as a <a class="el" href="classMediaPacket.html">MediaPacket</a>; <a class="el" href="classJpegVideoEncoder.html#aeaf9daa46e46fe753fc41ee26e5ca32b">receivePacket</a> pops the head of that queue.</p>
+<p>Default subsampling is 4:2:2 for RFC 2435 RTP compatibility.</p>
+<p>Registered against <a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dcafabdbb7faf996c7b3dd1dbdf0cd8bfc6">VideoCodec::JPEG</a>. Every emitted packet is flagged MediaPacket::Keyframe because every JPEG bitstream is independently decodable.</p>
 <dl class="section user"><dt>Config keys</dt><dd></dd></dl>
 <table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Key   </th><th class="markdownTableHeadNone">Type   </th><th class="markdownTableHeadNone">Default   </th><th class="markdownTableHeadNone">Description    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">MediaConfig::JpegQuality   </td><td class="markdownTableBodyNone">int   </td><td class="markdownTableBodyNone">85   </td><td class="markdownTableBodyNone">Forwarded to <a class="el" href="classJpegImageCodec.html">JpegImageCodec</a>.    </td></tr>
+<td class="markdownTableBodyNone">MediaConfig::JpegQuality   </td><td class="markdownTableBodyNone">int   </td><td class="markdownTableBodyNone">85   </td><td class="markdownTableBodyNone">libjpeg-turbo quality (1-100, clamped).    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">MediaConfig::JpegSubsampling   </td><td class="markdownTableBodyNone"><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> <a class="el" href="classChromaSubsampling.html">ChromaSubsampling</a>   </td><td class="markdownTableBodyNone">YUV422   </td><td class="markdownTableBodyNone">Forwarded to <a class="el" href="classJpegImageCodec.html">JpegImageCodec</a>.    </td></tr>
+<td class="markdownTableBodyNone">MediaConfig::JpegSubsampling   </td><td class="markdownTableBodyNone"><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> <a class="el" href="classChromaSubsampling.html">ChromaSubsampling</a>   </td><td class="markdownTableBodyNone">YUV422   </td><td class="markdownTableBodyNone">Chroma subsampling for RGB encode paths.    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">MediaConfig::OutputPixelDesc   </td><td class="markdownTableBodyNone"><a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a>   </td><td class="markdownTableBodyNone">Invalid   </td><td class="markdownTableBodyNone">Optional override of the encoder's reported <a class="el" href="classJpegVideoEncoder.html#aed0c8149bf6abe35eee6e3395726f14e">outputPixelDesc</a>.    </td></tr>
+<td class="markdownTableBodyNone">MediaConfig::OutputPixelFormat   </td><td class="markdownTableBodyNone"><a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a>   </td><td class="markdownTableBodyNone">Invalid   </td><td class="markdownTableBodyNone">Optional override of the encoder's reported outputPixelFormat.    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">MediaConfig::Capacity   </td><td class="markdownTableBodyNone">int   </td><td class="markdownTableBodyNone">8   </td><td class="markdownTableBodyNone">Output FIFO depth before a one-shot warning is logged.   </td></tr>
 </table>
-</div><h2 class="groupheader">Member Function Documentation</h2>
+</div><h2 class="groupheader">Member Enumeration Documentation</h2>
+<a id="a6729d4444adbb298f8ed418604f7bf4d" name="a6729d4444adbb298f8ed418604f7bf4d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6729d4444adbb298f8ed418604f7bf4d">&#9670;&#160;</a></span>Subsampling</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">enum</a> <a class="el" href="classJpegVideoEncoder.html#a6729d4444adbb298f8ed418604f7bf4d">JpegVideoEncoder::Subsampling</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Chroma subsampling mode for JPEG encoding. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a6729d4444adbb298f8ed418604f7bf4da00be0359df0c203441a8cc3f7883f323" name="a6729d4444adbb298f8ed418604f7bf4da00be0359df0c203441a8cc3f7883f323"></a>Subsampling444&#160;</td><td class="fielddoc"><p>4:4:4 (no chroma subsampling). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a6729d4444adbb298f8ed418604f7bf4dacb63b2cac16d86590f761fbf17df19be" name="a6729d4444adbb298f8ed418604f7bf4dacb63b2cac16d86590f761fbf17df19be"></a>Subsampling422&#160;</td><td class="fielddoc"><p>4:2:2 (default, RFC 2435 compatible). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a6729d4444adbb298f8ed418604f7bf4da81999ab09d679a33f6ea67c85d44e073" name="a6729d4444adbb298f8ed418604f7bf4da81999ab09d679a33f6ea67c85d44e073"></a>Subsampling420&#160;</td><td class="fielddoc"><p>4:2:0. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
 <a id="abdbf7a047cf028bdcabf06ec8c4852d9" name="abdbf7a047cf028bdcabf06ec8c4852d9"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abdbf7a047cf028bdcabf06ec8c4852d9">&#9670;&#160;</a></span>configure()</h2>
 
@@ -261,7 +307,7 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Applies encoder parameters from a <a class="el" href="classMediaConfig.html">MediaConfig</a>. </p>
-<p>Each backend reads the well-known keys it understands (e.g. <code>BitrateKbps</code>, <code>VideoRcMode</code>, <code>GopLength</code>, <code>VideoPreset</code>) and silently ignores the rest, so the same <a class="el" href="classMediaConfig.html">MediaConfig</a> can be reused across pipeline stages without filtering. Calling <code>configure()</code> while an encoder session is active is allowed; the backend applies what it can at runtime and may defer the rest to the next IDR. The default implementation is a no-op.</p>
+<p>Each backend reads the well-known keys it understands (<code>BitrateKbps</code>, <code>VideoRcMode</code>, <code>GopLength</code>, <code>VideoPreset</code>, …) and silently ignores the rest. Calling <code>configure()</code> while a session is active is allowed; the backend applies what it can at runtime and defers the rest to the next IDR. The default implementation is a no-op.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">config</td><td>Caller-supplied configuration database. </td></tr>
@@ -270,35 +316,6 @@ Additional Inherited Members</h2></td></tr>
 </dl>
 
 <p>Reimplemented from <a class="el" href="classVideoEncoder.html#a783883c096c4fe7ff5a3742f8bb270d9">VideoEncoder</a>.</p>
-
-</div>
-</div>
-<a id="a4fdcdbcb2ebaf5a16603c40483224fb3" name="a4fdcdbcb2ebaf5a16603c40483224fb3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4fdcdbcb2ebaf5a16603c40483224fb3">&#9670;&#160;</a></span>description()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classString.html">String</a> JpegVideoEncoder::description </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns a human-readable description. </p>
-
-<p>Implements <a class="el" href="classVideoEncoder.html#af78aaf1893a4e5a332991a8a922e3bce">VideoEncoder</a>.</p>
 
 </div>
 </div>
@@ -325,16 +342,14 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Signals end-of-stream to the encoder and asks it to emit remaining packets. </p>
-<p>After <code><a class="el" href="classJpegVideoEncoder.html#ad5d2516eb5752e734afc172e2d2d356e" title="Signals end-of-stream to the encoder and asks it to emit remaining packets.">flush()</a></code>, the caller drains with <a class="el" href="classJpegVideoEncoder.html#a8963f1650825d82cf3681016719e7820">receivePacket</a> until it sees a packet with the <a class="el" href="classMediaPacket.html#a6d228cbf2421239a345b8ce28dfc8c39a7fa263cbbcf9fb005e8011f00c493ce3">MediaPacket::EndOfStream</a> flag or a null Ptr. After the flush completes, the encoder may be reused for a fresh stream by calling <a class="el" href="classJpegVideoEncoder.html#ab85cb06ff67889e41de0a2276c744862">reset</a> followed by <a class="el" href="classJpegVideoEncoder.html#abdbf7a047cf028bdcabf06ec8c4852d9">configure</a>; or it may be destroyed.</p>
-<dl class="section return"><dt>Returns</dt><dd><code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a></code> on success. </dd></dl>
+<p>Signals end-of-stream and asks the encoder to drain remaining packets. </p>
 
 <p>Implements <a class="el" href="classVideoEncoder.html#a85fd078c046e20b5ebdb5c480818d4b2">VideoEncoder</a>.</p>
 
 </div>
 </div>
-<a id="a272b7822075417da255dcb3ac731bc9f" name="a272b7822075417da255dcb3ac731bc9f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a272b7822075417da255dcb3ac731bc9f">&#9670;&#160;</a></span>name()</h2>
+<a id="aeaf9daa46e46fe753fc41ee26e5ca32b" name="aeaf9daa46e46fe753fc41ee26e5ca32b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeaf9daa46e46fe753fc41ee26e5ca32b">&#9670;&#160;</a></span>receivePacket()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -343,66 +358,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classString.html">String</a> JpegVideoEncoder::name </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns the codec name (e.g. <code>"H264"</code>, <code>"HEVC"</code>). </p>
-
-<p>Implements <a class="el" href="classVideoEncoder.html#a458f5a446eb61370897560bd14653c4d">VideoEncoder</a>.</p>
-
-</div>
-</div>
-<a id="aed0c8149bf6abe35eee6e3395726f14e" name="aed0c8149bf6abe35eee6e3395726f14e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aed0c8149bf6abe35eee6e3395726f14e">&#9670;&#160;</a></span>outputPixelDesc()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classPixelDesc.html">PixelDesc</a> JpegVideoEncoder::outputPixelDesc </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns the compressed <a class="el" href="classPixelDesc.html">PixelDesc</a> this encoder produces. </p>
-<p>For <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a> this is <code><a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa5ee8334d39e47fc8d9c55bbf2e4a1216" title="H.264 / AVC compressed video (avc1/avc3).">PixelDesc::H264</a></code>; for HEVC it is <code><a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa4a171b5dd0af777e03264653659a0258" title="H.265 / HEVC compressed video (hvc1/hev1).">PixelDesc::HEVC</a></code>; etc. The returned value is copied into each outgoing <a class="el" href="classMediaPacket.html">MediaPacket</a>. </p>
-
-<p>Implements <a class="el" href="classVideoEncoder.html#a0175b1fb1d26300f1ff9ca22e386468e">VideoEncoder</a>.</p>
-
-</div>
-</div>
-<a id="a8963f1650825d82cf3681016719e7820" name="a8963f1650825d82cf3681016719e7820"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8963f1650825d82cf3681016719e7820">&#9670;&#160;</a></span>receivePacket()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classMediaPacket.html#a0d042c1f6143d734c401c0de3927ddb0">MediaPacket::Ptr</a> JpegVideoEncoder::receivePacket </td>
+          <td class="memname"><a class="el" href="classVideoPacket.html#acd061b0a22f40e1b25f19743f9d5025f">VideoPacket::Ptr</a> JpegVideoEncoder::receivePacket </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -415,41 +371,9 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Dequeues one encoded packet from the encoder's output queue. </p>
-<p>Returns a null <a class="el" href="classMediaPacket.html#a0d042c1f6143d734c401c0de3927ddb0">MediaPacket::Ptr</a> when no packet is ready yet (the encoder is pipelined and has not emitted output corresponding to any submitted frame). Callers typically drain in a loop after every <a class="el" href="classJpegVideoEncoder.html#a492a58771ef638d253fab9038715ec33">submitFrame</a> and again after <a class="el" href="classJpegVideoEncoder.html#ad5d2516eb5752e734afc172e2d2d356e">flush</a>.</p>
-<dl class="section return"><dt>Returns</dt><dd>The next encoded packet, or a null Ptr if none is available. </dd></dl>
+<p>Dequeues one encoded packet, or a null Ptr when none is ready. </p>
 
-<p>Implements <a class="el" href="classVideoEncoder.html#acc56a81e62a6585c5a9b8d4038e09cb4">VideoEncoder</a>.</p>
-
-</div>
-</div>
-<a id="abf5a2ce1f84d09c78b24e2864c9cb120" name="abf5a2ce1f84d09c78b24e2864c9cb120"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abf5a2ce1f84d09c78b24e2864c9cb120">&#9670;&#160;</a></span>requestKeyframe()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> JpegVideoEncoder::requestKeyframe </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Forces the next submitted frame to be coded as a keyframe. </p>
-<p>The request persists until the next frame is coded as an IDR / keyframe; further calls before that frame is consumed are idempotent. </p>
-
-<p>Implements <a class="el" href="classVideoEncoder.html#a2383d89b60244c3c4f7361bc950895ee">VideoEncoder</a>.</p>
+<p>Implements <a class="el" href="classVideoEncoder.html#a7898cfa9ca92982c89ee105cab8f57e0">VideoEncoder</a>.</p>
 
 </div>
 </div>
@@ -476,16 +400,14 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Discards any pending frames / packets and returns the encoder to a fresh state. </p>
-<p>Unlike <a class="el" href="classJpegVideoEncoder.html#ad5d2516eb5752e734afc172e2d2d356e">flush</a>, <code>reset</code> does not emit the pending packets — the encoder simply drops them. Configuration set by <a class="el" href="classJpegVideoEncoder.html#abdbf7a047cf028bdcabf06ec8c4852d9">configure</a> is preserved; call <code>configure</code> again only if knobs need to change.</p>
-<dl class="section return"><dt>Returns</dt><dd><code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a></code> on success. </dd></dl>
+<p>Discards any pending frames / packets and returns to a fresh state. </p>
 
 <p>Implements <a class="el" href="classVideoEncoder.html#ac0463f9aae758d542ad3fb6ac0b7f3c4">VideoEncoder</a>.</p>
 
 </div>
 </div>
-<a id="a492a58771ef638d253fab9038715ec33" name="a492a58771ef638d253fab9038715ec33"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a492a58771ef638d253fab9038715ec33">&#9670;&#160;</a></span>submitFrame()</h2>
+<a id="a3a22d88551e54252ebf88d2373cada79" name="a3a22d88551e54252ebf88d2373cada79"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3a22d88551e54252ebf88d2373cada79">&#9670;&#160;</a></span>submitFrame()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -496,7 +418,7 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td class="memname"><a class="el" href="classError.html">Error</a> JpegVideoEncoder::submitFrame </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classImage.html">Image</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classImage.html#a38745cfc2762b9f0aeaaba861098b852">Image::Ptr</a> &amp;&#160;</td>
           <td class="paramname"><em>frame</em>, </td>
         </tr>
         <tr>
@@ -519,17 +441,16 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Submits one uncompressed frame for encoding. </p>
-<p>The encoder takes a logical copy of what it needs from <code>frame</code> before returning; the caller may reuse or release the frame afterward. The <code>pts</code> is recorded in the encoder's internal queue so that the matching output packet can carry it back out. Submitting does not guarantee a packet will be available immediately — B-frames and look-ahead both introduce output delay.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">frame</td><td>The source image in one of the supported uncompressed pixel formats. </td></tr>
-    <tr><td class="paramname">pts</td><td>Presentation timestamp for this frame. May be invalid if the pipeline does not care about presentation ordering. </td></tr>
+    <tr><td class="paramname">frame</td><td>The source image in one of the supported uncompressed pixel formats, passed as a shared <a class="el" href="classImage.html#a38745cfc2762b9f0aeaaba861098b852">Image::Ptr</a> so the encoder can retain a reference without copying the plane buffers. A null Ptr is treated as <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85">Error::Invalid</a>. </td></tr>
+    <tr><td class="paramname">pts</td><td>Presentation timestamp for this frame. </td></tr>
   </table>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a></code> on success, or an error code describing why the frame was rejected. </dd></dl>
 
-<p>Implements <a class="el" href="classVideoEncoder.html#a0fe5a2670c8a120c4e38a82e4625dd5b">VideoEncoder</a>.</p>
+<p>Implements <a class="el" href="classVideoEncoder.html#aae6cadfe04338225ecc30341ad27bbc2">VideoEncoder</a>.</p>
 
 </div>
 </div>
@@ -556,38 +477,8 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Static view of the encoder's <a class="el" href="classJpegVideoEncoder.html#ac46e257a01fb134905a39b542b24b0ae">supportedInputs</a> list. </p>
-<p>Returned verbatim by the virtual <a class="el" href="classJpegVideoEncoder.html#ac46e257a01fb134905a39b542b24b0ae">supportedInputs</a> override. Exposed statically so the <a class="el" href="classVideoCodec.html">VideoCodec</a> registry can populate <a class="el" href="structVideoCodec_1_1Data.html#a7ce0c2feebd0a5f4eb4a866400440a90">VideoCodec::Data::encoderSupportedInputs</a> without allocating an encoder instance. </p>
-
-</div>
-</div>
-<a id="ac46e257a01fb134905a39b542b24b0ae" name="ac46e257a01fb134905a39b542b24b0ae"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac46e257a01fb134905a39b542b24b0ae">&#9670;&#160;</a></span>supportedInputs()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">List</a>&lt; int &gt; JpegVideoEncoder::supportedInputs </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns the uncompressed <a class="el" href="classPixelDesc.html">PixelDesc</a> IDs this encoder accepts. </p>
-<p>Callers can check whether their source pixel format is supported before submitting any frames. Backends that can ingest any format they can convert internally may return an empty list, indicating "any input accepted". </p>
-
-<p>Implements <a class="el" href="classVideoEncoder.html#a2bd3da8445225cb50ed7665dec93b425">VideoEncoder</a>.</p>
+<p>Static view of the encoder's accepted uncompressed input list. </p>
+<p>Exposed for the <a class="el" href="classVideoCodec.html">VideoCodec</a> backend registry so the planner can query supported inputs without allocating an encoder instance. </p>
 
 </div>
 </div>
@@ -601,7 +492,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classJpegVideoEncoder.html">JpegVideoEncoder</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

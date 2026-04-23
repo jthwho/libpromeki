@@ -304,7 +304,7 @@ Static Public Member Functions</h2></td></tr>
 <li>The <b>OETF</b> (Opto-Electronic Transfer Function) converts from linear light to encoded values (what a camera does).</li>
 <li>The <b>EOTF</b> (Electro-Optical Transfer Function) converts from encoded values back to linear light (what a display does).</li>
 </ul>
-<p>For sRGB, the OETF is approximately a power curve of <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1/2.4</a>, with a linear segment near black. For <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a> and <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.601</a>, the curve is similar but uses different constants (power of <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.45</a>). These curves are often loosely called "gamma" although the precise definitions differ between standards.</p>
+<p>For sRGB, the OETF is approximately a power curve of 1/2.4, with a linear segment near black. For <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a> and <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.601</a>, the curve is similar but uses different constants (power of <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.45</a>). These curves are often loosely called "gamma" although the precise definitions differ between standards.</p>
 <p>The linear variants (LinearSRGB, LinearRec709, etc.) have identity transfer functions; their values represent linear light directly.</p>
 <dl class="section user"><dt>Component normalization</dt><dd></dd></dl>
 <p>All component values stored by <a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a> are normalized to <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">-1.0</a> internally. The native display range for each component (e.g. 0-360 for hue, 0-100 for Lab lightness) is available via <a class="el" href="classColorModel.html#af7e1c8091b1bd0c94648f79624658493" title="Returns descriptor for the given component index (0-2).">compInfo()</a> and the <a class="el" href="classColorModel.html#a6ebc6ceff4e5ad6e11349a6bca4ea5f9" title="Converts a normalized component value to native display units.">toNative()</a>/ <a class="el" href="classColorModel.html#a2889be3bd0de3ade11d1a0f654cccf47" title="Converts a native display value to normalized form.">fromNative()</a> helpers.</p>
@@ -1125,7 +1125,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classColorModel.html">ColorModel</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

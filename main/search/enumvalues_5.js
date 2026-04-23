@@ -5,7 +5,7 @@ var searchData=
   ['fifo_2',['Fifo',['../group__events.html#gga5f6319f9bba46b51ebc61f9c0e4a896daa0476ca4d7283b340d24c53c16270958',1,'thread.h']]],
   ['firstfield_3',['FirstField',['../classTimecode.html#a0c1acba5a9446c8020cbaf07681c12b3a5382ae29b7f8eb748bdbb0e2144e8b1f',1,'Timecode']]],
   ['fixed_4',['Fixed',['../classTextStream.html#a2118184be90cb08e1cbe05f8b57f9a4ba2074a622101021c0f762cd449b6cef61',1,'TextStream']]],
-  ['flac_5',['FLAC',['../classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41ac09740ed78a26f213a58b58f5b3e056c',1,'AudioCodec']]],
+  ['flac_5',['flac',['../classAudioCodec.html#ac82ceb6ead32bbe1d3c6f4ef6edd2c41ac09740ed78a26f213a58b58f5b3e056c',1,'AudioCodec::FLAC'],['../classAudioFormat.html#a0f380d5e097ec56ab78e4781729113ada3a648cf53576e7bd5a34faa23db834b8',1,'AudioFormat::FLAC']]],
   ['floatformat_6',['FloatFormat',['../classColor.html#a96af432bfa4a82d9c30f787fb1e5a066a4bb1ed00efbd8469dc3a46785eda46f4',1,'Color']]],
   ['focustext_7',['FocusText',['../classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0a54eaa4fa26b1cd197a3fd25abf16ade5',1,'TuiPalette']]],
   ['fontunavailable_8',['FontUnavailable',['../classError.html#ab5980e13b879db253df802b0950d1708a860bb07c791353ea49a5c70a3cbd4ebc',1,'Error']]],

@@ -101,12 +101,13 @@ $(document).ready(function(){initNavTree('classJpegXsVideoDecoder.html',''); ini
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classJpegXsVideoDecoder-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">JpegXsVideoDecoder Class Reference<div class="ingroups"><a class="el" href="group__proav.html">ProAV Media</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>JPEG XS <a class="el" href="classVideoDecoder.html">VideoDecoder</a> built on <a class="el" href="classJpegXsImageCodec.html">JpegXsImageCodec</a>.  
+<p>JPEG XS <a class="el" href="classVideoDecoder.html">VideoDecoder</a> built on SVT-JPEG-XS.  
  <a href="classJpegXsVideoDecoder.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="jpegxsvideocodec_8h_source.html">jpegxsvideocodec.h</a>&gt;</code></p>
@@ -115,7 +116,7 @@ Inheritance diagram for JpegXsVideoDecoder:</div>
 <div class="dyncontent">
 <div class="center"><img src="classJpegXsVideoDecoder__inherit__graph.png" border="0" usemap="#aJpegXsVideoDecoder_inherit__map" alt="Inheritance graph"/></div>
 <map name="aJpegXsVideoDecoder_inherit__map" id="aJpegXsVideoDecoder_inherit__map">
-<area shape="rect" title="JPEG XS VideoDecoder built on JpegXsImageCodec." alt="" coords="5,79,163,104"/>
+<area shape="rect" title="JPEG XS VideoDecoder built on SVT&#45;JPEG&#45;XS." alt="" coords="5,79,163,104"/>
 <area shape="rect" href="classVideoDecoder.html" title="Abstract base class for stateful video decoders." alt="" coords="27,5,141,31"/>
 <area shape="poly" title=" " alt="" coords="87,44,87,79,81,79,81,44"/>
 </map>
@@ -125,7 +126,7 @@ Collaboration diagram for JpegXsVideoDecoder:</div>
 <div class="dyncontent">
 <div class="center"><img src="classJpegXsVideoDecoder__coll__graph.png" border="0" usemap="#aJpegXsVideoDecoder_coll__map" alt="Collaboration graph"/></div>
 <map name="aJpegXsVideoDecoder_coll__map" id="aJpegXsVideoDecoder_coll__map">
-<area shape="rect" title="JPEG XS VideoDecoder built on JpegXsImageCodec." alt="" coords="5,168,163,193"/>
+<area shape="rect" title="JPEG XS VideoDecoder built on SVT&#45;JPEG&#45;XS." alt="" coords="5,168,163,193"/>
 <area shape="rect" href="classVideoDecoder.html" title="Abstract base class for stateful video decoders." alt="" coords="27,93,141,119"/>
 <area shape="poly" title=" " alt="" coords="87,133,87,168,81,168,81,133"/>
 <area shape="rect" href="classError.html" title="Lightweight error code wrapper for the promeki library." alt="" coords="9,5,63,31"/>
@@ -137,29 +138,17 @@ Collaboration diagram for JpegXsVideoDecoder:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ae914b3becbfe8319f47e6c9a064ede06" id="r_ae914b3becbfe8319f47e6c9a064ede06"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegXsVideoDecoder.html#ae914b3becbfe8319f47e6c9a064ede06">name</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:ae914b3becbfe8319f47e6c9a064ede06"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the codec name (e.g. <code>"H264"</code>, <code>"HEVC"</code>).  <br /></td></tr>
-<tr class="separator:ae914b3becbfe8319f47e6c9a064ede06"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab88eacd8381e67243c996f5443710a12" id="r_ab88eacd8381e67243c996f5443710a12"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegXsVideoDecoder.html#ab88eacd8381e67243c996f5443710a12">description</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:ab88eacd8381e67243c996f5443710a12"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a human-readable description.  <br /></td></tr>
-<tr class="separator:ab88eacd8381e67243c996f5443710a12"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abe79968285c2501310328723ebf08dc4" id="r_abe79968285c2501310328723ebf08dc4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classPixelDesc.html">PixelDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegXsVideoDecoder.html#abe79968285c2501310328723ebf08dc4">inputPixelDesc</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:abe79968285c2501310328723ebf08dc4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the compressed <a class="el" href="classPixelDesc.html">PixelDesc</a> this decoder accepts.  <br /></td></tr>
-<tr class="separator:abe79968285c2501310328723ebf08dc4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2e9506adab32d16e5d0f837561649db0" id="r_a2e9506adab32d16e5d0f837561649db0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">List</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegXsVideoDecoder.html#a2e9506adab32d16e5d0f837561649db0">supportedOutputs</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:a2e9506adab32d16e5d0f837561649db0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the uncompressed <a class="el" href="classPixelDesc.html">PixelDesc</a> IDs this decoder can emit.  <br /></td></tr>
-<tr class="separator:a2e9506adab32d16e5d0f837561649db0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9ea854572897cd70ef6362ee2b303657" id="r_a9ea854572897cd70ef6362ee2b303657"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegXsVideoDecoder.html#a9ea854572897cd70ef6362ee2b303657">configure</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaConfig.html">MediaConfig</a> &amp;config) <a class="el" href="classList.html">override</a></td></tr>
 <tr class="memdesc:a9ea854572897cd70ef6362ee2b303657"><td class="mdescLeft">&#160;</td><td class="mdescRight">Applies decoder parameters from a <a class="el" href="classMediaConfig.html">MediaConfig</a>.  <br /></td></tr>
 <tr class="separator:a9ea854572897cd70ef6362ee2b303657"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0943bd34d0bcf5ed0952bae784b2d42f" id="r_a0943bd34d0bcf5ed0952bae784b2d42f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegXsVideoDecoder.html#a0943bd34d0bcf5ed0952bae784b2d42f">submitPacket</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaPacket.html">MediaPacket</a> &amp;packet) <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:a0943bd34d0bcf5ed0952bae784b2d42f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Submits one encoded packet for decoding.  <br /></td></tr>
-<tr class="separator:a0943bd34d0bcf5ed0952bae784b2d42f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a403d32f6b029a102647f3ad839ea16bb" id="r_a403d32f6b029a102647f3ad839ea16bb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImage.html">Image</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegXsVideoDecoder.html#a403d32f6b029a102647f3ad839ea16bb">receiveFrame</a> () <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:a403d32f6b029a102647f3ad839ea16bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dequeues one decoded frame.  <br /></td></tr>
-<tr class="separator:a403d32f6b029a102647f3ad839ea16bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9a18c52b15aab7b75aa6b0cb2da1ca2e" id="r_a9a18c52b15aab7b75aa6b0cb2da1ca2e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegXsVideoDecoder.html#a9a18c52b15aab7b75aa6b0cb2da1ca2e">submitPacket</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classVideoPacket.html#acd061b0a22f40e1b25f19743f9d5025f">VideoPacket::Ptr</a> &amp;packet) <a class="el" href="classList.html">override</a></td></tr>
+<tr class="memdesc:a9a18c52b15aab7b75aa6b0cb2da1ca2e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Submits one encoded packet for decoding.  <br /></td></tr>
+<tr class="separator:a9a18c52b15aab7b75aa6b0cb2da1ca2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afbc3d01c52997278763fa15eaef18bfd" id="r_afbc3d01c52997278763fa15eaef18bfd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImage.html#a38745cfc2762b9f0aeaaba861098b852">Image::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegXsVideoDecoder.html#afbc3d01c52997278763fa15eaef18bfd">receiveFrame</a> () <a class="el" href="classList.html">override</a></td></tr>
+<tr class="memdesc:afbc3d01c52997278763fa15eaef18bfd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dequeues one decoded frame.  <br /></td></tr>
+<tr class="separator:afbc3d01c52997278763fa15eaef18bfd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a916d0bdfb1f850c0e4d0bd4cf9e8f31b" id="r_a916d0bdfb1f850c0e4d0bd4cf9e8f31b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegXsVideoDecoder.html#a916d0bdfb1f850c0e4d0bd4cf9e8f31b">flush</a> () <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:a916d0bdfb1f850c0e4d0bd4cf9e8f31b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signals end-of-stream; remaining frames can be drained with <a class="el" href="classJpegXsVideoDecoder.html#a403d32f6b029a102647f3ad839ea16bb">receiveFrame</a>.  <br /></td></tr>
+<tr class="memdesc:a916d0bdfb1f850c0e4d0bd4cf9e8f31b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signals end-of-stream; remaining frames can be drained with <a class="el" href="classJpegXsVideoDecoder.html#afbc3d01c52997278763fa15eaef18bfd">receiveFrame</a>.  <br /></td></tr>
 <tr class="separator:a916d0bdfb1f850c0e4d0bd4cf9e8f31b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5a876122bf3972da9dfe45e40ddf63e0" id="r_a5a876122bf3972da9dfe45e40ddf63e0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegXsVideoDecoder.html#a5a876122bf3972da9dfe45e40ddf63e0">reset</a> () <a class="el" href="classList.html">override</a></td></tr>
 <tr class="memdesc:a5a876122bf3972da9dfe45e40ddf63e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Discards any pending packets / frames.  <br /></td></tr>
@@ -169,6 +158,10 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><b>~VideoDecoder</b> ()</td></tr>
 <tr class="memdesc:a985e1a71aa7503979cac3736b8b34838 inherit pub_methods_classVideoDecoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual destructor. <br /></td></tr>
 <tr class="separator:a985e1a71aa7503979cac3736b8b34838 inherit pub_methods_classVideoDecoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af52fbfbb66838e32ac0826d5d756f426 inherit pub_methods_classVideoDecoder" id="r_af52fbfbb66838e32ac0826d5d756f426"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classVideoCodec.html">VideoCodec</a>&#160;</td><td class="memItemRight" valign="bottom"><b>codec</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:af52fbfbb66838e32ac0826d5d756f426 inherit pub_methods_classVideoDecoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the codec this session decodes, with backend pinned. <br /></td></tr>
+<tr class="separator:af52fbfbb66838e32ac0826d5d756f426 inherit pub_methods_classVideoDecoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8afebb1dcc4aa7059c612c2da5223609 inherit pub_methods_classVideoDecoder" id="r_a8afebb1dcc4aa7059c612c2da5223609"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><b>lastError</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a8afebb1dcc4aa7059c612c2da5223609 inherit pub_methods_classVideoDecoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the last error produced by the decoder. <br /></td></tr>
@@ -178,22 +171,41 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a671f0cdf5ca6563964d0284ad3b146a3 inherit pub_methods_classVideoDecoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a human-readable message for the last error. <br /></td></tr>
 <tr class="separator:a671f0cdf5ca6563964d0284ad3b146a3 inherit pub_methods_classVideoDecoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a57bf31ad7c3301ce79f350e544512105" id="r_a57bf31ad7c3301ce79f350e544512105"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">List</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegXsVideoDecoder.html#a57bf31ad7c3301ce79f350e544512105">supportedOutputList</a> ()</td></tr>
+<tr class="memdesc:a57bf31ad7c3301ce79f350e544512105"><td class="mdescLeft">&#160;</td><td class="mdescRight">Static view of the decoder's emitted uncompressed output list.  <br /></td></tr>
+<tr class="separator:a57bf31ad7c3301ce79f350e544512105"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_static_methods_classVideoDecoder"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classVideoDecoder')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classVideoDecoder.html">VideoDecoder</a></td></tr>
+<tr class="memitem:a813605800d7f78c5ddddfa3962196110 inherit pub_static_methods_classVideoDecoder" id="r_a813605800d7f78c5ddddfa3962196110"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">static</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><b>registerBackend</b> (<a class="el" href="structVideoDecoder_1_1BackendRecord.html">BackendRecord</a> record)</td></tr>
+<tr class="memdesc:a813605800d7f78c5ddddfa3962196110 inherit pub_static_methods_classVideoDecoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers a concrete decoder backend for a (codec, backend) pair. See <a class="el" href="classVideoEncoder.html#a9c0a2730ff8dbfbb453122a8d4f8dcdf">VideoEncoder::registerBackend</a> for the symmetric contract. <br /></td></tr>
+<tr class="separator:a813605800d7f78c5ddddfa3962196110 inherit pub_static_methods_classVideoDecoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50e353747f10ff11f808e788d32c5b4b inherit pub_static_methods_classVideoDecoder" id="r_a50e353747f10ff11f808e788d32c5b4b"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">static</a> <a class="el" href="classVideoCodec.html#a1fccd459f626e5b6d9eef80e4d616428">VideoCodec::BackendList</a>&#160;</td><td class="memItemRight" valign="bottom"><b>availableBackends</b> (<a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dc">VideoCodec::ID</a> codecId)</td></tr>
+<tr class="separator:a50e353747f10ff11f808e788d32c5b4b inherit pub_static_methods_classVideoDecoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5de20d986a17a148dde7dec1a756ab00 inherit pub_static_methods_classVideoDecoder" id="r_a5de20d986a17a148dde7dec1a756ab00"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">List</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>supportedOutputsFor</b> (<a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dc">VideoCodec::ID</a> codecId, <a class="el" href="classVideoCodec_1_1Backend.html">VideoCodec::Backend</a> backend)</td></tr>
+<tr class="separator:a5de20d986a17a148dde7dec1a756ab00 inherit pub_static_methods_classVideoDecoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0d7cdfbd490389ff7f3a2a447d253d58 inherit pub_static_methods_classVideoDecoder" id="r_a0d7cdfbd490389ff7f3a2a447d253d58"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classVideoDecoder.html">VideoDecoder</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>create</b> (<a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dc">VideoCodec::ID</a> codecId, <a class="el" href="classVideoCodec_1_1Backend.html">VideoCodec::Backend</a> <a class="el" href="classList.html">pinned</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classMediaConfig.html">MediaConfig</a> *config)</td></tr>
+<tr class="separator:a0d7cdfbd490389ff7f3a2a447d253d58 inherit pub_static_methods_classVideoDecoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
-<tr class="inherit_header pub_static_methods_classVideoDecoder"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classVideoDecoder')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classVideoDecoder.html">VideoDecoder</a></td></tr>
-<tr class="memitem:a9a0c680011fc31343e26b0427302a3c9 inherit pub_static_methods_classVideoDecoder" id="r_a9a0c680011fc31343e26b0427302a3c9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoDecoder.html#a9a0c680011fc31343e26b0427302a3c9">registerDecoder</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classVideoDecoder.html#ac420417732f3412a4847a9e9e1821e59">name</a>, std::function&lt; <a class="el" href="classVideoDecoder.html">VideoDecoder</a> *()&gt; <a class="el" href="classList.html">factory</a>)</td></tr>
-<tr class="memdesc:a9a0c680011fc31343e26b0427302a3c9 inherit pub_static_methods_classVideoDecoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers a video decoder factory.  <br /></td></tr>
-<tr class="separator:a9a0c680011fc31343e26b0427302a3c9 inherit pub_static_methods_classVideoDecoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a74d28d125acba9219d3badf6ca985479 inherit pub_static_methods_classVideoDecoder" id="r_a74d28d125acba9219d3badf6ca985479"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVideoDecoder.html">VideoDecoder</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoDecoder.html#a74d28d125acba9219d3badf6ca985479">createDecoder</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classVideoDecoder.html#ac420417732f3412a4847a9e9e1821e59">name</a>)</td></tr>
-<tr class="memdesc:a74d28d125acba9219d3badf6ca985479 inherit pub_static_methods_classVideoDecoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a video decoder instance by name.  <br /></td></tr>
-<tr class="separator:a74d28d125acba9219d3badf6ca985479 inherit pub_static_methods_classVideoDecoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae808e679b08c6a25423eb649f1f54e85 inherit pub_static_methods_classVideoDecoder" id="r_ae808e679b08c6a25423eb649f1f54e85"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">List</a>&lt; <a class="el" href="classString.html">String</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>registeredDecoders</b> ()</td></tr>
-<tr class="memdesc:ae808e679b08c6a25423eb649f1f54e85 inherit pub_static_methods_classVideoDecoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of all registered decoder codec names. <br /></td></tr>
-<tr class="separator:ae808e679b08c6a25423eb649f1f54e85 inherit pub_static_methods_classVideoDecoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_types_classVideoDecoder"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classVideoDecoder')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classVideoDecoder.html">VideoDecoder</a></td></tr>
+<tr class="memitem:aa111274a2b1d955fe253183a7c99b379 inherit pub_types_classVideoDecoder" id="r_aa111274a2b1d955fe253183a7c99b379"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Factory</b> = std::function&lt; <a class="el" href="classVideoDecoder.html">VideoDecoder</a> *()&gt;</td></tr>
+<tr class="memdesc:aa111274a2b1d955fe253183a7c99b379 inherit pub_types_classVideoDecoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Factory signature used by the decoder registry. <br /></td></tr>
+<tr class="separator:aa111274a2b1d955fe253183a7c99b379 inherit pub_types_classVideoDecoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classVideoDecoder"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classVideoDecoder')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classVideoDecoder.html">VideoDecoder</a></td></tr>
-<tr class="memitem:a87125a1d9e2e69e7c44a0e968b4f2ae5 inherit pro_methods_classVideoDecoder" id="r_a87125a1d9e2e69e7c44a0e968b4f2ae5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoDecoder.html#a87125a1d9e2e69e7c44a0e968b4f2ae5">setError</a> (<a class="el" href="classError.html">Error</a> <a class="el" href="classList.html">err</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;msg=<a class="el" href="classString.html">String</a>())</td></tr>
-<tr class="memdesc:a87125a1d9e2e69e7c44a0e968b4f2ae5 inherit pro_methods_classVideoDecoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Records a new error state.  <br /></td></tr>
+<tr class="memitem:a0c31215472c1d153813bf4f2cdde49f1 inherit pro_methods_classVideoDecoder" id="r_a0c31215472c1d153813bf4f2cdde49f1"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setCodec</b> (<a class="el" href="classVideoCodec.html">VideoCodec</a> <a class="el" href="classVideoDecoder.html#af52fbfbb66838e32ac0826d5d756f426">codec</a>)</td></tr>
+<tr class="memdesc:a0c31215472c1d153813bf4f2cdde49f1 inherit pro_methods_classVideoDecoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Records the codec + backend this session implements. <br /></td></tr>
+<tr class="separator:a0c31215472c1d153813bf4f2cdde49f1 inherit pro_methods_classVideoDecoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a87125a1d9e2e69e7c44a0e968b4f2ae5 inherit pro_methods_classVideoDecoder" id="r_a87125a1d9e2e69e7c44a0e968b4f2ae5"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setError</b> (<a class="el" href="classError.html">Error</a> <a class="el" href="classList.html">err</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;msg=<a class="el" href="classString.html">String</a>())</td></tr>
+<tr class="memdesc:a87125a1d9e2e69e7c44a0e968b4f2ae5 inherit pro_methods_classVideoDecoder"><td class="mdescLeft">&#160;</td><td class="mdescRight">Records a new error state. <br /></td></tr>
 <tr class="separator:a87125a1d9e2e69e7c44a0e968b4f2ae5 inherit pro_methods_classVideoDecoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a03c0ce8380b2ccf56ba419d16d632040 inherit pro_methods_classVideoDecoder" id="r_a03c0ce8380b2ccf56ba419d16d632040"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>clearError</b> ()</td></tr>
@@ -208,8 +220,8 @@ Additional Inherited Members</h2></td></tr>
 <tr class="separator:abb452382959a049564c14002c8e30ffc inherit pro_attribs_classVideoDecoder"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>JPEG XS <a class="el" href="classVideoDecoder.html">VideoDecoder</a> built on <a class="el" href="classJpegXsImageCodec.html">JpegXsImageCodec</a>. </p>
-<p>Symmetric counterpart to <a class="el" href="classJpegXsVideoEncoder.html">JpegXsVideoEncoder</a>. Registered against <a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dcac00b50b22e81463557287ef36dc782da">VideoCodec::JPEG_XS</a>. </p>
+<div class="textblock"><p>JPEG XS <a class="el" href="classVideoDecoder.html">VideoDecoder</a> built on SVT-JPEG-XS. </p>
+<p>Symmetric counterpart to <a class="el" href="classJpegXsVideoEncoder.html">JpegXsVideoEncoder</a>. Registered against <a class="el" href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dcac00b50b22e81463557287ef36dc782da">VideoCodec::JPEG_XS</a>. The decoder's output <a class="el" href="classPixelFormat.html">PixelFormat</a> is set via MediaConfig::OutputPixelFormat; when unset, the natural planar target matching the incoming bitstream (bit depth × subsampling) is produced. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a9ea854572897cd70ef6362ee2b303657" name="a9ea854572897cd70ef6362ee2b303657"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9ea854572897cd70ef6362ee2b303657">&#9670;&#160;</a></span>configure()</h2>
@@ -236,44 +248,9 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Applies decoder parameters from a <a class="el" href="classMediaConfig.html">MediaConfig</a>. </p>
-<p>Same semantics as VideoEncoder::configure: reads known keys, ignores the rest.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">config</td><td>Caller-supplied configuration database. </td></tr>
-  </table>
-  </dd>
-</dl>
+<p>Same semantics as <a class="el" href="classVideoEncoder.html#a783883c096c4fe7ff5a3742f8bb270d9">VideoEncoder::configure</a> — reads known keys, ignores the rest. The default implementation is a no-op. </p>
 
 <p>Reimplemented from <a class="el" href="classVideoDecoder.html#adce7b8d7def1b75cb70d8229c010bd45">VideoDecoder</a>.</p>
-
-</div>
-</div>
-<a id="ab88eacd8381e67243c996f5443710a12" name="ab88eacd8381e67243c996f5443710a12"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab88eacd8381e67243c996f5443710a12">&#9670;&#160;</a></span>description()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classString.html">String</a> JpegXsVideoDecoder::description </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns a human-readable description. </p>
-
-<p>Implements <a class="el" href="classVideoDecoder.html#a68d268b3ec414cdd458938ec03b25ab8">VideoDecoder</a>.</p>
 
 </div>
 </div>
@@ -300,14 +277,14 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Signals end-of-stream; remaining frames can be drained with <a class="el" href="classJpegXsVideoDecoder.html#a403d32f6b029a102647f3ad839ea16bb">receiveFrame</a>. </p>
+<p>Signals end-of-stream; remaining frames can be drained with <a class="el" href="classJpegXsVideoDecoder.html#afbc3d01c52997278763fa15eaef18bfd">receiveFrame</a>. </p>
 
 <p>Implements <a class="el" href="classVideoDecoder.html#a82c34ac191eaa96b73b095580f98dd12">VideoDecoder</a>.</p>
 
 </div>
 </div>
-<a id="abe79968285c2501310328723ebf08dc4" name="abe79968285c2501310328723ebf08dc4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abe79968285c2501310328723ebf08dc4">&#9670;&#160;</a></span>inputPixelDesc()</h2>
+<a id="afbc3d01c52997278763fa15eaef18bfd" name="afbc3d01c52997278763fa15eaef18bfd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afbc3d01c52997278763fa15eaef18bfd">&#9670;&#160;</a></span>receiveFrame()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -316,65 +293,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classPixelDesc.html">PixelDesc</a> JpegXsVideoDecoder::inputPixelDesc </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns the compressed <a class="el" href="classPixelDesc.html">PixelDesc</a> this decoder accepts. </p>
-
-<p>Implements <a class="el" href="classVideoDecoder.html#a81d7cfaec1f812770baacacd4cc24719">VideoDecoder</a>.</p>
-
-</div>
-</div>
-<a id="ae914b3becbfe8319f47e6c9a064ede06" name="ae914b3becbfe8319f47e6c9a064ede06"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae914b3becbfe8319f47e6c9a064ede06">&#9670;&#160;</a></span>name()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classString.html">String</a> JpegXsVideoDecoder::name </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns the codec name (e.g. <code>"H264"</code>, <code>"HEVC"</code>). </p>
-
-<p>Implements <a class="el" href="classVideoDecoder.html#ac420417732f3412a4847a9e9e1821e59">VideoDecoder</a>.</p>
-
-</div>
-</div>
-<a id="a403d32f6b029a102647f3ad839ea16bb" name="a403d32f6b029a102647f3ad839ea16bb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a403d32f6b029a102647f3ad839ea16bb">&#9670;&#160;</a></span>receiveFrame()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classImage.html">Image</a> JpegXsVideoDecoder::receiveFrame </td>
+          <td class="memname"><a class="el" href="classImage.html#a38745cfc2762b9f0aeaaba861098b852">Image::Ptr</a> JpegXsVideoDecoder::receiveFrame </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -388,9 +307,9 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Dequeues one decoded frame. </p>
-<dl class="section return"><dt>Returns</dt><dd>A valid <a class="el" href="classImage.html">Image</a> on success, or an invalid <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> if no frame is ready yet. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A valid <a class="el" href="classImage.html#a38745cfc2762b9f0aeaaba861098b852">Image::Ptr</a>, or a null Ptr when no frame is ready. </dd></dl>
 
-<p>Implements <a class="el" href="classVideoDecoder.html#a9c0bb30ed2e9736b48fb6ecfaf0a034b">VideoDecoder</a>.</p>
+<p>Implements <a class="el" href="classVideoDecoder.html#a7a70c55e9ac80b2f1b02eea76427be70">VideoDecoder</a>.</p>
 
 </div>
 </div>
@@ -423,8 +342,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a0943bd34d0bcf5ed0952bae784b2d42f" name="a0943bd34d0bcf5ed0952bae784b2d42f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0943bd34d0bcf5ed0952bae784b2d42f">&#9670;&#160;</a></span>submitPacket()</h2>
+<a id="a9a18c52b15aab7b75aa6b0cb2da1ca2e" name="a9a18c52b15aab7b75aa6b0cb2da1ca2e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9a18c52b15aab7b75aa6b0cb2da1ca2e">&#9670;&#160;</a></span>submitPacket()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -435,7 +354,7 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td class="memname"><a class="el" href="classError.html">Error</a> JpegXsVideoDecoder::submitPacket </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classMediaPacket.html">MediaPacket</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classVideoPacket.html#acd061b0a22f40e1b25f19743f9d5025f">VideoPacket::Ptr</a> &amp;&#160;</td>
           <td class="paramname"><em>packet</em></td><td>)</td>
           <td></td>
         </tr>
@@ -450,18 +369,18 @@ Additional Inherited Members</h2></td></tr>
 <p>Submits one encoded packet for decoding. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">packet</td><td>The packet to decode. Its <a class="el" href="classMediaPacket.html#a56035fad1d51bc0bd4a45ea341fdbea8">MediaPacket::pixelDesc</a> must match <a class="el" href="classJpegXsVideoDecoder.html#abe79968285c2501310328723ebf08dc4">inputPixelDesc</a>. </td></tr>
+    <tr><td class="paramname">packet</td><td>The packet to decode, passed as a shared <a class="el" href="classVideoPacket.html#acd061b0a22f40e1b25f19743f9d5025f">VideoPacket::Ptr</a> so the decoder can retain the packet without copying its payload. Its <a class="el" href="classVideoPacket.html#ad6619b342601024077ba710795e81f17">VideoPacket::pixelFormat</a> should fall within this codec's compressed <a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a> set (see <a class="el" href="classVideoCodec.html#a4cc563e65ece0d30e679767b1b6025ee">VideoCodec::compressedPixelFormats</a>). A null Ptr is treated as <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85">Error::Invalid</a>. </td></tr>
   </table>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a></code> on success. </dd></dl>
 
-<p>Implements <a class="el" href="classVideoDecoder.html#ad15702190e962a93215c27b65ca55d08">VideoDecoder</a>.</p>
+<p>Implements <a class="el" href="classVideoDecoder.html#a373c89520c6cce9d18d53e4bcd867733">VideoDecoder</a>.</p>
 
 </div>
 </div>
-<a id="a2e9506adab32d16e5d0f837561649db0" name="a2e9506adab32d16e5d0f837561649db0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2e9506adab32d16e5d0f837561649db0">&#9670;&#160;</a></span>supportedOutputs()</h2>
+<a id="a57bf31ad7c3301ce79f350e544512105" name="a57bf31ad7c3301ce79f350e544512105"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a57bf31ad7c3301ce79f350e544512105">&#9670;&#160;</a></span>supportedOutputList()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -470,23 +389,21 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">List</a>&lt; int &gt; JpegXsVideoDecoder::supportedOutputs </td>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">List</a>&lt; int &gt; JpegXsVideoDecoder::supportedOutputList </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
-          <td> const</td>
+          <td></td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Returns the uncompressed <a class="el" href="classPixelDesc.html">PixelDesc</a> IDs this decoder can emit. </p>
-<p>Callers can use <a class="el" href="classJpegXsVideoDecoder.html#a9ea854572897cd70ef6362ee2b303657">configure</a> with <code>MediaConfig::OutputPixelDesc</code> to request a specific output; decoders that only support a single native output may ignore the request. </p>
-
-<p>Implements <a class="el" href="classVideoDecoder.html#a7f4c09061943cddbc982c746300191fd">VideoDecoder</a>.</p>
+<p>Static view of the decoder's emitted uncompressed output list. </p>
+<p>Exposed for the <a class="el" href="classVideoCodec.html">VideoCodec</a> backend registry. </p>
 
 </div>
 </div>
@@ -500,7 +417,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classJpegXsVideoDecoder.html">JpegXsVideoDecoder</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

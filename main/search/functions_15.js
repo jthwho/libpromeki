@@ -11,7 +11,7 @@ var searchData=
   ['unit_8',['unit',['../classHistogram.html#aea563ae60c0c01b48f7dddd6ca2e87f3',1,'Histogram']]],
   ['unite_9',['unite',['../classHashSet.html#a8a499ec9479146c731b7d3dea38f86c6',1,'HashSet::unite()'],['../classSet.html#a2acc455cde9a26a833edf2b17cd4b394',1,'Set::unite()']]],
   ['united_10',['united',['../classRect.html#ae9662132cb3123eb7b232dd87d8d19de',1,'Rect']]],
-  ['unknown_11',['unknown',['../classFrameNumber.html#a3a0c24b556b83bb591166f529594a726',1,'FrameNumber::unknown()'],['../classFrameCount.html#aa89aceb280b41d625d529a1d4b509f5d',1,'FrameCount::unknown()']]],
+  ['unknown_11',['unknown',['../classFrameCount.html#aa89aceb280b41d625d529a1d4b509f5d',1,'FrameCount::unknown()'],['../classFrameNumber.html#a3a0c24b556b83bb591166f529594a726',1,'FrameNumber::unknown()']]],
   ['unknownconfigkeys_12',['unknownConfigKeys',['../classMediaIO.html#af8fbe20ebdf212d1a1fb6c273f2c83f4',1,'MediaIO']]],
   ['unknownkeys_13',['unknownKeys',['../classVariantDatabase.html#a03550a04712f59054d56a81ec84880d2',1,'VariantDatabase']]],
   ['unlink_14',['unlink',['../classSharedMemory.html#ac174a0e3210c9e1ce8686f16ff7cfe21',1,'SharedMemory']]],
@@ -27,9 +27,11 @@ var searchData=
   ['updatesetpoint_24',['updateSetPoint',['../classPIDController.html#a036a4a6bed5d47e7c38e1c876ebb4108',1,'PIDController']]],
   ['updatestatus_25',['updateStatus',['../classFileInfo.html#a1715dc819cef7c02038d06682c8e9220',1,'FileInfo']]],
   ['upperbound_26',['upperbound',['../classSet.html#aef6f31bea55e3e2fd6e4bf09ab17a7d5',1,'Set::upperBound(const T &amp;value)'],['../classSet.html#ab334a07f4af693ab65490b7e293dee45',1,'Set::upperBound(const T &amp;value) const']]],
-  ['usealternatescreenbuffer_27',['useAlternateScreenBuffer',['../classAnsiStream.html#aa3b450f9b8a9de01d8b56f4d9077b525',1,'AnsiStream']]],
-  ['useaudioclock_28',['useAudioClock',['../classSDLPlayerTask.html#a8861d18e9dd433e8025136a7f5c154d4',1,'SDLPlayerTask']]],
-  ['usemainscreenbuffer_29',['useMainScreenBuffer',['../classAnsiStream.html#a891387d134fda19dc9a927bc2eef8f02',1,'AnsiStream']]],
-  ['utf8bytecount_30',['utf8ByteCount',['../classChar.html#ad6d482575c9386e3155c7660d485b29c',1,'Char']]],
-  ['uuid_31',['uuid',['../classFrameBridge.html#a23ed7b3eddd48e3988f1f4c0a51f3096',1,'FrameBridge::uuid()'],['../classMediaIO.html#aaa4eed4f1032cc745b89e9c78837e038',1,'MediaIO::uuid()'],['../classMediaIODescription.html#a79ebfbe0417f2ddf89cf85f9dc9dbfee',1,'MediaIODescription::uuid()'],['../classUUID.html#a56b6dfa8d38418093502ad169a814dfb',1,'UUID::UUID()'],['../classUUID.html#aee004a2b1ee415b72cdb2845a09e43c4',1,'UUID::UUID(const UUID &amp;u)'],['../classUUID.html#aaafc53f2d2f31f85c078031b1a426121',1,'UUID::UUID(const UUID &amp;&amp;u)'],['../classUUID.html#a34bc4b44a96998f26ba21a74ca528033',1,'UUID::UUID(const DataFormat &amp;val)'],['../classUUID.html#af8be632b28e561206cbd8da97e73038e',1,'UUID::UUID(const DataFormat &amp;&amp;val)'],['../classUUID.html#a0d5065024feea1291fe5b492b39116f0',1,'UUID::UUID(const char *str)'],['../classUUID.html#a2edd75cfc5b7e59b3d8fe57cea508155',1,'UUID::UUID(const String &amp;str)']]]
+  ['url_27',['url',['../classUrl.html#a86ba638712035f70da528538dd8cc657',1,'Url::Url()=default'],['../classUrl.html#a818383897a59754656f50e905438bf99',1,'Url::Url(const String &amp;s)'],['../classUrl.html#adca6545355f87d055863fbbe842c78ba',1,'Url::Url(const char *s)']]],
+  ['usealternatescreenbuffer_28',['useAlternateScreenBuffer',['../classAnsiStream.html#aa3b450f9b8a9de01d8b56f4d9077b525',1,'AnsiStream']]],
+  ['useaudioclock_29',['useAudioClock',['../classSDLPlayerTask.html#a8861d18e9dd433e8025136a7f5c154d4',1,'SDLPlayerTask']]],
+  ['usemainscreenbuffer_30',['useMainScreenBuffer',['../classAnsiStream.html#a891387d134fda19dc9a927bc2eef8f02',1,'AnsiStream']]],
+  ['userinfo_31',['userInfo',['../classUrl.html#ae7e4c6f03873f087ba5f20e433e5ae18',1,'Url']]],
+  ['utf8bytecount_32',['utf8ByteCount',['../classChar.html#ad6d482575c9386e3155c7660d485b29c',1,'Char']]],
+  ['uuid_33',['uuid',['../classFrameBridge.html#a23ed7b3eddd48e3988f1f4c0a51f3096',1,'FrameBridge::uuid()'],['../classMediaIO.html#aaa4eed4f1032cc745b89e9c78837e038',1,'MediaIO::uuid()'],['../classMediaIODescription.html#a79ebfbe0417f2ddf89cf85f9dc9dbfee',1,'MediaIODescription::uuid()'],['../classUUID.html#a56b6dfa8d38418093502ad169a814dfb',1,'UUID::UUID()'],['../classUUID.html#aee004a2b1ee415b72cdb2845a09e43c4',1,'UUID::UUID(const UUID &amp;u)'],['../classUUID.html#aaafc53f2d2f31f85c078031b1a426121',1,'UUID::UUID(const UUID &amp;&amp;u)'],['../classUUID.html#a34bc4b44a96998f26ba21a74ca528033',1,'UUID::UUID(const DataFormat &amp;val)'],['../classUUID.html#af8be632b28e561206cbd8da97e73038e',1,'UUID::UUID(const DataFormat &amp;&amp;val)'],['../classUUID.html#a0d5065024feea1291fe5b492b39116f0',1,'UUID::UUID(const char *str)'],['../classUUID.html#a2edd75cfc5b7e59b3d8fe57cea508155',1,'UUID::UUID(const String &amp;str)']]]
 ];

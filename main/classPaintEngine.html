@@ -148,9 +148,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a302c06e18928db5f61cf9c2b0191e5ff" id="r_a302c06e18928db5f61cf9c2b0191e5ff"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine.html#a302c06e18928db5f61cf9c2b0191e5ff">PaintEngine</a> (<a class="el" href="classPaintEngine_1_1Impl.html">Impl</a> *<a class="el" href="classList.html">impl</a>)</td></tr>
 <tr class="memdesc:a302c06e18928db5f61cf9c2b0191e5ff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images.">PaintEngine</a> that takes ownership of the given <a class="el" href="classPaintEngine_1_1Impl.html" title="Abstract implementation backend for PaintEngine.">Impl</a>.  <br /></td></tr>
 <tr class="separator:a302c06e18928db5f61cf9c2b0191e5ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9750c5b92a12fe5fc30b443bab1d8d48" id="r_a9750c5b92a12fe5fc30b443bab1d8d48"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine.html#a9750c5b92a12fe5fc30b443bab1d8d48">pixelDesc</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a9750c5b92a12fe5fc30b443bab1d8d48"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the pixel description of the underlying implementation.  <br /></td></tr>
-<tr class="separator:a9750c5b92a12fe5fc30b443bab1d8d48"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa675c184c11f2bb8654d9f95c5b45667" id="r_aa675c184c11f2bb8654d9f95c5b45667"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classPixelFormat.html">PixelFormat</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine.html#aa675c184c11f2bb8654d9f95c5b45667">pixelFormat</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aa675c184c11f2bb8654d9f95c5b45667"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the pixel description of the underlying implementation.  <br /></td></tr>
+<tr class="separator:aa675c184c11f2bb8654d9f95c5b45667"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2d037066c56a1ebf687b5959b987d3f0" id="r_a2d037066c56a1ebf687b5959b987d3f0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine.html#a2d037066c56a1ebf687b5959b987d3f0">createPixel</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">uint16_t</a> *comps, <a class="el" href="classList.html">size_t</a> compCount) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a2d037066c56a1ebf687b5959b987d3f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a <a class="el" href="structPaintEngine_1_1Pixel.html" title="Opaque pixel value with inline fixed-size storage.">Pixel</a> from an array of component values.  <br /></td></tr>
 <tr class="separator:a2d037066c56a1ebf687b5959b987d3f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -465,7 +465,7 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Creates a <a class="el" href="structPaintEngine_1_1Pixel.html" title="Opaque pixel value with inline fixed-size storage.">Pixel</a> from a <a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a> value. </p>
-<p>Converts the <a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a> to the <a class="el" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images.">PaintEngine</a>'s color model (from <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a>), then maps each component to a 16-bit value and delegates to the format-specific <a class="el" href="classPaintEngine.html#a2d037066c56a1ebf687b5959b987d3f0" title="Creates a Pixel from an array of component values.">createPixel()</a>.</p>
+<p>Converts the <a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a> to the <a class="el" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images.">PaintEngine</a>'s color model (from <a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a>), then maps each component to a 16-bit value and delegates to the format-specific <a class="el" href="classPaintEngine.html#a2d037066c56a1ebf687b5959b987d3f0" title="Creates a Pixel from an array of component values.">createPixel()</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">color</td><td>The <a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a> to convert. </td></tr>
@@ -1320,8 +1320,8 @@ Static Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a9750c5b92a12fe5fc30b443bab1d8d48" name="a9750c5b92a12fe5fc30b443bab1d8d48"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9750c5b92a12fe5fc30b443bab1d8d48">&#9670;&#160;</a></span>pixelDesc()</h2>
+<a id="aa675c184c11f2bb8654d9f95c5b45667" name="aa675c184c11f2bb8654d9f95c5b45667"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa675c184c11f2bb8654d9f95c5b45667">&#9670;&#160;</a></span>pixelFormat()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1330,7 +1330,7 @@ Static Public Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp; PaintEngine::pixelDesc </td>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classPixelFormat.html">PixelFormat</a> &amp; PaintEngine::pixelFormat </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -1344,7 +1344,7 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Returns the pixel description of the underlying implementation. </p>
-<dl class="section return"><dt>Returns</dt><dd>A const reference to the <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a>. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A const reference to the <a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a>. </dd></dl>
 
 </div>
 </div>
@@ -1418,7 +1418,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classPaintEngine.html">PaintEngine</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

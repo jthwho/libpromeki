@@ -279,7 +279,10 @@ var group__util =
         [ "ClockPaused", "classError.html#ab5980e13b879db253df802b0950d1708a472abb37baff1ed0725d1a8400e1ec1e", null ],
         [ "DurationUnknown", "classError.html#ab5980e13b879db253df802b0950d1708ac3b0a5260c550da359ce21d5d2f4790f", null ],
         [ "FrameRangeInfinite", "classError.html#ab5980e13b879db253df802b0950d1708a98240600c1b658add2e71f1dc7ec7e95", null ],
-        [ "NotAdjacent", "classError.html#ab5980e13b879db253df802b0950d1708a9027e04f1e22c093a246d518d805db28", null ]
+        [ "NotAdjacent", "classError.html#ab5980e13b879db253df802b0950d1708a9027e04f1e22c093a246d518d805db28", null ],
+        [ "PipelineBuildFailed", "classError.html#ab5980e13b879db253df802b0950d1708a44668d412cf96d150adcfa317344e26b", null ],
+        [ "PipelineRuntimeError", "classError.html#ab5980e13b879db253df802b0950d1708a7d9fc03044568d076864360cba222720", null ],
+        [ "InspectorDiscontinuityDetected", "classError.html#ab5980e13b879db253df802b0950d1708a6f93c8647382884e0ee13f21ce50a3cf", null ]
       ] ],
       [ "Error", "classError.html#a83eaa8db2a6c22d6aff5758eea236a6e", null ],
       [ "~Error", "classError.html#a1a45d42a3a035d510333cdfeb36a0e93", null ],
@@ -553,6 +556,8 @@ var group__util =
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a615df79aaf48bad29fcafadd1c2b100e", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a11544962ea1d443f072287639a6dad92", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#af4e5b039cc17e4ed7b46859fad7f78b9", null ],
+      [ "PROMEKI_DECLARE_ID", "classMetadata.html#af812eb5390307709e53b6086f96d1010", null ],
+      [ "PROMEKI_DECLARE_ID", "classMetadata.html#a470d5a4448f15cea4f0014b9bd5c627f", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a5a8083e08b3f8c5dfcb57d0eb6693a57", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a276ea936a7081ba34fc849355142887a", null ],
       [ "PROMEKI_DECLARE_ID", "classMetadata.html#a9450a81c0836337aac4036bcf543469f", null ],
@@ -844,6 +849,35 @@ var group__util =
       [ "toString", "classUMID.html#aa0dc639699dcc577b78802e935d1aeee", null ]
     ] ],
     [ "Units", "classUnits.html", null ],
+    [ "Url", "classUrl.html", [
+      [ "Url", "classUrl.html#a86ba638712035f70da528538dd8cc657", null ],
+      [ "Url", "classUrl.html#a818383897a59754656f50e905438bf99", null ],
+      [ "Url", "classUrl.html#adca6545355f87d055863fbbe842c78ba", null ],
+      [ "fragment", "classUrl.html#a033d178b3898ffe34b11fa46f76fadda", null ],
+      [ "hasAuthority", "classUrl.html#a74c52f8d2e17b1e706afc41fa12693ea", null ],
+      [ "hasQueryValue", "classUrl.html#ac5a2246bbe74c5fd46935462cbeaf86d", null ],
+      [ "host", "classUrl.html#a6066ddb5ec8a69486c516beb701edfab", null ],
+      [ "isValid", "classUrl.html#af8cd1062a77d6d85685465aafe4f0439", null ],
+      [ "operator!=", "classUrl.html#a496dcefe58ff795b0d402c0cea998ccf", null ],
+      [ "operator==", "classUrl.html#aec6a93384d8df0f8dd0b13a4b9870ce4", null ],
+      [ "path", "classUrl.html#ad6bc6c74b97ee3cda07f6da0ebc40013", null ],
+      [ "port", "classUrl.html#ad6e5fe41def1ed786777e058e7aa2568", null ],
+      [ "query", "classUrl.html#a10bad9464c38669c70f1f29f46bf6ec5", null ],
+      [ "queryValue", "classUrl.html#a3551b2fa55895b7234503b07a5112aa4", null ],
+      [ "removeQueryValue", "classUrl.html#aacd3467294c819d45254cb17bd11a45d", null ],
+      [ "scheme", "classUrl.html#a13aa515312263a29289c5b5a074eaeed", null ],
+      [ "setFragment", "classUrl.html#a359a8d246b9c1d904f1dc68d3ed10411", null ],
+      [ "setHasAuthority", "classUrl.html#ae24f55f25bd9f3839f36ab44cc3b4182", null ],
+      [ "setHost", "classUrl.html#a2a6e2fe3eb7e5bbf4fd2487b72c855ee", null ],
+      [ "setPath", "classUrl.html#af19fd845a0e311e0b03fb565fb574c3f", null ],
+      [ "setPort", "classUrl.html#a3a01c7f6beaf0a12ee0b44ba1beb72c6", null ],
+      [ "setQuery", "classUrl.html#a05339f7493750ca1bc35f811157f7ef0", null ],
+      [ "setQueryValue", "classUrl.html#a1210cd7d881ed845993607641fc03113", null ],
+      [ "setScheme", "classUrl.html#ad1c23c0760c9ad0d90aff0354625aef8", null ],
+      [ "setUserInfo", "classUrl.html#a560e110dc2140fb232cf2517ac8da8e6", null ],
+      [ "toString", "classUrl.html#a4d4317da18864a0c667ee5a9f9c9667e", null ],
+      [ "userInfo", "classUrl.html#ae7e4c6f03873f087ba5f20e433e5ae18", null ]
+    ] ],
     [ "UUID", "classUUID.html", [
       [ "DataFormat", "classUUID.html#aaf83be55f4a3f88451a7e84ed139879c", null ],
       [ "UUID", "classUUID.html#a56b6dfa8d38418093502ad169a814dfb", null ],
@@ -990,5 +1024,6 @@ var group__util =
     ] ],
     [ "fnv1a", "group__util.html#gab69e96bcf690e69917938a80b3e84123", null ],
     [ "secureZero", "group__util.html#ga67dcec7dbce274b3670485a4dc82d808", null ],
+    [ "sharedPointerCast", "group__util.html#gab6910062fa715b6855ec69f961257030", null ],
     [ "sorted", "group__util.html#gac27428ecfe86c08c467f57d7ab38308d", null ]
 ];

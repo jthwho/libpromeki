@@ -7,6 +7,9 @@ var searchData=
   ['variantquery_2eh_4',['variantquery.h',['../variantquery_8h.html',1,'']]],
   ['variantspec_2eh_5',['variantspec.h',['../variantspec_8h.html',1,'']]],
   ['videocodec_2eh_6',['videocodec.h',['../videocodec_8h.html',1,'']]],
-  ['videoformat_2eh_7',['videoformat.h',['../videoformat_8h.html',1,'']]],
-  ['videotestpattern_2eh_8',['videotestpattern.h',['../videotestpattern_8h.html',1,'']]]
+  ['videodecoder_2eh_7',['videodecoder.h',['../videodecoder_8h.html',1,'']]],
+  ['videoencoder_2eh_8',['videoencoder.h',['../videoencoder_8h.html',1,'']]],
+  ['videoformat_2eh_9',['videoformat.h',['../videoformat_8h.html',1,'']]],
+  ['videopacket_2eh_10',['videopacket.h',['../videopacket_8h.html',1,'']]],
+  ['videotestpattern_2eh_11',['videotestpattern.h',['../videotestpattern_8h.html',1,'']]]
 ];

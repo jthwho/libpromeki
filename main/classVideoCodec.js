@@ -1,9 +1,14 @@
 var classVideoCodec =
 [
+    [ "Backend", "classVideoCodec_1_1Backend.html", "classVideoCodec_1_1Backend" ],
     [ "Data", "structVideoCodec_1_1Data.html", "structVideoCodec_1_1Data" ],
-    [ "DecoderFactory", "classVideoCodec.html#a4ea3cd4bb3c561497bd7f446606ed12a", null ],
-    [ "EncoderFactory", "classVideoCodec.html#a9784efc47e55a62866ce7605107fdc52", null ],
+    [ "BackendList", "classVideoCodec.html#a1fccd459f626e5b6d9eef80e4d616428", null ],
     [ "IDList", "classVideoCodec.html#a4592805075cb09835e61af5106205b71", null ],
+    [ "CodingType", "classVideoCodec.html#ae7b43fab2a9f161059e260f40df1979f", [
+      [ "CodingInvalid", "classVideoCodec.html#ae7b43fab2a9f161059e260f40df1979faa6e36bc79fc422894ab7bf1c573f3707", null ],
+      [ "CodingIntraOnly", "classVideoCodec.html#ae7b43fab2a9f161059e260f40df1979fa8b7dd8c6b278fa30d8a3c31bd55bb242", null ],
+      [ "CodingTemporal", "classVideoCodec.html#ae7b43fab2a9f161059e260f40df1979fa04ba43a934fdc8c3dd7e969147329265", null ]
+    ] ],
     [ "ID", "classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dc", [
       [ "Invalid", "classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca87e5acce5d36534159db13a2c635e101", null ],
       [ "H264", "classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca48919d6ed222bf6aed61e664ac1e3350", null ],
@@ -20,19 +25,43 @@ var classVideoCodec =
       [ "ProRes_4444_XQ", "classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca4b1138df53d0e0591c453fadcae9b5b0", null ],
       [ "UserDefined", "classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca5fff2612f236512fb16a7b2395f4a6d6", null ]
     ] ],
-    [ "VideoCodec", "classVideoCodec.html#a4786b245d957788dec65332337a40f7c", null ],
+    [ "RandomAccessGranularity", "classVideoCodec.html#ad71bbc3d1ef9ec60df583e75b2b584c5", [
+      [ "AccessInvalid", "classVideoCodec.html#ad71bbc3d1ef9ec60df583e75b2b584c5ab0be935cdaf29d04cf9c01af3b32ebe1", null ],
+      [ "AccessFrame", "classVideoCodec.html#ad71bbc3d1ef9ec60df583e75b2b584c5aeda92a98fde43eff4dde84c0b5c26153", null ],
+      [ "AccessGOP", "classVideoCodec.html#ad71bbc3d1ef9ec60df583e75b2b584c5ab6b76508965a5b6d9f9964799f12c004", null ]
+    ] ],
+    [ "VideoCodec", "classVideoCodec.html#a2e012bdd83a91cf464b01020dc1b60ef", null ],
+    [ "availableDecoderBackends", "classVideoCodec.html#a27c9703ffd490df358c853461bf81d88", null ],
+    [ "availableEncoderBackends", "classVideoCodec.html#a14c8d67776034db62d543f0b2b57a610", null ],
+    [ "backend", "classVideoCodec.html#a907a75ff8c9a058e2768bf19e5c6d3d1", null ],
     [ "canDecode", "classVideoCodec.html#a5e1441f143e81ceab7b1e0076e1f8bda", null ],
     [ "canEncode", "classVideoCodec.html#ad23ab65be10033eac314bc83c720ea48", null ],
-    [ "compressedPixelDescs", "classVideoCodec.html#ade010cc2b86711df7f74aa216342991a", null ],
-    [ "createDecoder", "classVideoCodec.html#ad9515fca6ee6958ce5078249c3592bf2", null ],
-    [ "createEncoder", "classVideoCodec.html#a2277de00627b09dababfa87743ce81d6", null ],
+    [ "codingType", "classVideoCodec.html#a181dcf0a175c70137fd503d0924a3929", null ],
+    [ "compressedPixelFormats", "classVideoCodec.html#a4cc563e65ece0d30e679767b1b6025ee", null ],
+    [ "createDecoder", "classVideoCodec.html#a357995988d59375f894365924f5043f4", null ],
+    [ "createEncoder", "classVideoCodec.html#abf05fe27153e1a251178fa2be6632894", null ],
     [ "data", "classVideoCodec.html#a7a7e8243e92c5f3781e1a2231427e243", null ],
+    [ "decoderSupportedOutputs", "classVideoCodec.html#a4cfded8270c3f5866573ced3ccd5442f", null ],
     [ "description", "classVideoCodec.html#a9116cd7b4055b648f14cef43d31ba1c3", null ],
-    [ "encoderSupportedInputs", "classVideoCodec.html#a8d2e4a95f049e022364873463c8baac2", null ],
+    [ "encoderSupportedInputs", "classVideoCodec.html#a23972db97d81f0ee81ee35e1b5d7fd10", null ],
     [ "fourccList", "classVideoCodec.html#ade6c014445b3fb804e8dc8429b7c76d6", null ],
     [ "id", "classVideoCodec.html#a970be6fa47cc0934f92c20493ac96b37", null ],
+    [ "isIntraOnly", "classVideoCodec.html#a312c940eeff1b6eb6c04213bc6329198", null ],
     [ "isValid", "classVideoCodec.html#a14acda48f4792085f9668b7b53183b89", null ],
+    [ "maxHeight", "classVideoCodec.html#ac7be661d14fa95ba8d9c2b99b79dbe78", null ],
+    [ "maxWidth", "classVideoCodec.html#aea047d8e5130356c053fc9ec5ce552db", null ],
     [ "name", "classVideoCodec.html#a597f740cf04497f4bc1df65508a11d79", null ],
     [ "operator!=", "classVideoCodec.html#a5432d11dbef4867725eab449ea3736b0", null ],
-    [ "operator==", "classVideoCodec.html#ae5ec2be9928da8f33e9c5a4bfda9c015", null ]
+    [ "operator==", "classVideoCodec.html#ae5ec2be9928da8f33e9c5a4bfda9c015", null ],
+    [ "randomAccessGranularity", "classVideoCodec.html#aff52ed10822c0c461ee35089760419f0", null ],
+    [ "rateControlModes", "classVideoCodec.html#acfdad633716b56ca0dbbcfb8c2a4e21e", null ],
+    [ "supportedBitDepths", "classVideoCodec.html#ad22a793ed554855334697e9aad3d44f1", null ],
+    [ "supportedFrameRates", "classVideoCodec.html#ae81895e0ea2b14373e2be771792feda5", null ],
+    [ "supportsAlpha", "classVideoCodec.html#aa4260c6209ae610057ad2282f7482773", null ],
+    [ "supportsBFrames", "classVideoCodec.html#a9dcda2d9bf33fedddcf4e69cccf86093", null ],
+    [ "supportsHDRMetadata", "classVideoCodec.html#adfd9f50e17f0e9c4317b47cd49a8de4e", null ],
+    [ "supportsInterlaced", "classVideoCodec.html#a6a14c455ea37623ccc0eebf6099f0921", null ],
+    [ "supportsLossless", "classVideoCodec.html#a950c397e751db8123485c10241b0c6bb", null ],
+    [ "supportsVariableFrameSize", "classVideoCodec.html#a494c3757b24c557d0165e220d475c643", null ],
+    [ "toString", "classVideoCodec.html#a440a169ae5ad6cb128d65224405abdd4", null ]
 ];

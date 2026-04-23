@@ -186,7 +186,7 @@ Additional Inherited Members</h2></td></tr>
 <p>Implements packing/unpacking of arbitrary JSON-serialized messages over RTP. This is the fallback metadata-stream payload used by <a class="el" href="classMediaIOTask__Rtp.html">MediaIOTask_Rtp</a> when the user wants to ship the per-frame <a class="el" href="classMetadata.html">Metadata</a> object as-is without committing to the SMPTE ST 2110-40 Ancillary Data wire format. It is deliberately simple: each RTP packet carries a raw fragment of the JSON bytes, in order, and the RTP marker bit on the last packet of each message signals end-of-message to the receiver.</p>
 <p>No custom in-payload header is added — the only framing is the RTP sequence number (for ordering) and the marker bit (for message boundaries). A full message is reassembled by concatenating the payloads of consecutive packets sharing the same RTP timestamp, terminated by the marker bit.</p>
 <dl class="section user"><dt>Wire format</dt><dd><div class="fragment"><div class="line">+--12 bytes--+------ <a class="code hl_class" href="classList.html">up</a> to <a class="code hl_function" href="classRtpPayload.html#a699beaa3bde84013963c8538e68ba66e">maxPayloadSize</a> bytes ------+</div>
-<div class="line">| <a class="code hl_class" href="classList.html">RTP</a> <a class="code hl_class" href="classList.html">Header</a> | <a class="code hl_class" href="classList.html">JSON</a> bytes (<a class="code hl_class" href="classList.html">fragment</a> <a class="code hl_class" href="classList.html">of</a> <a class="code hl_class" href="classList.html">the</a> message)    |</div>
+<div class="line">| <a class="code hl_class" href="classList.html">RTP</a> <a class="code hl_class" href="classList.html">Header</a> | <a class="code hl_class" href="classList.html">JSON</a> bytes (fragment <a class="code hl_class" href="classList.html">of</a> <a class="code hl_class" href="classList.html">the</a> message)    |</div>
 <div class="line">+------------+----------------------------------------+</div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassRtpPayload_html_a699beaa3bde84013963c8538e68ba66e"><div class="ttname"><a href="classRtpPayload.html#a699beaa3bde84013963c8538e68ba66e">RtpPayload::maxPayloadSize</a></div><div class="ttdeci">virtual size_t maxPayloadSize() const</div><div class="ttdoc">Returns the maximum payload size per packet.</div><div class="ttdef"><b>Definition</b> rtppayload.h:76</div></div>
@@ -385,7 +385,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classRtpPayloadJson.html">RtpPayloadJson</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

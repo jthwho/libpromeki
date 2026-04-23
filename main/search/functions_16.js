@@ -21,12 +21,13 @@ var searchData=
   ['vformat_18',['vformat',['../classString.html#a3c743dacbebc0135a0d2179d96a7e17c',1,'String']]],
   ['vibrato_19',['vibrato',['../classMusicalNote.html#a3fe9291cbafc5eb949c31d36755a0e97',1,'MusicalNote']]],
   ['vibratorate_20',['vibratoRate',['../classMusicalNote.html#a6bfacc2d894969d74d2bdfde5c24884f',1,'MusicalNote']]],
-  ['videocodec_21',['videocodec',['../classVideoCodec.html#a4786b245d957788dec65332337a40f7c',1,'VideoCodec::VideoCodec()'],['../classPixelDesc.html#a4b1c5d6c7f378a9777bbba2700b41ea9',1,'PixelDesc::videoCodec()']]],
+  ['videocodec_21',['videocodec',['../classVideoCodec.html#a2e012bdd83a91cf464b01020dc1b60ef',1,'VideoCodec::VideoCodec()'],['../classPixelFormat.html#a5ae6bd921f60785e530acd7212d96933',1,'PixelFormat::videoCodec()']]],
   ['videoformat_22',['videoformat',['../classFrame.html#a5cd4e91eefa51727a9e709143888fe31',1,'Frame::videoFormat()'],['../classMediaDesc.html#aebb9dc5d73a52d2457156cbab4bed26a',1,'MediaDesc::videoFormat()'],['../classVideoFormat.html#a18c2115a48cd8fc115ea77d6f749a4da',1,'VideoFormat::VideoFormat()=default'],['../classVideoFormat.html#a563ef3c02e95132eb27807a4422545ac',1,'VideoFormat::VideoFormat(const Size2Du32 &amp;raster, const FrameRate &amp;rate, VideoScanMode scanMode=VideoScanMode::Progressive)'],['../classVideoFormat.html#a9c828419cd441e61873ddf9f977810bc',1,'VideoFormat::VideoFormat(WellKnownRaster raster, const FrameRate &amp;rate, VideoScanMode scanMode=VideoScanMode::Progressive)'],['../classVideoFormat.html#aa3c54f934ee229eabb365bd5e8f8340f',1,'VideoFormat::VideoFormat(WellKnownFormat fmt)']]],
-  ['videorange_23',['videoRange',['../classPixelDesc.html#a7c4e72a6fa453853f276d6bcbbbeba26',1,'PixelDesc']]],
-  ['videoscanmode_24',['videoscanmode',['../classImageDesc.html#adf46599e9450e411d295e7d41983ad27',1,'ImageDesc::videoScanMode()'],['../classVideoFormat.html#a30200a54cc538831df2ce4c3d7d2e62d',1,'VideoFormat::videoScanMode()']]],
-  ['videosize_25',['videoSize',['../classImgSeq.html#a3b5155fba1472f84c86f3370a376e4fc',1,'ImgSeq']]],
-  ['videotestpattern_26',['VideoTestPattern',['../classVideoTestPattern.html#afe3332167e195dd2f5ba008b7542404c',1,'VideoTestPattern']]],
-  ['view_27',['view',['../classMediaPacket.html#a729697af537c09caacbc837b4a6859a3',1,'MediaPacket::view() const'],['../classMediaPacket.html#ad50258bd27d117ede7d43faa87945566',1,'MediaPacket::view()']]],
-  ['vtcformat_28',['vtcformat',['../classTimecode_1_1Mode.html#aa0a65217591cda81646bca6edca2aacd',1,'Timecode::Mode::vtcFormat()'],['../classTimecode.html#a8b7cb5b642f7f2d0696b3315785f221b',1,'Timecode::vtcFormat()']]]
+  ['videopacket_23',['videopacket',['../classVideoPacket.html#aa86f53e26d49e9ad123f91a5a312272e',1,'VideoPacket::VideoPacket()=default'],['../classVideoPacket.html#a87e43ecd0a34af97e328d7c0aefffbb7',1,'VideoPacket::VideoPacket(const BufferView &amp;view, const PixelFormat &amp;pixelFormat)'],['../classVideoPacket.html#a67d46dcba9b92571a86da813251a72ce',1,'VideoPacket::VideoPacket(Buffer::Ptr buffer, const PixelFormat &amp;pixelFormat)']]],
+  ['videorange_24',['videoRange',['../classPixelFormat.html#af46c25d042f614840b5fca552ebfffc5',1,'PixelFormat']]],
+  ['videoscanmode_25',['videoscanmode',['../classImageDesc.html#adf46599e9450e411d295e7d41983ad27',1,'ImageDesc::videoScanMode()'],['../classVideoFormat.html#a30200a54cc538831df2ce4c3d7d2e62d',1,'VideoFormat::videoScanMode()']]],
+  ['videosize_26',['videoSize',['../classImgSeq.html#a3b5155fba1472f84c86f3370a376e4fc',1,'ImgSeq']]],
+  ['videotestpattern_27',['VideoTestPattern',['../classVideoTestPattern.html#afe3332167e195dd2f5ba008b7542404c',1,'VideoTestPattern']]],
+  ['view_28',['view',['../classMediaPacket.html#a729697af537c09caacbc837b4a6859a3',1,'MediaPacket::view() const'],['../classMediaPacket.html#ad50258bd27d117ede7d43faa87945566',1,'MediaPacket::view()']]],
+  ['vtcformat_29',['vtcformat',['../classTimecode_1_1Mode.html#aa0a65217591cda81646bca6edca2aacd',1,'Timecode::Mode::vtcFormat()'],['../classTimecode.html#a8b7cb5b642f7f2d0696b3315785f221b',1,'Timecode::vtcFormat()']]]
 ];

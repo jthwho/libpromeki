@@ -23,13 +23,22 @@ var hierarchy =
     [ "Audio", "classAudio.html", null ],
     [ "AudioBuffer", "classAudioBuffer.html", null ],
     [ "AudioCodec", "classAudioCodec.html", null ],
+    [ "AudioDecoder", "classAudioDecoder.html", null ],
     [ "AudioDesc", "classAudioDesc.html", null ],
+    [ "AudioEncoder", "classAudioEncoder.html", null ],
     [ "AudioFile", "classAudioFile.html", null ],
+    [ "AudioFormat", "classAudioFormat.html", null ],
     [ "AudioGen", "classAudioGen.html", null ],
     [ "AudioLevel", "classAudioLevel.html", null ],
     [ "AudioResampler", "classAudioResampler.html", null ],
     [ "AudioTestPattern", "classAudioTestPattern.html", null ],
     [ "AvcDecoderConfig", "structAvcDecoderConfig.html", null ],
+    [ "AudioCodec::Backend", "classAudioCodec_1_1Backend.html", null ],
+    [ "VideoCodec::Backend", "classVideoCodec_1_1Backend.html", null ],
+    [ "AudioDecoder::BackendRecord", "structAudioDecoder_1_1BackendRecord.html", null ],
+    [ "AudioEncoder::BackendRecord", "structAudioEncoder_1_1BackendRecord.html", null ],
+    [ "VideoDecoder::BackendRecord", "structVideoDecoder_1_1BackendRecord.html", null ],
+    [ "VideoEncoder::BackendRecord", "structVideoEncoder_1_1BackendRecord.html", null ],
     [ "ImageDataDecoder::Band", "structImageDataDecoder_1_1Band.html", null ],
     [ "Benchmark", "classBenchmark.html", null ],
     [ "BenchmarkCase", "classBenchmarkCase.html", null ],
@@ -61,11 +70,11 @@ var hierarchy =
     [ "CmdLineParser", "classCmdLineParser.html", null ],
     [ "Color", "classColor.html", null ],
     [ "ColorModel", "classColorModel.html", null ],
-    [ "PixelFormat::CompDesc", "structPixelFormat_1_1CompDesc.html", null ],
+    [ "PixelMemLayout::CompDesc", "structPixelMemLayout_1_1CompDesc.html", null ],
     [ "CompiledCodepoints< Count >", "classCompiledCodepoints.html", null ],
     [ "CompiledString< N >", "classCompiledString.html", null ],
     [ "ColorModel::CompInfo", "structColorModel_1_1CompInfo.html", null ],
-    [ "PixelDesc::CompSemantic", "structPixelDesc_1_1CompSemantic.html", null ],
+    [ "PixelFormat::CompSemantic", "structPixelFormat_1_1CompSemantic.html", null ],
     [ "AudioBlock::Config", "classAudioBlock_1_1Config.html", null ],
     [ "AudioGen::Config", "structAudioGen_1_1Config.html", null ],
     [ "FrameBridge::Config", "structFrameBridge_1_1Config.html", null ],
@@ -79,9 +88,10 @@ var hierarchy =
     [ "CudaBootstrap", "classCudaBootstrap.html", null ],
     [ "CudaDevice", "classCudaDevice.html", null ],
     [ "AudioCodec::Data", "structAudioCodec_1_1Data.html", null ],
+    [ "AudioFormat::Data", "structAudioFormat_1_1Data.html", null ],
     [ "ColorModel::Data", "structColorModel_1_1Data.html", null ],
-    [ "PixelDesc::Data", "structPixelDesc_1_1Data.html", null ],
     [ "PixelFormat::Data", "structPixelFormat_1_1Data.html", null ],
+    [ "PixelMemLayout::Data", "structPixelMemLayout_1_1Data.html", null ],
     [ "VideoCodec::Data", "structVideoCodec_1_1Data.html", null ],
     [ "PacketTransport::Datagram", "structPacketTransport_1_1Datagram.html", null ],
     [ "UdpSocket::Datagram", "structUdpSocket_1_1Datagram.html", null ],
@@ -91,6 +101,8 @@ var hierarchy =
     [ "LtcDecoder::DecodedTimecode", "structLtcDecoder_1_1DecodedTimecode.html", null ],
     [ "Enum::Definition", "structEnum_1_1Definition.html", null ],
     [ "Deque< T >", "classDeque.html", null ],
+    [ "Deque< SharedPtr< Image > >", "classDeque.html", null ],
+    [ "Deque< SharedPtr< VideoPacket, true, VideoPacket > >", "classDeque.html", null ],
     [ "Dir", "classDir.html", null ],
     [ "Duration", "classDuration.html", null ],
     [ "ElapsedTimer", "classElapsedTimer.html", null ],
@@ -143,8 +155,14 @@ var hierarchy =
       [ "TypedEnum< MetadataRtpFormat >", "classTypedEnum.html", [
         [ "MetadataRtpFormat", "classMetadataRtpFormat.html", null ]
       ] ],
+      [ "TypedEnum< OpusApplication >", "classTypedEnum.html", [
+        [ "OpusApplication", "classOpusApplication.html", null ]
+      ] ],
       [ "TypedEnum< QuickTimeLayout >", "classTypedEnum.html", [
         [ "QuickTimeLayout", "classQuickTimeLayout.html", null ]
+      ] ],
+      [ "TypedEnum< RateControlMode >", "classTypedEnum.html", [
+        [ "RateControlMode", "classRateControlMode.html", null ]
       ] ],
       [ "TypedEnum< RtpPacingMode >", "classTypedEnum.html", [
         [ "RtpPacingMode", "classRtpPacingMode.html", null ]
@@ -172,9 +190,6 @@ var hierarchy =
       ] ],
       [ "TypedEnum< VideoRange >", "classTypedEnum.html", [
         [ "VideoRange", "classVideoRange.html", null ]
-      ] ],
-      [ "TypedEnum< VideoRateControl >", "classTypedEnum.html", [
-        [ "VideoRateControl", "classVideoRateControl.html", null ]
       ] ],
       [ "TypedEnum< VideoScanMode >", "classTypedEnum.html", [
         [ "VideoScanMode", "classVideoScanMode.html", null ]
@@ -204,7 +219,6 @@ var hierarchy =
       [ "BasicFont", "classBasicFont.html", null ],
       [ "FastFont", "classFastFont.html", null ]
     ] ],
-    [ "AudioDesc::Format", "structAudioDesc_1_1Format.html", null ],
     [ "MediaIO::FormatDesc", "structMediaIO_1_1FormatDesc.html", null ],
     [ "std::formatter", null, [
       [ "ToStringFormatter< T >", "structToStringFormatter.html", null ],
@@ -239,10 +253,6 @@ var hierarchy =
     [ "HevcDecoderConfig", "structHevcDecoderConfig.html", null ],
     [ "Histogram", "classHistogram.html", null ],
     [ "Image", "classImage.html", null ],
-    [ "ImageCodec", "classImageCodec.html", [
-      [ "JpegImageCodec", "classJpegImageCodec.html", null ],
-      [ "JpegXsImageCodec", "classJpegXsImageCodec.html", null ]
-    ] ],
     [ "ImageDataDecoder", "classImageDataDecoder.html", null ],
     [ "ImageDataEncoder", "classImageDataEncoder.html", null ],
     [ "ImageDesc", "classImageDesc.html", null ],
@@ -284,6 +294,7 @@ var hierarchy =
     [ "List< double >", "classList.html", null ],
     [ "List< float >", "classList.html", null ],
     [ "List< FourCC >", "classList.html", null ],
+    [ "List< FrameRate >", "classList.html", null ],
     [ "List< GridItem >", "classList.html", null ],
     [ "List< GroupEntry >", "classList.html", null ],
     [ "List< ID >", "classList.html", null ],
@@ -298,6 +309,7 @@ var hierarchy =
     [ "List< Params >", "classList.html", null ],
     [ "List< QueuedFrame >", "classList.html", null ],
     [ "List< QueueEntry >", "classList.html", null ],
+    [ "List< RateControlMode >", "classList.html", null ],
     [ "List< SharedPtr >", "classList.html", null ],
     [ "List< SharedPtr< Buffer > >", "classList.html", null ],
     [ "List< SharedPtr< Frame > >", "classList.html", null ],
@@ -381,7 +393,10 @@ var hierarchy =
       [ "MediaIOTask_VideoEncoder", "classMediaIOTask__VideoEncoder.html", null ],
       [ "SDLPlayerTask", "classSDLPlayerTask.html", null ]
     ] ],
-    [ "MediaPacket", "classMediaPacket.html", null ],
+    [ "MediaPacket", "classMediaPacket.html", [
+      [ "AudioPacket", "classAudioPacket.html", null ],
+      [ "VideoPacket", "classVideoPacket.html", null ]
+    ] ],
     [ "MediaPipelineConfig", "classMediaPipelineConfig.html", null ],
     [ "MediaPipelinePlanner", "classMediaPipelinePlanner.html", null ],
     [ "MediaPipelineStats", "classMediaPipelineStats.html", null ],
@@ -483,9 +498,9 @@ var hierarchy =
     [ "PeriodicCallback", "classPeriodicCallback.html", null ],
     [ "PIDController< ValueType, TimeType >", "classPIDController.html", null ],
     [ "PaintEngine::Pixel", "structPaintEngine_1_1Pixel.html", null ],
-    [ "PixelDesc", "classPixelDesc.html", null ],
     [ "PixelFormat", "classPixelFormat.html", null ],
-    [ "PixelFormat::PlaneDesc", "structPixelFormat_1_1PlaneDesc.html", null ],
+    [ "PixelMemLayout", "classPixelMemLayout.html", null ],
+    [ "PixelMemLayout::PlaneDesc", "structPixelMemLayout_1_1PlaneDesc.html", null ],
     [ "Point< T, NumValues >", "classPoint.html", null ],
     [ "Point< int32_t, 2 >", "classPoint.html", null ],
     [ "Point< T, 2 >", "classPoint.html", null ],
@@ -539,15 +554,16 @@ var hierarchy =
     [ "SharedMemory", "classSharedMemory.html", null ],
     [ "SharedPtr< T, CopyOnWrite, ST >", "classSharedPtr.html", null ],
     [ "SharedPtr< AudioFile::Impl >", "classSharedPtr.html", null ],
+    [ "SharedPtr< AudioPacket, true, AudioPacket >", "classSharedPtr.html", null ],
     [ "SharedPtr< Benchmark >", "classSharedPtr.html", null ],
     [ "SharedPtr< Buffer >", "classSharedPtr.html", null ],
     [ "SharedPtr< Clock, false, Clock >", "classSharedPtr.html", null ],
     [ "SharedPtr< Frame >", "classSharedPtr.html", null ],
     [ "SharedPtr< Image >", "classSharedPtr.html", null ],
-    [ "SharedPtr< MediaPacket >", "classSharedPtr.html", null ],
     [ "SharedPtr< PaintEngine::Impl, false >", "classSharedPtr.html", null ],
     [ "SharedPtr< QuickTime::Impl >", "classSharedPtr.html", null ],
     [ "SharedPtr< StringData >", "classSharedPtr.html", null ],
+    [ "SharedPtr< VideoPacket, true, VideoPacket >", "classSharedPtr.html", null ],
     [ "SharedPtrProxy< T >", "classSharedPtrProxy.html", null ],
     [ "Signal< Args >", "classSignal.html", null ],
     [ "Signal< ObjectBase * >", "classSignal.html", null ],
@@ -598,10 +614,11 @@ var hierarchy =
     [ "std::true_type", null, [
       [ "IsSharedObject< T, std::void_t< decltype(&T::_promeki_refct)> >", "structIsSharedObject_3_01T_00_01std_1_1void__t_3_01decltype_07_6T_1_1__promeki__refct_08_4_01_4.html", null ],
       [ "detail::is_type_registry< AudioCodec >", "structdetail_1_1is__type__registry_3_01AudioCodec_01_4.html", null ],
+      [ "detail::is_type_registry< AudioFormat >", "structdetail_1_1is__type__registry_3_01AudioFormat_01_4.html", null ],
       [ "detail::is_type_registry< ColorModel >", "structdetail_1_1is__type__registry_3_01ColorModel_01_4.html", null ],
       [ "detail::is_type_registry< MemSpace >", "structdetail_1_1is__type__registry_3_01MemSpace_01_4.html", null ],
-      [ "detail::is_type_registry< PixelDesc >", "structdetail_1_1is__type__registry_3_01PixelDesc_01_4.html", null ],
       [ "detail::is_type_registry< PixelFormat >", "structdetail_1_1is__type__registry_3_01PixelFormat_01_4.html", null ],
+      [ "detail::is_type_registry< PixelMemLayout >", "structdetail_1_1is__type__registry_3_01PixelMemLayout_01_4.html", null ],
       [ "detail::is_type_registry< VideoCodec >", "structdetail_1_1is__type__registry_3_01VideoCodec_01_4.html", null ]
     ] ],
     [ "TuiCell", "structTuiCell.html", null ],
@@ -615,6 +632,7 @@ var hierarchy =
     [ "Enum::Type", "classEnum_1_1Type.html", null ],
     [ "UMID", "classUMID.html", null ],
     [ "Units", "classUnits.html", null ],
+    [ "Url", "classUrl.html", null ],
     [ "UUID", "classUUID.html", null ],
     [ "VariantDatabase< Name >", "classVariantDatabase.html", null ],
     [ "VariantDatabase<\"Config\">", "classVariantDatabase.html", null ],
@@ -636,7 +654,7 @@ var hierarchy =
     ] ],
     [ "detail::VariantEnd", "structdetail_1_1VariantEnd.html", null ],
     [ "VariantImpl< Types >", "classVariantImpl.html", null ],
-    [ "VariantImpl< std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, FrameNumber, FrameCount, MediaDuration, Size2Du32, UUID, UMID, Timecode, Rational< int >, FrameRate, VideoFormat, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, VideoCodec, AudioCodec, Enum, EnumList, MasteringDisplay, ContentLightLevel, detail::VariantEnd >", "classVariantImpl.html", [
+    [ "VariantImpl< std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, MediaTimeStamp, FrameNumber, FrameCount, MediaDuration, Size2Du32, UUID, UMID, Timecode, Rational< int >, FrameRate, VideoFormat, StringList, Color, ColorModel, MemSpace, PixelMemLayout, PixelFormat, VideoCodec, AudioCodec, AudioFormat, Enum, EnumList, MasteringDisplay, ContentLightLevel, Url, detail::VariantEnd >", "classVariantImpl.html", [
       [ "Variant", "classVariant.html", null ]
     ] ],
     [ "VariantLookup< T >", "classVariantLookup.html", null ],

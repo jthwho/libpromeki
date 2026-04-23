@@ -4,7 +4,7 @@ var classQuickTime_1_1Impl =
     [ "~Impl", "classQuickTime_1_1Impl.html#a15884e9b28104fa18697454fa04a1e76", null ],
     [ "addAudioTrack", "classQuickTime_1_1Impl.html#a10c89660be030ef065c0d867b69f831a", null ],
     [ "addTimecodeTrack", "classQuickTime_1_1Impl.html#a190698c29eb9c9647bf7f8a80caae01a", null ],
-    [ "addVideoTrack", "classQuickTime_1_1Impl.html#a171aff7d4a26e342c63364eb4f4eede2", null ],
+    [ "addVideoTrack", "classQuickTime_1_1Impl.html#affc78c04f0044d8f728e6f9f7915117c", null ],
     [ "close", "classQuickTime_1_1Impl.html#abc7eab1db83f6e1deb15913b4c81bdab", null ],
     [ "containerMetadata", "classQuickTime_1_1Impl.html#a5180be08447b2862a741cec71b94a75c", null ],
     [ "device", "classQuickTime_1_1Impl.html#a5c25b631464f0d9ea7616b983e7aa5e4", null ],

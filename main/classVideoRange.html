@@ -262,7 +262,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Well-known <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> type for video value range (aka quantization range / full-range flag). </p>
-<p><code>Limited</code> means studio / broadcast / "video" range — 16..235 on 8-bit Y'CbCr luma, 16..240 on the chroma channels, and the bit-depth scaling of those values for 10/12/16-bit. <code>Full</code> means the whole digital range (0..255 on 8-bit, 0..2^N-1 in general). <code>Unknown</code> is the "auto-derive" / "not declared" default used by <a class="el" href="classPixelDesc.html">PixelDesc</a> entries that pre-date the field being explicit, and by <a class="el" href="classMediaConfig.html">MediaConfig</a> keys that want downstream code to infer the range from the accompanying <a class="el" href="classPixelDesc.html">PixelDesc</a>.</p>
+<p><code>Limited</code> means studio / broadcast / "video" range — 16..235 on 8-bit Y'CbCr luma, 16..240 on the chroma channels, and the bit-depth scaling of those values for 10/12/16-bit. <code>Full</code> means the whole digital range (0..255 on 8-bit, 0..2^N-1 in general). <code>Unknown</code> is the "auto-derive" / "not declared" default used by <a class="el" href="classPixelFormat.html">PixelFormat</a> entries that pre-date the field being explicit, and by <a class="el" href="classMediaConfig.html">MediaConfig</a> keys that want downstream code to infer the range from the accompanying <a class="el" href="classPixelFormat.html">PixelFormat</a>.</p>
 <p>The numeric values are local to libpromeki and do <em>not</em> match any codec-specific on-wire representation. Encoders translate to codec-native signalling (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a>/HEVC VUI <code>videoFullRangeFlag</code>, AV1 <code>colorRange</code>, etc.) at session init. </p>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="enums_8h_source.html">enums.h</a></li>
@@ -274,7 +274,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classVideoRange.html">VideoRange</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

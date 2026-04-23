@@ -379,6 +379,9 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>referenceCount</b> () 
 <a class="el" href="classString.html#aa47fc64069a6cad0f6123caf035841b7">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isNumeric</b> () <a class="el" href="classString.html#aa47fc64069a6cad0f6123caf035841b7">const</a></td></tr>
 <tr class="memdesc:abb1b1b976e950ab51ff6ffa5d30ec6c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if every character is a decimal digit. <br /></td></tr>
 <tr class="separator:abb1b1b976e950ab51ff6ffa5d30ec6c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a41864bcae69a2c7569c3ae01aacdecbd" id="r_a41864bcae69a2c7569c3ae01aacdecbd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html#aa47fc64069a6cad0f6123caf035841b7">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classString.html#a41864bcae69a2c7569c3ae01aacdecbd">isIdentifier</a> () <a class="el" href="classString.html#aa47fc64069a6cad0f6123caf035841b7">const</a></td></tr>
+<tr class="memdesc:a41864bcae69a2c7569c3ae01aacdecbd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true when this string is a valid C identifier.  <br /></td></tr>
+<tr class="separator:a41864bcae69a2c7569c3ae01aacdecbd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8f65d408942ba243e7630ade86710beb" id="r_a8f65d408942ba243e7630ade86710beb"><td class="memItemLeft" align="right" valign="top"><a id="a8f65d408942ba243e7630ade86710beb" name="a8f65d408942ba243e7630ade86710beb"></a>
 <a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><b>replace</b> (<a class="el" href="classString.html#aa47fc64069a6cad0f6123caf035841b7">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classString.html#a1106697fe39028af3f5e29f666ff06c9">find</a>, <a class="el" href="classString.html#aa47fc64069a6cad0f6123caf035841b7">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classString.html#aa47fc64069a6cad0f6123caf035841b7">replacement</a>) <a class="el" href="classString.html#aa47fc64069a6cad0f6123caf035841b7">const</a></td></tr>
 <tr class="memdesc:a8f65d408942ba243e7630ade86710beb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a copy with all occurrences of <code>find</code> replaced by <code>replacement</code>. <br /></td></tr>
@@ -1768,6 +1771,34 @@ template&lt;<a class="el" href="classString.html#aa47fc64069a6cad0f6123caf035841
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a41864bcae69a2c7569c3ae01aacdecbd" name="a41864bcae69a2c7569c3ae01aacdecbd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a41864bcae69a2c7569c3ae01aacdecbd">&#9670;&#160;</a></span>isIdentifier()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classString.html#aa47fc64069a6cad0f6123caf035841b7">bool</a> String::isIdentifier </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns true when this string is a valid C identifier. </p>
+<p>A C identifier is non-empty, starts with a letter or underscore, and contains only ASCII letters, digits, and underscores thereafter. Used by registry-facing name validation (codec names, backend tags, …) to guarantee the string is safe to embed in generated code, use as a map key without escaping, and round- trip through JSON / shell / URL parsers without quoting. </p>
 
 </div>
 </div>
@@ -3862,7 +3893,7 @@ template&lt;<a class="el" href="classString.html#aa47fc64069a6cad0f6123caf035841
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classString.html">String</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

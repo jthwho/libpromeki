@@ -240,7 +240,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Feeds an <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> object's selected channel to the decoder. </p>
-<p>Format-agnostic — any sample format <a class="el" href="classAudioDesc.html">AudioDesc</a> supports is accepted. The named channel is converted to int8 mono via <a class="el" href="structAudioDesc_1_1Format.html#a19231a42331af0bc4033f345818edb65">AudioDesc::Format::samplesToFloat</a> (the same per-format helper <a class="el" href="classAudioBuffer.html">AudioBuffer</a> uses) followed by a normalised float-to-int8 quantisation. The audio's sample rate must match the decoder's configured rate, otherwise an empty list is returned.</p>
+<p>Format-agnostic — any sample format <a class="el" href="classAudioFormat.html">AudioFormat</a> supports is accepted. The named channel is converted to int8 mono via <a class="el" href="classAudioFormat.html#a7f6f6c0013f9a8b1686bd320cebe397e">AudioFormat::samplesToFloat</a> (the same per-format helper <a class="el" href="classAudioBuffer.html">AudioBuffer</a> uses) followed by a normalised float-to-int8 quantisation. The audio's sample rate must match the decoder's configured rate, otherwise an empty list is returned.</p>
 <p>The fast path for <code>PCMI_S8</code> mono audio (when <code>channelIndex</code> is 0) skips the conversion entirely and feeds the raw bytes straight to libvtc.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -412,7 +412,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classLtcDecoder.html">LtcDecoder</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

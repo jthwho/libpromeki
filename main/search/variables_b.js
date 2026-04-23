@@ -10,7 +10,7 @@ var searchData=
   ['linearcounterpart_7',['linearCounterpart',['../structColorModel_1_1Data.html#aed117695ed66001d121342f906e6da81',1,'ColorModel::Data']]],
   ['lineargain_8',['linearGain',['../structAudioGen_1_1Config.html#a1c4fb64b867087dad499e3064ebe1889',1,'AudioGen::Config']]],
   ['linecount_9',['linecount',['../structImageDataDecoder_1_1Band.html#a9afc8b83b1b1193947121f7d26427392',1,'ImageDataDecoder::Band::lineCount'],['../structImageDataEncoder_1_1Item.html#a3ecc2f29bd0721804d0fc63df94c4137',1,'ImageDataEncoder::Item::lineCount']]],
-  ['linestridefunc_10',['lineStrideFunc',['../structPixelFormat_1_1Data.html#af41bc2f98070946b026a8f4d96d16336',1,'PixelFormat::Data']]],
+  ['linestridefunc_10',['lineStrideFunc',['../structPixelMemLayout_1_1Data.html#a9c0afcf598bc0c6a7bcc7c76b839e146',1,'PixelMemLayout::Data']]],
   ['livebytes_11',['livebytes',['../structMemSpace_1_1Stats_1_1Snapshot.html#af911d3c4d4fdddfabd01eae959705efd',1,'MemSpace::Stats::Snapshot::liveBytes'],['../structMemSpace_1_1Stats.html#a93a5203206f9f3e6ac66533e7ed0c002',1,'MemSpace::Stats::liveBytes']]],
   ['livecount_12',['livecount',['../structMemSpace_1_1Stats_1_1Snapshot.html#a95316141200198eb961407fa9c4fc124',1,'MemSpace::Stats::Snapshot::liveCount'],['../structMemSpace_1_1Stats.html#a017f32f236faa64ae0266c457805c433',1,'MemSpace::Stats::liveCount']]],
   ['longname_13',['longName',['../classCmdLineParser_1_1Option.html#ab59a65731a2a1fec3b67d0e4b1258bc9',1,'CmdLineParser::Option']]],

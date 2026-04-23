@@ -28,5 +28,5 @@ var classPaintEngine =
     [ "fillCircle", "classPaintEngine.html#a09ee73b28e43fbd785843d32121e64d5", null ],
     [ "fillEllipse", "classPaintEngine.html#a47860bee2d201a40204c7f6a9e9671f0", null ],
     [ "fillRect", "classPaintEngine.html#ab7ee459fa790ba346a045f5ff12c47a2", null ],
-    [ "pixelDesc", "classPaintEngine.html#a9750c5b92a12fe5fc30b443bab1d8d48", null ]
+    [ "pixelFormat", "classPaintEngine.html#aa675c184c11f2bb8654d9f95c5b45667", null ]
 ];

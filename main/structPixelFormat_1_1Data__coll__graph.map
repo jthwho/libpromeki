@@ -1,10 +1,27 @@
 <map id="PixelFormat::Data" name="PixelFormat::Data">
-<area shape="rect" id="Node000001" title="Immutable data record for a pixel format." alt="" coords="94,185,233,211"/>
-<area shape="rect" id="Node000002" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,5,65,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="28,45,20,83,21,103,28,121,46,143,68,160,118,183,116,188,66,165,42,147,24,124,16,104,15,83,23,44"/>
-<area shape="rect" id="Node000004" href="$structPixelFormat_1_1PlaneDesc.html" title="Describes a single image plane." alt="" coords="76,95,251,121"/>
-<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="65,36,148,93,145,97,62,41"/>
-<area shape="rect" id="Node000003" href="$structPixelFormat_1_1CompDesc.html" title="Describes a single component within the pixel format." alt="" coords="275,95,452,121"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="326,129,191,188,188,183,323,124"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="166,134,166,185,161,185,161,134"/>
+<area shape="rect" id="Node000001" title="Immutable data record for a pixel description." alt="" coords="823,250,961,275"/>
+<area shape="rect" id="Node000002" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="186,70,246,95"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="259,68,362,46,429,36,502,31,579,32,656,42,731,63,766,78,800,96,820,112,838,131,864,174,881,217,890,249,885,251,876,219,859,177,833,134,817,116,797,101,764,83,729,68,655,47,578,38,502,37,429,42,363,51,260,73"/>
+<area shape="rect" id="Node000008" href="$structPixelFormat_1_1CompSemantic.html" title="Describes the semantic meaning and value range of a single component." alt="" coords="416,106,623,131"/>
+<area shape="poly" id="edge8_Node000008_Node000002" title=" " alt="" coords="260,89,343,103,416,110,416,115,342,108,259,94"/>
+<area shape="rect" id="Node000003" href="$classPixelMemLayout.html" title="Describes the memory layout of pixel data without color semantics." alt="" coords="454,155,585,181"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="599,169,696,181,748,192,800,207,841,226,875,248,872,252,838,231,798,212,747,197,695,186,598,174"/>
+<area shape="rect" id="Node000004" href="$classColorModel.html" title="Single source of truth for a color model and its associated color space." alt="" coords="471,205,567,230"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="581,220,799,244,823,248,822,253,798,249,581,225"/>
+<area shape="rect" id="Node000005" href="$classVideoCodec.html" title="First&#45;class identifier for a video codec family." alt="" coords="470,254,569,279"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="583,263,822,261,823,266,583,269"/>
+<area shape="rect" id="Node000006" href="$classList.html" title=" " alt="" coords="475,306,564,331"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="577,317,681,314,740,308,798,297,833,286,865,273,867,278,835,291,799,303,741,313,681,319,578,323"/>
+<area shape="rect" id="Node000007" href="$classList.html" title=" " alt="" coords="459,355,580,381"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="593,369,693,363,746,353,798,336,822,323,844,306,878,274,882,277,848,310,825,328,800,341,748,358,693,368,594,374"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="637,114,720,126,761,138,800,155,829,176,853,201,886,248,881,251,849,205,825,180,797,160,759,143,718,131,637,119"/>
+<area shape="rect" id="Node000009" href="$classVideoRange.html" title="Well&#45;known Enum type for video value range (aka quantization range / full&#45;range flag)." alt="" coords="469,473,569,498"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="582,473,632,461,688,444,745,420,797,389,827,361,851,329,882,274,887,277,855,332,830,365,800,393,747,425,690,449,634,467,584,478"/>
+<area shape="poly" id="edge12_Node000009_Node000009" title=" " alt="" coords="489,458,498,449,519,446,537,448,548,455,550,464,545,474,540,471,545,464,543,458,535,453,519,451,501,454,493,462"/>
+<area shape="rect" id="Node000010" href="$classTypedEnum.html" title=" " alt="" coords="113,473,319,498"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="333,483,469,483,469,488,333,488"/>
+<area shape="rect" id="Node000011" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="5,473,64,498"/>
+<area shape="poly" id="edge11_Node000010_Node000011" title=" " alt="" coords="78,483,113,483,113,488,78,488"/>
+<area shape="rect" id="Node000012" href="$classPaintEngine.html" title="2D drawing engine for rendering primitives onto images." alt="" coords="470,522,569,547"/>
+<area shape="poly" id="edge13_Node000001_Node000012" title=" " alt="" coords="582,536,633,534,690,525,747,508,773,495,797,478,820,455,838,429,865,371,880,315,887,275,892,276,885,316,870,372,843,432,824,459,800,482,776,499,749,513,691,531,634,539,583,541"/>
 </map>

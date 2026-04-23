@@ -157,7 +157,7 @@ PaintEngine and Invalidation</h1>
 Examples</h1>
 <h2><a class="anchor" id="font_example_fast"></a>
 FastFont: Timecode Overlay</h2>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classImage.html">Image</a> <a class="code hl_class" href="classList.html">img</a>(1920, 1080, <a class="code hl_enumvalue" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa4eb281b7da4a176269cf8331ff2f6706">PixelDesc::RGB8_sRGB</a>);</div>
+<div class="fragment"><div class="line"><a class="code hl_class" href="classImage.html">Image</a> <a class="code hl_class" href="classList.html">img</a>(1920, 1080, <a class="code hl_enumvalue" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda55625c509b9fc4b6f1e10df8680d30cd">PixelFormat::RGB8_sRGB</a>);</div>
 <div class="line"><a class="code hl_class" href="classFastFont.html">FastFont</a> <a class="code hl_class" href="classList.html">ff</a>(<a class="code hl_class" href="classList.html">img</a>.createPaintEngine());</div>
 <div class="line"><a class="code hl_class" href="classList.html">ff</a>.setFontFilename(<span class="stringliteral">&quot;/path/to/font.ttf&quot;</span>);</div>
 <div class="line"><a class="code hl_class" href="classList.html">ff</a>.setFontSize(48);</div>
@@ -172,10 +172,10 @@ FastFont: Timecode Overlay</h2>
 <div class="ttc" id="aclassFastFont_html"><div class="ttname"><a href="classFastFont.html">FastFont</a></div><div class="ttdoc">High-performance cached font renderer.</div><div class="ttdef"><b>Definition</b> fastfont.h:56</div></div>
 <div class="ttc" id="aclassImage_html"><div class="ttname"><a href="classImage.html">Image</a></div><div class="ttdoc">Raster image with pixel description, planes, and metadata.</div><div class="ttdef"><b>Definition</b> image.h:64</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafa4eb281b7da4a176269cf8331ff2f6706"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa4eb281b7da4a176269cf8331ff2f6706">PixelDesc::RGB8_sRGB</a></div><div class="ttdeci">@ RGB8_sRGB</div><div class="ttdoc">8-bit RGB, sRGB, full range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:143</div></div>
+<div class="ttc" id="aclassPixelFormat_html_a7ae7d8a6cf46a5c9947b72d5ec9d4deda55625c509b9fc4b6f1e10df8680d30cd"><div class="ttname"><a href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda55625c509b9fc4b6f1e10df8680d30cd">PixelFormat::RGB8_sRGB</a></div><div class="ttdeci">@ RGB8_sRGB</div><div class="ttdoc">8-bit RGB, sRGB, full range.</div><div class="ttdef"><b>Definition</b> pixelformat.h:143</div></div>
 </div><!-- fragment --><h2><a class="anchor" id="font_example_basic"></a>
 BasicFont: Transparent Overlay</h2>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classImage.html">Image</a> <a class="code hl_class" href="classList.html">img</a>(1920, 1080, <a class="code hl_enumvalue" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00">PixelDesc::RGBA8_sRGB</a>);</div>
+<div class="fragment"><div class="line"><a class="code hl_class" href="classImage.html">Image</a> <a class="code hl_class" href="classList.html">img</a>(1920, 1080, <a class="code hl_enumvalue" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4dedac09d859f4e4dc0d747afe58c98dae903">PixelFormat::RGBA8_sRGB</a>);</div>
 <div class="line"><a class="code hl_class" href="classBasicFont.html">BasicFont</a> <a class="code hl_class" href="classList.html">bf</a>(<a class="code hl_class" href="classList.html">img</a>.createPaintEngine());</div>
 <div class="line"><a class="code hl_class" href="classList.html">bf</a>.setFontFilename(<span class="stringliteral">&quot;/path/to/font.ttf&quot;</span>);</div>
 <div class="line"><a class="code hl_class" href="classList.html">bf</a>.setFontSize(24);</div>
@@ -185,7 +185,7 @@ BasicFont: Transparent Overlay</h2>
 <div class="line"><a class="code hl_class" href="classList.html">bf</a>.drawText(<span class="stringliteral">&quot;Watermark&quot;</span>, 50, 100);</div>
 <div class="ttc" id="aclassBasicFont_html"><div class="ttname"><a href="classBasicFont.html">BasicFont</a></div><div class="ttdoc">Alpha-compositing font renderer.</div><div class="ttdef"><b>Definition</b> basicfont.h:50</div></div>
 <div class="ttc" id="aclassColor_html"><div class="ttname"><a href="classColor.html">Color</a></div><div class="ttdoc">A color value in any supported color model.</div><div class="ttdef"><b>Definition</b> color.h:97</div></div>
-<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00">PixelDesc::RGBA8_sRGB</a></div><div class="ttdeci">@ RGBA8_sRGB</div><div class="ttdoc">8-bit RGBA, sRGB, full range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:142</div></div>
+<div class="ttc" id="aclassPixelFormat_html_a7ae7d8a6cf46a5c9947b72d5ec9d4dedac09d859f4e4dc0d747afe58c98dae903"><div class="ttname"><a href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4dedac09d859f4e4dc0d747afe58c98dae903">PixelFormat::RGBA8_sRGB</a></div><div class="ttdeci">@ RGBA8_sRGB</div><div class="ttdoc">8-bit RGBA, sRGB, full range.</div><div class="ttdef"><b>Definition</b> pixelformat.h:142</div></div>
 </div><!-- fragment --> </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->
@@ -193,7 +193,7 @@ BasicFont: Transparent Overlay</h2>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

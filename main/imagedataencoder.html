@@ -207,7 +207,7 @@ Per-format value mapping</h1>
 <p>For RGB formats every plane is full-range, so the white and black primers are the format's component-wise max and min respectively (e.g. <code>0/255</code> for 8-bit, <code>0/65535</code> for 16-bit).</p>
 <h1><a class="anchor" id="img_data_decode"></a>
 How to write a decoder</h1>
-<p>A minimal decoder for a known <code><a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a></code> and image size proceeds as follows:</p>
+<p>A minimal decoder for a known <code><a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a></code> and image size proceeds as follows:</p>
 <ol type="1">
 <li>Compute the bit cell width using the same algorithm the encoder uses (<a class="el" href="imagedataencoder.html#img_data_cellwidth">Bit cell width selection</a> above).</li>
 <li>Pick a single luma scan line that should be inside the encoded band. Read <code>bitWidth</code> bytes (or one byte per cell — only the luma value at the start of each cell matters) at the relevant positions:<ul>
@@ -264,7 +264,7 @@ find them again" use case.</p>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

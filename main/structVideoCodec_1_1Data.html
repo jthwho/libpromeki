@@ -115,13 +115,17 @@ Collaboration diagram for VideoCodec::Data:</div>
 <div class="dyncontent">
 <div class="center"><img src="structVideoCodec_1_1Data__coll__graph.png" border="0" usemap="#aVideoCodec_1_1Data_coll__map" alt="Collaboration graph"/></div>
 <map name="aVideoCodec_1_1Data_coll__map" id="aVideoCodec_1_1Data_coll__map">
-<area shape="rect" title="Immutable descriptor for a video codec." alt="" coords="81,108,219,133"/>
+<area shape="rect" title="Immutable descriptor for a video codec." alt="" coords="195,108,334,133"/>
 <area shape="rect" href="classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,5,65,31"/>
-<area shape="poly" title=" " alt="" coords="60,38,109,82,137,106,134,110,106,86,56,42"/>
+<area shape="poly" title=" " alt="" coords="60,38,89,61,124,82,160,95,197,105,196,111,159,101,122,86,86,65,56,42"/>
 <area shape="rect" href="classList.html" title=" " alt="" coords="89,5,211,31"/>
-<area shape="poly" title=" " alt="" coords="153,45,153,108,147,108,147,45"/>
+<area shape="poly" title=" " alt="" coords="162,42,174,63,190,82,209,95,230,106,228,110,207,100,187,86,170,66,158,44"/>
 <area shape="rect" href="classList.html" title=" " alt="" coords="235,5,327,31"/>
-<area shape="poly" title=" " alt="" coords="266,44,248,65,225,86,182,110,179,106,222,82,244,62,262,40"/>
+<area shape="poly" title=" " alt="" coords="272,44,269,55,266,83,266,108,261,108,260,83,263,54,267,43"/>
+<area shape="rect" href="classList.html" title=" " alt="" coords="369,5,557,31"/>
+<area shape="poly" title=" " alt="" coords="460,45,451,67,436,86,418,95,394,103,335,114,334,109,392,98,416,90,432,82,447,64,456,43"/>
+<area shape="rect" href="classList.html" title=" " alt="" coords="582,5,729,31"/>
+<area shape="poly" title=" " alt="" coords="639,43,613,66,580,86,535,99,471,108,334,119,334,114,470,103,534,94,578,82,610,62,635,39"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -133,7 +137,7 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a8822e30f4d315abda4a19562a1917f1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5816f3176d3cc1f5996c2080d1d0416b" id="r_a5816f3176d3cc1f5996c2080d1d0416b"><td class="memItemLeft" align="right" valign="top"><a id="a5816f3176d3cc1f5996c2080d1d0416b" name="a5816f3176d3cc1f5996c2080d1d0416b"></a>
 <a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><b>name</b></td></tr>
-<tr class="memdesc:a5816f3176d3cc1f5996c2080d1d0416b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Short name (e.g. <code>"H264"</code>). <br /></td></tr>
+<tr class="memdesc:a5816f3176d3cc1f5996c2080d1d0416b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Short name, must be a valid C identifier (e.g. <code>"H264"</code>). <br /></td></tr>
 <tr class="separator:a5816f3176d3cc1f5996c2080d1d0416b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a39368e3bae5a35a56e6b403a3ab6710b" id="r_a39368e3bae5a35a56e6b403a3ab6710b"><td class="memItemLeft" align="right" valign="top"><a id="a39368e3bae5a35a56e6b403a3ab6710b" name="a39368e3bae5a35a56e6b403a3ab6710b"></a>
 <a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><b>desc</b></td></tr>
@@ -143,56 +147,133 @@ Public Attributes</h2></td></tr>
 <a class="el" href="fourcc_8h.html#a7273afc33a6e1d395b0fdd32265996f0">FourCCList</a>&#160;</td><td class="memItemRight" valign="bottom"><b>fourccList</b></td></tr>
 <tr class="memdesc:abdf17b9de6b5c3d695ec7604e74363f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Associated <a class="el" href="classFourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a> codes. <br /></td></tr>
 <tr class="separator:abdf17b9de6b5c3d695ec7604e74363f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac9ba56cfa4c9499d35d79db82d613511" id="r_ac9ba56cfa4c9499d35d79db82d613511"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">List</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structVideoCodec_1_1Data.html#ac9ba56cfa4c9499d35d79db82d613511">compressedPixelDescs</a></td></tr>
-<tr class="memdesc:ac9ba56cfa4c9499d35d79db82d613511"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compressed <a class="el" href="classPixelDesc.html">PixelDesc</a> IDs this codec produces / consumes.  <br /></td></tr>
-<tr class="separator:ac9ba56cfa4c9499d35d79db82d613511"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af00cf62cf43ddb5f11760b9f5fbd170f" id="r_af00cf62cf43ddb5f11760b9f5fbd170f"><td class="memItemLeft" align="right" valign="top"><a id="af00cf62cf43ddb5f11760b9f5fbd170f" name="af00cf62cf43ddb5f11760b9f5fbd170f"></a>
-<a class="el" href="classVideoCodec.html#a9784efc47e55a62866ce7605107fdc52">EncoderFactory</a>&#160;</td><td class="memItemRight" valign="bottom"><b>createEncoder</b></td></tr>
-<tr class="memdesc:af00cf62cf43ddb5f11760b9f5fbd170f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Factory for <a class="el" href="classVideoEncoder.html" title="Abstract base class for stateful video encoders.">VideoEncoder</a> sessions; null = encode not supported. <br /></td></tr>
-<tr class="separator:af00cf62cf43ddb5f11760b9f5fbd170f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af3dc6e1229eba4a1ee9c2550601d963d" id="r_af3dc6e1229eba4a1ee9c2550601d963d"><td class="memItemLeft" align="right" valign="top"><a id="af3dc6e1229eba4a1ee9c2550601d963d" name="af3dc6e1229eba4a1ee9c2550601d963d"></a>
-<a class="el" href="classVideoCodec.html#a4ea3cd4bb3c561497bd7f446606ed12a">DecoderFactory</a>&#160;</td><td class="memItemRight" valign="bottom"><b>createDecoder</b></td></tr>
-<tr class="memdesc:af3dc6e1229eba4a1ee9c2550601d963d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Factory for <a class="el" href="classVideoDecoder.html" title="Abstract base class for stateful video decoders.">VideoDecoder</a> sessions; null = decode not supported. <br /></td></tr>
-<tr class="separator:af3dc6e1229eba4a1ee9c2550601d963d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7ce0c2feebd0a5f4eb4a866400440a90" id="r_a7ce0c2feebd0a5f4eb4a866400440a90"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">List</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structVideoCodec_1_1Data.html#a7ce0c2feebd0a5f4eb4a866400440a90">encoderSupportedInputs</a></td></tr>
-<tr class="memdesc:a7ce0c2feebd0a5f4eb4a866400440a90"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uncompressed <a class="el" href="classPixelDesc.html">PixelDesc</a> IDs the encoder accepts.  <br /></td></tr>
-<tr class="separator:a7ce0c2feebd0a5f4eb4a866400440a90"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3b2c61b16706be66c76cc5dd8d730ac0" id="r_a3b2c61b16706be66c76cc5dd8d730ac0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">List</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structVideoCodec_1_1Data.html#a3b2c61b16706be66c76cc5dd8d730ac0">compressedPixelFormats</a></td></tr>
+<tr class="memdesc:a3b2c61b16706be66c76cc5dd8d730ac0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compressed <a class="el" href="classPixelFormat.html">PixelFormat</a> IDs this codec produces / consumes.  <br /></td></tr>
+<tr class="separator:a3b2c61b16706be66c76cc5dd8d730ac0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad852c84b23a123cada40f12fec9dc6d6" id="r_ad852c84b23a123cada40f12fec9dc6d6"><td class="memItemLeft" align="right" valign="top"><a id="ad852c84b23a123cada40f12fec9dc6d6" name="ad852c84b23a123cada40f12fec9dc6d6"></a>
+<a class="el" href="classVideoCodec.html#ae7b43fab2a9f161059e260f40df1979f">CodingType</a>&#160;</td><td class="memItemRight" valign="bottom"><b>codingType</b> = <a class="el" href="classVideoCodec.html#ae7b43fab2a9f161059e260f40df1979faa6e36bc79fc422894ab7bf1c573f3707">CodingInvalid</a></td></tr>
+<tr class="memdesc:ad852c84b23a123cada40f12fec9dc6d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Intra-only vs temporal. <br /></td></tr>
+<tr class="separator:ad852c84b23a123cada40f12fec9dc6d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afa1ca1214d74f4b45011f2080e132cd5" id="r_afa1ca1214d74f4b45011f2080e132cd5"><td class="memItemLeft" align="right" valign="top"><a id="afa1ca1214d74f4b45011f2080e132cd5" name="afa1ca1214d74f4b45011f2080e132cd5"></a>
+<a class="el" href="classVideoCodec.html#ad71bbc3d1ef9ec60df583e75b2b584c5">RandomAccessGranularity</a>&#160;</td><td class="memItemRight" valign="bottom"><b>randomAccessGranularity</b> = <a class="el" href="classVideoCodec.html#ad71bbc3d1ef9ec60df583e75b2b584c5ab0be935cdaf29d04cf9c01af3b32ebe1">AccessInvalid</a></td></tr>
+<tr class="memdesc:afa1ca1214d74f4b45011f2080e132cd5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Seek granularity. <br /></td></tr>
+<tr class="separator:afa1ca1214d74f4b45011f2080e132cd5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a862b4f77b470dba59140abc803f854ca" id="r_a862b4f77b470dba59140abc803f854ca"><td class="memItemLeft" align="right" valign="top"><a id="a862b4f77b470dba59140abc803f854ca" name="a862b4f77b470dba59140abc803f854ca"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>supportsBFrames</b> = <a class="el" href="classList.html">false</a></td></tr>
+<tr class="memdesc:a862b4f77b470dba59140abc803f854ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Codec spec allows B-frame reordering. <br /></td></tr>
+<tr class="separator:a862b4f77b470dba59140abc803f854ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a470bf0ff7261ad8b9c76d18ee3ffaad4" id="r_a470bf0ff7261ad8b9c76d18ee3ffaad4"><td class="memItemLeft" align="right" valign="top"><a id="a470bf0ff7261ad8b9c76d18ee3ffaad4" name="a470bf0ff7261ad8b9c76d18ee3ffaad4"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>supportsLossless</b> = <a class="el" href="classList.html">false</a></td></tr>
+<tr class="memdesc:a470bf0ff7261ad8b9c76d18ee3ffaad4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Codec has a lossless mode (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a> Hi444, ProRes 4444 XQ near-lossless, …). <br /></td></tr>
+<tr class="separator:a470bf0ff7261ad8b9c76d18ee3ffaad4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a669b856ec387f2daf2487123412e1107" id="r_a669b856ec387f2daf2487123412e1107"><td class="memItemLeft" align="right" valign="top"><a id="a669b856ec387f2daf2487123412e1107" name="a669b856ec387f2daf2487123412e1107"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>supportsAlpha</b> = <a class="el" href="classList.html">false</a></td></tr>
+<tr class="memdesc:a669b856ec387f2daf2487123412e1107"><td class="mdescLeft">&#160;</td><td class="mdescRight">Codec encodes an alpha channel (ProRes 4444 yes, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a> no). <br /></td></tr>
+<tr class="separator:a669b856ec387f2daf2487123412e1107"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a13b17b1941882322df03b65b5d17b828" id="r_a13b17b1941882322df03b65b5d17b828"><td class="memItemLeft" align="right" valign="top"><a id="a13b17b1941882322df03b65b5d17b828" name="a13b17b1941882322df03b65b5d17b828"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>supportsVariableFrameSize</b> = <a class="el" href="classList.html">false</a></td></tr>
+<tr class="memdesc:a13b17b1941882322df03b65b5d17b828"><td class="mdescLeft">&#160;</td><td class="mdescRight">Each frame may declare new dimensions (JPEG yes, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">H.264</a> only at IDR). <br /></td></tr>
+<tr class="separator:a13b17b1941882322df03b65b5d17b828"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0b9e0c0a244827e7c9045e16809c97c4" id="r_a0b9e0c0a244827e7c9045e16809c97c4"><td class="memItemLeft" align="right" valign="top"><a id="a0b9e0c0a244827e7c9045e16809c97c4" name="a0b9e0c0a244827e7c9045e16809c97c4"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>supportsHDRMetadata</b> = <a class="el" href="classList.html">false</a></td></tr>
+<tr class="memdesc:a0b9e0c0a244827e7c9045e16809c97c4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bitstream carries mastering display / content-light metadata natively. <br /></td></tr>
+<tr class="separator:a0b9e0c0a244827e7c9045e16809c97c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4ea7cac823d7b48fe36146d580b5027c" id="r_a4ea7cac823d7b48fe36146d580b5027c"><td class="memItemLeft" align="right" valign="top"><a id="a4ea7cac823d7b48fe36146d580b5027c" name="a4ea7cac823d7b48fe36146d580b5027c"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>supportsInterlaced</b> = <a class="el" href="classList.html">false</a></td></tr>
+<tr class="memdesc:a4ea7cac823d7b48fe36146d580b5027c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Codec signals / encodes interlaced scan natively. <br /></td></tr>
+<tr class="separator:a4ea7cac823d7b48fe36146d580b5027c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aca197bf9de55485429d455190560112c" id="r_aca197bf9de55485429d455190560112c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">List</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structVideoCodec_1_1Data.html#aca197bf9de55485429d455190560112c">supportedBitDepths</a></td></tr>
+<tr class="memdesc:aca197bf9de55485429d455190560112c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bit depths the codec spec permits, in bits per component.  <br /></td></tr>
+<tr class="separator:aca197bf9de55485429d455190560112c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a11426222968d9edc4f855b52de8f510c" id="r_a11426222968d9edc4f855b52de8f510c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">List</a>&lt; <a class="el" href="classRateControlMode.html">RateControlMode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structVideoCodec_1_1Data.html#a11426222968d9edc4f855b52de8f510c">rateControlModes</a></td></tr>
+<tr class="memdesc:a11426222968d9edc4f855b52de8f510c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Rate-control modes the codec can be driven in.  <br /></td></tr>
+<tr class="separator:a11426222968d9edc4f855b52de8f510c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a77ba3197d110f5a75d627ecfb61e6d8d" id="r_a77ba3197d110f5a75d627ecfb61e6d8d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">List</a>&lt; <a class="el" href="classFrameRate.html">FrameRate</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structVideoCodec_1_1Data.html#a77ba3197d110f5a75d627ecfb61e6d8d">supportedFrameRates</a></td></tr>
+<tr class="memdesc:a77ba3197d110f5a75d627ecfb61e6d8d"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> rates the codec spec permits.  <br /></td></tr>
+<tr class="separator:a77ba3197d110f5a75d627ecfb61e6d8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa59daf9ef1c2d567312b8d0c5642ef11" id="r_aa59daf9ef1c2d567312b8d0c5642ef11"><td class="memItemLeft" align="right" valign="top"><a id="aa59daf9ef1c2d567312b8d0c5642ef11" name="aa59daf9ef1c2d567312b8d0c5642ef11"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>maxWidth</b> = 0</td></tr>
+<tr class="memdesc:aa59daf9ef1c2d567312b8d0c5642ef11"><td class="mdescLeft">&#160;</td><td class="mdescRight">0 = spec-unlimited. <br /></td></tr>
+<tr class="separator:aa59daf9ef1c2d567312b8d0c5642ef11"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa55fc750c20fa318c71817a5ce9cb70f" id="r_aa55fc750c20fa318c71817a5ce9cb70f"><td class="memItemLeft" align="right" valign="top"><a id="aa55fc750c20fa318c71817a5ce9cb70f" name="aa55fc750c20fa318c71817a5ce9cb70f"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>maxHeight</b> = 0</td></tr>
+<tr class="memdesc:aa55fc750c20fa318c71817a5ce9cb70f"><td class="mdescLeft">&#160;</td><td class="mdescRight">0 = spec-unlimited. <br /></td></tr>
+<tr class="separator:aa55fc750c20fa318c71817a5ce9cb70f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae84d1606bc04b6359955e24d7164793b" id="r_ae84d1606bc04b6359955e24d7164793b"><td class="memItemLeft" align="right" valign="top"><a id="ae84d1606bc04b6359955e24d7164793b" name="ae84d1606bc04b6359955e24d7164793b"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>maxChannels</b> = 0</td></tr>
+<tr class="memdesc:ae84d1606bc04b6359955e24d7164793b"><td class="mdescLeft">&#160;</td><td class="mdescRight">0 = unlimited. (Not meaningful for most video codecs; present for symmetry with audio.) <br /></td></tr>
+<tr class="separator:ae84d1606bc04b6359955e24d7164793b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Immutable descriptor for a video codec. </p>
-<p>Populated by the library for well-known codecs, or by applications via <a class="el" href="classVideoCodec.html#a0fd5f4f981aa720fda1bae1e1c696794">registerData</a> for custom codecs. </p>
+<p>Populated by the library for well-known codecs, or by applications via <a class="el" href="classVideoCodec.html#a0fd5f4f981aa720fda1bae1e1c696794">registerData</a> for custom codecs. Captures codec-family facts that do not depend on any specific backend implementation — per-backend capabilities live on the <a class="el" href="classVideoEncoder.html">VideoEncoder</a> / <a class="el" href="classVideoDecoder.html">VideoDecoder</a> backend records. </p>
 </div><h2 class="groupheader">Member Data Documentation</h2>
-<a id="ac9ba56cfa4c9499d35d79db82d613511" name="ac9ba56cfa4c9499d35d79db82d613511"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac9ba56cfa4c9499d35d79db82d613511">&#9670;&#160;</a></span>compressedPixelDescs</h2>
+<a id="a3b2c61b16706be66c76cc5dd8d730ac0" name="a3b2c61b16706be66c76cc5dd8d730ac0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3b2c61b16706be66c76cc5dd8d730ac0">&#9670;&#160;</a></span>compressedPixelFormats</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">List</a>&lt;int&gt; VideoCodec::Data::compressedPixelDescs</td>
+          <td class="memname"><a class="el" href="classList.html">List</a>&lt;int&gt; VideoCodec::Data::compressedPixelFormats</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Compressed <a class="el" href="classPixelDesc.html">PixelDesc</a> IDs this codec produces / consumes. </p>
-<p>Stored as <code>int</code> for header-layering reasons (<a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a> pulls in colormodel/pixelformat). Callers wrap each as <a class="el" href="classPixelDesc.html">PixelDesc(id)</a> at use time. </p>
+<p>Compressed <a class="el" href="classPixelFormat.html">PixelFormat</a> IDs this codec produces / consumes. </p>
+<p>Stored as <code>int</code> for header-layering reasons (<a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a> pulls in colormodel/pixelmemlayout). Callers wrap each as <a class="el" href="classPixelFormat.html">PixelFormat(id)</a> at use time. </p>
 
 </div>
 </div>
-<a id="a7ce0c2feebd0a5f4eb4a866400440a90" name="a7ce0c2feebd0a5f4eb4a866400440a90"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7ce0c2feebd0a5f4eb4a866400440a90">&#9670;&#160;</a></span>encoderSupportedInputs</h2>
+<a id="a11426222968d9edc4f855b52de8f510c" name="a11426222968d9edc4f855b52de8f510c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a11426222968d9edc4f855b52de8f510c">&#9670;&#160;</a></span>rateControlModes</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">List</a>&lt;int&gt; VideoCodec::Data::encoderSupportedInputs</td>
+          <td class="memname"><a class="el" href="classList.html">List</a>&lt;<a class="el" href="classRateControlMode.html">RateControlMode</a>&gt; VideoCodec::Data::rateControlModes</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Uncompressed <a class="el" href="classPixelDesc.html">PixelDesc</a> IDs the encoder accepts. </p>
-<p>Parallel to <a class="el" href="classVideoEncoder.html#a2bd3da8445225cb50ed7665dec93b425">VideoEncoder::supportedInputs</a>, but exposed at the codec level so planners can query without instantiating an encoder session. Empty when the codec has no registered encoder or when the backend accepts any uncompressed input. </p>
+<p>Rate-control modes the codec can be driven in. </p>
+<p>Same shape as <a class="el" href="structAudioCodec_1_1Data.html#a5fa0999b1cceacd42b360d96dde0708f">AudioCodec::Data::rateControlModes</a>. Empty means "constant-quality / fixed codec" (lossless-only, JPEG at fixed quality, etc.). </p>
+
+</div>
+</div>
+<a id="aca197bf9de55485429d455190560112c" name="aca197bf9de55485429d455190560112c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aca197bf9de55485429d455190560112c">&#9670;&#160;</a></span>supportedBitDepths</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">List</a>&lt;int&gt; VideoCodec::Data::supportedBitDepths</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Bit depths the codec spec permits, in bits per component. </p>
+<p>Empty means "no spec-level restriction" (unusual — most modern codecs enumerate 8 / 10 / 12). </p>
+
+</div>
+</div>
+<a id="a77ba3197d110f5a75d627ecfb61e6d8d" name="a77ba3197d110f5a75d627ecfb61e6d8d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a77ba3197d110f5a75d627ecfb61e6d8d">&#9670;&#160;</a></span>supportedFrameRates</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">List</a>&lt;<a class="el" href="classFrameRate.html">FrameRate</a>&gt; VideoCodec::Data::supportedFrameRates</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> rates the codec spec permits. </p>
+<p>Populated only when the codec spec actually restricts its frame rate. Empty means "any
+rate". Mirror of <a class="el" href="structAudioCodec_1_1Data.html#a3a5fc3656964efd62ecca330057d125e">AudioCodec::Data::supportedSampleRates</a>. </p>
 
 </div>
 </div>
@@ -206,7 +287,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classVideoCodec.html">VideoCodec</a></li><li class="navelem"><a class="el" href="structVideoCodec_1_1Data.html">Data</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

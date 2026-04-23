@@ -204,7 +204,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a8a684b75b27a92812a0c045b817cf9e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Genre (audio media). <br /></td></tr>
 <tr class="separator:a8a684b75b27a92812a0c045b817cf9e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0165d77b62e215a24ca574aba410ba99" id="r_a0165d77b62e215a24ca574aba410ba99"><td class="memItemLeft" align="right" valign="top"><a id="a0165d77b62e215a24ca574aba410ba99" name="a0165d77b62e215a24ca574aba410ba99"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">EnableBWF</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool) .setDefault(<a class="el" href="classList.html">false</a>) .setDescription(&quot;Enable <a class="el" href="classList.html">Broadcast</a> <a class="el" href="classList.html">Wave</a> Format metadata.&quot;))</td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">EnableBWF</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool) .setDefault(<a class="el" href="classList.html">false</a>) .setDescription(&quot;Enable <a class="el" href="classList.html">Broadcast</a> <a class="el" href="classList.html">Wave</a> <a class="el" href="classList.html">Format</a> metadata.&quot;))</td></tr>
 <tr class="memdesc:a0165d77b62e215a24ca574aba410ba99"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable Broadcast Wave Format metadata in audio files. <br /></td></tr>
 <tr class="separator:a0165d77b62e215a24ca574aba410ba99"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a276ea936a7081ba34fc849355142887a" id="r_a276ea936a7081ba34fc849355142887a"><td class="memItemLeft" align="right" valign="top"><a id="a276ea936a7081ba34fc849355142887a" name="a276ea936a7081ba34fc849355142887a"></a>
@@ -256,9 +256,16 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a77abb7b7b94a2ac02a92c866b005e076"><td class="mdescLeft">&#160;</td><td class="mdescRight">Internal: allocation hint for compressed pixel formats. Use <a class="el" href="classImage.html#a9b610a3cd7782ad7318d22a912021243" title="Returns the compressed data size in bytes.">Image::compressedSize()</a> instead. <br /></td></tr>
 <tr class="separator:a77abb7b7b94a2ac02a92c866b005e076"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3c4fd6dbceb0c05173d346e72fa58667" id="r_a3c4fd6dbceb0c05173d346e72fa58667"><td class="memItemLeft" align="right" valign="top"><a id="a3c4fd6dbceb0c05173d346e72fa58667" name="a3c4fd6dbceb0c05173d346e72fa58667"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (EndOfStream, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool) .setDefault(<a class="el" href="classList.html">false</a>) .setDescription(&quot;Signals end-<a class="el" href="classList.html">of</a>-stream to <a class="el" href="classList.html">downstream</a> <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">nodes.&quot;</a>))</td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">EndOfStream</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool) .setDefault(<a class="el" href="classList.html">false</a>) .setDescription(&quot;Signals end-<a class="el" href="classList.html">of</a>-stream to <a class="el" href="classList.html">downstream</a> <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">nodes.&quot;</a>))</td></tr>
 <tr class="memdesc:a3c4fd6dbceb0c05173d346e72fa58667"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signals end-of-stream to downstream nodes. <br /></td></tr>
 <tr class="separator:a3c4fd6dbceb0c05173d346e72fa58667"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af812eb5390307709e53b6086f96d1010" id="r_af812eb5390307709e53b6086f96d1010"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#af812eb5390307709e53b6086f96d1010">PROMEKI_DECLARE_ID</a> (<a class="el" href="classList.html">Corrupt</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool) .setDefault(<a class="el" href="classList.html">false</a>) .setDescription(&quot;Media unit <a class="el" href="classList.html">carries</a> <a class="el" href="classList.html">corrupt</a> data.&quot;))</td></tr>
+<tr class="memdesc:af812eb5390307709e53b6086f96d1010"><td class="mdescLeft">&#160;</td><td class="mdescRight">Marks a media unit as carrying corrupt data.  <br /></td></tr>
+<tr class="separator:af812eb5390307709e53b6086f96d1010"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a470d5a4448f15cea4f0014b9bd5c627f" id="r_a470d5a4448f15cea4f0014b9bd5c627f"><td class="memItemLeft" align="right" valign="top"><a id="a470d5a4448f15cea4f0014b9bd5c627f" name="a470d5a4448f15cea4f0014b9bd5c627f"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">CorruptReason</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString) .setDefault(<a class="el" href="classString.html">String</a>()) .setDescription(&quot;Human-<a class="el" href="classList.html">readable</a> <a class="el" href="classList.html">reason</a> <a class="el" href="classList.html">for</a> a <a class="el" href="classList.html">Corrupt</a> <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">marking.&quot;</a>))</td></tr>
+<tr class="memdesc:a470d5a4448f15cea4f0014b9bd5c627f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Human-readable explanation for a Corrupt marking. <br /></td></tr>
+<tr class="separator:a470d5a4448f15cea4f0014b9bd5c627f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a641af02af52b67233acbda1fdcc5a853" id="r_a641af02af52b67233acbda1fdcc5a853"><td class="memItemLeft" align="right" valign="top"><a id="a641af02af52b67233acbda1fdcc5a853" name="a641af02af52b67233acbda1fdcc5a853"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classFrameNumber.html">FrameNumber</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeFrameNumber) .setDefault(promeki::FrameNumber()) .setDescription(&quot;Frame <a class="el" href="classList.html">sequence</a> number <a class="el" href="classList.html">within</a> a stream.&quot;))</td></tr>
 <tr class="memdesc:a641af02af52b67233acbda1fdcc5a853"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> sequence number within a stream. <br /></td></tr>
@@ -325,7 +332,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a1db1a7672ee52131a194901528bd83ff"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classProcess.html" title="Subprocess execution with pipe-based I/O.">Process</a> ID of the writer at capture time. <br /></td></tr>
 <tr class="separator:a1db1a7672ee52131a194901528bd83ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afaf9f1957198662aa7859a51fd4759ee" id="r_afaf9f1957198662aa7859a51fd4759ee"><td class="memItemLeft" align="right" valign="top"><a id="afaf9f1957198662aa7859a51fd4759ee" name="afaf9f1957198662aa7859a51fd4759ee"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">LibraryBuildInfo</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString) .setDefault(<a class="el" href="classString.html">String</a>()) .setDescription(&quot;libpromeki build identity (version, <a class="el" href="classList.html">repo</a>, date, <a class="el" href="classList.html">host</a>).&quot;))</td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_DECLARE_ID</b> (<a class="el" href="classList.html">LibraryBuildInfo</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString) .setDefault(<a class="el" href="classString.html">String</a>()) .setDescription(&quot;libpromeki build identity (version, <a class="el" href="classList.html">repo</a>, date, host).&quot;))</td></tr>
 <tr class="memdesc:afaf9f1957198662aa7859a51fd4759ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Full libpromeki build identity (name, version, repo ident, type, date/time, build hostname). Written by debug-oriented sinks so readers can locate the exact library revision that produced a file. <br /></td></tr>
 <tr class="separator:afaf9f1957198662aa7859a51fd4759ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab15b7493d9bda9a6e20da0b2b845b8b9" id="r_ab15b7493d9bda9a6e20da0b2b845b8b9"><td class="memItemLeft" align="right" valign="top"><a id="ab15b7493d9bda9a6e20da0b2b845b8b9" name="ab15b7493d9bda9a6e20da0b2b845b8b9"></a>
@@ -750,7 +757,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="ade696870d6c1a3460a25371a616290d3" name="ade696870d6c1a3460a25371a616290d3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ade696870d6c1a3460a25371a616290d3">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[1/8]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ade696870d6c1a3460a25371a616290d3">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[1/9]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -780,8 +787,39 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="af812eb5390307709e53b6086f96d1010" name="af812eb5390307709e53b6086f96d1010"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af812eb5390307709e53b6086f96d1010">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[2/9]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Metadata::PROMEKI_DECLARE_ID </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">Corrupt</a>&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool) .setDefault(<a class="el" href="classList.html">false</a>) .setDescription(&quot;Media unit <a class="el" href="classList.html">carries</a> <a class="el" href="classList.html">corrupt</a> data.&quot;)&#160;</td>
+          <td class="paramname">&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Marks a media unit as carrying corrupt data. </p>
+<p><a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> by decoders / parsers when a packet, frame, or audio buffer is known to be corrupt (checksum failure, truncated bitstream, unrecoverable error concealment). Downstream nodes typically drop or pass-through marked units depending on policy. <a class="el" href="classPair.html" title="Typed pair container wrapping std::pair.">Pair</a> with CorruptReason when a human-readable explanation is available. </p>
+
+</div>
+</div>
 <a id="a9450a81c0836337aac4036bcf543469f" name="a9450a81c0836337aac4036bcf543469f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9450a81c0836337aac4036bcf543469f">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[2/8]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a9450a81c0836337aac4036bcf543469f">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[3/9]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -813,7 +851,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="a50d5380637e810618ac86f0b6b5730c2" name="a50d5380637e810618ac86f0b6b5730c2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a50d5380637e810618ac86f0b6b5730c2">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[3/8]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a50d5380637e810618ac86f0b6b5730c2">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[4/9]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -844,7 +882,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="afb2fcf431ff9210de9dd71f7d0036c77" name="afb2fcf431ff9210de9dd71f7d0036c77"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afb2fcf431ff9210de9dd71f7d0036c77">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[4/8]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#afb2fcf431ff9210de9dd71f7d0036c77">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[5/9]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -875,7 +913,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="a7c7ae06b21b30e90eda28388bfee524a" name="a7c7ae06b21b30e90eda28388bfee524a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7c7ae06b21b30e90eda28388bfee524a">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[5/8]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a7c7ae06b21b30e90eda28388bfee524a">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[6/9]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -906,7 +944,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="ae1260a748fefec50e1d60f51c7baa8d8" name="ae1260a748fefec50e1d60f51c7baa8d8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae1260a748fefec50e1d60f51c7baa8d8">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[6/8]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1260a748fefec50e1d60f51c7baa8d8">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[7/9]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -937,7 +975,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="a2f3f23133d826559a7f03a257e6dfa7b" name="a2f3f23133d826559a7f03a257e6dfa7b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2f3f23133d826559a7f03a257e6dfa7b">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[7/8]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a2f3f23133d826559a7f03a257e6dfa7b">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[8/9]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -968,7 +1006,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="ab694155f6292e23d4129efd3490cfe0b" name="ab694155f6292e23d4129efd3490cfe0b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab694155f6292e23d4129efd3490cfe0b">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[8/8]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ab694155f6292e23d4129efd3490cfe0b">&#9670;&#160;</a></span>PROMEKI_DECLARE_ID() <span class="overload">[9/9]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1043,7 +1081,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMetadata.html">Metadata</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>

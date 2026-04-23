@@ -1,0 +1,10 @@
+<map id="PixelMemLayout::Data" name="PixelMemLayout::Data">
+<area shape="rect" id="Node000001" title="Immutable data record for a pixel format." alt="" coords="95,185,264,211"/>
+<area shape="rect" id="Node000002" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,5,65,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="28,45,20,83,21,103,28,121,47,143,71,160,124,183,122,188,68,165,43,147,24,124,16,104,15,83,22,44"/>
+<area shape="rect" id="Node000004" href="$structPixelMemLayout_1_1PlaneDesc.html" title="Describes a single image plane." alt="" coords="76,95,283,121"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="67,36,162,93,159,98,65,40"/>
+<area shape="rect" id="Node000003" href="$structPixelMemLayout_1_1CompDesc.html" title="Describes a single component within the pixel format." alt="" coords="307,95,515,121"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="369,128,211,188,209,183,367,123"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="182,134,182,185,177,185,177,134"/>
+</map>

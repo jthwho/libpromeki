@@ -26,7 +26,7 @@ var classQuickTime =
     [ "QuickTime", "classQuickTime.html#a6cd6abffb7b30c81e4c0c50bd27f0155", null ],
     [ "addAudioTrack", "classQuickTime.html#a8151804c5f12ca96578c7df3b8e3a58e", null ],
     [ "addTimecodeTrack", "classQuickTime.html#a3165b1df4c652a1f71a05e83808ae129", null ],
-    [ "addVideoTrack", "classQuickTime.html#a4d22bede9c2530f994b1c34456cce2ee", null ],
+    [ "addVideoTrack", "classQuickTime.html#af1b8bb84ef1da57c2097f683f932f050", null ],
     [ "close", "classQuickTime.html#a63be316d4e5c1383631dc167e4797d95", null ],
     [ "containerMetadata", "classQuickTime.html#a2dec00289180b9e69d8425b21c9c680c", null ],
     [ "device", "classQuickTime.html#ab2cf96ffcdac92676a44bfbc790635f6", null ],

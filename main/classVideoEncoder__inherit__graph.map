@@ -1,7 +1,7 @@
 <map id="VideoEncoder" name="VideoEncoder">
 <area shape="rect" id="Node000001" title="Abstract base class for stateful video encoders." alt="" coords="105,5,215,31"/>
-<area shape="rect" id="Node000002" href="$classJpegVideoEncoder.html" title="JPEG VideoEncoder built on JpegImageCodec." alt="" coords="5,79,144,104"/>
+<area shape="rect" id="Node000002" href="$classJpegVideoEncoder.html" title="JPEG VideoEncoder built on libjpeg&#45;turbo." alt="" coords="5,79,144,104"/>
 <area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="138,41,90,80,87,76,134,37"/>
-<area shape="rect" id="Node000003" href="$classJpegXsVideoEncoder.html" title="JPEG XS VideoEncoder built on JpegXsImageCodec." alt="" coords="168,79,323,104"/>
+<area shape="rect" id="Node000003" href="$classJpegXsVideoEncoder.html" title="JPEG XS VideoEncoder built on SVT&#45;JPEG&#45;XS." alt="" coords="168,79,323,104"/>
 <area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="186,37,233,76,230,80,182,41"/>
 </map>

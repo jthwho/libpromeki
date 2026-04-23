@@ -10,11 +10,15 @@ var searchData=
   ['audioblock_2eh_7',['audioblock.h',['../audioblock_8h.html',1,'']]],
   ['audiobuffer_2eh_8',['audiobuffer.h',['../audiobuffer_8h.html',1,'']]],
   ['audiocodec_2eh_9',['audiocodec.h',['../audiocodec_8h.html',1,'']]],
-  ['audiodesc_2eh_10',['audiodesc.h',['../audiodesc_8h.html',1,'']]],
-  ['audiofile_2eh_11',['audiofile.h',['../audiofile_8h.html',1,'']]],
-  ['audiofilefactory_2eh_12',['audiofilefactory.h',['../audiofilefactory_8h.html',1,'']]],
-  ['audiogen_2eh_13',['audiogen.h',['../audiogen_8h.html',1,'']]],
-  ['audiolevel_2eh_14',['audiolevel.h',['../audiolevel_8h.html',1,'']]],
-  ['audioresampler_2eh_15',['audioresampler.h',['../audioresampler_8h.html',1,'']]],
-  ['audiotestpattern_2eh_16',['audiotestpattern.h',['../audiotestpattern_8h.html',1,'']]]
+  ['audiodecoder_2eh_10',['audiodecoder.h',['../audiodecoder_8h.html',1,'']]],
+  ['audiodesc_2eh_11',['audiodesc.h',['../audiodesc_8h.html',1,'']]],
+  ['audioencoder_2eh_12',['audioencoder.h',['../audioencoder_8h.html',1,'']]],
+  ['audiofile_2eh_13',['audiofile.h',['../audiofile_8h.html',1,'']]],
+  ['audiofilefactory_2eh_14',['audiofilefactory.h',['../audiofilefactory_8h.html',1,'']]],
+  ['audioformat_2eh_15',['audioformat.h',['../audioformat_8h.html',1,'']]],
+  ['audiogen_2eh_16',['audiogen.h',['../audiogen_8h.html',1,'']]],
+  ['audiolevel_2eh_17',['audiolevel.h',['../audiolevel_8h.html',1,'']]],
+  ['audiopacket_2eh_18',['audiopacket.h',['../audiopacket_8h.html',1,'']]],
+  ['audioresampler_2eh_19',['audioresampler.h',['../audioresampler_8h.html',1,'']]],
+  ['audiotestpattern_2eh_20',['audiotestpattern.h',['../audiotestpattern_8h.html',1,'']]]
 ];

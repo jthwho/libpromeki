@@ -184,7 +184,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a5eebd1c545b6a5734c1ad87da565698e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if any member differs. <br /></td></tr>
 <tr class="separator:a5eebd1c545b6a5734c1ad87da565698e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a43aa3eb15b74b0c93dcdbf6d3b8ed6e6" id="r_a43aa3eb15b74b0c93dcdbf6d3b8ed6e6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaDesc.html#a42ad89ee1c8311fd9e30f2282257f39b">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaDesc.html#a43aa3eb15b74b0c93dcdbf6d3b8ed6e6">formatEquals</a> (<a class="el" href="classMediaDesc.html#a42ad89ee1c8311fd9e30f2282257f39b">const</a> <a class="el" href="classMediaDesc.html">MediaDesc</a> &amp;<a class="el" href="classMediaDesc.html#a42ad89ee1c8311fd9e30f2282257f39b">other</a>) <a class="el" href="classMediaDesc.html#a42ad89ee1c8311fd9e30f2282257f39b">const</a></td></tr>
-<tr class="memdesc:a43aa3eb15b74b0c93dcdbf6d3b8ed6e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compares structural media fields, ignoring metadata on the <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> itself and on every <a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a> / <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a>.  <br /></td></tr>
+<tr class="memdesc:a43aa3eb15b74b0c93dcdbf6d3b8ed6e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compares structural media fields, ignoring metadata on the <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> itself and on every <a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a> / <a class="el" href="classAudioDesc.html" title="Describes a concrete audio stream — format plus sample rate and channel count.">AudioDesc</a>.  <br /></td></tr>
 <tr class="separator:a43aa3eb15b74b0c93dcdbf6d3b8ed6e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
@@ -195,7 +195,7 @@ Static Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Describes a media format including frame rate, image layers, audio channels, and metadata. </p>
-<p><a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> is the complete descriptor for a media resource. It carries the frame rate, zero or more image layers (<a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a>), zero or more audio channel groups (<a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a>), and container-level metadata. A valid <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> has a valid frame rate and at least one image or audio description. </p>
+<p><a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> is the complete descriptor for a media resource. It carries the frame rate, zero or more image layers (<a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a>), zero or more audio channel groups (<a class="el" href="classAudioDesc.html" title="Describes a concrete audio stream — format plus sample rate and channel count.">AudioDesc</a>), and container-level metadata. A valid <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> has a valid frame rate and at least one image or audio description. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a43aa3eb15b74b0c93dcdbf6d3b8ed6e6" name="a43aa3eb15b74b0c93dcdbf6d3b8ed6e6"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a43aa3eb15b74b0c93dcdbf6d3b8ed6e6">&#9670;&#160;</a></span>formatEquals()</h2>
@@ -221,7 +221,7 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Compares structural media fields, ignoring metadata on the <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> itself and on every <a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a> / <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a>. </p>
+<p>Compares structural media fields, ignoring metadata on the <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> itself and on every <a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a> / <a class="el" href="classAudioDesc.html" title="Describes a concrete audio stream — format plus sample rate and channel count.">AudioDesc</a>. </p>
 <p>Returns true when frame rate, image-list structure (per <a class="el" href="classImageDesc.html#a185179bffd02924e8578ad13a872b461">ImageDesc::formatEquals</a>), and audio-list structure (per <a class="el" href="classAudioDesc.html#a6f30788b4198573e07bbe7cb50e63aa2">AudioDesc::formatEquals</a>) all match. Used by the pipeline planner so routes are compared on the shape that actually matters for format compatibility rather than on cosmetic metadata (colour tags, creator fields, user data) that one side may carry and the other may not.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -379,7 +379,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaDesc.html">MediaDesc</a></li>
-    <li class="footer">Generated on 2026-04-22 00:46:56 from commit 6de16ab (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
   </ul>
 </div>
 </body>
