@@ -1,5 +1,6 @@
 var classLtcEncoder =
 [
+    [ "UPtr", "classLtcEncoder.html#a25f285cb00cae069cb1271a0beb2fb7d", null ],
     [ "LtcEncoder", "classLtcEncoder.html#ad97fc3f20c3eb0d4a51b4317ab956238", null ],
     [ "~LtcEncoder", "classLtcEncoder.html#a43fe5ab20bf8032320f1bb51521c37f5", null ],
     [ "encode", "classLtcEncoder.html#a0880e8ec3a1620a785deb714cd85ed10", null ],

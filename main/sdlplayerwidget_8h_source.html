@@ -111,10 +111,10 @@ $(document).ready(function(){initNavTree('sdlplayerwidget_8h_source.html',''); i
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;<a class="code" href="atomic_8h.html">promeki/atomic.h</a>&gt;</span></div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;<a class="code" href="framecount_8h.html">promeki/framecount.h</a>&gt;</span></div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;<a class="code" href="image_8h.html">promeki/image.h</a>&gt;</span></div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="keyword">class </span><a class="code hl_class" href="classMediaIO.html">MediaIO</a>;</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &lt;<a class="code" href="mediaio_8h.html">promeki/mediaio.h</a>&gt;</span></div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="keyword">class </span><a class="code hl_class" href="classSDLPlayerTask.html">SDLPlayerTask</a>;</div>
 <div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="keyword">class </span><a class="code hl_class" href="classSDLAudioOutput.html">SDLAudioOutput</a>;</div>
 <div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="keyword">class </span><a class="code hl_class" href="classKeyEvent.html">KeyEvent</a>;</div>
@@ -133,7 +133,7 @@ $(document).ready(function(){initNavTree('sdlplayerwidget_8h_source.html',''); i
 <div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>                <a class="code hl_class" href="classSDLPlayerWidget.html">SDLPlayerWidget</a>(<span class="keyword">const</span> <a class="code hl_class" href="classSDLPlayerWidget.html">SDLPlayerWidget</a> &amp;) = <span class="keyword">delete</span>;</div>
 <div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>                <a class="code hl_class" href="classSDLPlayerWidget.html">SDLPlayerWidget</a> &amp;operator=(<span class="keyword">const</span> <a class="code hl_class" href="classSDLPlayerWidget.html">SDLPlayerWidget</a> &amp;) = <span class="keyword">delete</span>;</div>
 <div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span> </div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno"><a class="line" href="classSDLPlayerWidget.html#a3f6217748dcf572fed47319bb677425b">   91</a></span>                <a class="code hl_class" href="classMediaIO.html">MediaIO</a> *<a class="code hl_function" href="classSDLPlayerWidget.html#a3f6217748dcf572fed47319bb677425b">mediaIO</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _mediaIO; }</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno"><a class="line" href="classSDLPlayerWidget.html#a3f6217748dcf572fed47319bb677425b">   91</a></span>                <a class="code hl_class" href="classMediaIO.html">MediaIO</a> *<a class="code hl_function" href="classSDLPlayerWidget.html#a3f6217748dcf572fed47319bb677425b">mediaIO</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _mediaIO.<a class="code hl_function" href="classUniquePtr.html#ab7f7ad01e7e7955edb07e3d11d2b6e30">get</a>(); }</div>
 <div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span> </div>
 <div class="line"><a id="l00094" name="l00094"></a><span class="lineno"><a class="line" href="classSDLPlayerWidget.html#ac74bb79ed6f86c6253094ce96f1a041e">   94</a></span>                <a class="code hl_class" href="classSDLPlayerTask.html">SDLPlayerTask</a> *<a class="code hl_function" href="classSDLPlayerWidget.html#ac74bb79ed6f86c6253094ce96f1a041e">task</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _task; }</div>
 <div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span> </div>
@@ -161,7 +161,7 @@ $(document).ready(function(){initNavTree('sdlplayerwidget_8h_source.html',''); i
 <div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>                <span class="keywordtype">void</span> wakeMainThread();</div>
 <div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>                <span class="keyword">static</span> <a class="code hl_class" href="classList.html">uint32_t</a> userEventType();</div>
 <div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span> </div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>                <a class="code hl_class" href="classMediaIO.html">MediaIO</a>         *_mediaIO = <span class="keyword">nullptr</span>;     </div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>                <a class="code hl_class" href="classUniquePtr.html">MediaIO::UPtr</a>    _mediaIO;               </div>
 <div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>                <a class="code hl_class" href="classSDLPlayerTask.html">SDLPlayerTask</a>   *_task = <span class="keyword">nullptr</span>;        </div>
 <div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span> </div>
 <div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>                <span class="comment">// Main-thread render stash (written by the pull thread,</span></div>
@@ -179,7 +179,7 @@ $(document).ready(function(){initNavTree('sdlplayerwidget_8h_source.html',''); i
 <div class="ttc" id="aclassFrameCount_html"><div class="ttname"><a href="classFrameCount.html">FrameCount</a></div><div class="ttdoc">Count of frames, optionally empty, unknown, or infinite.</div><div class="ttdef"><b>Definition</b> framecount.h:71</div></div>
 <div class="ttc" id="aclassKeyEvent_html"><div class="ttname"><a href="classKeyEvent.html">KeyEvent</a></div><div class="ttdoc">Event delivered when a key is pressed or released.</div><div class="ttdef"><b>Definition</b> keyevent.h:22</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassMediaIO_html"><div class="ttname"><a href="classMediaIO.html">MediaIO</a></div><div class="ttdoc">Controller for media I/O backends.</div><div class="ttdef"><b>Definition</b> mediaio.h:489</div></div>
+<div class="ttc" id="aclassMediaIO_html"><div class="ttname"><a href="classMediaIO.html">MediaIO</a></div><div class="ttdoc">Controller for media I/O backends.</div><div class="ttdef"><b>Definition</b> mediaio.h:490</div></div>
 <div class="ttc" id="aclassMutex_html"><div class="ttname"><a href="classMutex.html">Mutex</a></div><div class="ttdoc">Mutual exclusion lock wrapping std::mutex.</div><div class="ttdef"><b>Definition</b> mutex.h:33</div></div>
 <div class="ttc" id="aclassObjectBase_html"><div class="ttname"><a href="classObjectBase.html">ObjectBase</a></div><div class="ttdoc">Base object for promeki.</div><div class="ttdef"><b>Definition</b> objectbase.h:154</div></div>
 <div class="ttc" id="aclassObjectBase_html_ad8a11dd19f4510f3ce38c779fc7911a8"><div class="ttname"><a href="classObjectBase.html#ad8a11dd19f4510f3ce38c779fc7911a8">ObjectBase::parent</a></div><div class="ttdeci">ObjectBase * parent() const</div><div class="ttdoc">Returns the parent object, if one. nullptr if none.</div><div class="ttdef"><b>Definition</b> objectbase.h:280</div></div>
@@ -195,8 +195,11 @@ $(document).ready(function(){initNavTree('sdlplayerwidget_8h_source.html',''); i
 <div class="ttc" id="aclassSDLPlayerWidget_html_ae5581eeb98d89ee46edfacfd8170dca2"><div class="ttname"><a href="classSDLPlayerWidget.html#ae5581eeb98d89ee46edfacfd8170dca2">SDLPlayerWidget::framesPresented</a></div><div class="ttdeci">FrameCount framesPresented() const</div><div class="ttdoc">Total frames the widget has presented since construction.</div><div class="ttdef"><b>Definition</b> sdlplayerwidget.h:97</div></div>
 <div class="ttc" id="aclassSDLVideoWidget_html"><div class="ttname"><a href="classSDLVideoWidget.html">SDLVideoWidget</a></div><div class="ttdoc">Widget that displays a promeki Image via SDL texture rendering.</div><div class="ttdef"><b>Definition</b> sdlvideowidget.h:54</div></div>
 <div class="ttc" id="aclassSharedPtr_html"><div class="ttname"><a href="classSharedPtr.html">SharedPtr&lt; Image &gt;</a></div></div>
+<div class="ttc" id="aclassUniquePtr_html"><div class="ttname"><a href="classUniquePtr.html">UniquePtr&lt; MediaIO &gt;</a></div></div>
+<div class="ttc" id="aclassUniquePtr_html_ab7f7ad01e7e7955edb07e3d11d2b6e30"><div class="ttname"><a href="classUniquePtr.html#ab7f7ad01e7e7955edb07e3d11d2b6e30">UniquePtr::get</a></div><div class="ttdeci">T * get() const</div><div class="ttdoc">Returns the raw pointer without asserting non-null.</div><div class="ttdef"><b>Definition</b> uniqueptr.h:224</div></div>
 <div class="ttc" id="aframecount_8h_html"><div class="ttname"><a href="framecount_8h.html">framecount.h</a></div></div>
 <div class="ttc" id="aimage_8h_html"><div class="ttname"><a href="image_8h.html">image.h</a></div></div>
+<div class="ttc" id="amediaio_8h_html"><div class="ttname"><a href="mediaio_8h.html">mediaio.h</a></div></div>
 <div class="ttc" id="amutex_8h_html"><div class="ttname"><a href="mutex_8h.html">mutex.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html"><div class="ttname"><a href="namespace_8h.html">namespace.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html_a0444a93cedfdf35aa76c315990dc6e10"><div class="ttname"><a href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_BEGIN</div><div class="ttdoc">Starts a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:14</div></div>
@@ -209,7 +212,7 @@ $(document).ready(function(){initNavTree('sdlplayerwidget_8h_source.html',''); i
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="dir_5de5535980063e87a96453d3d72f8c3d.html">sdl</a></li><li class="navelem"><a class="el" href="sdlplayerwidget_8h.html">sdlplayerwidget.h</a></li>
-    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
   </ul>
 </div>
 </body>

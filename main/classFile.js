@@ -2,6 +2,7 @@ var classFile =
 [
     [ "IOVec", "structFile_1_1IOVec.html", "structFile_1_1IOVec" ],
     [ "FileHandle", "classFile.html#a42476f88b764bbb09ee2e978e404dd31", null ],
+    [ "UPtr", "classFile.html#afb11c57f7a52006cdec474c4368dab2f", null ],
     [ "Flags", "classFile.html#aad4a83201b3528a66eab5ad4f9cf1513", [
       [ "NoFlags", "classFile.html#aad4a83201b3528a66eab5ad4f9cf1513a24e88b69189d56af622c09f4b1c877a8", null ],
       [ "Create", "classFile.html#aad4a83201b3528a66eab5ad4f9cf1513a9f9012b13652cd115b7e41427531ca3d", null ],

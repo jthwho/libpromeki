@@ -2,6 +2,7 @@ var classVideoEncoder =
 [
     [ "BackendRecord", "structVideoEncoder_1_1BackendRecord.html", "structVideoEncoder_1_1BackendRecord" ],
     [ "Factory", "classVideoEncoder.html#a4cad3dde3d9c6f42d32590347a36713e", null ],
+    [ "UPtr", "classVideoEncoder.html#ae63bc4d84fdd4c1bfc79de68844e26b8", null ],
     [ "~VideoEncoder", "classVideoEncoder.html#adc5f7db2760b8095e86d6e55b9cab3e9", null ],
     [ "clearError", "classVideoEncoder.html#a118ebebcfebdd2f5e93f3db0d79db4d5", null ],
     [ "codec", "classVideoEncoder.html#aa71dff6ef0672eb00b8c6a2c4884fda2", null ],

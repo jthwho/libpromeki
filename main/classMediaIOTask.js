@@ -1,5 +1,6 @@
 var classMediaIOTask =
 [
+    [ "UPtr", "classMediaIOTask.html#a5e17844dbea29097522b930b4f3d90c1", null ],
     [ "MediaIOTask", "classMediaIOTask.html#a0b805f45d7b99204ec16da2f3ee060c1", null ],
     [ "~MediaIOTask", "classMediaIOTask.html#ae9d15045ad37ac2f930a2f0f91633b2c", null ],
     [ "mediaIo", "classMediaIOTask.html#a56ee29aac6f338c32541042c01754160", null ],

@@ -1,6 +1,7 @@
 var classFrameBridge =
 [
     [ "Config", "structFrameBridge_1_1Config.html", "structFrameBridge_1_1Config" ],
+    [ "UPtr", "classFrameBridge.html#a342e12e4c7018e40135d299287cc1484", null ],
     [ "FrameBridge", "classFrameBridge.html#a41c737092a2aa3858b77156c532a8e19", null ],
     [ "~FrameBridge", "classFrameBridge.html#a6ff360fdd776422334f8132f7fc82b68", null ],
     [ "abort", "classFrameBridge.html#a255988020661f7a2018b26985104a167", null ],

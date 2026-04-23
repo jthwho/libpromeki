@@ -110,10 +110,10 @@ $(document).ready(function(){initNavTree('textstream_8h_source.html',''); initRe
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;<a class="code" href="namespace_8h.html">promeki/namespace.h</a>&gt;</span></div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;<a class="code" href="string_8h.html">promeki/string.h</a>&gt;</span></div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;<a class="code" href="variant__fwd_8h.html">promeki/variant_fwd.h</a>&gt;</span></div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="keyword">class </span><a class="code hl_class" href="classIODevice.html">IODevice</a>;</div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;<a class="code" href="iodevice_8h.html">promeki/iodevice.h</a>&gt;</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="keyword">class </span><a class="code hl_class" href="classBuffer.html">Buffer</a>;</div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span> </div>
 <div class="foldopen" id="foldopen00054" data-start="{" data-end="};">
@@ -255,7 +255,7 @@ $(document).ready(function(){initNavTree('textstream_8h_source.html',''); initRe
 <div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span>                <a class="code hl_class" href="classString.html">String</a> readToken();</div>
 <div class="line"><a id="l00372" name="l00372"></a><span class="lineno">  372</span> </div>
 <div class="line"><a id="l00373" name="l00373"></a><span class="lineno">  373</span>                <a class="code hl_class" href="classIODevice.html">IODevice</a>                *_device                = <span class="keyword">nullptr</span>;</div>
-<div class="line"><a id="l00374" name="l00374"></a><span class="lineno">  374</span>                <a class="code hl_class" href="classIODevice.html">IODevice</a>                *_ownedDevice           = <span class="keyword">nullptr</span>;</div>
+<div class="line"><a id="l00374" name="l00374"></a><span class="lineno">  374</span>                <a class="code hl_class" href="classUniquePtr.html">IODevice::UPtr</a>           _ownedDevice;</div>
 <div class="line"><a id="l00375" name="l00375"></a><span class="lineno">  375</span> </div>
 <div class="line"><a id="l00376" name="l00376"></a><span class="lineno">  376</span>                <span class="comment">// Encoding</span></div>
 <div class="line"><a id="l00377" name="l00377"></a><span class="lineno">  377</span>                <a class="code hl_class" href="classString.html">String</a>                  _encoding{<span class="stringliteral">&quot;UTF-8&quot;</span>};</div>
@@ -357,7 +357,7 @@ $(document).ready(function(){initNavTree('textstream_8h_source.html',''); initRe
 <div class="line"><a id="l00461" name="l00461"></a><span class="lineno">  461</span> </div>
 <div class="line"><a id="l00462" name="l00462"></a><span class="lineno">  462</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
 <div class="ttc" id="aclassBuffer_html"><div class="ttname"><a href="classBuffer.html">Buffer</a></div><div class="ttdoc">Generic memory buffer descriptor with alignment and memory space support.</div><div class="ttdef"><b>Definition</b> buffer.h:85</div></div>
-<div class="ttc" id="aclassIODevice_html"><div class="ttname"><a href="classIODevice.html">IODevice</a></div><div class="ttdoc">Abstract base class for all I/O devices.</div><div class="ttdef"><b>Definition</b> iodevice.h:29</div></div>
+<div class="ttc" id="aclassIODevice_html"><div class="ttname"><a href="classIODevice.html">IODevice</a></div><div class="ttdoc">Abstract base class for all I/O devices.</div><div class="ttdef"><b>Definition</b> iodevice.h:30</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:56</div></div>
 <div class="ttc" id="aclassTextStream_html"><div class="ttname"><a href="classTextStream.html">TextStream</a></div><div class="ttdoc">Formatted text I/O with encoding awareness.</div><div class="ttdef"><b>Definition</b> textstream.h:54</div></div>
@@ -417,7 +417,9 @@ $(document).ready(function(){initNavTree('textstream_8h_source.html',''); initRe
 <div class="ttc" id="aclassTextStream_html_afa3c52ae3ee44179dd386669cfa41a1b"><div class="ttname"><a href="classTextStream.html#afa3c52ae3ee44179dd386669cfa41a1b">TextStream::TextStream</a></div><div class="ttdeci">TextStream(String *string)</div><div class="ttdoc">Constructs a TextStream backed by a String.</div></div>
 <div class="ttc" id="aclassTextStream_html_afc0f29360e9b23ef3c8b9afae3bee154"><div class="ttname"><a href="classTextStream.html#afc0f29360e9b23ef3c8b9afae3bee154">TextStream::operator&lt;&lt;</a></div><div class="ttdeci">TextStream &amp; operator&lt;&lt;(const char *val)</div><div class="ttdoc">Writes a C string.</div></div>
 <div class="ttc" id="aclassTextStream_html_afea09c3eec6c413e96373507aa3aa8b2"><div class="ttname"><a href="classTextStream.html#afea09c3eec6c413e96373507aa3aa8b2">TextStream::setRealNumberPrecision</a></div><div class="ttdeci">void setRealNumberPrecision(int precision)</div><div class="ttdoc">Sets the number of decimal places for float/double output.</div><div class="ttdef"><b>Definition</b> textstream.h:240</div></div>
+<div class="ttc" id="aclassUniquePtr_html"><div class="ttname"><a href="classUniquePtr.html">UniquePtr&lt; IODevice &gt;</a></div></div>
 <div class="ttc" id="aclassVariant_html"><div class="ttname"><a href="classVariant.html">Variant</a></div><div class="ttdoc">Concrete Variant type used throughout promeki.</div><div class="ttdef"><b>Definition</b> variant.h:602</div></div>
+<div class="ttc" id="aiodevice_8h_html"><div class="ttname"><a href="iodevice_8h.html">iodevice.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html"><div class="ttname"><a href="namespace_8h.html">namespace.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html_a0444a93cedfdf35aa76c315990dc6e10"><div class="ttname"><a href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_BEGIN</div><div class="ttdoc">Starts a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:14</div></div>
 <div class="ttc" id="anamespace_8h_html_a9a7eb1268c947a92a8cb60d369b8abf8"><div class="ttname"><a href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_END</div><div class="ttdoc">Ends a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:19</div></div>
@@ -441,7 +443,7 @@ $(document).ready(function(){initNavTree('textstream_8h_source.html',''); initRe
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="textstream_8h.html">textstream.h</a></li>
-    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
   </ul>
 </div>
 </body>

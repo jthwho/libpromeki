@@ -7,6 +7,7 @@ var group__time =
       [ "minError", "structClockJitter.html#a02f64b3fea3497898c12d37501b9bcba", null ]
     ] ],
     [ "ClockFilter", "classClockFilter.html", [
+      [ "UPtr", "classClockFilter.html#ac1c3898604cd69a7f1fe5062788b40b5", null ],
       [ "filter", "classClockFilter.html#a64a3268d56cf39088656ca27875f6f04", null ]
     ] ],
     [ "Clock", "classClock.html", [

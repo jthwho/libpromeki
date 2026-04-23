@@ -1,5 +1,6 @@
 var classSDLPlayerTask =
 [
+    [ "UPtr", "classSDLPlayerTask.html#ade46ba0b26b8bf263474e48f19be4194", null ],
     [ "audioOutput", "classSDLPlayerTask.html#a13c7e17c195b16fa2ab521d69e69c29b", null ],
     [ "isPaused", "classSDLPlayerTask.html#a203d0f6ed5bed1f84572792e2696bf25", null ],
     [ "pause", "classSDLPlayerTask.html#ad03cb66870db0bcbc4a32fc865206542", null ],

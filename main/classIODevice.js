@@ -1,5 +1,6 @@
 var classIODevice =
 [
+    [ "UPtr", "classIODevice.html#ab90e72997e6039504ffe30a92d212e82", null ],
     [ "OpenMode", "classIODevice.html#ac12c287cd37708c10d6618d667a3147a", [
       [ "NotOpen", "classIODevice.html#ac12c287cd37708c10d6618d667a3147aa84e4448af6ff59ea244090f7126f7926", null ],
       [ "ReadOnly", "classIODevice.html#ac12c287cd37708c10d6618d667a3147aa6d749f5bb57e3cef1e17d58e0419625a", null ],

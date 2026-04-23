@@ -2,6 +2,7 @@ var classVideoPacket =
 [
     [ "Ptr", "classVideoPacket.html#acd061b0a22f40e1b25f19743f9d5025f", null ],
     [ "PtrList", "classVideoPacket.html#a2306c624df4abc9d2f3361b66153a826", null ],
+    [ "UPtr", "classVideoPacket.html#a3af47be06f371b5d1b2951730a19f21b", null ],
     [ "Flag", "classVideoPacket.html#afa35941ff0c3d4d9ac39da46ac3608ae", [
       [ "None", "classVideoPacket.html#afa35941ff0c3d4d9ac39da46ac3608aea770a422ca16aae73273955edff8af0b1", null ],
       [ "Keyframe", "classVideoPacket.html#afa35941ff0c3d4d9ac39da46ac3608aea8363671bc975fb9ae67ac14ff742d2f3", null ],

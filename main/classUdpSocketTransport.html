@@ -100,6 +100,7 @@ $(document).ready(function(){initNavTree('classUdpSocketTransport.html',''); ini
 
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classUdpSocketTransport-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">UdpSocketTransport Class Reference<div class="ingroups"><a class="el" href="group__network.html">Network</a></div></div></div>
@@ -131,6 +132,22 @@ Collaboration diagram for UdpSocketTransport:</div>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a253e77eecbed8173502ee6a9a6709ce3" id="r_a253e77eecbed8173502ee6a9a6709ce3"><td class="memItemLeft" align="right" valign="top"><a id="a253e77eecbed8173502ee6a9a6709ce3" name="a253e77eecbed8173502ee6a9a6709ce3"></a>
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>UPtr</b> = <a class="el" href="classUniquePtr.html">UniquePtr</a>&lt; <a class="el" href="classUdpSocketTransport.html">UdpSocketTransport</a> &gt;</td></tr>
+<tr class="memdesc:a253e77eecbed8173502ee6a9a6709ce3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unique-ownership pointer to a <a class="el" href="classUdpSocketTransport.html" title="UDP socket implementation of PacketTransport.">UdpSocketTransport</a>. <br /></td></tr>
+<tr class="separator:a253e77eecbed8173502ee6a9a6709ce3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_types_classPacketTransport"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classPacketTransport')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classPacketTransport.html">PacketTransport</a></td></tr>
+<tr class="memitem:a31e2980a406e3de93c88e129cb5d6379 inherit pub_types_classPacketTransport" id="r_a31e2980a406e3de93c88e129cb5d6379"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>UPtr</b> = <a class="el" href="classUniquePtr.html">UniquePtr</a>&lt; <a class="el" href="classPacketTransport.html">PacketTransport</a> &gt;</td></tr>
+<tr class="memdesc:a31e2980a406e3de93c88e129cb5d6379 inherit pub_types_classPacketTransport"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unique-ownership pointer to a <a class="el" href="classPacketTransport.html" title="Abstract packet-I/O transport for datagram-oriented protocols.">PacketTransport</a>. <br /></td></tr>
+<tr class="separator:a31e2980a406e3de93c88e129cb5d6379 inherit pub_types_classPacketTransport"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a39856eb1e9a67c8d3c516c2115f24bfe inherit pub_types_classPacketTransport" id="r_a39856eb1e9a67c8d3c516c2115f24bfe"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>DatagramList</b> = <a class="el" href="classList.html">List</a>&lt; <a class="el" href="structPacketTransport_1_1Datagram.html">Datagram</a> &gt;</td></tr>
+<tr class="memdesc:a39856eb1e9a67c8d3c516c2115f24bfe inherit pub_types_classPacketTransport"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of datagrams for batch send. <br /></td></tr>
+<tr class="separator:a39856eb1e9a67c8d3c516c2115f24bfe inherit pub_types_classPacketTransport"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a884ed4c9f33d18f70a97288be3548c0e" id="r_a884ed4c9f33d18f70a97288be3548c0e"><td class="memItemLeft" align="right" valign="top"><a id="a884ed4c9f33d18f70a97288be3548c0e" name="a884ed4c9f33d18f70a97288be3548c0e"></a>
@@ -225,11 +242,6 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>multicastTTL</b> () <a
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
-<tr class="inherit_header pub_types_classPacketTransport"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classPacketTransport')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classPacketTransport.html">PacketTransport</a></td></tr>
-<tr class="memitem:a39856eb1e9a67c8d3c516c2115f24bfe inherit pub_types_classPacketTransport" id="r_a39856eb1e9a67c8d3c516c2115f24bfe"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>DatagramList</b> = <a class="el" href="classList.html">List</a>&lt; <a class="el" href="structPacketTransport_1_1Datagram.html">Datagram</a> &gt;</td></tr>
-<tr class="memdesc:a39856eb1e9a67c8d3c516c2115f24bfe inherit pub_types_classPacketTransport"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of datagrams for batch send. <br /></td></tr>
-<tr class="separator:a39856eb1e9a67c8d3c516c2115f24bfe inherit pub_types_classPacketTransport"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classPacketTransport"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classPacketTransport')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classPacketTransport.html">PacketTransport</a></td></tr>
 <tr class="memitem:a9211b4a9b9073199909844f5d29921de inherit pro_methods_classPacketTransport" id="r_a9211b4a9b9073199909844f5d29921de"><td class="memItemLeft" align="right" valign="top">
 &#160;</td><td class="memItemRight" valign="bottom"><b>PacketTransport</b> ()=<a class="el" href="classList.html">default</a></td></tr>
@@ -273,15 +285,15 @@ Additional Inherited Members</h2></td></tr>
 <div class="ttc" id="aclassList_html_ae311ad9e8cddc35b2d91587f6c204cb1"><div class="ttname"><a href="classList.html#ae311ad9e8cddc35b2d91587f6c204cb1">List::pushToBack</a></div><div class="ttdeci">void pushToBack(const T &amp;value)</div><div class="ttdoc">Pushes an item onto the back of the list.</div><div class="ttdef"><b>Definition</b> list.h:455</div></div>
 <div class="ttc" id="aclassSocketAddress_html"><div class="ttname"><a href="classSocketAddress.html">SocketAddress</a></div><div class="ttdoc">Network address with port number.</div><div class="ttdef"><b>Definition</b> socketaddress.h:50</div></div>
 <div class="ttc" id="aclassSocketAddress_html_aa74f0f4a0ee616a0b941f899e1dcc7f3"><div class="ttname"><a href="classSocketAddress.html#aa74f0f4a0ee616a0b941f899e1dcc7f3">SocketAddress::any</a></div><div class="ttdeci">static SocketAddress any(uint16_t port)</div><div class="ttdoc">Returns INADDR_ANY with the given port.</div><div class="ttdef"><b>Definition</b> socketaddress.h:71</div></div>
-<div class="ttc" id="aclassUdpSocketTransport_html"><div class="ttname"><a href="classUdpSocketTransport.html">UdpSocketTransport</a></div><div class="ttdoc">UDP socket implementation of PacketTransport.</div><div class="ttdef"><b>Definition</b> udpsockettransport.h:53</div></div>
+<div class="ttc" id="aclassUdpSocketTransport_html"><div class="ttname"><a href="classUdpSocketTransport.html">UdpSocketTransport</a></div><div class="ttdoc">UDP socket implementation of PacketTransport.</div><div class="ttdef"><b>Definition</b> udpsockettransport.h:52</div></div>
 <div class="ttc" id="aclassUdpSocketTransport_html_a10f14e832cd87d23e0ca65cb38921b84"><div class="ttname"><a href="classUdpSocketTransport.html#a10f14e832cd87d23e0ca65cb38921b84">UdpSocketTransport::open</a></div><div class="ttdeci">Error open() override</div><div class="ttdoc">Opens the transport and acquires its resources.</div></div>
 <div class="ttc" id="aclassUdpSocketTransport_html_a26f061f4a60f79ebeeb2c7e500913652"><div class="ttname"><a href="classUdpSocketTransport.html#a26f061f4a60f79ebeeb2c7e500913652">UdpSocketTransport::sendPackets</a></div><div class="ttdeci">int sendPackets(const DatagramList &amp;datagrams) override</div><div class="ttdoc">Sends a batch of packets.</div></div>
-<div class="ttc" id="aclassUdpSocketTransport_html_a8a073a27e61ee121e03ae0e865772c61"><div class="ttname"><a href="classUdpSocketTransport.html#a8a073a27e61ee121e03ae0e865772c61">UdpSocketTransport::setLocalAddress</a></div><div class="ttdeci">void setLocalAddress(const SocketAddress &amp;addr)</div><div class="ttdoc">Sets the local bind address.</div><div class="ttdef"><b>Definition</b> udpsockettransport.h:70</div></div>
-<div class="ttc" id="aclassUdpSocketTransport_html_ac2850e5cca1e2f0018af9802845efcfc"><div class="ttname"><a href="classUdpSocketTransport.html#ac2850e5cca1e2f0018af9802845efcfc">UdpSocketTransport::setDscp</a></div><div class="ttdeci">void setDscp(uint8_t dscp)</div><div class="ttdoc">Sets the DSCP (Differentiated Services) value.</div><div class="ttdef"><b>Definition</b> udpsockettransport.h:88</div></div>
-<div class="ttc" id="astructPacketTransport_1_1Datagram_html"><div class="ttname"><a href="structPacketTransport_1_1Datagram.html">PacketTransport::Datagram</a></div><div class="ttdoc">Describes one outbound datagram.</div><div class="ttdef"><b>Definition</b> packettransport.h:73</div></div>
-<div class="ttc" id="astructPacketTransport_1_1Datagram_html_a2e3f3f5934887524b108fb21c974b838"><div class="ttname"><a href="structPacketTransport_1_1Datagram.html#a2e3f3f5934887524b108fb21c974b838">PacketTransport::Datagram::dest</a></div><div class="ttdeci">SocketAddress dest</div><div class="ttdoc">Destination address and port.</div><div class="ttdef"><b>Definition</b> packettransport.h:79</div></div>
-<div class="ttc" id="astructPacketTransport_1_1Datagram_html_a7c808f6ac47382e942ff33c72b85098b"><div class="ttname"><a href="structPacketTransport_1_1Datagram.html#a7c808f6ac47382e942ff33c72b85098b">PacketTransport::Datagram::size</a></div><div class="ttdeci">size_t size</div><div class="ttdoc">Number of bytes to send.</div><div class="ttdef"><b>Definition</b> packettransport.h:77</div></div>
-<div class="ttc" id="astructPacketTransport_1_1Datagram_html_acb2a714bb65ccc627b6f7da7dc035afd"><div class="ttname"><a href="structPacketTransport_1_1Datagram.html#acb2a714bb65ccc627b6f7da7dc035afd">PacketTransport::Datagram::data</a></div><div class="ttdeci">const void * data</div><div class="ttdoc">Pointer to the packet bytes (caller-owned, contiguous).</div><div class="ttdef"><b>Definition</b> packettransport.h:75</div></div>
+<div class="ttc" id="aclassUdpSocketTransport_html_a8a073a27e61ee121e03ae0e865772c61"><div class="ttname"><a href="classUdpSocketTransport.html#a8a073a27e61ee121e03ae0e865772c61">UdpSocketTransport::setLocalAddress</a></div><div class="ttdeci">void setLocalAddress(const SocketAddress &amp;addr)</div><div class="ttdoc">Sets the local bind address.</div><div class="ttdef"><b>Definition</b> udpsockettransport.h:72</div></div>
+<div class="ttc" id="aclassUdpSocketTransport_html_ac2850e5cca1e2f0018af9802845efcfc"><div class="ttname"><a href="classUdpSocketTransport.html#ac2850e5cca1e2f0018af9802845efcfc">UdpSocketTransport::setDscp</a></div><div class="ttdeci">void setDscp(uint8_t dscp)</div><div class="ttdoc">Sets the DSCP (Differentiated Services) value.</div><div class="ttdef"><b>Definition</b> udpsockettransport.h:90</div></div>
+<div class="ttc" id="astructPacketTransport_1_1Datagram_html"><div class="ttname"><a href="structPacketTransport_1_1Datagram.html">PacketTransport::Datagram</a></div><div class="ttdoc">Describes one outbound datagram.</div><div class="ttdef"><b>Definition</b> packettransport.h:77</div></div>
+<div class="ttc" id="astructPacketTransport_1_1Datagram_html_a2e3f3f5934887524b108fb21c974b838"><div class="ttname"><a href="structPacketTransport_1_1Datagram.html#a2e3f3f5934887524b108fb21c974b838">PacketTransport::Datagram::dest</a></div><div class="ttdeci">SocketAddress dest</div><div class="ttdoc">Destination address and port.</div><div class="ttdef"><b>Definition</b> packettransport.h:83</div></div>
+<div class="ttc" id="astructPacketTransport_1_1Datagram_html_a7c808f6ac47382e942ff33c72b85098b"><div class="ttname"><a href="structPacketTransport_1_1Datagram.html#a7c808f6ac47382e942ff33c72b85098b">PacketTransport::Datagram::size</a></div><div class="ttdeci">size_t size</div><div class="ttdoc">Number of bytes to send.</div><div class="ttdef"><b>Definition</b> packettransport.h:81</div></div>
+<div class="ttc" id="astructPacketTransport_1_1Datagram_html_acb2a714bb65ccc627b6f7da7dc035afd"><div class="ttname"><a href="structPacketTransport_1_1Datagram.html#acb2a714bb65ccc627b6f7da7dc035afd">PacketTransport::Datagram::data</a></div><div class="ttdeci">const void * data</div><div class="ttdoc">Pointer to the packet bytes (caller-owned, contiguous).</div><div class="ttdef"><b>Definition</b> packettransport.h:79</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="adb3167189bf38a3538803c9afd657452" name="adb3167189bf38a3538803c9afd657452"></a>
@@ -875,7 +887,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classUdpSocketTransport.html">UdpSocketTransport</a></li>
-    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -143,19 +143,19 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a9670bbc91982b48085224fc1d2d153a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0933a54b3f16590607b280a943acbc0b" id="r_a0933a54b3f16590607b280a943acbc0b"><td class="memItemLeft" align="right" valign="top"><a id="a0933a54b3f16590607b280a943acbc0b" name="a0933a54b3f16590607b280a943acbc0b"></a>
 <a class="el" href="classList.html">void</a>(*&#160;</td><td class="memItemRight" valign="bottom"><b>alloc</b> )(<a class="el" href="structMemAllocation.html">MemAllocation</a> &amp;alloc)</td></tr>
-<tr class="memdesc:a0933a54b3f16590607b280a943acbc0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocate memory. Size and align are pre-filled. <br /></td></tr>
+<tr class="memdesc:a0933a54b3f16590607b280a943acbc0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocate memory. Size and align are pre-filled; size &gt; 0 guaranteed. <br /></td></tr>
 <tr class="separator:a0933a54b3f16590607b280a943acbc0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7e1a52bd6ab8f690d90ce2c462a2c76d" id="r_a7e1a52bd6ab8f690d90ce2c462a2c76d"><td class="memItemLeft" align="right" valign="top"><a id="a7e1a52bd6ab8f690d90ce2c462a2c76d" name="a7e1a52bd6ab8f690d90ce2c462a2c76d"></a>
 <a class="el" href="classList.html">void</a>(*&#160;</td><td class="memItemRight" valign="bottom"><b>release</b> )(<a class="el" href="structMemAllocation.html">MemAllocation</a> &amp;<a class="el" href="structMemSpace_1_1Ops.html#a0933a54b3f16590607b280a943acbc0b">alloc</a>)</td></tr>
-<tr class="memdesc:a7e1a52bd6ab8f690d90ce2c462a2c76d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release previously allocated memory. <br /></td></tr>
+<tr class="memdesc:a7e1a52bd6ab8f690d90ce2c462a2c76d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release previously allocated memory. Called only when ptr != nullptr. <br /></td></tr>
 <tr class="separator:a7e1a52bd6ab8f690d90ce2c462a2c76d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1d4ccdc87d78f4913341121f3f2e5adc" id="r_a1d4ccdc87d78f4913341121f3f2e5adc"><td class="memItemLeft" align="right" valign="top"><a id="a1d4ccdc87d78f4913341121f3f2e5adc" name="a1d4ccdc87d78f4913341121f3f2e5adc"></a>
 <a class="el" href="classList.html">bool</a>(*&#160;</td><td class="memItemRight" valign="bottom"><b>copy</b> )(<a class="el" href="classList.html">const</a> <a class="el" href="structMemAllocation.html">MemAllocation</a> &amp;<a class="el" href="classList.html">src</a>, <a class="el" href="classList.html">const</a> <a class="el" href="structMemAllocation.html">MemAllocation</a> &amp;<a class="el" href="classList.html">dst</a>, <a class="el" href="classList.html">size_t</a> bytes)</td></tr>
-<tr class="memdesc:a1d4ccdc87d78f4913341121f3f2e5adc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy bytes from this space to another. <br /></td></tr>
+<tr class="memdesc:a1d4ccdc87d78f4913341121f3f2e5adc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy bytes from this space to another. Both pointers non-null. <br /></td></tr>
 <tr class="separator:a1d4ccdc87d78f4913341121f3f2e5adc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6a57ec936c0c7ccecb2b34802d1d6aaa" id="r_a6a57ec936c0c7ccecb2b34802d1d6aaa"><td class="memItemLeft" align="right" valign="top"><a id="a6a57ec936c0c7ccecb2b34802d1d6aaa" name="a6a57ec936c0c7ccecb2b34802d1d6aaa"></a>
 <a class="el" href="classError.html">Error</a>(*&#160;</td><td class="memItemRight" valign="bottom"><b>fill</b> )(<a class="el" href="classList.html">void</a> *ptr, <a class="el" href="classList.html">size_t</a> bytes, <a class="el" href="classList.html">char</a> <a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
-<tr class="memdesc:a6a57ec936c0c7ccecb2b34802d1d6aaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fill memory with a byte value. <br /></td></tr>
+<tr class="memdesc:a6a57ec936c0c7ccecb2b34802d1d6aaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fill memory with a byte value. Called only when ptr != nullptr. <br /></td></tr>
 <tr class="separator:a6a57ec936c0c7ccecb2b34802d1d6aaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a559b7631993babfc6074f75f46f5f892" id="r_a559b7631993babfc6074f75f46f5f892"><td class="memItemLeft" align="right" valign="top"><a id="a559b7631993babfc6074f75f46f5f892" name="a559b7631993babfc6074f75f46f5f892"></a>
 <a class="el" href="structMemSpace_1_1Stats.html">Stats</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>stats</b> = <a class="el" href="classList.html">nullptr</a></td></tr>
@@ -164,6 +164,12 @@ Public Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Function table for memory space operations. </p>
+<p>The <a class="el" href="classMemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a> wrapper handles trivial cases (zero-size allocations, null-pointer release/copy/fill) before dispatching, so backend lambdas may rely on:</p><ul>
+<li><code>alloc:</code> <code>a.size</code> &gt; 0.</li>
+<li><code>release:</code> <code>a.ptr</code> != nullptr.</li>
+<li><code>copy:</code> both <code>src.ptr</code> and <code>dst.ptr</code> non-null.</li>
+<li><code>fill:</code> <code>ptr</code> != nullptr. </li>
+</ul>
 </div><hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="memspace_8h_source.html">memspace.h</a></li>
 </ul>
@@ -174,7 +180,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMemSpace.html">MemSpace</a></li><li class="navelem"><a class="el" href="structMemSpace_1_1Ops.html">Ops</a></li>
-    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
   </ul>
 </div>
 </body>

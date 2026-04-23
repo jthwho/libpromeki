@@ -1,5 +1,6 @@
 var classFastFont =
 [
+    [ "UPtr", "classFastFont.html#a95e9226baec4b3c5e50f79804f7053a9", null ],
     [ "FastFont", "classFastFont.html#a124387189da59c31b4dcd989a39bd4b2", null ],
     [ "~FastFont", "classFastFont.html#a690350d7224175f4b011dff2f8017786", null ],
     [ "ascender", "classFastFont.html#a1b339c6a44ff958a8d87df34d96c5e09", null ],

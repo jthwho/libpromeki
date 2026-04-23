@@ -148,6 +148,10 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
+<tr class="memitem:ae63bc4d84fdd4c1bfc79de68844e26b8" id="r_ae63bc4d84fdd4c1bfc79de68844e26b8"><td class="memItemLeft" align="right" valign="top"><a id="ae63bc4d84fdd4c1bfc79de68844e26b8" name="ae63bc4d84fdd4c1bfc79de68844e26b8"></a>
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>UPtr</b> = <a class="el" href="classUniquePtr.html">UniquePtr</a>&lt; <a class="el" href="classVideoEncoder.html">VideoEncoder</a> &gt;</td></tr>
+<tr class="memdesc:ae63bc4d84fdd4c1bfc79de68844e26b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unique-ownership pointer to a <a class="el" href="classVideoEncoder.html" title="Abstract base class for stateful video encoders.">VideoEncoder</a>. <br /></td></tr>
+<tr class="separator:ae63bc4d84fdd4c1bfc79de68844e26b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4cad3dde3d9c6f42d32590347a36713e" id="r_a4cad3dde3d9c6f42d32590347a36713e"><td class="memItemLeft" align="right" valign="top"><a id="a4cad3dde3d9c6f42d32590347a36713e" name="a4cad3dde3d9c6f42d32590347a36713e"></a>
 <a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Factory</b> = std::function&lt; <a class="el" href="classVideoEncoder.html">VideoEncoder</a> *()&gt;</td></tr>
 <tr class="memdesc:a4cad3dde3d9c6f42d32590347a36713e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Factory signature used by the encoder registry. <br /></td></tr>
@@ -253,7 +257,7 @@ Protected Attributes</h2></td></tr>
 <div class="ttc" id="aclassList_html_a708769d50011e6bdadc6bed2a6468aec"><div class="ttname"><a href="classList.html#a708769d50011e6bdadc6bed2a6468aec">List::List</a></div><div class="ttdeci">List()=default</div><div class="ttdoc">Default constructor. Creates an empty list.</div></div>
 <div class="ttc" id="aclassVideoCodec_html_a28d13fdb0f61e851c9a0f5f83855a720"><div class="ttname"><a href="classVideoCodec.html#a28d13fdb0f61e851c9a0f5f83855a720">VideoCodec::registerBackend</a></div><div class="ttdeci">static Result&lt; Backend &gt; registerBackend(const String &amp;name)</div><div class="ttdoc">Registers a backend name and returns its typed handle.</div></div>
 <div class="ttc" id="aclassVideoCodec_html_af5d21a83ef1d943e8ad2d3e9b041b5dca48919d6ed222bf6aed61e664ac1e3350"><div class="ttname"><a href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca48919d6ed222bf6aed61e664ac1e3350">VideoCodec::H264</a></div><div class="ttdeci">@ H264</div><div class="ttdoc">H.264 / MPEG-4 AVC.</div><div class="ttdef"><b>Definition</b> videocodec.h:119</div></div>
-<div class="ttc" id="aclassVideoEncoder_html"><div class="ttname"><a href="classVideoEncoder.html">VideoEncoder</a></div><div class="ttdoc">Abstract base class for stateful video encoders.</div><div class="ttdef"><b>Definition</b> videoencoder.h:95</div></div>
+<div class="ttc" id="aclassVideoEncoder_html"><div class="ttname"><a href="classVideoEncoder.html">VideoEncoder</a></div><div class="ttdoc">Abstract base class for stateful video encoders.</div><div class="ttdef"><b>Definition</b> videoencoder.h:96</div></div>
 <div class="ttc" id="aclassVideoEncoder_html_a9c0a2730ff8dbfbb453122a8d4f8dcdf"><div class="ttname"><a href="classVideoEncoder.html#a9c0a2730ff8dbfbb453122a8d4f8dcdf">VideoEncoder::registerBackend</a></div><div class="ttdeci">static Error registerBackend(BackendRecord record)</div><div class="ttdoc">Registers a concrete encoder backend for a (codec, backend) pair.</div></div>
 <div class="ttc" id="anamespaceBackendWeight_html_a706a55db9ff0e191e865e4263ece9b85"><div class="ttname"><a href="namespaceBackendWeight.html#a706a55db9ff0e191e865e4263ece9b85">BackendWeight::Vendored</a></div><div class="ttdeci">constexpr int Vendored</div><div class="ttdoc">Vendored / built-in backend (lowest of the standard bands).</div><div class="ttdef"><b>Definition</b> backendweight.h:29</div></div>
 <div class="ttc" id="aresult_8h_html_a231c9201a93dca6f23b67d1d32643de1"><div class="ttname"><a href="result_8h.html#a231c9201a93dca6f23b67d1d32643de1">isError</a></div><div class="ttdeci">bool isError(const Result&lt; T &gt; &amp;r)</div><div class="ttdoc">Returns true if the Result has an error.</div><div class="ttdef"><b>Definition</b> result.h:83</div></div>
@@ -658,7 +662,7 @@ Protected Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classVideoEncoder.html">VideoEncoder</a></li>
-    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
   </ul>
 </div>
 </body>

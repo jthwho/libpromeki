@@ -143,6 +143,7 @@ var group__network =
       [ "waitForNewConnection", "classLocalServer.html#afcecf7c6c5b066e62cc95bcd9634c7c8", null ]
     ] ],
     [ "LocalSocket", "classLocalSocket.html", [
+      [ "UPtr", "classLocalSocket.html#aff9807f095727861e9f6f7cf634c7da5", null ],
       [ "LocalSocket", "classLocalSocket.html#a806a5255d92c1210758a48c24b284109", null ],
       [ "~LocalSocket", "classLocalSocket.html#a4f4424939a80f40a0c90522ad272b8ce", null ],
       [ "bytesAvailable", "classLocalSocket.html#a42c8d411cbaac080fb1ba73f93975b0f", null ],
@@ -283,6 +284,7 @@ var group__network =
         [ "txTimeNs", "structPacketTransport_1_1Datagram.html#a74cc7586d150bcb5da4028333a1077ab", null ]
       ] ],
       [ "DatagramList", "classPacketTransport.html#a39856eb1e9a67c8d3c516c2115f24bfe", null ],
+      [ "UPtr", "classPacketTransport.html#a31e2980a406e3de93c88e129cb5d6379", null ],
       [ "~PacketTransport", "classPacketTransport.html#aafb6f16e896c0a9c38002f45e8f16c79", null ],
       [ "PacketTransport", "classPacketTransport.html#a9211b4a9b9073199909844f5d29921de", null ],
       [ "close", "classPacketTransport.html#a19e5fa4d5b4f29c4916151970b3aa7f3", null ],
@@ -566,6 +568,7 @@ var group__network =
         [ "txTimeNs", "structUdpSocket_1_1Datagram.html#a118e37ee4be4cf9451ae5d61efa4f037", null ]
       ] ],
       [ "DatagramList", "classUdpSocket.html#aa3e71cccd2d27986479f9b6a15ba24fb", null ],
+      [ "UPtr", "classUdpSocket.html#afef3cf91873eb6ec1b2c35e02dc7851c", null ],
       [ "UdpSocket", "classUdpSocket.html#aa837ef3b63156eb8fd3ee2958f9a102d", null ],
       [ "~UdpSocket", "classUdpSocket.html#a4f0c61954dbbdb8dec1458bc7975a9ea", null ],
       [ "bytesAvailable", "classUdpSocket.html#add5c68fef5c035cd83fcd5c9a986eefe", null ],
@@ -594,6 +597,7 @@ var group__network =
       [ "writeDatagrams", "classUdpSocket.html#abb70a958826f6f6d24b19f4b7992b50f", null ]
     ] ],
     [ "UdpSocketTransport", "classUdpSocketTransport.html", [
+      [ "UPtr", "classUdpSocketTransport.html#a253e77eecbed8173502ee6a9a6709ce3", null ],
       [ "UdpSocketTransport", "classUdpSocketTransport.html#a884ed4c9f33d18f70a97288be3548c0e", null ],
       [ "~UdpSocketTransport", "classUdpSocketTransport.html#a33a3f124833e56dae641de7f04aa5355", null ],
       [ "close", "classUdpSocketTransport.html#adb3167189bf38a3538803c9afd657452", null ],

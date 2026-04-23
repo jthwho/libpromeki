@@ -2,6 +2,7 @@ var classAudioPacket =
 [
     [ "Ptr", "classAudioPacket.html#a3dcc8525a6f1d71b65dfa25a17981301", null ],
     [ "PtrList", "classAudioPacket.html#a969a0a91e26b7529f44b737b43e7f517", null ],
+    [ "UPtr", "classAudioPacket.html#a8d5044a3ed992c2ac57a6bb0cafe9b18", null ],
     [ "AudioPacket", "classAudioPacket.html#a9c2f4c06df76d674cc8027ed225bf261", null ],
     [ "AudioPacket", "classAudioPacket.html#a44ff803693d63ae5935945c67f1d8aba", null ],
     [ "AudioPacket", "classAudioPacket.html#ada1b8db03a5ef81c489781d7d42ae412", null ],

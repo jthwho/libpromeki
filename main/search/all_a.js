@@ -18,7 +18,7 @@ var searchData=
   ['generatev5_15',['generateV5',['../classUUID.html#ae6a21cbe14d3cda73d6ea39339c9f97d',1,'UUID']]],
   ['generatev7_16',['generateV7',['../classUUID.html#a6f61a1528f819fdd59d7b553f0e48333',1,'UUID']]],
   ['geometry_17',['geometry',['../classWidget.html#a4dcbb32d11c0fb6dc628f77fabf47154',1,'Widget']]],
-  ['get_18',['get',['../classEnv.html#a1a7542737d1fce2a67a13d87dbb94267',1,'Env::get(const char *name)'],['../classEnv.html#af2286e9900dafc2a34997797d1d6f281',1,'Env::get(const char *name, const String &amp;defaultValue)'],['../classMatrix3x3.html#ad4a20447ac3ab508a4b802c354453131',1,'Matrix3x3::get()'],['../classPair.html#acea562e8e7452113a5838c5cd66119e2',1,'Pair::get() &amp;'],['../classPair.html#a8dfc0b9a09b5eebc05e7b64430b343c6',1,'Pair::get() const &amp;'],['../classPair.html#a57f5e2a21b7efe50c75964aced5a3b48',1,'Pair::get() &amp;&amp;'],['../classStructDatabase.html#a64a470a9de2bae25353a2896e22c4dcb',1,'StructDatabase::get()'],['../classVariantImpl.html#a95ca32106dbaee20a12d1a3a8c9e48fe',1,'VariantImpl::get()'],['../classVariantDatabase.html#a11a698992de8d4d830d83a78f6a6ece7',1,'VariantDatabase::get()']]],
+  ['get_18',['get',['../classEnv.html#a1a7542737d1fce2a67a13d87dbb94267',1,'Env::get()'],['../classVariantDatabase.html#a11a698992de8d4d830d83a78f6a6ece7',1,'VariantDatabase::get()'],['../classVariantImpl.html#a95ca32106dbaee20a12d1a3a8c9e48fe',1,'VariantImpl::get()'],['../classUniquePtr.html#ab7f7ad01e7e7955edb07e3d11d2b6e30',1,'UniquePtr::get()'],['../classStructDatabase.html#a64a470a9de2bae25353a2896e22c4dcb',1,'StructDatabase::get()'],['../classPair.html#a57f5e2a21b7efe50c75964aced5a3b48',1,'Pair::get() &amp;&amp;'],['../classPair.html#a8dfc0b9a09b5eebc05e7b64430b343c6',1,'Pair::get() const &amp;'],['../classPair.html#acea562e8e7452113a5838c5cd66119e2',1,'Pair::get() &amp;'],['../classMatrix3x3.html#ad4a20447ac3ab508a4b802c354453131',1,'Matrix3x3::get()'],['../classEnv.html#af2286e9900dafc2a34997797d1d6f281',1,'Env::get()']]],
   ['getarray_19',['getarray',['../classJsonObject.html#a217105ce1f5d4961a797826631d0286e',1,'JsonObject::getArray()'],['../classJsonArray.html#a307c1bb8083bd9279bac468ba743a4c1',1,'JsonArray::getArray()']]],
   ['getas_20',['getAs',['../classVariantDatabase.html#aba34c18fb083556f801a692fce34d76b',1,'VariantDatabase']]],
   ['getbool_21',['getbool',['../classJsonObject.html#ad0d6553d43d1a9e0dd21aa0d3c65ce0b',1,'JsonObject::getBool()'],['../classJsonArray.html#ae0d5a5d086cb397e320908f8b94c0e98',1,'JsonArray::getBool()']]],
@@ -48,7 +48,7 @@ var searchData=
   ['grouplist_45',['GroupList',['../classMulticastReceiver.html#a25807eb027d663ffeaa1d8c50ef0d7d5',1,'MulticastReceiver']]],
   ['groupname_46',['groupName',['../structFrameBridge_1_1Config.html#a051cb637cd8ae180df7e935c0dd14094',1,'FrameBridge::Config']]],
   ['groups_47',['groups',['../classMulticastReceiver.html#a0edec448bc795d802cc874182f843e84',1,'MulticastReceiver']]],
-  ['guards_48',['guards',['../typeregistry.html#tr_disambiguation',1,'ID Disambiguation Guards'],['../md_CODING__STANDARDS.html#autotoc_md80',1,'ID Disambiguation Guards'],['../md_CODING__STANDARDS.html#autotoc_md46',1,'Include Guards']]],
+  ['guards_48',['guards',['../typeregistry.html#tr_disambiguation',1,'ID Disambiguation Guards'],['../md_CODING__STANDARDS.html#autotoc_md93',1,'ID Disambiguation Guards'],['../md_CODING__STANDARDS.html#autotoc_md46',1,'Include Guards']]],
   ['guidelines_49',['Design Guidelines',['../typeregistry.html#tr_guidelines',1,'']]],
   ['guides_50',['Guides',['../index.html#autotoc_md19',1,'']]]
 ];

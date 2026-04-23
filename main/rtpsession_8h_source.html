@@ -114,10 +114,10 @@ $(document).ready(function(){initNavTree('rtpsession_8h_source.html',''); initRe
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &lt;<a class="code" href="duration_8h.html">promeki/duration.h</a>&gt;</span></div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="preprocessor">#include &lt;<a class="code" href="socketaddress_8h.html">promeki/socketaddress.h</a>&gt;</span></div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#include &lt;<a class="code" href="rtppacket_8h.html">promeki/rtppacket.h</a>&gt;</span></div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="keyword">class </span><a class="code hl_class" href="classPacketTransport.html">PacketTransport</a>;</div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="preprocessor">#include &lt;<a class="code" href="packettransport_8h.html">promeki/packettransport.h</a>&gt;</span></div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span> </div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="keyword">class </span><a class="code hl_class" href="classThread.html">Thread</a>;</div>
 <div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
 <div class="foldopen" id="foldopen00073" data-start="{" data-end="};">
@@ -207,24 +207,25 @@ $(document).ready(function(){initNavTree('rtpsession_8h_source.html',''); initRe
 <div class="line"><a id="l00370" name="l00370"></a><span class="lineno">  370</span>                                <a class="code hl_class" href="classList.html">uint32_t</a> timestamp);</div>
 <div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span>                <span class="keywordtype">void</span> generateSsrc();</div>
 <div class="line"><a id="l00372" name="l00372"></a><span class="lineno">  372</span> </div>
-<div class="line"><a id="l00373" name="l00373"></a><span class="lineno">  373</span>                <a class="code hl_class" href="classPacketTransport.html">PacketTransport</a> *_transport = <span class="keyword">nullptr</span>;</div>
-<div class="line"><a id="l00374" name="l00374"></a><span class="lineno">  374</span>                <span class="keywordtype">bool</span>             _ownsTransport = <span class="keyword">false</span>;</div>
-<div class="line"><a id="l00375" name="l00375"></a><span class="lineno">  375</span>                <span class="keywordtype">bool</span>             _running = <span class="keyword">false</span>;</div>
-<div class="line"><a id="l00376" name="l00376"></a><span class="lineno">  376</span>                <a class="code hl_class" href="classSocketAddress.html">SocketAddress</a>    _remote;</div>
-<div class="line"><a id="l00377" name="l00377"></a><span class="lineno">  377</span>                <a class="code hl_class" href="classList.html">uint32_t</a>         _ssrc = 0;</div>
-<div class="line"><a id="l00378" name="l00378"></a><span class="lineno">  378</span>                <a class="code hl_class" href="classList.html">uint16_t</a>         _sequenceNumber = 0;</div>
-<div class="line"><a id="l00379" name="l00379"></a><span class="lineno">  379</span>                <a class="code hl_class" href="classList.html">uint8_t</a>          _payloadType = 96;</div>
-<div class="line"><a id="l00380" name="l00380"></a><span class="lineno">  380</span>                <a class="code hl_class" href="classList.html">uint32_t</a>         _clockRate = 90000;</div>
+<div class="line"><a id="l00373" name="l00373"></a><span class="lineno">  373</span>                <a class="code hl_class" href="classPacketTransport.html">PacketTransport</a>        *_transport = <span class="keyword">nullptr</span>;</div>
+<div class="line"><a id="l00374" name="l00374"></a><span class="lineno">  374</span>                <a class="code hl_class" href="classUniquePtr.html">PacketTransport::UPtr</a>   _ownedTransport;</div>
+<div class="line"><a id="l00375" name="l00375"></a><span class="lineno">  375</span>                <span class="keywordtype">bool</span>                    _running = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00376" name="l00376"></a><span class="lineno">  376</span>                <a class="code hl_class" href="classSocketAddress.html">SocketAddress</a>           _remote;</div>
+<div class="line"><a id="l00377" name="l00377"></a><span class="lineno">  377</span>                <a class="code hl_class" href="classList.html">uint32_t</a>                _ssrc = 0;</div>
+<div class="line"><a id="l00378" name="l00378"></a><span class="lineno">  378</span>                <a class="code hl_class" href="classList.html">uint16_t</a>                _sequenceNumber = 0;</div>
+<div class="line"><a id="l00379" name="l00379"></a><span class="lineno">  379</span>                <a class="code hl_class" href="classList.html">uint8_t</a>                 _payloadType = 96;</div>
+<div class="line"><a id="l00380" name="l00380"></a><span class="lineno">  380</span>                <a class="code hl_class" href="classList.html">uint32_t</a>                _clockRate = 90000;</div>
 <div class="line"><a id="l00381" name="l00381"></a><span class="lineno">  381</span> </div>
 <div class="line"><a id="l00382" name="l00382"></a><span class="lineno">  382</span>                <span class="comment">// Receive path</span></div>
-<div class="line"><a id="l00383" name="l00383"></a><span class="lineno">  383</span>                ReceiveThread   *_receiveThread = <span class="keyword">nullptr</span>;</div>
-<div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span>                <a class="code hl_typedef" href="classRtpSession.html#ae472a7b0761117674132e5779dff44c6">PacketCallback</a>   _receiveCallback;</div>
-<div class="line"><a id="l00385" name="l00385"></a><span class="lineno">  385</span>                <a class="code hl_class" href="classList.html">Atomic&lt;bool&gt;</a>     _receiving;</div>
-<div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span>                <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span>     _receivePollMs = 200;</div>
-<div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span>};</div>
+<div class="line"><a id="l00383" name="l00383"></a><span class="lineno">  383</span>                <span class="keyword">using </span><a class="code hl_class" href="classUniquePtr.html">ReceiveThreadUPtr</a> = <a class="code hl_class" href="classList.html">UniquePtr&lt;ReceiveThread&gt;</a>;</div>
+<div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span>                <a class="code hl_class" href="classUniquePtr.html">ReceiveThreadUPtr</a>       _receiveThread;</div>
+<div class="line"><a id="l00385" name="l00385"></a><span class="lineno">  385</span>                <a class="code hl_typedef" href="classRtpSession.html#ae472a7b0761117674132e5779dff44c6">PacketCallback</a>   _receiveCallback;</div>
+<div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span>                <a class="code hl_class" href="classList.html">Atomic&lt;bool&gt;</a>     _receiving;</div>
+<div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span>                <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span>     _receivePollMs = 200;</div>
+<div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span>};</div>
 </div>
-<div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span> </div>
-<div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
+<div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span> </div>
+<div class="line"><a id="l00390" name="l00390"></a><span class="lineno">  390</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
 <div class="ttc" id="aatomic_8h_html"><div class="ttname"><a href="atomic_8h.html">atomic.h</a></div></div>
 <div class="ttc" id="abuffer_8h_html"><div class="ttname"><a href="buffer_8h.html">buffer.h</a></div></div>
 <div class="ttc" id="aclassAtomic_html_af2ca398429bd935ca7912a1d14513cd0"><div class="ttname"><a href="classAtomic.html#af2ca398429bd935ca7912a1d14513cd0">Atomic::value</a></div><div class="ttdeci">T value() const</div><div class="ttdoc">Loads the current value with acquire semantics.</div><div class="ttdef"><b>Definition</b> atomic.h:46</div></div>
@@ -234,7 +235,7 @@ $(document).ready(function(){initNavTree('rtpsession_8h_source.html',''); initRe
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassObjectBase_html"><div class="ttname"><a href="classObjectBase.html">ObjectBase</a></div><div class="ttdoc">Base object for promeki.</div><div class="ttdef"><b>Definition</b> objectbase.h:154</div></div>
 <div class="ttc" id="aclassObjectBase_html_ad8a11dd19f4510f3ce38c779fc7911a8"><div class="ttname"><a href="classObjectBase.html#ad8a11dd19f4510f3ce38c779fc7911a8">ObjectBase::parent</a></div><div class="ttdeci">ObjectBase * parent() const</div><div class="ttdoc">Returns the parent object, if one. nullptr if none.</div><div class="ttdef"><b>Definition</b> objectbase.h:280</div></div>
-<div class="ttc" id="aclassPacketTransport_html"><div class="ttname"><a href="classPacketTransport.html">PacketTransport</a></div><div class="ttdoc">Abstract packet-I/O transport for datagram-oriented protocols.</div><div class="ttdef"><b>Definition</b> packettransport.h:63</div></div>
+<div class="ttc" id="aclassPacketTransport_html"><div class="ttname"><a href="classPacketTransport.html">PacketTransport</a></div><div class="ttdoc">Abstract packet-I/O transport for datagram-oriented protocols.</div><div class="ttdef"><b>Definition</b> packettransport.h:64</div></div>
 <div class="ttc" id="aclassRtpPacket_html"><div class="ttname"><a href="classRtpPacket.html">RtpPacket</a></div><div class="ttdoc">A BufferView that interprets its data as an RTP packet.</div><div class="ttdef"><b>Definition</b> rtppacket.h:59</div></div>
 <div class="ttc" id="aclassRtpPacket_html_ac88d10b933d477637a4c1f61151accc1"><div class="ttname"><a href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">RtpPacket::List</a></div><div class="ttdeci">promeki::List&lt; RtpPacket &gt; List</div><div class="ttdoc">List of RtpPacket values.</div><div class="ttdef"><b>Definition</b> rtppacket.h:62</div></div>
 <div class="ttc" id="aclassRtpSession_html"><div class="ttname"><a href="classRtpSession.html">RtpSession</a></div><div class="ttdoc">RTP session for sending and receiving packets (RFC 3550).</div><div class="ttdef"><b>Definition</b> rtpsession.h:73</div></div>
@@ -270,11 +271,13 @@ $(document).ready(function(){initNavTree('rtpsession_8h_source.html',''); initRe
 <div class="ttc" id="aclassSocketAddress_html"><div class="ttname"><a href="classSocketAddress.html">SocketAddress</a></div><div class="ttdoc">Network address with port number.</div><div class="ttdef"><b>Definition</b> socketaddress.h:50</div></div>
 <div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:56</div></div>
 <div class="ttc" id="aclassThread_html"><div class="ttname"><a href="classThread.html">Thread</a></div><div class="ttdoc">Wrapper around std::thread with a built-in EventLoop.</div><div class="ttdef"><b>Definition</b> thread.h:48</div></div>
+<div class="ttc" id="aclassUniquePtr_html"><div class="ttname"><a href="classUniquePtr.html">UniquePtr&lt; PacketTransport &gt;</a></div></div>
 <div class="ttc" id="aduration_8h_html"><div class="ttname"><a href="duration_8h.html">duration.h</a></div></div>
 <div class="ttc" id="aerror_8h_html"><div class="ttname"><a href="error_8h.html">error.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html_a0444a93cedfdf35aa76c315990dc6e10"><div class="ttname"><a href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_BEGIN</div><div class="ttdoc">Starts a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:14</div></div>
 <div class="ttc" id="anamespace_8h_html_a9a7eb1268c947a92a8cb60d369b8abf8"><div class="ttname"><a href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_END</div><div class="ttdoc">Ends a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:19</div></div>
 <div class="ttc" id="aobjectbase_8h_html"><div class="ttname"><a href="objectbase_8h.html">objectbase.h</a></div></div>
+<div class="ttc" id="apackettransport_8h_html"><div class="ttname"><a href="packettransport_8h.html">packettransport.h</a></div></div>
 <div class="ttc" id="artppacket_8h_html"><div class="ttname"><a href="rtppacket_8h.html">rtppacket.h</a></div></div>
 <div class="ttc" id="asocketaddress_8h_html"><div class="ttname"><a href="socketaddress_8h.html">socketaddress.h</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
@@ -284,7 +287,7 @@ $(document).ready(function(){initNavTree('rtpsession_8h_source.html',''); initRe
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="rtpsession_8h.html">rtpsession.h</a></li>
-    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
   </ul>
 </div>
 </body>

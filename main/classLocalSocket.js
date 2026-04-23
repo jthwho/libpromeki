@@ -1,5 +1,6 @@
 var classLocalSocket =
 [
+    [ "UPtr", "classLocalSocket.html#aff9807f095727861e9f6f7cf634c7da5", null ],
     [ "LocalSocket", "classLocalSocket.html#a806a5255d92c1210758a48c24b284109", null ],
     [ "~LocalSocket", "classLocalSocket.html#a4f4424939a80f40a0c90522ad272b8ce", null ],
     [ "bytesAvailable", "classLocalSocket.html#a42c8d411cbaac080fb1ba73f93975b0f", null ],

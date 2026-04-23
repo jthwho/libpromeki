@@ -5,6 +5,7 @@ var classMediaIO =
     [ "ConfigID", "classMediaIO.html#a08d6f0ff155c9b44e241d5c0f4a4559f", null ],
     [ "Mode", "classMediaIO.html#aecf4fd1d9415ab9e37e355e826afc123", null ],
     [ "SeekMode", "classMediaIO.html#a04b4e0c765ff2b7c9a7c6718714c3136", null ],
+    [ "UPtr", "classMediaIO.html#a01a99d5da829b41596c7ad9110a2463c", null ],
     [ "ConfigValidation", "classMediaIO.html#a777f2b97d916b5afc27e3fa914971e7e", [
       [ "Lenient", "classMediaIO.html#a777f2b97d916b5afc27e3fa914971e7eaeec7931eeb6771fd5d189ba70656fb80", null ],
       [ "Strict", "classMediaIO.html#a777f2b97d916b5afc27e3fa914971e7ea2e979835dd62324f5bfe217449ba4974", null ]

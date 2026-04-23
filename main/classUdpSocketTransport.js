@@ -1,5 +1,6 @@
 var classUdpSocketTransport =
 [
+    [ "UPtr", "classUdpSocketTransport.html#a253e77eecbed8173502ee6a9a6709ce3", null ],
     [ "UdpSocketTransport", "classUdpSocketTransport.html#a884ed4c9f33d18f70a97288be3548c0e", null ],
     [ "~UdpSocketTransport", "classUdpSocketTransport.html#a33a3f124833e56dae641de7f04aa5355", null ],
     [ "close", "classUdpSocketTransport.html#adb3167189bf38a3538803c9afd657452", null ],

@@ -355,6 +355,7 @@ var annotated_dup =
     [ "UdpSocket", "classUdpSocket.html", "classUdpSocket" ],
     [ "UdpSocketTransport", "classUdpSocketTransport.html", "classUdpSocketTransport" ],
     [ "UMID", "classUMID.html", "classUMID" ],
+    [ "UniquePtr", "classUniquePtr.html", "classUniquePtr" ],
     [ "Units", "classUnits.html", null ],
     [ "Url", "classUrl.html", "classUrl" ],
     [ "UUID", "classUUID.html", "classUUID" ],

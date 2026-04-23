@@ -1,6 +1,7 @@
 var classAudioResampler =
 [
     [ "ProcessResult", "classAudioResampler.html#a0b7dac95f925a2ebad7b8c3d7d1c84f8", null ],
+    [ "UPtr", "classAudioResampler.html#a6ac5c71ea65300246169b6c07b54345c", null ],
     [ "AudioResampler", "classAudioResampler.html#a79cee7b13dca6c009a53eae203b6c120", null ],
     [ "~AudioResampler", "classAudioResampler.html#ac726f5559e90fbd753b959a0030eacd2", null ],
     [ "channels", "classAudioResampler.html#a455cb14c0f45fdf1b4f790f6bd539e0f", null ],

@@ -64,6 +64,7 @@ var group__io =
         [ "size", "structFile_1_1IOVec.html#a709b98ebf60e2ecf958eb35f42a525c7", null ]
       ] ],
       [ "FileHandle", "classFile.html#a42476f88b764bbb09ee2e978e404dd31", null ],
+      [ "UPtr", "classFile.html#afb11c57f7a52006cdec474c4368dab2f", null ],
       [ "Flags", "classFile.html#aad4a83201b3528a66eab5ad4f9cf1513", [
         [ "NoFlags", "classFile.html#aad4a83201b3528a66eab5ad4f9cf1513a24e88b69189d56af622c09f4b1c877a8", null ],
         [ "Create", "classFile.html#aad4a83201b3528a66eab5ad4f9cf1513a9f9012b13652cd115b7e41427531ca3d", null ],
@@ -204,6 +205,7 @@ var group__io =
       [ "toString", "classFilePath.html#a7296faeecf493adbeee3ae94996b66d7", null ]
     ] ],
     [ "IODevice", "classIODevice.html", [
+      [ "UPtr", "classIODevice.html#ab90e72997e6039504ffe30a92d212e82", null ],
       [ "OpenMode", "classIODevice.html#ac12c287cd37708c10d6618d667a3147a", [
         [ "NotOpen", "classIODevice.html#ac12c287cd37708c10d6618d667a3147aa84e4448af6ff59ea244090f7126f7926", null ],
         [ "ReadOnly", "classIODevice.html#ac12c287cd37708c10d6618d667a3147aa6d749f5bb57e3cef1e17d58e0419625a", null ],

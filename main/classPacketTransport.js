@@ -2,6 +2,7 @@ var classPacketTransport =
 [
     [ "Datagram", "structPacketTransport_1_1Datagram.html", "structPacketTransport_1_1Datagram" ],
     [ "DatagramList", "classPacketTransport.html#a39856eb1e9a67c8d3c516c2115f24bfe", null ],
+    [ "UPtr", "classPacketTransport.html#a31e2980a406e3de93c88e129cb5d6379", null ],
     [ "~PacketTransport", "classPacketTransport.html#aafb6f16e896c0a9c38002f45e8f16c79", null ],
     [ "PacketTransport", "classPacketTransport.html#a9211b4a9b9073199909844f5d29921de", null ],
     [ "close", "classPacketTransport.html#a19e5fa4d5b4f29c4916151970b3aa7f3", null ],

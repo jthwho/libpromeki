@@ -2,6 +2,7 @@ var classUdpSocket =
 [
     [ "Datagram", "structUdpSocket_1_1Datagram.html", "structUdpSocket_1_1Datagram" ],
     [ "DatagramList", "classUdpSocket.html#aa3e71cccd2d27986479f9b6a15ba24fb", null ],
+    [ "UPtr", "classUdpSocket.html#afef3cf91873eb6ec1b2c35e02dc7851c", null ],
     [ "UdpSocket", "classUdpSocket.html#aa837ef3b63156eb8fd3ee2958f9a102d", null ],
     [ "~UdpSocket", "classUdpSocket.html#a4f0c61954dbbdb8dec1458bc7975a9ea", null ],
     [ "bytesAvailable", "classUdpSocket.html#add5c68fef5c035cd83fcd5c9a986eefe", null ],

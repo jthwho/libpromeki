@@ -108,7 +108,7 @@ Design Philosophy</h1>
 <p>libpromeki provides Qt-inspired C++ core classes built on top of the C++ standard library. The goal is to offer friendlier, less verbose APIs than <code>std::</code> while retaining full interoperability. Key principles:</p>
 <ul>
 <li><b>Value semantics</b>: All data classes are plain value types. The layer above decides whether to use <code><a class="el" href="classList.html#a5065311ff7846505d9a73878bcf7a3e3" title="Shared pointer type for List.">MyClass::Ptr</a></code> (<a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a>) for shared ownership.</li>
-<li><b>No raw ownership</b>: Memory is managed via <code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a></code>, <code><a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a></code>, or RAII. Raw pointers are only used for non-owning references (e.g., parent/child relationships in <code><a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a></code>).</li>
+<li><b>No raw ownership</b>: Memory is managed via <code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a></code>, <code><a class="el" href="classUniquePtr.html" title="A move-only smart pointer with exclusive ownership semantics.">UniquePtr</a></code>, <code><a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a></code>, or RAII. Raw pointers are only used for non-owning references (e.g., parent/child relationships in <code><a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a></code>, observer pointers). See Heap Ownership and Pointer Types for the full policy.</li>
 <li><b><a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> codes over exceptions</b>: Use the <code><a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a></code> class and return values rather than throwing. Constructors never throw.</li>
 <li><b>Minimal abstraction</b>: Wrap <code>std::</code> types to improve ergonomics, but don't add layers of indirection for their own sake.</li>
 <li><b>Fix the library, don't work around it</b>: When library types have missing operators, conversions, or other ergonomic gaps that force awkward usage at call sites, fix the library type rather than scattering workarounds through application code. For example, if <code>"literal" + MyType(...)</code> doesn't compile, add a free <code>operator+</code> overload — don't require callers to write <code>MyType("literal") + ...</code>.</li>
@@ -292,7 +292,66 @@ Classes and Types</h2>
 </ul>
 <h2><a class="anchor" id="autotoc_md51"></a>
 Convenience Type Aliases for Templates</h2>
-<p>When a template class is commonly instantiated with specific types, provide <code>using</code> aliases at namespace scope so callers never spell the template arguments directly. Every alias must include an explicit type suffix — there are no unsuffixed "default" aliases.</p>
+<p>Template types are never spelled directly at call sites. When a template class is used with specific instantiations, always define a <code>using</code> alias so callers write the concrete name, not the template arguments. Why:</p>
+<ul>
+<li>Shorter, clearer signatures (<code><a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3" title="Shared pointer type for Buffer.">Buffer::Ptr</a></code> beats <code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a>&lt;<a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>, true, <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>&gt;</code>).</li>
+<li>A single authoritative spelling per type — no drift between files.</li>
+<li>Changes to the underlying template (e.g. adding a template parameter with a default) don't force every call site to update.</li>
+</ul>
+<p><b>Rules</b>:</p>
+<ul>
+<li>If the same template instantiation appears in more than one place, define an alias.</li>
+<li>In public headers, always use the alias — never the raw template.</li>
+<li>The alias lives where the instantiation "belongs" (see the table below).</li>
+<li>Any callers of the raw template form count as bugs to be fixed, not as an alternate style.</li>
+</ul>
+<h3><a class="anchor" id="autotoc_md52"></a>
+Where the Alias Lives</h3>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Template shape   </th><th class="markdownTableHeadNone">Alias location   </th><th class="markdownTableHeadNone">Convention   </th><th class="markdownTableHeadNone">Example    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Smart pointer to a specific class   </td><td class="markdownTableBodyNone">Inside the class (<code>public:</code>)   </td><td class="markdownTableBodyNone"><code>Ptr</code>, <code>UPtr</code>   </td><td class="markdownTableBodyNone"><code>using UPtr = <a class="el" href="classUniquePtr.html" title="A move-only smart pointer with exclusive ownership semantics.">UniquePtr</a>&lt;<a class="el" href="classLtcDecoder.html" title="Decodes LTC (Linear Timecode) audio samples into timecode values.">LtcDecoder</a>&gt;;</code>    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Container of a specific class   </td><td class="markdownTableBodyNone">Inside the class (<code>public:</code>)   </td><td class="markdownTableBodyNone"><code><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a></code>, <code>PtrList</code>   </td><td class="markdownTableBodyNone"><code>using PtrList = promeki::List&lt;Ptr&gt;;</code>    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Smart pointer to a private nested Impl   </td><td class="markdownTableBodyNone">Inside the enclosing class (<code>private:</code>)   </td><td class="markdownTableBodyNone"><code>ImplPtr</code> (or similar)   </td><td class="markdownTableBodyNone"><code>using ImplPtr = <a class="el" href="classUniquePtr.html" title="A move-only smart pointer with exclusive ownership semantics.">UniquePtr</a>&lt;Impl&gt;;</code>    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Smart pointer to a forward-declared opaque type   </td><td class="markdownTableBodyNone">Same scope as the forward declaration   </td><td class="markdownTableBodyNone"><code>{TypeName}UPtr</code> (or similar)   </td><td class="markdownTableBodyNone"><code>using VariantQueryNodeUPtr = <a class="el" href="classUniquePtr.html" title="A move-only smart pointer with exclusive ownership semantics.">UniquePtr</a>&lt;VariantQueryNode&gt;;</code>    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Generic numeric template   </td><td class="markdownTableBodyNone">Namespace scope in the template's own header   </td><td class="markdownTableBodyNone">Typed-suffix name (see table below)   </td><td class="markdownTableBodyNone"><code>using Size2Du32 = <a class="el" href="classSize2DTemplate.html" title="Two-dimensional size (width and height).">Size2DTemplate</a>&lt;uint32_t&gt;;</code>   </td></tr>
+</table>
+<h3><a class="anchor" id="autotoc_md53"></a>
+Class-Scope Ownership Aliases</h3>
+<p>Every heap-managed class defines its ownership aliases near the top of its <code>public:</code> section. See Heap Ownership and Pointer Types for the full policy on <code>Ptr</code> vs <code>UPtr</code>. The canonical set:</p>
+<ul>
+<li><code>using Ptr = <a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a>&lt;MyClass&gt;;</code> — shared ownership (classes with <code>PROMEKI_SHARED_FINAL</code>).</li>
+<li><code>using UPtr = <a class="el" href="classUniquePtr.html" title="A move-only smart pointer with exclusive ownership semantics.">UniquePtr</a>&lt;MyClass&gt;;</code> — unique ownership.</li>
+<li><code>using <a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> = promeki::List&lt;MyClass&gt;;</code> — plain value list (for shareable classes also used by value).</li>
+<li><code>using PtrList = promeki::List&lt;Ptr&gt;;</code> — list of shared pointers (only for types that define <code>Ptr</code>).</li>
+</ul>
+<p>A class may define more than one of these when it is legitimately used in multiple ownership modes — e.g. <code><a class="el" href="classAudioPacket.html" title="Encoded audio access unit produced by an AudioEncoder or consumed by an AudioDecoder.">AudioPacket</a></code> exposes both <code>Ptr</code> and <code>UPtr</code>.</p>
+<h3><a class="anchor" id="autotoc_md54"></a>
+Opaque Forward-Declared Types</h3>
+<p>Forward-declared types — typically a private nested <code>Impl</code> class in a PIMPL pattern, or an opaque detail type defined in a <code>.cpp</code> — have no class body in which to declare a member alias. Place the alias next to the forward declaration instead:</p>
+<div class="fragment"><div class="line"><span class="comment">// Nested PIMPL — alias at enclosing class scope, next to the forward-decl.</span></div>
+<div class="line"><span class="keyword">class </span><a class="code hl_class" href="classFrameBridge.html">FrameBridge</a> {</div>
+<div class="line">        <span class="keyword">private</span>:</div>
+<div class="line">                <span class="keyword">class </span>Impl;</div>
+<div class="line">                <span class="keyword">using </span>ImplPtr = <a class="code hl_class" href="classList.html">UniquePtr&lt;Impl&gt;</a>;</div>
+<div class="line">                ImplPtr _d;</div>
+<div class="line">};</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// Opaque namespace-scope type — alias at the same namespace.</span></div>
+<div class="line"><span class="keyword">namespace </span>detail {</div>
+<div class="line"><span class="keyword">class </span><a class="code hl_class" href="classList.html">VariantQueryNode</a>;</div>
+<div class="line"><span class="keyword">using </span>VariantQueryNodeUPtr = <a class="code hl_class" href="classList.html">UniquePtr&lt;VariantQueryNode&gt;</a>;</div>
+<div class="line">}</div>
+<div class="ttc" id="aclassFrameBridge_html"><div class="ttname"><a href="classFrameBridge.html">FrameBridge</a></div><div class="ttdoc">Cross-process frame transport over shared memory + local sockets.</div><div class="ttdef"><b>Definition</b> framebridge.h:88</div></div>
+</div><!-- fragment --><p>The alias is always adjacent to the forward declaration so readers encounter both together.</p>
+<h3><a class="anchor" id="autotoc_md55"></a>
+Numeric Template Aliases</h3>
+<p>Template classes parameterized by numeric type get typed aliases at namespace scope in the template's own header. Every alias includes an explicit type suffix — there are no unsuffixed "default" aliases.</p>
 <table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Suffix   </th><th class="markdownTableHeadNone">Underlying type   </th><th class="markdownTableHeadNone">Example    </th></tr>
@@ -318,8 +377,8 @@ Convenience Type Aliases for Templates</h2>
 <td class="markdownTableBodyNone"><code>d</code>   </td><td class="markdownTableBodyNone"><code>double</code>   </td><td class="markdownTableBodyNone"><code>Size2Dd</code> = <code><a class="el" href="classSize2DTemplate.html" title="Two-dimensional size (width and height).">Size2DTemplate</a>&lt;double&gt;</code>   </td></tr>
 </table>
 <p>Dimensionality is part of the base name; the type suffix always comes last (e.g. <code>Point3Di32</code>, <code>Line4Df</code>). Choose signed vs. unsigned based on the domain: coordinates and offsets are typically signed (<code>i32</code>), dimensions and sizes are typically unsigned (<code>u32</code>).</p>
-<p>Always use the convenience alias in code, never the raw template instantiation. When adding a new template class, define aliases for all commonly used instantiations in the same header.</p>
-<h2><a class="anchor" id="autotoc_md52"></a>
+<p>When adding a new template class, define aliases for all commonly used instantiations in the same header.</p>
+<h2><a class="anchor" id="autotoc_md56"></a>
 Methods</h2>
 <ul>
 <li><b>camelCase</b> for all methods.</li>
@@ -331,19 +390,19 @@ Methods</h2>
 <li><b>Conversions</b>: <code>to*()</code> — <code>toString()</code>, <code>toDouble()</code>, <code><a class="el" href="framecount_8h.html#acb51c110a367e9da4417bd72f03450db" title="Reinterprets a FrameCount as a FrameNumber.">toFrameNumber()</a></code>, <code>toUpper()</code></li>
 <li><b>Static factories</b>: <code>from*()</code> or descriptive name — <code>fromString()</code>, <code>fromFrameNumber()</code>, <code>now()</code>, <code>number()</code>, <code>syserr()</code></li>
 </ul>
-<h2><a class="anchor" id="autotoc_md53"></a>
+<h2><a class="anchor" id="autotoc_md57"></a>
 Member Variables</h2>
 <ul>
 <li><b>Private members</b>: underscore prefix — <code>_width</code>, <code>_height</code>, <code>_mode</code>, <code>_parent</code></li>
 </ul>
-<h2><a class="anchor" id="autotoc_md54"></a>
+<h2><a class="anchor" id="autotoc_md58"></a>
 Enums</h2>
 <ul>
 <li><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> values: <b>PascalCase</b> — <code>Ok</code>, <code>Invalid</code>, <code>DropFrame</code>, <code>NotExist</code></li>
 <li><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> class or nested enum within the owning class.</li>
 <li>Well-known constant enums may use <code>PREFIX_Name</code> style for readability: <code>FPS_2997</code>, <code>FPS_Invalid</code></li>
 </ul>
-<h2><a class="anchor" id="autotoc_md55"></a>
+<h2><a class="anchor" id="autotoc_md59"></a>
 Standard Library Type Aliases</h2>
 <p>When a <code>std::</code> type appears in a class's <b>public API</b> — return types, parameter types, public members, or type aliases that users interact with — wrap it in a <code>using</code> alias inside the class so that library users never spell <code>std::</code> types directly:</p>
 <div class="fragment"><div class="line"><span class="keyword">class </span><a class="code hl_class" href="classThread.html">Thread</a> {</div>
@@ -360,7 +419,7 @@ Standard Library Type Aliases</h2>
 <div class="ttc" id="aclassThread_html"><div class="ttname"><a href="classThread.html">Thread</a></div><div class="ttdoc">Wrapper around std::thread with a built-in EventLoop.</div><div class="ttdef"><b>Definition</b> thread.h:48</div></div>
 <div class="ttc" id="aclassThread_html_a4b083c8c9741814012bf85bac162a8c8"><div class="ttname"><a href="classThread.html#a4b083c8c9741814012bf85bac162a8c8">Thread::NativeHandle</a></div><div class="ttdeci">std::thread::native_handle_type NativeHandle</div><div class="ttdoc">Platform-specific native thread handle type.</div><div class="ttdef"><b>Definition</b> thread.h:52</div></div>
 </div><!-- fragment --><p>Private members and implementation files may use <code>std::</code> types directly when no library wrapper exists, since they do not leak into the public interface.</p>
-<h2><a class="anchor" id="autotoc_md56"></a>
+<h2><a class="anchor" id="autotoc_md60"></a>
 Prefer Library Wrappers Over Raw std:: Types</h2>
 <p>When a promeki wrapper exists for a <code>std::</code> type, always use the wrapper — even in private members and implementation files. This "eat your own dogfood" principle ensures consistency, exercises the library's own APIs, and catches usability gaps early.</p>
 <table class="markdownTable">
@@ -387,23 +446,27 @@ Prefer Library Wrappers Over Raw std:: Types</h2>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>std::set&lt;K&gt;</code>   </td><td class="markdownTableBodyNone"><code><a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a>&lt;K&gt;</code>    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>std::string</code>   </td><td class="markdownTableBodyNone"><code><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a></code>   </td></tr>
+<td class="markdownTableBodyNone"><code>std::string</code>   </td><td class="markdownTableBodyNone"><code><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a></code>    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>std::unique_ptr&lt;T&gt;</code>   </td><td class="markdownTableBodyNone"><code><a class="el" href="classUniquePtr.html" title="A move-only smart pointer with exclusive ownership semantics.">UniquePtr</a>&lt;T&gt;</code>    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>std::shared_ptr&lt;T&gt;</code>   </td><td class="markdownTableBodyNone"><code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a>&lt;T&gt;</code> (note: adds copy-on-write; different semantics)   </td></tr>
 </table>
 <p>Use the raw <code>std::</code> type only when no wrapper exists (e.g., <code>std::thread</code>, <code>std::packaged_task</code>) or when interfacing with third-party code that requires it.</p>
-<h2><a class="anchor" id="autotoc_md57"></a>
+<h2><a class="anchor" id="autotoc_md61"></a>
 Macros</h2>
 <ul>
 <li>All caps with <code>PROMEKI_</code> prefix: <code>PROMEKI_SHARED</code>, <code>PROMEKI_OBJECT</code>, <code>PROMEKI_SIGNAL</code></li>
 <li>Utility macros: <code>PROMEKI_STRINGIFY</code>, <code>PROMEKI_ASSERT</code>, <code>PROMEKI_ARRAY_SIZE</code></li>
 </ul>
-<h2><a class="anchor" id="autotoc_md58"></a>
+<h2><a class="anchor" id="autotoc_md62"></a>
 Constants</h2>
 <ul>
 <li><code>static constexpr</code> inside the class.</li>
 <li>PascalCase or descriptive: <code>DefaultAlign</code>, <code>DefaultFormat</code>, <code>WhitespaceChars</code>, <code>npos</code></li>
 </ul>
 <hr  />
-<h1><a class="anchor" id="autotoc_md60"></a>
+<h1><a class="anchor" id="autotoc_md64"></a>
 Indentation and Formatting</h1>
 <ul>
 <li><b>Indentation</b>: 8-space-wide tabs for all code.</li>
@@ -420,10 +483,105 @@ Indentation and Formatting</h1>
 <li><b>Return statements</b>: Void functions end with <code>return;</code> on a separate line (Qt convention).</li>
 </ul>
 <hr  />
-<h1><a class="anchor" id="autotoc_md62"></a>
+<h1><a class="anchor" id="autotoc_md66"></a>
+Heap Ownership and Pointer Types</h1>
+<p>libpromeki does not use raw <code>new</code>/<code>delete</code> for object lifetime. Every heap-allocated object is owned by one of two smart pointers, and raw pointers are reserved for non-owning references. The "No raw ownership" design principle above is enforced through the conventions below.</p>
+<h2><a class="anchor" id="autotoc_md67"></a>
+The Three Tools</h2>
+<ol type="1">
+<li>**<code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a>&lt;T&gt;</code>** — Shared, reference-counted ownership with optional copy-on-write. Use for shareable data objects (see The SharedPtr / Copy-on-Write Pattern below) and for any value that crosses thread boundaries via the handoff pattern.</li>
+<li>**<code><a class="el" href="classUniquePtr.html" title="A move-only smart pointer with exclusive ownership semantics.">UniquePtr</a>&lt;T&gt;</code>** — Exclusive, move-only ownership. No reference counting, no copy-on-write, no proxy wrapper. Use for PIMPL implementations, owned member resources, and anywhere a single owner at a time is the correct model.</li>
+<li><b>Raw pointers</b> — Non-owning references only. Examples: parent/child back-pointers in <code><a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a></code>, observer pointers to an object owned elsewhere, short-lived pointers obtained from <code><a class="el" href="classUniquePtr.html#a8bb06dd615e904df2407941683361e58" title="Returns the raw pointer to the owned object.">UniquePtr::ptr()</a></code> / <code>SharedPtr::ptr()</code>.</li>
+</ol>
+<h2><a class="anchor" id="autotoc_md68"></a>
+Never Use Raw &lt;tt&gt;new&lt;/tt&gt; / &lt;tt&gt;delete&lt;/tt&gt; for Ownership</h2>
+<p>If you find yourself writing <code>delete _member;</code> in a destructor, stop and use <code><a class="el" href="classUniquePtr.html" title="A move-only smart pointer with exclusive ownership semantics.">UniquePtr</a></code> instead. If you write <code>_member = new T(...);</code> outside of an initializer that feeds a smart pointer, the same rule applies. Manual lifetime management is reserved for the handful of cases covered under Caveats and Limitations below.</p>
+<h2><a class="anchor" id="autotoc_md69"></a>
+Choosing Between SharedPtr and UniquePtr</h2>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Question   </th><th class="markdownTableHeadNone">Answer    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Is the type a shareable data object (<code>PROMEKI_SHARED_FINAL</code>)?   </td><td class="markdownTableBodyNone"><code><a class="el" href="classList.html#a5065311ff7846505d9a73878bcf7a3e3" title="Shared pointer type for List.">MyClass::Ptr</a></code> (<a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a>). Typical for <code><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a></code>, <code><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a></code>, <code><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a></code>, <code><a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a></code>, <code><a class="el" href="classMetadata.html" title="Key-value metadata container using typed Variant values.">Metadata</a></code>, etc.    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Is there exactly one owner, with lifetime tied to an enclosing object?   </td><td class="markdownTableBodyNone"><code>MyClass::UPtr</code> (<a class="el" href="classUniquePtr.html" title="A move-only smart pointer with exclusive ownership semantics.">UniquePtr</a>). Typical for PIMPL (<code>_impl</code>), owned backends (<code>_decoder</code>, <code>_resampler</code>, <code>_bridge</code>), and owned file handles.    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Does ownership transfer through a pipeline (producer → consumer → release)?   </td><td class="markdownTableBodyNone"><code>MyClass::UPtr</code> passed by <code>std::move</code>.    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Is the caller observing an object owned somewhere else?   </td><td class="markdownTableBodyNone">Raw pointer. Document the non-ownership on the accessor.   </td></tr>
+</table>
+<p>When both could work, prefer <code><a class="el" href="classUniquePtr.html" title="A move-only smart pointer with exclusive ownership semantics.">UniquePtr</a></code> — it is cheaper (no atomic refcount, no CoW check) and the exclusive-ownership contract is clearer at the call site.</p>
+<h2><a class="anchor" id="autotoc_md70"></a>
+Type Aliases for Heap-Managed Types</h2>
+<p>Every heap-managed type exposes ownership aliases (<code>Ptr</code>, <code>UPtr</code>, <code>PtrList</code>, <code>ImplPtr</code>, <code>{TypeName}UPtr</code>) so callers never spell <code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a>&lt;MyClass&gt;</code> or <code><a class="el" href="classUniquePtr.html" title="A move-only smart pointer with exclusive ownership semantics.">UniquePtr</a>&lt;MyClass&gt;</code> directly. The placement rules — class scope vs. namespace scope, visible vs. forward-declared types — are documented once under Convenience Type Aliases for Templates. Briefly:</p>
+<ul>
+<li><code>using Ptr = <a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a>&lt;MyClass&gt;;</code> for shareable data objects (<code>PROMEKI_SHARED_FINAL</code>).</li>
+<li><code>using UPtr = <a class="el" href="classUniquePtr.html" title="A move-only smart pointer with exclusive ownership semantics.">UniquePtr</a>&lt;MyClass&gt;;</code> for uniquely-owned classes.</li>
+<li><code>using ImplPtr = <a class="el" href="classUniquePtr.html" title="A move-only smart pointer with exclusive ownership semantics.">UniquePtr</a>&lt;Impl&gt;;</code> next to the forward-declaration of a private nested <code>Impl</code>.</li>
+<li>Namespace-scope <code>using FooUPtr = <a class="el" href="classUniquePtr.html" title="A move-only smart pointer with exclusive ownership semantics.">UniquePtr</a>&lt;Foo&gt;;</code> for opaque forward-declared types defined in a <code>.cpp</code>.</li>
+</ul>
+<p>A class may define both <code>Ptr</code> and <code>UPtr</code> when it is legitimately used in both modes — e.g. <code><a class="el" href="classAudioPacket.html" title="Encoded audio access unit produced by an AudioEncoder or consumed by an AudioDecoder.">AudioPacket</a></code> is typically shared via <code>::Ptr</code> but may be owned uniquely through <code>::UPtr</code> in transient factory paths.</p>
+<h2><a class="anchor" id="autotoc_md71"></a>
+Conditional Ownership (Dual-Pointer Pattern)</h2>
+<p>When an object may own a resource sometimes and reference an external one other times, use a <em>dual-pointer</em> pattern: a non-owning view pointer for access, plus a <code><a class="el" href="classUniquePtr.html" title="A move-only smart pointer with exclusive ownership semantics.">UniquePtr</a></code> that is populated only when ownership is held. This supersedes the older <code>T *_x + bool _ownsX</code> pattern.</p>
+<div class="fragment"><div class="line"><span class="keyword">class </span><a class="code hl_class" href="classRtpSession.html">RtpSession</a> {</div>
+<div class="line">        <span class="comment">// ...</span></div>
+<div class="line">        <span class="keyword">private</span>:</div>
+<div class="line">                <a class="code hl_class" href="classPacketTransport.html">PacketTransport</a>      *_transport = <span class="keyword">nullptr</span>;  <span class="comment">// always valid while running</span></div>
+<div class="line">                <a class="code hl_class" href="classUniquePtr.html">PacketTransport::UPtr</a> _ownedTransport;       <span class="comment">// populated only when we own</span></div>
+<div class="line">};</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// Owning path: create a transport we own.</span></div>
+<div class="line"><span class="keyword">auto</span> <a class="code hl_class" href="classList.html">owned</a> = UdpSocketTransport::UPtr::create();</div>
+<div class="line"><a class="code hl_class" href="classList.html">owned</a>-&gt;setLocalAddress(<a class="code hl_class" href="classList.html">localAddr</a>);</div>
+<div class="line"><span class="comment">// ... configure / open ...</span></div>
+<div class="line">_transport      = <a class="code hl_class" href="classList.html">owned</a>.ptr();</div>
+<div class="line">_ownedTransport = std::move(<a class="code hl_class" href="classList.html">owned</a>);</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// Borrowing path: caller supplies an external transport.</span></div>
+<div class="line">_transport = <a class="code hl_class" href="classList.html">externalTransport</a>;</div>
+<div class="line">_ownedTransport.<a class="code hl_function" href="classList.html#a8e2151a9bd72641fe14db4f23f9d18e2">clear</a>();</div>
+<div class="ttc" id="aclassList_html_a8e2151a9bd72641fe14db4f23f9d18e2"><div class="ttname"><a href="classList.html#a8e2151a9bd72641fe14db4f23f9d18e2">List::clear</a></div><div class="ttdeci">void clear() noexcept</div><div class="ttdoc">Removes all elements from the list.</div><div class="ttdef"><b>Definition</b> list.h:330</div></div>
+<div class="ttc" id="aclassPacketTransport_html"><div class="ttname"><a href="classPacketTransport.html">PacketTransport</a></div><div class="ttdoc">Abstract packet-I/O transport for datagram-oriented protocols.</div><div class="ttdef"><b>Definition</b> packettransport.h:64</div></div>
+<div class="ttc" id="aclassRtpSession_html"><div class="ttname"><a href="classRtpSession.html">RtpSession</a></div><div class="ttdoc">RTP session for sending and receiving packets (RFC 3550).</div><div class="ttdef"><b>Definition</b> rtpsession.h:73</div></div>
+<div class="ttc" id="aclassUniquePtr_html"><div class="ttname"><a href="classUniquePtr.html">UniquePtr&lt; PacketTransport &gt;</a></div></div>
+</div><!-- fragment --><p>The owned-side destructor runs automatically when <code>_ownedTransport</code> goes out of scope — there is no <code>if(_ownsTransport) delete _transport;</code> branch to get wrong.</p>
+<h2><a class="anchor" id="autotoc_md72"></a>
+Caveats and Limitations</h2>
+<ul>
+<li><b><a class="el" href="classUniquePtr.html" title="A move-only smart pointer with exclusive ownership semantics.">UniquePtr</a> does not support custom deleters.</b> For cases that need one (e.g. <code>std::unique_ptr&lt;char, void(*)(void*)&gt;</code> wrapping <code>strdup</code>'d memory with <code>free</code> as the deleter), use <code>std::unique_ptr</code> — this is the one context where bypassing the wrapper is appropriate.</li>
+<li><b>A type held via <code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a>&lt;T&gt;</code> with copy-on-write enabled must remain copyable.</b> <code><a class="el" href="group__util.html#ga171ec9034fbfc2c134195af18ea762e7" title="Macro to simplify making a base object into a native shared object.">PROMEKI_SHARED(T)</a></code> / <code><a class="el" href="sharedptr_8h.html#a19c77a1148cf694c53a7d0d6608c0cd9" title="Macro for non-polymorphic native shared objects.">PROMEKI_SHARED_FINAL(T)</a></code> emits a <code>_promeki_clone()</code> method whose default body is <code>new T(*this)</code>. Adding a <code><a class="el" href="classUniquePtr.html" title="A move-only smart pointer with exclusive ownership semantics.">UniquePtr</a></code> member to <code>T</code> deletes its copy constructor and breaks the clone. Mitigations:<ul>
+<li>Use <code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a>&lt;T, /*CopyOnWrite=*/false&gt;</code> on the holder so <code>_promeki_clone</code> is never instantiated, or</li>
+<li>Keep the raw-pointer + bool pattern for those specific members.</li>
+</ul>
+</li>
+<li><b>Forward-declared PIMPL impls require out-of-line destructors.</b> <code><a class="el" href="classUniquePtr.html" title="A move-only smart pointer with exclusive ownership semantics.">UniquePtr</a>&lt;Impl&gt;::~UniquePtr</code> needs the complete <code>Impl</code> type at the point of instantiation. Declare the outer class destructor in the header and define it in the <code>.cpp</code> (typically <code>= default;</code>) so destruction happens where <code>Impl</code> is complete.</li>
+<li><b>Objects whose lifetime is managed by the <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> parent/child tree stay on raw pointers.</b> Wrapping an <code><a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a></code> child in a smart pointer would double-delete because the parent already destroys children in its destructor.</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md73"></a>
+Accessors on UniquePtr / SharedPtr</h2>
+<ul>
+<li><code>ptr()</code> — asserts non-null and returns the raw pointer. Use when the smart pointer is known to hold a value.</li>
+<li><code>get()</code> (<a class="el" href="classUniquePtr.html" title="A move-only smart pointer with exclusive ownership semantics.">UniquePtr</a> only) — returns the raw pointer without asserting; returns <code>nullptr</code> when the <a class="el" href="classUniquePtr.html" title="A move-only smart pointer with exclusive ownership semantics.">UniquePtr</a> is empty. Use when exposing the pointer through an accessor that may legitimately return null.</li>
+<li><code>isValid()</code> / <code>isNull()</code> — predicate checks before dereferencing.</li>
+<li><code>operator-&gt;</code> / <code>operator*</code> — standard dereference; both assert non-null.</li>
+</ul>
+<p>When exposing a heap-managed member through a public accessor that may return null, use <code>get()</code> to preserve the non-owning contract at the API boundary:</p>
+<div class="fragment"><div class="line"><span class="keyword">class </span><a class="code hl_class" href="classMulticastReceiver.html">MulticastReceiver</a> {</div>
+<div class="line">        <span class="keyword">public</span>:</div>
+<div class="line">                <a class="code hl_class" href="classUdpSocket.html">UdpSocket</a> *<a class="code hl_function" href="classMulticastReceiver.html#a14a6ce54dc4ad1ab2519997aec036345">socket</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _socket.<a class="code hl_function" href="classUniquePtr.html#ab7f7ad01e7e7955edb07e3d11d2b6e30">get</a>(); }</div>
+<div class="line">        <span class="keyword">private</span>:</div>
+<div class="line">                <a class="code hl_class" href="classUniquePtr.html">UdpSocket::UPtr</a> _socket;</div>
+<div class="line">};</div>
+<div class="ttc" id="aclassMulticastReceiver_html"><div class="ttname"><a href="classMulticastReceiver.html">MulticastReceiver</a></div><div class="ttdoc">Standalone multicast datagram receiver with an owned worker thread.</div><div class="ttdef"><b>Definition</b> multicastreceiver.h:90</div></div>
+<div class="ttc" id="aclassMulticastReceiver_html_a14a6ce54dc4ad1ab2519997aec036345"><div class="ttname"><a href="classMulticastReceiver.html#a14a6ce54dc4ad1ab2519997aec036345">MulticastReceiver::socket</a></div><div class="ttdeci">UdpSocket * socket() const</div><div class="ttdoc">Returns the socket, or nullptr if not running.</div><div class="ttdef"><b>Definition</b> multicastreceiver.h:283</div></div>
+<div class="ttc" id="aclassUdpSocket_html"><div class="ttname"><a href="classUdpSocket.html">UdpSocket</a></div><div class="ttdoc">Datagram-oriented UDP socket with multicast support.</div><div class="ttdef"><b>Definition</b> udpsocket.h:49</div></div>
+<div class="ttc" id="aclassUniquePtr_html_ab7f7ad01e7e7955edb07e3d11d2b6e30"><div class="ttname"><a href="classUniquePtr.html#ab7f7ad01e7e7955edb07e3d11d2b6e30">UniquePtr::get</a></div><div class="ttdeci">T * get() const</div><div class="ttdoc">Returns the raw pointer without asserting non-null.</div><div class="ttdef"><b>Definition</b> uniqueptr.h:224</div></div>
+</div><!-- fragment --><hr  />
+<h1><a class="anchor" id="autotoc_md75"></a>
 The SharedPtr / Copy-on-Write Pattern</h1>
 <p><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a> provides reference-counted smart pointers with optional copy-on-write semantics (see <a class="el" href="md_CODING__STANDARDS.html#object-categories">Object Categories</a> above).</p>
-<h2><a class="anchor" id="autotoc_md63"></a>
+<h2><a class="anchor" id="autotoc_md76"></a>
 Shareable Data Objects Support SharedPtr</h2>
 <p>Every shareable data object includes the <code>PROMEKI_SHARED_FINAL</code> macro, which adds zero-cost <code><a class="el" href="classRefCount.html" title="An atomic reference count object.">RefCount</a></code> and <code>_promeki_clone()</code> hooks so the object can be managed by <code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a></code> without proxy indirection. Simple data objects do not include this macro — they are too small to benefit from reference counting.</p>
 <p>Every shareable data object must provide the following type aliases in its <code>public:</code> section:</p>
@@ -449,7 +607,7 @@ Shareable Data Objects Support SharedPtr</h2>
 <li><code>PtrList</code> — convenience alias for <code>promeki::List&lt;Ptr&gt;</code> (shared pointer list).</li>
 </ul>
 <p>This convention makes shared ownership explicit at the call site and provides a consistent spelling throughout the codebase. Use <code><a class="el" href="classList.html#a5065311ff7846505d9a73878bcf7a3e3" title="Shared pointer type for List.">MyClass::Ptr</a></code> wherever you would have used a raw pointer for shared ownership.</p>
-<h2><a class="anchor" id="autotoc_md64"></a>
+<h2><a class="anchor" id="autotoc_md77"></a>
 No Internal SharedPtr&lt;Data&gt;</h2>
 <p>No data objects use <code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a>&lt;Data&gt;</code> internally. All data objects store their data directly as member variables. The decision to share is made by the <em>composing</em> layer, not baked into each data object. If a caller needs shared ownership, they use <code><a class="el" href="classList.html#a5065311ff7846505d9a73878bcf7a3e3" title="Shared pointer type for List.">MyClass::Ptr</a></code> (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">i.e</a>., <code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a>&lt;MyClass&gt;</code>) explicitly.</p>
 <p>Media objects like <code><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a></code> and <code><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a></code> hold their buffers via <code><a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3" title="Shared pointer type for Buffer.">Buffer::Ptr</a></code>, so pixel and sample data is shared across copies without deep copies. When the object itself is copied, only the descriptors and shared pointer references are duplicated — the actual buffer memory is not.</p>
@@ -459,7 +617,7 @@ No Internal SharedPtr&lt;Data&gt;</h2>
 <li>Template containers (<a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a>, <a class="el" href="classArray.html" title="Fixed-size array container wrapping std::array.">Array</a>, <a class="el" href="classMap.html" title="Ordered associative container wrapping std::map.">Map</a>, <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a>) — wrap standard containers directly.</li>
 <li>Functional objects (ObjectBase-derived) — not copyable; use parent/child ownership.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md65"></a>
+<h2><a class="anchor" id="autotoc_md78"></a>
 How to Implement (Shareable Classes)</h2>
 <p>Shareable classes store data directly as member variables and include <code>PROMEKI_SHARED_FINAL</code> so they can be managed by <code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a></code> externally:</p>
 <div class="fragment"><div class="line"><span class="keyword">class </span><a class="code hl_class" href="classAudioDesc.html">AudioDesc</a> {</div>
@@ -480,9 +638,9 @@ How to Implement (Shareable Classes)</h2>
 <div class="ttc" id="aclassAudioDesc_html_addd7d5467392b279d693eff02f0af5e0"><div class="ttname"><a href="classAudioDesc.html#addd7d5467392b279d693eff02f0af5e0">AudioDesc::PtrList</a></div><div class="ttdeci">promeki::List&lt; Ptr &gt; PtrList</div><div class="ttdoc">List of shared AudioDesc pointers.</div><div class="ttdef"><b>Definition</b> audiodesc.h:49</div></div>
 </div><!-- fragment --><p>No internal <code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a>&lt;Data&gt;</code>, no <code>d-&gt;field</code> / <code>d.modify()-&gt;field</code> pattern. Just direct member access. When shared ownership is needed, callers use <code><a class="el" href="classAudioDesc.html#a12c38d68a765340588c5b19ae43ee023" title="Shared pointer type for AudioDesc.">AudioDesc::Ptr</a></code>.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md67"></a>
+<h1><a class="anchor" id="autotoc_md80"></a>
 Error Handling</h1>
-<h2><a class="anchor" id="autotoc_md68"></a>
+<h2><a class="anchor" id="autotoc_md81"></a>
 The Error Class</h2>
 <p><code><a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a></code> is an enum-based error class with codes like <code>Ok</code>, <code>Invalid</code>, <code>NotExist</code>, etc.</p>
 <ul>
@@ -490,7 +648,7 @@ The Error Class</h2>
 <li><code>name()</code> / <code>desc()</code> for human-readable text</li>
 <li><code>syserr()</code> to create from <code>errno</code></li>
 </ul>
-<h2><a class="anchor" id="autotoc_md69"></a>
+<h2><a class="anchor" id="autotoc_md82"></a>
 Return Patterns</h2>
 <p>Use one of these patterns consistently within a class. Preferred order:</p>
 <ol type="1">
@@ -506,7 +664,7 @@ Return Patterns</h2>
 </div><!-- fragment --></li>
 </ol>
 <p>Avoid mixing patterns within the same class without good reason.</p>
-<h2><a class="anchor" id="autotoc_md70"></a>
+<h2><a class="anchor" id="autotoc_md83"></a>
 Avoid &lt;tt&gt;bool&lt;/tt&gt; for Error Reporting</h2>
 <p>Do not use <code>bool</code> return values or <code>bool *ok</code> output parameters to indicate success or failure. Use the <code><a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a></code> class instead. <code><a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a></code> provides specific, diagnosable failure reasons (<code>NoMem</code>, <code>NoPermission</code>, <code>Timeout</code>, etc.) whereas <code>bool</code> discards all context about <em>why</em> something failed, making debugging and error recovery harder. The only exception is pure predicates that answer a yes/no question (e.g., <code>isEmpty()</code>, <code><a class="el" href="algorithm_8h.html#a991fe4324e67d0ad19571a3577d563ef" title="Returns true if the container contains the given value.">contains()</a></code>), which are not error reporting.</p>
 <p>When wrapping system calls that set <code>errno</code>, use <code><a class="el" href="classError.html#a16136e7ebc397d51bcb89566235a9467" title="Creates an Error from the last system error.">Error::syserr()</a></code> to capture the specific failure: </p><div class="fragment"><div class="line"><span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">mlock</a>(ptr, size) != 0) {</div>
@@ -515,9 +673,9 @@ Avoid &lt;tt&gt;bool&lt;/tt&gt; for Error Reporting</h2>
 <div class="line">}</div>
 <div class="ttc" id="aclassError_html_a16136e7ebc397d51bcb89566235a9467"><div class="ttname"><a href="classError.html#a16136e7ebc397d51bcb89566235a9467">Error::syserr</a></div><div class="ttdeci">static Error syserr()</div><div class="ttdoc">Creates an Error from the last system error.</div></div>
 </div><!-- fragment --><hr  />
-<h1><a class="anchor" id="autotoc_md72"></a>
+<h1><a class="anchor" id="autotoc_md85"></a>
 Container and Wrapper Types</h1>
-<h2><a class="anchor" id="autotoc_md73"></a>
+<h2><a class="anchor" id="autotoc_md86"></a>
 String</h2>
 <ul>
 <li>Wraps <code>std::string</code> as a plain shareable value type (no internal <a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a>).</li>
@@ -525,7 +683,7 @@ String</h2>
 <li><code>stds()</code> provides access to the underlying <code>std::string</code> when needed.</li>
 <li>Implicit conversions to <code>std::string&amp;</code>, <code>const char*</code> are provided for interop.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md74"></a>
+<h2><a class="anchor" id="autotoc_md87"></a>
 List&lt;T&gt;</h2>
 <ul>
 <li>Wraps <code>std::vector&lt;T&gt;</code> with Qt-inspired naming.</li>
@@ -534,13 +692,13 @@ List&lt;T&gt;</h2>
 <li>Supports <code>operator+=</code> for appending items or lists.</li>
 <li>Use <code><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a>&lt;T&gt;</code> for type aliases in public APIs (not <code>std::vector&lt;T&gt;</code> directly).</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md75"></a>
+<h2><a class="anchor" id="autotoc_md88"></a>
 Array&lt;T, N&gt;</h2>
 <ul>
 <li>Wraps <code>std::array&lt;T, N&gt;</code> with arithmetic operators and utility methods.</li>
 <li>Use for fixed-size numerical data (color components, matrix rows, etc.).</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md76"></a>
+<h2><a class="anchor" id="autotoc_md89"></a>
 Buffer</h2>
 <ul>
 <li>Manages raw memory with optional ownership and alignment.</li>
@@ -549,10 +707,10 @@ Buffer</h2>
 <li>Tied to <code><a class="el" href="classMemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a></code> for allocation abstraction.</li>
 </ul>
 <hr  />
-<h1><a class="anchor" id="autotoc_md78"></a>
+<h1><a class="anchor" id="autotoc_md91"></a>
 TypeRegistry Types</h1>
 <p><a class="el" href="classColorModel.html" title="Single source of truth for a color model and its associated color space.">ColorModel</a>, <a class="el" href="classMemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a>, <a class="el" href="classPixelMemLayout.html" title="Describes the memory layout of pixel data without color semantics.">PixelMemLayout</a>, and <a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a> use the <a class="el" href="typeregistry.html">TypeRegistry pattern</a>. Each is a lightweight wrapper around a <code>const Data *</code> pointer, resolved once from an ID via a construct-on-first-use registry. Copying is a pointer copy; comparison is a pointer comparison.</p>
-<h2><a class="anchor" id="autotoc_md79"></a>
+<h2><a class="anchor" id="autotoc_md92"></a>
 Pass the Wrapper, Not the ID</h2>
 <p>IDs exist only for two purposes: constructing a wrapper, and registering new types. <b>All function parameters, return values, and member variables must use the wrapper class</b>, not the ID enum. This avoids redundant registry lookups:</p>
 <div class="fragment"><div class="line"><span class="comment">// WRONG — every caller pays for a registry lookup</span></div>
@@ -565,7 +723,7 @@ Pass the Wrapper, Not the ID</h2>
 <div class="ttc" id="aclassPixelFormat_html_a7ae7d8a6cf46a5c9947b72d5ec9d4ded"><div class="ttname"><a href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4ded">PixelFormat::ID</a></div><div class="ttdeci">ID</div><div class="ttdoc">Identifies a pixel description.</div><div class="ttdef"><b>Definition</b> pixelformat.h:138</div></div>
 </div><!-- fragment --><p>Because every wrapper has an <b>implicit</b> constructor from its ID enum, changing a parameter from <code>ID</code> to <code>const Wrapper &amp;</code> is source-compatible — callers that pass an enum constant like <code><a class="el" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4dedac09d859f4e4dc0d747afe58c98dae903" title="8-bit RGBA, sRGB, full range.">PixelFormat::RGBA8_sRGB</a></code> compile unchanged.</p>
 <p>Do <b>not</b> create <code>static const</code> wrapper objects for well-known IDs, as this introduces static initialization order uncertainty. Instead, pass the ID enum constant directly and let the implicit conversion happen at the call site.</p>
-<h2><a class="anchor" id="autotoc_md80"></a>
+<h2><a class="anchor" id="autotoc_md93"></a>
 ID Disambiguation Guards</h2>
 <p>TypeRegistry ID enums are unscoped, so the compiler treats them as integer-compatible in overload resolution. When a class has another constructor whose leading parameters are integer-compatible types (e.g. <code>uint8_t</code>), the ID may silently match the wrong overload. In this case, provide an explicit ID overload as a <b>disambiguation guard</b>:</p>
 <div class="fragment"><div class="line"><span class="comment">// Primary constructor</span></div>
@@ -579,10 +737,10 @@ ID Disambiguation Guards</h2>
 <div class="ttc" id="aclassColor_html"><div class="ttname"><a href="classColor.html">Color</a></div><div class="ttdoc">A color value in any supported color model.</div><div class="ttdef"><b>Definition</b> color.h:97</div></div>
 </div><!-- fragment --><p>This is the <b>only</b> case where an ID should appear in a public parameter list. Always document the guard with a comment explaining why it exists.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md82"></a>
+<h1><a class="anchor" id="autotoc_md95"></a>
 Well-Known Enums</h1>
 <p>libpromeki uses the runtime-typed <code><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a></code> class (<code><a class="el" href="enum_8h.html">include/promeki/enum.h</a></code>) for any enumerated value that needs to round-trip through <code><a class="el" href="classVariant.html" title="Concrete Variant type used throughout promeki.">Variant</a></code>, <code><a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a></code>, JSON config files, or user-facing CLI/GUI options. Every <b>well-known</b> enum — meaning one that is shared across subsystems or exposed as configuration — goes in a single header: <code><a class="el" href="enums_8h.html">include/promeki/enums.h</a></code>.</p>
-<h2><a class="anchor" id="autotoc_md83"></a>
+<h2><a class="anchor" id="autotoc_md96"></a>
 Use the &lt;tt&gt;TypedEnum&lt;Derived&gt;&lt;/tt&gt; CRTP Pattern</h2>
 <p>All enums in <code><a class="el" href="enums_8h.html">enums.h</a></code> inherit from <code><a class="el" href="classTypedEnum.html" title="CRTP base pinning an Enum value to a compile-time type.">TypedEnum</a>&lt;Self&gt;</code>. This gives the enum a compile-time type identity so function signatures can take a concrete <code>const <a class="el" href="classVideoPattern.html" title="Well-known Enum type for video test pattern generator modes.">VideoPattern</a> &amp;</code> (etc.) instead of a generic <code>const <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> &amp;</code>, while still participating in every runtime <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> API via public inheritance.</p>
 <div class="fragment"><div class="line"><span class="comment">// include/promeki/enums.h</span></div>
@@ -616,11 +774,11 @@ Use the &lt;tt&gt;TypedEnum&lt;Derived&gt;&lt;/tt&gt; CRTP Pattern</h2>
 <li><b>No <code>Type</code> argument on the static definitions</b> — the inherited <code><a class="el" href="classTypedEnum.html" title="CRTP base pinning an Enum value to a compile-time type.">TypedEnum(int)</a></code> pulls <code>Derived::Type</code> automatically, so <code>{ 0 }</code> is all that is needed.</li>
 </ul>
 <p>The low-level <code><a class="el" href="classEnum.html#aee589f1f0e9bceb1bd1ca13ac005dd74" title="Registers a new enum type with a runtime-computed value table.">Enum::registerType</a>(const <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> &amp;, const ValueList &amp;, int)</code> is still available for truly dynamic cases (e.g. V4L2 menu controls built from device-advertised menu items); it copies the name and entry list onto the heap. Do <b>not</b> use it for well-known enums in <code><a class="el" href="enums_8h.html">enums.h</a></code> — always prefer <code>PROMEKI_REGISTER_ENUM_TYPE</code> so the data lives in rodata and the compile-time validators run.</p>
-<h2><a class="anchor" id="autotoc_md84"></a>
+<h2><a class="anchor" id="autotoc_md97"></a>
 Where Well-Known Enums Live</h2>
 <p>Every enum that is used outside a single implementation file <b>must</b> live in <code><a class="el" href="enums_8h.html">include/promeki/enums.h</a></code>. Do not scatter them across subsystem headers. Private, single-file enums (like a scoped <code>enum class</code> used only inside one <code>.cpp</code>) stay local — only enums that cross module boundaries or become config values belong in <code><a class="el" href="enums_8h.html">enums.h</a></code>.</p>
 <p>When adding a new well-known enum, also add a brief Doxygen comment explaining what subsystem it belongs to and which <code><a class="el" href="classMediaConfig.html" title="Generic name/value configuration container for the media subsystem.">MediaConfig</a></code> / <code><a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a></code> keys consume it.</p>
-<h2><a class="anchor" id="autotoc_md85"></a>
+<h2><a class="anchor" id="autotoc_md98"></a>
 Function Signatures</h2>
 <p>Prefer concrete <code>const TypedEnum-derived &amp;</code> parameters over <code>const <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> &amp;</code> whenever the function only accepts one specific enum kind. This gives compile-time type safety at zero runtime cost:</p>
 <div class="fragment"><div class="line"><span class="comment">// PREFER — compile-time type check; VideoPattern cannot be passed here</span></div>
@@ -634,7 +792,7 @@ Function Signatures</h2>
 <div class="ttc" id="aclassDataStream_html"><div class="ttname"><a href="classDataStream.html">DataStream</a></div><div class="ttdoc">Binary stream for structured, portable serialization.</div><div class="ttdef"><b>Definition</b> datastream.h:182</div></div>
 <div class="ttc" id="aclassEnum_html"><div class="ttname"><a href="classEnum.html">Enum</a></div><div class="ttdoc">Runtime-typed enumeration value carrying a registered type and integer.</div><div class="ttdef"><b>Definition</b> enum.h:107</div></div>
 </div><!-- fragment --><p>Because <code><a class="el" href="classTypedEnum.html" title="CRTP base pinning an Enum value to a compile-time type.">TypedEnum</a>&lt;T&gt;</code> inherits publicly from <code><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a></code> and adds no members, passing a typed value to an API that takes <code>const <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> &amp;</code> still works via implicit derived-to-base conversion.</p>
-<h2><a class="anchor" id="autotoc_md86"></a>
+<h2><a class="anchor" id="autotoc_md99"></a>
 Backward Compatibility</h2>
 <p>Migrating an existing enum from the old <code>struct { static inline const <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> X{Type,N}; }</code> pattern to <code><a class="el" href="classTypedEnum.html" title="CRTP base pinning an Enum value to a compile-time type.">TypedEnum</a>&lt;Self&gt;</code> is source-compatible:</p>
 <ul>
@@ -643,7 +801,7 @@ Backward Compatibility</h2>
 <li><code><a class="el" href="classEnum.html#ac621480dfcb02bcd46dca06ebbb7dc35" title="Parses a &quot;TypeName::ValueName&quot; string into an Enum.">Enum::lookup</a>("VideoPattern::ColorBars")</code> — unchanged on the wire format.</li>
 </ul>
 <hr  />
-<h1><a class="anchor" id="autotoc_md88"></a>
+<h1><a class="anchor" id="autotoc_md101"></a>
 ObjectBase and Signals/Slots</h1>
 <p>Functional objects (see <a class="el" href="md_CODING__STANDARDS.html#object-categories">Object Categories</a>) derive from <code><a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a></code> to gain identity, parent/child ownership, and signal/slot communication.</p>
 <ul>
@@ -655,17 +813,17 @@ ObjectBase and Signals/Slots</h1>
 <li>Do <b>not</b> use <code>PROMEKI_SHARED_FINAL</code> on ObjectBase-derived classes. They have their own ownership model and are never managed by <a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a>.</li>
 </ul>
 <hr  />
-<h1><a class="anchor" id="autotoc_md90"></a>
+<h1><a class="anchor" id="autotoc_md103"></a>
 Namespace</h1>
 <p>All code goes in the <code>promeki</code> namespace using macros: </p><div class="fragment"><div class="line"><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
 <div class="line"><span class="comment">// ...</span></div>
 <div class="line"><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
 </div><!-- fragment --><p>Do not use <code>using namespace promeki;</code> in headers.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md92"></a>
+<h1><a class="anchor" id="autotoc_md105"></a>
 Stream Operator Support (TextStream / DataStream)</h1>
 <p>New data classes should provide free <code>operator&lt;&lt;</code> and <code>operator&gt;&gt;</code> overloads for <code><a class="el" href="classTextStream.html" title="Formatted text I/O with encoding awareness.">TextStream</a></code> and, where binary serialization makes sense, <code><a class="el" href="classDataStream.html" title="Binary stream for structured, portable serialization.">DataStream</a></code>. These overloads live in the class's own header (not in <code><a class="el" href="textstream_8h.html">textstream.h</a></code> or <code><a class="el" href="datastream_8h.html">datastream.h</a></code>), following the same pattern Qt uses for placing <code>QTextStream</code>/<code>QDataStream</code> operators alongside each type.</p>
-<h2><a class="anchor" id="autotoc_md93"></a>
+<h2><a class="anchor" id="autotoc_md106"></a>
 TextStream</h2>
 <p>Every data class that has a meaningful text representation should provide:</p>
 <div class="fragment"><div class="line"><span class="comment">// In myclass.h — forward-declare TextStream to avoid circular includes</span></div>
@@ -676,7 +834,7 @@ TextStream</h2>
 <div class="ttc" id="aaudiodesc_8h_html_a93172015d81d29c21201f32bf7dcbcf7"><div class="ttname"><a href="audiodesc_8h.html#a93172015d81d29c21201f32bf7dcbcf7">operator&gt;&gt;</a></div><div class="ttdeci">DataStream &amp; operator&gt;&gt;(DataStream &amp;stream, AudioDesc &amp;desc)</div><div class="ttdoc">Reads an AudioDesc from its tagged wire format.</div><div class="ttdef"><b>Definition</b> audiodesc.h:317</div></div>
 <div class="ttc" id="aclassTextStream_html"><div class="ttname"><a href="classTextStream.html">TextStream</a></div><div class="ttdoc">Formatted text I/O with encoding awareness.</div><div class="ttdef"><b>Definition</b> textstream.h:54</div></div>
 </div><!-- fragment --><p>The <code>operator&lt;&lt;</code> should produce a human-readable representation consistent with <code>toString()</code>. The <code>operator&gt;&gt;</code> should parse the same format when round-tripping makes sense; omit it when it doesn't (e.g., complex summary formats).</p>
-<h2><a class="anchor" id="autotoc_md94"></a>
+<h2><a class="anchor" id="autotoc_md107"></a>
 DataStream</h2>
 <p>Data classes that participate in binary serialization (pipeline frames, object state, network protocols) should provide:</p>
 <div class="fragment"><div class="line"><span class="comment">// In myclass.h — forward-declare DataStream to avoid circular includes</span></div>
@@ -685,7 +843,7 @@ DataStream</h2>
 <div class="line"><a class="code hl_class" href="classDataStream.html">DataStream</a> &amp;<a class="code hl_function" href="audiodesc_8h.html#a58ee4887cc6f000368ebfd15426208f2">operator&lt;&lt;</a>(<a class="code hl_class" href="classDataStream.html">DataStream</a> &amp;stream, <span class="keyword">const</span> <a class="code hl_class" href="classList.html">MyClass</a> &amp;<a class="code hl_class" href="classList.html">val</a>);</div>
 <div class="line"><a class="code hl_class" href="classDataStream.html">DataStream</a> &amp;<a class="code hl_function" href="audiodesc_8h.html#a93172015d81d29c21201f32bf7dcbcf7">operator&gt;&gt;</a>(<a class="code hl_class" href="classDataStream.html">DataStream</a> &amp;stream, <a class="code hl_class" href="classList.html">MyClass</a> &amp;<a class="code hl_class" href="classList.html">val</a>);</div>
 </div><!-- fragment --><p>These write/read the class fields in a well-defined order. See <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">devplan/core_streams.md</a></code> for the wire format conventions.</p>
-<h2><a class="anchor" id="autotoc_md95"></a>
+<h2><a class="anchor" id="autotoc_md108"></a>
 When to Omit</h2>
 <ul>
 <li>Utility classes (<a class="el" href="classMutex.html" title="Mutual exclusion lock wrapping std::mutex.">Mutex</a>, <a class="el" href="classQueue.html" title="Thread-safe FIFO queue.">Queue</a>, etc.) do not need stream operators.</li>
@@ -693,17 +851,17 @@ When to Omit</h2>
 <li>Simple wrapper types where the underlying primitive's operator already suffices (e.g., <code><a class="el" href="classAtomic.html" title="Atomic variable wrapping std::atomic&lt;T&gt;.">Atomic</a>&lt;T&gt;</code>) do not need their own operators.</li>
 </ul>
 <hr  />
-<h1><a class="anchor" id="autotoc_md97"></a>
+<h1><a class="anchor" id="autotoc_md110"></a>
 Documentation (Doxygen)</h1>
 <p>All public API surfaces should be documented with Doxygen comments using the <code>/** ... */</code> style.</p>
-<h2><a class="anchor" id="autotoc_md98"></a>
+<h2><a class="anchor" id="autotoc_md111"></a>
 Class Documentation</h2>
 <p>Every class should have a <code>@brief</code> line followed by a longer description when appropriate. Use <code>@tparam</code> for template parameters and <code>@note</code> for important caveats:</p>
 <div class="fragment"><div class="line"> </div>
 <div class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
 <div class="line"><span class="keyword">class </span><a class="code hl_class" href="classQueue.html">Queue</a> { ... };</div>
 <div class="ttc" id="aclassQueue_html"><div class="ttname"><a href="classQueue.html">Queue</a></div><div class="ttdoc">Thread-safe FIFO queue.</div><div class="ttdef"><b>Definition</b> queue.h:46</div></div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md99"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md112"></a>
 Method Documentation</h2>
 <p>Every public method should have at minimum a <code>@brief</code> line. Document parameters, return values, and template parameters as applicable:</p>
 <ul>
@@ -713,7 +871,7 @@ Method Documentation</h2>
 </ul>
 <div class="fragment"><div class="line"> </div>
 <div class="line"><a class="code hl_class" href="classList.html">Result&lt;T&gt;</a> pop(<span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">timeoutMs</a> = 0);</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md100"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md113"></a>
 Thread Safety Documentation</h2>
 <p>Every class must document its thread safety guarantees in the class-level Doxygen comment. Use one of these standard statements:</p>
 <ul>
@@ -727,17 +885,17 @@ Thread Safety Documentation</h2>
 <div class="line"><span class="keyword">class </span><a class="code hl_class" href="classMulticastManager.html">MulticastManager</a> : <span class="keyword">public</span> <a class="code hl_class" href="classObjectBase.html">ObjectBase</a> { ... };</div>
 <div class="ttc" id="aclassMulticastManager_html"><div class="ttname"><a href="classMulticastManager.html">MulticastManager</a></div><div class="ttdoc">Manages multicast group membership for multi-stream scenarios.</div><div class="ttdef"><b>Definition</b> multicastmanager.h:47</div></div>
 <div class="ttc" id="aclassObjectBase_html"><div class="ttname"><a href="classObjectBase.html">ObjectBase</a></div><div class="ttdoc">Base object for promeki.</div><div class="ttdef"><b>Definition</b> objectbase.h:154</div></div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md101"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md114"></a>
 What Not to Document</h2>
 <ul>
 <li>Private members and implementation details do not require Doxygen comments (plain <code>//</code> comments are fine when needed).</li>
 <li>Trivial getters/setters that are self-explanatory from their name and signature may omit Doxygen, but prefer documenting them when there are non-obvious semantics.</li>
 </ul>
 <hr  />
-<h1><a class="anchor" id="autotoc_md103"></a>
+<h1><a class="anchor" id="autotoc_md116"></a>
 Testing</h1>
 <p>Tests use the <a href="https://github.com/doctest/doctest">doctest</a> framework, vendored in <code>thirdparty/doctest/</code>.</p>
-<h2><a class="anchor" id="autotoc_md104"></a>
+<h2><a class="anchor" id="autotoc_md117"></a>
 File Layout</h2>
 <ul>
 <li>Test files live in <code>tests/</code> and are named after the class they test (e.g., <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">tests/string.cpp</a></code> for <code><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a></code>).</li>
@@ -745,7 +903,7 @@ File Layout</h2>
 <li>A shared <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">tests/doctest_main.cpp</a></code> defines the <code>main()</code> entry point with <code>DOCTEST_CONFIG_IMPLEMENT</code>. Individual test files should <b>not</b> define <code>main()</code>.</li>
 <li>Tests are compiled and run automatically during the build via CTest.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md105"></a>
+<h2><a class="anchor" id="autotoc_md118"></a>
 Structure</h2>
 <p>Use <code>TEST_CASE</code> for each class or logical grouping, and <code>SUBCASE</code> for individual behaviors:</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;doctest/doctest.h&gt;</span></div>
@@ -765,7 +923,7 @@ Structure</h2>
 <div class="line">                <a class="code hl_class" href="classList.html">CHECK</a>(result.name() == <span class="stringliteral">&quot;hello&quot;</span>);</div>
 <div class="line">        }</div>
 <div class="line">}</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md106"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md119"></a>
 Assertions</h2>
 <p>Prefer these doctest macros:</p>
 <ul>
@@ -775,14 +933,14 @@ Assertions</h2>
 <li><code>CHECK(val == <a class="el" href="classList.html#ad6aca4c38c82cc5b5fd56ae77b73815f" title="Constructs a list with a given number of default-constructed elements.">doctest::Approx(expected)</a>.epsilon(<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.001</a>))</code> — with custom tolerance.</li>
 <li><code>REQUIRE(expr)</code> — fatal assertion (test stops on failure). Use sparingly, only when subsequent checks depend on this one passing.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md107"></a>
+<h2><a class="anchor" id="autotoc_md120"></a>
 Build Integration</h2>
 <p>All library code is built into a single <code>promeki</code> shared library with one test executable (<code>unittest-promeki</code>). It is registered with CTest. The <code>run-tests</code> custom target runs all tests as part of the normal build.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md109"></a>
+<h1><a class="anchor" id="autotoc_md122"></a>
 Logging</h1>
 <p>All logging goes through the <code><a class="el" href="classLogger.html" title="Asynchronous thread-safe logging facility.">Logger</a></code> system via the convenience macros in <code><a class="el" href="logger_8h.html">logger.h</a></code>. Follow these conventions so that log output is useful for diagnosing problems without access to a debugger.</p>
-<h2><a class="anchor" id="autotoc_md110"></a>
+<h2><a class="anchor" id="autotoc_md123"></a>
 Use the Right Level</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -796,7 +954,7 @@ Use the Right Level</h2>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>promekiErr(fmt, ...)</code>   </td><td class="markdownTableBodyNone">Errors that affect correctness or represent failed operations.   </td></tr>
 </table>
-<h2><a class="anchor" id="autotoc_md111"></a>
+<h2><a class="anchor" id="autotoc_md124"></a>
 Register Every Source File for Debug Logging</h2>
 <p>Any <code>.cpp</code> file that contains <code>promekiDebug()</code> calls must register a debug module name near the top, after the includes and inside the <code>promeki</code> namespace:</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;promeki/myclass.h&gt;</span></div>
@@ -807,7 +965,7 @@ Register Every Source File for Debug Logging</h2>
 <div class="line">PROMEKI_DEBUG(<a class="code hl_class" href="classList.html">MyClass</a>)</div>
 <div class="ttc" id="alogger_8h_html"><div class="ttname"><a href="logger_8h.html">logger.h</a></div></div>
 </div><!-- fragment --><p>This lets users activate debug output for individual modules at runtime via <code>PROMEKI_DEBUG=MyClass</code>.</p>
-<h2><a class="anchor" id="autotoc_md112"></a>
+<h2><a class="anchor" id="autotoc_md125"></a>
 Capture All Relevant State</h2>
 <p>A log message should contain enough context to understand what happened without cross-referencing other output. Include the values of variables, arguments, and state that led to the message:</p>
 <div class="fragment"><div class="line"><span class="comment">// BAD — no context, impossible to diagnose</span></div>
@@ -815,7 +973,7 @@ Capture All Relevant State</h2>
 <div class="line"> </div>
 <div class="line"><span class="comment">// GOOD — captures the path, the error, and enough state to reproduce</span></div>
 <div class="line">promekiWarn(<span class="stringliteral">&quot;Failed to open &#39;%s&#39;: %s&quot;</span>, path.cstr(), <a class="code hl_class" href="classList.html">err</a>.desc().cstr());</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md113"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md126"></a>
 Identify the Object Instance</h2>
 <p>When logging from an instance method, prefix the message with the class name and <code>this</code> pointer so you can correlate log lines with a specific object, especially when multiple instances of the same class exist:</p>
 <div class="fragment"><div class="line">promekiDebug(<span class="stringliteral">&quot;ThreadPool(%p): spawning thread %d (active %d, waiting %d, max %d)&quot;</span>,</div>
@@ -827,7 +985,7 @@ Identify the Object Instance</h2>
 </div><!-- fragment --><p>The format is <code>ClassName(p):</code> followed by the message. For classes that have a user-visible name, include that too:</p>
 <div class="fragment"><div class="line">promekiDebug(<span class="stringliteral">&quot;Thread(%p &#39;%s&#39;): started, priority %d&quot;</span>,</div>
 <div class="line">             (<span class="keywordtype">void</span> *)<span class="keyword">this</span>, _name.cstr(), _priority);</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md114"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md127"></a>
 Instrument the Library with promekiDebug</h2>
 <p>Use <code>promekiDebug()</code> generously throughout library code so the library can be debugged in-situ at runtime. Key places to add debug logging:</p>
 <ul>
@@ -839,7 +997,7 @@ Instrument the Library with promekiDebug</h2>
 </ul>
 <p>Because <code>promekiDebug()</code> is compiled out in Release builds and skipped at runtime unless the module is activated, there is no performance cost to having extensive instrumentation.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md116"></a>
+<h1><a class="anchor" id="autotoc_md129"></a>
 Miscellaneous</h1>
 <ul>
 <li><b>C++ standard</b>: C++20.</li>
@@ -857,7 +1015,7 @@ Miscellaneous</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
   </ul>
 </div>
 </body>

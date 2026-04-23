@@ -1,5 +1,8 @@
 var NAVTREEINDEX4 =
 {
+"classBenchmarkRunner.html#a22736714ebfc0d7af858b7986da3bdf4":[20,10,9,6],
+"classBenchmarkRunner.html#a2f856561998844ea57ea60276912ac52":[20,10,9,5],
+"classBenchmarkRunner.html#a3685b14452579bcc0bc26ed98abe61e1":[20,10,9,21],
 "classBenchmarkRunner.html#a38e1d7bf8e73c71d5de1278b643a3bf8":[20,10,9,19],
 "classBenchmarkRunner.html#a42698d4484fb3fd88b14eab5b6a8c377":[20,10,9,2],
 "classBenchmarkRunner.html#a58652a268bf988c2f8533a1bd223ac93":[20,10,9,20],
@@ -246,8 +249,5 @@ var NAVTREEINDEX4 =
 "classClock.html#acedc580419855c32366ce8347d6caec5":[20,9,2,17],
 "classClock.html#ad95118aed30fce290503214f17b037e3":[20,9,2,15],
 "classClockDomain.html":[20,9,4],
-"classClockDomain.html#a2db27f3c4166aec6498a507fa5e0f23f":[20,9,4,8],
-"classClockDomain.html#a3d6bd403bac919e57cf6f70dad1e484a":[20,9,4,13],
-"classClockDomain.html#a4468ef5412ddc87fae34fb5781c79904":[20,9,4,15],
-"classClockDomain.html#a5e9b96dc5735a9dc07febc66a147abc3":[20,9,4,12]
+"classClockDomain.html#a2db27f3c4166aec6498a507fa5e0f23f":[20,9,4,8]
 };

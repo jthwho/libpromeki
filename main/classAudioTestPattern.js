@@ -1,5 +1,6 @@
 var classAudioTestPattern =
 [
+    [ "UPtr", "classAudioTestPattern.html#a1bd782a3e2f145b9ecca7dad6821c5e0", null ],
     [ "AudioTestPattern", "classAudioTestPattern.html#aa4356079cf315f6f3a4f12db027c9be3", null ],
     [ "~AudioTestPattern", "classAudioTestPattern.html#a246792157b53446f6212fbf4d4006c99", null ],
     [ "channelIdBaseFreq", "classAudioTestPattern.html#a8bcf812a26fa0c3873ee04dd90d7abaa", null ],

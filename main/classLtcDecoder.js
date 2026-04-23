@@ -2,6 +2,7 @@ var classLtcDecoder =
 [
     [ "DecodedTimecode", "structLtcDecoder_1_1DecodedTimecode.html", "structLtcDecoder_1_1DecodedTimecode" ],
     [ "DecodedList", "classLtcDecoder.html#a801ff1d622064a6b3634eb20ed92aeb9", null ],
+    [ "UPtr", "classLtcDecoder.html#a45b53a563ee4fe8f72c8e69ddf1d4556", null ],
     [ "LtcDecoder", "classLtcDecoder.html#aefcccac7fc533c95f2527f43854dce2b", null ],
     [ "~LtcDecoder", "classLtcDecoder.html#ae8ed02f8a37b709bb1434e705b001201", null ],
     [ "decode", "classLtcDecoder.html#aa9f298171e75d4429d40498729b7419c", null ],

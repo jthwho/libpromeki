@@ -2,6 +2,7 @@ var classDebugMediaFile =
 [
     [ "FrameIndexEntry", "structDebugMediaFile_1_1FrameIndexEntry.html", "structDebugMediaFile_1_1FrameIndexEntry" ],
     [ "OpenOptions", "structDebugMediaFile_1_1OpenOptions.html", "structDebugMediaFile_1_1OpenOptions" ],
+    [ "UPtr", "classDebugMediaFile.html#a5977620b5cedd8e503596ce85fe4acac", null ],
     [ "Mode", "classDebugMediaFile.html#af102ac2a5a6619d4f1d290f2ffff26e5", [
       [ "NotOpen", "classDebugMediaFile.html#af102ac2a5a6619d4f1d290f2ffff26e5a48a08c0c5aa052b15385ede83401580e", null ],
       [ "Read", "classDebugMediaFile.html#af102ac2a5a6619d4f1d290f2ffff26e5aac5803403d80e2ca6de76055e2b9d857", null ],

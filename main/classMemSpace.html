@@ -324,6 +324,7 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Allocates memory in this memory space. </p>
+<p>A zero-byte allocation returns a valid <a class="el" href="structMemAllocation.html" title="Describes a memory allocation from a MemSpace.">MemAllocation</a> with <code>ptr</code> set to nullptr; registered backend alloc lambdas are not invoked and stats counters are not updated. This lets callers express "empty buffer" without the backend having to handle an implementation-defined <code>aligned_alloc(align, 0)</code> corner case.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">bytes</td><td>Number of bytes to allocate. </td></tr>
@@ -720,8 +721,8 @@ Static Public Member Functions</h2></td></tr>
 <div class="ttc" id="aclassMemSpace_html_a2b727b5807b3aed1ae585d1603a0d6ed"><div class="ttname"><a href="classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6ed">MemSpace::ID</a></div><div class="ttdeci">ID</div><div class="ttdoc">Identifies a memory space.</div><div class="ttdef"><b>Definition</b> memspace.h:49</div></div>
 <div class="ttc" id="aclassMemSpace_html_a6a7ed2a8545c7a588f399b0dc107d14a"><div class="ttname"><a href="classMemSpace.html#a6a7ed2a8545c7a588f399b0dc107d14a">MemSpace::registerData</a></div><div class="ttdeci">static void registerData(Ops &amp;&amp;ops)</div><div class="ttdoc">Registers an Ops record in the registry.</div></div>
 <div class="ttc" id="aclassMemSpace_html_af27c77f0ed51f425f058e367e4ed1712"><div class="ttname"><a href="classMemSpace.html#af27c77f0ed51f425f058e367e4ed1712">MemSpace::registerType</a></div><div class="ttdeci">static ID registerType()</div><div class="ttdoc">Allocates and returns a unique ID for a user-defined memory space.</div></div>
-<div class="ttc" id="astructMemAllocation_html"><div class="ttname"><a href="structMemAllocation.html">MemAllocation</a></div><div class="ttdoc">Describes a memory allocation from a MemSpace.</div><div class="ttdef"><b>Definition</b> memspace.h:373</div></div>
-<div class="ttc" id="astructMemSpace_1_1Ops_html"><div class="ttname"><a href="structMemSpace_1_1Ops.html">MemSpace::Ops</a></div><div class="ttdoc">Function table for memory space operations.</div><div class="ttdef"><b>Definition</b> memspace.h:152</div></div>
+<div class="ttc" id="astructMemAllocation_html"><div class="ttname"><a href="structMemAllocation.html">MemAllocation</a></div><div class="ttdoc">Describes a memory allocation from a MemSpace.</div><div class="ttdef"><b>Definition</b> memspace.h:391</div></div>
+<div class="ttc" id="astructMemSpace_1_1Ops_html"><div class="ttname"><a href="structMemSpace_1_1Ops.html">MemSpace::Ops</a></div><div class="ttdoc">Function table for memory space operations.</div><div class="ttdef"><b>Definition</b> memspace.h:162</div></div>
 </div><!-- fragment --><dl class="section return"><dt>Returns</dt><dd>A unique ID value. </dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classMemSpace.html#a6a7ed2a8545c7a588f399b0dc107d14a" title="Registers an Ops record in the registry.">registerData()</a> </dd></dl>
 
@@ -849,7 +850,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMemSpace.html">MemSpace</a></li>
-    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
   </ul>
 </div>
 </body>

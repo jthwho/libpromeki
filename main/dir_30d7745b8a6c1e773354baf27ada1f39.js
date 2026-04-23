@@ -234,6 +234,7 @@ var dir_30d7745b8a6c1e773354baf27ada1f39 =
     [ "udpsocket.h", "udpsocket_8h.html", "udpsocket_8h" ],
     [ "udpsockettransport.h", "udpsockettransport_8h.html", null ],
     [ "umid.h", "umid_8h.html", null ],
+    [ "uniqueptr.h", "uniqueptr_8h.html", "uniqueptr_8h" ],
     [ "units.h", "units_8h.html", null ],
     [ "url.h", "url_8h.html", null ],
     [ "util.h", "util_8h.html", null ],

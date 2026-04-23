@@ -114,6 +114,10 @@ $(document).ready(function(){initNavTree('classAudioResampler.html',''); initRes
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
+<tr class="memitem:a6ac5c71ea65300246169b6c07b54345c" id="r_a6ac5c71ea65300246169b6c07b54345c"><td class="memItemLeft" align="right" valign="top"><a id="a6ac5c71ea65300246169b6c07b54345c" name="a6ac5c71ea65300246169b6c07b54345c"></a>
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>UPtr</b> = <a class="el" href="classUniquePtr.html">UniquePtr</a>&lt; <a class="el" href="classAudioResampler.html">AudioResampler</a> &gt;</td></tr>
+<tr class="memdesc:a6ac5c71ea65300246169b6c07b54345c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unique-ownership pointer to an <a class="el" href="classAudioResampler.html" title="Variable-ratio audio sample rate converter backed by libsamplerate.">AudioResampler</a>. <br /></td></tr>
+<tr class="separator:a6ac5c71ea65300246169b6c07b54345c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0b7dac95f925a2ebad7b8c3d7d1c84f8" id="r_a0b7dac95f925a2ebad7b8c3d7d1c84f8"><td class="memItemLeft" align="right" valign="top"><a id="a0b7dac95f925a2ebad7b8c3d7d1c84f8" name="a0b7dac95f925a2ebad7b8c3d7d1c84f8"></a>
 <a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ProcessResult</b> = <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">size_t</a> &gt;</td></tr>
 <tr class="memdesc:a0b7dac95f925a2ebad7b8c3d7d1c84f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Result type for <a class="el" href="classAudioResampler.html#ab9ab28e9add43e23bebbfbef8ac580ce" title="Processes audio samples through the resampler.">process()</a>: {output samples generated, <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a>}. <br /></td></tr>
@@ -190,7 +194,7 @@ Public Member Functions</h2></td></tr>
 <div class="line"><a class="code hl_class" href="classAudio.html">Audio</a> <a class="code hl_class" href="classList.html">out</a>(<a class="code hl_class" href="classAudioDesc.html">AudioDesc</a>(48000.0f, 2), 2048);</div>
 <div class="line"><span class="keyword">auto</span> [<a class="code hl_class" href="classList.html">generated</a>, <a class="code hl_class" href="classList.html">processErr</a>] = r.<a class="code hl_function" href="classAudioResampler.html#ab9ab28e9add43e23bebbfbef8ac580ce">process</a>(<a class="code hl_class" href="classList.html">in</a>, <a class="code hl_class" href="classList.html">out</a>);</div>
 <div class="ttc" id="aclassAudioDesc_html"><div class="ttname"><a href="classAudioDesc.html">AudioDesc</a></div><div class="ttdoc">Describes a concrete audio stream — format plus sample rate and channel count.</div><div class="ttdef"><b>Definition</b> audiodesc.h:39</div></div>
-<div class="ttc" id="aclassAudioResampler_html"><div class="ttname"><a href="classAudioResampler.html">AudioResampler</a></div><div class="ttdoc">Variable-ratio audio sample rate converter backed by libsamplerate.</div><div class="ttdef"><b>Definition</b> audioresampler.h:47</div></div>
+<div class="ttc" id="aclassAudioResampler_html"><div class="ttname"><a href="classAudioResampler.html">AudioResampler</a></div><div class="ttdoc">Variable-ratio audio sample rate converter backed by libsamplerate.</div><div class="ttdef"><b>Definition</b> audioresampler.h:48</div></div>
 <div class="ttc" id="aclassAudioResampler_html_a493da667f9a4b24f2e1b5379ec1bf6b9"><div class="ttname"><a href="classAudioResampler.html#a493da667f9a4b24f2e1b5379ec1bf6b9">AudioResampler::setup</a></div><div class="ttdeci">Error setup(unsigned int channels, const SrcQuality &amp;quality=SrcQuality::SincMedium)</div><div class="ttdoc">Initializes (or reinitializes) the resampler.</div></div>
 <div class="ttc" id="aclassAudioResampler_html_ab9ab28e9add43e23bebbfbef8ac580ce"><div class="ttname"><a href="classAudioResampler.html#ab9ab28e9add43e23bebbfbef8ac580ce">AudioResampler::process</a></div><div class="ttdeci">ProcessResult process(const Audio &amp;input, Audio &amp;output, bool endOfInput=false)</div><div class="ttdoc">Processes audio samples through the resampler.</div></div>
 <div class="ttc" id="aclassAudioResampler_html_aea36a9456ad7ba2c96db1b532e2df215"><div class="ttname"><a href="classAudioResampler.html#aea36a9456ad7ba2c96db1b532e2df215">AudioResampler::setRatio</a></div><div class="ttdeci">Error setRatio(double ratio)</div><div class="ttdoc">Sets the conversion ratio for subsequent process() calls.</div></div>
@@ -458,7 +462,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudioResampler.html">AudioResampler</a></li>
-    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
   </ul>
 </div>
 </body>

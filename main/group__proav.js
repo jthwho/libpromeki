@@ -371,6 +371,7 @@ var group__proav =
     [ "AudioPacket", "classAudioPacket.html", [
       [ "Ptr", "classAudioPacket.html#a3dcc8525a6f1d71b65dfa25a17981301", null ],
       [ "PtrList", "classAudioPacket.html#a969a0a91e26b7529f44b737b43e7f517", null ],
+      [ "UPtr", "classAudioPacket.html#a8d5044a3ed992c2ac57a6bb0cafe9b18", null ],
       [ "AudioPacket", "classAudioPacket.html#a9c2f4c06df76d674cc8027ed225bf261", null ],
       [ "AudioPacket", "classAudioPacket.html#a44ff803693d63ae5935945c67f1d8aba", null ],
       [ "AudioPacket", "classAudioPacket.html#ada1b8db03a5ef81c489781d7d42ae412", null ],
@@ -381,6 +382,7 @@ var group__proav =
     ] ],
     [ "AudioResampler", "classAudioResampler.html", [
       [ "ProcessResult", "classAudioResampler.html#a0b7dac95f925a2ebad7b8c3d7d1c84f8", null ],
+      [ "UPtr", "classAudioResampler.html#a6ac5c71ea65300246169b6c07b54345c", null ],
       [ "AudioResampler", "classAudioResampler.html#a79cee7b13dca6c009a53eae203b6c120", null ],
       [ "~AudioResampler", "classAudioResampler.html#ac726f5559e90fbd753b959a0030eacd2", null ],
       [ "channels", "classAudioResampler.html#a455cb14c0f45fdf1b4f790f6bd539e0f", null ],
@@ -395,6 +397,7 @@ var group__proav =
       [ "setup", "classAudioResampler.html#a493da667f9a4b24f2e1b5379ec1bf6b9", null ]
     ] ],
     [ "AudioTestPattern", "classAudioTestPattern.html", [
+      [ "UPtr", "classAudioTestPattern.html#a1bd782a3e2f145b9ecca7dad6821c5e0", null ],
       [ "AudioTestPattern", "classAudioTestPattern.html#aa4356079cf315f6f3a4f12db027c9be3", null ],
       [ "~AudioTestPattern", "classAudioTestPattern.html#a246792157b53446f6212fbf4d4006c99", null ],
       [ "channelIdBaseFreq", "classAudioTestPattern.html#a8bcf812a26fa0c3873ee04dd90d7abaa", null ],
@@ -523,6 +526,7 @@ var group__proav =
       [ "OpenOptions", "structDebugMediaFile_1_1OpenOptions.html", [
         [ "sessionInfo", "structDebugMediaFile_1_1OpenOptions.html#ad473fcf4e30f5be88c00731b3d258717", null ]
       ] ],
+      [ "UPtr", "classDebugMediaFile.html#a5977620b5cedd8e503596ce85fe4acac", null ],
       [ "Mode", "classDebugMediaFile.html#af102ac2a5a6619d4f1d290f2ffff26e5", [
         [ "NotOpen", "classDebugMediaFile.html#af102ac2a5a6619d4f1d290f2ffff26e5a48a08c0c5aa052b15385ede83401580e", null ],
         [ "Read", "classDebugMediaFile.html#af102ac2a5a6619d4f1d290f2ffff26e5aac5803403d80e2ca6de76055e2b9d857", null ],
@@ -605,6 +609,7 @@ var group__proav =
         [ "ringDepth", "structFrameBridge_1_1Config.html#ac58c635f12a89c811d17b3571ea883b2", null ],
         [ "waitForConsumer", "structFrameBridge_1_1Config.html#a782f8f205edfaddf48484088fffb5f5b", null ]
       ] ],
+      [ "UPtr", "classFrameBridge.html#a342e12e4c7018e40135d299287cc1484", null ],
       [ "FrameBridge", "classFrameBridge.html#a41c737092a2aa3858b77156c532a8e19", null ],
       [ "~FrameBridge", "classFrameBridge.html#a6ff360fdd776422334f8132f7fc82b68", null ],
       [ "abort", "classFrameBridge.html#a255988020661f7a2018b26985104a167", null ],
@@ -840,6 +845,7 @@ var group__proav =
         [ "timecode", "structLtcDecoder_1_1DecodedTimecode.html#a498bcfdeaea00cca924cab759912beaf", null ]
       ] ],
       [ "DecodedList", "classLtcDecoder.html#a801ff1d622064a6b3634eb20ed92aeb9", null ],
+      [ "UPtr", "classLtcDecoder.html#a45b53a563ee4fe8f72c8e69ddf1d4556", null ],
       [ "LtcDecoder", "classLtcDecoder.html#aefcccac7fc533c95f2527f43854dce2b", null ],
       [ "~LtcDecoder", "classLtcDecoder.html#ae8ed02f8a37b709bb1434e705b001201", null ],
       [ "decode", "classLtcDecoder.html#aa9f298171e75d4429d40498729b7419c", null ],
@@ -850,6 +856,7 @@ var group__proav =
       [ "setThresholds", "classLtcDecoder.html#a5362edd8af5598940245136afbbe227a", null ]
     ] ],
     [ "LtcEncoder", "classLtcEncoder.html", [
+      [ "UPtr", "classLtcEncoder.html#a25f285cb00cae069cb1271a0beb2fb7d", null ],
       [ "LtcEncoder", "classLtcEncoder.html#ad97fc3f20c3eb0d4a51b4317ab956238", null ],
       [ "~LtcEncoder", "classLtcEncoder.html#a43fe5ab20bf8032320f1bb51521c37f5", null ],
       [ "encode", "classLtcEncoder.html#a0880e8ec3a1620a785deb714cd85ed10", null ],
@@ -980,6 +987,7 @@ var group__proav =
       [ "ConfigID", "classMediaIO.html#a08d6f0ff155c9b44e241d5c0f4a4559f", null ],
       [ "Mode", "classMediaIO.html#aecf4fd1d9415ab9e37e355e826afc123", null ],
       [ "SeekMode", "classMediaIO.html#a04b4e0c765ff2b7c9a7c6718714c3136", null ],
+      [ "UPtr", "classMediaIO.html#a01a99d5da829b41596c7ad9110a2463c", null ],
       [ "ConfigValidation", "classMediaIO.html#a777f2b97d916b5afc27e3fa914971e7e", [
         [ "Lenient", "classMediaIO.html#a777f2b97d916b5afc27e3fa914971e7eaeec7931eeb6771fd5d189ba70656fb80", null ],
         [ "Strict", "classMediaIO.html#a777f2b97d916b5afc27e3fa914971e7ea2e979835dd62324f5bfe217449ba4974", null ]
@@ -1100,6 +1108,7 @@ var group__proav =
       [ "uuid", "classMediaIODescription.html#a79ebfbe0417f2ddf89cf85f9dc9dbfee", null ]
     ] ],
     [ "MediaIOTask", "classMediaIOTask.html", [
+      [ "UPtr", "classMediaIOTask.html#a5e17844dbea29097522b930b4f3d90c1", null ],
       [ "MediaIOTask", "classMediaIOTask.html#a0b805f45d7b99204ec16da2f3ee060c1", null ],
       [ "~MediaIOTask", "classMediaIOTask.html#ae9d15045ad37ac2f930a2f0f91633b2c", null ],
       [ "mediaIo", "classMediaIOTask.html#a56ee29aac6f338c32541042c01754160", null ],
@@ -1866,6 +1875,7 @@ var group__proav =
         [ "weight", "structVideoDecoder_1_1BackendRecord.html#a2629ffe3b01084787b75b2c5399f5f1c", null ]
       ] ],
       [ "Factory", "classVideoDecoder.html#aa111274a2b1d955fe253183a7c99b379", null ],
+      [ "UPtr", "classVideoDecoder.html#a10e626743faa35055c0148c84e073980", null ],
       [ "~VideoDecoder", "classVideoDecoder.html#a985e1a71aa7503979cac3736b8b34838", null ],
       [ "clearError", "classVideoDecoder.html#a03c0ce8380b2ccf56ba419d16d632040", null ],
       [ "codec", "classVideoDecoder.html#af52fbfbb66838e32ac0826d5d756f426", null ],
@@ -1888,6 +1898,7 @@ var group__proav =
         [ "weight", "structVideoEncoder_1_1BackendRecord.html#ab4c15823d7caa5c4cead894cbaf66226", null ]
       ] ],
       [ "Factory", "classVideoEncoder.html#a4cad3dde3d9c6f42d32590347a36713e", null ],
+      [ "UPtr", "classVideoEncoder.html#ae63bc4d84fdd4c1bfc79de68844e26b8", null ],
       [ "~VideoEncoder", "classVideoEncoder.html#adc5f7db2760b8095e86d6e55b9cab3e9", null ],
       [ "clearError", "classVideoEncoder.html#a118ebebcfebdd2f5e93f3db0d79db4d5", null ],
       [ "codec", "classVideoEncoder.html#aa71dff6ef0672eb00b8c6a2c4884fda2", null ],
@@ -1905,6 +1916,7 @@ var group__proav =
     [ "VideoPacket", "classVideoPacket.html", [
       [ "Ptr", "classVideoPacket.html#acd061b0a22f40e1b25f19743f9d5025f", null ],
       [ "PtrList", "classVideoPacket.html#a2306c624df4abc9d2f3361b66153a826", null ],
+      [ "UPtr", "classVideoPacket.html#a3af47be06f371b5d1b2951730a19f21b", null ],
       [ "Flag", "classVideoPacket.html#afa35941ff0c3d4d9ac39da46ac3608ae", [
         [ "None", "classVideoPacket.html#afa35941ff0c3d4d9ac39da46ac3608aea770a422ca16aae73273955edff8af0b1", null ],
         [ "Keyframe", "classVideoPacket.html#afa35941ff0c3d4d9ac39da46ac3608aea8363671bc975fb9ae67ac14ff742d2f3", null ],

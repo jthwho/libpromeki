@@ -236,6 +236,11 @@ Static Public Attributes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pub_types_classMediaIOTask"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classMediaIOTask')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classMediaIOTask.html">MediaIOTask</a></td></tr>
+<tr class="memitem:a5e17844dbea29097522b930b4f3d90c1 inherit pub_types_classMediaIOTask" id="r_a5e17844dbea29097522b930b4f3d90c1"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>UPtr</b> = <a class="el" href="classUniquePtr.html">UniquePtr</a>&lt; <a class="el" href="classMediaIOTask.html">MediaIOTask</a> &gt;</td></tr>
+<tr class="memdesc:a5e17844dbea29097522b930b4f3d90c1 inherit pub_types_classMediaIOTask"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unique-ownership pointer to a <a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a>. <br /></td></tr>
+<tr class="separator:a5e17844dbea29097522b930b4f3d90c1 inherit pub_types_classMediaIOTask"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classMediaIOTask"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classMediaIOTask')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classMediaIOTask.html">MediaIOTask</a></td></tr>
 <tr class="memitem:a33a701a9866643312bab92a63113fe83 inherit pro_methods_classMediaIOTask" id="r_a33a701a9866643312bab92a63113fe83"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>noteFrameDropped</b> ()</td></tr>
@@ -363,10 +368,10 @@ stream" so no separate RTCP socket is ever opened. Since the backend does not tr
 <div class="ttc" id="aclassMediaDesc_html_a09c0528b5aa497ab8ddac1b886186d2c"><div class="ttname"><a href="classMediaDesc.html#a09c0528b5aa497ab8ddac1b886186d2c">MediaDesc::setFrameRate</a></div><div class="ttdeci">void setFrameRate(const FrameRate &amp;val)</div><div class="ttdoc">Sets the frame rate.</div><div class="ttdef"><b>Definition</b> mediadesc.h:96</div></div>
 <div class="ttc" id="aclassMediaDesc_html_ac8a182d12277fe4180b3ca2ea05939ee"><div class="ttname"><a href="classMediaDesc.html#ac8a182d12277fe4180b3ca2ea05939ee">MediaDesc::imageList</a></div><div class="ttdeci">const ImageDesc::List &amp; imageList() const</div><div class="ttdoc">Returns a const reference to the list of image descriptions.</div><div class="ttdef"><b>Definition</b> mediadesc.h:99</div></div>
 <div class="ttc" id="aclassMediaDesc_html_aed7432e82390ce0ff1ae5c43d43270c0"><div class="ttname"><a href="classMediaDesc.html#aed7432e82390ce0ff1ae5c43d43270c0">MediaDesc::audioList</a></div><div class="ttdeci">const AudioDesc::List &amp; audioList() const</div><div class="ttdoc">Returns a const reference to the list of audio descriptions.</div><div class="ttdef"><b>Definition</b> mediadesc.h:122</div></div>
-<div class="ttc" id="aclassMediaIO_html"><div class="ttname"><a href="classMediaIO.html">MediaIO</a></div><div class="ttdoc">Controller for media I/O backends.</div><div class="ttdef"><b>Definition</b> mediaio.h:489</div></div>
+<div class="ttc" id="aclassMediaIO_html"><div class="ttname"><a href="classMediaIO.html">MediaIO</a></div><div class="ttdoc">Controller for media I/O backends.</div><div class="ttdef"><b>Definition</b> mediaio.h:490</div></div>
 <div class="ttc" id="aclassMediaIO_html_a083b9e49f5f676da9066f084bfbd0f60"><div class="ttname"><a href="classMediaIO.html#a083b9e49f5f676da9066f084bfbd0f60">MediaIO::writeFrame</a></div><div class="ttdeci">Error writeFrame(const Frame::Ptr &amp;frame, bool block=true)</div><div class="ttdoc">Writes a frame to the media resource.</div></div>
 <div class="ttc" id="aclassMediaIO_html_a4fbce71f10169c3986844ce2c451daa5"><div class="ttname"><a href="classMediaIO.html#a4fbce71f10169c3986844ce2c451daa5">MediaIO::setExpectedDesc</a></div><div class="ttdeci">Error setExpectedDesc(const MediaDesc &amp;desc)</div><div class="ttdoc">Sets the expected media description.</div></div>
-<div class="ttc" id="aclassMediaIO_html_a54825254dffb007bc72929645024a495"><div class="ttname"><a href="classMediaIO.html#a54825254dffb007bc72929645024a495">MediaIO::Sink</a></div><div class="ttdeci">static constexpr Mode Sink</div><div class="ttdoc">Backend accepts frames from the caller.</div><div class="ttdef"><b>Definition</b> mediaio.h:497</div></div>
+<div class="ttc" id="aclassMediaIO_html_a54825254dffb007bc72929645024a495"><div class="ttname"><a href="classMediaIO.html#a54825254dffb007bc72929645024a495">MediaIO::Sink</a></div><div class="ttdeci">static constexpr Mode Sink</div><div class="ttdoc">Backend accepts frames from the caller.</div><div class="ttdef"><b>Definition</b> mediaio.h:501</div></div>
 <div class="ttc" id="aclassMediaIO_html_a594b8b55ae788efe104c871248d73808"><div class="ttname"><a href="classMediaIO.html#a594b8b55ae788efe104c871248d73808">MediaIO::create</a></div><div class="ttdeci">static MediaIO * create(const Config &amp;config, ObjectBase *parent=nullptr)</div><div class="ttdoc">Creates a MediaIO instance from a configuration.</div></div>
 <div class="ttc" id="aclassMediaIO_html_a6a601a20bd14d709a28e09e6165254d3"><div class="ttname"><a href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3">MediaIO::open</a></div><div class="ttdeci">Error open(Mode mode)</div><div class="ttdoc">Opens the media resource.</div></div>
 <div class="ttc" id="aclassMediaIO_html_af37ceef12934d2397a18c58d518c3489"><div class="ttname"><a href="classMediaIO.html#af37ceef12934d2397a18c58d518c3489">MediaIO::close</a></div><div class="ttdeci">Error close(bool block=true)</div><div class="ttdoc">Closes the media resource.</div></div>
@@ -415,7 +420,7 @@ stream" so no separate RTCP socket is ever opened. Since the backend does not tr
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIOTask__Rtp.html">MediaIOTask_Rtp</a></li>
-    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -160,6 +160,10 @@ Public Types</h2></td></tr>
  }</td></tr>
 <tr class="memdesc:ac12c287cd37708c10d6618d667a3147a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mode flags controlling how a device is opened.  <a href="classIODevice.html#ac12c287cd37708c10d6618d667a3147a">More...</a><br /></td></tr>
 <tr class="separator:ac12c287cd37708c10d6618d667a3147a inherit pub_types_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab90e72997e6039504ffe30a92d212e82 inherit pub_types_classIODevice" id="r_ab90e72997e6039504ffe30a92d212e82"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>UPtr</b> = <a class="el" href="classUniquePtr.html">UniquePtr</a>&lt; <a class="el" href="classIODevice.html">IODevice</a> &gt;</td></tr>
+<tr class="memdesc:ab90e72997e6039504ffe30a92d212e82 inherit pub_types_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unique-ownership pointer to an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a>. <br /></td></tr>
+<tr class="separator:ab90e72997e6039504ffe30a92d212e82 inherit pub_types_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -371,7 +375,7 @@ Additional Inherited Members</h2></td></tr>
 <dl class="section user"><dt>External FILE (e.g. stdin, stdout, stderr)</dt><dd>Construct with a FILE* and OpenMode. The device is immediately open. Ownership is controlled by the OwnsFile flag — when set, the FILE is fclose'd on <a class="el" href="classFileIODevice.html#a3d807fc3cdd18454e17c62d5247ce173" title="Closes the device.">close()</a> or destruction. Use <a class="el" href="classFileIODevice.html#aa093bdda804bc91d69afc032fbbc8eaa" title="Transfers ownership of the FILE pointer to the caller.">takeFile()</a> to reclaim ownership. <div class="fragment"><div class="line"><a class="code hl_class" href="classFileIODevice.html">FileIODevice</a> <a class="code hl_class" href="classList.html">dev</a>(<a class="code hl_class" href="classList.html">stdout</a>, <a class="code hl_enumvalue" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa5e2c1690c5235439fb591119ec7f8dbe">IODevice::WriteOnly</a>);</div>
 <div class="line"><a class="code hl_class" href="classList.html">dev</a> &lt;&lt; <span class="stringliteral">&quot;hello&quot;</span>;</div>
 <div class="ttc" id="aclassFileIODevice_html"><div class="ttname"><a href="classFileIODevice.html">FileIODevice</a></div><div class="ttdoc">IODevice wrapping a C stdio FILE pointer.</div><div class="ttdef"><b>Definition</b> fileiodevice.h:47</div></div>
-<div class="ttc" id="aclassIODevice_html_ac12c287cd37708c10d6618d667a3147aa5e2c1690c5235439fb591119ec7f8dbe"><div class="ttname"><a href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa5e2c1690c5235439fb591119ec7f8dbe">IODevice::WriteOnly</a></div><div class="ttdeci">@ WriteOnly</div><div class="ttdoc">Open for writing only.</div><div class="ttdef"><b>Definition</b> iodevice.h:36</div></div>
+<div class="ttc" id="aclassIODevice_html_ac12c287cd37708c10d6618d667a3147aa5e2c1690c5235439fb591119ec7f8dbe"><div class="ttname"><a href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa5e2c1690c5235439fb591119ec7f8dbe">IODevice::WriteOnly</a></div><div class="ttdeci">@ WriteOnly</div><div class="ttdoc">Open for writing only.</div><div class="ttdef"><b>Definition</b> iodevice.h:40</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 </div><!-- fragment --></dd></dl>
 <dl class="section user"><dt>Filename-based (fopen)</dt><dd><a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> a filename via the constructor or <a class="el" href="classFileIODevice.html#a09005ece4b1fdef4ae0071fb3469153b" title="Sets the filename for fopen-based opening.">setFilename()</a>, then call <a class="el" href="classFileIODevice.html#a13d0069b4ddbdef91b33e7562254ccba" title="Opens the device.">open()</a>. The FILE is created internally and owned by the device. <div class="fragment"><div class="line"><a class="code hl_class" href="classFileIODevice.html">FileIODevice</a> <a class="code hl_class" href="classList.html">dev</a>(<span class="stringliteral">&quot;/tmp/log.txt&quot;</span>);</div>
@@ -1116,7 +1120,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classFileIODevice.html">FileIODevice</a></li>
-    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
   </ul>
 </div>
 </body>

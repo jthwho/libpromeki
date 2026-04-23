@@ -167,20 +167,21 @@ $(document).ready(function(){initNavTree('classBufferedIODevice.html',''); initR
   <tr class="odd"><td class="entry"><a class="el" href="classObjectBase.html#a2fabc995337aed5634ed041bf7dcd989">startTimer</a>(unsigned int intervalMs, bool singleShot=false)</td><td class="entry"><a class="el" href="classObjectBase.html">ObjectBase</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classObjectBase.html#a1b92022c1cad139382f3681a0e1c405a">stopTimer</a>(int timerId)</td><td class="entry"><a class="el" href="classObjectBase.html">ObjectBase</a></td><td class="entry"></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classObjectBase.html#a3ee4d94ac818e49a506f7fa4be8cc2f7">timerEvent</a>(TimerEvent *e)</td><td class="entry"><a class="el" href="classObjectBase.html">ObjectBase</a></td><td class="entry"><span class="mlabel">protected</span><span class="mlabel">virtual</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classIODevice.html#a16dfc2d93dfb068b7b994bbb3c2def75">waitForBytesWritten</a>(unsigned int timeoutMs=0)</td><td class="entry"><a class="el" href="classIODevice.html">IODevice</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="classIODevice.html#ae1c4db433359a6ce75d229549de54d91">waitForReadyRead</a>(unsigned int timeoutMs=0)</td><td class="entry"><a class="el" href="classIODevice.html">IODevice</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classIODevice.html#ab8f95a3dc11ce55907e63d314ae2d402">write</a>(const void *data, int64_t maxSize)=0</td><td class="entry"><a class="el" href="classIODevice.html">IODevice</a></td><td class="entry"><span class="mlabel">pure virtual</span></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa5e2c1690c5235439fb591119ec7f8dbe">WriteOnly</a> enum value</td><td class="entry"><a class="el" href="classIODevice.html">IODevice</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classBufferedIODevice.html#a14fab15cfcfa1242eb9c25da11399014">~BufferedIODevice</a>()</td><td class="entry"><a class="el" href="classBufferedIODevice.html">BufferedIODevice</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="classIODevice.html#a3615f78e1b4ae46ba84ce46c048a0dfb">~IODevice</a>()</td><td class="entry"><a class="el" href="classIODevice.html">IODevice</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classObjectBase.html#a7074bc9389069351c2d0eee6a47e5ee3">~ObjectBase</a>()</td><td class="entry"><a class="el" href="classObjectBase.html">ObjectBase</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">virtual</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classIODevice.html#ab90e72997e6039504ffe30a92d212e82">UPtr</a> typedef</td><td class="entry"><a class="el" href="classIODevice.html">IODevice</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classIODevice.html#a16dfc2d93dfb068b7b994bbb3c2def75">waitForBytesWritten</a>(unsigned int timeoutMs=0)</td><td class="entry"><a class="el" href="classIODevice.html">IODevice</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classIODevice.html#ae1c4db433359a6ce75d229549de54d91">waitForReadyRead</a>(unsigned int timeoutMs=0)</td><td class="entry"><a class="el" href="classIODevice.html">IODevice</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classIODevice.html#ab8f95a3dc11ce55907e63d314ae2d402">write</a>(const void *data, int64_t maxSize)=0</td><td class="entry"><a class="el" href="classIODevice.html">IODevice</a></td><td class="entry"><span class="mlabel">pure virtual</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa5e2c1690c5235439fb591119ec7f8dbe">WriteOnly</a> enum value</td><td class="entry"><a class="el" href="classIODevice.html">IODevice</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classBufferedIODevice.html#a14fab15cfcfa1242eb9c25da11399014">~BufferedIODevice</a>()</td><td class="entry"><a class="el" href="classBufferedIODevice.html">BufferedIODevice</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classIODevice.html#a3615f78e1b4ae46ba84ce46c048a0dfb">~IODevice</a>()</td><td class="entry"><a class="el" href="classIODevice.html">IODevice</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classObjectBase.html#a7074bc9389069351c2d0eee6a47e5ee3">~ObjectBase</a>()</td><td class="entry"><a class="el" href="classObjectBase.html">ObjectBase</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">virtual</span></td></tr>
 </table></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- HTML footer for doxygen -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-23 04:53:09 from commit f640afe (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
   </ul>
 </div>
 </body>
