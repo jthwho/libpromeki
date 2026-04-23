@@ -15,7 +15,7 @@
 
 #include <promeki/cscregistry.h>
 #include <promeki/csccontext.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 
 namespace promeki {
 namespace csc {
@@ -162,142 +162,142 @@ static struct FastPathRegistrar {
                 auto reg = CSCRegistry::registerFastPath;
 
                 // Same-model format changes
-                reg(PixelDesc::BGRA8_sRGB, PixelDesc::RGBA8_sRGB, dispatch_FastPathBGRA8toRGBA8);
-                reg(PixelDesc::RGBA8_sRGB, PixelDesc::BGRA8_sRGB, dispatch_FastPathRGBA8toBGRA8);
-                reg(PixelDesc::RGBA8_sRGB, PixelDesc::RGB8_sRGB,  dispatch_FastPathRGBA8toRGB8);
-                reg(PixelDesc::RGB8_sRGB,  PixelDesc::RGBA8_sRGB, dispatch_FastPathRGB8toRGBA8);
+                reg(PixelFormat::BGRA8_sRGB, PixelFormat::RGBA8_sRGB, dispatch_FastPathBGRA8toRGBA8);
+                reg(PixelFormat::RGBA8_sRGB, PixelFormat::BGRA8_sRGB, dispatch_FastPathRGBA8toBGRA8);
+                reg(PixelFormat::RGBA8_sRGB, PixelFormat::RGB8_sRGB,  dispatch_FastPathRGBA8toRGB8);
+                reg(PixelFormat::RGB8_sRGB,  PixelFormat::RGBA8_sRGB, dispatch_FastPathRGB8toRGBA8);
 
                 // YUYV interleaved
-                reg(PixelDesc::YUV8_422_Rec709,          PixelDesc::RGBA8_sRGB, dispatch_FastPathYUYV8toRGBA8);
-                reg(PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_422_Rec709, dispatch_FastPathRGBA8toYUYV8);
+                reg(PixelFormat::YUV8_422_Rec709,          PixelFormat::RGBA8_sRGB, dispatch_FastPathYUYV8toRGBA8);
+                reg(PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_422_Rec709, dispatch_FastPathRGBA8toYUYV8);
 
                 // UYVY interleaved
-                reg(PixelDesc::YUV8_422_UYVY_Rec709,     PixelDesc::RGBA8_sRGB, dispatch_FastPathUYVY8toRGBA8);
-                reg(PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_422_UYVY_Rec709, dispatch_FastPathRGBA8toUYVY8);
+                reg(PixelFormat::YUV8_422_UYVY_Rec709,     PixelFormat::RGBA8_sRGB, dispatch_FastPathUYVY8toRGBA8);
+                reg(PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_422_UYVY_Rec709, dispatch_FastPathRGBA8toUYVY8);
 
                 // YUYV <-> UYVY (byte-pair swap, no colour math)
-                reg(PixelDesc::YUV8_422_Rec709,          PixelDesc::YUV8_422_UYVY_Rec709, dispatch_FastPathYUYV8toUYVY8);
-                reg(PixelDesc::YUV8_422_UYVY_Rec709,     PixelDesc::YUV8_422_Rec709,      dispatch_FastPathUYVY8toYUYV8);
+                reg(PixelFormat::YUV8_422_Rec709,          PixelFormat::YUV8_422_UYVY_Rec709, dispatch_FastPathYUYV8toUYVY8);
+                reg(PixelFormat::YUV8_422_UYVY_Rec709,     PixelFormat::YUV8_422_Rec709,      dispatch_FastPathUYVY8toYUYV8);
 
                 // NV12 (420 semi-planar, CbCr)
-                reg(PixelDesc::YUV8_420_SemiPlanar_Rec709, PixelDesc::RGBA8_sRGB, dispatch_FastPathNV12toRGBA8);
-                reg(PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_420_SemiPlanar_Rec709, dispatch_FastPathRGBA8toNV12);
-                reg(PixelDesc::YUV8_420_SemiPlanar_Rec709, PixelDesc::RGB8_sRGB,  dispatch_FastPathNV12toRGB8);
-                reg(PixelDesc::RGB8_sRGB,                PixelDesc::YUV8_420_SemiPlanar_Rec709, dispatch_FastPathRGB8toNV12);
+                reg(PixelFormat::YUV8_420_SemiPlanar_Rec709, PixelFormat::RGBA8_sRGB, dispatch_FastPathNV12toRGBA8);
+                reg(PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_420_SemiPlanar_Rec709, dispatch_FastPathRGBA8toNV12);
+                reg(PixelFormat::YUV8_420_SemiPlanar_Rec709, PixelFormat::RGB8_sRGB,  dispatch_FastPathNV12toRGB8);
+                reg(PixelFormat::RGB8_sRGB,                PixelFormat::YUV8_420_SemiPlanar_Rec709, dispatch_FastPathRGB8toNV12);
 
                 // NV21 (420 semi-planar, CrCb)
-                reg(PixelDesc::YUV8_420_NV21_Rec709,     PixelDesc::RGBA8_sRGB, dispatch_FastPathNV21toRGBA8);
-                reg(PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_420_NV21_Rec709, dispatch_FastPathRGBA8toNV21);
+                reg(PixelFormat::YUV8_420_NV21_Rec709,     PixelFormat::RGBA8_sRGB, dispatch_FastPathNV21toRGBA8);
+                reg(PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_420_NV21_Rec709, dispatch_FastPathRGBA8toNV21);
 
                 // NV16 (422 semi-planar, CbCr)
-                reg(PixelDesc::YUV8_422_SemiPlanar_Rec709, PixelDesc::RGBA8_sRGB, dispatch_FastPathNV16toRGBA8);
-                reg(PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_422_SemiPlanar_Rec709, dispatch_FastPathRGBA8toNV16);
+                reg(PixelFormat::YUV8_422_SemiPlanar_Rec709, PixelFormat::RGBA8_sRGB, dispatch_FastPathNV16toRGBA8);
+                reg(PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_422_SemiPlanar_Rec709, dispatch_FastPathRGBA8toNV16);
 
                 // Planar 422
-                reg(PixelDesc::YUV8_422_Planar_Rec709,   PixelDesc::RGBA8_sRGB, dispatch_FastPathPlanar422toRGBA8);
-                reg(PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_422_Planar_Rec709, dispatch_FastPathRGBA8toPlanar422);
+                reg(PixelFormat::YUV8_422_Planar_Rec709,   PixelFormat::RGBA8_sRGB, dispatch_FastPathPlanar422toRGBA8);
+                reg(PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_422_Planar_Rec709, dispatch_FastPathRGBA8toPlanar422);
 
                 // Planar 420
-                reg(PixelDesc::YUV8_420_Planar_Rec709,   PixelDesc::RGBA8_sRGB, dispatch_FastPathPlanar420toRGBA8);
-                reg(PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_420_Planar_Rec709, dispatch_FastPathRGBA8toPlanar420);
+                reg(PixelFormat::YUV8_420_Planar_Rec709,   PixelFormat::RGBA8_sRGB, dispatch_FastPathPlanar420toRGBA8);
+                reg(PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_420_Planar_Rec709, dispatch_FastPathRGBA8toPlanar420);
 
                 // --- Rec.601 8-bit fast paths ---
 
                 // YUYV Rec.601
-                reg(PixelDesc::YUV8_422_Rec601,          PixelDesc::RGBA8_sRGB, dispatch_FastPathYUYV601toRGBA8);
-                reg(PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_422_Rec601, dispatch_FastPathRGBA8toYUYV601);
+                reg(PixelFormat::YUV8_422_Rec601,          PixelFormat::RGBA8_sRGB, dispatch_FastPathYUYV601toRGBA8);
+                reg(PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_422_Rec601, dispatch_FastPathRGBA8toYUYV601);
 
                 // UYVY Rec.601
-                reg(PixelDesc::YUV8_422_UYVY_Rec601,     PixelDesc::RGBA8_sRGB, dispatch_FastPathUYVY601toRGBA8);
-                reg(PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_422_UYVY_Rec601, dispatch_FastPathRGBA8toUYVY601);
+                reg(PixelFormat::YUV8_422_UYVY_Rec601,     PixelFormat::RGBA8_sRGB, dispatch_FastPathUYVY601toRGBA8);
+                reg(PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_422_UYVY_Rec601, dispatch_FastPathRGBA8toUYVY601);
 
                 // YUYV <-> UYVY Rec.601 (same byte swap as Rec.709)
-                reg(PixelDesc::YUV8_422_Rec601,          PixelDesc::YUV8_422_UYVY_Rec601, dispatch_FastPathYUYV8toUYVY8);
-                reg(PixelDesc::YUV8_422_UYVY_Rec601,     PixelDesc::YUV8_422_Rec601,      dispatch_FastPathUYVY8toYUYV8);
+                reg(PixelFormat::YUV8_422_Rec601,          PixelFormat::YUV8_422_UYVY_Rec601, dispatch_FastPathYUYV8toUYVY8);
+                reg(PixelFormat::YUV8_422_UYVY_Rec601,     PixelFormat::YUV8_422_Rec601,      dispatch_FastPathUYVY8toYUYV8);
 
                 // NV12 Rec.601
-                reg(PixelDesc::YUV8_420_SemiPlanar_Rec601, PixelDesc::RGBA8_sRGB, dispatch_FastPathNV12_601toRGBA8);
-                reg(PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_420_SemiPlanar_Rec601, dispatch_FastPathRGBA8toNV12_601);
+                reg(PixelFormat::YUV8_420_SemiPlanar_Rec601, PixelFormat::RGBA8_sRGB, dispatch_FastPathNV12_601toRGBA8);
+                reg(PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_420_SemiPlanar_Rec601, dispatch_FastPathRGBA8toNV12_601);
 
                 // Planar 420 Rec.601
-                reg(PixelDesc::YUV8_420_Planar_Rec601,   PixelDesc::RGBA8_sRGB, dispatch_FastPathPlanar601_420toRGBA8);
-                reg(PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_420_Planar_Rec601, dispatch_FastPathRGBA8toPlanar601_420);
+                reg(PixelFormat::YUV8_420_Planar_Rec601,   PixelFormat::RGBA8_sRGB, dispatch_FastPathPlanar601_420toRGBA8);
+                reg(PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_420_Planar_Rec601, dispatch_FastPathRGBA8toPlanar601_420);
 
                 // --- 10-bit LE fast paths ---
 
                 // 10-bit UYVY LE
-                reg(PixelDesc::YUV10_422_UYVY_LE_Rec709, PixelDesc::RGBA10_LE_sRGB, dispatch_FastPathUYVY10LEtoRGBA10LE);
-                reg(PixelDesc::RGBA10_LE_sRGB,           PixelDesc::YUV10_422_UYVY_LE_Rec709, dispatch_FastPathRGBA10LEtoUYVY10LE);
+                reg(PixelFormat::YUV10_422_UYVY_LE_Rec709, PixelFormat::RGBA10_LE_sRGB, dispatch_FastPathUYVY10LEtoRGBA10LE);
+                reg(PixelFormat::RGBA10_LE_sRGB,           PixelFormat::YUV10_422_UYVY_LE_Rec709, dispatch_FastPathRGBA10LEtoUYVY10LE);
 
                 // 10-bit Planar 422 LE
-                reg(PixelDesc::YUV10_422_Planar_LE_Rec709, PixelDesc::RGBA10_LE_sRGB, dispatch_FastPathPlanar10LE422toRGBA10LE);
-                reg(PixelDesc::RGBA10_LE_sRGB,             PixelDesc::YUV10_422_Planar_LE_Rec709, dispatch_FastPathRGBA10LEtoPlanar10LE422);
+                reg(PixelFormat::YUV10_422_Planar_LE_Rec709, PixelFormat::RGBA10_LE_sRGB, dispatch_FastPathPlanar10LE422toRGBA10LE);
+                reg(PixelFormat::RGBA10_LE_sRGB,             PixelFormat::YUV10_422_Planar_LE_Rec709, dispatch_FastPathRGBA10LEtoPlanar10LE422);
 
                 // 10-bit Planar 420 LE
-                reg(PixelDesc::YUV10_420_Planar_LE_Rec709, PixelDesc::RGBA10_LE_sRGB, dispatch_FastPathPlanar10LE420toRGBA10LE);
-                reg(PixelDesc::RGBA10_LE_sRGB,             PixelDesc::YUV10_420_Planar_LE_Rec709, dispatch_FastPathRGBA10LEtoPlanar10LE420);
+                reg(PixelFormat::YUV10_420_Planar_LE_Rec709, PixelFormat::RGBA10_LE_sRGB, dispatch_FastPathPlanar10LE420toRGBA10LE);
+                reg(PixelFormat::RGBA10_LE_sRGB,             PixelFormat::YUV10_420_Planar_LE_Rec709, dispatch_FastPathRGBA10LEtoPlanar10LE420);
 
                 // 10-bit NV12 LE (420 semi-planar)
-                reg(PixelDesc::YUV10_420_SemiPlanar_LE_Rec709, PixelDesc::RGBA10_LE_sRGB, dispatch_FastPathNV12_10LEtoRGBA10LE);
-                reg(PixelDesc::RGBA10_LE_sRGB,                 PixelDesc::YUV10_420_SemiPlanar_LE_Rec709, dispatch_FastPathRGBA10LEtoNV12_10LE);
+                reg(PixelFormat::YUV10_420_SemiPlanar_LE_Rec709, PixelFormat::RGBA10_LE_sRGB, dispatch_FastPathNV12_10LEtoRGBA10LE);
+                reg(PixelFormat::RGBA10_LE_sRGB,                 PixelFormat::YUV10_420_SemiPlanar_LE_Rec709, dispatch_FastPathRGBA10LEtoNV12_10LE);
 
                 // v210 <-> RGBA10_LE
-                reg(PixelDesc::YUV10_422_v210_Rec709, PixelDesc::RGBA10_LE_sRGB, dispatch_FastPathV210toRGBA10LE);
-                reg(PixelDesc::RGBA10_LE_sRGB,        PixelDesc::YUV10_422_v210_Rec709, dispatch_FastPathRGBA10LEtoV210);
+                reg(PixelFormat::YUV10_422_v210_Rec709, PixelFormat::RGBA10_LE_sRGB, dispatch_FastPathV210toRGBA10LE);
+                reg(PixelFormat::RGBA10_LE_sRGB,        PixelFormat::YUV10_422_v210_Rec709, dispatch_FastPathRGBA10LEtoV210);
 
                 // v210 <-> RGBA8 (wraps the 10-bit path with an
                 // inline bit-depth conversion — the generic pipeline
                 // can't handle v210's bit packing).
-                reg(PixelDesc::YUV10_422_v210_Rec709, PixelDesc::RGBA8_sRGB, dispatch_FastPathV210toRGBA8);
-                reg(PixelDesc::RGBA8_sRGB,            PixelDesc::YUV10_422_v210_Rec709, dispatch_FastPathRGBA8toV210);
+                reg(PixelFormat::YUV10_422_v210_Rec709, PixelFormat::RGBA8_sRGB, dispatch_FastPathV210toRGBA8);
+                reg(PixelFormat::RGBA8_sRGB,            PixelFormat::YUV10_422_v210_Rec709, dispatch_FastPathRGBA8toV210);
 
                 // --- Rec.2020 10-bit LE fast paths ---
 
                 // UYVY 10-bit LE Rec.2020
-                reg(PixelDesc::YUV10_422_UYVY_LE_Rec2020, PixelDesc::RGBA10_LE_sRGB, dispatch_FastPathUYVY10LE_2020toRGBA10LE);
-                reg(PixelDesc::RGBA10_LE_sRGB,             PixelDesc::YUV10_422_UYVY_LE_Rec2020, dispatch_FastPathRGBA10LEtoUYVY10LE_2020);
+                reg(PixelFormat::YUV10_422_UYVY_LE_Rec2020, PixelFormat::RGBA10_LE_sRGB, dispatch_FastPathUYVY10LE_2020toRGBA10LE);
+                reg(PixelFormat::RGBA10_LE_sRGB,             PixelFormat::YUV10_422_UYVY_LE_Rec2020, dispatch_FastPathRGBA10LEtoUYVY10LE_2020);
 
                 // Planar 420 10-bit LE Rec.2020
-                reg(PixelDesc::YUV10_420_Planar_LE_Rec2020, PixelDesc::RGBA10_LE_sRGB, dispatch_FastPathPlanar10LE420_2020toRGBA10LE);
-                reg(PixelDesc::RGBA10_LE_sRGB,              PixelDesc::YUV10_420_Planar_LE_Rec2020, dispatch_FastPathRGBA10LEtoPlanar10LE420_2020);
+                reg(PixelFormat::YUV10_420_Planar_LE_Rec2020, PixelFormat::RGBA10_LE_sRGB, dispatch_FastPathPlanar10LE420_2020toRGBA10LE);
+                reg(PixelFormat::RGBA10_LE_sRGB,              PixelFormat::YUV10_420_Planar_LE_Rec2020, dispatch_FastPathRGBA10LEtoPlanar10LE420_2020);
 
                 // --- 12-bit LE BT.709 fast paths ---
 
                 // UYVY 12-bit LE Rec.709
-                reg(PixelDesc::YUV12_422_UYVY_LE_Rec709, PixelDesc::RGBA12_LE_sRGB, dispatch_FastPathUYVY12LE_709toRGBA12LE);
-                reg(PixelDesc::RGBA12_LE_sRGB,           PixelDesc::YUV12_422_UYVY_LE_Rec709, dispatch_FastPathRGBA12LEtoUYVY12LE_709);
+                reg(PixelFormat::YUV12_422_UYVY_LE_Rec709, PixelFormat::RGBA12_LE_sRGB, dispatch_FastPathUYVY12LE_709toRGBA12LE);
+                reg(PixelFormat::RGBA12_LE_sRGB,           PixelFormat::YUV12_422_UYVY_LE_Rec709, dispatch_FastPathRGBA12LEtoUYVY12LE_709);
 
                 // Planar 422 12-bit LE Rec.709
-                reg(PixelDesc::YUV12_422_Planar_LE_Rec709, PixelDesc::RGBA12_LE_sRGB, dispatch_FastPathPlanar12LE422_709toRGBA12LE);
-                reg(PixelDesc::RGBA12_LE_sRGB,             PixelDesc::YUV12_422_Planar_LE_Rec709, dispatch_FastPathRGBA12LEtoPlanar12LE422_709);
+                reg(PixelFormat::YUV12_422_Planar_LE_Rec709, PixelFormat::RGBA12_LE_sRGB, dispatch_FastPathPlanar12LE422_709toRGBA12LE);
+                reg(PixelFormat::RGBA12_LE_sRGB,             PixelFormat::YUV12_422_Planar_LE_Rec709, dispatch_FastPathRGBA12LEtoPlanar12LE422_709);
 
                 // Planar 420 12-bit LE Rec.709
-                reg(PixelDesc::YUV12_420_Planar_LE_Rec709, PixelDesc::RGBA12_LE_sRGB, dispatch_FastPathPlanar12LE420_709toRGBA12LE);
-                reg(PixelDesc::RGBA12_LE_sRGB,             PixelDesc::YUV12_420_Planar_LE_Rec709, dispatch_FastPathRGBA12LEtoPlanar12LE420_709);
+                reg(PixelFormat::YUV12_420_Planar_LE_Rec709, PixelFormat::RGBA12_LE_sRGB, dispatch_FastPathPlanar12LE420_709toRGBA12LE);
+                reg(PixelFormat::RGBA12_LE_sRGB,             PixelFormat::YUV12_420_Planar_LE_Rec709, dispatch_FastPathRGBA12LEtoPlanar12LE420_709);
 
                 // NV12 12-bit LE Rec.709
-                reg(PixelDesc::YUV12_420_SemiPlanar_LE_Rec709, PixelDesc::RGBA12_LE_sRGB, dispatch_FastPathNV12_12LE_709toRGBA12LE);
-                reg(PixelDesc::RGBA12_LE_sRGB,                 PixelDesc::YUV12_420_SemiPlanar_LE_Rec709, dispatch_FastPathRGBA12LEtoNV12_12LE_709);
+                reg(PixelFormat::YUV12_420_SemiPlanar_LE_Rec709, PixelFormat::RGBA12_LE_sRGB, dispatch_FastPathNV12_12LE_709toRGBA12LE);
+                reg(PixelFormat::RGBA12_LE_sRGB,                 PixelFormat::YUV12_420_SemiPlanar_LE_Rec709, dispatch_FastPathRGBA12LEtoNV12_12LE_709);
 
                 // --- 12-bit LE BT.2020 fast paths ---
 
                 // UYVY 12-bit LE Rec.2020
-                reg(PixelDesc::YUV12_422_UYVY_LE_Rec2020, PixelDesc::RGBA12_LE_sRGB, dispatch_FastPathUYVY12LE_2020toRGBA12LE);
-                reg(PixelDesc::RGBA12_LE_sRGB,             PixelDesc::YUV12_422_UYVY_LE_Rec2020, dispatch_FastPathRGBA12LEtoUYVY12LE_2020);
+                reg(PixelFormat::YUV12_422_UYVY_LE_Rec2020, PixelFormat::RGBA12_LE_sRGB, dispatch_FastPathUYVY12LE_2020toRGBA12LE);
+                reg(PixelFormat::RGBA12_LE_sRGB,             PixelFormat::YUV12_422_UYVY_LE_Rec2020, dispatch_FastPathRGBA12LEtoUYVY12LE_2020);
 
                 // Planar 420 12-bit LE Rec.2020
-                reg(PixelDesc::YUV12_420_Planar_LE_Rec2020, PixelDesc::RGBA12_LE_sRGB, dispatch_FastPathPlanar12LE420_2020toRGBA12LE);
-                reg(PixelDesc::RGBA12_LE_sRGB,              PixelDesc::YUV12_420_Planar_LE_Rec2020, dispatch_FastPathRGBA12LEtoPlanar12LE420_2020);
+                reg(PixelFormat::YUV12_420_Planar_LE_Rec2020, PixelFormat::RGBA12_LE_sRGB, dispatch_FastPathPlanar12LE420_2020toRGBA12LE);
+                reg(PixelFormat::RGBA12_LE_sRGB,              PixelFormat::YUV12_420_Planar_LE_Rec2020, dispatch_FastPathRGBA12LEtoPlanar12LE420_2020);
 
                 // --- Planar RGB8 fast paths ---
 
                 // Planar RGB8 <-> Interleaved RGB8
-                reg(PixelDesc::RGB8_Planar_sRGB, PixelDesc::RGB8_sRGB,  dispatch_FastPathPlanarRGB8toRGB8);
-                reg(PixelDesc::RGB8_sRGB,        PixelDesc::RGB8_Planar_sRGB, dispatch_FastPathRGB8toPlanarRGB8);
+                reg(PixelFormat::RGB8_Planar_sRGB, PixelFormat::RGB8_sRGB,  dispatch_FastPathPlanarRGB8toRGB8);
+                reg(PixelFormat::RGB8_sRGB,        PixelFormat::RGB8_Planar_sRGB, dispatch_FastPathRGB8toPlanarRGB8);
 
                 // Planar RGB8 <-> RGBA8
-                reg(PixelDesc::RGB8_Planar_sRGB, PixelDesc::RGBA8_sRGB, dispatch_FastPathPlanarRGB8toRGBA8);
-                reg(PixelDesc::RGBA8_sRGB,       PixelDesc::RGB8_Planar_sRGB, dispatch_FastPathRGBA8toPlanarRGB8);
+                reg(PixelFormat::RGB8_Planar_sRGB, PixelFormat::RGBA8_sRGB, dispatch_FastPathPlanarRGB8toRGBA8);
+                reg(PixelFormat::RGBA8_sRGB,       PixelFormat::RGB8_Planar_sRGB, dispatch_FastPathRGBA8toPlanarRGB8);
         }
 } __fastPathRegistrar;
 

@@ -16,7 +16,7 @@
 #include <promeki/framerate.h>
 #include <promeki/size2d.h>
 #include <promeki/videoformat.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/enums.h>
 #include <promeki/enumlist.h>
 #include <promeki/audiotestpattern.h>
@@ -54,7 +54,7 @@ void buildRig(InspectorRig &rig, uint32_t streamId,
         // marker and the LTC stream to verify.
         MediaIO::Config tpgCfg = MediaIO::defaultConfig("TPG");
         tpgCfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p30));
-        tpgCfg.set(MediaConfig::VideoPixelFormat, PixelDesc(PixelDesc::RGBA8_sRGB));
+        tpgCfg.set(MediaConfig::VideoPixelFormat, PixelFormat(PixelFormat::RGBA8_sRGB));
         tpgCfg.set(MediaConfig::TimecodeStart, String("01:00:00:00"));
         tpgCfg.set(MediaConfig::StreamID, streamId);
         tpgCfg.set(MediaConfig::AudioEnabled, audioEnabled);
@@ -255,7 +255,7 @@ TEST_CASE("Inspector flags a sync offset change as a discontinuity") {
         REQUIRE(audPtr.isValid());
         audPtr.modify();   // ensure exclusive ownership before writing
         const Audio &aud = *audPtr;
-        REQUIRE(aud.desc().dataType() == AudioDesc::PCMI_Float32LE);
+        REQUIRE(aud.desc().format().id() == AudioFormat::PCMI_Float32LE);
         const int channels = aud.desc().channels();
         const size_t samples = aud.samples();
         REQUIRE(samples >= 4);

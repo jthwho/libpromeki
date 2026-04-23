@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/paintengine.h>
 #include <promeki/image.h>
 
@@ -31,7 +31,7 @@ class PaintEngine_422 : public PaintEngine::Impl {
                 Size2Du32       _size;
                 uint8_t         *_buf;
                 size_t          _stride;
-                PixelDesc       _pixDesc;
+                PixelFormat       _pixDesc;
                 float           _compOffset[3] = {};
                 float           _compScale[3] = {};
 
@@ -39,7 +39,7 @@ class PaintEngine_422 : public PaintEngine::Impl {
                         : _image(img), _size(img.size()),
                           _buf(static_cast<uint8_t *>(img.plane(0)->data())),
                           _stride(img.lineStride(0)),
-                          _pixDesc(img.pixelDesc()) {
+                          _pixDesc(img.pixelFormat()) {
                         for(int i = 0; i < 3; i++) {
                                 const auto &cs = _pixDesc.compSemantic(i);
                                 _compOffset[i] = cs.rangeMin;
@@ -49,7 +49,7 @@ class PaintEngine_422 : public PaintEngine::Impl {
                         }
                 }
 
-                const PixelDesc &pixelDesc() const override { return _pixDesc; }
+                const PixelFormat &pixelFormat() const override { return _pixDesc; }
 
                 CompType mapComp(uint16_t v, int comp) const {
                         return static_cast<CompType>(_compOffset[comp] + v * _compScale[comp] + 0.5f);
@@ -96,7 +96,7 @@ class PaintEngine_422 : public PaintEngine::Impl {
 
                 bool blit(const Point2Di32 &dpt, const Image &src,
                           const Point2Di32 &spt, const Size2Du32 &ssz) const override {
-                        if(src.pixelDesc() != _pixDesc) return false;
+                        if(src.pixelFormat() != _pixDesc) return false;
                         const uint8_t *sbuf = static_cast<const uint8_t *>(src.plane(0)->data());
                         size_t sStride = src.lineStride(0);
                         int sx = spt.x(), sy = spt.y();
@@ -319,22 +319,22 @@ template class PaintEngine_422<uint16_t, 16, true>;
 
 // --- Factory functions ---
 
-PaintEngine createPaintEngine_YUYV8(const PixelDesc::Data *, const Image &img) {
+PaintEngine createPaintEngine_YUYV8(const PixelFormat::Data *, const Image &img) {
         return new PaintEngine_422<uint8_t, 8, false>(img);
 }
-PaintEngine createPaintEngine_YUYV10_LE(const PixelDesc::Data *, const Image &img) {
+PaintEngine createPaintEngine_YUYV10_LE(const PixelFormat::Data *, const Image &img) {
         return new PaintEngine_422<uint16_t, 10, false>(img);
 }
-PaintEngine createPaintEngine_UYVY8(const PixelDesc::Data *, const Image &img) {
+PaintEngine createPaintEngine_UYVY8(const PixelFormat::Data *, const Image &img) {
         return new PaintEngine_422<uint8_t, 8, true>(img);
 }
-PaintEngine createPaintEngine_UYVY10_LE(const PixelDesc::Data *, const Image &img) {
+PaintEngine createPaintEngine_UYVY10_LE(const PixelFormat::Data *, const Image &img) {
         return new PaintEngine_422<uint16_t, 10, true>(img);
 }
-PaintEngine createPaintEngine_UYVY12_LE(const PixelDesc::Data *, const Image &img) {
+PaintEngine createPaintEngine_UYVY12_LE(const PixelFormat::Data *, const Image &img) {
         return new PaintEngine_422<uint16_t, 12, true>(img);
 }
-PaintEngine createPaintEngine_UYVY16_LE(const PixelDesc::Data *, const Image &img) {
+PaintEngine createPaintEngine_UYVY16_LE(const PixelFormat::Data *, const Image &img) {
         return new PaintEngine_422<uint16_t, 16, true>(img);
 }
 

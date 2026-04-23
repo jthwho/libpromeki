@@ -11,7 +11,7 @@
 #include <promeki/image.h>
 #include <promeki/paintengine.h>
 #include <promeki/color.h>
-#include <promeki/pixelformat.h>
+#include <promeki/pixelmemlayout.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -22,7 +22,7 @@ namespace {
 // every plane's natural alignment quantum.  Combines the format's
 // pixels-per-block (e.g. v210's 6) with the LCM of all planes'
 // horizontal subsampling factors (typically 1 or 2).
-size_t cellWidthAlignment(const PixelFormat &pf) {
+size_t cellWidthAlignment(const PixelMemLayout &pf) {
         size_t align = pf.pixelsPerBlock();
         if(align == 0) align = 1;
         for(size_t i = 0; i < pf.planeCount(); i++) {
@@ -33,13 +33,13 @@ size_t cellWidthAlignment(const PixelFormat &pf) {
 }
 
 // Returns the unpadded byte count for a 1-line image of width
-// @c cellPixels in the supplied plane.  Unlike PixelFormat::lineStride,
+// @c cellPixels in the supplied plane.  Unlike PixelMemLayout::lineStride,
 // this returns the *exact* data byte count with no trailing padding —
 // required by the encoder which must place adjacent bit cells with no
-// gaps in between (some PixelFormats — notably v210 — force lineStride
+// gaps in between (some PixelMemLayouts — notably v210 — force lineStride
 // to a 128-byte alignment, which would corrupt subsequent cells if
 // applied per-cell).
-size_t cellBytesForPlane(const PixelFormat &pf, size_t planeIndex, size_t cellPixels) {
+size_t cellBytesForPlane(const PixelMemLayout &pf, size_t planeIndex, size_t cellPixels) {
         const auto &pd = pf.planeDesc(planeIndex);
         if(pd.bytesPerSample > 0) {
                 // Planar / semi-planar formats: bytesPerSample already
@@ -58,13 +58,13 @@ size_t cellBytesForPlane(const PixelFormat &pf, size_t planeIndex, size_t cellPi
 // Build a small primer image of width @c cellPixels filled with
 // @p color, then convert it to @p targetDesc.  Returns an invalid
 // Image on any failure.
-Image buildPrimerImage(size_t cellPixels, const Color &color, const PixelDesc &targetDesc) {
+Image buildPrimerImage(size_t cellPixels, const Color &color, const PixelFormat &targetDesc) {
         if(cellPixels == 0) return Image();
 
         // Render into RGBA8_sRGB first because it always has a paint
         // engine — RGBA8 → anything is the canonical CSC fast path.
         Image rgba(static_cast<size_t>(cellPixels), size_t(1),
-                   PixelDesc(PixelDesc::RGBA8_sRGB));
+                   PixelFormat(PixelFormat::RGBA8_sRGB));
         if(!rgba.isValid()) return Image();
         // RGBA8_sRGB always has a working paint engine, so no need to
         // validate the engine itself — only YUV / packed / compressed
@@ -73,7 +73,7 @@ Image buildPrimerImage(size_t cellPixels, const Color &color, const PixelDesc &t
         auto pixel = pe.createPixel(color);
         pe.fill(pixel);
 
-        if(targetDesc.id() == PixelDesc::RGBA8_sRGB) {
+        if(targetDesc.id() == PixelFormat::RGBA8_sRGB) {
                 // No conversion needed — pass through.
                 return rgba;
         }
@@ -85,13 +85,13 @@ Image buildPrimerImage(size_t cellPixels, const Color &color, const PixelDesc &t
 ImageDataEncoder::ImageDataEncoder(const ImageDesc &desc) : _desc(desc) {
         if(!_desc.isValid()) return;
 
-        const PixelDesc &pd = _desc.pixelDesc();
+        const PixelFormat &pd = _desc.pixelFormat();
         if(!pd.isValid() || pd.isCompressed()) {
                 promekiErr("ImageDataEncoder: invalid or compressed pixel description");
                 return;
         }
 
-        const PixelFormat &pf = pd.pixelFormat();
+        const PixelMemLayout &pf = pd.memLayout();
         const size_t imgWidth = _desc.width();
         const size_t align    = cellWidthAlignment(pf);
 
@@ -140,8 +140,8 @@ ImageDataEncoder::ImageDataEncoder(const ImageDesc &desc) : _desc(desc) {
 }
 
 bool ImageDataEncoder::buildPrimers() {
-        const PixelDesc &pd = _desc.pixelDesc();
-        const PixelFormat &pf = pd.pixelFormat();
+        const PixelFormat &pd = _desc.pixelFormat();
+        const PixelMemLayout &pf = pd.memLayout();
 
         // We render up to three primer images via the CSC pipeline:
         //
@@ -257,7 +257,7 @@ Error ImageDataEncoder::encode(Image &img, const List<Item> &items) const {
         if(!_valid) return Error::Invalid;
         if(!img.isValid()) return Error::Invalid;
         if(img.desc().size() != _desc.size() ||
-           img.desc().pixelDesc() != _desc.pixelDesc()) {
+           img.desc().pixelFormat() != _desc.pixelFormat()) {
                 return Error::InvalidArgument;
         }
 

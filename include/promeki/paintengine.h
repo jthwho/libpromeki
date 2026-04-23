@@ -7,7 +7,7 @@
 
 #pragma once
 #include <promeki/namespace.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/sharedptr.h>
 #include <promeki/array.h>
 #include <promeki/list.h>
@@ -197,9 +197,9 @@ class PaintEngine {
 
                                 /**
                                  * @brief Returns the pixel description associated with this implementation.
-                                 * @return The PixelDesc, or an invalid PixelDesc if unset.
+                                 * @return The PixelFormat, or an invalid PixelFormat if unset.
                                  */
-                                virtual const PixelDesc &pixelDesc() const;
+                                virtual const PixelFormat &pixelFormat() const;
 
                         protected:
                 };
@@ -225,10 +225,10 @@ class PaintEngine {
 
                 /**
                  * @brief Returns the pixel description of the underlying implementation.
-                 * @return A const reference to the PixelDesc.
+                 * @return A const reference to the PixelFormat.
                  */
-                const PixelDesc &pixelDesc() const {
-                        return d->pixelDesc();
+                const PixelFormat &pixelFormat() const {
+                        return d->pixelFormat();
                 }
 
                 /**
@@ -290,20 +290,20 @@ class PaintEngine {
                  * @brief Creates a Pixel from a Color value.
                  *
                  * Converts the Color to the PaintEngine's color model (from
-                 * PixelDesc), then maps each component to a 16-bit value and
+                 * PixelFormat), then maps each component to a 16-bit value and
                  * delegates to the format-specific createPixel().
                  *
                  * @param color The Color to convert.
                  * @return A Pixel suitable for drawing on this engine.
                  */
                 Pixel createPixel(const Color &color) const {
-                        const PixelDesc &pd = d->pixelDesc();
+                        const PixelFormat &pd = d->pixelFormat();
                         const ColorModel &targetModel = pd.isValid()
                                 ? pd.colorModel() : ColorModel(ColorModel::sRGB);
                         Color c = (color.model() == targetModel)
                                 ? color : color.convert(targetModel);
                         size_t count = pd.isValid() ? pd.compCount() : 4;
-                        uint16_t data[PixelFormat::MaxComps] = {};
+                        uint16_t data[PixelMemLayout::MaxComps] = {};
                         for(size_t i = 0; i < count && i < 3; i++) {
                                 float v = c.comp(i) * 65535.0f;
                                 if(v < 0.0f) v = 0.0f;

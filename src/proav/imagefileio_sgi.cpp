@@ -94,31 +94,31 @@ static bool isLittleEndian() {
 // Pixel format mapping
 // ===========================================================================
 
-static PixelDesc::ID sgiPixelDesc(uint8_t bpc, uint16_t zSize) {
+static PixelFormat::ID sgiPixelFormat(uint8_t bpc, uint16_t zSize) {
         if(bpc == 1) {
                 switch(zSize) {
-                        case 1: return PixelDesc::Mono8_sRGB;
-                        case 3: return PixelDesc::RGB8_sRGB;
-                        case 4: return PixelDesc::RGBA8_sRGB;
+                        case 1: return PixelFormat::Mono8_sRGB;
+                        case 3: return PixelFormat::RGB8_sRGB;
+                        case 4: return PixelFormat::RGBA8_sRGB;
                 }
         } else if(bpc == 2) {
                 switch(zSize) {
-                        case 1: return PixelDesc::Mono16_BE_sRGB;
-                        case 3: return PixelDesc::RGB16_BE_sRGB;
-                        case 4: return PixelDesc::RGBA16_BE_sRGB;
+                        case 1: return PixelFormat::Mono16_BE_sRGB;
+                        case 3: return PixelFormat::RGB16_BE_sRGB;
+                        case 4: return PixelFormat::RGBA16_BE_sRGB;
                 }
         }
-        return PixelDesc::Invalid;
+        return PixelFormat::Invalid;
 }
 
-static bool sgiFormatParams(PixelDesc::ID id, uint8_t &bpc, uint16_t &zSize) {
+static bool sgiFormatParams(PixelFormat::ID id, uint8_t &bpc, uint16_t &zSize) {
         switch(id) {
-                case PixelDesc::Mono8_sRGB:     bpc = 1; zSize = 1; return true;
-                case PixelDesc::RGB8_sRGB:      bpc = 1; zSize = 3; return true;
-                case PixelDesc::RGBA8_sRGB:     bpc = 1; zSize = 4; return true;
-                case PixelDesc::Mono16_BE_sRGB: bpc = 2; zSize = 1; return true;
-                case PixelDesc::RGB16_BE_sRGB:  bpc = 2; zSize = 3; return true;
-                case PixelDesc::RGBA16_BE_sRGB: bpc = 2; zSize = 4; return true;
+                case PixelFormat::Mono8_sRGB:     bpc = 1; zSize = 1; return true;
+                case PixelFormat::RGB8_sRGB:      bpc = 1; zSize = 3; return true;
+                case PixelFormat::RGBA8_sRGB:     bpc = 1; zSize = 4; return true;
+                case PixelFormat::Mono16_BE_sRGB: bpc = 2; zSize = 1; return true;
+                case PixelFormat::RGB16_BE_sRGB:  bpc = 2; zSize = 3; return true;
+                case PixelFormat::RGBA16_BE_sRGB: bpc = 2; zSize = 4; return true;
                 default: return false;
         }
 }
@@ -319,8 +319,8 @@ Error ImageFileIO_SGI::load(ImageFile &imageFile, const MediaConfig &config) con
         }
 
         // Determine pixel format
-        PixelDesc::ID pdId = sgiPixelDesc(hdr.bpc, hdr.zSize);
-        if(pdId == PixelDesc::Invalid) {
+        PixelFormat::ID pdId = sgiPixelFormat(hdr.bpc, hdr.zSize);
+        if(pdId == PixelFormat::Invalid) {
                 promekiErr("SGI load '%s': unsupported format (bpc=%d, zSize=%d)",
                            filename.cstr(), hdr.bpc, hdr.zSize);
                 file.close();
@@ -392,7 +392,7 @@ Error ImageFileIO_SGI::load(ImageFile &imageFile, const MediaConfig &config) con
         }
 
         // Allocate image and convert planar → interleaved
-        Image image(w, h, PixelDesc(pdId));
+        Image image(w, h, PixelFormat(pdId));
         if(!image.isValid()) {
                 promekiErr("SGI load '%s': failed to allocate image", filename.cstr());
                 return Error::NoMem;
@@ -410,7 +410,7 @@ Error ImageFileIO_SGI::load(ImageFile &imageFile, const MediaConfig &config) con
         frame.imageList().pushToBack(Image::Ptr::create(image));
         imageFile.setFrame(frame);
         promekiDebug("SGI load '%s': %zux%zu %s (%s)", filename.cstr(), w, h,
-                     PixelDesc(pdId).name().cstr(), hdr.storage ? "RLE" : "raw");
+                     PixelFormat(pdId).name().cstr(), hdr.storage ? "RLE" : "raw");
         return Error::Ok;
 }
 
@@ -430,9 +430,9 @@ Error ImageFileIO_SGI::save(ImageFile &imageFile, const MediaConfig &config) con
 
         uint8_t bpc;
         uint16_t zSize;
-        if(!sgiFormatParams(image.pixelDesc().id(), bpc, zSize)) {
+        if(!sgiFormatParams(image.pixelFormat().id(), bpc, zSize)) {
                 promekiErr("SGI save '%s': unsupported pixel format '%s'",
-                           filename.cstr(), image.pixelDesc().name().cstr());
+                           filename.cstr(), image.pixelFormat().name().cstr());
                 return Error::PixelFormatNotSupported;
         }
 
@@ -488,7 +488,7 @@ Error ImageFileIO_SGI::save(ImageFile &imageFile, const MediaConfig &config) con
 
         file.close();
         promekiDebug("SGI save '%s': %zux%zu %s", filename.cstr(), w, h,
-                     image.pixelDesc().name().cstr());
+                     image.pixelFormat().name().cstr());
         return Error::Ok;
 }
 

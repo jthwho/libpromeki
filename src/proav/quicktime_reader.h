@@ -135,8 +135,8 @@ class QuickTimeReader : public QuickTime::Impl {
                  *
                  * Reads the fixed fields of the visual sample entry
                  * (width/height, compressor name, depth, etc.) and
-                 * populates @p track with the derived size, pixelDesc
-                 * (resolved from @p entryType via the PixelDesc
+                 * populates @p track with the derived size, pixelFormat
+                 * (resolved from @p entryType via the PixelFormat
                  * registry), and software metadata.
                  *
                  * On entry, @c stream must be positioned immediately

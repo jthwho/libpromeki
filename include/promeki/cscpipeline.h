@@ -11,7 +11,7 @@
 #include <promeki/sharedptr.h>
 #include <promeki/list.h>
 #include <promeki/error.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/csccontext.h>
 #include <promeki/cscregistry.h>
@@ -24,7 +24,7 @@ class Image;
  * @brief Pre-compiled color space conversion pipeline.
  * @ingroup proav
  *
- * CSCPipeline analyzes a source and target PixelDesc at construction
+ * CSCPipeline analyzes a source and target PixelFormat at construction
  * time and compiles an optimized chain of processing stages.  After
  * construction the pipeline is immutable and thread-safe to execute
  * concurrently from multiple threads (each caller must provide its own
@@ -64,9 +64,9 @@ class Image;
  *
  * @par Example
  * @code
- * CSCPipeline pipeline(PixelDesc::RGBA8_sRGB, PixelDesc::YUV8_422_Rec709);
+ * CSCPipeline pipeline(PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_422_Rec709);
  * if(pipeline.isValid()) {
- *     Image dst(srcImage.size(), PixelDesc::YUV8_422_Rec709);
+ *     Image dst(srcImage.size(), PixelFormat::YUV8_422_Rec709);
  *     pipeline.execute(srcImage, dst);
  * }
  *
@@ -226,7 +226,7 @@ class CSCPipeline {
                  * @param config Optional configuration hints
                  *               (e.g. @ref MediaConfig::CscPath).
                  */
-                CSCPipeline(const PixelDesc &src, const PixelDesc &dst,
+                CSCPipeline(const PixelFormat &src, const PixelFormat &dst,
                             const MediaConfig &config = MediaConfig());
 
                 /**
@@ -271,7 +271,7 @@ class CSCPipeline {
                  *         be invalid (e.g. unsupported format pair) —
                  *         check @c isValid() before executing.
                  */
-                static Ptr cached(const PixelDesc &src, const PixelDesc &dst,
+                static Ptr cached(const PixelFormat &src, const PixelFormat &dst,
                                   const MediaConfig &config = MediaConfig());
 
                 /**
@@ -282,15 +282,15 @@ class CSCPipeline {
 
                 /**
                  * @brief Returns the source pixel description.
-                 * @return A const reference to the source PixelDesc.
+                 * @return A const reference to the source PixelFormat.
                  */
-                const PixelDesc &srcDesc() const { return _srcDesc; }
+                const PixelFormat &srcDesc() const { return _srcDesc; }
 
                 /**
                  * @brief Returns the target pixel description.
-                 * @return A const reference to the target PixelDesc.
+                 * @return A const reference to the target PixelFormat.
                  */
-                const PixelDesc &dstDesc() const { return _dstDesc; }
+                const PixelFormat &dstDesc() const { return _dstDesc; }
 
                 /**
                  * @brief Returns true if this is an identity conversion (src == dst).
@@ -314,8 +314,8 @@ class CSCPipeline {
                  * @brief Converts an entire image.
                  *
                  * The source and destination images must have matching dimensions.
-                 * The source must use this pipeline's source PixelDesc and the
-                 * destination must use the target PixelDesc.
+                 * The source must use this pipeline's source PixelFormat and the
+                 * destination must use the target PixelFormat.
                  *
                  * @param src Source image.
                  * @param dst Destination image (must be pre-allocated).
@@ -344,8 +344,8 @@ class CSCPipeline {
                                  CSCContext &ctx) const;
 
         private:
-                PixelDesc               _srcDesc;
-                PixelDesc               _dstDesc;
+                PixelFormat               _srcDesc;
+                PixelFormat               _dstDesc;
                 MediaConfig             _config;
                 bool                    _valid = false;
                 bool                    _identity = false;
@@ -354,9 +354,9 @@ class CSCPipeline {
                 List<Stage>             _stages;
 
                 void compile();
-                void buildUnpackStage(const PixelDesc &pd, Stage &stage);
-                void buildPackStage(const PixelDesc &pd, Stage &stage);
-                void buildRangeStage(const PixelDesc &pd, Stage &stage, bool isInput);
+                void buildUnpackStage(const PixelFormat &pd, Stage &stage);
+                void buildPackStage(const PixelFormat &pd, Stage &stage);
+                void buildRangeStage(const PixelFormat &pd, Stage &stage, bool isInput);
                 void buildTransferStage(const ColorModel &cm, Stage &stage, bool isEOTF, int bits);
                 void buildMatrixStage(const ColorModel &src, const ColorModel &dst, Stage &stage);
 };

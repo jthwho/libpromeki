@@ -14,7 +14,7 @@
 #include <promeki/image.h>
 #include <promeki/audio.h>
 #include <promeki/buffer.h>
-#include <promeki/mediapacket.h>
+#include <promeki/videopacket.h>
 #include <promeki/imagedesc.h>
 #include <promeki/audiodesc.h>
 #include <promeki/mediadesc.h>
@@ -25,7 +25,7 @@
 #include <promeki/udpsocket.h>
 #include <promeki/udpsockettransport.h>
 #include <promeki/sdpsession.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/logger.h>
 #include <promeki/mediatimestamp.h>
 #include <promeki/clockdomain.h>
@@ -142,7 +142,7 @@ MediaIO::FormatDesc MediaIOTask_Rtp::formatDesc() {
                         // Media descriptor knobs.
                         s(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_30));
                         s(MediaConfig::VideoSize, Size2Du32());
-                        s(MediaConfig::VideoPixelFormat, PixelDesc());
+                        s(MediaConfig::VideoPixelFormat, PixelFormat());
                         s(MediaConfig::AudioRate, 48000.0f);
                         s(MediaConfig::AudioChannels, int32_t(2));
                         // Transport-global defaults.
@@ -272,7 +272,7 @@ void MediaIOTask_Rtp::resetAll() {
         _framesSent    = 0;
         _readerFramesReceived = 0;
         _readerMode    = false;
-        _videoWirePixelDesc = PixelDesc();
+        _videoWirePixelFormat = PixelFormat();
         _readerQueue.clear();
         _sdpSession = SdpSession();
         _readerAgg.audioFifo.clear();
@@ -281,8 +281,8 @@ void MediaIOTask_Rtp::resetAll() {
         _readerAgg.pendingMetadata = Metadata();
 }
 
-static bool isJpegPixelDesc(const PixelDesc &pd) {
-        // Any PixelDesc whose codec is "JPEG" is a valid RtpPayloadJpeg
+static bool isJpegPixelFormat(const PixelFormat &pd) {
+        // Any PixelFormat whose codec is "JPEG" is a valid RtpPayloadJpeg
         // input — the codec registry is the single source of truth
         // for what's in the JPEG family, and it's cheaper than
         // enumerating every (subsampling × matrix × range) variant
@@ -292,7 +292,7 @@ static bool isJpegPixelDesc(const PixelDesc &pd) {
                 && pd.videoCodec().id() == VideoCodec::JPEG;
 }
 
-static bool isJpegXsPixelDesc(const PixelDesc &pd) {
+static bool isJpegXsPixelFormat(const PixelFormat &pd) {
         return pd.isValid() && pd.isCompressed()
                 && pd.videoCodec().id() == VideoCodec::JPEG_XS;
 }
@@ -511,7 +511,7 @@ Error MediaIOTask_Rtp::configureVideoStream(const MediaIO::Config &cfg,
         }
         if(!img.isValid()) {
                 Size2Du32 size = cfg.getAs<Size2Du32>(MediaConfig::VideoSize, Size2Du32());
-                PixelDesc pd   = cfg.getAs<PixelDesc>(MediaConfig::VideoPixelFormat, PixelDesc());
+                PixelFormat pd   = cfg.getAs<PixelFormat>(MediaConfig::VideoPixelFormat, PixelFormat());
                 if(size.isValid() && pd.isValid()) {
                         img = ImageDesc(size, pd);
                 }
@@ -544,11 +544,11 @@ Error MediaIOTask_Rtp::configureVideoStream(const MediaIO::Config &cfg,
         }
 
         _video.readerImageDesc = img;
-        const PixelDesc &pd = img.pixelDesc();
+        const PixelFormat &pd = img.pixelFormat();
 
         // Use ImageDesc::toSdp() to derive the rtpmap, fmtp
         // (including colorimetry + RANGE), and encoding name.
-        // This keeps all PixelDesc → SDP mapping in one place.
+        // This keeps all PixelFormat → SDP mapping in one place.
         SdpMediaDescription sdpMd = img.toSdp(_video.payloadType);
         if(sdpMd.mediaType().isEmpty()) {
                 promekiErr("MediaIOTask_Rtp: unsupported video pixel format '%s'",
@@ -579,17 +579,17 @@ Error MediaIOTask_Rtp::configureVideoStream(const MediaIO::Config &cfg,
         }
 
         // Pick payload class from the pixel descriptor family.
-        if(isJpegPixelDesc(pd)) {
+        if(isJpegPixelFormat(pd)) {
                 _video.payload = new RtpPayloadJpeg(static_cast<int>(img.width()),
                                                     static_cast<int>(img.height()));
-        } else if(isJpegXsPixelDesc(pd)) {
+        } else if(isJpegXsPixelFormat(pd)) {
                 auto *jxs = new RtpPayloadJpegXs(static_cast<int>(img.width()),
                                                  static_cast<int>(img.height()),
                                                  _video.payloadType);
                 _video.payload = jxs;
                 _video.clockRate = RtpPayloadJpegXs::ClockRate;
         } else if(!pd.isCompressed()) {
-                const PixelFormat &pf = pd.pixelFormat();
+                const PixelMemLayout &pf = pd.memLayout();
                 if(pf.planeCount() > 1) {
                         promekiErr("MediaIOTask_Rtp: planar pixel formats are not supported "
                                    "for RFC 4175 raw video (use an interleaved format)");
@@ -605,17 +605,17 @@ Error MediaIOTask_Rtp::configureVideoStream(const MediaIO::Config &cfg,
                 // RFC 4175 mandates Cb-Y-Cr-Y (UYVY) component order
                 // for YCbCr 4:2:2 on the wire.  When the input uses
                 // a different component order (e.g. YUYV), store the
-                // corresponding UYVY PixelDesc so sendVideo() can call
+                // corresponding UYVY PixelFormat so sendVideo() can call
                 // Image::convert() before packing.
-                if(pf.id() == PixelFormat::I_422_3x8) {
-                        if(pd.id() == PixelDesc::YUV8_422_Rec709)
-                                _videoWirePixelDesc = PixelDesc(PixelDesc::YUV8_422_UYVY_Rec709);
-                        else if(pd.id() == PixelDesc::YUV8_422_Rec601)
-                                _videoWirePixelDesc = PixelDesc(PixelDesc::YUV8_422_UYVY_Rec601);
+                if(pf.id() == PixelMemLayout::I_422_3x8) {
+                        if(pd.id() == PixelFormat::YUV8_422_Rec709)
+                                _videoWirePixelFormat = PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709);
+                        else if(pd.id() == PixelFormat::YUV8_422_Rec601)
+                                _videoWirePixelFormat = PixelFormat(PixelFormat::YUV8_422_UYVY_Rec601);
                         else
-                                _videoWirePixelDesc = PixelDesc();
+                                _videoWirePixelFormat = PixelFormat();
                 } else {
-                        _videoWirePixelDesc = PixelDesc();
+                        _videoWirePixelFormat = PixelFormat();
                 }
                 _video.payload = new RtpPayloadRawVideo(static_cast<int>(img.width()),
                                                          static_cast<int>(img.height()),
@@ -649,9 +649,9 @@ Error MediaIOTask_Rtp::configureAudioStream(const MediaIO::Config &cfg,
                         // writer path overrides this explicitly so
                         // that AudioBuffer can convert whatever the
                         // producer supplies into the wire format.
-                        AudioDesc::DataType dt = _readerMode
-                                ? AudioDesc::PCMI_S16BE
-                                : AudioDesc::PCMI_S16LE;
+                        AudioFormat::ID dt = _readerMode
+                                ? AudioFormat::PCMI_S16BE
+                                : AudioFormat::PCMI_S16LE;
                         ad = AudioDesc(dt, rate, channels);
                 }
         }
@@ -760,7 +760,7 @@ Error MediaIOTask_Rtp::configureAudioStream(const MediaIO::Config &cfg,
         // the pipeline hands it provided the sample rate and channel
         // count already match.  Rate / channel conversion still
         // belongs to an upstream CSC stage.
-        AudioDesc storageDesc(AudioDesc::PCMI_S16BE, ad.sampleRate(), ad.channels());
+        AudioDesc storageDesc(AudioFormat::PCMI_S16BE, ad.sampleRate(), ad.channels());
         if(!storageDesc.isValid()) {
                 promekiErr("MediaIOTask_Rtp: could not build L16 storage descriptor (%.1f Hz, %u ch)",
                            ad.sampleRate(), ad.channels());
@@ -1249,13 +1249,13 @@ void MediaIOTask_Rtp::emitVideoFrame() {
                         }
                 }
 
-                PixelDesc::ID pdId = ImageDesc::jpegPixelDescFromSdp(
+                PixelFormat::ID pdId = ImageDesc::jpegPixelFormatFromSdp(
                         colorimetry, range, is420, isRgb);
                 _video.readerImageDesc = ImageDesc(
-                        Size2Du32(w, h), PixelDesc(pdId));
+                        Size2Du32(w, h), PixelFormat(pdId));
                 promekiInfo("MediaIOTask_Rtp: JPEG reader discovered "
                             "%ux%u %s from first frame",
-                            w, h, PixelDesc(pdId).name().cstr());
+                            w, h, PixelFormat(pdId).name().cstr());
         }
 
         // Build an Image from the reassembled buffer.  Both compressed
@@ -1268,7 +1268,7 @@ void MediaIOTask_Rtp::emitVideoFrame() {
         Buffer::Ptr plane = Buffer::Ptr::create(reassembled.size());
         std::memcpy(plane->data(), reassembled.data(), reassembled.size());
         plane->setSize(reassembled.size());
-        const PixelDesc &pd = _video.readerImageDesc.pixelDesc();
+        const PixelFormat &pd = _video.readerImageDesc.pixelFormat();
         img = Image::fromBuffer(plane,
                 _video.readerImageDesc.width(),
                 _video.readerImageDesc.height(),
@@ -1330,15 +1330,15 @@ void MediaIOTask_Rtp::emitVideoFrame() {
                 }
         }
 
-        // Compressed streams also attach a MediaPacket to the Image
+        // Compressed streams also attach a VideoPacket to the Image
         // sharing the same backing buffer, so a downstream VideoDecoder
         // stage sees the bitstream via the canonical Image::packet
         // accessor (every intraframe packet is a keyframe).
         if(pd.isCompressed()) {
-                auto pkt = MediaPacket::Ptr::create(plane, pd);
+                auto pkt = VideoPacket::Ptr::create(plane, pd);
                 pkt.modify()->setPts(capMts);
                 pkt.modify()->setDts(capMts);
-                pkt.modify()->addFlag(MediaPacket::Keyframe);
+                pkt.modify()->addFlag(VideoPacket::Keyframe);
                 f->imageList().back().modify()->setPacket(std::move(pkt));
         }
 
@@ -1409,7 +1409,7 @@ void MediaIOTask_Rtp::onAudioPacket(const RtpPacket &pkt) {
         const size_t samples = pkt.payloadSize() / frameBytes;
         if(samples == 0) return;
 
-        AudioDesc wireDesc(AudioDesc::PCMI_S16BE,
+        AudioDesc wireDesc(AudioFormat::PCMI_S16BE,
                            _audio.readerAudioDesc.sampleRate(),
                            ch);
 
@@ -1678,7 +1678,7 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandOpen &cmd) {
         // of headroom — enough to absorb a transient burst of audio
         // arriving ahead of the video stream without losing data.
         if(_readerMode && _audio.readerAudioDesc.isValid()) {
-                AudioDesc wireFormat(AudioDesc::PCMI_S16BE,
+                AudioDesc wireFormat(AudioFormat::PCMI_S16BE,
                                      _audio.readerAudioDesc.sampleRate(),
                                      _audio.readerAudioDesc.channels());
                 _readerAgg.audioFifo.setFormat(wireFormat);
@@ -1774,11 +1774,11 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandOpen &cmd) {
                 if(videoBitrate == 0 && _video.active &&
                    !cmd.pendingMediaDesc.imageList().isEmpty()) {
                         const ImageDesc &img = cmd.pendingMediaDesc.imageList()[0];
-                        if(!img.pixelDesc().isCompressed()) {
+                        if(!img.pixelFormat().isCompressed()) {
                                 // Uncompressed: width * height * bpp * fps.
                                 // bpp is approximated from
                                 // bytesPerBlock / pixelsPerBlock.
-                                const PixelFormat &pf = img.pixelDesc().pixelFormat();
+                                const PixelMemLayout &pf = img.pixelFormat().memLayout();
                                 size_t ppb = pf.pixelsPerBlock();
                                 size_t bpb = pf.bytesPerBlock();
                                 double bpp = ppb > 0
@@ -1952,9 +1952,9 @@ Error MediaIOTask_Rtp::sendVideo(const Image &image, const FrameNumber &frameInd
         // first via Image::convert().
         const Image *src = &image;
         Image wireImage;
-        if(_videoWirePixelDesc.isValid() &&
-           image.pixelDesc().id() != _videoWirePixelDesc.id()) {
-                wireImage = image.convert(_videoWirePixelDesc, Metadata());
+        if(_videoWirePixelFormat.isValid() &&
+           image.pixelFormat().id() != _videoWirePixelFormat.id()) {
+                wireImage = image.convert(_videoWirePixelFormat, Metadata());
                 if(!wireImage.isValid()) return Error::Invalid;
                 src = &wireImage;
         }
@@ -1992,7 +1992,7 @@ Error MediaIOTask_Rtp::sendVideo(const Image &image, const FrameNumber &frameInd
         // means the caller has explicitly chosen the rate, and
         // open-time @c applyRate already programmed it.
         if(_pacingMode.value() == RtpPacingMode::KernelFq.value() &&
-           _frameRate.isValid() && image.pixelDesc().isCompressed()) {
+           _frameRate.isValid() && image.pixelFormat().isCompressed()) {
                 size_t frameBytes = 0;
                 for(size_t i = 0; i < packets.size(); i++) {
                         frameBytes += packets[i].size();

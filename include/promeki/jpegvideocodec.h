@@ -2,121 +2,129 @@
  * @file      jpegvideocodec.h
  * @copyright Howard Logic. All rights reserved.
  *
- * See LICENSE file in the project root folder.
+ * See LICENSE file in the project root folder for license information.
  */
 
 #pragma once
 
 #include <promeki/namespace.h>
-#include <promeki/codec.h>
-#include <promeki/jpegimagecodec.h>
-#include <deque>
+#include <promeki/videoencoder.h>
+#include <promeki/videodecoder.h>
+#include <promeki/pixelformat.h>
+#include <promeki/deque.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief JPEG @ref VideoEncoder built on @ref JpegImageCodec.
+ * @brief JPEG @ref VideoEncoder built on libjpeg-turbo.
  * @ingroup proav
  *
- * Adapts the existing intra-only @ref JpegImageCodec into the
- * stateful push-frame / pull-packet @ref VideoEncoder contract that
- * the unified codec subsystem expects.  Each call to
- * @ref submitFrame runs one JPEG encode through the underlying
- * @ref JpegImageCodec instance and queues the resulting compressed
- * bytes as a @ref MediaPacket; @ref receivePacket pops the head of
- * that queue.
+ * Encodes uncompressed images (RGB8, RGBA8, YCbCr 4:2:2 YUYV/UYVY/planar,
+ * YCbCr 4:2:0 planar/NV12) to JPEG compressed form.  Each call to
+ * @ref submitFrame runs one JPEG encode through libjpeg-turbo and
+ * queues the resulting compressed bytes as a @ref MediaPacket;
+ * @ref receivePacket pops the head of that queue.
  *
- * Holding an instance of @ref JpegImageCodec across calls is what
- * lets future revisions of @c JpegImageCodec reuse the libjpeg
- * @c jpeg_compress_struct between frames — the wrapper itself is
- * stateless beyond the output FIFO.
+ * Default subsampling is 4:2:2 for RFC 2435 RTP compatibility.
  *
- * Registered against @ref VideoCodec::JPEG.  Every emitted packet
- * is flagged @ref MediaPacket::Keyframe because every JPEG bitstream
- * is independently decodable.
+ * Registered against @ref VideoCodec::JPEG.  Every emitted packet is
+ * flagged @ref MediaPacket::Keyframe because every JPEG bitstream is
+ * independently decodable.
  *
  * @par Config keys
  *
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
- * | @ref MediaConfig::JpegQuality      | int                  | 85      | Forwarded to @ref JpegImageCodec. |
- * | @ref MediaConfig::JpegSubsampling  | Enum @ref ChromaSubsampling | YUV422 | Forwarded to @ref JpegImageCodec. |
- * | @ref MediaConfig::OutputPixelDesc  | PixelDesc | Invalid | Optional override of the encoder's reported @ref outputPixelDesc. |
- * | @ref MediaConfig::Capacity         | int       | 8       | Output FIFO depth before a one-shot warning is logged. |
+ * | @ref MediaConfig::JpegQuality       | int                         | 85      | libjpeg-turbo quality (1-100, clamped). |
+ * | @ref MediaConfig::JpegSubsampling   | Enum @ref ChromaSubsampling | YUV422  | Chroma subsampling for RGB encode paths. |
+ * | @ref MediaConfig::OutputPixelFormat | PixelFormat                 | Invalid | Optional override of the encoder's reported @ref outputPixelFormat. |
+ * | @ref MediaConfig::Capacity          | int                         | 8       | Output FIFO depth before a one-shot warning is logged. |
  */
 class JpegVideoEncoder : public VideoEncoder {
         public:
-                JpegVideoEncoder() = default;
+                /** @brief Chroma subsampling mode for JPEG encoding. */
+                enum Subsampling {
+                        Subsampling444,   ///< @brief 4:4:4 (no chroma subsampling).
+                        Subsampling422,   ///< @brief 4:2:2 (default, RFC 2435 compatible).
+                        Subsampling420    ///< @brief 4:2:0.
+                };
+
+                JpegVideoEncoder();
                 ~JpegVideoEncoder() override;
 
-                String name() const override;
-                String description() const override;
-                PixelDesc outputPixelDesc() const override;
-                List<int> supportedInputs() const override;
-
                 /**
-                 * @brief Static view of the encoder's @ref supportedInputs list.
+                 * @brief Static view of the encoder's accepted uncompressed input list.
                  *
-                 * Returned verbatim by the virtual @ref supportedInputs
-                 * override.  Exposed statically so the
-                 * @ref VideoCodec registry can populate
-                 * @ref VideoCodec::Data::encoderSupportedInputs without
+                 * Exposed for the @ref VideoCodec backend registry so
+                 * the planner can query supported inputs without
                  * allocating an encoder instance.
                  */
                 static List<int> supportedInputList();
 
                 void configure(const MediaConfig &config) override;
-                Error submitFrame(const Image &frame,
+                Error submitFrame(const Image::Ptr &frame,
                                   const MediaTimeStamp &pts = MediaTimeStamp()) override;
-                MediaPacket::Ptr receivePacket() override;
+                VideoPacket::Ptr receivePacket() override;
                 Error flush() override;
                 Error reset() override;
-                void requestKeyframe() override;
+
+                /** @brief Returns the JPEG quality (1-100). */
+                int quality() const { return _quality; }
+
+                /** @brief Returns the chroma subsampling mode. */
+                Subsampling subsampling() const { return _subsampling; }
 
         private:
-                JpegImageCodec               _codec;
-                PixelDesc                    _outputPd;
-                int                          _capacity = 8;
-                std::deque<MediaPacket::Ptr> _queue;
+                struct Impl;                          ///< pImpl shielding consumers from @c \<jpeglib.h\>.
+                Impl                        *_impl   = nullptr;
+
+                int                          _quality       = 85;
+                Subsampling                  _subsampling   = Subsampling422;
+                PixelFormat                  _outputPd;
+                int                          _capacity      = 8;
+                Deque<VideoPacket::Ptr>      _queue;
                 bool                         _capacityWarned = false;
 };
 
 /**
- * @brief JPEG @ref VideoDecoder built on @ref JpegImageCodec.
+ * @brief JPEG @ref VideoDecoder built on libjpeg-turbo.
  * @ingroup proav
  *
  * Symmetric counterpart to @ref JpegVideoEncoder — incoming
- * @ref MediaPacket bytes are wrapped as a compressed @ref Image and
- * handed to @ref JpegImageCodec::decode, with the resulting
- * uncompressed Image queued for @ref receiveFrame.  The decoder's
- * target uncompressed pixel description is set via
- * @ref MediaConfig::OutputPixelDesc; when unset, the codec's first
- * declared decode target is used.
+ * @ref MediaPacket bytes are handed to libjpeg-turbo for decode and
+ * the resulting uncompressed Image is queued for @ref receiveFrame.
+ * The decoder's target uncompressed pixel description is set via
+ * @ref MediaConfig::OutputPixelFormat; when unset, the first
+ * declared decode target for the input JPEG sub-format is used.
  *
  * Registered against @ref VideoCodec::JPEG.
  */
 class JpegVideoDecoder : public VideoDecoder {
         public:
-                JpegVideoDecoder() = default;
+                JpegVideoDecoder();
                 ~JpegVideoDecoder() override;
 
-                String name() const override;
-                String description() const override;
-                PixelDesc inputPixelDesc() const override;
-                List<int> supportedOutputs() const override;
+                /**
+                 * @brief Static view of the decoder's emitted uncompressed output list.
+                 *
+                 * Exposed for the @ref VideoCodec backend registry.
+                 */
+                static List<int> supportedOutputList();
 
                 void configure(const MediaConfig &config) override;
-                Error submitPacket(const MediaPacket &packet) override;
-                Image receiveFrame() override;
+                Error submitPacket(const VideoPacket::Ptr &packet) override;
+                Image::Ptr receiveFrame() override;
                 Error flush() override;
                 Error reset() override;
 
         private:
-                JpegImageCodec      _codec;
-                PixelDesc           _outputPd;
-                int                 _capacity = 8;
-                std::deque<Image>   _queue;
-                bool                _capacityWarned = false;
+                struct Impl;                          ///< pImpl shielding consumers from @c \<jpeglib.h\>.
+                Impl                *_impl    = nullptr;
+
+                PixelFormat            _outputPd;
+                int                    _capacity = 8;
+                Deque<Image::Ptr>      _queue;
+                bool                   _capacityWarned = false;
 };
 
 PROMEKI_NAMESPACE_END

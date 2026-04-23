@@ -12,7 +12,7 @@
 #include <promeki/audio.h>
 #include <promeki/metadata.h>
 #include <promeki/mediaconfig.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/enums.h>
 
 using namespace promeki;
@@ -30,13 +30,13 @@ Frame::Ptr richFrame() {
         raw->metadata().set(Metadata::Comment,
                             String("dropped 5 frames during capture"));
 
-        ImageDesc idesc(Size2Du32(1920, 1080), PixelDesc::RGBA8_sRGB);
+        ImageDesc idesc(Size2Du32(1920, 1080), PixelFormat::RGBA8_sRGB);
         idesc.setVideoScanMode(VideoScanMode::Progressive);
         Image::Ptr img = Image::Ptr::create(idesc);
         img.modify()->metadata().set(Metadata::FrameNumber, FrameNumber(42));
         raw->imageList().pushToBack(img);
 
-        AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        AudioDesc adesc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         Audio::Ptr aud = Audio::Ptr::create(adesc, 1024);
         aud.modify()->metadata().set(Metadata::Album, String("LiveSet"));
         raw->audioList().pushToBack(aud);
@@ -100,7 +100,7 @@ TEST_CASE("VariantQuery<Frame>: scalar keys and subscripted keys") {
         CHECK(matchFrame("AudioCount == 1", *f));
         CHECK(matchFrame("Image[0].Width == 1920", *f));
         CHECK(matchFrame("Image[0].Height == 1080", *f));
-        CHECK(matchFrame("Image[0].PixelDesc == \"RGBA8_sRGB\"", *f));
+        CHECK(matchFrame("Image[0].PixelFormat == \"RGBA8_sRGB\"", *f));
         CHECK(matchFrame("Audio[0].Channels == 2", *f));
         CHECK(matchFrame("Audio[0].Meta.Album == \"LiveSet\"", *f));
 }
@@ -193,7 +193,7 @@ TEST_CASE("VariantQuery<Frame>: source() round-trips the input") {
 namespace {
 
 Image::Ptr richImage() {
-        ImageDesc idesc(Size2Du32(1920, 1080), PixelDesc::RGBA8_sRGB);
+        ImageDesc idesc(Size2Du32(1920, 1080), PixelFormat::RGBA8_sRGB);
         idesc.setVideoScanMode(VideoScanMode::Progressive);
         Image::Ptr img = Image::Ptr::create(idesc);
         img.modify()->metadata().set(Metadata::FrameNumber, FrameNumber(7));
@@ -214,7 +214,7 @@ TEST_CASE("VariantQuery<Image>: scalar dimensions and typed literal") {
         CHECK(matchImage("Width == 1920", *img));
         CHECK(matchImage("Height == 1080", *img));
         CHECK(matchImage("Width >= 1920 && Height >= 1080", *img));
-        CHECK(matchImage("PixelDesc == \"RGBA8_sRGB\"", *img));
+        CHECK(matchImage("PixelFormat == \"RGBA8_sRGB\"", *img));
 }
 
 TEST_CASE("VariantQuery<Image>: metadata via database handler") {
@@ -231,7 +231,7 @@ TEST_CASE("VariantQuery<Image>: metadata via database handler") {
 namespace {
 
 Audio::Ptr richAudio() {
-        AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        AudioDesc adesc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         Audio::Ptr aud = Audio::Ptr::create(adesc, 1024);
         aud.modify()->metadata().set(Metadata::Album, String("LiveSet"));
         aud.modify()->metadata().set(Metadata::FrameNumber, FrameNumber(11));

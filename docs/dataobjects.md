@@ -25,8 +25,8 @@ reference counting.
 | `Color` | Float[4] color value with ColorModel |
 | `ColorModel` | Color model / color space descriptor (TypeRegistry) |
 | `MemSpace` | Memory space descriptor (TypeRegistry) |
-| `PixelFormat` | Pixel memory layout descriptor (TypeRegistry) |
-| `PixelDesc` | Full pixel description: format + color model + ranges (TypeRegistry) |
+| `PixelMemLayout` | Pixel memory layout descriptor (TypeRegistry) |
+| `PixelFormat` | Full pixel description: format + color model + ranges (TypeRegistry) |
 | `Pair` | Typed pair of two values |
 | `Result` | `Pair<T, Error>` for fallible operations |
 | `Span` | Non-owning view over contiguous storage |
@@ -81,10 +81,12 @@ Shareable classes also provide convenience type aliases for collections:
 | `HashSet` | Unordered set (std::unordered_set wrapper) |
 | `Deque` | Double-ended queue (std::deque wrapper) |
 | `Array` | Fixed-size array (std::array wrapper) |
-| `Image` | Image descriptor + pixel buffer planes (compressed images carry an attached `MediaPacket`) |
-| `Audio` | Audio descriptor + sample buffer (compressed audio carries an attached `MediaPacket`) |
+| `Image` | Image descriptor + pixel buffer planes (compressed images carry an attached `VideoPacket`) |
+| `Audio` | Audio descriptor + sample buffer (compressed audio carries an attached `AudioPacket`) |
 | `Frame` | Container of images, audio, and metadata |
-| `MediaPacket` | Encoded bitstream access unit — attached to its owning `Image` or `Audio` |
+| `MediaPacket` | Abstract polymorphic base for encoded bitstream access units |
+| `VideoPacket` | Encoded video access unit — attached to a compressed `Image` |
+| `AudioPacket` | Encoded audio access unit — attached to a compressed `Audio` |
 | `EncodedDesc` | Compressed/encoded media descriptor |
 
 ## Thread Safety and Cross-Thread Sharing {#dataobj_threading}

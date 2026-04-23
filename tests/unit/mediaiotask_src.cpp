@@ -13,7 +13,7 @@
 #include <promeki/audio.h>
 #include <promeki/audiodesc.h>
 #include <promeki/frame.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/imagedesc.h>
 #include <promeki/mediadesc.h>
 #include <promeki/framerate.h>
@@ -23,7 +23,7 @@ using namespace promeki;
 
 namespace {
 
-Frame::Ptr makeAudioFrame(AudioDesc::DataType dt, float rate,
+Frame::Ptr makeAudioFrame(AudioFormat::ID dt, float rate,
                           unsigned int channels, size_t samples) {
         AudioDesc desc(dt, rate, channels);
         Audio audio(desc, samples);
@@ -33,10 +33,10 @@ Frame::Ptr makeAudioFrame(AudioDesc::DataType dt, float rate,
         return frame;
 }
 
-Frame::Ptr makeVideoAudioFrame(size_t w, size_t h, PixelDesc::ID id,
-                               AudioDesc::DataType dt, float rate,
+Frame::Ptr makeVideoAudioFrame(size_t w, size_t h, PixelFormat::ID id,
+                               AudioFormat::ID dt, float rate,
                                unsigned int channels, size_t samples) {
-        Image img(w, h, PixelDesc(id));
+        Image img(w, h, PixelFormat(id));
         img.fill(0);
         AudioDesc adesc(dt, rate, channels);
         Audio audio(adesc, samples);
@@ -100,14 +100,14 @@ TEST_CASE("MediaIOTask_SRC_AudioPassThrough") {
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Transform).isOk());
 
-        Frame::Ptr in = makeAudioFrame(AudioDesc::PCMI_Float32LE, 48000.0f, 2, 1024);
+        Frame::Ptr in = makeAudioFrame(AudioFormat::PCMI_Float32LE, 48000.0f, 2, 1024);
         CHECK(io->writeFrame(in).isOk());
 
         Frame::Ptr out;
         CHECK(io->readFrame(out).isOk());
         REQUIRE(out.isValid());
         REQUIRE(out->audioList().size() == 1);
-        CHECK(out->audioList()[0]->desc().dataType() == AudioDesc::PCMI_Float32LE);
+        CHECK(out->audioList()[0]->desc().format().id() == AudioFormat::PCMI_Float32LE);
         CHECK(out->audioList()[0]->samples() == 1024);
 
         io->close();
@@ -123,7 +123,7 @@ TEST_CASE("MediaIOTask_SRC_AudioFormatConversion") {
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Transform).isOk());
 
-        Frame::Ptr in = makeAudioFrame(AudioDesc::PCMI_Float32LE, 48000.0f, 2, 1024);
+        Frame::Ptr in = makeAudioFrame(AudioFormat::PCMI_Float32LE, 48000.0f, 2, 1024);
         CHECK(io->writeFrame(in).isOk());
 
         Frame::Ptr out;
@@ -132,7 +132,7 @@ TEST_CASE("MediaIOTask_SRC_AudioFormatConversion") {
         REQUIRE(out->audioList().size() == 1);
         const Audio &a = *out->audioList()[0];
         CHECK(a.isValid());
-        CHECK(a.desc().dataType() == AudioDesc::PCMI_S16LE);
+        CHECK(a.desc().format().id() == AudioFormat::PCMI_S16LE);
         CHECK(a.samples() == 1024);
 
         io->close();
@@ -148,8 +148,8 @@ TEST_CASE("MediaIOTask_SRC_VideoPassesThrough") {
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Transform).isOk());
 
-        Frame::Ptr in = makeVideoAudioFrame(16, 16, PixelDesc::RGB8_sRGB,
-                                            AudioDesc::PCMI_Float32LE,
+        Frame::Ptr in = makeVideoAudioFrame(16, 16, PixelFormat::RGB8_sRGB,
+                                            AudioFormat::PCMI_Float32LE,
                                             48000.0f, 2, 1024);
         CHECK(io->writeFrame(in).isOk());
 
@@ -157,9 +157,9 @@ TEST_CASE("MediaIOTask_SRC_VideoPassesThrough") {
         CHECK(io->readFrame(out).isOk());
         REQUIRE(out.isValid());
         REQUIRE(out->imageList().size() == 1);
-        CHECK(out->imageList()[0]->pixelDesc() == PixelDesc(PixelDesc::RGB8_sRGB));
+        CHECK(out->imageList()[0]->pixelFormat() == PixelFormat(PixelFormat::RGB8_sRGB));
         REQUIRE(out->audioList().size() == 1);
-        CHECK(out->audioList()[0]->desc().dataType() == AudioDesc::PCMI_S16LE);
+        CHECK(out->audioList()[0]->desc().format().id() == AudioFormat::PCMI_S16LE);
 
         io->close();
         delete io;
@@ -186,14 +186,14 @@ TEST_CASE("MediaIOTask_SRC_OutputMediaDesc") {
         MediaDesc pending;
         pending.setFrameRate(FrameRate(FrameRate::FPS_29_97));
         pending.audioList().pushToBack(
-                AudioDesc(AudioDesc::PCMI_Float32LE, 48000.0f, 2));
+                AudioDesc(AudioFormat::PCMI_Float32LE, 48000.0f, 2));
         io->setExpectedDesc(pending);
 
         REQUIRE(io->open(MediaIO::Transform).isOk());
 
         MediaDesc vd = io->mediaDesc();
         REQUIRE(vd.audioList().size() == 1);
-        CHECK(vd.audioList()[0].dataType() == AudioDesc::PCMI_S16LE);
+        CHECK(vd.audioList()[0].format().id() == AudioFormat::PCMI_S16LE);
         CHECK(vd.audioList()[0].sampleRate() == 48000.0f);
 
         io->close();
@@ -209,7 +209,7 @@ TEST_CASE("MediaIOTask_SRC_Stats") {
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Transform).isOk());
 
-        Frame::Ptr f = makeAudioFrame(AudioDesc::PCMI_Float32LE, 48000.0f, 2, 1024);
+        Frame::Ptr f = makeAudioFrame(AudioFormat::PCMI_Float32LE, 48000.0f, 2, 1024);
         CHECK(io->writeFrame(f).isOk());
         CHECK(io->writeFrame(f).isOk());
 

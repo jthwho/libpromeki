@@ -13,7 +13,7 @@
 #   <tag>_mptx.log / <tag>_fftx.log  — sender log
 #   <tag>_mprx.log / <tag>_ffrx.log  — receiver log
 #
-# where <tag> is a short slug derived from the PixelDesc name
+# where <tag> is a short slug derived from the PixelFormat name
 # (e.g. rgb8, uyvy8_422_709, jpeg_422_601f).
 #
 # Usage:
@@ -40,14 +40,14 @@
 #
 # Adding a new format:
 #   Append a line to the FORMATS array below.  Each entry is:
-#     "<PixelDesc>|<tag>|<receivers>"
+#     "<PixelFormat>|<tag>|<receivers>"
 #   where <receivers> is a comma-separated list of "mp" and/or "ff"
 #   (use "mp" for mediaplay-only when ffmpeg can't decode the format).
 
 set -euo pipefail
 
 # ── Format table ─────────────────────────────────────────────────
-# PixelDesc                        | short tag          | receivers
+# PixelFormat                        | short tag          | receivers
 # Receivers: mp = mediaplay, ff = ffmpeg, mp,ff = both
 FORMATS=(
         # Uncompressed (RFC 4175)
@@ -202,7 +202,7 @@ run_rx_mp() {
         local log="$3"
         "$MEDIAPLAY" \
                 "$sdp" \
-                -c --cc OutputPixelDesc:RGB8_sRGB \
+                -c --cc OutputPixelFormat:RGB8_sRGB \
                 -o "$png" \
                 --frame-count 1 \
                 >"$log" 2>&1
@@ -224,7 +224,7 @@ run_rx_ff() {
 }
 
 # ── Single test driver ───────────────────────────────────────────
-#   run_test <PixelDesc> <tag> <receiver>
+#   run_test <PixelFormat> <tag> <receiver>
 # where receiver is "mp" or "ff".
 run_test() {
         local fmt="$1"

@@ -12,9 +12,9 @@
 #include <promeki/image.h>
 #include <promeki/audio.h>
 #include <promeki/buffer.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/audiodesc.h>
-#include <promeki/mediapacket.h>
+#include <promeki/videopacket.h>
 #include <promeki/metadata.h>
 #include <promeki/dir.h>
 #include <promeki/filepath.h>
@@ -47,7 +47,7 @@ Frame::Ptr makeTestFrame(int64_t frameNumber) {
         raw->metadata().set(Metadata::Title, String("pmdf-test"));
 
         // One RGB image with a frame-number-dependent pattern.
-        ImageDesc idesc(Size2Du32(16, 8), PixelDesc::RGB8_sRGB);
+        ImageDesc idesc(Size2Du32(16, 8), PixelFormat::RGB8_sRGB);
         idesc.setVideoScanMode(VideoScanMode::Progressive);
         Image::Ptr img = Image::Ptr::create(idesc);
         uint8_t *d = static_cast<uint8_t *>(img->data(0));
@@ -61,7 +61,7 @@ Frame::Ptr makeTestFrame(int64_t frameNumber) {
         raw->imageList().pushToBack(img);
 
         // One PCM audio track.
-        AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        AudioDesc adesc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         Audio::Ptr aud = Audio::Ptr::create(adesc, 32);
         int16_t *s = aud->data<int16_t>();
         for(size_t i = 0; i < 32 * 2; ++i) {
@@ -74,7 +74,7 @@ Frame::Ptr makeTestFrame(int64_t frameNumber) {
 
 bool imagesEqual(const Image &a, const Image &b) {
         if(a.desc().size() != b.desc().size()) return false;
-        if(a.desc().pixelDesc() != b.desc().pixelDesc()) return false;
+        if(a.desc().pixelFormat() != b.desc().pixelFormat()) return false;
         if(a.planes().size() != b.planes().size()) return false;
         for(size_t i = 0; i < a.planes().size(); ++i) {
                 if(a.plane(i)->size() != b.plane(i)->size()) return false;
@@ -87,7 +87,7 @@ bool imagesEqual(const Image &a, const Image &b) {
 bool audioEqual(const Audio &a, const Audio &b) {
         if(a.desc().sampleRate() != b.desc().sampleRate()) return false;
         if(a.desc().channels()   != b.desc().channels())   return false;
-        if(a.desc().dataType()   != b.desc().dataType())   return false;
+        if(a.desc().format().id()   != b.desc().format().id())   return false;
         if(a.samples()           != b.samples())           return false;
         if(!a.buffer().isValid() || !b.buffer().isValid())
                 return a.buffer().isValid() == b.buffer().isValid();
@@ -286,7 +286,7 @@ TEST_CASE("DebugMediaFile: truncated trailing frame is skipped") {
         CHECK(r.frameCount() == 4);
 }
 
-TEST_CASE("DebugMediaFile: preserves MediaPacket on compressed images") {
+TEST_CASE("DebugMediaFile: preserves VideoPacket on compressed images") {
         String fn = scratchFile("packet.pmdf").toString();
 
         // Build a compressed "JPEG" image whose plane(0) holds the
@@ -298,10 +298,10 @@ TEST_CASE("DebugMediaFile: preserves MediaPacket on compressed images") {
         buf->setSize(sz);
 
         Image img = Image::fromBuffer(buf, 16, 16,
-                                      PixelDesc(PixelDesc::JPEG_RGB8_sRGB));
+                                      PixelFormat(PixelFormat::JPEG_RGB8_sRGB));
         REQUIRE(img.isValid());
-        auto pkt = MediaPacket::Ptr::create(buf, PixelDesc(PixelDesc::JPEG_RGB8_sRGB));
-        pkt.modify()->addFlag(MediaPacket::Keyframe);
+        auto pkt = VideoPacket::Ptr::create(buf, PixelFormat(PixelFormat::JPEG_RGB8_sRGB));
+        pkt.modify()->addFlag(VideoPacket::Keyframe);
         img.setPacket(pkt);
 
         Frame::Ptr f = Frame::Ptr::create();
@@ -324,7 +324,7 @@ TEST_CASE("DebugMediaFile: preserves MediaPacket on compressed images") {
         CHECK(gi.isCompressed());
         REQUIRE(gi.packet().isValid());
         CHECK(gi.packet()->isKeyframe());
-        CHECK(gi.packet()->pixelDesc() == PixelDesc(PixelDesc::JPEG_RGB8_sRGB));
+        CHECK(gi.packet()->pixelFormat() == PixelFormat(PixelFormat::JPEG_RGB8_sRGB));
         CHECK(gi.plane(0)->size() == sz);
         CHECK(std::memcmp(gi.plane(0)->data(), payload, sz) == 0);
 

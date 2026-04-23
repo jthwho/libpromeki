@@ -8,6 +8,7 @@
 
 #include <doctest/doctest.h>
 #include <promeki/audiodesc.h>
+#include <promeki/audioformat.h>
 #include <promeki/sdpsession.h>
 
 using namespace promeki;
@@ -19,7 +20,7 @@ using namespace promeki;
 TEST_CASE("AudioDesc_Default") {
     AudioDesc desc;
     CHECK(!desc.isValid());
-    CHECK(desc.dataType() == AudioDesc::Invalid);
+    CHECK(desc.format().id() == AudioFormat::Invalid);
 }
 
 // ============================================================================
@@ -36,9 +37,9 @@ TEST_CASE("AudioDesc_Construct") {
 }
 
 TEST_CASE("AudioDesc_ConstructWithType") {
-    AudioDesc desc(AudioDesc::PCMI_S16LE, 44100.0f, 1);
+    AudioDesc desc(AudioFormat::PCMI_S16LE, 44100.0f, 1);
     CHECK(desc.isValid());
-    CHECK(desc.dataType() == AudioDesc::PCMI_S16LE);
+    CHECK(desc.format().id() == AudioFormat::PCMI_S16LE);
     CHECK(desc.sampleRate() > 44099.0f);
     CHECK(desc.channels() == 1);
     CHECK(desc.bytesPerSample() == 2);
@@ -61,10 +62,10 @@ TEST_CASE("AudioDesc_SetChannels") {
     CHECK(desc.channels() == 8);
 }
 
-TEST_CASE("AudioDesc_SetDataType") {
+TEST_CASE("AudioDesc_SetFormat") {
     AudioDesc desc(48000.0f, 2);
-    desc.setDataType(AudioDesc::PCMI_S16LE);
-    CHECK(desc.dataType() == AudioDesc::PCMI_S16LE);
+    desc.setFormat(AudioFormat::PCMI_S16LE);
+    CHECK(desc.format().id() == AudioFormat::PCMI_S16LE);
 }
 
 // ============================================================================
@@ -94,15 +95,21 @@ TEST_CASE("AudioDesc_CopyChannelsIndependent") {
 // ============================================================================
 
 TEST_CASE("AudioDesc_BufferSize") {
-    AudioDesc desc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+    AudioDesc desc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
     // 2 bytes per sample * 2 channels * 1024 samples = 4096
     CHECK(desc.bufferSize(1024) == 4096);
 }
 
 TEST_CASE("AudioDesc_BytesPerSampleStride") {
-    AudioDesc desc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+    AudioDesc desc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
     // Interleaved: bytesPerSample * channels = 2 * 2 = 4
     CHECK(desc.bytesPerSampleStride() == 4);
+}
+
+TEST_CASE("AudioDesc_BytesPerSampleStride_Planar") {
+    AudioDesc desc(AudioFormat::PCMP_S16LE, 48000.0f, 2);
+    // Planar: just bytesPerSample = 2
+    CHECK(desc.bytesPerSampleStride() == 2);
 }
 
 // ============================================================================
@@ -110,7 +117,7 @@ TEST_CASE("AudioDesc_BytesPerSampleStride") {
 // ============================================================================
 
 TEST_CASE("AudioDesc_WorkingDesc") {
-    AudioDesc desc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+    AudioDesc desc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
     AudioDesc working = desc.workingDesc();
     CHECK(working.isValid());
     CHECK(working.isNative());
@@ -180,11 +187,21 @@ TEST_CASE("AudioDesc_FormatEqualsIgnoresMetadata") {
 // ============================================================================
 
 TEST_CASE("AudioDesc_ToJson") {
-    AudioDesc desc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+    AudioDesc desc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
     JsonObject json = desc.toJson();
-    CHECK(json.contains("DataType"));
+    CHECK(json.contains("Format"));
     CHECK(json.contains("SampleRate"));
     CHECK(json.contains("Channels"));
+}
+
+TEST_CASE("AudioDesc_FromJson") {
+    AudioDesc desc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
+    JsonObject json = desc.toJson();
+    AudioDesc out = AudioDesc::fromJson(json);
+    CHECK(out.isValid());
+    CHECK(out.format().id() == AudioFormat::PCMI_S16LE);
+    CHECK(out.sampleRate() == 48000.0f);
+    CHECK(out.channels() == 2);
 }
 
 // ============================================================================
@@ -201,7 +218,7 @@ TEST_CASE("AudioDesc_fromSdp_L16_Stereo") {
 
     AudioDesc ad = AudioDesc::fromSdp(md);
     CHECK(ad.isValid());
-    CHECK(ad.dataType() == AudioDesc::PCMI_S16BE);
+    CHECK(ad.format().id() == AudioFormat::PCMI_S16BE);
     CHECK(ad.sampleRate() == 48000.0f);
     CHECK(ad.channels() == 2);
 }
@@ -213,7 +230,7 @@ TEST_CASE("AudioDesc_fromSdp_L24") {
     md.setAttribute("rtpmap", "97 L24/48000/8");
     AudioDesc ad = AudioDesc::fromSdp(md);
     CHECK(ad.isValid());
-    CHECK(ad.dataType() == AudioDesc::PCMI_S24BE);
+    CHECK(ad.format().id() == AudioFormat::PCMI_S24BE);
     CHECK(ad.sampleRate() == 48000.0f);
     CHECK(ad.channels() == 8);
 }
@@ -225,7 +242,7 @@ TEST_CASE("AudioDesc_fromSdp_L8") {
     md.setAttribute("rtpmap", "11 L8/44100/1");
     AudioDesc ad = AudioDesc::fromSdp(md);
     CHECK(ad.isValid());
-    CHECK(ad.dataType() == AudioDesc::PCMI_U8);
+    CHECK(ad.format().id() == AudioFormat::PCMI_U8);
     CHECK(ad.sampleRate() == 44100.0f);
     CHECK(ad.channels() == 1);
 }
@@ -238,7 +255,7 @@ TEST_CASE("AudioDesc_fromSdp_L16_DefaultsToMono") {
     md.setAttribute("rtpmap", "96 L16/48000");
     AudioDesc ad = AudioDesc::fromSdp(md);
     CHECK(ad.isValid());
-    CHECK(ad.dataType() == AudioDesc::PCMI_S16BE);
+    CHECK(ad.format().id() == AudioFormat::PCMI_S16BE);
     CHECK(ad.channels() == 1);
 }
 
@@ -276,46 +293,65 @@ TEST_CASE("AudioDesc_fromSdp_L16_HighChannelCount") {
     md.setAttribute("rtpmap", "96 L16/96000/16");
     AudioDesc ad = AudioDesc::fromSdp(md);
     CHECK(ad.isValid());
-    CHECK(ad.dataType() == AudioDesc::PCMI_S16BE);
+    CHECK(ad.format().id() == AudioFormat::PCMI_S16BE);
     CHECK(ad.sampleRate() == 96000.0f);
     CHECK(ad.channels() == 16);
 }
 
 // ============================================================================
-// dataTypeName
+// Format name access (delegated to AudioFormat)
 // ============================================================================
 
-TEST_CASE("AudioDesc_dataTypeName_native") {
+TEST_CASE("AudioDesc_FormatName_native") {
     AudioDesc desc(48000.0f, 2);
-    const String &name = desc.dataTypeName();
+    const String &name = desc.format().name();
     CHECK(name.contains("Float32"));
 }
 
-TEST_CASE("AudioDesc_dataTypeName_S16LE") {
-    AudioDesc desc(AudioDesc::PCMI_S16LE, 44100.0f, 1);
-    CHECK(desc.dataTypeName() == "PCMI_S16LE");
+TEST_CASE("AudioDesc_FormatName_S16LE") {
+    AudioDesc desc(AudioFormat::PCMI_S16LE, 44100.0f, 1);
+    CHECK(desc.format().name() == "PCMI_S16LE");
 }
 
-TEST_CASE("AudioDesc_dataTypeName_invalid") {
+TEST_CASE("AudioDesc_FormatName_invalid") {
     AudioDesc desc;
-    CHECK(desc.dataTypeName() == "InvalidAudioFormat");
+    CHECK(desc.format().name() == "Invalid");
 }
 
-TEST_CASE("AudioDesc_dataTypeName_roundtrips_with_stringToDataType") {
-    // Every PCM DataType should round-trip through dataTypeName → stringToDataType
-    AudioDesc::DataType types[] = {
-        AudioDesc::PCMI_Float32LE, AudioDesc::PCMI_Float32BE,
-        AudioDesc::PCMI_S8,       AudioDesc::PCMI_U8,
-        AudioDesc::PCMI_S16LE,    AudioDesc::PCMI_U16LE,
-        AudioDesc::PCMI_S16BE,    AudioDesc::PCMI_U16BE,
-        AudioDesc::PCMI_S24LE,    AudioDesc::PCMI_U24LE,
-        AudioDesc::PCMI_S24BE,    AudioDesc::PCMI_U24BE,
-        AudioDesc::PCMI_S32LE,    AudioDesc::PCMI_U32LE,
-        AudioDesc::PCMI_S32BE,    AudioDesc::PCMI_U32BE,
+TEST_CASE("AudioDesc_FormatName_roundtrips_through_AudioFormat_lookup") {
+    // Every PCM format name should round-trip through
+    // value(AudioFormat::lookup()) — this replaces the old
+    // AudioDesc::stringToDataType mechanism.
+    AudioFormat::ID types[] = {
+        AudioFormat::PCMI_Float32LE, AudioFormat::PCMI_Float32BE,
+        AudioFormat::PCMI_S8,       AudioFormat::PCMI_U8,
+        AudioFormat::PCMI_S16LE,    AudioFormat::PCMI_U16LE,
+        AudioFormat::PCMI_S16BE,    AudioFormat::PCMI_U16BE,
+        AudioFormat::PCMI_S24LE,    AudioFormat::PCMI_U24LE,
+        AudioFormat::PCMI_S24BE,    AudioFormat::PCMI_U24BE,
+        AudioFormat::PCMI_S32LE,    AudioFormat::PCMI_U32LE,
+        AudioFormat::PCMI_S32BE,    AudioFormat::PCMI_U32BE,
     };
-    for(auto dt : types) {
-        AudioDesc desc(dt, 48000.0f, 2);
-        CAPTURE(desc.dataTypeName());
-        CHECK(AudioDesc::stringToDataType(desc.dataTypeName()) == dt);
+    for(auto id : types) {
+        AudioFormat fmt(id);
+        CAPTURE(fmt.name());
+        CHECK(value(AudioFormat::lookup(fmt.name())).id() == id);
     }
+}
+
+// ============================================================================
+// Compressed audio
+// ============================================================================
+
+TEST_CASE("AudioDesc_Compressed_Opus") {
+    AudioDesc desc(AudioFormat::Opus, 48000.0f, 2);
+    CHECK(desc.isValid());
+    CHECK(desc.isCompressed());
+    CHECK(desc.format().audioCodec().id() == AudioCodec::Opus);
+}
+
+TEST_CASE("AudioDesc_Uncompressed_IsNotCompressed") {
+    AudioDesc desc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
+    CHECK(desc.isValid());
+    CHECK_FALSE(desc.isCompressed());
 }

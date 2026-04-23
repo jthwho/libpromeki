@@ -29,7 +29,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par Supported pixel formats
  *
- * Every uncompressed @c PixelDesc the library supports can be
+ * Every uncompressed @c PixelFormat the library supports can be
  * displayed.  Formats with a direct SDL equivalent (8-bit RGB/BGR/
  * RGBA/BGRA/ARGB/ABGR and the host-endian 16-bit variants of those)
  * are uploaded to an SDL texture as-is.  Everything else — DPX
@@ -94,7 +94,7 @@ class SDLVideoWidget : public Widget {
                 ScaleMode scaleMode() const { return _scaleMode; }
 
                 /**
-                 * @brief Maps a promeki PixelDesc to an SDL pixel format.
+                 * @brief Maps a promeki PixelFormat to an SDL pixel format.
                  *
                  * Returns a direct SDL format for:
                  *   - Uncompressed 8-bit RGB/BGR/RGBA/BGRA/ARGB/ABGR.
@@ -122,12 +122,12 @@ class SDLVideoWidget : public Widget {
                  * @param pd The promeki pixel description.
                  * @return The SDL pixel format enum value, or 0 if no direct mapping.
                  */
-                static uint32_t mapPixelDesc(const PixelDesc &pd);
+                static uint32_t mapPixelFormat(const PixelFormat &pd);
 
                 /**
-                 * @brief Maps a promeki PixelDesc to an SDL_Colorspace.
+                 * @brief Maps a promeki PixelFormat to an SDL_Colorspace.
                  *
-                 * Used for YUV formats that @c mapPixelDesc() returns
+                 * Used for YUV formats that @c mapPixelFormat() returns
                  * a direct SDL YUV format for.  The colorspace property
                  * tells SDL which YCbCr→RGB matrix and which range
                  * (limited / full) to use when rendering the texture.
@@ -140,7 +140,7 @@ class SDLVideoWidget : public Widget {
                  * @return An SDL_Colorspace value, or 0 if no colorspace
                  *         override is needed.
                  */
-                static uint32_t mapColorspace(const PixelDesc &pd);
+                static uint32_t mapColorspace(const PixelFormat &pd);
 
                 /**
                  * @brief Returns whether a format can skip CSC conversion on upload.
@@ -153,7 +153,7 @@ class SDLVideoWidget : public Widget {
                  * @param pd The promeki pixel description.
                  * @return true if the format maps directly to an SDL format.
                  */
-                static bool isDirectlyMappable(const PixelDesc &pd);
+                static bool isDirectlyMappable(const PixelFormat &pd);
 
         protected:
                 void paintEvent(PaintEvent *e) override;

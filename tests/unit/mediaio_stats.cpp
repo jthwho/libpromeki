@@ -26,7 +26,7 @@
 #include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/buffer.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/size2d.h>
 #include <thread>
 #include <chrono>
@@ -54,7 +54,7 @@ class TelemetryTestTask : public MediaIOTask {
                 // the RateTracker meaningfully without the test
                 // paying a real allocation cost.
                 Size2Du32 imageSize{32, 32};
-                PixelDesc::ID pixelDescId = PixelDesc::RGB8_sRGB;
+                PixelFormat::ID pixelFormatId = PixelFormat::RGB8_sRGB;
 
                 void injectDrops(int n) { dropsToInject = n; }
                 void injectRepeats(int n) { repeatsToInject = n; }
@@ -94,10 +94,10 @@ class TelemetryTestTask : public MediaIOTask {
                         // Manufacture a frame with one small allocated
                         // image plane so the base class's RateTracker
                         // has something non-zero to count.  The
-                        // Image(size, pixelDesc) constructor allocates
+                        // Image(size, pixelFormat) constructor allocates
                         // its own plane buffers.
                         Frame::Ptr f = Frame::Ptr::create();
-                        Image img(imageSize, PixelDesc(pixelDescId));
+                        Image img(imageSize, PixelFormat(pixelFormatId));
                         f.modify()->imageList().pushToBack(
                                 Image::Ptr::create(std::move(img)));
                         cmd.frame = f;

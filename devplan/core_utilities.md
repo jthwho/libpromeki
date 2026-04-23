@@ -23,7 +23,7 @@ Needed to make `MediaConfig`/`MediaPipelineConfig` JSON round-trip work across e
 - [ ] `toJson()` — convert variant to `JsonObject`/`JsonArray`
 - [ ] `fromJson(const JsonObject &)` — construct variant from JSON
 - [ ] `fromJson(const JsonArray &)` — construct variant from JSON array
-- [ ] Round-trip tests: Variant → JSON → Variant for every registered Variant type (`PixelDesc`, `MediaDesc`, `FrameRate`, `Color`, `SocketAddress`, `UUID`, `UMID`, etc.)
+- [ ] Round-trip tests: Variant → JSON → Variant for every registered Variant type (`PixelFormat`, `MediaDesc`, `FrameRate`, `Color`, `SocketAddress`, `UUID`, `UMID`, etc.)
 - [ ] Update `VariantImpl` template for new types
 
 ---

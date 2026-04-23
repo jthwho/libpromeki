@@ -12,7 +12,7 @@
 #include <promeki/imagefile.h>
 #include <promeki/audiofile.h>
 #include <promeki/audiodesc.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/mediadesc.h>
 #include <promeki/metadata.h>
 #include <promeki/framerate.h>
@@ -103,7 +103,7 @@ class ImageFileIO;
  * | @ref MediaConfig::Filename         | String    | — | File path, mask, or @c .imgseq sidecar. |
  * | @ref MediaConfig::ImageFileID      | int       | Invalid | Explicit ImageFile::ID override. |
  * | @ref MediaConfig::VideoSize        | Size2Du32 | 0x0 | Image size hint for headerless formats. |
- * | @ref MediaConfig::VideoPixelFormat | PixelDesc | — | Pixel description for headerless formats. |
+ * | @ref MediaConfig::VideoPixelFormat | PixelFormat | — | Pixel description for headerless formats. |
  * | @ref MediaConfig::FrameRate        | FrameRate | 30/1 | Reported frame rate for the still image or sequence. |
  * | @ref MediaConfig::SequenceHead     | int       | 1 | First frame number for a sequence writer. |
  * | @ref MediaConfig::SaveImgSeqEnabled | bool      | true | Enable automatic @c .imgseq sidecar (read + write). |
@@ -170,15 +170,15 @@ class MediaIOTask_ImageFile : public MediaIOTask {
                                    MediaDesc *preferred) const override;
 
                 // Maps the extension in @p filename to the preferred
-                // writer PixelDesc for that format, taking the
+                // writer PixelFormat for that format, taking the
                 // source's bit depth into account so we don't drop
                 // precision unnecessarily (e.g. 10-bit source ->
                 // 10-bit DPX, not 8-bit).  Returns an invalid
-                // PixelDesc when no extension-specific preference
+                // PixelFormat when no extension-specific preference
                 // applies; the proposeInput override then accepts
                 // whatever was offered.
-                PixelDesc preferredWriterPixelDesc(const String &filename,
-                                                   const PixelDesc &source) const;
+                PixelFormat preferredWriterPixelFormat(const String &filename,
+                                                   const PixelFormat &source) const;
 
                 Error openSingle(MediaIOCommandOpen &cmd, MediaDesc &mediaDesc,
                                  const String &frSource);
@@ -218,7 +218,7 @@ class MediaIOTask_ImageFile : public MediaIOTask {
                 bool            _seqAtEnd = false;   ///< @brief True after the step-direction end was reached.
                 Metadata        _seqMetadata;        ///< @brief Sidecar-supplied metadata merged onto frames.
                 Size2Du32       _seqSize;            ///< @brief Size hint for headerless formats.
-                PixelDesc       _seqPixelDesc;       ///< @brief Pixel desc hint for headerless formats.
+                PixelFormat       _seqPixelFormat;       ///< @brief Pixel desc hint for headerless formats.
 
                 // Sidecar audio state (sequence mode only)
                 AudioFile       _sidecarAudio;       ///< @brief Reader/writer handle for the sidecar audio file.

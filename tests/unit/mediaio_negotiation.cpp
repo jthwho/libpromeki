@@ -28,7 +28,7 @@
 #include <promeki/mediaio.h>
 #include <promeki/mediaiodescription.h>
 #include <promeki/mediaiotask.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/set.h>
 #include <promeki/size2d.h>
 
@@ -89,7 +89,7 @@ private:
                 preferred.setFrameRate(FrameRate(FrameRate::FPS_30));
                 preferred.imageList().pushToBack(
                         ImageDesc(Size2Du32(1280, 720),
-                                  PixelDesc(PixelDesc::RGBA8_sRGB)));
+                                  PixelFormat(PixelFormat::RGBA8_sRGB)));
                 out->setPreferredFormat(preferred);
                 out->producibleFormats().pushToBack(preferred);
 
@@ -97,7 +97,7 @@ private:
                 alt.setFrameRate(FrameRate(FrameRate::FPS_25));
                 alt.imageList().pushToBack(
                         ImageDesc(Size2Du32(1920, 1080),
-                                  PixelDesc(PixelDesc::RGBA8_sRGB)));
+                                  PixelFormat(PixelFormat::RGBA8_sRGB)));
                 out->producibleFormats().pushToBack(alt);
 
                 out->acceptableFormats().pushToBack(preferred);
@@ -114,14 +114,14 @@ private:
                 if(offered.imageList().isEmpty()) {
                         return Error::NotSupported;
                 }
-                const PixelDesc &pd = offered.imageList()[0].pixelDesc();
-                if(pd.id() == PixelDesc::RGBA8_sRGB) {
+                const PixelFormat &pd = offered.imageList()[0].pixelFormat();
+                if(pd.id() == PixelFormat::RGBA8_sRGB) {
                         *preferred = offered;
                         return Error::Ok;
                 }
                 MediaDesc want = offered;
                 ImageDesc img(offered.imageList()[0].size(),
-                              PixelDesc(PixelDesc::RGBA8_sRGB));
+                              PixelFormat(PixelFormat::RGBA8_sRGB));
                 img.setVideoScanMode(offered.imageList()[0].videoScanMode());
                 want.imageList().clear();
                 want.imageList().pushToBack(img);
@@ -135,8 +135,8 @@ private:
                 // Synthetic source can switch raster freely as long
                 // as the requested pixel format is RGBA8_sRGB.
                 if(requested.imageList().isEmpty()) return Error::NotSupported;
-                const PixelDesc &pd = requested.imageList()[0].pixelDesc();
-                if(pd.id() != PixelDesc::RGBA8_sRGB) return Error::NotSupported;
+                const PixelFormat &pd = requested.imageList()[0].pixelFormat();
+                if(pd.id() != PixelFormat::RGBA8_sRGB) return Error::NotSupported;
                 *achievable = requested;
                 return Error::Ok;
         }
@@ -157,7 +157,7 @@ MediaDesc makeRgbaDesc(uint32_t w, uint32_t h) {
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.imageList().pushToBack(
                 ImageDesc(Size2Du32(w, h),
-                          PixelDesc(PixelDesc::RGBA8_sRGB)));
+                          PixelFormat(PixelFormat::RGBA8_sRGB)));
         return md;
 }
 
@@ -166,7 +166,7 @@ MediaDesc makeNv12Desc(uint32_t w, uint32_t h) {
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.imageList().pushToBack(
                 ImageDesc(Size2Du32(w, h),
-                          PixelDesc(PixelDesc::YUV8_420_SemiPlanar_Rec709)));
+                          PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709)));
         return md;
 }
 
@@ -297,7 +297,7 @@ TEST_CASE("MediaIO_proposeOutput_TPGRejectsCompressed") {
         MediaDesc requested;
         requested.setFrameRate(FrameRate(FrameRate::FPS_30));
         requested.imageList().pushToBack(
-                ImageDesc(Size2Du32(1920, 1080), PixelDesc(PixelDesc::H264)));
+                ImageDesc(Size2Du32(1920, 1080), PixelFormat(PixelFormat::H264)));
         MediaDesc achievable;
         CHECK(io->proposeOutput(requested, &achievable) == Error::NotSupported);
 
@@ -366,7 +366,7 @@ TEST_CASE("MediaIO_proposeInput_OverrideRequestsConversion") {
         REQUIRE(io->proposeInput(offered, &preferred) == Error::Ok);
 
         REQUIRE(!preferred.imageList().isEmpty());
-        CHECK(preferred.imageList()[0].pixelDesc().id() == PixelDesc::RGBA8_sRGB);
+        CHECK(preferred.imageList()[0].pixelFormat().id() == PixelFormat::RGBA8_sRGB);
         CHECK(preferred.imageList()[0].size() == offered.imageList()[0].size());
         CHECK(preferred.frameRate() == offered.frameRate());
 
@@ -424,19 +424,19 @@ TEST_CASE("MediaIO_proposeInput_ImageFile_DPX_PreservesBitDepth") {
         // so the planner doesn't silently drop precision when a real
         // writer path exists.
         struct Case {
-                PixelDesc::ID source;
-                PixelDesc::ID expectedTarget;
+                PixelFormat::ID source;
+                PixelFormat::ID expectedTarget;
                 const char   *label;
         };
         const Case cases[] = {
-                { PixelDesc::RGB8_sRGB,
-                  PixelDesc::RGBA8_sRGB,        "8-bit  source -> 8-bit  DPX target" },
-                { PixelDesc::RGB10_LE_sRGB,
-                  PixelDesc::RGB10_DPX_sRGB,    "10-bit source -> 10-bit DPX target" },
-                { PixelDesc::RGB12_LE_sRGB,
-                  PixelDesc::RGB10_DPX_sRGB,    "12-bit source -> 10-bit DPX (no 12-bit writer)" },
-                { PixelDesc::RGB16_LE_sRGB,
-                  PixelDesc::RGB16_BE_sRGB,     "16-bit source -> 16-bit BE DPX target" },
+                { PixelFormat::RGB8_sRGB,
+                  PixelFormat::RGBA8_sRGB,        "8-bit  source -> 8-bit  DPX target" },
+                { PixelFormat::RGB10_LE_sRGB,
+                  PixelFormat::RGB10_DPX_sRGB,    "10-bit source -> 10-bit DPX target" },
+                { PixelFormat::RGB12_LE_sRGB,
+                  PixelFormat::RGB10_DPX_sRGB,    "12-bit source -> 10-bit DPX (no 12-bit writer)" },
+                { PixelFormat::RGB16_LE_sRGB,
+                  PixelFormat::RGB16_BE_sRGB,     "16-bit source -> 16-bit BE DPX target" },
         };
         for(const auto &c : cases) {
                 INFO(c.label);
@@ -449,12 +449,12 @@ TEST_CASE("MediaIO_proposeInput_ImageFile_DPX_PreservesBitDepth") {
                 MediaDesc offered;
                 offered.setFrameRate(FrameRate(FrameRate::FPS_30));
                 offered.imageList().pushToBack(
-                        ImageDesc(Size2Du32(1920, 1080), PixelDesc(c.source)));
+                        ImageDesc(Size2Du32(1920, 1080), PixelFormat(c.source)));
 
                 MediaDesc preferred;
                 CHECK(io->proposeInput(offered, &preferred) == Error::Ok);
                 REQUIRE(!preferred.imageList().isEmpty());
-                CHECK(preferred.imageList()[0].pixelDesc().id() == c.expectedTarget);
+                CHECK(preferred.imageList()[0].pixelFormat().id() == c.expectedTarget);
                 delete io;
         }
 }
@@ -474,20 +474,20 @@ TEST_CASE("MediaIO_proposeInput_ImageFile_JPEG_DropsToEightBit") {
         rgbOffered.setFrameRate(FrameRate(FrameRate::FPS_30));
         rgbOffered.imageList().pushToBack(
                 ImageDesc(Size2Du32(1920, 1080),
-                          PixelDesc(PixelDesc::RGB10_LE_sRGB)));
+                          PixelFormat(PixelFormat::RGB10_LE_sRGB)));
         MediaDesc rgbPreferred;
         REQUIRE(io->proposeInput(rgbOffered, &rgbPreferred) == Error::Ok);
-        CHECK(rgbPreferred.imageList()[0].pixelDesc().id() == PixelDesc::RGBA8_sRGB);
+        CHECK(rgbPreferred.imageList()[0].pixelFormat().id() == PixelFormat::RGBA8_sRGB);
 
         MediaDesc yuvOffered;
         yuvOffered.setFrameRate(FrameRate(FrameRate::FPS_30));
         yuvOffered.imageList().pushToBack(
                 ImageDesc(Size2Du32(1920, 1080),
-                          PixelDesc(PixelDesc::YUV10_422_Planar_LE_Rec709)));
+                          PixelFormat(PixelFormat::YUV10_422_Planar_LE_Rec709)));
         MediaDesc yuvPreferred;
         REQUIRE(io->proposeInput(yuvOffered, &yuvPreferred) == Error::Ok);
-        CHECK(yuvPreferred.imageList()[0].pixelDesc().id() ==
-              PixelDesc::YUV8_422_Planar_Rec709);
+        CHECK(yuvPreferred.imageList()[0].pixelFormat().id() ==
+              PixelFormat::YUV8_422_Planar_Rec709);
 
         delete io;
 }
@@ -505,20 +505,20 @@ TEST_CASE("MediaIO_proposeInput_AudioFile_BWF_PassesThroughIntegerPCM") {
         REQUIRE(io != nullptr);
 
         struct Case {
-                AudioDesc::DataType source;
-                AudioDesc::DataType expected;
+                AudioFormat::ID source;
+                AudioFormat::ID expected;
                 const char         *label;
         };
         const Case cases[] = {
-                { AudioDesc::PCMI_S16LE,   AudioDesc::PCMI_S16LE,
+                { AudioFormat::PCMI_S16LE,   AudioFormat::PCMI_S16LE,
                                                   "S16 source stays S16" },
-                { AudioDesc::PCMI_S24LE,   AudioDesc::PCMI_S24LE,
+                { AudioFormat::PCMI_S24LE,   AudioFormat::PCMI_S24LE,
                                                   "S24 source stays S24" },
-                { AudioDesc::PCMI_Float32LE, AudioDesc::PCMI_Float32LE,
+                { AudioFormat::PCMI_Float32LE, AudioFormat::PCMI_Float32LE,
                                                   "Float source stays Float" },
                 // Non-PCM-friendly source (e.g. PCMI_U8) should be
                 // upgraded to S24LE since BWF can't store U8 directly.
-                { AudioDesc::PCMI_U8,      AudioDesc::PCMI_S24LE,
+                { AudioFormat::PCMI_U8,      AudioFormat::PCMI_S24LE,
                                                   "U8 source upgraded to S24" },
         };
         for(const auto &c : cases) {
@@ -528,13 +528,13 @@ TEST_CASE("MediaIO_proposeInput_AudioFile_BWF_PassesThroughIntegerPCM") {
                 AudioDesc ad;
                 ad.setSampleRate(48000.0f);
                 ad.setChannels(2);
-                ad.setDataType(c.source);
+                ad.setFormat(c.source);
                 offered.audioList().pushToBack(ad);
 
                 MediaDesc preferred;
                 CHECK(io->proposeInput(offered, &preferred) == Error::Ok);
                 REQUIRE(!preferred.audioList().isEmpty());
-                CHECK(preferred.audioList()[0].dataType() == c.expected);
+                CHECK(preferred.audioList()[0].format().id() == c.expected);
         }
         delete io;
 }
@@ -554,53 +554,53 @@ TEST_CASE("MediaIO_proposeInput_AudioFile_OGG_AlwaysFloat") {
         AudioDesc ad;
         ad.setSampleRate(48000.0f);
         ad.setChannels(2);
-        ad.setDataType(AudioDesc::PCMI_S16LE);
+        ad.setFormat(AudioFormat::PCMI_S16LE);
         offered.audioList().pushToBack(ad);
 
         MediaDesc preferred;
         REQUIRE(io->proposeInput(offered, &preferred) == Error::Ok);
-        CHECK(preferred.audioList()[0].dataType() == AudioDesc::PCMI_Float32LE);
+        CHECK(preferred.audioList()[0].format().id() == AudioFormat::PCMI_Float32LE);
         delete io;
 }
 
 TEST_CASE("MediaIO_proposeInput_QuickTime_PreservesBitDepthAndChroma") {
         // QuickTime's writer accepts a curated set of FourCCs.  The
         // proposeInput override must (a) reject unsupported
-        // PixelDescs and rewrite them to the closest supported one,
+        // PixelFormats and rewrite them to the closest supported one,
         // and (b) preserve bit depth and chroma subsampling where
         // possible — a 10-bit YUV 4:2:2 source should round-trip
         // through v210, not be downconverted to NV12.
         struct Case {
-                PixelDesc::ID source;
-                PixelDesc::ID expectedTarget;
+                PixelFormat::ID source;
+                PixelFormat::ID expectedTarget;
                 const char   *label;
         };
         const Case cases[] = {
                 // 10-bit 4:2:2 YUV stays 10-bit 4:2:2 via v210.
-                { PixelDesc::YUV10_422_v210_Rec709,
-                  PixelDesc::YUV10_422_v210_Rec709,
+                { PixelFormat::YUV10_422_v210_Rec709,
+                  PixelFormat::YUV10_422_v210_Rec709,
                   "v210 already supported, pass-through" },
                 // 8-bit 4:2:2 YUV stays 4:2:2 via YUYV.
-                { PixelDesc::YUV8_422_Rec709,
-                  PixelDesc::YUV8_422_Rec709,
+                { PixelFormat::YUV8_422_Rec709,
+                  PixelFormat::YUV8_422_Rec709,
                   "YUYV already supported, pass-through" },
                 // 8-bit 4:2:0 NV12 stays 4:2:0 NV12.
-                { PixelDesc::YUV8_420_SemiPlanar_Rec709,
-                  PixelDesc::YUV8_420_SemiPlanar_Rec709,
+                { PixelFormat::YUV8_420_SemiPlanar_Rec709,
+                  PixelFormat::YUV8_420_SemiPlanar_Rec709,
                   "NV12 already supported, pass-through" },
                 // 10-bit YUV 4:4:4 (unsupported by QT) drops to v210
                 // (4:2:2) — chroma loss is unavoidable, but bit depth
                 // is preserved.
-                { PixelDesc::YUV10_444_Planar_LE_Rec709,
-                  PixelDesc::YUV10_422_v210_Rec709,
+                { PixelFormat::YUV10_444_Planar_LE_Rec709,
+                  PixelFormat::YUV10_422_v210_Rec709,
                   "10-bit 4:4:4 -> 10-bit 4:2:2 (preserve bits, drop chroma)" },
                 // 8-bit RGB stays 8-bit RGB.
-                { PixelDesc::RGBA8_sRGB,
-                  PixelDesc::RGBA8_sRGB,
+                { PixelFormat::RGBA8_sRGB,
+                  PixelFormat::RGBA8_sRGB,
                   "RGBA8 already supported, pass-through" },
                 // 16-bit RGB (no QT support) drops to 8-bit RGBA.
-                { PixelDesc::RGBA16_LE_sRGB,
-                  PixelDesc::RGBA8_sRGB,
+                { PixelFormat::RGBA16_LE_sRGB,
+                  PixelFormat::RGBA8_sRGB,
                   "16-bit RGBA -> 8-bit RGBA (no QT 16-bit RGBA support)" },
         };
         for(const auto &c : cases) {
@@ -614,12 +614,12 @@ TEST_CASE("MediaIO_proposeInput_QuickTime_PreservesBitDepthAndChroma") {
                 MediaDesc offered;
                 offered.setFrameRate(FrameRate(FrameRate::FPS_30));
                 offered.imageList().pushToBack(
-                        ImageDesc(Size2Du32(1920, 1080), PixelDesc(c.source)));
+                        ImageDesc(Size2Du32(1920, 1080), PixelFormat(c.source)));
 
                 MediaDesc preferred;
                 CHECK(io->proposeInput(offered, &preferred) == Error::Ok);
                 REQUIRE(!preferred.imageList().isEmpty());
-                CHECK(preferred.imageList()[0].pixelDesc().id() == c.expectedTarget);
+                CHECK(preferred.imageList()[0].pixelFormat().id() == c.expectedTarget);
                 delete io;
         }
 }

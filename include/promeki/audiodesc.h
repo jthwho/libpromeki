@@ -9,24 +9,32 @@
 
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
+#include <promeki/audioformat.h>
 #include <promeki/metadata.h>
 #include <promeki/string.h>
-#include <promeki/system.h>
 #include <promeki/json.h>
-#include <promeki/fourcc.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 class SdpMediaDescription;
 
 /**
- * @brief Describes an audio format including sample type, rate, and channel count.
+ * @brief Describes a concrete audio stream — format plus sample rate and channel count.
  * @ingroup proav
  *
- * AudioDesc encapsulates the complete description of an audio format: the sample
- * data type (e.g. PCM signed 16-bit little-endian), sample rate, and number of
- * channels. It also provides static utility methods for converting between integer
- * sample representations and normalized floating-point values in the range [-1, 1].
+ * AudioDesc is to @ref AudioFormat what @ref ImageDesc is to
+ * @ref PixelFormat: AudioFormat identifies the sample encoding
+ * (PCM layout, bit depth, endianness, optional compressed codec)
+ * while AudioDesc binds that format to a specific sample rate,
+ * channel count, and optional metadata.
+ *
+ * @par Example
+ * @code
+ * AudioDesc desc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
+ * assert(desc.isValid());
+ * assert(desc.bytesPerSample() == 2);
+ * assert(desc.bufferSize(1024) == 4096);
+ * @endcode
  */
 class AudioDesc {
         PROMEKI_SHARED_FINAL(AudioDesc)
@@ -40,243 +48,16 @@ class AudioDesc {
                 /** @brief List of shared AudioDesc pointers. */
                 using PtrList = promeki::List<Ptr>;
 
-                /** @brief Minimum value of a signed 24-bit integer. */
-                static const int32_t MinS24 = -8388608;
-                /** @brief Maximum value of a signed 24-bit integer. */
-                static const int32_t MaxS24 = 8388607;
-                /** @brief Minimum value of an unsigned 24-bit integer. */
-                static const int32_t MinU24 = 0;
-                /** @brief Maximum value of an unsigned 24-bit integer. */
-                static const int32_t MaxU24 = 16777215;
-
-                /**
-                 * @brief Converts an integer sample value to a normalized float in [-1, 1].
-                 *
-                 * Maps the integer range [Min, Max] linearly onto the float range [-1.0, 1.0].
-                 *
-                 * @tparam IntegerType The integer sample type.
-                 * @tparam Min        The minimum value of the integer range.
-                 * @tparam Max        The maximum value of the integer range.
-                 * @param  value      The integer sample to convert.
-                 * @return The corresponding normalized float value.
-                 */
-                template <typename IntegerType, IntegerType Min, IntegerType Max>
-                static float integerToFloat(IntegerType value) {
-                        static_assert(std::is_integral<IntegerType>::value, "IntegerType must be an integer.");
-                        constexpr float min = static_cast<float>(Min);
-                        constexpr float max = static_cast<float>(Max);
-                        return((static_cast<float>(value) - min) * 2.0f / (max - min)) - 1.0f;
-                }
-
-                /**
-                 * @brief Converts an integer sample value to a normalized float using the type's full range.
-                 * @tparam IntegerType The integer sample type whose numeric_limits define the range.
-                 * @param  value       The integer sample to convert.
-                 * @return The corresponding normalized float value.
-                 */
-                template <typename IntegerType>
-                static float integerToFloat(IntegerType value) {
-                        static_assert(std::is_integral<IntegerType>::value, "IntegerType must be an integer.");
-                        return integerToFloat<IntegerType,
-                               std::numeric_limits<IntegerType>::min(),
-                               std::numeric_limits<IntegerType>::max()>(value);
-                }
-
-                /**
-                 * @brief Converts a normalized float in [-1, 1] to an integer sample value.
-                 *
-                 * Maps the float range [-1.0, 1.0] linearly onto the integer range [Min, Max].
-                 * Values outside [-1, 1] are clamped.
-                 *
-                 * @tparam IntegerType The integer sample type.
-                 * @tparam Min        The minimum value of the integer range.
-                 * @tparam Max        The maximum value of the integer range.
-                 * @param  value      The normalized float sample to convert.
-                 * @return The corresponding integer sample value, clamped to [Min, Max].
-                 */
-                template <typename IntegerType, IntegerType Min, IntegerType Max>
-                static IntegerType floatToInteger(float value) {
-                        static_assert(std::is_integral<IntegerType>::value, "IntegerType must be an integer.");
-                        const float min = static_cast<float>(Min);
-                        const float max = static_cast<float>(Max);
-                        if(value <= -1.0f) return Min;
-                        else if(value >= 1.0f) return Max;
-                        return static_cast<IntegerType>((value + 1.0f) * 0.5f * (max - min) + min);
-                }
-
-                /**
-                 * @brief Converts a normalized float to an integer sample using the type's full range.
-                 * @tparam IntegerType The integer sample type whose numeric_limits define the range.
-                 * @param  value       The normalized float sample to convert.
-                 * @return The corresponding integer sample value, clamped to the type's range.
-                 */
-                template <typename IntegerType>
-                static IntegerType floatToInteger(float value) {
-                        static_assert(std::is_integral<IntegerType>::value, "IntegerType must be an integer.");
-                        return floatToInteger<IntegerType,
-                               std::numeric_limits<IntegerType>::min(),
-                               std::numeric_limits<IntegerType>::max()>(value);
-                }
-
-                /**
-                 * @brief Converts a buffer of integer samples to normalized floats.
-                 *
-                 * Handles endian conversion if the input byte order differs from the host.
-                 *
-                 * @tparam IntegerType      The integer sample type.
-                 * @tparam InputIsBigEndian  True if the input buffer is big-endian.
-                 * @param  out     Destination buffer for float samples.
-                 * @param  inbuf   Source buffer of raw integer sample bytes.
-                 * @param  samples Number of samples to convert.
-                 */
-                template <typename IntegerType, bool InputIsBigEndian>
-                static void samplesToFloat(float *out, const uint8_t *inbuf, size_t samples) {
-                        static_assert(std::is_integral<IntegerType>::value, "IntegerType must be an integer.");
-                        const IntegerType *in = reinterpret_cast<const IntegerType *>(inbuf);
-                        for(size_t i = 0; i < samples; ++i) {
-                                IntegerType val = *in++;
-                                if constexpr (InputIsBigEndian != System::isBigEndian()) System::swapEndian(val);
-                                *out++ = integerToFloat<IntegerType>(val);
-                        }
-                        return;
-                }
-
-                /**
-                 * @brief Converts a buffer of normalized floats to integer samples.
-                 *
-                 * Handles endian conversion if the output byte order differs from the host.
-                 *
-                 * @tparam IntegerType       The integer sample type.
-                 * @tparam OutputIsBigEndian  True if the output buffer should be big-endian.
-                 * @param  outbuf  Destination buffer for raw integer sample bytes.
-                 * @param  in      Source buffer of float samples.
-                 * @param  samples Number of samples to convert.
-                 */
-                template <typename IntegerType, bool OutputIsBigEndian>
-                static void floatToSamples(uint8_t *outbuf, const float *in, size_t samples) {
-                        static_assert(std::is_integral<IntegerType>::value, "IntegerType must be an integer.");
-                        IntegerType *out = reinterpret_cast<IntegerType *>(outbuf);
-                        for(size_t i = 0; i < samples; ++i) {
-                                IntegerType val = floatToInteger<IntegerType>(*in++);
-                                if constexpr (OutputIsBigEndian != System::isBigEndian()) System::swapEndian(val);
-                                *out++ = val;
-                        }
-                        return;
-                }
-
-                /**
-                 * @brief Descriptor for a specific audio sample format.
-                 *
-                 * Contains the format's properties and function pointers for converting
-                 * between the format's native representation and normalized floats.
-                 */
-                struct Format {
-                        int             id;             ///< @brief Format identifier matching a DataType enum value.
-                        String          name;           ///< @brief Short format name (e.g. "PCMI_S16LE").
-                        String          desc;           ///< @brief Human-readable format description.
-                        size_t          bytesPerSample; ///< @brief Number of bytes per single sample.
-                        size_t          bitsPerSample;  ///< @brief Number of bits per single sample.
-                        bool            isSigned;       ///< @brief True if the format uses signed integers.
-                        bool            isPlanar;       ///< @brief True if channels are stored in separate planes.
-                        bool            isBigEndian;    ///< @brief True if the format uses big-endian byte order.
-                        void (*samplesToFloat)(float *out, const uint8_t *in, size_t samples); ///< @brief Conversion function from this format to float.
-                        void (*floatToSamples)(uint8_t *out, const float *in, size_t samples); ///< @brief Conversion function from float to this format.
-                };
-
-                /**
-                 * @brief Looks up a Format descriptor by its DataType id.
-                 * @param id The DataType enum value to look up.
-                 * @return A pointer to the matching Format, or the Invalid format descriptor.
-                 */
-                static const Format *lookupFormat(int id);
-
-                /**
-                 * @brief Enumeration of supported audio sample data types.
-                 *
-                 * PCMI = PCM audio with interleaved channels.
-                 * PCMP = PCM audio with planar channels.
-                 */
-                enum DataType {
-                        Invalid = 0,    ///< @brief Invalid / unset format.
-                        PCMI_Float32LE, ///< @brief 32-bit float, little-endian, interleaved.
-                        PCMI_Float32BE, ///< @brief 32-bit float, big-endian, interleaved.
-                        PCMI_S8,        ///< @brief Signed 8-bit integer, interleaved.
-                        PCMI_U8,        ///< @brief Unsigned 8-bit integer, interleaved.
-                        PCMI_S16LE,     ///< @brief Signed 16-bit integer, little-endian, interleaved.
-                        PCMI_U16LE,     ///< @brief Unsigned 16-bit integer, little-endian, interleaved.
-                        PCMI_S16BE,     ///< @brief Signed 16-bit integer, big-endian, interleaved.
-                        PCMI_U16BE,     ///< @brief Unsigned 16-bit integer, big-endian, interleaved.
-                        PCMI_S24LE,     ///< @brief Signed 24-bit integer, little-endian, interleaved.
-                        PCMI_U24LE,     ///< @brief Unsigned 24-bit integer, little-endian, interleaved.
-                        PCMI_S24BE,     ///< @brief Signed 24-bit integer, big-endian, interleaved.
-                        PCMI_U24BE,     ///< @brief Unsigned 24-bit integer, big-endian, interleaved.
-                        PCMI_S32LE,     ///< @brief Signed 32-bit integer, little-endian, interleaved.
-                        PCMI_U32LE,     ///< @brief Unsigned 32-bit integer, little-endian, interleaved.
-                        PCMI_S32BE,     ///< @brief Signed 32-bit integer, big-endian, interleaved.
-                        PCMI_U32BE      ///< @brief Unsigned 32-bit integer, big-endian, interleaved.
-                };
-
-                /** @brief The native float format for the current platform's endianness. */
-                static constexpr DataType NativeType = System::isLittleEndian() ? PCMI_Float32LE : PCMI_Float32BE;
-
-                /**
-                 * @brief Converts a string name to its corresponding DataType enum value.
-                 * @param val The format name string (e.g. "PCMI_S16LE").
-                 * @return The matching DataType, or Invalid if the string is not recognized.
-                 */
-                static DataType stringToDataType(const String &val);
-
                 /**
                  * @brief Constructs an AudioDesc from a JSON object.
-                 * @param json The JSON object containing "DataType", "SampleRate", "Channels", and optional "Metadata".
+                 * @param json The JSON object containing @c "Format",
+                 *             @c "SampleRate", @c "Channels", and optional
+                 *             @c "Metadata".
                  * @param err  Optional error output.
-                 * @return The deserialized AudioDesc, or an invalid AudioDesc on failure.
+                 * @return The deserialized AudioDesc, or an invalid
+                 *         AudioDesc on failure.
                  */
                 static AudioDesc fromJson(const JsonObject &json, Error *err = nullptr);
-
-                /** @brief Constructs an invalid (default) audio description. */
-                AudioDesc() : _format(lookupFormat(Invalid)) { }
-
-                /**
-                 * @brief Constructs an audio description with the native float format.
-                 *
-                 * If the resulting description is not valid, all fields are reset to invalid.
-                 *
-                 * @param sr Sample rate in Hz.
-                 * @param ch Number of audio channels.
-                 */
-                AudioDesc(float sr, unsigned int ch) :
-                        _dataType(NativeType), _sampleRate(sr),
-                        _channels(ch), _format(lookupFormat(NativeType))
-                {
-                        if(!isValid()) {
-                                _dataType = Invalid;
-                                _sampleRate = 0.0f;
-                                _channels = 0;
-                                _format = lookupFormat(Invalid);
-                        }
-                }
-
-                /**
-                 * @brief Constructs an audio description with the specified data type, sample rate, and channels.
-                 *
-                 * If the resulting description is not valid, all fields are reset to invalid.
-                 *
-                 * @param dt Data type (sample format).
-                 * @param sr Sample rate in Hz.
-                 * @param ch Number of audio channels.
-                 */
-                AudioDesc(DataType dt, float sr, unsigned int ch) :
-                        _dataType(dt), _sampleRate(sr),
-                        _channels(ch), _format(lookupFormat(dt))
-                {
-                        if(!isValid()) {
-                                _dataType = Invalid;
-                                _sampleRate = 0.0f;
-                                _channels = 0;
-                                _format = lookupFormat(Invalid);
-                        }
-                }
 
                 /**
                  * @brief Derives an AudioDesc from an SDP media description.
@@ -285,260 +66,200 @@ class AudioDesc {
                  * @c a=rtpmap attribute to build an audio AudioDesc.
                  * Supported encodings (all RFC 3551 / RFC 3190):
                  *
-                 *  - @c L16  → @ref PCMI_S16BE (wire is big-endian 16-bit)
-                 *  - @c L24  → @ref PCMI_S24BE (wire is packed 24-bit big-endian)
-                 *  - @c L8   → @ref PCMI_U8   (unsigned 8-bit per RFC 3551 §4.5.10)
+                 *  - @c L16  → @ref AudioFormat::PCMI_S16BE (wire is big-endian 16-bit)
+                 *  - @c L24  → @ref AudioFormat::PCMI_S24BE (wire is packed 24-bit big-endian)
+                 *  - @c L8   → @ref AudioFormat::PCMI_U8   (unsigned 8-bit per RFC 3551 §4.5.10)
                  *
-                 * Sample rate and channel count come from the rtpmap
-                 * rate / channel fields.  Anything else (compressed
-                 * codecs, non-audio media descriptions) yields an
-                 * invalid @ref AudioDesc.
+                 * Anything else (compressed codecs, non-audio media
+                 * descriptions) yields an invalid @ref AudioDesc.
                  *
                  * @param md The SDP media description to interpret.
-                 * @return A populated AudioDesc, or an invalid
-                 *         AudioDesc on any failure.
+                 * @return A populated AudioDesc, or an invalid AudioDesc
+                 *         on any failure.
                  */
                 static AudioDesc fromSdp(const SdpMediaDescription &md);
+
+                /** @brief Constructs an invalid (default) audio description. */
+                AudioDesc() = default;
+
+                /**
+                 * @brief Constructs an audio description using the platform's
+                 *        native float32 PCM format.
+                 * @param sr Sample rate in Hz.
+                 * @param ch Number of audio channels.
+                 *
+                 * FIXME: parameter order is (rate, channels) — easy to
+                 * swap with @c AudioDesc(2, 48000.0f).  Revisit later
+                 * with a builder / named-args style or a dedicated
+                 * factory like @c AudioDesc::nativeFloat(sr, ch).
+                 */
+                AudioDesc(float sr, unsigned int ch)
+                        : _format(AudioFormat::NativeFloat), _sampleRate(sr), _channels(ch)
+                {
+                        if(!validParams()) reset();
+                }
+
+                /**
+                 * @brief Constructs an audio description with the given format, sample rate, and channels.
+                 * @param fmt Audio format (sample layout / codec identity).
+                 * @param sr  Sample rate in Hz.
+                 * @param ch  Number of audio channels.
+                 */
+                AudioDesc(const AudioFormat &fmt, float sr, unsigned int ch)
+                        : _format(fmt), _sampleRate(sr), _channels(ch)
+                {
+                        if(!validParams()) reset();
+                }
 
                 /**
                  * @brief Builds an SDP media description from this AudioDesc.
                  *
                  * The inverse of @ref fromSdp.  Populates the returned
-                 * @c SdpMediaDescription with @c m=audio, an
-                 * @c a=rtpmap line for the appropriate encoding
-                 * (@c L16, @c L24, or @c L8), and the clock rate /
-                 * channel count derived from this descriptor.
+                 * @c SdpMediaDescription with @c m=audio, an @c a=rtpmap
+                 * line for the appropriate encoding (@c L16, @c L24, or
+                 * @c L8), and the clock rate / channel count derived
+                 * from this descriptor.
                  *
                  * Returns an empty @c SdpMediaDescription if the
-                 * AudioDesc is invalid or the data type has no RTP
+                 * AudioDesc is invalid or its AudioFormat has no RTP
                  * encoding mapping.
                  *
                  * @param payloadType RTP payload type (0-127).
-                 * @return A populated SdpMediaDescription, or an
-                 *         empty one on failure.
+                 * @return A populated SdpMediaDescription, or an empty
+                 *         one on failure.
                  */
                 SdpMediaDescription toSdp(uint8_t payloadType) const;
 
                 /**
-                 * @brief Returns true if both audio descriptions have equal format (type, rate, channels).
+                 * @brief Returns true if the format, rate, and channels match.
                  * @param other The AudioDesc to compare against.
                  * @return true if the audio format matches, ignoring metadata.
                  */
                 bool formatEquals(const AudioDesc &other) const {
-                        return _dataType == other._dataType &&
+                        return _format == other._format &&
                                _sampleRate == other._sampleRate &&
                                _channels == other._channels;
                 }
 
                 /**
-                 * @brief Returns true if both audio descriptions are fully equal, including metadata.
+                 * @brief Full equality — includes metadata.
                  * @param other The AudioDesc to compare against.
                  * @return true if equal.
                  */
                 bool operator==(const AudioDesc &other) const {
-                        return formatEquals(other) &&
-                               _metadata == other._metadata;
+                        return formatEquals(other) && _metadata == other._metadata;
                 }
 
-                /**
-                 * @brief Returns true if this audio description is valid.
-                 *
-                 * Valid when the sample rate and channel count are set
-                 * AND either a PCM data type or a compressed codec FourCC
-                 * is present.
-                 */
+                /** @brief Returns true if this audio description is valid. */
                 bool isValid() const {
-                        if(_sampleRate <= 0.0f || _channels == 0) return false;
-                        return _dataType != 0 || _codecFourCC.value() != 0;
+                        return _format.isValid() && _sampleRate > 0.0f && _channels > 0;
                 }
 
-                /**
-                 * @brief Returns true if this description identifies a compressed audio codec
-                 *        (as opposed to raw PCM).
-                 *
-                 * Compressed audio has a non-zero @c codecFourCC() and
-                 * typically an @c Invalid @c dataType (since the encoded
-                 * bitstream has no single bit-depth).
-                 */
-                bool isCompressed() const { return _codecFourCC.value() != 0; }
+                /** @brief Returns true if this description identifies a compressed bitstream. */
+                bool isCompressed() const { return _format.isCompressed(); }
 
                 /**
-                 * @brief Returns the four-character code identifying the compressed codec,
-                 *        or an all-zero FourCC for PCM audio.
+                 * @brief Returns true if the format is the platform's
+                 *        native float32 PCM format.
                  */
-                FourCC codecFourCC() const { return _codecFourCC; }
+                bool isNative() const { return _format.id() == AudioFormat::NativeFloat; }
 
                 /**
-                 * @brief Sets the compressed codec FourCC.
-                 *
-                 * Setting a non-zero FourCC marks this description as
-                 * compressed; setting zero clears the compressed flag.
-                 * Does not modify @c dataType, @c sampleRate, or
-                 * @c channels.
-                 */
-                void setCodecFourCC(FourCC code) { _codecFourCC = code; }
-
-                /**
-                 * @brief Returns true if the data type is the platform's native float format.
-                 * @return true if the data type equals NativeType.
-                 */
-                bool isNative() const {
-                        return _dataType == NativeType;
-                }
-
-                /**
-                 * @brief Returns a new AudioDesc with the same sample rate and channels but using the native float format.
-                 * @return An AudioDesc suitable for internal processing.
+                 * @brief Returns a new AudioDesc using the platform's
+                 *        native float32 PCM format with the same sample
+                 *        rate and channel count.
                  */
                 AudioDesc workingDesc() const {
-                        return AudioDesc(NativeType, _sampleRate, _channels);
+                        return AudioDesc(AudioFormat(AudioFormat::NativeFloat),
+                                         _sampleRate, _channels);
                 }
 
-                /**
-                 * @brief Returns a human-readable string representation of this audio description.
-                 * @return A String in the format "[FormatName SampleRateHz Channelsc]".
-                 */
+                /** @brief Returns a human-readable string. */
                 String toString() const {
                         return String::sprintf("[%s %fHz %uc]",
-                                _format->name.cstr(), _sampleRate, _channels);
+                                _format.name().cstr(), _sampleRate, _channels);
                 }
 
                 /**
                  * @brief Serializes this audio description to a JSON object.
-                 * @return A JsonObject containing "DataType", "SampleRate", "Channels", and optional "Metadata".
+                 * @return A JsonObject containing @c "Format",
+                 *         @c "SampleRate", @c "Channels", and optional
+                 *         @c "Metadata".
                  */
                 JsonObject toJson() const {
                         JsonObject ret;
-                        ret.set("DataType", _format->name);
+                        ret.set("Format", _format.name());
                         ret.set("SampleRate", _sampleRate);
                         ret.set("Channels", _channels);
                         if(!_metadata.isEmpty()) ret.set("Metadata", _metadata.toJson());
                         return ret;
                 }
 
-                /**
-                 * @brief Returns the number of bytes per single sample.
-                 * @return Bytes per sample.
-                 */
-                size_t bytesPerSample() const {
-                        return _format->bytesPerSample;
-                }
+                /** @brief Returns the audio format. */
+                const AudioFormat &format() const { return _format; }
+
+                /** @brief Sets the audio format. */
+                void setFormat(const AudioFormat &val) { _format = val; }
+
+                /** @brief Returns the sample rate in Hz. */
+                float sampleRate() const { return _sampleRate; }
+
+                /** @brief Sets the sample rate. */
+                void setSampleRate(float val) { _sampleRate = val; }
+
+                /** @brief Returns the number of audio channels. */
+                unsigned int channels() const { return _channels; }
+
+                /** @brief Sets the number of audio channels. */
+                void setChannels(unsigned int val) { _channels = val; }
+
+                /** @brief Returns a const reference to the metadata. */
+                const Metadata &metadata() const { return _metadata; }
+
+                /** @brief Returns a mutable reference to the metadata. */
+                Metadata &metadata() { return _metadata; }
+
+                /** @brief Returns the number of bytes per single sample (PCM only). */
+                size_t bytesPerSample() const { return _format.bytesPerSample(); }
 
                 /**
-                 * @brief Returns the byte stride between consecutive samples of the same channel.
+                 * @brief Returns the byte stride between consecutive
+                 *        samples of the same channel.
                  *
-                 * For planar formats this is the single sample size; for interleaved formats
-                 * it is the sample size multiplied by the number of channels.
-                 *
-                 * @return Byte stride per sample.
+                 * For planar formats this is the single sample size; for
+                 * interleaved formats it is the sample size multiplied
+                 * by the number of channels.
                  */
                 size_t bytesPerSampleStride() const {
-                        return _format->isPlanar ?
-                                _format->bytesPerSample :
-                                _format->bytesPerSample * _channels;
+                        return _format.isPlanar() ?
+                                _format.bytesPerSample() :
+                                _format.bytesPerSample() * _channels;
                 }
 
                 /**
-                 * @brief Returns the byte offset to a specific channel within a sample buffer.
+                 * @brief Returns the byte offset to a specific channel
+                 *        within a sample buffer.
                  *
-                 * For planar formats, the offset is channel * bytesPerSample * bufferSamples.
-                 * For interleaved formats, it is channel * bytesPerSample.
+                 * For planar formats, the offset is @c channel * bytesPerSample * bufferSamples.
+                 * For interleaved formats, it is @c channel * bytesPerSample.
                  *
                  * @param chan          The channel index (zero-based).
                  * @param bufferSamples Total number of samples per channel in the buffer.
                  * @return Byte offset to the start of the requested channel's data.
                  */
                 size_t channelBufferOffset(unsigned int chan, size_t bufferSamples) const {
-                        return _format->isPlanar ?
-                                _format->bytesPerSample * bufferSamples * chan :
-                                _format->bytesPerSample * chan;
+                        return _format.isPlanar() ?
+                                _format.bytesPerSample() * bufferSamples * chan :
+                                _format.bytesPerSample() * chan;
                 }
 
                 /**
-                 * @brief Returns the total buffer size in bytes needed to store the given number of samples.
+                 * @brief Returns the total buffer size (bytes) for the given sample count.
                  * @param samples Number of samples per channel.
-                 * @return Total size in bytes (bytesPerSample * channels * samples).
+                 * @return Total size in bytes (@c bytesPerSample * channels * samples).
                  */
                 size_t bufferSize(size_t samples) const {
-                        return _format->bytesPerSample * _channels * samples;
-                }
-
-                /**
-                 * @brief Returns the data type of this audio description.
-                 * @return The DataType enum value.
-                 */
-                DataType dataType() const {
-                        return (DataType)_dataType;
-                }
-
-                /**
-                 * @brief Returns the short name of the data type (e.g. "PCMI_S16LE").
-                 * @return The format name string.
-                 */
-                const String &dataTypeName() const {
-                        return _format->name;
-                }
-
-                /**
-                 * @brief Sets the data type.
-                 *
-                 * Also refreshes the cached @c Format pointer so
-                 * @ref toString, @ref bytesPerSample, @ref isPlanar,
-                 * and the StructDatabase-driven helpers stay in sync
-                 * with @p val.  Without this, @c toString would keep
-                 * reporting the previously-cached format name even
-                 * after @ref setDataType.
-                 *
-                 * @param val The new DataType value.
-                 */
-                void setDataType(DataType val) {
-                        _dataType = val;
-                        _format = lookupFormat(val);
-                        if(_format == nullptr) _format = lookupFormat(Invalid);
-                }
-
-                /**
-                 * @brief Returns the sample rate in Hz.
-                 * @return The sample rate.
-                 */
-                float sampleRate() const {
-                        return _sampleRate;
-                }
-
-                /**
-                 * @brief Sets the sample rate.
-                 * @param val The new sample rate in Hz.
-                 */
-                void setSampleRate(float val) {
-                        _sampleRate = val;
-                        return;
-                }
-
-                /**
-                 * @brief Returns the number of audio channels.
-                 * @return The channel count.
-                 */
-                unsigned int channels() const {
-                        return _channels;
-                }
-
-                /**
-                 * @brief Sets the number of audio channels.
-                 * @param val The new channel count.
-                 */
-                void setChannels(unsigned int val) {
-                        _channels = val;
-                        return;
-                }
-
-                /** @brief Returns a const reference to the metadata. */
-                const Metadata &metadata() const {
-                        return _metadata;
-                }
-
-                /** @brief Returns a mutable reference to the metadata. */
-                Metadata &metadata() {
-                        return _metadata;
+                        return _format.bytesPerSample() * _channels * samples;
                 }
 
                 /**
@@ -548,8 +269,7 @@ class AudioDesc {
                  * @param samples Number of samples per channel to convert.
                  */
                 void samplesToFloat(float *out, const uint8_t *in, size_t samples) const {
-                        _format->samplesToFloat(out, in, samples * _channels);
-                        return;
+                        _format.samplesToFloat(out, in, samples * _channels);
                 }
 
                 /**
@@ -559,28 +279,32 @@ class AudioDesc {
                  * @param samples Number of samples per channel to convert.
                  */
                 void floatToSamples(uint8_t *out, const float *in, size_t samples) const {
-                        _format->floatToSamples(out, in, samples * _channels);
-                        return;
+                        _format.floatToSamples(out, in, samples * _channels);
                 }
 
         private:
-                int                     _dataType = 0;
-                float                   _sampleRate = 0.0f;
-                unsigned int            _channels = 0;
-                FourCC                  _codecFourCC{'\0','\0','\0','\0'};
-                Metadata                _metadata;
-                const Format            *_format = nullptr;
+                AudioFormat  _format;
+                float        _sampleRate = 0.0f;
+                unsigned int _channels = 0;
+                Metadata     _metadata;
+
+                bool validParams() const {
+                        return _format.isValid() && _sampleRate > 0.0f && _channels > 0;
+                }
+
+                void reset() {
+                        _format     = AudioFormat();
+                        _sampleRate = 0.0f;
+                        _channels   = 0;
+                }
 };
 
 /**
- * @brief Writes an AudioDesc as tag + dataType + sampleRate + channels + metadata.
- * @param stream The stream to write to.
- * @param desc   The AudioDesc to serialize.
- * @return The stream, for chaining.
+ * @brief Writes an AudioDesc as tag + format (by name) + sample rate + channels + metadata.
  */
 inline DataStream &operator<<(DataStream &stream, const AudioDesc &desc) {
         stream.writeTag(DataStream::TypeAudioDesc);
-        stream << static_cast<int32_t>(desc.dataType());
+        stream << desc.format();
         stream << desc.sampleRate();
         stream << static_cast<uint32_t>(desc.channels());
         stream << desc.metadata();
@@ -589,19 +313,16 @@ inline DataStream &operator<<(DataStream &stream, const AudioDesc &desc) {
 
 /**
  * @brief Reads an AudioDesc from its tagged wire format.
- * @param stream The stream to read from.
- * @param desc   The AudioDesc to populate.
- * @return The stream, for chaining.
  */
 inline DataStream &operator>>(DataStream &stream, AudioDesc &desc) {
         if(!stream.readTag(DataStream::TypeAudioDesc)) { desc = AudioDesc(); return stream; }
-        int32_t dt = 0;
+        AudioFormat fmt;
         float sr = 0.0f;
         uint32_t ch = 0;
         Metadata meta;
-        stream >> dt >> sr >> ch >> meta;
+        stream >> fmt >> sr >> ch >> meta;
         if(stream.status() != DataStream::Ok) { desc = AudioDesc(); return stream; }
-        desc = AudioDesc(static_cast<AudioDesc::DataType>(dt), sr, ch);
+        desc = AudioDesc(fmt, sr, ch);
         desc.metadata() = std::move(meta);
         return stream;
 }
@@ -609,4 +330,3 @@ inline DataStream &operator>>(DataStream &stream, AudioDesc &desc) {
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::AudioDesc);
-

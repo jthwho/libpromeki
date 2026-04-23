@@ -94,17 +94,17 @@ assert(cm.name() == "MyCustomRGB");
 
   ```cpp
   // WRONG -- forces a registry lookup at every call site
-  Image(size_t w, size_t h, PixelDesc::ID pd);
+  Image(size_t w, size_t h, PixelFormat::ID pd);
 
   // RIGHT -- the caller already has a resolved wrapper (or the
   // compiler inserts the implicit conversion once)
-  Image(size_t w, size_t h, const PixelDesc &pd);
+  Image(size_t w, size_t h, const PixelFormat &pd);
   ```
 
   Because every wrapper has an implicit constructor from its ID
   enum, changing a parameter from `ID` to `const Wrapper &` is
   source-compatible: callers that pass an enum constant like
-  `PixelDesc::RGBA8_sRGB` compile unchanged.
+  `PixelFormat::RGBA8_sRGB` compile unchanged.
 
 - **Data is immutable.** Once registered, a Data record must not
   be modified. This guarantees that concurrent reads from multiple
@@ -145,7 +145,7 @@ why it exists so it is not removed during future cleanup.
 |-------|-------------|-------------|
 | `ColorModel` | `ColorModel::Data` | Color model / color space descriptors |
 | `MemSpace` | `MemSpace::Ops` | Memory space operation tables |
-| `PixelFormat` | `PixelFormat::Data` | Pixel memory layout (components, bit depths, planes) |
-| `PixelDesc` | `PixelDesc::Data` | Full pixel description (format + color model + ranges) |
+| `PixelMemLayout` | `PixelMemLayout::Data` | Pixel memory layout (components, bit depths, planes) |
+| `PixelFormat` | `PixelFormat::Data` | Full pixel description (format + color model + ranges) |
 
-**See also:** `ColorModel`, `MemSpace`, `PixelFormat`, `PixelDesc`.
+**See also:** `ColorModel`, `MemSpace`, `PixelMemLayout`, `PixelFormat`.

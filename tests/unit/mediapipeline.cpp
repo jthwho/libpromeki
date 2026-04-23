@@ -12,6 +12,7 @@
 #include <doctest/doctest.h>
 #include <promeki/elapsedtimer.h>
 #include <promeki/eventloop.h>
+#include <promeki/framecount.h>
 #include <promeki/mediapipeline.h>
 #include <promeki/mediapipelineconfig.h>
 #include <promeki/mediaconfig.h>
@@ -227,6 +228,99 @@ TEST_CASE("MediaPipeline_StartDrainsFramesThroughChain") {
         for(int i = 0; i < 50; ++i) {
                 loop.processEvents();
         }
+
+        CHECK(p.stop().isOk());
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_FrameCountCapClosesPipelineCleanly") {
+        // TPG → CSC with a small frame-count cap on an intra-only path
+        // (TPG produces uncompressed frames, so every frame is a safe
+        // cut point).  The pipeline should reach its cap, close
+        // itself, and transition to State::Closed without any external
+        // stop/close call.
+        MediaPipelineConfig cfg = makeTpgToCsc();
+        cfg.setFrameCount(FrameCount(3));
+
+        EventLoop loop;
+        MediaPipeline p;
+        REQUIRE(p.build(cfg).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+
+        ElapsedTimer watchdog;
+        watchdog.start();
+        while(p.state() != MediaPipeline::State::Closed
+              && watchdog.elapsed() < 3000) {
+                loop.processEvents();
+        }
+        CHECK(p.state() == MediaPipeline::State::Closed);
+
+        // No explicit close was needed — the pipeline self-closed on
+        // reaching the cap.  A second close is a no-op and should
+        // still return cleanly.
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_DefaultFrameCountRunsUncapped") {
+        // A config with no frameCount set must leave the pipeline
+        // unbounded — drainSource's cap check collapses to zero at
+        // build time and the pipeline keeps running until we stop it.
+        // This guards the fast path (no cap configured) against a
+        // regression where unknown / infinite / empty FrameCount
+        // states accidentally trip the cutoff.
+        MediaPipelineConfig cfg = makeTpgToCsc();
+        CHECK(cfg.frameCount().isUnknown());  // default-constructed
+
+        EventLoop loop;
+        MediaPipeline p;
+        REQUIRE(p.build(cfg).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+
+        // Pump briefly and then force-stop; the pipeline must still be
+        // running (Running state) because the cap never fires.
+        for(int i = 0; i < 50; ++i) loop.processEvents();
+        CHECK(p.state() == MediaPipeline::State::Running);
+
+        CHECK(p.stop().isOk());
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_FrameCountInfinityRunsUncapped") {
+        // FrameCount::infinity() is semantically the same "no cap"
+        // as the default; the build-time normalization has to fold
+        // it to zero just like the unknown case.
+        MediaPipelineConfig cfg = makeTpgToCsc();
+        cfg.setFrameCount(FrameCount::infinity());
+
+        EventLoop loop;
+        MediaPipeline p;
+        REQUIRE(p.build(cfg).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+
+        for(int i = 0; i < 50; ++i) loop.processEvents();
+        CHECK(p.state() == MediaPipeline::State::Running);
+
+        CHECK(p.stop().isOk());
+        CHECK(p.close().isOk());
+}
+
+TEST_CASE("MediaPipeline_FrameCountEmptyRunsUncapped") {
+        // FrameCount::empty() also collapses to "no cap" — isFinite()
+        // is true but isEmpty() excludes it from the limit branch.
+        MediaPipelineConfig cfg = makeTpgToCsc();
+        cfg.setFrameCount(FrameCount::empty());
+
+        EventLoop loop;
+        MediaPipeline p;
+        REQUIRE(p.build(cfg).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+
+        for(int i = 0; i < 50; ++i) loop.processEvents();
+        CHECK(p.state() == MediaPipeline::State::Running);
 
         CHECK(p.stop().isOk());
         CHECK(p.close().isOk());

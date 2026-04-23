@@ -65,15 +65,15 @@ Single-hop solver plus a codec-transitive two-hop fallback (VideoDecoder → Vid
 | `CSC`            | ✓      | rejects compressed        | applies `applyOutputOverrides` from current config           |
 | `FrameSync`      | ✓      | passthrough               | applies output rate / channel / format overrides             |
 | `SRC`            | ✓      | rejects invalid audio     | applies `OutputAudioDataType` override                       |
-| `VideoDecoder`   | ✓      | requires compressed input | reports configured uncompressed `OutputPixelDesc`            |
+| `VideoDecoder`   | ✓      | requires compressed input | reports configured uncompressed `OutputPixelFormat`            |
 | `VideoEncoder`   | ✓      | requires uncompressed     | replaces pixel desc with the configured codec's compressed form |
 | `TPG`            | —      | n/a (source)              | accepts any uncompressed shape; rejects compressed; describe advertises configured shape + `FrameCountInfinite` |
-| `ImageFile` sink | —      | per-extension PixelDesc preference table (DPX, CIN, JPEG, PNG, TGA, SGI, PNM); preserves source bit depth | default                                                      |
+| `ImageFile` sink | —      | per-extension PixelFormat preference table (DPX, CIN, JPEG, PNG, TGA, SGI, PNM); preserves source bit depth | default                                                      |
 | `AudioFile` sink | —      | per-extension DataType preference (WAV/BWF/AIFF/FLAC/W64/RF64 pass-through; OGG/Opus → Float32); preserves source bit depth | default                                                      |
 | `QuickTime` sink | —      | curated FourCC whitelist (compressed: H.264 / HEVC / AV1 / ProRes / JPEG / JPEG XS; uncompressed: RGB8 / RGBA8 / YUYV / UYVY / v210 / I422 / I420 / NV12 / NV16); chroma + bit depth preserved | default                                                      |
-| `SDLPlayer`      | —      | restricted to native `mapPixelDesc` set; prefers same colour family + bit depth | describe advertises full SDL-native acceptable list           |
-| `RawBitstream`          | —      | rejects uncompressed input (`NotSupported`); passthrough on compressed | describes every registered compressed PixelDesc as acceptable |
-| `Burn`                  | —      | rejects compressed and non-paintable input; substitutes same-family uncompressed via `defaultUncompressedPixelDesc` | passthrough (output shape == input shape) |
+| `SDLPlayer`      | —      | restricted to native `mapPixelFormat` set; prefers same colour family + bit depth | describe advertises full SDL-native acceptable list           |
+| `RawBitstream`          | —      | rejects uncompressed input (`NotSupported`); passthrough on compressed | describes every registered compressed PixelFormat as acceptable |
+| `Burn`                  | —      | rejects compressed and non-paintable input; substitutes same-family uncompressed via `defaultUncompressedPixelFormat` | passthrough (output shape == input shape) |
 | `FrameBridge` / `Inspector` | — | default (passthrough) | default                                                      |
 
 ### `mediaplay` integration

@@ -467,7 +467,7 @@ if(mlock(ptr, size) != 0) {
 
 ## TypeRegistry Types
 
-ColorModel, MemSpace, PixelFormat, and PixelDesc use the [TypeRegistry pattern](@ref typeregistry). Each is a lightweight wrapper around a `const Data *` pointer, resolved once from an ID via a construct-on-first-use registry. Copying is a pointer copy; comparison is a pointer comparison.
+ColorModel, MemSpace, PixelMemLayout, and PixelFormat use the [TypeRegistry pattern](@ref typeregistry). Each is a lightweight wrapper around a `const Data *` pointer, resolved once from an ID via a construct-on-first-use registry. Copying is a pointer copy; comparison is a pointer comparison.
 
 ### Pass the Wrapper, Not the ID
 
@@ -475,14 +475,14 @@ IDs exist only for two purposes: constructing a wrapper, and registering new typ
 
 ```cpp
 // WRONG — every caller pays for a registry lookup
-Image(size_t w, size_t h, PixelDesc::ID pd);
+Image(size_t w, size_t h, PixelFormat::ID pd);
 
 // RIGHT — caller passes a resolved wrapper (or the compiler
 // inserts the implicit conversion from ID once automatically)
-Image(size_t w, size_t h, const PixelDesc &pd);
+Image(size_t w, size_t h, const PixelFormat &pd);
 ```
 
-Because every wrapper has an **implicit** constructor from its ID enum, changing a parameter from `ID` to `const Wrapper &` is source-compatible — callers that pass an enum constant like `PixelDesc::RGBA8_sRGB` compile unchanged.
+Because every wrapper has an **implicit** constructor from its ID enum, changing a parameter from `ID` to `const Wrapper &` is source-compatible — callers that pass an enum constant like `PixelFormat::RGBA8_sRGB` compile unchanged.
 
 Do **not** create `static const` wrapper objects for well-known IDs, as this introduces static initialization order uncertainty. Instead, pass the ID enum constant directly and let the implicit conversion happen at the call site.
 

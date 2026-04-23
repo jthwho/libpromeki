@@ -36,7 +36,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par Example
  * @code
- * Image img(1920, 1080, PixelDesc::RGBA8_sRGB);
+ * Image img(1920, 1080, PixelFormat::RGBA8_sRGB);
  * BasicFont bf(img.createPaintEngine());
  * bf.setFontFilename("/path/to/font.ttf");
  * bf.setFontSize(24);

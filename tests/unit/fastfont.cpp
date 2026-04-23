@@ -8,7 +8,7 @@
 #include <doctest/doctest.h>
 #include <promeki/fastfont.h>
 #include <promeki/image.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/color.h>
 #include <promeki/filepath.h>
 
@@ -20,7 +20,7 @@ using namespace promeki;
 // compiled-in resource filesystem the default load will fail and
 // the dependent tests skip themselves.
 static bool fontAvailable() {
-        Image img(16, 16, PixelDesc::RGB8_sRGB);
+        Image img(16, 16, PixelFormat::RGB8_sRGB);
         FastFont probe(img.createPaintEngine());
         probe.setFontSize(12);
         return probe.measureText("A") > 0;
@@ -51,7 +51,7 @@ TEST_CASE("FastFont: construction with default PaintEngine") {
 }
 
 TEST_CASE("FastFont: construction with real PaintEngine") {
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
         CHECK(ff.fontFilename().isEmpty());
         CHECK(ff.fontSize() == 12);
@@ -91,7 +91,7 @@ TEST_CASE("FastFont: setFontSize same value no-op") {
 }
 
 TEST_CASE("FastFont: isValid requires paint engine and positive size") {
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
         // Empty filename is OK — effectiveFilename() falls back to
         // the bundled default internally.
@@ -109,7 +109,7 @@ TEST_CASE("FastFont: isValid requires paint engine and positive size") {
 TEST_CASE("FastFont: drawText works without explicit filename") {
         if(!fontAvailable()) return;
 
-        Image img(256, 64, PixelDesc::RGB8_sRGB);
+        Image img(256, 64, PixelFormat::RGB8_sRGB);
         img.fill(0);
         FastFont ff(img.createPaintEngine());
         // Intentionally no setFontFilename() — exercise the
@@ -129,7 +129,7 @@ TEST_CASE("FastFont: drawText works without explicit filename") {
 TEST_CASE("FastFont: measureText works without explicit filename") {
         if(!fontAvailable()) return;
 
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
         ff.setFontSize(24);
         CHECK(ff.measureText("A") > 0);
@@ -140,14 +140,14 @@ TEST_CASE("FastFont: measureText works without explicit filename") {
 // ============================================================================
 
 TEST_CASE("FastFont: drawText fails with bad font path") {
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
         ff.setFontFilename("/nonexistent/font.ttf");
         CHECK_FALSE(ff.drawText("test", 0, 0));
 }
 
 TEST_CASE("FastFont: measureText returns 0 with bad font path") {
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
         ff.setFontFilename("/nonexistent/font.ttf");
         CHECK(ff.measureText("test") == 0);
@@ -160,7 +160,7 @@ TEST_CASE("FastFont: measureText returns 0 with bad font path") {
 TEST_CASE("FastFont: font metrics after loading") {
         if(!fontAvailable()) return;
 
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
         ff.setFontSize(24);
 
@@ -180,7 +180,7 @@ TEST_CASE("FastFont: font metrics after loading") {
 TEST_CASE("FastFont: measureText empty string") {
         if(!fontAvailable()) return;
 
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
         ff.setFontSize(24);
 
@@ -190,7 +190,7 @@ TEST_CASE("FastFont: measureText empty string") {
 TEST_CASE("FastFont: measureText single character") {
         if(!fontAvailable()) return;
 
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
         ff.setFontSize(24);
 
@@ -201,7 +201,7 @@ TEST_CASE("FastFont: measureText single character") {
 TEST_CASE("FastFont: measureText longer string is wider") {
         if(!fontAvailable()) return;
 
-        Image img(256, 64, PixelDesc::RGB8_sRGB);
+        Image img(256, 64, PixelFormat::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
         ff.setFontSize(24);
 
@@ -213,7 +213,7 @@ TEST_CASE("FastFont: measureText longer string is wider") {
 TEST_CASE("FastFont: measureText monospace characters same width") {
         if(!fontAvailable()) return;
 
-        Image img(256, 64, PixelDesc::RGB8_sRGB);
+        Image img(256, 64, PixelFormat::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
         ff.setFontSize(24);
 
@@ -232,7 +232,7 @@ TEST_CASE("FastFont: measureText monospace characters same width") {
 TEST_CASE("FastFont: drawText renders pixels") {
         if(!fontAvailable()) return;
 
-        Image img(256, 64, PixelDesc::RGB8_sRGB);
+        Image img(256, 64, PixelFormat::RGB8_sRGB);
         img.fill(128);
         FastFont ff(img.createPaintEngine());
         ff.setFontSize(24);
@@ -256,7 +256,7 @@ TEST_CASE("FastFont: drawText with different colors") {
         if(!fontAvailable()) return;
 
         auto renderAndSum = [](Color fg, Color bg) -> uint64_t {
-                Image img(256, 64, PixelDesc::RGB8_sRGB);
+                Image img(256, 64, PixelFormat::RGB8_sRGB);
                 img.fill(0);
                 FastFont ff(img.createPaintEngine());
                         ff.setFontSize(24);
@@ -282,7 +282,7 @@ TEST_CASE("FastFont: drawText with different colors") {
 TEST_CASE("FastFont: drawText on RGBA8") {
         if(!fontAvailable()) return;
 
-        Image img(256, 64, PixelDesc::RGBA8_sRGB);
+        Image img(256, 64, PixelFormat::RGBA8_sRGB);
         img.fill(0);
         FastFont ff(img.createPaintEngine());
         ff.setFontSize(24);
@@ -306,7 +306,7 @@ TEST_CASE("FastFont: drawText on RGBA8") {
 TEST_CASE("FastFont: changing font size invalidates cache") {
         if(!fontAvailable()) return;
 
-        Image img(256, 64, PixelDesc::RGB8_sRGB);
+        Image img(256, 64, PixelFormat::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
         ff.setFontSize(12);
 
@@ -323,7 +323,7 @@ TEST_CASE("FastFont: changing font size invalidates cache") {
 TEST_CASE("FastFont: changing font filename invalidates cache") {
         if(!fontAvailable()) return;
 
-        Image img(256, 64, PixelDesc::RGB8_sRGB);
+        Image img(256, 64, PixelFormat::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
         ff.setFontSize(24);
 
@@ -339,8 +339,8 @@ TEST_CASE("FastFont: changing font filename invalidates cache") {
 TEST_CASE("FastFont: setPaintEngine same pixel format preserves cache") {
         if(!fontAvailable()) return;
 
-        Image img1(256, 64, PixelDesc::RGB8_sRGB);
-        Image img2(256, 64, PixelDesc::RGB8_sRGB);
+        Image img1(256, 64, PixelFormat::RGB8_sRGB);
+        Image img2(256, 64, PixelFormat::RGB8_sRGB);
         FastFont ff(img1.createPaintEngine());
         ff.setFontSize(24);
 
@@ -363,7 +363,7 @@ TEST_CASE("FastFont: setPaintEngine same pixel format preserves cache") {
 TEST_CASE("FastFont: deferred PaintEngine on RGB8") {
         if(!fontAvailable()) return;
 
-        Image img(256, 64, PixelDesc::RGB8_sRGB);
+        Image img(256, 64, PixelFormat::RGB8_sRGB);
         img.fill(128);
 
         // Construct with no-op PaintEngine, configure, then switch
@@ -388,7 +388,7 @@ TEST_CASE("FastFont: deferred PaintEngine on RGB8") {
 TEST_CASE("FastFont: deferred PaintEngine on RGBA8") {
         if(!fontAvailable()) return;
 
-        Image img(256, 64, PixelDesc::RGBA8_sRGB);
+        Image img(256, 64, PixelFormat::RGBA8_sRGB);
         img.fill(128);
 
         FastFont ff{PaintEngine()};
@@ -412,7 +412,7 @@ TEST_CASE("FastFont: deferred PaintEngine on RGBA8") {
 TEST_CASE("FastFont: deferred PaintEngine measures correctly") {
         if(!fontAvailable()) return;
 
-        Image img(256, 64, PixelDesc::RGB8_sRGB);
+        Image img(256, 64, PixelFormat::RGB8_sRGB);
 
         // Direct construction for reference
         FastFont direct(img.createPaintEngine());
@@ -436,7 +436,7 @@ TEST_CASE("FastFont: deferred PaintEngine measures correctly") {
 TEST_CASE("FastFont: drawText at bottom of large RGBA8 image") {
         if(!fontAvailable()) return;
 
-        Image img(1920, 1080, PixelDesc::RGBA8_sRGB);
+        Image img(1920, 1080, PixelFormat::RGBA8_sRGB);
         img.fill(128);
 
         FastFont ff{PaintEngine()};
@@ -468,7 +468,7 @@ TEST_CASE("FastFont: drawText at bottom of large RGBA8 image") {
 TEST_CASE("FastFont: drawText at bottom of large RGB8 image") {
         if(!fontAvailable()) return;
 
-        Image img(1920, 1080, PixelDesc::RGB8_sRGB);
+        Image img(1920, 1080, PixelFormat::RGB8_sRGB);
         img.fill(128);
 
         FastFont ff(img.createPaintEngine());
@@ -501,7 +501,7 @@ TEST_CASE("FastFont: drawText at bottom of large RGB8 image") {
 TEST_CASE("FastFont: lineHeight equals ascender plus descender") {
         if(!fontAvailable()) return;
 
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
         ff.setFontSize(48);
 
@@ -514,7 +514,7 @@ TEST_CASE("FastFont: lineHeight equals ascender plus descender") {
 TEST_CASE("FastFont: metrics scale with font size") {
         if(!fontAvailable()) return;
 
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
 
         FastFont small(img.createPaintEngine());
         small.setFontSize(12);
@@ -532,7 +532,7 @@ TEST_CASE("FastFont: metrics scale with font size") {
 TEST_CASE("FastFont: metrics match between deferred and direct construction") {
         if(!fontAvailable()) return;
 
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
 
         FastFont direct(pe);

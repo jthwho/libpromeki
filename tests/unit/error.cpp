@@ -108,6 +108,51 @@ TEST_CASE("Error: NotHostAccessible has name and desc") {
         CHECK_FALSE(e.desc().isEmpty());
 }
 
+TEST_CASE("Error: NotAdjacent has name and desc") {
+        Error e(Error::NotAdjacent);
+        CHECK(e.isError());
+        CHECK_FALSE(e.name().isEmpty());
+        CHECK_FALSE(e.desc().isEmpty());
+}
+
+TEST_CASE("Error: PipelineBuildFailed has name and desc") {
+        Error e(Error::PipelineBuildFailed);
+        CHECK(e.isError());
+        CHECK_FALSE(e.name().isEmpty());
+        CHECK_FALSE(e.desc().isEmpty());
+}
+
+TEST_CASE("Error: PipelineRuntimeError has name and desc") {
+        Error e(Error::PipelineRuntimeError);
+        CHECK(e.isError());
+        CHECK_FALSE(e.name().isEmpty());
+        CHECK_FALSE(e.desc().isEmpty());
+}
+
+TEST_CASE("Error: InspectorDiscontinuityDetected has name and desc") {
+        Error e(Error::InspectorDiscontinuityDetected);
+        CHECK(e.isError());
+        CHECK_FALSE(e.name().isEmpty());
+        CHECK_FALSE(e.desc().isEmpty());
+}
+
+TEST_CASE("Error: pipeline and inspector codes are distinct") {
+        // Ensures the new registry entries don't accidentally collide
+        // with each other or other pipeline-adjacent codes.
+        Error pbf(Error::PipelineBuildFailed);
+        Error pre(Error::PipelineRuntimeError);
+        Error idd(Error::InspectorDiscontinuityDetected);
+        Error na(Error::NotAdjacent);
+        CHECK(pbf != pre);
+        CHECK(pbf != idd);
+        CHECK(pre != idd);
+        CHECK(pbf != na);
+        CHECK(pre != na);
+        CHECK(idd != na);
+        CHECK(pbf.name() != pre.name());
+        CHECK(pre.name() != idd.name());
+}
+
 TEST_CASE("Error: systemError returns errno for mapped codes") {
         Error e(Error::Invalid);
         CHECK(e.systemError() == EINVAL);

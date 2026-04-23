@@ -13,7 +13,7 @@
 #include <promeki/mediadesc.h>
 #include <promeki/mediaiodescription.h>
 #include <promeki/metadata.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/uuid.h>
 
 using namespace promeki;
@@ -24,7 +24,7 @@ namespace {
 // every member.  Uses a couple of representative MediaDescs in each
 // of the producible / acceptable lists so list serialization is
 // exercised.
-MediaDesc makeUncompressedDesc(uint32_t w, uint32_t h, const PixelDesc &pd) {
+MediaDesc makeUncompressedDesc(uint32_t w, uint32_t h, const PixelFormat &pd) {
         MediaDesc md;
         md.setFrameRate(FrameRate(FrameRate::FPS_29_97));
         ImageDesc id(Size2Du32(w, h), pd);
@@ -44,11 +44,11 @@ MediaIODescription makeSample() {
         d.setCanBeTransform(false);
 
         d.producibleFormats().pushToBack(
-                makeUncompressedDesc(1920, 1080, PixelDesc(PixelDesc::RGBA8_sRGB)));
+                makeUncompressedDesc(1920, 1080, PixelFormat(PixelFormat::RGBA8_sRGB)));
         d.producibleFormats().pushToBack(
-                makeUncompressedDesc(1280,  720, PixelDesc(PixelDesc::RGBA8_sRGB)));
+                makeUncompressedDesc(1280,  720, PixelFormat(PixelFormat::RGBA8_sRGB)));
         d.setPreferredFormat(
-                makeUncompressedDesc(1920, 1080, PixelDesc(PixelDesc::RGBA8_sRGB)));
+                makeUncompressedDesc(1920, 1080, PixelFormat(PixelFormat::RGBA8_sRGB)));
 
         d.setCanSeek(true);
         d.setFrameCount(MediaIODescription::FrameCountInfinite);
@@ -135,7 +135,7 @@ TEST_CASE("MediaIODescription_Equality") {
         b = makeSample();
         b.setUuid(a.uuid());
         b.acceptableFormats().pushToBack(
-                makeUncompressedDesc(640, 480, PixelDesc(PixelDesc::RGBA8_sRGB)));
+                makeUncompressedDesc(640, 480, PixelFormat(PixelFormat::RGBA8_sRGB)));
         CHECK(a != b);
 }
 

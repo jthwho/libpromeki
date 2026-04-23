@@ -32,7 +32,7 @@ PROMEKI_NAMESPACE_BEGIN
  * Font rendering is delegated to @ref VideoTestPattern::applyBurn,
  * which uses the @ref FastFont glyph cache for efficient repeated
  * draws.  The image must be in a paintable pixel format
- * (@c PixelDesc::hasPaintEngine() == true); non-paintable formats
+ * (@c PixelFormat::hasPaintEngine() == true); non-paintable formats
  * pass through with a one-shot warning.
  *
  * @par Mode support

@@ -14,7 +14,7 @@
 #include <promeki/list.h>
 #include <promeki/error.h>
 #include <promeki/imagedesc.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/buffer.h>
 #include <promeki/crc.h>
 
@@ -65,7 +65,7 @@ class Image;
  * @par Per-format value mapping
  * The encoder uses libpromeki's CSC pipeline to render its three
  * "primer" cells (one full-white pixel cell, one full-black pixel
- * cell, and one neutral / padding cell) into the target PixelDesc
+ * cell, and one neutral / padding cell) into the target PixelFormat
  * once at construction time.  This means:
  *
  * - For RGB formats, "white" is the format's per-component max,
@@ -85,7 +85,7 @@ class Image;
  * floor of any modern memory subsystem.
  *
  * @par Lifetime and reuse
- * Construct one encoder per (PixelDesc, image dimensions) pair and
+ * Construct one encoder per (PixelFormat, image dimensions) pair and
  * reuse it across many frames.  The encoder owns its primer cells
  * and CRC state internally; @ref encode is reentrant on a single
  * instance only with respect to itself (do not call @c encode from
@@ -135,7 +135,7 @@ class ImageDataEncoder {
                 /**
                  * @brief Maximum number of planes the encoder supports.
                  *
-                 * Matches @c PixelFormat::MaxPlanes.
+                 * Matches @c PixelMemLayout::MaxPlanes.
                  */
                 static constexpr size_t MaxPlanes = 4;
 

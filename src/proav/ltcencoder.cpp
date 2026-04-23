@@ -27,7 +27,7 @@ Audio LtcEncoder::encode(const Timecode &tc) {
         size_t bufSize = approx + approx / 4 + 64; // 25% headroom
 
         // Create Audio object: mono, int8_t
-        AudioDesc desc(AudioDesc::PCMI_S8, (float)_encoder.sample_rate, 1);
+        AudioDesc desc(AudioFormat::PCMI_S8, (float)_encoder.sample_rate, 1);
         Audio audio(desc, bufSize);
 
         // Convert Timecode to VtcTimecode

@@ -124,7 +124,7 @@ Error ImageFileIO_TGA::load(ImageFile &imageFile, const MediaConfig &config) con
         }
 
         // Allocate RGBA8 image
-        Image image(w, h, PixelDesc(PixelDesc::RGBA8_sRGB));
+        Image image(w, h, PixelFormat(PixelFormat::RGBA8_sRGB));
         if(!image.isValid()) {
                 promekiErr("TGA load '%s': failed to allocate image", filename.cstr());
                 return Error::NoMem;
@@ -179,9 +179,9 @@ Error ImageFileIO_TGA::save(ImageFile &imageFile, const MediaConfig &config) con
                 promekiErr("TGA save '%s': image is not valid", filename.cstr());
                 return Error::Invalid;
         }
-        if(image.pixelDesc().id() != PixelDesc::RGBA8_sRGB) {
+        if(image.pixelFormat().id() != PixelFormat::RGBA8_sRGB) {
                 promekiErr("TGA save '%s': only RGBA8 supported, got '%s'",
-                           filename.cstr(), image.pixelDesc().name().cstr());
+                           filename.cstr(), image.pixelFormat().name().cstr());
                 return Error::PixelFormatNotSupported;
         }
 

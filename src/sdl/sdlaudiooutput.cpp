@@ -38,7 +38,7 @@ bool SDLAudioOutput::open() {
         }
         if(_open) return true;
 
-        // We always push float32 to SDL — the Audio::convertTo() path
+        // We always push float32 to SDL — the Audio::convert() path
         // handles conversion from any promeki format to native float.
         SDL_AudioSpec spec = {};
         spec.format = SDL_AUDIO_F32;
@@ -97,7 +97,7 @@ bool SDLAudioOutput::pushAudio(const Audio &audio) {
         const Audio *src = &audio;
         Audio converted;
         if(!audio.isNative()) {
-                converted = audio.convertTo(AudioDesc::NativeType);
+                converted = audio.convert(AudioFormat::NativeFloat);
                 if(!converted.isValid()) {
                         promekiErr("SDLAudioOutput: audio format conversion failed");
                         return false;

@@ -6,6 +6,7 @@
  */
 
 #include <doctest/doctest.h>
+#include <promeki/framecount.h>
 #include <promeki/mediapipelineconfig.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/metadata.h>
@@ -108,6 +109,145 @@ TEST_CASE("MediaPipelineConfig_Accessors") {
 TEST_CASE("MediaPipelineConfig_Validate_Success") {
         MediaPipelineConfig cfg = makeSample();
         CHECK(cfg.validate() == Error::Ok);
+}
+
+TEST_CASE("MediaPipelineConfig_FrameCount_DefaultIsUnbounded") {
+        MediaPipelineConfig cfg;
+        // A fresh config defaults to "no cap" — round-trip through
+        // toJson / fromJson preserves that.
+        CHECK(cfg.frameCount().isUnknown());
+        JsonObject j = cfg.toJson();
+        CHECK_FALSE(j.contains("frameCount"));
+}
+
+TEST_CASE("MediaPipelineConfig_FrameCount_RoundTripJson") {
+        MediaPipelineConfig cfg = makeSample();
+        cfg.setFrameCount(FrameCount(60));
+        CHECK(cfg.frameCount() == FrameCount(60));
+
+        JsonObject j = cfg.toJson();
+        REQUIRE(j.contains("frameCount"));
+        CHECK(j.getInt("frameCount") == 60);
+
+        Error err;
+        MediaPipelineConfig round = MediaPipelineConfig::fromJson(j, &err);
+        CHECK(err.isOk());
+        CHECK(round.frameCount() == FrameCount(60));
+        // Also verifies operator==: configs with differing frame counts
+        // compare unequal, and matching ones compare equal.
+        CHECK(round == cfg);
+        MediaPipelineConfig other = makeSample();
+        other.setFrameCount(FrameCount(90));
+        CHECK_FALSE(round == other);
+}
+
+TEST_CASE("MediaPipelineConfig_FrameCount_InfiniteNotSerialized") {
+        // FrameCount::infinity() is a "run forever" sentinel and must
+        // not appear in the JSON — the round-trip collapses it back
+        // through the "no key present" path.
+        MediaPipelineConfig cfg = makeSample();
+        cfg.setFrameCount(FrameCount::infinity());
+        JsonObject j = cfg.toJson();
+        CHECK_FALSE(j.contains("frameCount"));
+        Error err;
+        MediaPipelineConfig round = MediaPipelineConfig::fromJson(j, &err);
+        CHECK(err.isOk());
+        CHECK(round.frameCount().isUnknown());
+}
+
+TEST_CASE("MediaPipelineConfig_FrameCount_EmptyNotSerialized") {
+        // FrameCount::empty() (isFinite() but the value-less sentinel
+        // used for "no samples") is also not a real cap — same
+        // suppression path as infinity.
+        MediaPipelineConfig cfg = makeSample();
+        cfg.setFrameCount(FrameCount::empty());
+        JsonObject j = cfg.toJson();
+        CHECK_FALSE(j.contains("frameCount"));
+}
+
+TEST_CASE("MediaPipelineConfig_FrameCount_NegativeJsonRejected") {
+        // Negative frameCount values make no semantic sense; the
+        // loader must leave the field at the default and flag an
+        // error so the caller can surface it.  Positive and zero
+        // values stay in the fast path.
+        MediaPipelineConfig cfg = makeSample();
+        JsonObject j = cfg.toJson();
+        j.set("frameCount", int64_t(-1));
+        Error err;
+        MediaPipelineConfig round = MediaPipelineConfig::fromJson(j, &err);
+        // The loader clears the error by default and only sets it
+        // when the input is malformed; a negative value should make
+        // it scream.
+        CHECK(err.isError());
+        // The frameCount on the partial result stays at its default.
+        CHECK(round.frameCount().isUnknown());
+}
+
+TEST_CASE("MediaPipelineConfig_FrameCount_ZeroJsonAccepted") {
+        // FrameCount(0) is a legitimate "cap at zero" — not a common
+        // user choice, but it's a well-formed non-negative value and
+        // the loader should accept it.  The pipeline treats it the
+        // same as no cap (zero frames produced) but the config layer
+        // must preserve it verbatim.
+        MediaPipelineConfig cfg = makeSample();
+        JsonObject j = cfg.toJson();
+        j.set("frameCount", int64_t(0));
+        Error err;
+        MediaPipelineConfig round = MediaPipelineConfig::fromJson(j, &err);
+        CHECK(err.isOk());
+        CHECK(round.frameCount() == FrameCount(0));
+}
+
+TEST_CASE("MediaPipelineConfig_Describe_MentionsFrameCount") {
+        // When a finite positive frame cap is configured, the
+        // user-facing describe() output must surface it — we use it
+        // to summarise a job to the user before launching the
+        // pipeline.
+        MediaPipelineConfig cfg = makeSample();
+        cfg.setFrameCount(FrameCount(42));
+        StringList lines = cfg.describe();
+        bool mentionsCap = false;
+        for(size_t i = 0; i < lines.size(); ++i) {
+                if(lines[i].contains("Frame count limit")
+                   && lines[i].contains("42")) {
+                        mentionsCap = true;
+                        break;
+                }
+        }
+        CHECK(mentionsCap);
+}
+
+TEST_CASE("MediaPipelineConfig_Describe_OmitsFrameCountWhenUnbounded") {
+        // The unlimited-by-default case must *not* clutter the
+        // describe() summary with an irrelevant line — the same
+        // suppression rule as the JSON serializer.
+        MediaPipelineConfig cfg = makeSample();
+        StringList lines = cfg.describe();
+        for(size_t i = 0; i < lines.size(); ++i) {
+                CHECK_FALSE(lines[i].contains("Frame count limit"));
+        }
+}
+
+TEST_CASE("MediaPipelineConfig_FrameCount_RoundTripDataStream") {
+        MediaPipelineConfig orig = makeSample();
+        orig.setFrameCount(FrameCount(120));
+        Buffer buf(16384);
+        BufferIODevice dev(&buf);
+        dev.open(IODevice::ReadWrite);
+        {
+                DataStream writer = DataStream::createWriter(&dev);
+                writer << orig;
+                REQUIRE(writer.status() == DataStream::Ok);
+        }
+        dev.seek(0);
+        MediaPipelineConfig round;
+        {
+                DataStream reader = DataStream::createReader(&dev);
+                reader >> round;
+                REQUIRE(reader.status() == DataStream::Ok);
+        }
+        CHECK(round.frameCount() == FrameCount(120));
+        CHECK(round == orig);
 }
 
 TEST_CASE("MediaPipelineConfig_Validate_EmptyStages") {

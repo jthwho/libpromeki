@@ -24,10 +24,10 @@ TEST_CASE("ImageFileIO TGA: handler is registered") {
 
 TEST_CASE("ImageFileIO TGA: RGBA8 round-trip") {
         const char *fn = "/tmp/promeki_tga_rgba8.tga";
-        Image src(64, 48, PixelDesc(PixelDesc::RGBA8_sRGB));
+        Image src(64, 48, PixelFormat(PixelFormat::RGBA8_sRGB));
         REQUIRE(src.isValid());
         uint8_t *data = static_cast<uint8_t *>(src.data());
-        size_t bytes = src.pixelDesc().pixelFormat().planeSize(0, 64, 48);
+        size_t bytes = src.pixelFormat().memLayout().planeSize(0, 64, 48);
         for(size_t i = 0; i < bytes; ++i) data[i] = static_cast<uint8_t>((i * 11) & 0xFF);
 
         ImageFile sf(ImageFile::TGA);
@@ -42,7 +42,7 @@ TEST_CASE("ImageFileIO TGA: RGBA8 round-trip") {
         REQUIRE(dst.isValid());
         CHECK(dst.width() == 64);
         CHECK(dst.height() == 48);
-        CHECK(dst.pixelDesc().id() == PixelDesc::RGBA8_sRGB);
+        CHECK(dst.pixelFormat().id() == PixelFormat::RGBA8_sRGB);
         CHECK(std::memcmp(src.data(), dst.data(), bytes) == 0);
 
         std::remove(fn);

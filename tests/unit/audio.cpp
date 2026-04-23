@@ -90,7 +90,7 @@ TEST_CASE("Audio: isNative") {
         Audio audio(desc, 256);
         CHECK(audio.isNative());
 
-        AudioDesc nonNative(AudioDesc::PCMI_S16LE, 48000, 2);
+        AudioDesc nonNative(AudioFormat::PCMI_S16LE, 48000, 2);
         Audio audio2(nonNative, 256);
         CHECK_FALSE(audio2.isNative());
 }
@@ -175,28 +175,28 @@ TEST_CASE("Audio: data template accessor") {
         CHECK(audio.data<float>()[1] == -0.25f);
 }
 
-TEST_CASE("Audio: convertTo invalid audio returns invalid") {
+TEST_CASE("Audio: convert invalid audio returns invalid") {
         Audio invalid;
-        Audio result = invalid.convertTo(AudioDesc::PCMI_S16LE);
+        Audio result = invalid.convert(AudioFormat::PCMI_S16LE);
         CHECK_FALSE(result.isValid());
 }
 
-TEST_CASE("Audio: convertTo same format returns equivalent") {
+TEST_CASE("Audio: convert same format returns equivalent") {
         AudioDesc desc(48000, 2);
         Audio audio(desc, 64);
         float *p = audio.data<float>();
         for(size_t i = 0; i < 64 * 2; i++) p[i] = 0.1f * (float)i;
 
-        Audio result = audio.convertTo(AudioDesc::NativeType);
+        Audio result = audio.convert(AudioFormat::NativeFloat);
         REQUIRE(result.isValid());
         CHECK(result.samples() == 64);
-        CHECK(result.desc().dataType() == AudioDesc::NativeType);
+        CHECK(result.desc().format().id() == AudioFormat::NativeFloat);
         // Data should be identical (same format returns *this)
         CHECK(result.data<float>()[0] == p[0]);
         CHECK(result.data<float>()[1] == p[1]);
 }
 
-TEST_CASE("Audio: convertTo native float to S16LE (fast path)") {
+TEST_CASE("Audio: convert native float to S16LE (fast path)") {
         AudioDesc desc(48000, 1);
         Audio audio(desc, 4);
         float *p = audio.data<float>();
@@ -205,10 +205,10 @@ TEST_CASE("Audio: convertTo native float to S16LE (fast path)") {
         p[2] = -0.5f;
         p[3] = 1.0f;
 
-        Audio result = audio.convertTo(AudioDesc::PCMI_S16LE);
+        Audio result = audio.convert(AudioFormat::PCMI_S16LE);
         REQUIRE(result.isValid());
         CHECK(result.samples() == 4);
-        CHECK(result.desc().dataType() == AudioDesc::PCMI_S16LE);
+        CHECK(result.desc().format().id() == AudioFormat::PCMI_S16LE);
         CHECK(result.desc().sampleRate() == 48000);
         CHECK(result.desc().channels() == 1);
 
@@ -221,18 +221,18 @@ TEST_CASE("Audio: convertTo native float to S16LE (fast path)") {
         CHECK(s[2] < -10000);
 }
 
-TEST_CASE("Audio: convertTo S16LE to native float (fast path)") {
-        AudioDesc desc(AudioDesc::PCMI_S16LE, 48000, 1);
+TEST_CASE("Audio: convert S16LE to native float (fast path)") {
+        AudioDesc desc(AudioFormat::PCMI_S16LE, 48000, 1);
         Audio audio(desc, 3);
         int16_t *p = audio.data<int16_t>();
         p[0] = 0;
         p[1] = 16384;
         p[2] = -16384;
 
-        Audio result = audio.convertTo(AudioDesc::NativeType);
+        Audio result = audio.convert(AudioFormat::NativeFloat);
         REQUIRE(result.isValid());
         CHECK(result.samples() == 3);
-        CHECK(result.desc().dataType() == AudioDesc::NativeType);
+        CHECK(result.desc().format().id() == AudioFormat::NativeFloat);
 
         const float *f = result.data<float>();
         CHECK(f[0] == doctest::Approx(0.0f).epsilon(0.01f));
@@ -240,17 +240,17 @@ TEST_CASE("Audio: convertTo S16LE to native float (fast path)") {
         CHECK(f[2] == doctest::Approx(-0.5f).epsilon(0.05f));
 }
 
-TEST_CASE("Audio: convertTo S16LE to S32LE (general two-pass path)") {
-        AudioDesc desc(AudioDesc::PCMI_S16LE, 48000, 1);
+TEST_CASE("Audio: convert S16LE to S32LE (general two-pass path)") {
+        AudioDesc desc(AudioFormat::PCMI_S16LE, 48000, 1);
         Audio audio(desc, 2);
         int16_t *p = audio.data<int16_t>();
         p[0] = 0;
         p[1] = 16384;
 
-        Audio result = audio.convertTo(AudioDesc::PCMI_S32LE);
+        Audio result = audio.convert(AudioFormat::PCMI_S32LE);
         REQUIRE(result.isValid());
         CHECK(result.samples() == 2);
-        CHECK(result.desc().dataType() == AudioDesc::PCMI_S32LE);
+        CHECK(result.desc().format().id() == AudioFormat::PCMI_S32LE);
 
         const int32_t *s = result.data<int32_t>();
         // Zero S16 → float → S32: small rounding offset is expected
@@ -259,24 +259,24 @@ TEST_CASE("Audio: convertTo S16LE to S32LE (general two-pass path)") {
         CHECK(s[1] > 100000);
 }
 
-TEST_CASE("Audio: convertTo multichannel") {
+TEST_CASE("Audio: convert multichannel") {
         AudioDesc desc(48000, 2);
         Audio audio(desc, 8);
         float *p = audio.data<float>();
         for(size_t i = 0; i < 16; i++) p[i] = (float)i / 16.0f;
 
-        Audio result = audio.convertTo(AudioDesc::PCMI_S16LE);
+        Audio result = audio.convert(AudioFormat::PCMI_S16LE);
         REQUIRE(result.isValid());
         CHECK(result.samples() == 8);
         CHECK(result.desc().channels() == 2);
 }
 
-TEST_CASE("Audio: convertTo invalid target format returns invalid") {
+TEST_CASE("Audio: convert invalid target format returns invalid") {
         AudioDesc desc(48000, 1);
         Audio audio(desc, 4);
         audio.zero();
 
-        Audio result = audio.convertTo(AudioDesc::Invalid);
+        Audio result = audio.convert(AudioFormat::Invalid);
         CHECK_FALSE(result.isValid());
 }
 
@@ -582,7 +582,7 @@ TEST_CASE("AudioFile: File IODevice roundtrip") {
 }
 
 TEST_CASE("AudioFile: BufferIODevice roundtrip") {
-        AudioDesc desc(AudioDesc::PCMI_S16LE, 48000, 1);
+        AudioDesc desc(AudioFormat::PCMI_S16LE, 48000, 1);
 
         AudioGen gen(AudioDesc(48000, 1));
         gen.setConfig(0, { AudioGen::Sine, 440.0f, AudioLevel::fromDbfs(-6.0), 0.0f, 0.0f });
@@ -590,7 +590,7 @@ TEST_CASE("AudioFile: BufferIODevice roundtrip") {
         REQUIRE(srcAudio.isValid());
 
         // Convert to S16LE for writing
-        AudioDesc writeDesc(AudioDesc::PCMI_S16LE, 48000, 1);
+        AudioDesc writeDesc(AudioFormat::PCMI_S16LE, 48000, 1);
 
         // Pre-allocate a generous buffer for in-memory WAV.
         Buffer buf(1024 * 1024);

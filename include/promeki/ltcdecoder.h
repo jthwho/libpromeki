@@ -99,11 +99,11 @@ class LtcDecoder {
                 /**
                  * @brief Feeds an Audio object's selected channel to the decoder.
                  *
-                 * Format-agnostic — any sample format @ref AudioDesc supports
-                 * is accepted.  The named channel is converted to int8 mono
-                 * via @ref AudioDesc::Format::samplesToFloat (the same per-format
-                 * helper @ref AudioBuffer uses) followed by a normalised
-                 * float-to-int8 quantisation.  The audio's sample rate must
+                 * Format-agnostic — any sample format @ref AudioFormat
+                 * supports is accepted.  The named channel is converted
+                 * to int8 mono via @ref AudioFormat::samplesToFloat (the
+                 * same per-format helper @ref AudioBuffer uses) followed
+                 * by a normalised float-to-int8 quantisation.  The audio's sample rate must
                  * match the decoder's configured rate, otherwise an empty
                  * list is returned.
                  *

@@ -8,8 +8,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
-#include <promeki/pixeldesc.h>
 #include <promeki/pixelformat.h>
+#include <promeki/pixelmemlayout.h>
 #include <promeki/paintengine.h>
 #include <promeki/image.h>
 
@@ -39,15 +39,15 @@ class PaintEngine_MultiPlane : public PaintEngine::Impl {
 
                 Image           _image;
                 Size2Du32       _size;
-                PixelDesc       _pixDesc;
+                PixelFormat       _pixDesc;
                 size_t          _compCount = 0;
                 size_t          _planeCount = 0;
-                PlaneInfo       _planes[PixelFormat::MaxPlanes] = {};
-                CompInfo        _comps[PixelFormat::MaxComps] = {};
+                PlaneInfo       _planes[PixelMemLayout::MaxPlanes] = {};
+                CompInfo        _comps[PixelMemLayout::MaxComps] = {};
 
                 PaintEngine_MultiPlane(const Image &img)
-                        : _image(img), _size(img.size()), _pixDesc(img.pixelDesc()) {
-                        const PixelFormat &pf = _pixDesc.pixelFormat();
+                        : _image(img), _size(img.size()), _pixDesc(img.pixelFormat()) {
+                        const PixelMemLayout &pf = _pixDesc.memLayout();
                         _compCount = pf.compCount();
                         _planeCount = pf.planeCount();
                         for(size_t i = 0; i < _planeCount; i++) {
@@ -71,7 +71,7 @@ class PaintEngine_MultiPlane : public PaintEngine::Impl {
                         }
                 }
 
-                const PixelDesc &pixelDesc() const override { return _pixDesc; }
+                const PixelFormat &pixelFormat() const override { return _pixDesc; }
 
                 CompType mapComp(uint16_t v, size_t comp) const {
                         return static_cast<CompType>(
@@ -115,7 +115,7 @@ class PaintEngine_MultiPlane : public PaintEngine::Impl {
                 PaintEngine::Pixel readPixelAt(const Image &srcImg, int x, int y) const {
                         PaintEngine::Pixel ret;
                         CompType *p = reinterpret_cast<CompType *>(ret.data());
-                        const PixelFormat &pf = _pixDesc.pixelFormat();
+                        const PixelMemLayout &pf = _pixDesc.memLayout();
                         for(size_t i = 0; i < _compCount; i++) {
                                 const auto &cd = pf.data()->comps[i];
                                 const auto &pd = pf.data()->planes[cd.plane];
@@ -136,7 +136,7 @@ class PaintEngine_MultiPlane : public PaintEngine::Impl {
 
                 bool blit(const Point2Di32 &dpt, const Image &src,
                           const Point2Di32 &spt, const Size2Du32 &ssz) const override {
-                        if(src.pixelDesc() != _pixDesc) return false;
+                        if(src.pixelFormat() != _pixDesc) return false;
                         int sx = spt.x(), sy = spt.y();
                         int dx = dpt.x(), dy = dpt.y();
                         int sw = ssz.isValid() ? ssz.width()  : src.width() - sx;
@@ -351,16 +351,16 @@ template class PaintEngine_MultiPlane<uint16_t, 16>;
 
 // --- Factory functions ---
 
-PaintEngine createPaintEngine_MultiPlane8(const PixelDesc::Data *, const Image &img) {
+PaintEngine createPaintEngine_MultiPlane8(const PixelFormat::Data *, const Image &img) {
         return new PaintEngine_MultiPlane<uint8_t, 8>(img);
 }
-PaintEngine createPaintEngine_MultiPlane10_LE(const PixelDesc::Data *, const Image &img) {
+PaintEngine createPaintEngine_MultiPlane10_LE(const PixelFormat::Data *, const Image &img) {
         return new PaintEngine_MultiPlane<uint16_t, 10>(img);
 }
-PaintEngine createPaintEngine_MultiPlane12_LE(const PixelDesc::Data *, const Image &img) {
+PaintEngine createPaintEngine_MultiPlane12_LE(const PixelFormat::Data *, const Image &img) {
         return new PaintEngine_MultiPlane<uint16_t, 12>(img);
 }
-PaintEngine createPaintEngine_MultiPlane16_LE(const PixelDesc::Data *, const Image &img) {
+PaintEngine createPaintEngine_MultiPlane16_LE(const PixelFormat::Data *, const Image &img) {
         return new PaintEngine_MultiPlane<uint16_t, 16>(img);
 }
 

@@ -11,6 +11,7 @@
 #include <promeki/datastream.h>
 #include <promeki/error.h>
 #include <promeki/filepath.h>
+#include <promeki/framecount.h>
 #include <promeki/json.h>
 #include <promeki/list.h>
 #include <promeki/mediaconfig.h>
@@ -185,6 +186,34 @@ class MediaPipelineConfig {
                 void setPipelineMetadata(const Metadata &m) { _pipelineMetadata = m; }
 
                 // ------------------------------------------------------------
+                // Frame-count limit
+                // ------------------------------------------------------------
+
+                /**
+                 * @brief Returns the pipeline-wide target frame count.
+                 *
+                 * A finite, non-empty @ref FrameCount tells @ref MediaPipeline
+                 * to close each sink once it has received the requested
+                 * number of frames; subsequent source reads are dropped
+                 * on the floor.  Any non-finite value (the default
+                 * @ref FrameCount::unknown, @ref FrameCount::empty, or
+                 * @ref FrameCount::infinity) means "unlimited" — the
+                 * pipeline runs until the sources naturally hit EOS.
+                 *
+                 * For interframe-coded streams (@ref VideoCodec::CodingTemporal)
+                 * the cutoff respects GOP boundaries: once the target has
+                 * been reached, the pipeline keeps writing until the next
+                 * frame carries a @ref MediaPacket::Keyframe flag, then
+                 * stops before writing that keyframe.  The sink therefore
+                 * always receives a complete sequence of GOPs, even if
+                 * that means overshooting the target by up to one GOP.
+                 */
+                const FrameCount &frameCount() const { return _frameCount; }
+
+                /** @brief Sets the pipeline-wide target frame count. */
+                void setFrameCount(const FrameCount &count) { _frameCount = count; }
+
+                // ------------------------------------------------------------
                 // Operations
                 // ------------------------------------------------------------
 
@@ -327,6 +356,7 @@ class MediaPipelineConfig {
                 StageList       _stages;
                 RouteList       _routes;
                 Metadata        _pipelineMetadata;
+                FrameCount      _frameCount;
 };
 
 // ============================================================================

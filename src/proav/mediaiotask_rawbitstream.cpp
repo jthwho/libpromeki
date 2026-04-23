@@ -9,13 +9,13 @@
 #include <promeki/mediaconfig.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaiodescription.h>
-#include <promeki/mediapacket.h>
+#include <promeki/videopacket.h>
 #include <promeki/bufferview.h>
 #include <promeki/frame.h>
 #include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/logger.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/videocodec.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -112,9 +112,9 @@ Error MediaIOTask_RawBitstream::executeCmd(MediaIOCommandWrite &cmd) {
         bool anyPacket = false;
         for(const Image::Ptr &imgPtr : frame.imageList()) {
                 if(!imgPtr.isValid() || !imgPtr->isCompressed()) continue;
-                const MediaPacket::Ptr &pktPtr = imgPtr->packet();
+                const VideoPacket::Ptr &pktPtr = imgPtr->packet();
                 if(!pktPtr.isValid()) continue;
-                const MediaPacket &pkt = *pktPtr;
+                const VideoPacket &pkt = *pktPtr;
                 const BufferView &view = pkt.view();
                 if(view.size() == 0 || !view.isValid()) continue;
                 int64_t n = _file.write(view.data(),
@@ -132,7 +132,7 @@ Error MediaIOTask_RawBitstream::executeCmd(MediaIOCommandWrite &cmd) {
         if(!anyPacket) {
                 if(!_warnedNoPackets) {
                         promekiWarn("MediaIOTask_RawBitstream: Frame has no compressed "
-                                    "Image with an attached MediaPacket — is an encoder "
+                                    "Image with an attached VideoPacket — is an encoder "
                                     "stage upstream of this sink?");
                         _warnedNoPackets = true;
                 }
@@ -160,7 +160,7 @@ Error MediaIOTask_RawBitstream::executeCmd(MediaIOCommandStats &cmd) {
 // extension (.h264 / .h265 / .hevc / .bit) advertises which codec a
 // consumer should assume, but the writer itself doesn't enforce it.
 // So:
-//  - describe(): every registered compressed PixelDesc is acceptable.
+//  - describe(): every registered compressed PixelFormat is acceptable.
 //  - proposeInput(): reject uncompressed input so the planner splices
 //    in a VideoEncoder ahead of us instead of routing raw frames that
 //    would hit the `no compressed Image with an attached MediaPacket`
@@ -171,13 +171,12 @@ Error MediaIOTask_RawBitstream::describe(MediaIODescription *out) const {
         for(VideoCodec::ID cid : VideoCodec::registeredIDs()) {
                 VideoCodec codec(cid);
                 if(!codec.isValid()) continue;
-                for(int pdId : codec.compressedPixelDescs()) {
-                        // A codec could in principle register a PixelDesc
+                for(const PixelFormat &pd : codec.compressedPixelFormats()) {
+                        // A codec could in principle register a PixelFormat
                         // ID that is not in the well-known table (custom
                         // variant added by a plugin); skip those so we
                         // do not advertise a malformed MediaDesc from
                         // describe().
-                        PixelDesc pd(static_cast<PixelDesc::ID>(pdId));
                         if(!pd.isValid()) continue;
                         MediaDesc accepted;
                         accepted.imageList().pushToBack(
@@ -192,7 +191,7 @@ Error MediaIOTask_RawBitstream::proposeInput(const MediaDesc &offered,
                                              MediaDesc *preferred) const {
         if(preferred == nullptr) return Error::Invalid;
         if(offered.imageList().isEmpty()) return Error::NotSupported;
-        const PixelDesc &pd = offered.imageList()[0].pixelDesc();
+        const PixelFormat &pd = offered.imageList()[0].pixelFormat();
         if(!pd.isValid() || !pd.isCompressed()) {
                 return Error::NotSupported;
         }

@@ -38,7 +38,7 @@ TEST_CASE("include chain: AudioDesc serializes through audiodesc.h alone") {
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
 
-        AudioDesc in(AudioDesc::PCMI_S24LE, 48000.0f, 6);
+        AudioDesc in(AudioFormat::PCMI_S24LE, 48000.0f, 6);
         {
                 DataStream ws = DataStream::createWriter(&dev);
                 ws << in;
@@ -50,7 +50,7 @@ TEST_CASE("include chain: AudioDesc serializes through audiodesc.h alone") {
                 AudioDesc out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(out.dataType() == AudioDesc::PCMI_S24LE);
+                CHECK(out.format().id() == AudioFormat::PCMI_S24LE);
                 CHECK(out.sampleRate() == 48000.0f);
                 CHECK(out.channels() == 6);
         }
@@ -66,7 +66,7 @@ TEST_CASE("include chain: ImageDesc serializes through imagedesc.h alone") {
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
 
-        ImageDesc in(1280, 720, PixelDesc::RGBA8_sRGB);
+        ImageDesc in(1280, 720, PixelFormat::RGBA8_sRGB);
         in.setLinePad(8);
         in.setVideoScanMode(VideoScanMode::Progressive);
         {
@@ -82,7 +82,7 @@ TEST_CASE("include chain: ImageDesc serializes through imagedesc.h alone") {
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.width() == 1280);
                 CHECK(out.height() == 720);
-                CHECK(out.pixelDesc().id() == PixelDesc::RGBA8_sRGB);
+                CHECK(out.pixelFormat().id() == PixelFormat::RGBA8_sRGB);
                 CHECK(out.linePad() == 8);
                 CHECK(out.videoScanMode() == VideoScanMode::Progressive);
         }
@@ -100,7 +100,7 @@ TEST_CASE("include chain: MediaDesc serializes through mediadesc.h alone") {
 
         MediaDesc in;
         in.setFrameRate(FrameRate(FrameRate::RationalType(25u, 1u)));
-        in.imageList().pushToBack(ImageDesc(640, 480, PixelDesc::RGB8_sRGB));
+        in.imageList().pushToBack(ImageDesc(640, 480, PixelFormat::RGB8_sRGB));
         {
                 DataStream ws = DataStream::createWriter(&dev);
                 ws << in;

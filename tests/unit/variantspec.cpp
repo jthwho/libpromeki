@@ -12,10 +12,14 @@
 #include <promeki/buffer.h>
 #include <promeki/enums.h>
 #include <promeki/framerate.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/audiocodec.h>
+#include <promeki/audioformat.h>
+#include <promeki/pixelformat.h>
+#include <promeki/pixelmemlayout.h>
 #include <promeki/size2d.h>
 #include <promeki/textstream.h>
 #include <promeki/timecode.h>
+#include <promeki/videocodec.h>
 
 using namespace promeki;
 
@@ -215,7 +219,7 @@ TEST_CASE("VariantSpec_TypeName_Single") {
     CHECK(VariantSpec().setType(Variant::TypeFrameRate).typeName() == "FrameRate");
     CHECK(VariantSpec().setType(Variant::TypeSize2D).typeName() == "Size2D");
     CHECK(VariantSpec().setType(Variant::TypeTimecode).typeName() == "Timecode");
-    CHECK(VariantSpec().setType(Variant::TypePixelDesc).typeName() == "PixelDesc");
+    CHECK(VariantSpec().setType(Variant::TypePixelFormat).typeName() == "PixelFormat");
 }
 
 TEST_CASE("VariantSpec_TypeName_Enum") {
@@ -370,13 +374,55 @@ TEST_CASE("VariantSpec_ParseString_Timecode") {
     REQUIRE(v.isValid());
 }
 
-TEST_CASE("VariantSpec_ParseString_PixelDesc") {
-    VariantSpec s = VariantSpec().setType(Variant::TypePixelDesc);
+TEST_CASE("VariantSpec_ParseString_PixelFormat") {
+    VariantSpec s = VariantSpec().setType(Variant::TypePixelFormat);
     Variant v = s.parseString("RGB8_sRGB");
     REQUIRE(v.isValid());
-    CHECK(v.get<PixelDesc>() == PixelDesc(PixelDesc::RGB8_sRGB));
+    CHECK(v.get<PixelFormat>() == PixelFormat(PixelFormat::RGB8_sRGB));
     Error err;
     s.parseString("NonexistentFormat", &err);
+    CHECK(err.isError());
+}
+
+TEST_CASE("VariantSpec_ParseString_PixelMemLayout") {
+    VariantSpec s = VariantSpec().setType(Variant::TypePixelMemLayout);
+    Variant v = s.parseString("4x8");
+    REQUIRE(v.isValid());
+    CHECK(v.get<PixelMemLayout>() == PixelMemLayout(PixelMemLayout::I_4x8));
+    Error err;
+    s.parseString("NonexistentLayout", &err);
+    CHECK(err.isError());
+}
+
+TEST_CASE("VariantSpec_ParseString_AudioFormat") {
+    VariantSpec s = VariantSpec().setType(Variant::TypeAudioFormat);
+    Variant v = s.parseString("PCMI_S16LE");
+    REQUIRE(v.isValid());
+    CHECK(v.get<AudioFormat>().id() == AudioFormat::PCMI_S16LE);
+    Error err;
+    s.parseString("NonexistentAudioFormat", &err);
+    CHECK(err.isError());
+}
+
+TEST_CASE("VariantSpec_ParseString_VideoCodec_BareName") {
+    // Bare "H264" (no backend pin) must still parse after the switch
+    // from lookup() to fromString() — common config-file form.
+    VariantSpec s = VariantSpec().setType(Variant::TypeVideoCodec);
+    Variant v = s.parseString("H264");
+    REQUIRE(v.isValid());
+    CHECK(v.get<VideoCodec>().id() == VideoCodec::H264);
+    Error err;
+    s.parseString("NotACodec", &err);
+    CHECK(err.isError());
+}
+
+TEST_CASE("VariantSpec_ParseString_AudioCodec_BareName") {
+    VariantSpec s = VariantSpec().setType(Variant::TypeAudioCodec);
+    Variant v = s.parseString("AAC");
+    REQUIRE(v.isValid());
+    CHECK(v.get<AudioCodec>().id() == AudioCodec::AAC);
+    Error err;
+    s.parseString("NotAnAudioCodec", &err);
     CHECK(err.isError());
 }
 

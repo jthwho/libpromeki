@@ -29,7 +29,7 @@
 #include <promeki/mediaiotask.h>
 #include <promeki/mediapipelineconfig.h>
 #include <promeki/mediapipelineplanner.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/size2d.h>
 #include <promeki/string.h>
 #include <promeki/videocodec.h>
@@ -42,7 +42,7 @@ using namespace promeki;
 // ============================================================================
 //
 // Both backends parse a single config key (PlannerProducedDesc /
-// PlannerAcceptedDesc) carrying a stable PixelDesc::ID.  describe()
+// PlannerAcceptedDesc) carrying a stable PixelFormat::ID.  describe()
 // projects that into a MediaDesc whose raster is fixed (1920x1080 @
 // 30 fps) so test fixtures only need to vary the pixel format.
 
@@ -55,19 +55,19 @@ const MediaConfig::ID PlannerAcceptedDesc("PlannerAcceptedDesc");
 const MediaConfig::ID PlannerProducedRate("PlannerProducedRate");
 const MediaConfig::ID PlannerAcceptedRate("PlannerAcceptedRate");
 
-MediaDesc syntheticDesc(PixelDesc::ID id,
+MediaDesc syntheticDesc(PixelFormat::ID id,
                         FrameRate rate = FrameRate(FrameRate::FPS_30)) {
         MediaDesc md;
         md.setFrameRate(rate);
         md.imageList().pushToBack(
-                ImageDesc(Size2Du32(1920, 1080), PixelDesc(id)));
+                ImageDesc(Size2Du32(1920, 1080), PixelFormat(id)));
         return md;
 }
 
-PixelDesc::ID readDescId(const MediaIO::Config &cfg, MediaConfig::ID key,
-                         PixelDesc::ID fallback) {
+PixelFormat::ID readDescId(const MediaIO::Config &cfg, MediaConfig::ID key,
+                         PixelFormat::ID fallback) {
         if(!cfg.contains(key)) return fallback;
-        const PixelDesc pd = cfg.getAs<PixelDesc>(key);
+        const PixelFormat pd = cfg.getAs<PixelFormat>(key);
         return pd.isValid() ? pd.id() : fallback;
 }
 
@@ -83,7 +83,7 @@ public:
         static MediaIO::FormatDesc formatDesc() {
                 MediaIO::FormatDesc d;
                 d.name           = "PlannerSyntheticSrc";
-                d.description    = "Synthetic source emitting a configurable PixelDesc.";
+                d.description    = "Synthetic source emitting a configurable PixelFormat.";
                 d.canBeSource    = true;
                 d.canBeSink      = false;
                 d.canBeTransform = false;
@@ -93,8 +93,8 @@ public:
                 d.configSpecs    = []() {
                         MediaIO::Config::SpecMap m;
                         m.insert(PlannerProducedDesc,
-                                VariantSpec().setType(Variant::TypePixelDesc)
-                                        .setDefault(PixelDesc(PixelDesc::RGBA8_sRGB)));
+                                VariantSpec().setType(Variant::TypePixelFormat)
+                                        .setDefault(PixelFormat(PixelFormat::RGBA8_sRGB)));
                         m.insert(PlannerProducedRate,
                                 VariantSpec().setType(Variant::TypeFrameRate)
                                         .setDefault(FrameRate(FrameRate::FPS_30)));
@@ -109,8 +109,8 @@ private:
                 const MediaIO *io = mediaIo();
                 const MediaIO::Config &cfg = (io != nullptr) ? io->config()
                                                              : MediaIO::Config();
-                const PixelDesc::ID id = readDescId(cfg, PlannerProducedDesc,
-                                                    PixelDesc::RGBA8_sRGB);
+                const PixelFormat::ID id = readDescId(cfg, PlannerProducedDesc,
+                                                    PixelFormat::RGBA8_sRGB);
                 const FrameRate rate = readRate(cfg, PlannerProducedRate,
                                                 FrameRate(FrameRate::FPS_30));
                 out->setPreferredFormat(syntheticDesc(id, rate));
@@ -124,7 +124,7 @@ public:
         static MediaIO::FormatDesc formatDesc() {
                 MediaIO::FormatDesc d;
                 d.name           = "PlannerSyntheticSink";
-                d.description    = "Synthetic sink demanding a configurable PixelDesc.";
+                d.description    = "Synthetic sink demanding a configurable PixelFormat.";
                 d.canBeSource    = false;
                 d.canBeSink      = true;
                 d.canBeTransform = false;
@@ -134,8 +134,8 @@ public:
                 d.configSpecs    = []() {
                         MediaIO::Config::SpecMap m;
                         m.insert(PlannerAcceptedDesc,
-                                VariantSpec().setType(Variant::TypePixelDesc)
-                                        .setDefault(PixelDesc(PixelDesc::RGBA8_sRGB)));
+                                VariantSpec().setType(Variant::TypePixelFormat)
+                                        .setDefault(PixelFormat(PixelFormat::RGBA8_sRGB)));
                         m.insert(PlannerAcceptedRate,
                                 VariantSpec().setType(Variant::TypeFrameRate)
                                         .setDefault(FrameRate(FrameRate::FPS_30)));
@@ -150,8 +150,8 @@ private:
                 const MediaIO *io = mediaIo();
                 const MediaIO::Config &cfg = (io != nullptr) ? io->config()
                                                              : MediaIO::Config();
-                const PixelDesc::ID id = readDescId(cfg, PlannerAcceptedDesc,
-                                                    PixelDesc::RGBA8_sRGB);
+                const PixelFormat::ID id = readDescId(cfg, PlannerAcceptedDesc,
+                                                    PixelFormat::RGBA8_sRGB);
                 const FrameRate rate = readRate(cfg, PlannerAcceptedRate,
                                                 FrameRate(FrameRate::FPS_30));
                 out->acceptableFormats().pushToBack(syntheticDesc(id, rate));
@@ -167,18 +167,18 @@ private:
                 const MediaIO *io = mediaIo();
                 const MediaIO::Config &cfg = (io != nullptr) ? io->config()
                                                              : MediaIO::Config();
-                const PixelDesc::ID id = readDescId(cfg, PlannerAcceptedDesc,
-                                                    PixelDesc::RGBA8_sRGB);
+                const PixelFormat::ID id = readDescId(cfg, PlannerAcceptedDesc,
+                                                    PixelFormat::RGBA8_sRGB);
                 const FrameRate rate = readRate(cfg, PlannerAcceptedRate,
                                                 FrameRate(FrameRate::FPS_30));
-                const bool pixelMatches = offered.imageList()[0].pixelDesc().id() == id;
+                const bool pixelMatches = offered.imageList()[0].pixelFormat().id() == id;
                 const bool rateMatches  = offered.frameRate() == rate;
                 if(pixelMatches && rateMatches) {
                         *preferred = offered;
                         return Error::Ok;
                 }
                 MediaDesc want = offered;
-                if(!pixelMatches) want.imageList()[0].setPixelDesc(PixelDesc(id));
+                if(!pixelMatches) want.imageList()[0].setPixelFormat(PixelFormat(id));
                 if(!rateMatches)  want.setFrameRate(rate);
                 *preferred = want;
                 return Error::Ok;
@@ -190,21 +190,21 @@ PROMEKI_REGISTER_MEDIAIO(PlannerSyntheticSinkTask)
 
 // ----- helpers -----
 
-MediaPipelineConfig makeSrcSinkConfig(PixelDesc::ID srcId, PixelDesc::ID sinkId) {
+MediaPipelineConfig makeSrcSinkConfig(PixelFormat::ID srcId, PixelFormat::ID sinkId) {
         MediaPipelineConfig cfg;
 
         MediaPipelineConfig::Stage src;
         src.name = "src";
         src.type = "PlannerSyntheticSrc";
         src.mode = MediaIO::Source;
-        src.config.set(PlannerProducedDesc, PixelDesc(srcId));
+        src.config.set(PlannerProducedDesc, PixelFormat(srcId));
         cfg.addStage(src);
 
         MediaPipelineConfig::Stage sink;
         sink.name = "sink";
         sink.type = "PlannerSyntheticSink";
         sink.mode = MediaIO::Sink;
-        sink.config.set(PlannerAcceptedDesc, PixelDesc(sinkId));
+        sink.config.set(PlannerAcceptedDesc, PixelFormat(sinkId));
         cfg.addStage(sink);
 
         cfg.addRoute("src", "sink");
@@ -225,8 +225,8 @@ TEST_CASE("MediaPipelinePlanner_Identity_NoBridgesInserted") {
         // Source produces RGBA8, sink also accepts RGBA8 — there's no
         // gap, so the resolved config must be route-equivalent to the
         // input.
-        const MediaPipelineConfig in = makeSrcSinkConfig(PixelDesc::RGBA8_sRGB,
-                                                         PixelDesc::RGBA8_sRGB);
+        const MediaPipelineConfig in = makeSrcSinkConfig(PixelFormat::RGBA8_sRGB,
+                                                         PixelFormat::RGBA8_sRGB);
 
         MediaPipelineConfig out;
         String diag;
@@ -239,8 +239,8 @@ TEST_CASE("MediaPipelinePlanner_Identity_NoBridgesInserted") {
 }
 
 TEST_CASE("MediaPipelineConfig_isResolved_ReturnsTrueWhenDirect") {
-        const MediaPipelineConfig cfg = makeSrcSinkConfig(PixelDesc::RGBA8_sRGB,
-                                                          PixelDesc::RGBA8_sRGB);
+        const MediaPipelineConfig cfg = makeSrcSinkConfig(PixelFormat::RGBA8_sRGB,
+                                                          PixelFormat::RGBA8_sRGB);
         String diag;
         CHECK(cfg.isResolved(&diag));
         CHECK(diag.isEmpty());
@@ -254,8 +254,8 @@ TEST_CASE("MediaPipelinePlanner_PixelGap_InsertsCSC") {
         // Source produces RGBA8 but sink demands NV12 (4:2:0 YUV) —
         // CSC must be spliced into the route.
         const MediaPipelineConfig in = makeSrcSinkConfig(
-                PixelDesc::RGBA8_sRGB,
-                PixelDesc::YUV8_420_SemiPlanar_Rec709);
+                PixelFormat::RGBA8_sRGB,
+                PixelFormat::YUV8_420_SemiPlanar_Rec709);
 
         MediaPipelineConfig out;
         String diag;
@@ -280,17 +280,17 @@ TEST_CASE("MediaPipelinePlanner_PixelGap_InsertsCSC") {
         CHECK(out.routes()[1].from == "br0_src_sink");
         CHECK(out.routes()[1].to   == "sink");
 
-        // The bridge stage carries the right OutputPixelDesc so the
+        // The bridge stage carries the right OutputPixelFormat so the
         // runtime CSC actually converts to the sink's preferred form.
         const auto &bridgeCfg = out.stages()[2].config;
-        CHECK(bridgeCfg.getAs<PixelDesc>(MediaConfig::OutputPixelDesc).id() ==
-              PixelDesc::YUV8_420_SemiPlanar_Rec709);
+        CHECK(bridgeCfg.getAs<PixelFormat>(MediaConfig::OutputPixelFormat).id() ==
+              PixelFormat::YUV8_420_SemiPlanar_Rec709);
 }
 
 TEST_CASE("MediaPipelineConfig_isResolved_ReturnsFalseOnGap") {
         const MediaPipelineConfig cfg = makeSrcSinkConfig(
-                PixelDesc::RGBA8_sRGB,
-                PixelDesc::YUV8_420_SemiPlanar_Rec709);
+                PixelFormat::RGBA8_sRGB,
+                PixelFormat::YUV8_420_SemiPlanar_Rec709);
         String diag;
         CHECK_FALSE(cfg.isResolved(&diag));
         CHECK(diag.contains("src"));
@@ -306,8 +306,8 @@ TEST_CASE("MediaPipelinePlanner_ExcludedBridges_BlockInsertion") {
         // policy.  No other bridge can satisfy the gap, so the
         // planner must fail with NotSupported.
         const MediaPipelineConfig in = makeSrcSinkConfig(
-                PixelDesc::RGBA8_sRGB,
-                PixelDesc::YUV8_420_SemiPlanar_Rec709);
+                PixelFormat::RGBA8_sRGB,
+                PixelFormat::YUV8_420_SemiPlanar_Rec709);
 
         MediaPipelinePlanner::Policy policy;
         policy.excludedBridges.pushToBack("CSC");
@@ -336,8 +336,8 @@ TEST_CASE("MediaPipelinePlanner_FailureDiagnostic_HasShapeAndTrace") {
         // contract that mediaplay relies on for end-user-visible
         // failure logs.
         const MediaPipelineConfig in = makeSrcSinkConfig(
-                PixelDesc::RGBA8_sRGB,
-                PixelDesc::YUV8_420_SemiPlanar_Rec709);
+                PixelFormat::RGBA8_sRGB,
+                PixelFormat::YUV8_420_SemiPlanar_Rec709);
 
         MediaPipelinePlanner::Policy policy;
         policy.quality = MediaPipelinePlanner::Quality::ZeroCopyOnly;
@@ -362,8 +362,8 @@ TEST_CASE("MediaPipelinePlanner_FailureDiagnostic_HasShapeAndTrace") {
 
 TEST_CASE("MediaPipelinePlanner_ReplanIsIdempotent") {
         const MediaPipelineConfig in = makeSrcSinkConfig(
-                PixelDesc::RGBA8_sRGB,
-                PixelDesc::YUV8_420_SemiPlanar_Rec709);
+                PixelFormat::RGBA8_sRGB,
+                PixelFormat::YUV8_420_SemiPlanar_Rec709);
 
         MediaPipelineConfig once;
         REQUIRE(MediaPipelinePlanner::plan(in, &once) == Error::Ok);
@@ -420,8 +420,8 @@ TEST_CASE("MediaPipelinePlanner_ZeroCopyOnly_BlocksLossyBridges") {
         // ZeroCopyOnly should reject the CSC and the planner has no
         // alternative — so it fails with NotSupported.
         const MediaPipelineConfig in = makeSrcSinkConfig(
-                PixelDesc::RGBA8_sRGB,
-                PixelDesc::YUV8_420_SemiPlanar_Rec709);
+                PixelFormat::RGBA8_sRGB,
+                PixelFormat::YUV8_420_SemiPlanar_Rec709);
 
         MediaPipelinePlanner::Policy policy;
         policy.quality = MediaPipelinePlanner::Quality::ZeroCopyOnly;
@@ -448,8 +448,8 @@ TEST_CASE("MediaPipelinePlanner_InvalidInput_FailsValidation") {
 }
 
 TEST_CASE("MediaPipelinePlanner_NullOutPointer_ReturnsInvalid") {
-        const MediaPipelineConfig in = makeSrcSinkConfig(PixelDesc::RGBA8_sRGB,
-                                                         PixelDesc::RGBA8_sRGB);
+        const MediaPipelineConfig in = makeSrcSinkConfig(PixelFormat::RGBA8_sRGB,
+                                                         PixelFormat::RGBA8_sRGB);
         Error err = MediaPipelinePlanner::plan(in, nullptr);
         CHECK(err == Error::Invalid);
 }
@@ -460,8 +460,8 @@ TEST_CASE("MediaPipelinePlanner_NullOutPointer_ReturnsInvalid") {
 
 TEST_CASE("MediaPipelineConfig_resolved_DelegatesToPlanner") {
         const MediaPipelineConfig in = makeSrcSinkConfig(
-                PixelDesc::RGBA8_sRGB,
-                PixelDesc::YUV8_420_SemiPlanar_Rec709);
+                PixelFormat::RGBA8_sRGB,
+                PixelFormat::YUV8_420_SemiPlanar_Rec709);
 
         Error err;
         MediaPipelineConfig resolvedCfg = in.resolved(&err);
@@ -497,7 +497,7 @@ TEST_CASE("MediaPipelinePlanner_SimultaneousPixelAndRateGap_FailsWithHint") {
         src.name = "src";
         src.type = "PlannerSyntheticSrc";
         src.mode = MediaIO::Source;
-        src.config.set(PlannerProducedDesc, PixelDesc(PixelDesc::RGBA8_sRGB));
+        src.config.set(PlannerProducedDesc, PixelFormat(PixelFormat::RGBA8_sRGB));
         src.config.set(PlannerProducedRate, FrameRate(FrameRate::FPS_30));
         cfg.addStage(src);
 
@@ -506,7 +506,7 @@ TEST_CASE("MediaPipelinePlanner_SimultaneousPixelAndRateGap_FailsWithHint") {
         sink.type = "PlannerSyntheticSink";
         sink.mode = MediaIO::Sink;
         sink.config.set(PlannerAcceptedDesc,
-                PixelDesc(PixelDesc::YUV8_420_SemiPlanar_Rec709));
+                PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709));
         sink.config.set(PlannerAcceptedRate, FrameRate(FrameRate::FPS_24));
         cfg.addStage(sink);
 
@@ -542,16 +542,16 @@ TEST_CASE("MediaPipelinePlanner_CodecTransitive_InsertsDecoderEncoderPair") {
         // decoder / encoder respectively; if either is missing in
         // this build, the codec-transitive path cannot solve the
         // gap and the test is skipped.
-        const VideoCodec h264 = VideoCodec::lookup("H264");
-        const VideoCodec hevc = VideoCodec::lookup("HEVC");
+        const VideoCodec h264 = value(VideoCodec::lookup("H264"));
+        const VideoCodec hevc = value(VideoCodec::lookup("HEVC"));
         if(!h264.canDecode() || !hevc.canEncode()) {
                 INFO("H264 decoder or HEVC encoder not registered in "
                      "this build; skipping.");
                 return;
         }
 
-        const MediaPipelineConfig in = makeSrcSinkConfig(PixelDesc::H264,
-                                                         PixelDesc::HEVC);
+        const MediaPipelineConfig in = makeSrcSinkConfig(PixelFormat::H264,
+                                                         PixelFormat::HEVC);
 
         MediaPipelineConfig out;
         String diag;

@@ -174,7 +174,7 @@ primers are the format's component-wise max and min respectively
 
 ## How to write a decoder {#img_data_decode}
 
-A minimal decoder for a known `PixelDesc` and image size proceeds as
+A minimal decoder for a known `PixelFormat` and image size proceeds as
 follows:
 
 1. Compute the bit cell width using the same algorithm the encoder

@@ -764,3 +764,53 @@ TEST_CASE("Metadata: constexpr ID usable in a switch statement") {
         CHECK(classifyMetadataId(Metadata::Copyright.id()) == 3);
         CHECK(classifyMetadataId(0xdeadbeef)                == 0);
 }
+
+// ============================================================================
+// Well-known enums in enums.h — sanity checks for newly-added values
+// ============================================================================
+
+TEST_CASE("RateControlMode: all four registered values") {
+        // RateControlMode replaced the earlier VideoRateControl enum
+        // (video-only, CBR/VBR/CQP) with a shared audio+video enum that
+        // also carries ABR.  Each value must round-trip through name
+        // and integer lookup.
+        CHECK(RateControlMode::CBR.value() == 0);
+        CHECK(RateControlMode::VBR.value() == 1);
+        CHECK(RateControlMode::ABR.value() == 2);
+        CHECK(RateControlMode::CQP.value() == 3);
+
+        CHECK(RateControlMode::CBR.valueName() == "CBR");
+        CHECK(RateControlMode::VBR.valueName() == "VBR");
+        CHECK(RateControlMode::ABR.valueName() == "ABR");
+        CHECK(RateControlMode::CQP.valueName() == "CQP");
+
+        // Name-based construction must resolve each value.
+        CHECK(Enum(RateControlMode::Type, "ABR") == RateControlMode::ABR);
+        CHECK(Enum(RateControlMode::Type, "CQP") == RateControlMode::CQP);
+
+        // toString / lookup round-trip on the new ABR value.
+        Error err;
+        Enum back = Enum::lookup("RateControlMode::ABR", &err);
+        CHECK(err.isOk());
+        CHECK(back == RateControlMode::ABR);
+}
+
+TEST_CASE("OpusApplication: values and names") {
+        CHECK(OpusApplication::Voip.value()     == 0);
+        CHECK(OpusApplication::Audio.value()    == 1);
+        CHECK(OpusApplication::LowDelay.value() == 2);
+
+        CHECK(OpusApplication::Voip.valueName()     == "Voip");
+        CHECK(OpusApplication::Audio.valueName()    == "Audio");
+        CHECK(OpusApplication::LowDelay.valueName() == "LowDelay");
+
+        // Default (per registration comment) is Audio.
+        Enum def(OpusApplication::Type);
+        CHECK(def == OpusApplication::Audio);
+
+        // Round-trip through Enum::lookup.
+        Error err;
+        Enum back = Enum::lookup("OpusApplication::LowDelay", &err);
+        CHECK(err.isOk());
+        CHECK(back == OpusApplication::LowDelay);
+}

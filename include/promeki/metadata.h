@@ -228,6 +228,25 @@ class Metadata : public VariantDatabase<"Metadata"> {
                                 .setDefault(false)
                                 .setDescription("Signals end-of-stream to downstream nodes."));
 
+                /// @brief Marks a media unit as carrying corrupt data.
+                ///
+                /// Set by decoders / parsers when a packet, frame, or audio
+                /// buffer is known to be corrupt (checksum failure, truncated
+                /// bitstream, unrecoverable error concealment).  Downstream
+                /// nodes typically drop or pass-through marked units depending
+                /// on policy.  Pair with @ref CorruptReason when a
+                /// human-readable explanation is available.
+                PROMEKI_DECLARE_ID(Corrupt,
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(false)
+                                .setDescription("Media unit carries corrupt data."));
+
+                /// @brief Human-readable explanation for a Corrupt marking.
+                PROMEKI_DECLARE_ID(CorruptReason,
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Human-readable reason for a Corrupt marking."));
+
                 /// @brief Frame sequence number within a stream.
                 PROMEKI_DECLARE_ID(FrameNumber,
                         VariantSpec().setType(Variant::TypeFrameNumber)

@@ -10,7 +10,7 @@
 #include <promeki/videotestpattern.h>
 #include <promeki/image.h>
 #include <promeki/paintengine.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/random.h>
 #include <promeki/fastfont.h>
 #include <promeki/timecode.h>
@@ -95,7 +95,7 @@ void VideoTestPattern::invalidateImageCache() const {
         }
         _cacheW = 0;
         _cacheH = 0;
-        _cachePixelDescId = 0;
+        _cachePixelFormatId = 0;
 }
 
 ImageDesc VideoTestPattern::rgbScratchDesc(const ImageDesc &target) const {
@@ -111,14 +111,14 @@ ImageDesc VideoTestPattern::rgbScratchDesc(const ImageDesc &target) const {
         // cost by roughly the same factor the fast path is faster
         // than the scalar pipeline.
         ImageDesc rd(target.width(), target.height(),
-                     PixelDesc(PixelDesc::RGBA8_sRGB));
+                     PixelFormat(PixelFormat::RGBA8_sRGB));
         rd.metadata() = target.metadata();
         return rd;
 }
 
 Image VideoTestPattern::create(const ImageDesc &desc, double motionOffset,
                                const Timecode &currentTimecode) const {
-        const bool directPaint = desc.pixelDesc().hasPaintEngine()
+        const bool directPaint = desc.pixelFormat().hasPaintEngine()
                                  && _pattern != VideoPattern::ZonePlate
                                  && _pattern != VideoPattern::CircularZone
                                  && _pattern != VideoPattern::Noise;
@@ -151,7 +151,7 @@ Image VideoTestPattern::create(const ImageDesc &desc, double motionOffset,
                 Image scratch(rgbDesc);
                 if(!scratch.isValid()) return;
                 runPattern(scratch);
-                Image conv = scratch.convert(desc.pixelDesc(),
+                Image conv = scratch.convert(desc.pixelFormat(),
                                              desc.metadata());
                 if(conv.isValid()) dst = conv;
         };
@@ -178,7 +178,7 @@ Image VideoTestPattern::create(const ImageDesc &desc, double motionOffset,
                 // values for 422 targets, bypassing PaintEngine / CSC.
                 // Non-422 targets fall through to the scratch + CSC path
                 // which produces an approximate visual.
-                if(desc.pixelDesc().pixelFormat().sampling() == PixelFormat::Sampling422) {
+                if(desc.pixelFormat().memLayout().sampling() == PixelMemLayout::Sampling422) {
                         out = cachedImage(0, desc, [&](Image &img) {
                                 render(img, 0.0);
                         });
@@ -219,10 +219,10 @@ void VideoTestPattern::applyBurnFontConfig() const {
 Error VideoTestPattern::applyBurn(Image &img, const String &burnText) const {
         if(!_burnEnabled || burnText.isEmpty()) return Error::Ok;
         if(!img.isValid()) return Error::InvalidArgument;
-        if(!img.pixelDesc().hasPaintEngine()) {
+        if(!img.pixelFormat().hasPaintEngine()) {
                 promekiWarn("VideoTestPattern::applyBurn: image pixel "
                             "format '%s' has no paint engine — burn skipped",
-                            img.pixelDesc().name().cstr());
+                            img.pixelFormat().name().cstr());
                 return Error::NotSupported;
         }
 
@@ -493,8 +493,8 @@ void VideoTestPattern::renderZonePlate(Image &img, double phase) const {
 
         uint8_t *data = static_cast<uint8_t *>(img.data());
         size_t stride = img.lineStride();
-        int bpp = img.pixelDesc().pixelFormat().bytesPerBlock();
-        int components = img.pixelDesc().pixelFormat().compCount();
+        int bpp = img.pixelFormat().memLayout().bytesPerBlock();
+        int components = img.pixelFormat().memLayout().compCount();
         double cx = w / 2.0;
         double cy = h / 2.0;
         double scale = 0.001;
@@ -522,8 +522,8 @@ void VideoTestPattern::renderNoise(Image &img) const {
 
         uint8_t *data = static_cast<uint8_t *>(img.data());
         size_t stride = img.lineStride();
-        int bpp = img.pixelDesc().pixelFormat().bytesPerBlock();
-        int components = img.pixelDesc().pixelFormat().compCount();
+        int bpp = img.pixelFormat().memLayout().bytesPerBlock();
+        int components = img.pixelFormat().memLayout().compCount();
 
         Random rng;
         for(int y = 0; y < h; y++) {
@@ -752,8 +752,8 @@ void VideoTestPattern::renderCircularZone(Image &img, double phase) const {
 
         uint8_t *data = static_cast<uint8_t *>(img.data());
         size_t stride = img.lineStride();
-        int bpp = img.pixelDesc().pixelFormat().bytesPerBlock();
-        int components = img.pixelDesc().pixelFormat().compCount();
+        int bpp = img.pixelFormat().memLayout().bytesPerBlock();
+        int components = img.pixelFormat().memLayout().compCount();
         double cx = w / 2.0;
         double cy = h / 2.0;
         double freq = 2.0 * M_PI / 8.0;
@@ -852,10 +852,10 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
 
         const int iw = static_cast<int>(img.width());
         const int ih = static_cast<int>(img.height());
-        const auto pfId = img.pixelDesc().pixelFormat().id();
+        const auto pfId = img.pixelFormat().memLayout().id();
 
         // ---- Interleaved UYVY 8-bit ----
-        if(pfId == PixelFormat::I_422_UYVY_3x8) {
+        if(pfId == PixelMemLayout::I_422_UYVY_3x8) {
                 uint8_t v0 = static_cast<uint8_t>(w0 >> 2);
                 uint8_t v1 = static_cast<uint8_t>(w1 >> 2);
                 uint8_t blockE[4] = { v0, v1, v0, v1 };
@@ -870,16 +870,16 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
         }
 
         // ---- Interleaved UYVY 10/12/16-bit (LE and BE) ----
-        if(pfId == PixelFormat::I_422_UYVY_3x10_LE || pfId == PixelFormat::I_422_UYVY_3x10_BE ||
-           pfId == PixelFormat::I_422_UYVY_3x12_LE || pfId == PixelFormat::I_422_UYVY_3x12_BE ||
-           pfId == PixelFormat::I_422_UYVY_3x16_LE || pfId == PixelFormat::I_422_UYVY_3x16_BE) {
+        if(pfId == PixelMemLayout::I_422_UYVY_3x10_LE || pfId == PixelMemLayout::I_422_UYVY_3x10_BE ||
+           pfId == PixelMemLayout::I_422_UYVY_3x12_LE || pfId == PixelMemLayout::I_422_UYVY_3x12_BE ||
+           pfId == PixelMemLayout::I_422_UYVY_3x16_LE || pfId == PixelMemLayout::I_422_UYVY_3x16_BE) {
                 int shift = 0;
                 bool be = false;
-                if(pfId == PixelFormat::I_422_UYVY_3x10_BE)      be = true;
-                else if(pfId == PixelFormat::I_422_UYVY_3x12_LE) shift = 2;
-                else if(pfId == PixelFormat::I_422_UYVY_3x12_BE) { shift = 2; be = true; }
-                else if(pfId == PixelFormat::I_422_UYVY_3x16_LE) shift = 6;
-                else if(pfId == PixelFormat::I_422_UYVY_3x16_BE) { shift = 6; be = true; }
+                if(pfId == PixelMemLayout::I_422_UYVY_3x10_BE)      be = true;
+                else if(pfId == PixelMemLayout::I_422_UYVY_3x12_LE) shift = 2;
+                else if(pfId == PixelMemLayout::I_422_UYVY_3x12_BE) { shift = 2; be = true; }
+                else if(pfId == PixelMemLayout::I_422_UYVY_3x16_LE) shift = 6;
+                else if(pfId == PixelMemLayout::I_422_UYVY_3x16_BE) { shift = 6; be = true; }
                 uint16_t v0 = static_cast<uint16_t>(w0 << shift);
                 uint16_t v1 = static_cast<uint16_t>(w1 << shift);
                 uint8_t blockE[8], blockO[8];
@@ -897,7 +897,7 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
         }
 
         // ---- Interleaved YUYV 8-bit ----
-        if(pfId == PixelFormat::I_422_3x8) {
+        if(pfId == PixelMemLayout::I_422_3x8) {
                 uint8_t v0 = static_cast<uint8_t>(w0 >> 2);
                 uint8_t v1 = static_cast<uint8_t>(w1 >> 2);
                 uint8_t blockE[4] = { v1, v0, v1, v0 };
@@ -912,7 +912,7 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
         }
 
         // ---- Interleaved YUYV 10-bit (LE) ----
-        if(pfId == PixelFormat::I_422_3x10) {
+        if(pfId == PixelMemLayout::I_422_3x10) {
                 uint8_t blockE[8], blockO[8];
                 sdiPathStore16(blockE + 0, w1, false); sdiPathStore16(blockE + 2, w0, false);
                 sdiPathStore16(blockE + 4, w1, false); sdiPathStore16(blockE + 6, w0, false);
@@ -928,7 +928,7 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
         }
 
         // ---- v210 packed ----
-        if(pfId == PixelFormat::I_422_v210) {
+        if(pfId == PixelMemLayout::I_422_v210) {
                 // v210 word layout (each 32-bit LE word holds 3 x 10-bit values):
                 //   Word 0: Cb0[9:0]  Y0[19:10] Cr0[29:20]
                 //   Word 1: Y1[9:0]   Cb1[19:10] Y2[29:20]
@@ -951,7 +951,7 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
         }
 
         // ---- Planar 422 8-bit ----
-        if(pfId == PixelFormat::P_422_3x8) {
+        if(pfId == PixelMemLayout::P_422_3x8) {
                 uint8_t v0 = static_cast<uint8_t>(w0 >> 2);
                 uint8_t v1 = static_cast<uint8_t>(w1 >> 2);
                 int chromaW = iw / 2;
@@ -969,16 +969,16 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
         }
 
         // ---- Planar 422 10/12/16-bit (LE and BE) ----
-        if(pfId == PixelFormat::P_422_3x10_LE || pfId == PixelFormat::P_422_3x10_BE ||
-           pfId == PixelFormat::P_422_3x12_LE || pfId == PixelFormat::P_422_3x12_BE ||
-           pfId == PixelFormat::P_422_3x16_LE || pfId == PixelFormat::P_422_3x16_BE) {
+        if(pfId == PixelMemLayout::P_422_3x10_LE || pfId == PixelMemLayout::P_422_3x10_BE ||
+           pfId == PixelMemLayout::P_422_3x12_LE || pfId == PixelMemLayout::P_422_3x12_BE ||
+           pfId == PixelMemLayout::P_422_3x16_LE || pfId == PixelMemLayout::P_422_3x16_BE) {
                 int shift = 0;
                 bool be = false;
-                if(pfId == PixelFormat::P_422_3x10_BE)      be = true;
-                else if(pfId == PixelFormat::P_422_3x12_LE) shift = 2;
-                else if(pfId == PixelFormat::P_422_3x12_BE) { shift = 2; be = true; }
-                else if(pfId == PixelFormat::P_422_3x16_LE) shift = 6;
-                else if(pfId == PixelFormat::P_422_3x16_BE) { shift = 6; be = true; }
+                if(pfId == PixelMemLayout::P_422_3x10_BE)      be = true;
+                else if(pfId == PixelMemLayout::P_422_3x12_LE) shift = 2;
+                else if(pfId == PixelMemLayout::P_422_3x12_BE) { shift = 2; be = true; }
+                else if(pfId == PixelMemLayout::P_422_3x16_LE) shift = 6;
+                else if(pfId == PixelMemLayout::P_422_3x16_BE) { shift = 6; be = true; }
                 uint16_t v0 = static_cast<uint16_t>(w0 << shift);
                 uint16_t v1 = static_cast<uint16_t>(w1 << shift);
                 uint8_t pat0[2], pat1[2];
@@ -1000,7 +1000,7 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
         }
 
         // ---- Semi-planar 422 8-bit ----
-        if(pfId == PixelFormat::SP_422_8) {
+        if(pfId == PixelMemLayout::SP_422_8) {
                 uint8_t v0 = static_cast<uint8_t>(w0 >> 2);
                 uint8_t v1 = static_cast<uint8_t>(w1 >> 2);
                 int chromaW = iw / 2;
@@ -1025,13 +1025,13 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
         }
 
         // ---- Semi-planar 422 10/12-bit (LE and BE) ----
-        if(pfId == PixelFormat::SP_422_10_LE || pfId == PixelFormat::SP_422_10_BE ||
-           pfId == PixelFormat::SP_422_12_LE || pfId == PixelFormat::SP_422_12_BE) {
+        if(pfId == PixelMemLayout::SP_422_10_LE || pfId == PixelMemLayout::SP_422_10_BE ||
+           pfId == PixelMemLayout::SP_422_12_LE || pfId == PixelMemLayout::SP_422_12_BE) {
                 int shift = 0;
                 bool be = false;
-                if(pfId == PixelFormat::SP_422_10_BE)      be = true;
-                else if(pfId == PixelFormat::SP_422_12_LE) shift = 2;
-                else if(pfId == PixelFormat::SP_422_12_BE) { shift = 2; be = true; }
+                if(pfId == PixelMemLayout::SP_422_10_BE)      be = true;
+                else if(pfId == PixelMemLayout::SP_422_12_LE) shift = 2;
+                else if(pfId == PixelMemLayout::SP_422_12_BE) { shift = 2; be = true; }
                 uint16_t v0 = static_cast<uint16_t>(w0 << shift);
                 uint16_t v1 = static_cast<uint16_t>(w1 << shift);
                 int chromaW = iw / 2;
@@ -1063,7 +1063,7 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
         }
 
         // ---- Fallback: approximate visual via PaintEngine ----
-        if(!img.pixelDesc().hasPaintEngine()) return;
+        if(!img.pixelFormat().hasPaintEngine()) return;
         PaintEngine pe = img.createPaintEngine();
         Color evenColor, oddColor;
         if(isEQ) {

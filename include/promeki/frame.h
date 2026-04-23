@@ -39,7 +39,7 @@ class MediaDesc;
  * Compressed bitstream access units are not stored as a separate
  * list on the Frame — they travel with their owning essence via
  * @ref Image::packet and @ref Audio::packet.  A compressed Image
- * carries its encoded @ref MediaPacket directly; that's the
+ * carries its encoded @ref VideoPacket directly; that's the
  * canonical location a downstream @ref VideoDecoder reads from,
  * and the canonical location a @ref VideoEncoder writes to.
  */
@@ -170,6 +170,44 @@ class Frame {
 
                 /** @brief Replaces the config update delta. */
                 void setConfigUpdate(MediaConfig cfg) { _configUpdate = std::move(cfg); }
+
+                /**
+                 * @brief Essence scope for @ref isSafeCutPoint.
+                 *
+                 * Selects which essence streams contribute to the cut-
+                 * point decision.  Callers that know the downstream
+                 * sink only consumes one kind of essence can restrict
+                 * the check — an audio-only sink shouldn't block a cut
+                 * on a mid-GOP video frame that will never be written.
+                 */
+                enum CutPointScope {
+                        CutPointVideoOnly = 0,  ///< @brief Consider only @ref imageList.
+                        CutPointAudioOnly = 1,  ///< @brief Consider only @ref audioList.
+                        CutPointAudioVideo = 2  ///< @brief Consider every essence stream in the frame (default).
+                };
+
+                /**
+                 * @brief Returns true when stopping the stream before this
+                 *        frame leaves the chosen essence streams intact.
+                 *
+                 * Defers to @ref Image::isSafeCutPoint for every image in
+                 * @ref imageList and @ref Audio::isSafeCutPoint for every
+                 * audio unit in @ref audioList.  A scope that excludes a
+                 * side of the essence skips that side entirely — useful
+                 * for sinks that only accept one kind of essence and
+                 * should not be held hostage to a mid-GOP frame that
+                 * will never be written to them.
+                 *
+                 * An empty essence list for the selected scope is treated
+                 * as trivially safe (nothing to truncate).  Null entries
+                 * are skipped rather than rejected — the pipeline builds
+                 * lists that always carry valid pointers.
+                 *
+                 * @param scope Which essence streams to consider.
+                 * @return @c true when the cut is safe for every image /
+                 *         audio unit in scope.
+                 */
+                bool isSafeCutPoint(CutPointScope scope = CutPointAudioVideo) const;
 
                 /**
                  * @brief Returns a human-readable multi-line dump of

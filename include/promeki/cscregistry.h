@@ -8,7 +8,7 @@
 #pragma once
 
 #include <promeki/namespace.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -18,7 +18,7 @@ class CSCContext;
  * @brief Static registry for fast-path CSC conversion kernels.
  * @ingroup proav
  *
- * Maps (source PixelDesc, target PixelDesc) pairs to hand-tuned
+ * Maps (source PixelFormat, target PixelFormat) pairs to hand-tuned
  * conversion functions that bypass the general pipeline. Register
  * fast paths at static-init time; they are discovered automatically
  * by CSCPipeline during compilation.
@@ -52,7 +52,7 @@ class CSCRegistry {
                  * @param dst  Target pixel description.
                  * @param func The line conversion function.
                  */
-                static void registerFastPath(const PixelDesc &src, const PixelDesc &dst, LineFuncPtr func);
+                static void registerFastPath(const PixelFormat &src, const PixelFormat &dst, LineFuncPtr func);
 
                 /**
                  * @brief Looks up a registered fast-path for the given pair.
@@ -60,7 +60,7 @@ class CSCRegistry {
                  * @param dst Target pixel description.
                  * @return The registered function, or nullptr if none registered.
                  */
-                static LineFuncPtr lookupFastPath(const PixelDesc &src, const PixelDesc &dst);
+                static LineFuncPtr lookupFastPath(const PixelFormat &src, const PixelFormat &dst);
 
         private:
                 CSCRegistry() = delete;

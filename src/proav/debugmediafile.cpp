@@ -13,7 +13,8 @@
 #include <promeki/datastream.h>
 #include <promeki/imagedesc.h>
 #include <promeki/audiodesc.h>
-#include <promeki/mediapacket.h>
+#include <promeki/videopacket.h>
+#include <promeki/audiopacket.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/logger.h>
 #include <promeki/buildinfo.h>
@@ -122,17 +123,16 @@ static Buffer makeStagingBuffer(size_t initialCapacity = 4096) {
         return b;
 }
 
-// Serialise a MediaPacket into a DataStream block (minus the buffer
-// payload — the raw bytes travel with the enclosing plane / audio
-// buffer so MediaPacket references can share the same backing
-// Buffer::Ptr on round-trip).
+// Serialise the MediaPacket-base fields (timing + duration) into a
+// DataStream block.  The buffer payload travels with the enclosing
+// plane / audio buffer so packet references can share the same
+// backing Buffer::Ptr on round-trip.
 //
 // MediaTimeStamp is only emitted when valid: its toString/fromString
 // round-trip does not cover the default-constructed invalid sentinel,
 // so we wrap with a presence bit.  Duration is serialised as a raw
 // int64 nanosecond count (no DataStream overload for Duration).
-static void writePacketMeta(DataStream &s, const MediaPacket &pkt) {
-        s << pkt.pixelDesc();
+static void writePacketCommon(DataStream &s, const MediaPacket &pkt) {
         bool hasPts = pkt.pts().isValid();
         s << hasPts;
         if(hasPts) s << pkt.pts();
@@ -140,26 +140,54 @@ static void writePacketMeta(DataStream &s, const MediaPacket &pkt) {
         s << hasDts;
         if(hasDts) s << pkt.dts();
         s << static_cast<int64_t>(pkt.duration().nanoseconds());
-        s << pkt.flags();
 }
 
-static Error readPacketMeta(DataStream &s, MediaPacket &out) {
-        PixelDesc pd;
+static Error readPacketCommon(DataStream &s, MediaPacket &out) {
         bool hasPts = false, hasDts = false;
         MediaTimeStamp pts, dts;
         int64_t durNs = 0;
-        uint32_t flags = 0;
-        s >> pd >> hasPts;
+        s >> hasPts;
         if(hasPts) s >> pts;
         s >> hasDts;
         if(hasDts) s >> dts;
-        s >> durNs >> flags;
+        s >> durNs;
         if(s.status() != DataStream::Ok) return Error::CorruptData;
-        out.setPixelDesc(pd);
         out.setPts(pts);
         out.setDts(dts);
         out.setDuration(Duration::fromNanoseconds(durNs));
+        return Error::Ok;
+}
+
+static void writeVideoPacketMeta(DataStream &s, const VideoPacket &pkt) {
+        s << pkt.pixelFormat();
+        writePacketCommon(s, pkt);
+        s << pkt.flags();
+}
+
+static Error readVideoPacketMeta(DataStream &s, VideoPacket &out) {
+        PixelFormat pd;
+        s >> pd;
+        if(Error e = readPacketCommon(s, out); e.isError()) return e;
+        uint32_t flags = 0;
+        s >> flags;
+        if(s.status() != DataStream::Ok) return Error::CorruptData;
+        out.setPixelFormat(pd);
         out.setFlags(flags);
+        return Error::Ok;
+}
+
+static void writeAudioPacketMeta(DataStream &s, const AudioPacket &pkt) {
+        // AudioCodec has no DataStream overload; serialise the integer
+        // ID which is stable across runs for well-known codecs.
+        s << static_cast<int32_t>(pkt.audioCodec().id());
+        writePacketCommon(s, pkt);
+}
+
+static Error readAudioPacketMeta(DataStream &s, AudioPacket &out) {
+        int32_t acId = 0;
+        s >> acId;
+        if(Error e = readPacketCommon(s, out); e.isError()) return e;
+        out.setAudioCodec(AudioCodec(static_cast<AudioCodec::ID>(acId)));
         return Error::Ok;
 }
 
@@ -175,7 +203,7 @@ static Error serialiseImage(const Image &img, Buffer &outPayload) {
 
         bool hasPacket = img.packet().isValid();
         s << hasPacket;
-        if(hasPacket) writePacketMeta(s, *img.packet());
+        if(hasPacket) writeVideoPacketMeta(s, *img.packet());
 
         // Plane count + each plane (size, flags, reserved, alignment, raw bytes)
         const Buffer::PtrList &planes = img.planes();
@@ -218,10 +246,10 @@ static Error deserialiseImage(DataStream &s, BufferIODevice &dev, Image::Ptr &ou
         s >> hasPacket;
         if(s.status() != DataStream::Ok) return Error::CorruptData;
 
-        MediaPacket::Ptr packet;
+        VideoPacket::Ptr packet;
         if(hasPacket) {
-                packet = MediaPacket::Ptr::create();
-                Error e = readPacketMeta(s, *packet.modify());
+                packet = VideoPacket::Ptr::create();
+                Error e = readVideoPacketMeta(s, *packet.modify());
                 if(e.isError()) return e;
         }
 
@@ -266,7 +294,7 @@ static Error deserialiseImage(DataStream &s, BufferIODevice &dev, Image::Ptr &ou
                 Image tmp = Image::fromBuffer(planes[0],
                                               desc.size().width(),
                                               desc.size().height(),
-                                              desc.pixelDesc(),
+                                              desc.pixelFormat(),
                                               desc.metadata());
                 if(!tmp.isValid()) return Error::CorruptData;
                 imgPtr = Image::Ptr::create(std::move(tmp));
@@ -305,7 +333,7 @@ static Error serialiseAudio(const Audio &aud, Buffer &outPayload) {
 
         bool hasPacket = aud.packet().isValid();
         s << hasPacket;
-        if(hasPacket) writePacketMeta(s, *aud.packet());
+        if(hasPacket) writeAudioPacketMeta(s, *aud.packet());
 
         const Buffer::Ptr &buf = aud.buffer();
         PROMEKI_ASSERT(!buf.isValid() || buf->size() <= UINT32_MAX);
@@ -343,10 +371,10 @@ static Error deserialiseAudio(DataStream &s, BufferIODevice &dev, Audio::Ptr &ou
         s >> hasPacket;
         if(s.status() != DataStream::Ok) return Error::CorruptData;
 
-        MediaPacket::Ptr packet;
+        AudioPacket::Ptr packet;
         if(hasPacket) {
-                packet = MediaPacket::Ptr::create();
-                Error e = readPacketMeta(s, *packet.modify());
+                packet = AudioPacket::Ptr::create();
+                Error e = readAudioPacketMeta(s, *packet.modify());
                 if(e.isError()) return e;
         }
 

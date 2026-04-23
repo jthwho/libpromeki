@@ -6,7 +6,7 @@ conversion with Highway SIMD acceleration.
 ## Overview {#csc_overview}
 
 The CSC framework converts images between any pair of pixel
-descriptions (`PixelDesc`), handling differences in memory layout,
+descriptions (`PixelFormat`), handling differences in memory layout,
 component ordering, bit depth, chroma subsampling, color model, and
 transfer function. It is the implementation behind `Image::convert()`.
 
@@ -123,7 +123,7 @@ transitions.
 // Force scalar path for debugging / reference comparison
 MediaConfig cfg;
 cfg.set(MediaConfig::CscPath, String("scalar"));
-Image dst = src.convert(PixelDesc::YUV8_422_Rec709, metadata, cfg);
+Image dst = src.convert(PixelFormat::YUV8_422_Rec709, metadata, cfg);
 ```
 
 ## Thread Safety {#csc_threading}
@@ -158,8 +158,8 @@ static void myKernel(const void *const *srcPlanes,
 static struct MyRegistrar {
     MyRegistrar() {
         CSCRegistry::registerFastPath(
-            PixelDesc::MySourceFormat,
-            PixelDesc::MyTargetFormat,
+            PixelFormat::MySourceFormat,
+            PixelFormat::MyTargetFormat,
             myKernel);
     }
 } __myRegistrar;

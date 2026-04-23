@@ -312,16 +312,16 @@ String extractAudioExt(const String &path) {
 
 } // namespace
 
-AudioDesc::DataType MediaIOTask_AudioFile::preferredWriterDataType(
-        const String &filename, AudioDesc::DataType source) const {
+AudioFormat::ID MediaIOTask_AudioFile::preferredWriterDataType(
+        const String &filename, AudioFormat::ID source) const {
         const String ext = extractAudioExt(filename);
-        if(ext.isEmpty()) return AudioDesc::Invalid;
+        if(ext.isEmpty()) return AudioFormat::Invalid;
 
         // OGG / Opus / Vorbis are float-pipeline codecs — keep float
         // unconditionally so libsndfile doesn't have to round-trip
         // through int internally.
         if(ext == "ogg" || ext == "oga" || ext == "opus") {
-                return AudioDesc::PCMI_Float32LE;
+                return AudioFormat::PCMI_Float32LE;
         }
 
         // WAV / BWF / AIFF / FLAC / W64 / RF64: integer-friendly
@@ -331,22 +331,22 @@ AudioDesc::DataType MediaIOTask_AudioFile::preferredWriterDataType(
         if(ext == "wav" || ext == "bwf" || ext == "aiff" || ext == "aif"
            || ext == "flac" || ext == "w64" || ext == "rf64") {
                 switch(source) {
-                        case AudioDesc::PCMI_S16LE:
-                        case AudioDesc::PCMI_S16BE:
-                        case AudioDesc::PCMI_S24LE:
-                        case AudioDesc::PCMI_S24BE:
-                        case AudioDesc::PCMI_S32LE:
-                        case AudioDesc::PCMI_S32BE:
-                        case AudioDesc::PCMI_Float32LE:
-                        case AudioDesc::PCMI_Float32BE:
+                        case AudioFormat::PCMI_S16LE:
+                        case AudioFormat::PCMI_S16BE:
+                        case AudioFormat::PCMI_S24LE:
+                        case AudioFormat::PCMI_S24BE:
+                        case AudioFormat::PCMI_S32LE:
+                        case AudioFormat::PCMI_S32BE:
+                        case AudioFormat::PCMI_Float32LE:
+                        case AudioFormat::PCMI_Float32BE:
                                 return source;       // pass-through
                         default:
-                                return AudioDesc::PCMI_S24LE;
+                                return AudioFormat::PCMI_S24LE;
                 }
         }
 
         // Unknown extension — let the default propose nothing.
-        return AudioDesc::Invalid;
+        return AudioFormat::Invalid;
 }
 
 Error MediaIOTask_AudioFile::proposeInput(const MediaDesc &offered,
@@ -367,11 +367,11 @@ Error MediaIOTask_AudioFile::proposeInput(const MediaDesc &offered,
         bool anyChanged = false;
         for(size_t i = 0; i < want.audioList().size(); ++i) {
                 AudioDesc &ad = want.audioList()[i];
-                const AudioDesc::DataType target =
-                        preferredWriterDataType(filename, ad.dataType());
-                if(target == AudioDesc::Invalid) continue;
-                if(target == ad.dataType()) continue;
-                ad.setDataType(target);
+                const AudioFormat::ID target =
+                        preferredWriterDataType(filename, ad.format().id());
+                if(target == AudioFormat::Invalid) continue;
+                if(target == ad.format().id()) continue;
+                ad.setFormat(target);
                 anyChanged = true;
         }
 

@@ -13,7 +13,7 @@
 #include <promeki/audio.h>
 #include <promeki/frame.h>
 #include <promeki/timecode.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/framerate.h>
 #include <promeki/videoformat.h>
 #include <promeki/dir.h>
@@ -263,7 +263,7 @@ TEST_CASE("MediaIO_Introspection_PendingWritesDrainAfterClose") {
         // Submit several blocking writes — each one runs to completion
         // before writeFrame() returns, so pendingWrites() is 0 again
         // at every observation point between calls.
-        Image img(8, 8, PixelDesc(PixelDesc::RGB8_sRGB));
+        Image img(8, 8, PixelFormat(PixelFormat::RGB8_sRGB));
         img.fill(0);
         Frame::Ptr f = Frame::Ptr::create();
         f.modify()->imageList().pushToBack(Image::Ptr::create(std::move(img)));
@@ -698,9 +698,9 @@ TEST_CASE("MediaIO_ImageFile_DefaultConfig") {
 }
 
 static void fillTestPattern(Image &img) {
-        for(size_t p = 0; p < img.pixelDesc().planeCount(); ++p) {
+        for(size_t p = 0; p < img.pixelFormat().planeCount(); ++p) {
                 uint8_t *data = static_cast<uint8_t *>(img.data(p));
-                size_t bytes = img.pixelDesc().pixelFormat().planeSize(p, img.width(), img.height());
+                size_t bytes = img.pixelFormat().memLayout().planeSize(p, img.width(), img.height());
                 for(size_t i = 0; i < bytes; ++i) {
                         data[i] = static_cast<uint8_t>((i * 7 + p * 37) & 0xFF);
                 }
@@ -711,7 +711,7 @@ TEST_CASE("MediaIO_ImageFile_DefaultFrameRateOnRead") {
         // Default config: reading a still image reports DefaultFrameRate.
         const char *fn = "/tmp/promeki_test_mediaio_fps_default.tga";
         {
-                Image src(16, 16, PixelDesc::RGBA8_sRGB);
+                Image src(16, 16, PixelFormat::RGBA8_sRGB);
                 REQUIRE(src.isValid());
                 fillTestPattern(src);
                 Frame::Ptr wf = Frame::Ptr::create();
@@ -739,7 +739,7 @@ TEST_CASE("MediaIO_ImageFile_ConfigFrameRateOverride") {
         // Explicit ConfigFrameRate overrides the default on read.
         const char *fn = "/tmp/promeki_test_mediaio_fps_override.tga";
         {
-                Image src(16, 16, PixelDesc::RGBA8_sRGB);
+                Image src(16, 16, PixelFormat::RGBA8_sRGB);
                 REQUIRE(src.isValid());
                 fillTestPattern(src);
                 Frame::Ptr wf = Frame::Ptr::create();
@@ -772,7 +772,7 @@ TEST_CASE("MediaIO_ImageFile_DPXRoundTrip") {
         const int w = 64, h = 48;
 
         {
-                Image src(w, h, PixelDesc::RGB8_sRGB);
+                Image src(w, h, PixelFormat::RGB8_sRGB);
                 REQUIRE(src.isValid());
                 fillTestPattern(src);
                 Frame::Ptr wf = Frame::Ptr::create();
@@ -818,7 +818,7 @@ TEST_CASE("MediaIO_ImageFile_DPXRoundTrip") {
 TEST_CASE("MediaIO_ImageFile_TGARoundTrip") {
         const char *fn = "/tmp/promeki_test_mediaio.tga";
         {
-                Image src(32, 32, PixelDesc::RGBA8_sRGB);
+                Image src(32, 32, PixelFormat::RGBA8_sRGB);
                 REQUIRE(src.isValid());
                 fillTestPattern(src);
                 Frame::Ptr wf = Frame::Ptr::create();
@@ -848,7 +848,7 @@ TEST_CASE("MediaIO_ImageFile_TGARoundTrip") {
 TEST_CASE("MediaIO_ImageFile_StepControl") {
         const char *fn = "/tmp/promeki_test_mediaio_step.dpx";
         {
-                Image src(16, 16, PixelDesc::RGB8_sRGB);
+                Image src(16, 16, PixelFormat::RGB8_sRGB);
                 REQUIRE(src.isValid());
                 fillTestPattern(src);
                 Frame::Ptr wf = Frame::Ptr::create();
@@ -895,7 +895,7 @@ TEST_CASE("MediaIO_ImageFile_ReadBeforeOpenFails") {
 TEST_CASE("MediaIO_ImageFile_ProbeDetectsFormat") {
         const char *fn = "/tmp/promeki_test_probe.dpx";
         {
-                Image src(8, 8, PixelDesc::RGB8_sRGB);
+                Image src(8, 8, PixelFormat::RGB8_sRGB);
                 REQUIRE(src.isValid());
                 Frame::Ptr wf = Frame::Ptr::create();
                 wf.modify()->imageList().pushToBack(Image::Ptr::create(src));
@@ -1325,7 +1325,7 @@ TEST_CASE("MediaIO_ImageFile_EOFLatchesAfterFirstEOF") {
         // close+reopen resets the latch.
         const char *fn = "/tmp/promeki_test_eof_latch.dpx";
         {
-                Image src(8, 8, PixelDesc::RGB8_sRGB);
+                Image src(8, 8, PixelFormat::RGB8_sRGB);
                 REQUIRE(src.isValid());
                 Frame::Ptr wf = Frame::Ptr::create();
                 wf.modify()->imageList().pushToBack(Image::Ptr::create(src));
@@ -1662,7 +1662,7 @@ TEST_CASE("MediaIO_Close_AsyncRejectsNewWrites") {
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Transform).isOk());
 
-        Image img(8, 8, PixelDesc(PixelDesc::RGB8_sRGB));
+        Image img(8, 8, PixelFormat(PixelFormat::RGB8_sRGB));
         img.fill(0);
         Frame::Ptr f = Frame::Ptr::create();
         f.modify()->imageList().pushToBack(Image::Ptr::create(std::move(img)));
@@ -1722,7 +1722,7 @@ TEST_CASE("MediaIO_Close_ReopenAfterAsyncStartsClean") {
 TEST_CASE("MediaIO_ImageFile_FrameCountAfterClose") {
         const char *fn = "/tmp/promeki_test_postclose.dpx";
         {
-                Image src(8, 8, PixelDesc::RGB8_sRGB);
+                Image src(8, 8, PixelFormat::RGB8_sRGB);
                 REQUIRE(src.isValid());
                 Frame::Ptr wf = Frame::Ptr::create();
                 wf.modify()->imageList().pushToBack(Image::Ptr::create(src));
@@ -1770,12 +1770,12 @@ static FilePath makeImageSequenceDir(const String &subdir,
                               prefix.cstr(), digits, i);
                 FilePath fp = dir / String(buf);
 
-                Image src(16, 8, PixelDesc::RGB8_sRGB);
+                Image src(16, 8, PixelFormat::RGB8_sRGB);
                 REQUIRE(src.isValid());
                 // Fill with a frame-number-dependent pattern so we can
                 // verify which frame was read.
                 uint8_t *data = static_cast<uint8_t *>(src.data(0));
-                size_t bytes = src.pixelDesc().pixelFormat().planeSize(
+                size_t bytes = src.pixelFormat().memLayout().planeSize(
                         0, src.width(), src.height());
                 for(size_t b = 0; b < bytes; b++) {
                         data[b] = static_cast<uint8_t>((b + i * 13) & 0xFF);
@@ -1928,7 +1928,7 @@ TEST_CASE("MediaIO_ImageSequence_WriteBasic") {
         REQUIRE(io->open(MediaIO::Sink).isOk());
 
         for(int i = 0; i < 4; i++) {
-                Image img(8, 8, PixelDesc::RGB8_sRGB);
+                Image img(8, 8, PixelFormat::RGB8_sRGB);
                 REQUIRE(img.isValid());
                 Frame::Ptr wf = Frame::Ptr::create();
                 wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
@@ -1968,7 +1968,7 @@ TEST_CASE("MediaIO_ImageSequence_WriteCustomHead") {
         REQUIRE(io->open(MediaIO::Sink).isOk());
 
         for(int i = 0; i < 3; i++) {
-                Image img(8, 8, PixelDesc::RGB8_sRGB);
+                Image img(8, 8, PixelFormat::RGB8_sRGB);
                 REQUIRE(img.isValid());
                 Frame::Ptr wf = Frame::Ptr::create();
                 wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
@@ -1999,7 +1999,7 @@ TEST_CASE("MediaIO_ImageSequence_RoundTrip") {
                 REQUIRE(io != nullptr);
                 REQUIRE(io->open(MediaIO::Sink).isOk());
                 for(int i = 0; i < 6; i++) {
-                        Image img(16, 8, PixelDesc::RGB8_sRGB);
+                        Image img(16, 8, PixelFormat::RGB8_sRGB);
                         REQUIRE(img.isValid());
                         Frame::Ptr wf = Frame::Ptr::create();
                         wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
@@ -2043,7 +2043,7 @@ TEST_CASE("MediaIO_ImageSequence_AudioRoundTrip") {
         d.mkdir();
 
         String mask = (dir / "au_####.dpx").toString();
-        AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        AudioDesc adesc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         const size_t samplesPerFrame = 800;  // 48000/60
 
         {
@@ -2051,7 +2051,7 @@ TEST_CASE("MediaIO_ImageSequence_AudioRoundTrip") {
                 REQUIRE(io != nullptr);
                 REQUIRE(io->open(MediaIO::Sink).isOk());
                 for(int i = 0; i < 4; i++) {
-                        Image img(16, 8, PixelDesc::RGB8_sRGB);
+                        Image img(16, 8, PixelFormat::RGB8_sRGB);
                         REQUIRE(img.isValid());
                         Audio audio(adesc, samplesPerFrame);
                         REQUIRE(audio.isValid());
@@ -2173,12 +2173,12 @@ TEST_CASE("MediaIO_ImageSequence_AutoSidecarWrite") {
                 MediaDesc md;
                 md.setFrameRate(fps);
                 md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
-                        PixelDesc(PixelDesc::RGB8_sRGB)));
+                        PixelFormat(PixelFormat::RGB8_sRGB)));
                 io->setExpectedDesc(md);
 
                 REQUIRE(io->open(MediaIO::Sink).isOk());
                 for(int i = 0; i < 4; i++) {
-                        Image img(16, 8, PixelDesc::RGB8_sRGB);
+                        Image img(16, 8, PixelFormat::RGB8_sRGB);
                         Frame::Ptr wf = Frame::Ptr::create();
                         wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
                         CHECK(io->writeFrame(wf).isOk());
@@ -2228,12 +2228,12 @@ TEST_CASE("MediaIO_ImageSequence_AutoSidecarRead") {
                 MediaDesc md;
                 md.setFrameRate(fps);
                 md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
-                        PixelDesc(PixelDesc::RGB8_sRGB)));
+                        PixelFormat(PixelFormat::RGB8_sRGB)));
                 io->setExpectedDesc(md);
 
                 REQUIRE(io->open(MediaIO::Sink).isOk());
                 for(int i = 0; i < 3; i++) {
-                        Image img(16, 8, PixelDesc::RGB8_sRGB);
+                        Image img(16, 8, PixelFormat::RGB8_sRGB);
                         Frame::Ptr wf = Frame::Ptr::create();
                         wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
                         CHECK(io->writeFrame(wf).isOk());
@@ -2278,7 +2278,7 @@ TEST_CASE("MediaIO_ImageSequence_AutoSidecarDisabled") {
                 REQUIRE(io->open(MediaIO::Sink).isOk());
 
                 for(int i = 0; i < 2; i++) {
-                        Image img(8, 8, PixelDesc::RGB8_sRGB);
+                        Image img(8, 8, PixelFormat::RGB8_sRGB);
                         Frame::Ptr wf = Frame::Ptr::create();
                         wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
                         CHECK(io->writeFrame(wf).isOk());
@@ -2339,7 +2339,7 @@ TEST_CASE("MediaIO_ImageFile_SingleFileStillReportsFrameRateSource") {
         // between a known rate and a guessed one.
         const char *fn = "/tmp/promeki_test_single_frsource.dpx";
         {
-                Image src(16, 16, PixelDesc::RGB8_sRGB);
+                Image src(16, 16, PixelFormat::RGB8_sRGB);
                 REQUIRE(src.isValid());
                 Frame::Ptr wf = Frame::Ptr::create();
                 wf.modify()->imageList().pushToBack(Image::Ptr::create(src));
@@ -2413,7 +2413,7 @@ TEST_CASE("MediaIO_ImageSequence_MaskNoMatch") {
 TEST_CASE("MediaIO_ImageFile_SingleFileUnchanged") {
         const char *fn = "/tmp/promeki_test_single_unchanged.dpx";
         {
-                Image src(16, 16, PixelDesc::RGB8_sRGB);
+                Image src(16, 16, PixelFormat::RGB8_sRGB);
                 REQUIRE(src.isValid());
                 Frame::Ptr wf = Frame::Ptr::create();
                 wf.modify()->imageList().pushToBack(Image::Ptr::create(src));
@@ -2460,7 +2460,7 @@ TEST_CASE("MediaIO_ImageSequence_WriterCreatesDirectory") {
 
         CHECK(Dir(dir).exists());
 
-        Image img(8, 8, PixelDesc::RGB8_sRGB);
+        Image img(8, 8, PixelFormat::RGB8_sRGB);
         Frame::Ptr wf = Frame::Ptr::create();
         wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
         CHECK(io->writeFrame(wf).isOk());
@@ -2765,7 +2765,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioWriteAndRead") {
         d.mkdir();
 
         String mask = (dir / "sc_####.dpx").toString();
-        AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        AudioDesc adesc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         FrameRate fps(FrameRate::FPS_24);
         const size_t samplesPerFrame = fps.samplesPerFrame(48000, 0);
         Timecode startTc(Timecode::NDF24, 1, 0, 0, 0);
@@ -2782,7 +2782,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioWriteAndRead") {
                 MediaDesc md;
                 md.setFrameRate(fps);
                 md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
-                        PixelDesc(PixelDesc::RGB8_sRGB)));
+                        PixelFormat(PixelFormat::RGB8_sRGB)));
                 md.audioList().pushToBack(adesc);
                 io->setExpectedDesc(md);
 
@@ -2797,7 +2797,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioWriteAndRead") {
                 CHECK(io->audioDesc().isValid());
 
                 for(int i = 0; i < 4; i++) {
-                        Image img(16, 8, PixelDesc::RGB8_sRGB);
+                        Image img(16, 8, PixelFormat::RGB8_sRGB);
                         REQUIRE(img.isValid());
                         Audio audio(adesc, samplesPerFrame);
                         REQUIRE(audio.isValid());
@@ -2883,7 +2883,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioDisabled") {
         d.mkdir();
 
         String mask = (dir / "nd_####.dpx").toString();
-        AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        AudioDesc adesc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         FrameRate fps(FrameRate::FPS_24);
         const size_t samplesPerFrame = fps.samplesPerFrame(48000, 0);
 
@@ -2898,7 +2898,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioDisabled") {
         MediaDesc md;
         md.setFrameRate(fps);
         md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
-                PixelDesc(PixelDesc::RGB8_sRGB)));
+                PixelFormat(PixelFormat::RGB8_sRGB)));
         md.audioList().pushToBack(adesc);
         io->setExpectedDesc(md);
 
@@ -2908,7 +2908,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioDisabled") {
         CHECK(io->mediaDesc().audioList().isEmpty());
 
         for(int i = 0; i < 2; i++) {
-                Image img(16, 8, PixelDesc::RGB8_sRGB);
+                Image img(16, 8, PixelFormat::RGB8_sRGB);
                 Audio audio(adesc, samplesPerFrame);
                 Frame::Ptr wf = Frame::Ptr::create();
                 wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
@@ -2940,7 +2940,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioNoAudio") {
         REQUIRE(io->open(MediaIO::Sink).isOk());
 
         for(int i = 0; i < 2; i++) {
-                Image img(16, 8, PixelDesc::RGB8_sRGB);
+                Image img(16, 8, PixelFormat::RGB8_sRGB);
                 Frame::Ptr wf = Frame::Ptr::create();
                 wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
                 CHECK(io->writeFrame(wf).isOk());
@@ -2962,7 +2962,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioPathOverride") {
         d.mkdir();
 
         String mask = (dir / "po_####.dpx").toString();
-        AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        AudioDesc adesc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         FrameRate fps(FrameRate::FPS_24);
         const size_t samplesPerFrame = fps.samplesPerFrame(48000, 0);
 
@@ -2977,13 +2977,13 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioPathOverride") {
         MediaDesc md;
         md.setFrameRate(fps);
         md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
-                PixelDesc(PixelDesc::RGB8_sRGB)));
+                PixelFormat(PixelFormat::RGB8_sRGB)));
         md.audioList().pushToBack(adesc);
         io->setExpectedDesc(md);
 
         REQUIRE(io->open(MediaIO::Sink).isOk());
 
-        Image img(16, 8, PixelDesc::RGB8_sRGB);
+        Image img(16, 8, PixelFormat::RGB8_sRGB);
         Audio audio(adesc, samplesPerFrame);
         Frame::Ptr wf = Frame::Ptr::create();
         wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
@@ -3027,7 +3027,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioImgSeqField") {
 
         String mask = (dir / "is_####.dpx").toString();
         String sidecarPath = (dir / "test.imgseq").toString();
-        AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        AudioDesc adesc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         FrameRate fps(FrameRate::FPS_24);
         const size_t samplesPerFrame = fps.samplesPerFrame(48000, 0);
 
@@ -3044,14 +3044,14 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioImgSeqField") {
                 MediaDesc md;
                 md.setFrameRate(fps);
                 md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
-                        PixelDesc(PixelDesc::RGB8_sRGB)));
+                        PixelFormat(PixelFormat::RGB8_sRGB)));
                 md.audioList().pushToBack(adesc);
                 io->setExpectedDesc(md);
 
                 REQUIRE(io->open(MediaIO::Sink).isOk());
 
                 for(int i = 0; i < 3; i++) {
-                        Image img(16, 8, PixelDesc::RGB8_sRGB);
+                        Image img(16, 8, PixelFormat::RGB8_sRGB);
                         Audio audio(adesc, samplesPerFrame);
                         Frame::Ptr wf = Frame::Ptr::create();
                         wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
@@ -3100,7 +3100,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioSeek") {
         d.mkdir();
 
         String mask = (dir / "sk_####.dpx").toString();
-        AudioDesc adesc(AudioDesc::NativeType, 48000.0f, 1);
+        AudioDesc adesc(AudioFormat::NativeFloat, 48000.0f, 1);
         FrameRate fps(FrameRate::FPS_24);
         const size_t samplesPerFrame = fps.samplesPerFrame(48000, 0);
 
@@ -3115,14 +3115,14 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioSeek") {
                 MediaDesc md;
                 md.setFrameRate(fps);
                 md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
-                        PixelDesc(PixelDesc::RGB8_sRGB)));
+                        PixelFormat(PixelFormat::RGB8_sRGB)));
                 md.audioList().pushToBack(adesc);
                 io->setExpectedDesc(md);
 
                 REQUIRE(io->open(MediaIO::Sink).isOk());
 
                 for(int i = 0; i < 8; i++) {
-                        Image img(16, 8, PixelDesc::RGB8_sRGB);
+                        Image img(16, 8, PixelFormat::RGB8_sRGB);
                         Audio audio(adesc, samplesPerFrame);
                         // Fill channel 0 with a per-frame constant so
                         // we can verify seek lands on the right audio.
@@ -3176,7 +3176,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioReadDisabled") {
         // Use PNG so DPX embedded audio doesn't mask the sidecar
         // disable — PNG has no embedded audio support.
         String mask = (dir / "rd_####.png").toString();
-        AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        AudioDesc adesc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         FrameRate fps(FrameRate::FPS_24);
         const size_t samplesPerFrame = fps.samplesPerFrame(48000, 0);
 
@@ -3191,12 +3191,12 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioReadDisabled") {
                 MediaDesc md;
                 md.setFrameRate(fps);
                 md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
-                        PixelDesc(PixelDesc::RGB8_sRGB)));
+                        PixelFormat(PixelFormat::RGB8_sRGB)));
                 md.audioList().pushToBack(adesc);
                 io->setExpectedDesc(md);
 
                 REQUIRE(io->open(MediaIO::Sink).isOk());
-                Image img(16, 8, PixelDesc::RGB8_sRGB);
+                Image img(16, 8, PixelFormat::RGB8_sRGB);
                 Audio audio(adesc, samplesPerFrame);
                 Frame::Ptr wf = Frame::Ptr::create();
                 wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
@@ -3240,7 +3240,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioSourceHint") {
         d.mkdir();
 
         String mask = (dir / "hn_####.dpx").toString();
-        AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        AudioDesc adesc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         FrameRate fps(FrameRate::FPS_24);
         const size_t samplesPerFrame = fps.samplesPerFrame(48000, 0);
 
@@ -3256,13 +3256,13 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioSourceHint") {
                 MediaDesc md;
                 md.setFrameRate(fps);
                 md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
-                        PixelDesc(PixelDesc::RGB8_sRGB)));
+                        PixelFormat(PixelFormat::RGB8_sRGB)));
                 md.audioList().pushToBack(adesc);
                 io->setExpectedDesc(md);
 
                 REQUIRE(io->open(MediaIO::Sink).isOk());
                 for(int i = 0; i < 3; i++) {
-                        Image img(16, 8, PixelDesc::RGB8_sRGB);
+                        Image img(16, 8, PixelFormat::RGB8_sRGB);
                         Audio audio(adesc, samplesPerFrame);
                         Frame::Ptr wf = Frame::Ptr::create();
                         wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
@@ -3331,7 +3331,7 @@ TEST_CASE("MediaIO_ImageSequence_SidecarAudioSourceHint") {
                         REQUIRE(io != nullptr);
                         REQUIRE(io->open(MediaIO::Sink).isOk());
                         for(int i = 0; i < 3; i++) {
-                                Image img(16, 8, PixelDesc::RGB8_sRGB);
+                                Image img(16, 8, PixelFormat::RGB8_sRGB);
                                 Frame::Ptr wf = Frame::Ptr::create();
                                 wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
                                 CHECK(io->writeFrame(wf).isOk());

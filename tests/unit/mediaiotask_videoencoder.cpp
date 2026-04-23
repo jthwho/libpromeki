@@ -19,7 +19,7 @@
 #include <promeki/imagedesc.h>
 #include <promeki/frame.h>
 #include <promeki/image.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/buffer.h>
 #include <cstring>
 
@@ -28,8 +28,8 @@ using namespace promeki;
 namespace {
 
 Image makeRgb8Frame(int width, int height, uint8_t fill) {
-        PixelDesc pd(PixelDesc::RGB8_sRGB);
-        const size_t bytes = pd.pixelFormat().planeSize(0, width, height);
+        PixelFormat pd(PixelFormat::RGB8_sRGB);
+        const size_t bytes = pd.memLayout().planeSize(0, width, height);
         auto buf = Buffer::Ptr::create(bytes);
         buf.modify()->fill(static_cast<char>(fill));
         buf.modify()->setSize(bytes);
@@ -56,7 +56,7 @@ TEST_CASE("MediaIOTask_VideoEncoder: open requires VideoCodec") {
 
         MediaDesc srcDesc;
         srcDesc.imageList().pushToBack(
-                ImageDesc(Size2Du32(8, 4), PixelDesc(PixelDesc::RGB8_sRGB)));
+                ImageDesc(Size2Du32(8, 4), PixelFormat(PixelFormat::RGB8_sRGB)));
         io->setExpectedDesc(srcDesc);
 
         // VideoCodec empty in cfg => open must fail.
@@ -73,7 +73,7 @@ TEST_CASE("MediaIOTask_VideoEncoder: open rejects a codec without an encoder fac
 
         MediaDesc srcDesc;
         srcDesc.imageList().pushToBack(
-                ImageDesc(Size2Du32(8, 4), PixelDesc(PixelDesc::RGB8_sRGB)));
+                ImageDesc(Size2Du32(8, 4), PixelFormat(PixelFormat::RGB8_sRGB)));
         io->setExpectedDesc(srcDesc);
 
         Error err = io->open(MediaIO::Transform);
@@ -83,7 +83,7 @@ TEST_CASE("MediaIOTask_VideoEncoder: open rejects a codec without an encoder fac
 
 TEST_CASE("MediaIOTask_VideoEncoder: write -> read emits a packet via passthrough codec") {
         MediaIO::Config cfg = MediaIO::defaultConfig("VideoEncoder");
-        cfg.set(MediaConfig::VideoCodec, VideoCodec::lookup("Passthrough"));
+        cfg.set(MediaConfig::VideoCodec, value(VideoCodec::lookup("Passthrough")));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
 
@@ -91,16 +91,16 @@ TEST_CASE("MediaIOTask_VideoEncoder: write -> read emits a packet via passthroug
         constexpr int kH = 8;
         MediaDesc srcDesc;
         srcDesc.imageList().pushToBack(
-                ImageDesc(Size2Du32(kW, kH), PixelDesc(PixelDesc::RGB8_sRGB)));
+                ImageDesc(Size2Du32(kW, kH), PixelFormat(PixelFormat::RGB8_sRGB)));
         io->setExpectedDesc(srcDesc);
 
         REQUIRE(io->open(MediaIO::Transform) == Error::Ok);
 
         // Output MediaDesc should have substituted the encoder's
-        // output PixelDesc (the passthrough codec pins it to H264).
+        // output PixelFormat (the passthrough codec pins it to H264).
         MediaDesc outDesc = io->mediaDesc();
         REQUIRE(!outDesc.imageList().isEmpty());
-        CHECK(outDesc.imageList()[0].pixelDesc().id() == PixelDesc::H264);
+        CHECK(outDesc.imageList()[0].pixelFormat().id() == PixelFormat::H264);
 
         // Build a source Frame with a single RGB image and push it
         // through writeFrame → readFrame.
@@ -120,7 +120,7 @@ TEST_CASE("MediaIOTask_VideoEncoder: write -> read emits a packet via passthroug
         const Image &outImg = *outFrame->imageList()[0];
         REQUIRE(outImg.isCompressed());
         REQUIRE(outImg.packet().isValid());
-        const MediaPacket &pkt = *outImg.packet();
+        const VideoPacket &pkt = *outImg.packet();
         CHECK(pkt.isKeyframe());
         CHECK(pkt.size() == src.plane(0)->size());
 
@@ -130,13 +130,13 @@ TEST_CASE("MediaIOTask_VideoEncoder: write -> read emits a packet via passthroug
 
 TEST_CASE("MediaIOTask_VideoEncoder: empty output queue returns TryAgain before close") {
         MediaIO::Config cfg = MediaIO::defaultConfig("VideoEncoder");
-        cfg.set(MediaConfig::VideoCodec, VideoCodec::lookup("Passthrough"));
+        cfg.set(MediaConfig::VideoCodec, value(VideoCodec::lookup("Passthrough")));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
 
         MediaDesc srcDesc;
         srcDesc.imageList().pushToBack(
-                ImageDesc(Size2Du32(8, 4), PixelDesc(PixelDesc::RGB8_sRGB)));
+                ImageDesc(Size2Du32(8, 4), PixelFormat(PixelFormat::RGB8_sRGB)));
         io->setExpectedDesc(srcDesc);
         REQUIRE(io->open(MediaIO::Transform) == Error::Ok);
 

@@ -13,6 +13,24 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+bool Frame::isSafeCutPoint(CutPointScope scope) const {
+        if(scope == CutPointVideoOnly || scope == CutPointAudioVideo) {
+                for(size_t i = 0; i < _imageList.size(); ++i) {
+                        const Image::Ptr &img = _imageList[i];
+                        if(!img.isValid()) continue;
+                        if(!img->isSafeCutPoint()) return false;
+                }
+        }
+        if(scope == CutPointAudioOnly || scope == CutPointAudioVideo) {
+                for(size_t i = 0; i < _audioList.size(); ++i) {
+                        const Audio::Ptr &aud = _audioList[i];
+                        if(!aud.isValid()) continue;
+                        if(!aud->isSafeCutPoint()) return false;
+                }
+        }
+        return true;
+}
+
 MediaDesc Frame::mediaDesc() const {
         MediaDesc md;
         md.setFrameRate(_metadata.getAs<FrameRate>(Metadata::FrameRate));
@@ -51,7 +69,7 @@ StringList Frame::dump(const String &indent) const {
                         s += value.typeName();
                         s += "]: ";
                         // format() renders via the Variant's own formatter
-                        // and handles types (PixelDesc, FrameRate, etc.)
+                        // and handles types (PixelFormat, FrameRate, etc.)
                         // whose get<String> would silently produce an
                         // empty string.
                         s += value.format(String());

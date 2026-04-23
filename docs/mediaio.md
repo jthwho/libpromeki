@@ -29,8 +29,8 @@ filename factories below.
 | `Burn`             | transform      | Burn-in overlay generator (text / timecode) for QA and review.                                           |
 | `FrameSync`        | transform      | Frame-rate sync / re-clock stage.                                                                        |
 | `VideoEncoder`     | transform      | Generic video-encoder stage that dispatches to the registered `VideoEncoder` backend for the configured `MediaConfig::VideoCodec`. Emits one compressed `Image` per encoded access unit with its `Image::packet` populated. |
-| `VideoDecoder`     | transform      | Generic video-decoder stage — consumes the `Image::packet` from each compressed input `Image` and emits uncompressed `Image` frames on the other side. Auto-detects the codec from the packet's `MediaPacket::pixelDesc` when `MediaConfig::VideoCodec` is unset. |
-| `RawBitstream`     | sink           | Writes every compressed `Image`'s attached `MediaPacket` payload verbatim to a file — the elementary-stream mirror of the encoder output. |
+| `VideoDecoder`     | transform      | Generic video-decoder stage — consumes the `Image::packet` from each compressed input `Image` and emits uncompressed `Image` frames on the other side. Auto-detects the codec from the packet's `VideoPacket::pixelFormat` when `MediaConfig::VideoCodec` is unset. |
+| `RawBitstream`     | sink           | Writes every compressed `Image`'s attached `VideoPacket` payload verbatim to a file — the elementary-stream mirror of the encoder output. |
 
 The TPG and Inspector are designed to be used together with no
 extra configuration: a default-config TPG produces everything the
@@ -44,7 +44,7 @@ the full walk-through.
 
 Compressed essence rides through the pipeline as a compressed
 `Image` (or `Audio`) carrying its encoded bytes on an
-attached `MediaPacket` — `Image::packet` is the canonical
+attached `VideoPacket` — `Image::packet` is the canonical
 location for the bitstream, PTS / DTS, and codec-level flags
 (keyframe, parameter-set, end-of-stream). There is no separate
 per-Frame packet list: producer stages (VideoEncoder, container

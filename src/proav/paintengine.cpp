@@ -7,7 +7,7 @@
 
 #include <cmath>
 #include <promeki/paintengine.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -53,8 +53,8 @@ PaintEngine::Impl::~Impl() {
 
 }
 
-const PixelDesc &PaintEngine::Impl::pixelDesc() const {
-        static PixelDesc invalid;
+const PixelFormat &PaintEngine::Impl::pixelFormat() const {
+        static PixelFormat invalid;
         return invalid;
 }
 

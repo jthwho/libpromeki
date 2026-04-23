@@ -34,9 +34,9 @@ TEST_CASE("ImageFileIO DPX: handler is registered") {
 // ============================================================================
 
 static void fillPattern(Image &img) {
-        for(size_t p = 0; p < img.pixelDesc().planeCount(); ++p) {
+        for(size_t p = 0; p < img.pixelFormat().planeCount(); ++p) {
                 uint8_t *data = static_cast<uint8_t *>(img.data(p));
-                size_t bytes = img.pixelDesc().pixelFormat().planeSize(p, img.width(), img.height());
+                size_t bytes = img.pixelFormat().memLayout().planeSize(p, img.width(), img.height());
                 for(size_t i = 0; i < bytes; ++i) {
                         data[i] = static_cast<uint8_t>((i * 7 + p * 37) & 0xFF);
                 }
@@ -44,8 +44,8 @@ static void fillPattern(Image &img) {
 }
 
 static bool verifyPattern(const Image &src, const Image &dst) {
-        for(size_t p = 0; p < src.pixelDesc().planeCount(); ++p) {
-                size_t bytes = src.pixelDesc().pixelFormat().planeSize(p, src.width(), src.height());
+        for(size_t p = 0; p < src.pixelFormat().planeCount(); ++p) {
+                size_t bytes = src.pixelFormat().memLayout().planeSize(p, src.width(), src.height());
                 if(std::memcmp(src.data(p), dst.data(p), bytes) != 0) return false;
         }
         return true;
@@ -55,8 +55,8 @@ static bool verifyPattern(const Image &src, const Image &dst) {
 // Helper: round-trip save + load
 // ============================================================================
 
-static void dpxRoundTrip(const char *fn, size_t w, size_t h, PixelDesc::ID pdId) {
-        Image src(w, h, PixelDesc(pdId));
+static void dpxRoundTrip(const char *fn, size_t w, size_t h, PixelFormat::ID pdId) {
+        Image src(w, h, PixelFormat(pdId));
         REQUIRE(src.isValid());
         fillPattern(src);
 
@@ -75,7 +75,7 @@ static void dpxRoundTrip(const char *fn, size_t w, size_t h, PixelDesc::ID pdId)
         REQUIRE(dst.isValid());
         CHECK(dst.width() == w);
         CHECK(dst.height() == h);
-        CHECK(dst.pixelDesc().id() == pdId);
+        CHECK(dst.pixelFormat().id() == pdId);
         CHECK(verifyPattern(src, dst));
 
         std::remove(fn);
@@ -86,7 +86,7 @@ static void dpxRoundTrip(const char *fn, size_t w, size_t h, PixelDesc::ID pdId)
 // ============================================================================
 
 TEST_CASE("ImageFileIO DPX: RGBA8 round-trip") {
-        dpxRoundTrip("/tmp/promeki_dpx_rgba8.dpx", 64, 48, PixelDesc::RGBA8_sRGB);
+        dpxRoundTrip("/tmp/promeki_dpx_rgba8.dpx", 64, 48, PixelFormat::RGBA8_sRGB);
 }
 
 TEST_CASE("ImageFileIO DPX: ARGB8 save and reload as RGBA8") {
@@ -94,7 +94,7 @@ TEST_CASE("ImageFileIO DPX: ARGB8 save and reload as RGBA8") {
         // Saving ARGB8 reorders to RGBA; loading always yields RGBA8.
         const char *fn = "/tmp/promeki_dpx_argb8.dpx";
         const size_t w = 64, h = 48;
-        Image src(w, h, PixelDesc(PixelDesc::ARGB8_sRGB));
+        Image src(w, h, PixelFormat(PixelFormat::ARGB8_sRGB));
         REQUIRE(src.isValid());
         // Fill with known pattern: A=0x10, R=0x20, G=0x30, B=0x40 per pixel
         uint8_t *sp = static_cast<uint8_t *>(src.data());
@@ -116,7 +116,7 @@ TEST_CASE("ImageFileIO DPX: ARGB8 save and reload as RGBA8") {
 
         Image dst = lf.image();
         REQUIRE(dst.isValid());
-        CHECK(dst.pixelDesc().id() == PixelDesc::RGBA8_sRGB);
+        CHECK(dst.pixelFormat().id() == PixelFormat::RGBA8_sRGB);
         // Verify channels were reordered: ARGB → RGBA
         const uint8_t *dp = static_cast<const uint8_t *>(dst.data());
         CHECK(dp[0] == 0x20); // R
@@ -128,33 +128,33 @@ TEST_CASE("ImageFileIO DPX: ARGB8 save and reload as RGBA8") {
 }
 
 TEST_CASE("ImageFileIO DPX: YUV8 4:4:4 round-trip") {
-        dpxRoundTrip("/tmp/promeki_dpx_yuv8.dpx", 64, 48, PixelDesc::YUV8_Rec709);
+        dpxRoundTrip("/tmp/promeki_dpx_yuv8.dpx", 64, 48, PixelFormat::YUV8_Rec709);
 }
 
 TEST_CASE("ImageFileIO DPX: RGB10 DPX LE round-trip") {
-        dpxRoundTrip("/tmp/promeki_dpx_rgb10le.dpx", 64, 48, PixelDesc::RGB10_DPX_LE_sRGB);
+        dpxRoundTrip("/tmp/promeki_dpx_rgb10le.dpx", 64, 48, PixelFormat::RGB10_DPX_LE_sRGB);
 }
 
 TEST_CASE("ImageFileIO DPX: RGB10 DPX BE round-trip") {
-        dpxRoundTrip("/tmp/promeki_dpx_rgb10be.dpx", 64, 48, PixelDesc::RGB10_DPX_sRGB);
+        dpxRoundTrip("/tmp/promeki_dpx_rgb10be.dpx", 64, 48, PixelFormat::RGB10_DPX_sRGB);
 }
 
 TEST_CASE("ImageFileIO DPX: YUV10 DPX method A round-trip") {
-        dpxRoundTrip("/tmp/promeki_dpx_yuv10a.dpx", 64, 48, PixelDesc::YUV10_DPX_Rec709);
+        dpxRoundTrip("/tmp/promeki_dpx_yuv10a.dpx", 64, 48, PixelFormat::YUV10_DPX_Rec709);
 }
 
 TEST_CASE("ImageFileIO DPX: YUV10 DPX method B round-trip") {
-        dpxRoundTrip("/tmp/promeki_dpx_yuv10b.dpx", 64, 48, PixelDesc::YUV10_DPX_B_Rec709);
+        dpxRoundTrip("/tmp/promeki_dpx_yuv10b.dpx", 64, 48, PixelFormat::YUV10_DPX_B_Rec709);
 }
 
 TEST_CASE("ImageFileIO DPX: RGB16 BE round-trip") {
-        dpxRoundTrip("/tmp/promeki_dpx_rgb16.dpx", 64, 48, PixelDesc::RGB16_BE_sRGB);
+        dpxRoundTrip("/tmp/promeki_dpx_rgb16.dpx", 64, 48, PixelFormat::RGB16_BE_sRGB);
 }
 
 TEST_CASE("ImageFileIO DPX: non-aligned image size round-trip") {
         // 50x50 RGBA8 = 10000 bytes, not a multiple of 4096.
         // Exercises the DIO write padding path where imagePadded > imageBytes.
-        dpxRoundTrip("/tmp/promeki_dpx_unaligned.dpx", 50, 50, PixelDesc::RGBA8_sRGB);
+        dpxRoundTrip("/tmp/promeki_dpx_unaligned.dpx", 50, 50, PixelFormat::RGBA8_sRGB);
 }
 
 // ============================================================================
@@ -163,7 +163,7 @@ TEST_CASE("ImageFileIO DPX: non-aligned image size round-trip") {
 
 TEST_CASE("ImageFileIO DPX: metadata round-trip") {
         const char *fn = "/tmp/promeki_dpx_meta.dpx";
-        Image src(64, 48, PixelDesc::RGBA8_sRGB);
+        Image src(64, 48, PixelFormat::RGBA8_sRGB);
         REQUIRE(src.isValid());
         src.fill(0x80);
 
@@ -225,12 +225,12 @@ TEST_CASE("ImageFileIO DPX: embedded audio round-trip") {
         const char *fn = "/tmp/promeki_dpx_audio.dpx";
 
         // Create image
-        Image img(64, 48, PixelDesc::RGBA8_sRGB);
+        Image img(64, 48, PixelFormat::RGBA8_sRGB);
         REQUIRE(img.isValid());
         img.fill(0x42);
 
         // Create audio: 480 samples, stereo, 16-bit LE, 48kHz
-        AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        AudioDesc adesc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         Audio audio(adesc, 480);
         REQUIRE(audio.isValid());
         int16_t *samps = static_cast<int16_t *>(audio.buffer()->data());
@@ -265,7 +265,7 @@ TEST_CASE("ImageFileIO DPX: embedded audio round-trip") {
         REQUIRE(dstAudio.isValid());
         CHECK(dstAudio.samples() == 480);
         CHECK(dstAudio.desc().channels() == 2);
-        CHECK(dstAudio.desc().dataType() == AudioDesc::PCMI_S16LE);
+        CHECK(dstAudio.desc().format().id() == AudioFormat::PCMI_S16LE);
 
         const int16_t *dstSamps = static_cast<const int16_t *>(dstAudio.buffer()->data());
         size_t audioBytes = adesc.bufferSize(480);

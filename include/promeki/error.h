@@ -106,7 +106,10 @@ class Error {
                         ClockPaused,             ///< Clock is paused; operation cannot complete until resumed.
                         DurationUnknown,         ///< MediaDuration has one or more Unknown fields.
                         FrameRangeInfinite,      ///< MediaDuration is infinite and cannot be expressed as a bounded FrameRange.
-                        NotAdjacent              ///< Two MediaDurations are not frame-adjacent and cannot be joined.
+                        NotAdjacent,             ///< Two MediaDurations are not frame-adjacent and cannot be joined.
+                        PipelineBuildFailed,     ///< MediaPipeline build step (including planner) could not resolve the requested pipeline.
+                        PipelineRuntimeError,    ///< A stage emitted a runtime error (pipelineErrorSignal) after start().
+                        InspectorDiscontinuityDetected  ///< Inspector observed at least one discontinuity during its run.
                 };
 
                 /**

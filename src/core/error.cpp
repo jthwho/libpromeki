@@ -101,7 +101,10 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(ClockPaused, NONE, "Clock is paused"),
         DEFINE_ERROR(DurationUnknown, NONE, "MediaDuration has one or more Unknown fields"),
         DEFINE_ERROR(FrameRangeInfinite, NONE, "MediaDuration is infinite and has no bounded FrameRange"),
-        DEFINE_ERROR(NotAdjacent, NONE, "MediaDurations are not frame-adjacent and cannot be joined")
+        DEFINE_ERROR(NotAdjacent, NONE, "MediaDurations are not frame-adjacent and cannot be joined"),
+        DEFINE_ERROR(PipelineBuildFailed, NONE, "MediaPipeline build failed to resolve the requested pipeline"),
+        DEFINE_ERROR(PipelineRuntimeError, NONE, "MediaPipeline stage reported a runtime error"),
+        DEFINE_ERROR(InspectorDiscontinuityDetected, NONE, "Inspector observed at least one discontinuity")
 };
 
 static StructDatabase<int, Error::Code> &posixErrorDb() {

@@ -38,7 +38,7 @@
 #include <promeki/mediaconfig.h>
 #include <promeki/image.h>
 #include <promeki/imagedesc.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/buffer.h>
 #include <promeki/cuda.h>
 #include <promeki/logger.h>
@@ -414,7 +414,7 @@ class NvdecVideoDecoder::Impl {
                                 MediaConfig::VideoRange).value());
                 }
 
-                Error submitPacket(const MediaPacket &pkt, Codec codec) {
+                Error submitPacket(const VideoPacket &pkt, Codec codec) {
                         if(Error err = ensureSession(codec); err.isError()) return err;
                         if(pkt.size() == 0 || !pkt.buffer()) return Error::Ok;
 
@@ -450,9 +450,9 @@ class NvdecVideoDecoder::Impl {
                         return mapCu(r, "cuvidParseVideoData");
                 }
 
-                Image receiveFrame() {
-                        if(_outQueue.empty()) return Image();
-                        Image img = std::move(_outQueue.front());
+                Image::Ptr receiveFrame() {
+                        if(_outQueue.empty()) return Image::Ptr();
+                        Image::Ptr img = std::move(_outQueue.front());
                         _outQueue.pop_front();
                         return img;
                 }
@@ -471,8 +471,8 @@ class NvdecVideoDecoder::Impl {
                         return Error::Ok;
                 }
 
-                PixelDesc outputPixelDesc() const {
-                        return PixelDesc(PixelDesc::YUV8_420_SemiPlanar_Rec709);
+                PixelFormat outputPixelFormat() const {
+                        return PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709);
                 }
 
         private:
@@ -490,10 +490,10 @@ class NvdecVideoDecoder::Impl {
                 unsigned int     _displayW    = 0;
                 unsigned int     _displayH    = 0;
 
-                std::deque<Image> _outQueue;
+                std::deque<Image::Ptr> _outQueue;
 
                 // Per-packet metadata FIFO.  submitPacket pushes one
-                // entry per incoming MediaPacket; handleDisplay pops
+                // entry per incoming VideoPacket; handleDisplay pops
                 // one entry per emitted Image.  Together they carry
                 // encoder-side per-image state (Timecode, MediaTimeStamp)
                 // across the codec boundary.
@@ -786,7 +786,7 @@ class NvdecVideoDecoder::Impl {
                         // the display rectangle, then cudaMemcpy2D
                         // luma + chroma planes down from device.
                         ImageDesc desc(Size2Du32(_displayW, _displayH),
-                                       outputPixelDesc());
+                                       outputPixelFormat());
                         Image img(desc);
                         bool copyOk = true;
                         if(img.planes().size() >= 2) {
@@ -937,7 +937,7 @@ class NvdecVideoDecoder::Impl {
                         img.metadata().set(Metadata::VideoScanMode,
                                            Enum(VideoScanMode::Type, scan.value()));
 
-                        _outQueue.push_back(std::move(img));
+                        _outQueue.push_back(Image::Ptr::create(std::move(img)));
                         return 1;
                 }
 };
@@ -951,33 +951,22 @@ NvdecVideoDecoder::NvdecVideoDecoder(Codec codec)
 
 NvdecVideoDecoder::~NvdecVideoDecoder() { delete _impl; }
 
-String NvdecVideoDecoder::name() const {
-        return _codec == Codec_H264 ? String("H264") : String("HEVC");
-}
-
-String NvdecVideoDecoder::description() const {
-        return _codec == Codec_H264
-                ? String("NVIDIA NVDEC H.264 hardware decoder")
-                : String("NVIDIA NVDEC HEVC hardware decoder");
-}
-
-PixelDesc NvdecVideoDecoder::inputPixelDesc() const {
-        return PixelDesc(_codec == Codec_H264
-                ? PixelDesc::H264
-                : PixelDesc::HEVC);
-}
-
-List<int> NvdecVideoDecoder::supportedOutputs() const {
-        return { static_cast<int>(PixelDesc::YUV8_420_SemiPlanar_Rec709) };
+List<int> NvdecVideoDecoder::supportedOutputList() {
+        return { static_cast<int>(PixelFormat::YUV8_420_SemiPlanar_Rec709) };
 }
 
 void NvdecVideoDecoder::configure(const MediaConfig &config) {
         _impl->configure(config);
 }
 
-Error NvdecVideoDecoder::submitPacket(const MediaPacket &packet) {
+Error NvdecVideoDecoder::submitPacket(const VideoPacket::Ptr &packet) {
         clearError();
-        Error err = _impl->submitPacket(packet, _codec);
+        if(!packet.isValid()) {
+                _lastError        = Error::Invalid;
+                _lastErrorMessage = "NVDEC: null packet Ptr";
+                return _lastError;
+        }
+        Error err = _impl->submitPacket(*packet, _codec);
         if(err.isError()) {
                 _lastError        = err;
                 _lastErrorMessage = String("NVDEC submitPacket failed");
@@ -985,7 +974,7 @@ Error NvdecVideoDecoder::submitPacket(const MediaPacket &packet) {
         return err;
 }
 
-Image NvdecVideoDecoder::receiveFrame() {
+Image::Ptr NvdecVideoDecoder::receiveFrame() {
         return _impl->receiveFrame();
 }
 
@@ -1005,38 +994,39 @@ Error NvdecVideoDecoder::reset() {
 }
 
 // ---------------------------------------------------------------------------
-// Factory registration.
+// Backend registration — typed (codec, backend) pair on the
+// VideoDecoder registry.  Registered under the "Nvidia" backend name
+// for H264 / HEVC.
 // ---------------------------------------------------------------------------
 
 namespace {
 
 struct NvdecRegistrar {
         NvdecRegistrar() {
-                auto h264Factory = []() -> VideoDecoder * {
-                        return new NvdecVideoDecoder(NvdecVideoDecoder::Codec_H264);
-                };
-                auto hevcFactory = []() -> VideoDecoder * {
-                        return new NvdecVideoDecoder(NvdecVideoDecoder::Codec_HEVC);
-                };
+                auto bk = VideoCodec::registerBackend("Nvidia");
+                if(error(bk).isError()) return;
+                const VideoCodec::Backend backend = value(bk);
 
-                VideoDecoder::registerDecoder("H264", h264Factory);
-                VideoDecoder::registerDecoder("HEVC", hevcFactory);
+                const List<int> nvdecOutputs = NvdecVideoDecoder::supportedOutputList();
 
-                // Same dual-surface story as the NVENC registrar:
-                // registerData() merges the decoder factory into the
-                // existing typed VideoCodec::H264 / VideoCodec::HEVC
-                // entries while preserving every other field
-                // populated by videocodec.cpp.
-                if(VideoCodec h264(VideoCodec::H264); h264.isValid()) {
-                        VideoCodec::Data d = *h264.data();
-                        d.createDecoder = h264Factory;
-                        VideoCodec::registerData(std::move(d));
-                }
-                if(VideoCodec hevc(VideoCodec::HEVC); hevc.isValid()) {
-                        VideoCodec::Data d = *hevc.data();
-                        d.createDecoder = hevcFactory;
-                        VideoCodec::registerData(std::move(d));
-                }
+                VideoDecoder::registerBackend({
+                        .codecId          = VideoCodec::H264,
+                        .backend          = backend,
+                        .weight           = BackendWeight::Vendored,
+                        .supportedOutputs = nvdecOutputs,
+                        .factory          = []() -> VideoDecoder * {
+                                return new NvdecVideoDecoder(NvdecVideoDecoder::Codec_H264);
+                        },
+                });
+                VideoDecoder::registerBackend({
+                        .codecId          = VideoCodec::HEVC,
+                        .backend          = backend,
+                        .weight           = BackendWeight::Vendored,
+                        .supportedOutputs = nvdecOutputs,
+                        .factory          = []() -> VideoDecoder * {
+                                return new NvdecVideoDecoder(NvdecVideoDecoder::Codec_HEVC);
+                        },
+                });
         }
 };
 

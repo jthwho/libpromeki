@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/paintengine.h>
 #include <promeki/image.h>
 
@@ -31,7 +31,7 @@ class PaintEngine_DPX : public PaintEngine::Impl {
                 Size2Du32       _size;
                 uint8_t         *_buf;
                 size_t          _stride;
-                PixelDesc       _pixDesc;
+                PixelFormat       _pixDesc;
                 float           _compOffset[3] = {};
                 float           _compScale[3] = {};
 
@@ -39,7 +39,7 @@ class PaintEngine_DPX : public PaintEngine::Impl {
                         : _image(img), _size(img.size()),
                           _buf(static_cast<uint8_t *>(img.plane(0)->data())),
                           _stride(img.lineStride(0)),
-                          _pixDesc(img.pixelDesc()) {
+                          _pixDesc(img.pixelFormat()) {
                         for(int i = 0; i < 3; i++) {
                                 const auto &cs = _pixDesc.compSemantic(i);
                                 _compOffset[i] = cs.rangeMin;
@@ -49,7 +49,7 @@ class PaintEngine_DPX : public PaintEngine::Impl {
                         }
                 }
 
-                const PixelDesc &pixelDesc() const override { return _pixDesc; }
+                const PixelFormat &pixelFormat() const override { return _pixDesc; }
 
                 uint16_t mapComp(uint16_t v, int comp) const {
                         return static_cast<uint16_t>(_compOffset[comp] + v * _compScale[comp] + 0.5f);
@@ -116,7 +116,7 @@ class PaintEngine_DPX : public PaintEngine::Impl {
 
                 bool blit(const Point2Di32 &dpt, const Image &src,
                           const Point2Di32 &spt, const Size2Du32 &ssz) const override {
-                        if(src.pixelDesc() != _pixDesc) return false;
+                        if(src.pixelFormat() != _pixDesc) return false;
                         const uint8_t *sbuf = static_cast<const uint8_t *>(src.plane(0)->data());
                         size_t sStride = src.lineStride(0);
                         int sx = spt.x(), sy = spt.y();
@@ -311,10 +311,10 @@ class PaintEngine_DPX : public PaintEngine::Impl {
 template class PaintEngine_DPX<false>;
 template class PaintEngine_DPX<true>;
 
-PaintEngine createPaintEngine_DPX_A(const PixelDesc::Data *, const Image &img) {
+PaintEngine createPaintEngine_DPX_A(const PixelFormat::Data *, const Image &img) {
         return new PaintEngine_DPX<false>(img);
 }
-PaintEngine createPaintEngine_DPX_B(const PixelDesc::Data *, const Image &img) {
+PaintEngine createPaintEngine_DPX_B(const PixelFormat::Data *, const Image &img) {
         return new PaintEngine_DPX<true>(img);
 }
 
@@ -354,7 +354,7 @@ class PaintEngine_v210 : public PaintEngine::Impl {
                 Size2Du32       _size;
                 uint8_t         *_buf;
                 size_t          _stride;
-                PixelDesc       _pixDesc;
+                PixelFormat       _pixDesc;
                 float           _compOffset[3] = {};
                 float           _compScale[3] = {};
 
@@ -362,7 +362,7 @@ class PaintEngine_v210 : public PaintEngine::Impl {
                         : _image(img), _size(img.size()),
                           _buf(static_cast<uint8_t *>(img.plane(0)->data())),
                           _stride(img.lineStride(0)),
-                          _pixDesc(img.pixelDesc()) {
+                          _pixDesc(img.pixelFormat()) {
                         for(int i = 0; i < 3; i++) {
                                 const auto &cs = _pixDesc.compSemantic(i);
                                 _compOffset[i] = cs.rangeMin;
@@ -372,7 +372,7 @@ class PaintEngine_v210 : public PaintEngine::Impl {
                         }
                 }
 
-                const PixelDesc &pixelDesc() const override { return _pixDesc; }
+                const PixelFormat &pixelFormat() const override { return _pixDesc; }
 
                 uint16_t mapComp(uint16_t v, int comp) const {
                         return static_cast<uint16_t>(_compOffset[comp] + v * _compScale[comp] + 0.5f);
@@ -438,7 +438,7 @@ class PaintEngine_v210 : public PaintEngine::Impl {
 
                 bool blit(const Point2Di32 &dpt, const Image &src,
                           const Point2Di32 &spt, const Size2Du32 &ssz) const override {
-                        if(src.pixelDesc() != _pixDesc) return false;
+                        if(src.pixelFormat() != _pixDesc) return false;
                         const uint8_t *sbuf = static_cast<const uint8_t *>(src.plane(0)->data());
                         size_t sStride = src.lineStride(0);
                         int sx = spt.x(), sy = spt.y();
@@ -624,7 +624,7 @@ class PaintEngine_v210 : public PaintEngine::Impl {
                 }
 };
 
-PaintEngine createPaintEngine_v210(const PixelDesc::Data *, const Image &img) {
+PaintEngine createPaintEngine_v210(const PixelFormat::Data *, const Image &img) {
         return new PaintEngine_v210(img);
 }
 

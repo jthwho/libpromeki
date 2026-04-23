@@ -183,20 +183,20 @@ All safe — tiny outputs, no desktop-session risk.
 ```bash
 # Default (Balanced) — works:
 mediaplay -s TPG --frame-count 30 \
-    -c CSC --cc OutputPixelDesc:YUV8_420_SemiPlanar_Rec709 \
+    -c CSC --cc OutputPixelFormat:YUV8_420_SemiPlanar_Rec709 \
     -c VideoEncoder --cc VideoCodec:H264 \
     -d /mnt/data/tmp/promeki/balanced.mov
 
 # HighQuality — reproduces the drain-at-close bug:
 mediaplay -s TPG --frame-count 30 \
-    -c CSC --cc OutputPixelDesc:YUV8_420_SemiPlanar_Rec709 \
+    -c CSC --cc OutputPixelFormat:YUV8_420_SemiPlanar_Rec709 \
     -c VideoEncoder --cc VideoCodec:H264 \
     --cc VideoPreset:HighQuality \
     -d /mnt/data/tmp/promeki/hq.mov
 
 # Classic vs Fragmented layout (for QuickTime-writer diffing):
 mediaplay -s TPG --frame-count 30 \
-    -c CSC --cc OutputPixelDesc:YUV8_420_SemiPlanar_Rec709 \
+    -c CSC --cc OutputPixelFormat:YUV8_420_SemiPlanar_Rec709 \
     -c VideoEncoder --cc VideoCodec:H264 \
     --cc QuickTimeLayout:Fragmented \
     -d /mnt/data/tmp/promeki/frag.mov

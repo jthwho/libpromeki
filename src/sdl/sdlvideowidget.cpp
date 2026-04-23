@@ -7,7 +7,7 @@
 
 #include <promeki/sdl/sdlvideowidget.h>
 #include <promeki/sdl/sdlwindow.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/system.h>
 #include <promeki/logger.h>
 
@@ -84,13 +84,13 @@ void SDLVideoWidget::paintEvent(PaintEvent *) {
         return;
 }
 
-uint32_t SDLVideoWidget::mapPixelDesc(const PixelDesc &pd) {
+uint32_t SDLVideoWidget::mapPixelFormat(const PixelFormat &pd) {
         // SDL3 ARRAY formats (RGB24, BGR24, the *32 aliases, RGB48,
         // BGR48, RGBA64, ARGB64, BGRA64, ABGR64, RGB48_FLOAT,
         // RGBA64_FLOAT, etc.) store components in memory in the order
         // their name implies, regardless of host endianness — so the
         // byte layout always matches the matching libpromeki "array"
-        // PixelDesc for that component order.
+        // PixelFormat for that component order.
         //
         // SDL3's ARRAYU16 / ARRAYF16 / ARRAYF32 formats, however, pack
         // their 16- or 32-bit components in *host* byte order.  We can
@@ -108,59 +108,59 @@ uint32_t SDLVideoWidget::mapPixelDesc(const PixelDesc &pd) {
 
         switch(pd.id()) {
                 // 8-bit, array-ordered, sRGB
-                case PixelDesc::RGB8_sRGB:      return SDL_PIXELFORMAT_RGB24;
-                case PixelDesc::BGR8_sRGB:      return SDL_PIXELFORMAT_BGR24;
-                case PixelDesc::RGBA8_sRGB:     return SDL_PIXELFORMAT_RGBA32;
-                case PixelDesc::BGRA8_sRGB:     return SDL_PIXELFORMAT_BGRA32;
-                case PixelDesc::ARGB8_sRGB:     return SDL_PIXELFORMAT_ARGB32;
-                case PixelDesc::ABGR8_sRGB:     return SDL_PIXELFORMAT_ABGR32;
+                case PixelFormat::RGB8_sRGB:      return SDL_PIXELFORMAT_RGB24;
+                case PixelFormat::BGR8_sRGB:      return SDL_PIXELFORMAT_BGR24;
+                case PixelFormat::RGBA8_sRGB:     return SDL_PIXELFORMAT_RGBA32;
+                case PixelFormat::BGRA8_sRGB:     return SDL_PIXELFORMAT_BGRA32;
+                case PixelFormat::ARGB8_sRGB:     return SDL_PIXELFORMAT_ARGB32;
+                case PixelFormat::ABGR8_sRGB:     return SDL_PIXELFORMAT_ABGR32;
 
                 // 16-bit per channel, sRGB — LE variants map directly
                 // on a little-endian host.
-                case PixelDesc::RGB16_LE_sRGB:   return LE ? SDL_PIXELFORMAT_RGB48 : 0;
-                case PixelDesc::BGR16_LE_sRGB:   return LE ? SDL_PIXELFORMAT_BGR48 : 0;
-                case PixelDesc::RGBA16_LE_sRGB:  return LE ? SDL_PIXELFORMAT_RGBA64 : 0;
-                case PixelDesc::BGRA16_LE_sRGB:  return LE ? SDL_PIXELFORMAT_BGRA64 : 0;
-                case PixelDesc::ARGB16_LE_sRGB:  return LE ? SDL_PIXELFORMAT_ARGB64 : 0;
-                case PixelDesc::ABGR16_LE_sRGB:  return LE ? SDL_PIXELFORMAT_ABGR64 : 0;
+                case PixelFormat::RGB16_LE_sRGB:   return LE ? SDL_PIXELFORMAT_RGB48 : 0;
+                case PixelFormat::BGR16_LE_sRGB:   return LE ? SDL_PIXELFORMAT_BGR48 : 0;
+                case PixelFormat::RGBA16_LE_sRGB:  return LE ? SDL_PIXELFORMAT_RGBA64 : 0;
+                case PixelFormat::BGRA16_LE_sRGB:  return LE ? SDL_PIXELFORMAT_BGRA64 : 0;
+                case PixelFormat::ARGB16_LE_sRGB:  return LE ? SDL_PIXELFORMAT_ARGB64 : 0;
+                case PixelFormat::ABGR16_LE_sRGB:  return LE ? SDL_PIXELFORMAT_ABGR64 : 0;
 
                 // ... and BE variants map directly on a big-endian host.
-                case PixelDesc::RGB16_BE_sRGB:   return BE ? SDL_PIXELFORMAT_RGB48 : 0;
-                case PixelDesc::BGR16_BE_sRGB:   return BE ? SDL_PIXELFORMAT_BGR48 : 0;
-                case PixelDesc::RGBA16_BE_sRGB:  return BE ? SDL_PIXELFORMAT_RGBA64 : 0;
-                case PixelDesc::BGRA16_BE_sRGB:  return BE ? SDL_PIXELFORMAT_BGRA64 : 0;
-                case PixelDesc::ARGB16_BE_sRGB:  return BE ? SDL_PIXELFORMAT_ARGB64 : 0;
-                case PixelDesc::ABGR16_BE_sRGB:  return BE ? SDL_PIXELFORMAT_ABGR64 : 0;
+                case PixelFormat::RGB16_BE_sRGB:   return BE ? SDL_PIXELFORMAT_RGB48 : 0;
+                case PixelFormat::BGR16_BE_sRGB:   return BE ? SDL_PIXELFORMAT_BGR48 : 0;
+                case PixelFormat::RGBA16_BE_sRGB:  return BE ? SDL_PIXELFORMAT_RGBA64 : 0;
+                case PixelFormat::BGRA16_BE_sRGB:  return BE ? SDL_PIXELFORMAT_BGRA64 : 0;
+                case PixelFormat::ARGB16_BE_sRGB:  return BE ? SDL_PIXELFORMAT_ARGB64 : 0;
+                case PixelFormat::ABGR16_BE_sRGB:  return BE ? SDL_PIXELFORMAT_ABGR64 : 0;
 
                 // 8-bit 4:2:2 packed YUV — Rec.709 and Rec.601, limited
                 // range.  SDL performs the YCbCr -> RGB conversion on
                 // the GPU at render time using the colorspace property
                 // set by mapColorspace().
-                case PixelDesc::YUV8_422_Rec709:
-                case PixelDesc::YUV8_422_Rec601:
+                case PixelFormat::YUV8_422_Rec709:
+                case PixelFormat::YUV8_422_Rec601:
                         return SDL_PIXELFORMAT_YUY2;
-                case PixelDesc::YUV8_422_UYVY_Rec709:
-                case PixelDesc::YUV8_422_UYVY_Rec601:
+                case PixelFormat::YUV8_422_UYVY_Rec709:
+                case PixelFormat::YUV8_422_UYVY_Rec601:
                         return SDL_PIXELFORMAT_UYVY;
 
                 // 8-bit 4:2:0 semi-planar YUV (NV12 / NV21).
-                case PixelDesc::YUV8_420_SemiPlanar_Rec709:
-                case PixelDesc::YUV8_420_SemiPlanar_Rec601:
+                case PixelFormat::YUV8_420_SemiPlanar_Rec709:
+                case PixelFormat::YUV8_420_SemiPlanar_Rec601:
                         return SDL_PIXELFORMAT_NV12;
-                case PixelDesc::YUV8_420_NV21_Rec709:
+                case PixelFormat::YUV8_420_NV21_Rec709:
                         return SDL_PIXELFORMAT_NV21;
 
                 // 8-bit 4:2:0 fully planar (I420 — SDL's IYUV).  Promeki
                 // stores planes as Y,Cb,Cr which matches SDL's IYUV.
-                case PixelDesc::YUV8_420_Planar_Rec709:
-                case PixelDesc::YUV8_420_Planar_Rec601:
+                case PixelFormat::YUV8_420_Planar_Rec709:
+                case PixelFormat::YUV8_420_Planar_Rec601:
                         return SDL_PIXELFORMAT_IYUV;
 
                 default:                        return 0;
         }
 }
 
-uint32_t SDLVideoWidget::mapColorspace(const PixelDesc &pd) {
+uint32_t SDLVideoWidget::mapColorspace(const PixelFormat &pd) {
         // Only YUV formats need an explicit colorspace hint — RGB
         // textures default to SDL_COLORSPACE_SRGB which is what we
         // want.  For YUV, we must tell SDL which YCbCr matrix and
@@ -168,17 +168,17 @@ uint32_t SDLVideoWidget::mapColorspace(const PixelDesc &pd) {
         // default (SDL_COLORSPACE_JPEG = BT.601 full-range) and the
         // colors will be subtly wrong.
         switch(pd.id()) {
-                case PixelDesc::YUV8_422_Rec709:
-                case PixelDesc::YUV8_422_UYVY_Rec709:
-                case PixelDesc::YUV8_420_SemiPlanar_Rec709:
-                case PixelDesc::YUV8_420_NV21_Rec709:
-                case PixelDesc::YUV8_420_Planar_Rec709:
+                case PixelFormat::YUV8_422_Rec709:
+                case PixelFormat::YUV8_422_UYVY_Rec709:
+                case PixelFormat::YUV8_420_SemiPlanar_Rec709:
+                case PixelFormat::YUV8_420_NV21_Rec709:
+                case PixelFormat::YUV8_420_Planar_Rec709:
                         return SDL_COLORSPACE_BT709_LIMITED;
 
-                case PixelDesc::YUV8_422_Rec601:
-                case PixelDesc::YUV8_422_UYVY_Rec601:
-                case PixelDesc::YUV8_420_SemiPlanar_Rec601:
-                case PixelDesc::YUV8_420_Planar_Rec601:
+                case PixelFormat::YUV8_422_Rec601:
+                case PixelFormat::YUV8_422_UYVY_Rec601:
+                case PixelFormat::YUV8_420_SemiPlanar_Rec601:
+                case PixelFormat::YUV8_420_Planar_Rec601:
                         return SDL_COLORSPACE_BT601_LIMITED;
 
                 default:
@@ -186,25 +186,25 @@ uint32_t SDLVideoWidget::mapColorspace(const PixelDesc &pd) {
         }
 }
 
-bool SDLVideoWidget::isDirectlyMappable(const PixelDesc &pd) {
-        return mapPixelDesc(pd) != 0;
+bool SDLVideoWidget::isDirectlyMappable(const PixelFormat &pd) {
+        return mapPixelFormat(pd) != 0;
 }
 
 bool SDLVideoWidget::uploadCurrentImage() {
         if(!_currentImage.isValid()) return false;
         _frameCount++;
 
-        const PixelDesc &srcPd = _currentImage.pixelDesc();
+        const PixelFormat &srcPd = _currentImage.pixelFormat();
 
         // The widget now relies on the planner-inserted CSC stage
-        // upstream to deliver an SDL-native PixelDesc — no inline
+        // upstream to deliver an SDL-native PixelFormat — no inline
         // CSC fallback here.  This moves all colour conversion work
         // off the render thread and onto the CSC stage's strand,
         // and matches what @ref SDLPlayerTask::proposeInput
         // advertises to the planner.
-        const uint32_t sdlFmt = mapPixelDesc(srcPd);
+        const uint32_t sdlFmt = mapPixelFormat(srcPd);
         if(sdlFmt == 0) {
-                promekiErr("SDLVideoWidget: PixelDesc '%s' is not SDL-native; "
+                promekiErr("SDLVideoWidget: PixelFormat '%s' is not SDL-native; "
                            "the upstream pipeline is supposed to bridge it via "
                            "a planner-inserted CSC stage.  Frame dropped.",
                            srcPd.name().cstr());

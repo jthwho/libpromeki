@@ -161,21 +161,41 @@ To VariantImpl<Types...>::get(Error *err) const {
                 } else if constexpr (std::is_same_v<To, MemSpace>) {
                         if constexpr (std::is_integral<From>::value) return MemSpace(static_cast<MemSpace::ID>(arg));
 
+                } else if constexpr (std::is_same_v<To, PixelMemLayout>) {
+                        if constexpr (std::is_same_v<From, String>) return PixelMemLayout::lookup(arg);
+                        if constexpr (std::is_integral<From>::value) return PixelMemLayout(static_cast<PixelMemLayout::ID>(arg));
+
                 } else if constexpr (std::is_same_v<To, PixelFormat>) {
                         if constexpr (std::is_same_v<From, String>) return PixelFormat::lookup(arg);
                         if constexpr (std::is_integral<From>::value) return PixelFormat(static_cast<PixelFormat::ID>(arg));
 
-                } else if constexpr (std::is_same_v<To, PixelDesc>) {
-                        if constexpr (std::is_same_v<From, String>) return PixelDesc::lookup(arg);
-                        if constexpr (std::is_integral<From>::value) return PixelDesc(static_cast<PixelDesc::ID>(arg));
-
                 } else if constexpr (std::is_same_v<To, VideoCodec>) {
-                        if constexpr (std::is_same_v<From, String>) return VideoCodec::lookup(arg);
+                        // Accept both "Name" and the pinned "Name:Backend"
+                        // form; the backend name must be pre-registered
+                        // via VideoCodec::registerBackend or the parse
+                        // falls back to an invalid VideoCodec.
+                        if constexpr (std::is_same_v<From, String>) {
+                                auto r = VideoCodec::fromString(arg);
+                                if(error(r).isError()) return VideoCodec();
+                                return value(r);
+                        }
                         if constexpr (std::is_integral<From>::value) return VideoCodec(static_cast<VideoCodec::ID>(arg));
 
                 } else if constexpr (std::is_same_v<To, AudioCodec>) {
-                        if constexpr (std::is_same_v<From, String>) return AudioCodec::lookup(arg);
+                        // Accept both "Name" and the pinned "Name:Backend" form.
+                        if constexpr (std::is_same_v<From, String>) {
+                                auto r = AudioCodec::fromString(arg);
+                                if(error(r).isError()) return AudioCodec();
+                                return value(r);
+                        }
                         if constexpr (std::is_integral<From>::value) return AudioCodec(static_cast<AudioCodec::ID>(arg));
+
+                } else if constexpr (std::is_same_v<To, AudioFormat>) {
+                        if constexpr (std::is_same_v<From, String>) {
+                                auto r = AudioFormat::fromString(arg);
+                                return error(r).isError() ? AudioFormat() : value(r);
+                        }
+                        if constexpr (std::is_integral<From>::value) return AudioFormat(static_cast<AudioFormat::ID>(arg));
 
                 } else if constexpr (std::is_same_v<To, Enum>) {
                         // Only String->Enum is supported; integer->Enum is intentionally
@@ -284,6 +304,14 @@ To VariantImpl<Types...>::get(Error *err) const {
                         if constexpr (std::is_same_v<From, VideoFormat>) return arg.toString();
                         if constexpr (std::is_same_v<From, StringList>) return arg.join(",");
                         if constexpr (std::is_same_v<From, Color>) return arg.toString();
+                        // VideoCodec / AudioCodec precede the generic
+                        // TypeRegistry branch so the pinned-backend
+                        // suffix ("Name:Backend") survives a String
+                        // round-trip.  The wrappers' name() accessor
+                        // drops the backend, so we explicitly call
+                        // toString().
+                        if constexpr (std::is_same_v<From, VideoCodec>) return arg.toString();
+                        if constexpr (std::is_same_v<From, AudioCodec>) return arg.toString();
                         if constexpr (detail::is_type_registry_v<From>) return arg.name();
                         if constexpr (std::is_same_v<From, Enum>) return arg.toString();
                         if constexpr (std::is_same_v<From, EnumList>) return arg.toString();

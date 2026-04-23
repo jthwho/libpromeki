@@ -28,7 +28,8 @@ int main() {
 }
 #else
 
-#include <promeki/codec.h>
+#include <promeki/videoencoder.h>
+#include <promeki/videodecoder.h>
 #include <promeki/color.h>
 #include <promeki/cuda.h>
 #include <promeki/enums.h>
@@ -39,7 +40,7 @@ int main() {
 #include <promeki/mediapacket.h>
 #include <promeki/metadata.h>
 #include <promeki/nvencvideoencoder.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/string.h>
 #include <promeki/videotestpattern.h>
 #include <promeki/videocodec.h>
@@ -50,6 +51,25 @@ int main() {
 using namespace promeki;
 
 namespace {
+
+// Helpers: the functional test was written against the old string-keyed
+// createEncoderByName() surface; under the new API every codec
+// is a typed VideoCodec, so we resolve the name once here and return a
+// fresh encoder/decoder session (or nullptr) keeping call sites
+// unchanged.
+VideoEncoder *createEncoderByName(const char *codecName) {
+        VideoCodec vc = VideoCodec::lookup(codecName);
+        if(!vc.isValid()) return nullptr;
+        auto r = vc.createEncoder();
+        return isOk(r) ? value(r) : nullptr;
+}
+
+VideoDecoder *createDecoderByName(const char *codecName) {
+        VideoCodec vc = VideoCodec::lookup(codecName);
+        if(!vc.isValid()) return nullptr;
+        auto r = vc.createDecoder();
+        return isOk(r) ? value(r) : nullptr;
+}
 
 struct Options {
         int     width   = 1920;
@@ -192,13 +212,13 @@ void skip(const char *name, const char *reason) {
 Image generateSource(const Options &opts) {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::ColorBars);
-        Image img(Size2Du32(opts.width, opts.height), PixelDesc(PixelDesc::RGBA8_sRGB));
+        Image img(Size2Du32(opts.width, opts.height), PixelFormat(PixelFormat::RGBA8_sRGB));
         gen.render(img);
         return img;
 }
 
-Image convertTo(const Image &src, PixelDesc::ID id) {
-        PixelDesc pd(id);
+Image convertTo(const Image &src, PixelFormat::ID id) {
+        PixelFormat pd(id);
         Metadata meta;
         return src.convert(pd, meta);
 }
@@ -219,7 +239,7 @@ EncodeResult runEncode(const char *codecName,
                        bool verbose) {
         EncodeResult r;
 
-        VideoEncoder *enc = VideoEncoder::createEncoder(codecName);
+        VideoEncoder *enc = createEncoderByName(codecName);
         if(!enc) {
                 r.errorMsg = String::sprintf("no encoder registered for '%s'", codecName);
                 return r;
@@ -227,7 +247,7 @@ EncodeResult runEncode(const char *codecName,
         enc->configure(cfg);
 
         for(int i = 0; i < frames.size(); ++i) {
-                Error err = enc->submitFrame(frames[i]);
+                Error err = enc->submitFrame(Image::Ptr::create(frames[i]));
                 if(err.isError()) {
                         r.errorMsg = enc->lastErrorMessage();
                         delete enc;
@@ -272,7 +292,7 @@ EncodeResult runEncode(const char *codecName,
 // ---------------------------------------------------------------------------
 
 struct FormatCodecCombo {
-        PixelDesc::ID   pixelDesc;
+        PixelFormat::ID   pixelFormat;
         const char     *codec;
         const char     *label;
 };
@@ -281,31 +301,31 @@ void testBasicEncode(const Options &opts, const Image &src) {
         section("Basic encode (format x codec)");
 
         FormatCodecCombo combos[] = {
-                { PixelDesc::YUV8_420_SemiPlanar_Rec709,     "H264", "NV12 / H.264" },
-                { PixelDesc::YUV8_420_SemiPlanar_Rec709,     "HEVC", "NV12 / HEVC"  },
-                { PixelDesc::YUV8_420_SemiPlanar_Rec709,     "AV1",  "NV12 / AV1"   },
-                { PixelDesc::YUV10_420_SemiPlanar_LE_Rec709, "H264", "P010 / H.264" },
-                { PixelDesc::YUV10_420_SemiPlanar_LE_Rec709, "HEVC", "P010 / HEVC"  },
-                { PixelDesc::YUV10_420_SemiPlanar_LE_Rec709, "AV1",  "P010 / AV1"   },
-                { PixelDesc::YUV8_422_SemiPlanar_Rec709,     "H264", "NV16 / H.264" },
-                { PixelDesc::YUV8_422_SemiPlanar_Rec709,     "HEVC", "NV16 / HEVC"  },
-                { PixelDesc::YUV10_422_SemiPlanar_LE_Rec709, "H264", "P210 / H.264" },
-                { PixelDesc::YUV10_422_SemiPlanar_LE_Rec709, "HEVC", "P210 / HEVC"  },
-                { PixelDesc::YUV8_444_Planar_Rec709,         "H264", "YUV444 / H.264" },
-                { PixelDesc::YUV8_444_Planar_Rec709,         "HEVC", "YUV444 / HEVC"  },
-                { PixelDesc::YUV10_444_Planar_LE_Rec709,     "H264", "YUV444_10 / H.264" },
-                { PixelDesc::YUV10_444_Planar_LE_Rec709,     "HEVC", "YUV444_10 / HEVC"  },
+                { PixelFormat::YUV8_420_SemiPlanar_Rec709,     "H264", "NV12 / H.264" },
+                { PixelFormat::YUV8_420_SemiPlanar_Rec709,     "HEVC", "NV12 / HEVC"  },
+                { PixelFormat::YUV8_420_SemiPlanar_Rec709,     "AV1",  "NV12 / AV1"   },
+                { PixelFormat::YUV10_420_SemiPlanar_LE_Rec709, "H264", "P010 / H.264" },
+                { PixelFormat::YUV10_420_SemiPlanar_LE_Rec709, "HEVC", "P010 / HEVC"  },
+                { PixelFormat::YUV10_420_SemiPlanar_LE_Rec709, "AV1",  "P010 / AV1"   },
+                { PixelFormat::YUV8_422_SemiPlanar_Rec709,     "H264", "NV16 / H.264" },
+                { PixelFormat::YUV8_422_SemiPlanar_Rec709,     "HEVC", "NV16 / HEVC"  },
+                { PixelFormat::YUV10_422_SemiPlanar_LE_Rec709, "H264", "P210 / H.264" },
+                { PixelFormat::YUV10_422_SemiPlanar_LE_Rec709, "HEVC", "P210 / HEVC"  },
+                { PixelFormat::YUV8_444_Planar_Rec709,         "H264", "YUV444 / H.264" },
+                { PixelFormat::YUV8_444_Planar_Rec709,         "HEVC", "YUV444 / HEVC"  },
+                { PixelFormat::YUV10_444_Planar_LE_Rec709,     "H264", "YUV444_10 / H.264" },
+                { PixelFormat::YUV10_444_Planar_LE_Rec709,     "HEVC", "YUV444_10 / HEVC"  },
         };
 
         MediaConfig cfg;
         cfg.set(MediaConfig::BitrateKbps, int32_t(20000));
         cfg.set(MediaConfig::GopLength,   int32_t(30));
-        cfg.set(MediaConfig::VideoRcMode, VideoRateControl::CBR);
+        cfg.set(MediaConfig::VideoRcMode, RateControlMode::CBR);
         cfg.set(MediaConfig::VideoPreset, VideoEncoderPreset::LowLatency);
 
         for(const auto &c : combos) {
                 tryStart(c.label);
-                Image converted = convertTo(src, c.pixelDesc);
+                Image converted = convertTo(src, c.pixelFormat);
                 if(!converted.isValid()) {
                         skip(c.label, "CSC conversion failed");
                         continue;
@@ -332,7 +352,7 @@ void testForceKeyframe(const Options &opts, const Image &src) {
         section("ForceKeyframe metadata");
 
         const char *codecs[] = { "H264", "HEVC", "AV1" };
-        Image nv12 = convertTo(src, PixelDesc::YUV8_420_SemiPlanar_Rec709);
+        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) {
                 skip("ForceKeyframe", "CSC conversion failed");
                 return;
@@ -342,7 +362,7 @@ void testForceKeyframe(const Options &opts, const Image &src) {
                 String label = String::sprintf("ForceKeyframe / %s", codec);
                 tryStart(label.cstr());
 
-                VideoEncoder *enc = VideoEncoder::createEncoder(codec);
+                VideoEncoder *enc = createEncoderByName(codec);
                 if(!enc) { skip(label.cstr(), "no encoder"); continue; }
 
                 MediaConfig cfg;
@@ -368,7 +388,7 @@ void testForceKeyframe(const Options &opts, const Image &src) {
                                         Metadata::ForceKeyframe, true);
                                 enc->requestKeyframe();
                         }
-                        if(enc->submitFrame(frame) != Error::Ok) {
+                        if(enc->submitFrame(Image::Ptr::create(std::move(frame))) != Error::Ok) {
                                 submitOk = false;
                                 break;
                         }
@@ -425,7 +445,7 @@ void testForceKeyframe(const Options &opts, const Image &src) {
 void testRateControlModes(const Options &opts, const Image &src) {
         section("Rate control modes");
 
-        Image nv12 = convertTo(src, PixelDesc::YUV8_420_SemiPlanar_Rec709);
+        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) { skip("RC modes", "CSC failed"); return; }
 
         List<Image> frames;
@@ -439,10 +459,10 @@ void testRateControlModes(const Options &opts, const Image &src) {
         };
 
         RcTest tests[] = {
-                { "CBR 10Mbps",  VideoRateControl::CBR, 10000, 0  },
-                { "VBR 10Mbps",  VideoRateControl::VBR, 10000, 0  },
-                { "CQP QP=23",   VideoRateControl::CQP, 0,     23 },
-                { "CQP QP=35",   VideoRateControl::CQP, 0,     35 },
+                { "CBR 10Mbps",  RateControlMode::CBR, 10000, 0  },
+                { "VBR 10Mbps",  RateControlMode::VBR, 10000, 0  },
+                { "CQP QP=23",   RateControlMode::CQP, 0,     23 },
+                { "CQP QP=35",   RateControlMode::CQP, 0,     35 },
         };
 
         for(const auto &t : tests) {
@@ -467,7 +487,7 @@ void testRateControlModes(const Options &opts, const Image &src) {
 void testPresets(const Options &opts, const Image &src) {
         section("Encoder presets");
 
-        Image nv12 = convertTo(src, PixelDesc::YUV8_420_SemiPlanar_Rec709);
+        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) { skip("Presets", "CSC failed"); return; }
 
         List<Image> frames;
@@ -504,7 +524,7 @@ void testPresets(const Options &opts, const Image &src) {
 void testGopAndIdr(const Options &opts, const Image &src) {
         section("GOP / IDR interval");
 
-        Image nv12 = convertTo(src, PixelDesc::YUV8_420_SemiPlanar_Rec709);
+        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) { skip("GOP/IDR", "CSC failed"); return; }
 
         int numFrames = std::max(opts.frames, 60);
@@ -537,7 +557,7 @@ void testGopAndIdr(const Options &opts, const Image &src) {
                 if(t.idr > 0) cfg.set(MediaConfig::IdrInterval, t.idr);
                 cfg.set(MediaConfig::VideoPreset, VideoEncoderPreset::LowLatency);
 
-                VideoEncoder *enc = VideoEncoder::createEncoder("H264");
+                VideoEncoder *enc = createEncoderByName("H264");
                 if(!enc) { skip(t.label, "no encoder"); continue; }
                 enc->configure(cfg);
 
@@ -546,7 +566,7 @@ void testGopAndIdr(const Options &opts, const Image &src) {
                 int pktCount = 0;
 
                 for(int i = 0; i < numFrames; ++i) {
-                        if(enc->submitFrame(frames[i]) != Error::Ok) {
+                        if(enc->submitFrame(Image::Ptr::create(frames[i])) != Error::Ok) {
                                 submitOk = false;
                                 break;
                         }
@@ -580,7 +600,7 @@ void testProfileLevel(const Options &opts, const Image &src) {
         section("Profile / level");
 
         struct ProfileTest {
-                PixelDesc::ID   pixelDesc;
+                PixelFormat::ID   pixelFormat;
                 const char     *codec;
                 const char     *profile;
                 const char     *level;
@@ -588,21 +608,21 @@ void testProfileLevel(const Options &opts, const Image &src) {
         };
 
         ProfileTest tests[] = {
-                { PixelDesc::YUV8_420_SemiPlanar_Rec709,     "H264", "high",    "4.1", "H264 high 4.1 / NV12"    },
-                { PixelDesc::YUV8_420_SemiPlanar_Rec709,     "H264", "main",    "",    "H264 main auto / NV12"    },
-                { PixelDesc::YUV8_420_SemiPlanar_Rec709,     "H264", "baseline","",    "H264 baseline auto / NV12"},
-                { PixelDesc::YUV10_420_SemiPlanar_LE_Rec709, "H264", "",        "",    "H264 auto (P010→high10)"  },
-                { PixelDesc::YUV8_422_SemiPlanar_Rec709,     "H264", "",        "",    "H264 auto (NV16→high422)" },
-                { PixelDesc::YUV8_422_SemiPlanar_Rec709,     "H264", "high422", "5.1", "H264 high422 5.1 / NV16"  },
-                { PixelDesc::YUV10_420_SemiPlanar_LE_Rec709, "HEVC", "",        "",    "HEVC auto (P010→main10)"  },
-                { PixelDesc::YUV8_422_SemiPlanar_Rec709,     "HEVC", "",        "",    "HEVC auto (NV16→rext)"    },
-                { PixelDesc::YUV8_422_SemiPlanar_Rec709,     "HEVC", "rext",    "5.1", "HEVC rext 5.1 / NV16"     },
-                { PixelDesc::YUV8_420_SemiPlanar_Rec709,     "AV1",  "",        "5.1", "AV1 main 5.1 / NV12"      },
+                { PixelFormat::YUV8_420_SemiPlanar_Rec709,     "H264", "high",    "4.1", "H264 high 4.1 / NV12"    },
+                { PixelFormat::YUV8_420_SemiPlanar_Rec709,     "H264", "main",    "",    "H264 main auto / NV12"    },
+                { PixelFormat::YUV8_420_SemiPlanar_Rec709,     "H264", "baseline","",    "H264 baseline auto / NV12"},
+                { PixelFormat::YUV10_420_SemiPlanar_LE_Rec709, "H264", "",        "",    "H264 auto (P010→high10)"  },
+                { PixelFormat::YUV8_422_SemiPlanar_Rec709,     "H264", "",        "",    "H264 auto (NV16→high422)" },
+                { PixelFormat::YUV8_422_SemiPlanar_Rec709,     "H264", "high422", "5.1", "H264 high422 5.1 / NV16"  },
+                { PixelFormat::YUV10_420_SemiPlanar_LE_Rec709, "HEVC", "",        "",    "HEVC auto (P010→main10)"  },
+                { PixelFormat::YUV8_422_SemiPlanar_Rec709,     "HEVC", "",        "",    "HEVC auto (NV16→rext)"    },
+                { PixelFormat::YUV8_422_SemiPlanar_Rec709,     "HEVC", "rext",    "5.1", "HEVC rext 5.1 / NV16"     },
+                { PixelFormat::YUV8_420_SemiPlanar_Rec709,     "AV1",  "",        "5.1", "AV1 main 5.1 / NV12"      },
         };
 
         for(const auto &t : tests) {
                 tryStart(t.label);
-                Image converted = convertTo(src, t.pixelDesc);
+                Image converted = convertTo(src, t.pixelFormat);
                 if(!converted.isValid()) {
                         skip(t.label, "CSC conversion failed");
                         continue;
@@ -631,7 +651,7 @@ void testProfileLevel(const Options &opts, const Image &src) {
 void testBFrames(const Options &opts, const Image &src) {
         section("B-frames");
 
-        Image nv12 = convertTo(src, PixelDesc::YUV8_420_SemiPlanar_Rec709);
+        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) { skip("B-frames", "CSC failed"); return; }
 
         int numFrames = std::max(opts.frames, 30);
@@ -681,7 +701,7 @@ void testBFrames(const Options &opts, const Image &src) {
 void testLookahead(const Options &opts, const Image &src) {
         section("Look-ahead");
 
-        Image nv12 = convertTo(src, PixelDesc::YUV8_420_SemiPlanar_Rec709);
+        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) { skip("Look-ahead", "CSC failed"); return; }
 
         int numFrames = std::max(opts.frames, 30);
@@ -728,7 +748,7 @@ void testLookahead(const Options &opts, const Image &src) {
 void testAdaptiveQuantization(const Options &opts, const Image &src) {
         section("Adaptive quantization");
 
-        Image nv12 = convertTo(src, PixelDesc::YUV8_420_SemiPlanar_Rec709);
+        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) { skip("AQ", "CSC failed"); return; }
 
         List<Image> frames;
@@ -771,7 +791,7 @@ void testAdaptiveQuantization(const Options &opts, const Image &src) {
 void testMultiPass(const Options &opts, const Image &src) {
         section("Multi-pass encoding");
 
-        Image nv12 = convertTo(src, PixelDesc::YUV8_420_SemiPlanar_Rec709);
+        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) { skip("MultiPass", "CSC failed"); return; }
 
         List<Image> frames;
@@ -808,7 +828,7 @@ void testMultiPass(const Options &opts, const Image &src) {
 void testRepeatHeaders(const Options &opts, const Image &src) {
         section("Repeat headers");
 
-        Image nv12 = convertTo(src, PixelDesc::YUV8_420_SemiPlanar_Rec709);
+        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) { skip("RepeatHeaders", "CSC failed"); return; }
 
         const char *codecs[] = { "H264", "HEVC", "AV1" };
@@ -847,7 +867,7 @@ void testRepeatHeaders(const Options &opts, const Image &src) {
 void testHdrMetadata(const Options &opts, const Image &src) {
         section("HDR metadata");
 
-        Image p010 = convertTo(src, PixelDesc::YUV10_420_SemiPlanar_LE_Rec709);
+        Image p010 = convertTo(src, PixelFormat::YUV10_420_SemiPlanar_LE_Rec709);
         if(!p010.isValid()) { skip("HDR", "P010 CSC failed"); return; }
 
         List<Image> frames;
@@ -896,7 +916,7 @@ void testLossless(const Options &opts, const Image &src) {
         section("Lossless encoding");
 
         struct LosslessTest {
-                PixelDesc::ID   pixelDesc;
+                PixelFormat::ID   pixelFormat;
                 const char     *codec;
                 const char     *label;
         };
@@ -906,14 +926,14 @@ void testLossless(const Options &opts, const Image &src) {
         // chroma formats, so we only exercise the 4:4:4 case here.
         // HEVC lossless works for all chroma formats via FREXT.
         LosslessTest tests[] = {
-                { PixelDesc::YUV8_444_Planar_Rec709,     "H264", "Lossless H264 YUV444" },
-                { PixelDesc::YUV8_444_Planar_Rec709,     "HEVC", "Lossless HEVC YUV444" },
-                { PixelDesc::YUV8_420_SemiPlanar_Rec709, "HEVC", "Lossless HEVC NV12" },
+                { PixelFormat::YUV8_444_Planar_Rec709,     "H264", "Lossless H264 YUV444" },
+                { PixelFormat::YUV8_444_Planar_Rec709,     "HEVC", "Lossless HEVC YUV444" },
+                { PixelFormat::YUV8_420_SemiPlanar_Rec709, "HEVC", "Lossless HEVC NV12" },
         };
 
         for(const auto &t : tests) {
                 tryStart(t.label);
-                Image converted = convertTo(src, t.pixelDesc);
+                Image converted = convertTo(src, t.pixelFormat);
                 if(!converted.isValid()) {
                         skip(t.label, "CSC conversion failed");
                         continue;
@@ -939,8 +959,8 @@ void testLossless(const Options &opts, const Image &src) {
 void testColorDescription(const Options &opts, const Image &src) {
         section("Color description (VUI / AV1)");
 
-        Image nv12   = convertTo(src, PixelDesc::YUV8_420_SemiPlanar_Rec709);
-        Image p010   = convertTo(src, PixelDesc::YUV10_420_SemiPlanar_LE_Rec709);
+        Image nv12   = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        Image p010   = convertTo(src, PixelFormat::YUV10_420_SemiPlanar_LE_Rec709);
         if(!nv12.isValid()) { skip("ColorDesc", "NV12 CSC failed"); return; }
         if(!p010.isValid()) { skip("ColorDesc", "P010 CSC failed"); return; }
 
@@ -948,7 +968,7 @@ void testColorDescription(const Options &opts, const Image &src) {
 
         struct ColorTest {
                 const char                     *codec;
-                PixelDesc::ID                   pdId;
+                PixelFormat::ID                   pdId;
                 // Config overrides.  Using Auto/Unknown exercises the
                 // auto-derivation path; explicit values test override.
                 ColorPrimaries                  primaries;
@@ -959,40 +979,40 @@ void testColorDescription(const Options &opts, const Image &src) {
         };
 
         ColorTest tests[] = {
-                // Auto everywhere — derive BT.709 / Limited from NV12 PixelDesc.
-                { "H264", PixelDesc::YUV8_420_SemiPlanar_Rec709,
+                // Auto everywhere — derive BT.709 / Limited from NV12 PixelFormat.
+                { "H264", PixelFormat::YUV8_420_SemiPlanar_Rec709,
                   ColorPrimaries::Auto, TransferCharacteristics::Auto,
                   MatrixCoefficients::Auto, VideoRange::Unknown,
                   "H264 NV12 Auto (→ BT.709 limited)" },
-                { "HEVC", PixelDesc::YUV8_420_SemiPlanar_Rec709,
+                { "HEVC", PixelFormat::YUV8_420_SemiPlanar_Rec709,
                   ColorPrimaries::Auto, TransferCharacteristics::Auto,
                   MatrixCoefficients::Auto, VideoRange::Unknown,
                   "HEVC NV12 Auto (→ BT.709 limited)" },
-                { "AV1", PixelDesc::YUV8_420_SemiPlanar_Rec709,
+                { "AV1", PixelFormat::YUV8_420_SemiPlanar_Rec709,
                   ColorPrimaries::Auto, TransferCharacteristics::Auto,
                   MatrixCoefficients::Auto, VideoRange::Unknown,
                   "AV1  NV12 Auto (→ BT.709 limited)" },
                 // Explicit HDR10 override on P010 — SMPTE2084 + BT.2020.
-                { "HEVC", PixelDesc::YUV10_420_SemiPlanar_LE_Rec709,
+                { "HEVC", PixelFormat::YUV10_420_SemiPlanar_LE_Rec709,
                   ColorPrimaries::BT2020, TransferCharacteristics::SMPTE2084,
                   MatrixCoefficients::BT2020_NCL, VideoRange::Limited,
                   "HEVC P010 HDR10 (BT.2020 + PQ)" },
-                { "AV1", PixelDesc::YUV10_420_SemiPlanar_LE_Rec709,
+                { "AV1", PixelFormat::YUV10_420_SemiPlanar_LE_Rec709,
                   ColorPrimaries::BT2020, TransferCharacteristics::SMPTE2084,
                   MatrixCoefficients::BT2020_NCL, VideoRange::Limited,
                   "AV1  P010 HDR10 (BT.2020 + PQ)" },
                 // HLG override on P010.
-                { "HEVC", PixelDesc::YUV10_420_SemiPlanar_LE_Rec709,
+                { "HEVC", PixelFormat::YUV10_420_SemiPlanar_LE_Rec709,
                   ColorPrimaries::BT2020, TransferCharacteristics::ARIB_STD_B67,
                   MatrixCoefficients::BT2020_NCL, VideoRange::Limited,
                   "HEVC P010 HLG" },
                 // Explicit full-range override (rare but legal).
-                { "H264", PixelDesc::YUV8_420_SemiPlanar_Rec709,
+                { "H264", PixelFormat::YUV8_420_SemiPlanar_Rec709,
                   ColorPrimaries::BT709, TransferCharacteristics::BT709,
                   MatrixCoefficients::BT709, VideoRange::Full,
                   "H264 NV12 explicit full-range" },
                 // Unspecified — suppress the color description block.
-                { "H264", PixelDesc::YUV8_420_SemiPlanar_Rec709,
+                { "H264", PixelFormat::YUV8_420_SemiPlanar_Rec709,
                   ColorPrimaries::Unspecified, TransferCharacteristics::Unspecified,
                   MatrixCoefficients::Unspecified, VideoRange::Unknown,
                   "H264 NV12 Unspecified (no VUI color)" },
@@ -1000,7 +1020,7 @@ void testColorDescription(const Options &opts, const Image &src) {
 
         for(const auto &t : tests) {
                 tryStart(t.label);
-                Image converted = (t.pdId == PixelDesc::YUV8_420_SemiPlanar_Rec709) ? nv12 : p010;
+                Image converted = (t.pdId == PixelFormat::YUV8_420_SemiPlanar_Rec709) ? nv12 : p010;
 
                 List<Image> frames;
                 for(int i = 0; i < numFrames; ++i) frames.pushToBack(converted);
@@ -1027,7 +1047,7 @@ void testColorDescription(const Options &opts, const Image &src) {
 void testTimecode(const Options &opts, const Image &src) {
         section("Timecode SEI");
 
-        Image nv12 = convertTo(src, PixelDesc::YUV8_420_SemiPlanar_Rec709);
+        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) { skip("Timecode", "NV12 CSC failed"); return; }
 
         struct TcTest {
@@ -1052,7 +1072,7 @@ void testTimecode(const Options &opts, const Image &src) {
 
         for(const auto &t : tests) {
                 tryStart(t.label);
-                VideoEncoder *enc = VideoEncoder::createEncoder(t.codec);
+                VideoEncoder *enc = createEncoderByName(t.codec);
                 if(!enc) { skip(t.label, "no encoder"); continue; }
 
                 MediaConfig cfg;
@@ -1071,7 +1091,7 @@ void testTimecode(const Options &opts, const Image &src) {
                 for(int i = 0; i < numFrames; ++i) {
                         Image frame = nv12;
                         frame.metadata().set(Metadata::Timecode, tc);
-                        if(enc->submitFrame(frame) != Error::Ok) {
+                        if(enc->submitFrame(Image::Ptr::create(std::move(frame))) != Error::Ok) {
                                 submitOk = false;
                                 break;
                         }
@@ -1102,7 +1122,7 @@ void testTimecode(const Options &opts, const Image &src) {
 void testInterlaced(const Options &opts, const Image &src) {
         section("Interlaced scan mode");
 
-        Image nv12 = convertTo(src, PixelDesc::YUV8_420_SemiPlanar_Rec709);
+        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) { skip("Interlaced", "NV12 CSC failed"); return; }
 
         struct ScanTest {
@@ -1129,7 +1149,7 @@ void testInterlaced(const Options &opts, const Image &src) {
 
         for(const auto &t : tests) {
                 tryStart(t.label);
-                VideoEncoder *enc = VideoEncoder::createEncoder(t.codec);
+                VideoEncoder *enc = createEncoderByName(t.codec);
                 if(!enc) { skip(t.label, "no encoder"); continue; }
 
                 MediaConfig cfg;
@@ -1143,7 +1163,7 @@ void testInterlaced(const Options &opts, const Image &src) {
                 size_t totalBytes = 0;
                 int packets = 0;
                 for(int i = 0; i < numFrames; ++i) {
-                        if(enc->submitFrame(nv12) != Error::Ok) {
+                        if(enc->submitFrame(Image::Ptr::create(nv12)) != Error::Ok) {
                                 submitOk = false;
                                 break;
                         }
@@ -1179,13 +1199,13 @@ Metadata encodeDecodeRoundTrip(const char *codecName,
                                const List<Image> &inFrames,
                                const MediaConfig &encCfg,
                                String &errOut) {
-        VideoEncoder *enc = VideoEncoder::createEncoder(codecName);
+        VideoEncoder *enc = createEncoderByName(codecName);
         if(!enc) { errOut = String::sprintf("no encoder for %s", codecName); return {}; }
         enc->configure(encCfg);
 
         List<MediaPacket::Ptr> packets;
         for(const auto &img : inFrames) {
-                Error err = enc->submitFrame(img);
+                Error err = enc->submitFrame(Image::Ptr::create(img));
                 if(err.isError()) {
                         errOut = enc->lastErrorMessage();
                         delete enc;
@@ -1210,26 +1230,31 @@ Metadata encodeDecodeRoundTrip(const char *codecName,
                 errOut = String::sprintf("no decoder for %s", codecName);
                 return {};
         }
-        VideoDecoder *dec = codec.createDecoder();
-        if(!dec) { errOut = String::sprintf("createDecoder returned null"); return {}; }
+        auto decRes = codec.createDecoder();
+        if(error(decRes).isError()) {
+                errOut = String::sprintf("createDecoder failed: %s",
+                                         error(decRes).name().cstr());
+                return {};
+        }
+        VideoDecoder *dec = value(decRes);
         dec->configure(MediaConfig());  // defaults — let bitstream drive
 
         Metadata firstMeta;
         bool gotFrame = false;
         for(const auto &pkt : packets) {
-                Error err = dec->submitPacket(*pkt);
+                Error err = dec->submitPacket(pkt);
                 if(err.isError()) { errOut = dec->lastErrorMessage(); delete dec; return {}; }
                 while(true) {
-                        Image img = dec->receiveFrame();
+                        Image::Ptr img = dec->receiveFrame();
                         if(!img.isValid()) break;
-                        if(!gotFrame) { firstMeta = img.metadata(); gotFrame = true; }
+                        if(!gotFrame) { firstMeta = img->metadata(); gotFrame = true; }
                 }
         }
         dec->flush();
         while(true) {
-                Image img = dec->receiveFrame();
+                Image::Ptr img = dec->receiveFrame();
                 if(!img.isValid()) break;
-                if(!gotFrame) { firstMeta = img.metadata(); gotFrame = true; }
+                if(!gotFrame) { firstMeta = img->metadata(); gotFrame = true; }
         }
         delete dec;
         if(!gotFrame) { errOut = "no decoded frames"; return {}; }
@@ -1239,8 +1264,8 @@ Metadata encodeDecodeRoundTrip(const char *codecName,
 void testEncodeDecodeRoundTrip(const Options &opts, const Image &src) {
         section("Encode → decode round-trip (NVENC → NVDEC)");
 
-        Image nv12 = convertTo(src, PixelDesc::YUV8_420_SemiPlanar_Rec709);
-        Image p010 = convertTo(src, PixelDesc::YUV10_420_SemiPlanar_LE_Rec709);
+        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        Image p010 = convertTo(src, PixelFormat::YUV10_420_SemiPlanar_LE_Rec709);
         if(!nv12.isValid()) { skip("RoundTrip", "NV12 CSC failed"); return; }
         if(!p010.isValid()) { skip("RoundTrip", "P010 CSC failed"); return; }
 
@@ -1518,14 +1543,14 @@ void testUnsupportedFormat(const Options &opts) {
         (void)opts;
         tryStart("RejectRGB");
 
-        VideoEncoder *enc = VideoEncoder::createEncoder("H264");
+        VideoEncoder *enc = createEncoderByName("H264");
         if(!enc) { skip("RejectRGB", "no encoder"); return; }
 
         MediaConfig cfg;
         cfg.set(MediaConfig::BitrateKbps, int32_t(2000));
         enc->configure(cfg);
 
-        Image rgb(Size2Du32(256, 128), PixelDesc(PixelDesc::RGB8_sRGB));
+        Image::Ptr rgb = Image::Ptr::create(Size2Du32(256, 128), PixelFormat(PixelFormat::RGB8_sRGB));
         Error err = enc->submitFrame(rgb);
         delete enc;
 
@@ -1541,15 +1566,15 @@ void testSupportedInputsList() {
         section("supportedInputs()");
         tryStart("supportedInputs");
 
-        VideoEncoder *enc = VideoEncoder::createEncoder("H264");
+        VideoEncoder *enc = createEncoderByName("H264");
         if(!enc) { skip("supportedInputs", "no encoder"); return; }
 
-        List<int> inputs = enc->supportedInputs();
+        List<int> inputs = enc->codec().encoderSupportedInputs();
         delete enc;
 
         bool hasNv12 = false;
         for(int id : inputs) {
-                if(id == static_cast<int>(PixelDesc::YUV8_420_SemiPlanar_Rec709)) {
+                if(id == static_cast<int>(PixelFormat::YUV8_420_SemiPlanar_Rec709)) {
                         hasNv12 = true;
                 }
         }

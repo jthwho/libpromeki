@@ -80,7 +80,7 @@ Error QuickTime::Impl::readSampleRange(size_t trackIndex, uint64_t startSampleIn
         return Error::Ok;
 }
 
-Error QuickTime::Impl::addVideoTrack(const PixelDesc & /*codec*/, const Size2Du32 & /*size*/,
+Error QuickTime::Impl::addVideoTrack(const PixelFormat & /*codec*/, const Size2Du32 & /*size*/,
                                      const FrameRate & /*frameRate*/, uint32_t * /*outTrackId*/) {
         return Error::NotImplemented;
 }

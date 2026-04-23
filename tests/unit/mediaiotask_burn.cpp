@@ -13,7 +13,7 @@
 #include <promeki/audio.h>
 #include <promeki/audiodesc.h>
 #include <promeki/frame.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/imagedesc.h>
 #include <promeki/mediadesc.h>
 #include <promeki/framerate.h>
@@ -24,9 +24,9 @@ using namespace promeki;
 
 namespace {
 
-Frame::Ptr makeRgbFrameWithTc(size_t w, size_t h, PixelDesc::ID id,
+Frame::Ptr makeRgbFrameWithTc(size_t w, size_t h, PixelFormat::ID id,
                                const Timecode &tc) {
-        Image img(w, h, PixelDesc(id));
+        Image img(w, h, PixelFormat(id));
         img.fill(0);
         Frame::Ptr frame = Frame::Ptr::create();
         frame.modify()->imageList().pushToBack(Image::Ptr::create(std::move(img)));
@@ -36,8 +36,8 @@ Frame::Ptr makeRgbFrameWithTc(size_t w, size_t h, PixelDesc::ID id,
         return frame;
 }
 
-Frame::Ptr makeRgbFrame(size_t w, size_t h, PixelDesc::ID id) {
-        Image img(w, h, PixelDesc(id));
+Frame::Ptr makeRgbFrame(size_t w, size_t h, PixelFormat::ID id) {
+        Image img(w, h, PixelFormat(id));
         img.fill(0);
         Frame::Ptr frame = Frame::Ptr::create();
         frame.modify()->imageList().pushToBack(Image::Ptr::create(std::move(img)));
@@ -98,7 +98,7 @@ TEST_CASE("MediaIOTask_Burn_AppliesBurn") {
         REQUIRE(io->open(MediaIO::Transform).isOk());
 
         Timecode tc(Timecode::NDF24, 1, 0, 0, 0);
-        Frame::Ptr in = makeRgbFrameWithTc(320, 240, PixelDesc::RGB8_sRGB, tc);
+        Frame::Ptr in = makeRgbFrameWithTc(320, 240, PixelFormat::RGB8_sRGB, tc);
         CHECK(io->writeFrame(in).isOk());
 
         Frame::Ptr out;
@@ -121,14 +121,14 @@ TEST_CASE("MediaIOTask_Burn_PassThroughWhenDisabled") {
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Transform).isOk());
 
-        Frame::Ptr in = makeRgbFrame(64, 48, PixelDesc::RGB8_sRGB);
+        Frame::Ptr in = makeRgbFrame(64, 48, PixelFormat::RGB8_sRGB);
         CHECK(io->writeFrame(in).isOk());
 
         Frame::Ptr out;
         CHECK(io->readFrame(out).isOk());
         REQUIRE(out.isValid());
         REQUIRE(out->imageList().size() == 1);
-        CHECK(out->imageList()[0]->pixelDesc() == PixelDesc(PixelDesc::RGB8_sRGB));
+        CHECK(out->imageList()[0]->pixelFormat() == PixelFormat(PixelFormat::RGB8_sRGB));
 
         io->close();
         delete io;
@@ -143,7 +143,7 @@ TEST_CASE("MediaIOTask_Burn_AudioPassesThrough") {
         REQUIRE(io->open(MediaIO::Transform).isOk());
 
         Frame::Ptr in = Frame::Ptr::create();
-        AudioDesc adesc(AudioDesc::PCMI_Float32LE, 48000.0f, 2);
+        AudioDesc adesc(AudioFormat::PCMI_Float32LE, 48000.0f, 2);
         Audio audio(adesc, 1024);
         audio.zero();
         in.modify()->audioList().pushToBack(Audio::Ptr::create(std::move(audio)));
@@ -167,7 +167,7 @@ TEST_CASE("MediaIOTask_Burn_Stats") {
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Transform).isOk());
 
-        Frame::Ptr f = makeRgbFrame(16, 16, PixelDesc::RGB8_sRGB);
+        Frame::Ptr f = makeRgbFrame(16, 16, PixelFormat::RGB8_sRGB);
         CHECK(io->writeFrame(f).isOk());
         CHECK(io->writeFrame(f).isOk());
 
@@ -198,7 +198,7 @@ TEST_CASE("MediaIOTask_Burn_ReadEmptyQueueTryAgain") {
 // ----------------------------------------------------------------------------
 //
 // Burn is a pure passthrough transform — the only negotiation
-// constraint is that the video PixelDesc must have a paint engine (the
+// constraint is that the video PixelFormat must have a paint engine (the
 // overlay goes through VideoTestPattern::applyBurn, which needs one).
 // These cases exercise proposeInput / proposeOutput against the three
 // classes of offered MediaDesc: (a) paintable uncompressed, which
@@ -209,11 +209,11 @@ TEST_CASE("MediaIOTask_Burn_ReadEmptyQueueTryAgain") {
 
 namespace {
 
-MediaDesc makeVideoDesc(uint32_t w, uint32_t h, PixelDesc::ID id) {
+MediaDesc makeVideoDesc(uint32_t w, uint32_t h, PixelFormat::ID id) {
         MediaDesc md;
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.imageList().pushToBack(
-                ImageDesc(Size2Du32(w, h), PixelDesc(id)));
+                ImageDesc(Size2Du32(w, h), PixelFormat(id)));
         return md;
 }
 
@@ -224,7 +224,7 @@ TEST_CASE("MediaIOTask_Burn_proposeInput_PaintableRgbPassesThrough") {
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
 
-        const MediaDesc offered = makeVideoDesc(1920, 1080, PixelDesc::RGBA8_sRGB);
+        const MediaDesc offered = makeVideoDesc(1920, 1080, PixelFormat::RGBA8_sRGB);
         MediaDesc preferred;
         CHECK(io->proposeInput(offered, &preferred) == Error::Ok);
         CHECK(preferred == offered);
@@ -238,7 +238,7 @@ TEST_CASE("MediaIOTask_Burn_proposeInput_PaintableYuvPassesThrough") {
         REQUIRE(io != nullptr);
 
         const MediaDesc offered =
-                makeVideoDesc(1920, 1080, PixelDesc::YUV8_420_SemiPlanar_Rec709);
+                makeVideoDesc(1920, 1080, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         MediaDesc preferred;
         CHECK(io->proposeInput(offered, &preferred) == Error::Ok);
         CHECK(preferred == offered);
@@ -255,11 +255,11 @@ TEST_CASE("MediaIOTask_Burn_proposeInput_CompressedYuvSubstitutesYuv") {
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
 
-        const MediaDesc offered = makeVideoDesc(1920, 1080, PixelDesc::H264);
+        const MediaDesc offered = makeVideoDesc(1920, 1080, PixelFormat::H264);
         MediaDesc preferred;
         REQUIRE(io->proposeInput(offered, &preferred) == Error::Ok);
         REQUIRE_FALSE(preferred.imageList().isEmpty());
-        CHECK(preferred.imageList()[0].pixelDesc().id() == PixelDesc::YUV8_422_Rec709);
+        CHECK(preferred.imageList()[0].pixelFormat().id() == PixelFormat::YUV8_422_Rec709);
         // Raster + frame rate are preserved — only the pixel format
         // changes.
         CHECK(preferred.imageList()[0].size() == offered.imageList()[0].size());
@@ -276,11 +276,11 @@ TEST_CASE("MediaIOTask_Burn_proposeInput_CompressedRgbSubstitutesRgba") {
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
 
-        const MediaDesc offered = makeVideoDesc(1920, 1080, PixelDesc::JPEG_RGB8_sRGB);
+        const MediaDesc offered = makeVideoDesc(1920, 1080, PixelFormat::JPEG_RGB8_sRGB);
         MediaDesc preferred;
         REQUIRE(io->proposeInput(offered, &preferred) == Error::Ok);
         REQUIRE_FALSE(preferred.imageList().isEmpty());
-        CHECK(preferred.imageList()[0].pixelDesc().id() == PixelDesc::RGBA8_sRGB);
+        CHECK(preferred.imageList()[0].pixelFormat().id() == PixelFormat::RGBA8_sRGB);
 
         delete io;
 }
@@ -294,11 +294,11 @@ TEST_CASE("MediaIOTask_Burn_proposeInput_NonPaintableYuvSubstitutesYuv") {
         REQUIRE(io != nullptr);
 
         const MediaDesc offered =
-                makeVideoDesc(1920, 1080, PixelDesc::YUV10_422_Planar_BE_Rec709);
+                makeVideoDesc(1920, 1080, PixelFormat::YUV10_422_Planar_BE_Rec709);
         MediaDesc preferred;
         REQUIRE(io->proposeInput(offered, &preferred) == Error::Ok);
         REQUIRE_FALSE(preferred.imageList().isEmpty());
-        CHECK(preferred.imageList()[0].pixelDesc().id() == PixelDesc::YUV8_422_Rec709);
+        CHECK(preferred.imageList()[0].pixelFormat().id() == PixelFormat::YUV8_422_Rec709);
         CHECK(preferred.imageList()[0].size() == offered.imageList()[0].size());
 
         delete io;
@@ -312,11 +312,11 @@ TEST_CASE("MediaIOTask_Burn_proposeInput_NonPaintableRgbSubstitutesRgba") {
         REQUIRE(io != nullptr);
 
         const MediaDesc offered =
-                makeVideoDesc(1920, 1080, PixelDesc::RGBA12_BE_sRGB);
+                makeVideoDesc(1920, 1080, PixelFormat::RGBA12_BE_sRGB);
         MediaDesc preferred;
         REQUIRE(io->proposeInput(offered, &preferred) == Error::Ok);
         REQUIRE_FALSE(preferred.imageList().isEmpty());
-        CHECK(preferred.imageList()[0].pixelDesc().id() == PixelDesc::RGBA8_sRGB);
+        CHECK(preferred.imageList()[0].pixelFormat().id() == PixelFormat::RGBA8_sRGB);
 
         delete io;
 }
@@ -333,7 +333,7 @@ TEST_CASE("MediaIOTask_Burn_proposeInput_AudioOnlyPassesThrough") {
         AudioDesc ad;
         ad.setSampleRate(48000.0f);
         ad.setChannels(2);
-        ad.setDataType(AudioDesc::PCMI_Float32LE);
+        ad.setFormat(AudioFormat::PCMI_Float32LE);
         offered.audioList().pushToBack(ad);
 
         MediaDesc preferred;
@@ -348,7 +348,7 @@ TEST_CASE("MediaIOTask_Burn_proposeInput_NullPreferredIsInvalid") {
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
 
-        const MediaDesc offered = makeVideoDesc(640, 480, PixelDesc::RGBA8_sRGB);
+        const MediaDesc offered = makeVideoDesc(640, 480, PixelFormat::RGBA8_sRGB);
         CHECK(io->proposeInput(offered, nullptr) == Error::Invalid);
 
         delete io;
@@ -362,7 +362,7 @@ TEST_CASE("MediaIOTask_Burn_proposeOutput_Passthrough") {
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
 
-        const MediaDesc requested = makeVideoDesc(1920, 1080, PixelDesc::RGBA8_sRGB);
+        const MediaDesc requested = makeVideoDesc(1920, 1080, PixelFormat::RGBA8_sRGB);
         MediaDesc achievable;
         CHECK(io->proposeOutput(requested, &achievable) == Error::Ok);
         CHECK(achievable == requested);
@@ -375,7 +375,7 @@ TEST_CASE("MediaIOTask_Burn_proposeOutput_NullAchievableIsInvalid") {
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
 
-        const MediaDesc requested = makeVideoDesc(640, 480, PixelDesc::RGBA8_sRGB);
+        const MediaDesc requested = makeVideoDesc(640, 480, PixelFormat::RGBA8_sRGB);
         CHECK(io->proposeOutput(requested, nullptr) == Error::Invalid);
 
         delete io;

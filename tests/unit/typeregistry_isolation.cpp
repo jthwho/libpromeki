@@ -6,7 +6,7 @@
  *
  * Cross-cutting regression test for the @ref typeregistry "TypeRegistry"
  * pattern.  Every TypeRegistry-style class in the library
- * (VideoCodec, AudioCodec, ColorModel, PixelDesc, PixelFormat,
+ * (VideoCodec, AudioCodec, ColorModel, PixelFormat, PixelMemLayout,
  * MemSpace, ClockDomain) backs its lookups with its own
  * construct-on-first-use singleton.  Each singleton lives behind a
  * helper struct in the corresponding @c .cpp file.
@@ -30,11 +30,12 @@
 
 #include <doctest/doctest.h>
 #include <promeki/audiocodec.h>
+#include <promeki/audioformat.h>
 #include <promeki/clockdomain.h>
 #include <promeki/colormodel.h>
 #include <promeki/memspace.h>
-#include <promeki/pixeldesc.h>
 #include <promeki/pixelformat.h>
+#include <promeki/pixelmemlayout.h>
 #include <promeki/videocodec.h>
 
 using namespace promeki;
@@ -49,19 +50,20 @@ TEST_CASE("TypeRegistry: each registry resolves to its own Data records") {
         CHECK(VideoCodec(VideoCodec::HEVC).name()         == "HEVC");
         CHECK(VideoCodec(VideoCodec::JPEG).name()         == "JPEG");
 
-        CHECK(AudioCodec(AudioCodec::PCMI_S16LE).name()   == "PCMI_S16LE");
         CHECK(AudioCodec(AudioCodec::AAC).name()          == "AAC");
         CHECK(AudioCodec(AudioCodec::Opus).name()         == "Opus");
+        CHECK(AudioFormat(AudioFormat::PCMI_S16LE).name() == "PCMI_S16LE");
+        CHECK(AudioFormat(AudioFormat::Opus).name()       == "Opus");
 
         CHECK(ColorModel(ColorModel::sRGB).name()         == "sRGB");
         CHECK(ColorModel(ColorModel::Rec709).name()       == "Rec709");
         CHECK(ColorModel(ColorModel::YCbCr_Rec709).name() == "YCbCr_Rec709");
 
-        CHECK(PixelDesc(PixelDesc::RGBA8_sRGB).name()     == "RGBA8_sRGB");
-        CHECK(PixelDesc(PixelDesc::H264).name()           == "H264");
+        CHECK(PixelFormat(PixelFormat::RGBA8_sRGB).name()     == "RGBA8_sRGB");
+        CHECK(PixelFormat(PixelFormat::H264).name()           == "H264");
 
-        CHECK(PixelFormat(PixelFormat::I_4x8).name()      == "4x8");
-        CHECK(PixelFormat(PixelFormat::I_3x8).name()      == "3x8");
+        CHECK(PixelMemLayout(PixelMemLayout::I_4x8).name()      == "4x8");
+        CHECK(PixelMemLayout(PixelMemLayout::I_3x8).name()      == "3x8");
 
         CHECK(MemSpace(MemSpace::System).name()           == "System");
         CHECK(MemSpace(MemSpace::SystemSecure).name()     == "SystemSecure");
@@ -74,19 +76,19 @@ TEST_CASE("TypeRegistry: lookup() returns the right type's entry") {
         // Same defence on the name-based lookup path — anyone
         // overloading on String name needs every registry's nameMap
         // to be its own.
-        CHECK(VideoCodec::lookup("H264")  == VideoCodec(VideoCodec::H264));
-        CHECK(AudioCodec::lookup("AAC")   == AudioCodec(AudioCodec::AAC));
+        CHECK(value(VideoCodec::lookup("H264"))  == VideoCodec(VideoCodec::H264));
+        CHECK(value(AudioCodec::lookup("AAC"))   == AudioCodec(AudioCodec::AAC));
         CHECK(ColorModel::lookup("sRGB")  == ColorModel(ColorModel::sRGB));
-        CHECK(PixelDesc::lookup("RGBA8_sRGB")
-                == PixelDesc(PixelDesc::RGBA8_sRGB));
-        CHECK(PixelFormat::lookup("4x8")
-                == PixelFormat(PixelFormat::I_4x8));
+        CHECK(PixelFormat::lookup("RGBA8_sRGB")
+                == PixelFormat(PixelFormat::RGBA8_sRGB));
+        CHECK(PixelMemLayout::lookup("4x8")
+                == PixelMemLayout(PixelMemLayout::I_4x8));
 
         // Cross-registry "wrong type" name lookups must miss.  If two
-        // singletons collapsed, e.g. AudioCodec::lookup("H264") would
+        // singletons collapsed, e.g. value(AudioCodec::lookup("H264")) would
         // wrongly succeed.
-        CHECK_FALSE(AudioCodec::lookup("H264").isValid());
-        CHECK_FALSE(VideoCodec::lookup("AAC").isValid());
+        CHECK(error(AudioCodec::lookup("H264")).isError());
+        CHECK(error(VideoCodec::lookup("AAC")).isError());
         CHECK_FALSE(ColorModel::lookup("H264").isValid());
-        CHECK_FALSE(PixelDesc::lookup("AAC").isValid());
+        CHECK_FALSE(PixelFormat::lookup("AAC").isValid());
 }

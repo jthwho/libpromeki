@@ -140,7 +140,7 @@ Error AudioTestPattern::configure() {
         // per-call by dedicated paths — storing them here would
         // duplicate state.
         _chanGens.resize(channels);
-        const AudioDesc monoDesc(_desc.dataType(), _desc.sampleRate(), 1);
+        const AudioDesc monoDesc(_desc.format().id(), _desc.sampleRate(), 1);
         for(size_t ch = 0; ch < channels; ++ch) {
                 AudioPattern mode = modeForChannel(ch);
                 _chanGens[ch] = nullptr;
@@ -410,7 +410,7 @@ const Audio &AudioTestPattern::avSyncBurst(size_t samples) const {
         // call so every marker frame ends up byte-identical, which is
         // what the Inspector A/V sync check expects when it validates
         // the marker waveform.
-        const AudioDesc monoDesc(_desc.dataType(), _desc.sampleRate(), 1);
+        const AudioDesc monoDesc(_desc.format().id(), _desc.sampleRate(), 1);
         AudioGen burst(monoDesc);
         AudioGen::Config cfg;
         cfg.type  = AudioGen::Sine;

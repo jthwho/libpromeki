@@ -14,7 +14,7 @@
 #include <promeki/imagefileio.h>
 #include <promeki/imagefile.h>
 #include <promeki/image.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/metadata.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/mediapacket.h>
@@ -40,7 +40,7 @@ TEST_CASE("ImageFileIO JPEG: handler is registered") {
 // ============================================================================
 
 static Image makeGradientRGB8(size_t w, size_t h) {
-        Image img(w, h, PixelDesc(PixelDesc::RGB8_sRGB));
+        Image img(w, h, PixelFormat(PixelFormat::RGB8_sRGB));
         REQUIRE(img.isValid());
         uint8_t *data = static_cast<uint8_t *>(img.data(0));
         const size_t stride = img.lineStride(0);
@@ -99,7 +99,7 @@ TEST_CASE("ImageFileIO JPEG: RGB8 round-trip") {
         Image loaded = lf.image();
         REQUIRE(loaded.isValid());
         CHECK(loaded.isCompressed());
-        CHECK(loaded.pixelDesc().videoCodec().id() == VideoCodec::JPEG);
+        CHECK(loaded.pixelFormat().videoCodec().id() == VideoCodec::JPEG);
         CHECK(loaded.width() == 64);
         CHECK(loaded.height() == 48);
 
@@ -107,7 +107,7 @@ TEST_CASE("ImageFileIO JPEG: RGB8 round-trip") {
         // (Image::convert is CSC-only after task 36) and compare
         // against the original gradient.
         Image decoded = promeki::tests::decodeCompressedToImage(
-                loaded, PixelDesc(PixelDesc::RGB8_sRGB));
+                loaded, PixelFormat(PixelFormat::RGB8_sRGB));
         REQUIRE(decoded.isValid());
         REQUIRE(!decoded.isCompressed());
         CHECK(decoded.width() == 64);
@@ -188,14 +188,14 @@ TEST_CASE("VideoCodec JPEG: RGB8 -> JPEG round-trip via VideoEncoder/VideoDecode
         Image src = makeGradientRGB8(80, 60);
 
         Image jpeg = promeki::tests::encodeImageToCompressed(
-                src, PixelDesc(PixelDesc::JPEG_YUV8_422_Rec709));
+                src, PixelFormat(PixelFormat::JPEG_YUV8_422_Rec709));
         REQUIRE(jpeg.isValid());
         REQUIRE(jpeg.isCompressed());
-        CHECK(jpeg.pixelDesc().videoCodec().id() == VideoCodec::JPEG);
+        CHECK(jpeg.pixelFormat().videoCodec().id() == VideoCodec::JPEG);
         CHECK(jpeg.compressedSize() > 0);
 
         Image decoded = promeki::tests::decodeCompressedToImage(
-                jpeg, PixelDesc(PixelDesc::RGB8_sRGB));
+                jpeg, PixelFormat(PixelFormat::RGB8_sRGB));
         REQUIRE(decoded.isValid());
         REQUIRE(!decoded.isCompressed());
         CHECK(decoded.width() == src.width());
@@ -215,14 +215,14 @@ TEST_CASE("VideoCodec JPEG: honours MediaConfig::JpegQuality") {
         MediaConfig low;
         low.set(MediaConfig::JpegQuality, 10);
         Image lowQ = promeki::tests::encodeImageToCompressed(
-                src, PixelDesc(PixelDesc::JPEG_RGB8_sRGB), low);
+                src, PixelFormat(PixelFormat::JPEG_RGB8_sRGB), low);
         REQUIRE(lowQ.isValid());
         REQUIRE(lowQ.isCompressed());
 
         MediaConfig high;
         high.set(MediaConfig::JpegQuality, 95);
         Image highQ = promeki::tests::encodeImageToCompressed(
-                src, PixelDesc(PixelDesc::JPEG_RGB8_sRGB), high);
+                src, PixelFormat(PixelFormat::JPEG_RGB8_sRGB), high);
         REQUIRE(highQ.isValid());
         REQUIRE(highQ.isCompressed());
 
@@ -255,7 +255,7 @@ TEST_CASE("ImageFileIO JPEG: save honours MediaConfig::JpegQuality") {
         REQUIRE(sfHi.save(high) == Error::Ok);
 
         // Quality propagates through ImageFile → ImageFileIO_JPEG →
-        // Image::convert → JpegImageCodec::configure: the on-disk
+        // Image::convert → JpegVideoEncoder::configure: the on-disk
         // payloads must differ in size in the same direction the codec
         // would produce on its own.
         FILE *fa = std::fopen(fnLo, "rb");
@@ -308,12 +308,12 @@ TEST_CASE("ImageFileIO JPEG: save empty image returns error") {
 }
 
 // ============================================================================
-// MediaPacket attachment — a compressed-image load attaches a
-// MediaPacket to the Image so a downstream MediaIOTask_VideoDecoder
+// VideoPacket attachment — a compressed-image load attaches a
+// VideoPacket to the Image so a downstream MediaIOTask_VideoDecoder
 // stage can read Image::packet() without having to re-wrap plane(0).
 // ============================================================================
 
-TEST_CASE("ImageFileIO JPEG: load attaches a MediaPacket to the Image") {
+TEST_CASE("ImageFileIO JPEG: load attaches a VideoPacket to the Image") {
         const char *fn = "/tmp/promeki_jpeg_packet.jpg";
         Image src = makeGradientRGB8(64, 48);
 
@@ -332,9 +332,9 @@ TEST_CASE("ImageFileIO JPEG: load attaches a MediaPacket to the Image") {
         const Image &img = *frame.imageList()[0];
         REQUIRE(img.isCompressed());
         REQUIRE(img.packet().isValid());
-        const MediaPacket &pkt = *img.packet();
+        const VideoPacket &pkt = *img.packet();
         CHECK(pkt.isValid());
-        CHECK(pkt.pixelDesc() == img.pixelDesc());
+        CHECK(pkt.pixelFormat() == img.pixelFormat());
         CHECK(pkt.size() == img.compressedSize());
         CHECK(pkt.isKeyframe());
         CHECK(pkt.buffer().ptr() == img.plane(0).ptr());

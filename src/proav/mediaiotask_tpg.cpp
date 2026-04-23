@@ -11,7 +11,7 @@
 #include <promeki/image.h>
 #include <promeki/audio.h>
 #include <promeki/frame.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/metadata.h>
 #include <promeki/timecode.h>
 #include <promeki/audiolevel.h>
@@ -51,7 +51,7 @@ MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
                         // stream out of the box.
                         s(MediaConfig::VideoEnabled, true);
                         s(MediaConfig::VideoPattern, VideoPattern::ColorBars);
-                        s(MediaConfig::VideoPixelFormat, PixelDesc(PixelDesc::RGB8_sRGB));
+                        s(MediaConfig::VideoPixelFormat, PixelFormat(PixelFormat::RGB8_sRGB));
                         s(MediaConfig::VideoSolidColor, Color::Black);
                         s(MediaConfig::VideoMotion, 0.0);
                         // Video burn-in — on by default so the plain
@@ -157,7 +157,7 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
                 _videoPattern.setPattern(VideoPattern(patEnum.value()));
 
                 Size2Du32 size = vfmt.raster();
-                PixelDesc pd = cfg.getAs<PixelDesc>(MediaConfig::VideoPixelFormat, PixelDesc(PixelDesc::RGB8_sRGB));
+                PixelFormat pd = cfg.getAs<PixelFormat>(MediaConfig::VideoPixelFormat, PixelFormat(PixelFormat::RGB8_sRGB));
                 if(!size.isValid()) {
                         promekiErr("MediaIOTask_TPG: invalid raster dimensions %s",
                                    size.toString().cstr());
@@ -499,9 +499,9 @@ MediaDesc MediaIOTask_TPG::producedFromConfig(const MediaIO::Config &cfg) const 
         if(vfmt.isValid()) {
                 md.setFrameRate(vfmt.frameRate());
                 if(merged.getAs<bool>(MediaConfig::VideoEnabled, true)) {
-                        const PixelDesc pd = merged.getAs<PixelDesc>(
+                        const PixelFormat pd = merged.getAs<PixelFormat>(
                                 MediaConfig::VideoPixelFormat,
-                                PixelDesc(PixelDesc::RGB8_sRGB));
+                                PixelFormat(PixelFormat::RGB8_sRGB));
                         ImageDesc img(vfmt.raster().width(), vfmt.raster().height(),
                                       pd.id());
                         img.setVideoScanMode(vfmt.videoScanMode());
@@ -513,7 +513,7 @@ MediaDesc MediaIOTask_TPG::producedFromConfig(const MediaIO::Config &cfg) const 
                 ad.setSampleRate(merged.getAs<float>(MediaConfig::AudioRate, 48000.0f));
                 ad.setChannels(static_cast<unsigned int>(
                         merged.getAs<int>(MediaConfig::AudioChannels, 2)));
-                ad.setDataType(AudioDesc::PCMI_Float32LE);
+                ad.setFormat(AudioFormat::PCMI_Float32LE);
                 md.audioList().pushToBack(ad);
         }
         return md;
@@ -537,13 +537,13 @@ Error MediaIOTask_TPG::proposeOutput(const MediaDesc &requested,
         // TPG can synthesise at any reasonable shape.  The planner
         // can ask for an alternative pixel format / raster / frame
         // rate via @p requested; we accept any uncompressed
-        // PixelDesc and any valid frame rate.  (When the planner
+        // PixelFormat and any valid frame rate.  (When the planner
         // doesn't ask for anything specific it falls back to
         // describe().preferredFormat.)
         if(achievable == nullptr) return Error::Invalid;
         if(!requested.isValid()) return Error::NotSupported;
         for(const auto &img : requested.imageList()) {
-                if(img.pixelDesc().isCompressed()) {
+                if(img.pixelFormat().isCompressed()) {
                         // TPG produces uncompressed frames only.
                         return Error::NotSupported;
                 }

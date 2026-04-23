@@ -13,7 +13,7 @@
 #include <promeki/image.h>
 #include <promeki/audio.h>
 #include <promeki/audiodesc.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/mediatimestamp.h>
 #include <promeki/metadata.h>
 #include <promeki/timestamp.h>
@@ -66,7 +66,7 @@ Frame::Ptr makeVideoAudioFrame(int64_t videoNs, int64_t audioNs,
 
         Frame::Ptr f = Frame::Ptr::create();
 
-        Image::Ptr img = Image::Ptr::create(4, 4, PixelDesc::RGBA8_sRGB);
+        Image::Ptr img = Image::Ptr::create(4, 4, PixelFormat::RGBA8_sRGB);
         img.modify()->metadata().set(Metadata::MediaTimeStamp,
                                      mts(videoNs, dom));
         f.modify()->imageList().pushToBack(img);
@@ -578,8 +578,8 @@ TEST_CASE("FrameSync: queue overflow drops oldest") {
 
 TEST_CASE("FrameSync: audio is produced at target sample count per pull") {
         FrameRate fps(FrameRate::FPS_60);
-        AudioDesc sourceAudio(AudioDesc::NativeType, 48000.0f, 2);
-        AudioDesc targetAudio(AudioDesc::NativeType, 48000.0f, 2);
+        AudioDesc sourceAudio(AudioFormat::NativeFloat, 48000.0f, 2);
+        AudioDesc targetAudio(AudioFormat::NativeFloat, 48000.0f, 2);
         SyntheticClock clk(fps);
         FrameSync fs(String("audio"));
         fs.setTargetFrameRate(fps);
@@ -610,7 +610,7 @@ TEST_CASE("FrameSync: audio is produced at target sample count per pull") {
 
 TEST_CASE("FrameSync: video-only source produces no output audio") {
         FrameRate fps(FrameRate::FPS_30);
-        AudioDesc targetAudio(AudioDesc::NativeType, 48000.0f, 2);
+        AudioDesc targetAudio(AudioFormat::NativeFloat, 48000.0f, 2);
         SyntheticClock clk(fps);
         FrameSync fs;
         fs.setTargetFrameRate(fps);

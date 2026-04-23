@@ -14,7 +14,7 @@
 #include <promeki/buffer.h>
 #include <promeki/imagedesc.h>
 #include <promeki/mediaconfig.h>
-#include <promeki/mediapacket.h>
+#include <promeki/videopacket.h>
 #include <promeki/paintengine.h>
 #include <promeki/stringlist.h>
 #include <promeki/variantlookup.h>
@@ -34,7 +34,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Compressed images
  * Image also represents compressed (encoded) image data such as JPEG,
  * JPEG XS, H.264, or HEVC.  A compressed Image uses a compressed pixel
- * description (e.g. PixelDesc::JPEG_RGB8_sRGB) and stores the encoded
+ * description (e.g. PixelFormat::JPEG_RGB8_sRGB) and stores the encoded
  * bitstream in its single plane buffer.  Use isCompressed() to test
  * whether an Image is compressed, compressedSize() to get the encoded
  * byte count, and data() to access the raw encoded bytes.  The
@@ -43,7 +43,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * Compressed Images produced by pipeline stages (VideoEncoder,
  * container demuxers, RTP readers, ImageFile loaders) also carry an
- * attached @ref MediaPacket accessible via packet().  The packet holds
+ * attached @ref VideoPacket accessible via packet().  The packet holds
  * the encoded bytes together with PTS/DTS and codec-level flags
  * (keyframe, parameter-set, end-of-stream) that downstream consumers
  * such as VideoDecoder read directly.  plane(0) and the packet's
@@ -54,7 +54,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @code
  * Image jpeg = Image::fromCompressedData(jpegBytes, jpegSize,
  *                                        1920, 1080,
- *                                        PixelDesc::JPEG_RGB8_sRGB,
+ *                                        PixelFormat::JPEG_RGB8_sRGB,
  *                                        srcImage.metadata());
  * assert(jpeg.isCompressed());
  * assert(jpeg.compressedSize() == jpegSize);
@@ -89,7 +89,7 @@ class Image {
                  * @param pd Pixel description.
                  * @param ms Memory space to allocate from.
                  */
-                Image(const Size2Du32 &s, const PixelDesc &pd, const MemSpace &ms = MemSpace::Default) :
+                Image(const Size2Du32 &s, const PixelFormat &pd, const MemSpace &ms = MemSpace::Default) :
                         Image(ImageDesc(s, pd), ms) { }
 
                 /**
@@ -99,7 +99,7 @@ class Image {
                  * @param pd Pixel description.
                  * @param ms Memory space to allocate from.
                  */
-                Image(size_t w, size_t h, const PixelDesc &pd, const MemSpace &ms = MemSpace::Default) :
+                Image(size_t w, size_t h, const PixelFormat &pd, const MemSpace &ms = MemSpace::Default) :
                         Image(ImageDesc(w, h, pd), ms) { }
 
                 /**
@@ -120,10 +120,10 @@ class Image {
 
                 /**
                  * @brief Returns the pixel description.
-                 * @return A const reference to the PixelDesc.
+                 * @return A const reference to the PixelFormat.
                  */
-                const PixelDesc &pixelDesc() const {
-                        return _desc.pixelDesc();
+                const PixelFormat &pixelFormat() const {
+                        return _desc.pixelFormat();
                 }
 
                 /**
@@ -177,7 +177,7 @@ class Image {
                  * (keyframe, parameter-set, end-of-stream) that a
                  * downstream @ref VideoDecoder consumes.
                  */
-                const MediaPacket::Ptr &packet() const {
+                const VideoPacket::Ptr &packet() const {
                         return _packet;
                 }
 
@@ -185,13 +185,13 @@ class Image {
                  * @brief Replaces the attached compressed-bitstream packet.
                  *
                  * Producers (video encoders, RTP readers, container
-                 * demuxers, ImageFile loaders) attach a MediaPacket
+                 * demuxers, ImageFile loaders) attach a VideoPacket
                  * when the loaded Image is compressed.  Consumers
                  * (video decoders, raw-bitstream sinks, muxers) read
                  * this via @ref packet().  Pass a null @ref
-                 * MediaPacket::Ptr to clear any attached packet.
+                 * VideoPacket::Ptr to clear any attached packet.
                  */
-                void setPacket(MediaPacket::Ptr pkt) {
+                void setPacket(VideoPacket::Ptr pkt) {
                         _packet = std::move(pkt);
                 }
 
@@ -201,7 +201,7 @@ class Image {
                  * @return The number of bytes per scanline.
                  */
                 size_t lineStride(int plane = 0) const {
-                        return _desc.pixelDesc().lineStride(plane, _desc);
+                        return _desc.pixelFormat().lineStride(plane, _desc);
                 }
 
                 /**
@@ -270,8 +270,31 @@ class Image {
                  * @return true if the pixel description is compressed (e.g. JPEG).
                  */
                 bool isCompressed() const {
-                        return _desc.pixelDesc().isCompressed();
+                        return _desc.pixelFormat().isCompressed();
                 }
+
+                /**
+                 * @brief Returns true when stopping the stream before this
+                 *        image leaves the decoded output intact.
+                 *
+                 * An uncompressed image is always a safe cut — every frame
+                 * is independently decodable.  A compressed image encoded
+                 * with an intra-only codec (e.g. JPEG, JPEG XS, ProRes) is
+                 * also always safe because every access unit is a random-
+                 * access point.  A compressed image encoded with a temporal
+                 * codec (H.264, HEVC, AV1) is only safe when its attached
+                 * @ref VideoPacket carries the @ref VideoPacket::Keyframe
+                 * flag — cutting mid-GOP would leave the decoder unable to
+                 * reconstruct prior P/B frames.
+                 *
+                 * Used by @ref Frame::isSafeCutPoint and by
+                 * @ref MediaPipeline to honour a pipeline-wide frame count
+                 * without truncating a GOP.
+                 *
+                 * @return @c true when stopping before this image is safe,
+                 *         @c false when a GOP would be left incomplete.
+                 */
+                bool isSafeCutPoint() const;
 
                 /**
                  * @brief Returns the compressed data size in bytes.
@@ -292,12 +315,12 @@ class Image {
                  * @param size       Size of the compressed data in bytes.
                  * @param width      Original image width in pixels.
                  * @param height     Original image height in pixels.
-                 * @param pd         Compressed pixel description (e.g. PixelDesc::JPEG_RGB8_sRGB).
+                 * @param pd         Compressed pixel description (e.g. PixelFormat::JPEG_RGB8_sRGB).
                  * @param metadata   Optional metadata to attach (e.g. timecode).
                  * @return A valid compressed Image, or an invalid Image on failure.
                  */
                 static Image fromCompressedData(const void *data, size_t size,
-                                                size_t width, size_t height, const PixelDesc &pd,
+                                                size_t width, size_t height, const PixelFormat &pd,
                                                 const Metadata &metadata = Metadata());
 
                 /**
@@ -330,7 +353,7 @@ class Image {
                  *         invalid Image on failure.
                  */
                 static Image fromBuffer(const Buffer::Ptr &buffer,
-                                        size_t width, size_t height, const PixelDesc &pd,
+                                        size_t width, size_t height, const PixelFormat &pd,
                                         const Metadata &metadata = Metadata());
 
                 /**
@@ -338,7 +361,7 @@ class Image {
                  * @return A PaintEngine configured for this image's pixel description.
                  */
                 PaintEngine createPaintEngine() const {
-                        return _desc.pixelDesc().createPaintEngine(*this);
+                        return _desc.pixelFormat().createPaintEngine(*this);
                 }
 
                 /**
@@ -356,7 +379,7 @@ class Image {
                  *   pipeline (useful for debugging or reference comparison
                  *   against @ref Color::convert).
                  * - **Uncompressed → compressed:** If the source format is not
-                 *   one of the target codec's @ref PixelDesc::encodeSources,
+                 *   one of the target codec's @ref PixelFormat::encodeSources,
                  *   a CSC is run first to land on one that is.  The codec
                  *   (currently only JPEG) then encodes the intermediate.
                  *   JPEG quality and chroma subsampling can be overridden via
@@ -365,7 +388,7 @@ class Image {
                  * - **Compressed → uncompressed:** The codec is asked to
                  *   decode directly to the target format.  If the codec does
                  *   not support that target natively, it decodes to one of its
-                 *   preferred @ref PixelDesc::decodeTargets and a CSC finishes
+                 *   preferred @ref PixelFormat::decodeTargets and a CSC finishes
                  *   the job.
                  * - **Compressed → compressed:** Decodes to an uncompressed
                  *   intermediate shared by both sides (or RGBA8_sRGB when
@@ -380,9 +403,9 @@ class Image {
                  * @return A new Image in the target pixel description, or an
                  *         invalid Image on failure.
                  *
-                 * @see CSCPipeline, ImageCodec, JpegImageCodec, @ref csc "CSC Framework"
+                 * @see CSCPipeline, VideoEncoder, VideoDecoder, JpegVideoEncoder, @ref csc "CSC Framework"
                  */
-                Image convert(const PixelDesc &pd, const Metadata &metadata,
+                Image convert(const PixelFormat &pd, const Metadata &metadata,
                               const MediaConfig &config = MediaConfig()) const;
 
                 /**
@@ -393,7 +416,7 @@ class Image {
                  * @c VariantLookup<Image> (size, pixel description,
                  * plane count, compression flags, etc.), per-plane
                  * byte sizes, metadata entries via @ref Metadata::dump,
-                 * and a single line about the attached @ref MediaPacket
+                 * and a single line about the attached @ref VideoPacket
                  * when present.  Each line is prefixed with @p indent
                  * and sub-sections indent an extra two spaces.
                  *
@@ -405,7 +428,7 @@ class Image {
         private:
                 ImageDesc         _desc;
                 Buffer::PtrList   _planeList;
-                MediaPacket::Ptr  _packet;
+                VideoPacket::Ptr  _packet;
 
                 bool allocate(const MemSpace &ms);
 };

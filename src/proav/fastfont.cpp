@@ -137,7 +137,7 @@ const FastFont::CachedGlyph *FastFont::getGlyph(uint32_t codepoint) {
         // using the PaintEngine, which handles all pixel format specifics.
         int cellWidth = advanceX;
         if(cellWidth <= 0) cellWidth = 1;
-        Image glyphImg(cellWidth, _lineHeight, _paintEngine.pixelDesc().id());
+        Image glyphImg(cellWidth, _lineHeight, _paintEngine.pixelFormat().id());
 
         PaintEngine pe = glyphImg.createPaintEngine();
 

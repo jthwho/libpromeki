@@ -114,6 +114,9 @@ String buildFeatureString() {
 #if PROMEKI_ENABLE_AUDIO
         features += "AUDIO";
 #endif
+#if PROMEKI_ENABLE_OPUS
+        features += "OPUS";
+#endif
 #if PROMEKI_ENABLE_SRC
         features += "SRC";
 #endif

@@ -118,7 +118,7 @@ const char *sdlDescription();
                                       promeki::Enum::Type type,
                                       bool isEnumList = false);
 
-/** @brief Prints every registered PixelDesc and exits. */
+/** @brief Prints every registered PixelFormat and exits. */
 [[noreturn]] void listPixelFormatsAndExit(const promeki::String &keyLabel);
 
 /**
@@ -133,6 +133,46 @@ const char *sdlDescription();
 
 /** @brief Prints every registered AudioCodec and exits. */
 [[noreturn]] void listAudioCodecsAndExit(const promeki::String &keyLabel);
+
+/**
+ * @brief Which codec family to emit for @ref printCodecsTsv.
+ *
+ * Mirrors @c Options::ListCodecsKind without including cli.h — keeps
+ * stage.cpp free of the Options struct.
+ */
+enum class CodecTsvKind {
+        Video,     ///< Print @ref VideoCodec rows only.
+        Audio,     ///< Print @ref AudioCodec rows only.
+        All        ///< Print video rows followed by audio rows.
+};
+
+/**
+ * @brief Emits a machine-parseable codec/backend listing to stdout.
+ *
+ * One row per (codec × registered backend) pair, tab-separated,
+ * columns: @c kind, @c codec, @c backend, @c enc (@c yes / @c no),
+ * @c dec (@c yes / @c no).  A codec with no registered backend for
+ * either direction is @em omitted entirely — every emitted row has
+ * at least one of the encoder / decoder slots registered, and
+ * consumers that need both can filter for @c "yes\tyes".
+ *
+ * The list is stable for a given build: codecs appear in
+ * @ref VideoCodec::registeredIDs / @ref AudioCodec::registeredIDs
+ * order, and each codec's backends appear in the order returned by
+ * @c availableEncoderBackends ∪ @c availableDecoderBackends (encoder
+ * list first, decoder-only backends appended afterwards).
+ *
+ * Example output:
+ * @code
+ * video   H264    Nvidia     yes     yes
+ * video   HEVC    Nvidia     yes     yes
+ * video   JPEG    Turbo      yes     yes
+ * audio   Opus    Native     yes     yes
+ * @endcode
+ *
+ * @param kind Which codec family to emit.
+ */
+void printCodecsTsv(CodecTsvKind kind);
 
 // --------------------------------------------------------------------------
 // Value parser helpers

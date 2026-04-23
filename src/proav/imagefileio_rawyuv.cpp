@@ -35,30 +35,30 @@ static constexpr Resolution wellKnownResolutions[] = {
 };
 
 // ---------------------------------------------------------------------------
-// Extension -> PixelDesc mapping
+// Extension -> PixelFormat mapping
 // ---------------------------------------------------------------------------
 
-static PixelDesc::ID pixelDescFromExtension(const String &ext) {
+static PixelFormat::ID pixelFormatFromExtension(const String &ext) {
         String lower = ext.toLower();
-        if(lower == ".uyvy")                            return PixelDesc::YUV8_422_UYVY_Rec709;
-        if(lower == ".yuyv" || lower == ".yuy2")        return PixelDesc::YUV8_422_Rec709;
-        if(lower == ".v210")                            return PixelDesc::YUV10_422_v210_Rec709;
-        if(lower == ".i420" || lower == ".yuv420p")     return PixelDesc::YUV8_420_Planar_Rec709;
-        if(lower == ".nv12")                            return PixelDesc::YUV8_420_SemiPlanar_Rec709;
-        if(lower == ".i422" || lower == ".yuv422p")     return PixelDesc::YUV8_422_Planar_Rec709;
-        if(lower == ".yuv")                             return PixelDesc::Invalid; // handled by smart detection
-        return PixelDesc::Invalid;
+        if(lower == ".uyvy")                            return PixelFormat::YUV8_422_UYVY_Rec709;
+        if(lower == ".yuyv" || lower == ".yuy2")        return PixelFormat::YUV8_422_Rec709;
+        if(lower == ".v210")                            return PixelFormat::YUV10_422_v210_Rec709;
+        if(lower == ".i420" || lower == ".yuv420p")     return PixelFormat::YUV8_420_Planar_Rec709;
+        if(lower == ".nv12")                            return PixelFormat::YUV8_420_SemiPlanar_Rec709;
+        if(lower == ".i422" || lower == ".yuv422p")     return PixelFormat::YUV8_422_Planar_Rec709;
+        if(lower == ".yuv")                             return PixelFormat::Invalid; // handled by smart detection
+        return PixelFormat::Invalid;
 }
 
 // ---------------------------------------------------------------------------
 // Smart .yuv detection: try multiple formats against file size
 // ---------------------------------------------------------------------------
 
-static const PixelDesc::ID yuvCandidates[] = {
-        PixelDesc::YUV8_420_Planar_Rec709,       // I420 — most common .yuv convention
-        PixelDesc::YUV8_422_UYVY_Rec709,         // UYVY
-        PixelDesc::YUV8_422_Planar_Rec709,       // YUV422P
-        PixelDesc::YUV8_420_SemiPlanar_Rec709,   // NV12
+static const PixelFormat::ID yuvCandidates[] = {
+        PixelFormat::YUV8_420_Planar_Rec709,       // I420 — most common .yuv convention
+        PixelFormat::YUV8_422_UYVY_Rec709,         // UYVY
+        PixelFormat::YUV8_422_Planar_Rec709,       // YUV422P
+        PixelFormat::YUV8_420_SemiPlanar_Rec709,   // NV12
 };
 
 static String fileExtension(const String &filename) {
@@ -71,10 +71,10 @@ static String fileExtension(const String &filename) {
 // Compute expected file size for a given resolution and pixel description
 // ---------------------------------------------------------------------------
 
-static size_t expectedFileSize(size_t width, size_t height, const PixelDesc &pd) {
+static size_t expectedFileSize(size_t width, size_t height, const PixelFormat &pd) {
         size_t total = 0;
         for(size_t p = 0; p < pd.planeCount(); ++p) {
-                total += pd.pixelFormat().planeSize(p, width, height);
+                total += pd.memLayout().planeSize(p, width, height);
         }
         return total;
 }
@@ -83,7 +83,7 @@ static size_t expectedFileSize(size_t width, size_t height, const PixelDesc &pd)
 // Try to guess dimensions from file size
 // ---------------------------------------------------------------------------
 
-static bool guessDimensions(size_t fileSize, const PixelDesc &pd,
+static bool guessDimensions(size_t fileSize, const PixelFormat &pd,
                             size_t &outWidth, size_t &outHeight) {
         for(const auto &res : wellKnownResolutions) {
                 if(expectedFileSize(res.width, res.height, pd) == fileSize) {
@@ -124,8 +124,8 @@ Error ImageFileIO_RawYUV::load(ImageFile &imageFile, const MediaConfig &config) 
         // Determine pixel description from file extension
         String ext = fileExtension(filename);
         bool isGenericYuv = (ext.toLower() == ".yuv");
-        PixelDesc::ID pdId = pixelDescFromExtension(ext);
-        if(pdId == PixelDesc::Invalid && !isGenericYuv) {
+        PixelFormat::ID pdId = pixelFormatFromExtension(ext);
+        if(pdId == PixelFormat::Invalid && !isGenericYuv) {
                 promekiErr("RawYUV load '%s': unrecognized extension '%s'",
                            filename.cstr(), ext.cstr());
                 return Error::PixelFormatNotSupported;
@@ -138,14 +138,14 @@ Error ImageFileIO_RawYUV::load(ImageFile &imageFile, const MediaConfig &config) 
         if(hint.isValid()) {
                 width  = hint.width();
                 height = hint.height();
-                if(pdId == PixelDesc::Invalid) pdId = hint.pixelDesc().id();
+                if(pdId == PixelFormat::Invalid) pdId = hint.pixelFormat().id();
         } else {
                 FileInfo fi(filename);
                 size_t fileSize = fi.size();
 
-                if(pdId != PixelDesc::Invalid) {
+                if(pdId != PixelFormat::Invalid) {
                         // Extension gave us a specific format — guess dimensions
-                        PixelDesc candidate(pdId);
+                        PixelFormat candidate(pdId);
                         if(!guessDimensions(fileSize, candidate, width, height)) {
                                 promekiErr("RawYUV load '%s': cannot guess dimensions from file size %zu",
                                            filename.cstr(), fileSize);
@@ -155,7 +155,7 @@ Error ImageFileIO_RawYUV::load(ImageFile &imageFile, const MediaConfig &config) 
                         // Smart .yuv detection: try multiple formats
                         bool found = false;
                         for(auto candidateId : yuvCandidates) {
-                                PixelDesc candidate(candidateId);
+                                PixelFormat candidate(candidateId);
                                 if(guessDimensions(fileSize, candidate, width, height)) {
                                         pdId = candidateId;
                                         found = true;
@@ -170,11 +170,11 @@ Error ImageFileIO_RawYUV::load(ImageFile &imageFile, const MediaConfig &config) 
                 }
                 promekiDebug("RawYUV load '%s': guessed %zux%zu %s from file size %zu",
                              filename.cstr(), width, height,
-                             PixelDesc(pdId).name().cstr(), fileSize);
+                             PixelFormat(pdId).name().cstr(), fileSize);
         }
 
         // Allocate the image
-        PixelDesc pd(pdId);
+        PixelFormat pd(pdId);
         Image image(width, height, pdId);
         if(!image.isValid()) {
                 promekiErr("RawYUV load '%s': failed to allocate %zux%zu image",
@@ -191,7 +191,7 @@ Error ImageFileIO_RawYUV::load(ImageFile &imageFile, const MediaConfig &config) 
         }
 
         for(size_t p = 0; p < pd.planeCount(); ++p) {
-                size_t planeBytes = pd.pixelFormat().planeSize(p, width, height);
+                size_t planeBytes = pd.memLayout().planeSize(p, width, height);
                 int64_t bytesRead = file.read(image.data(p), planeBytes);
                 if(bytesRead < 0 || static_cast<size_t>(bytesRead) != planeBytes) {
                         promekiErr("RawYUV load '%s': short read on plane %zu (expected %zu, got %lld)",
@@ -223,9 +223,9 @@ Error ImageFileIO_RawYUV::save(ImageFile &imageFile, const MediaConfig &config) 
                 return err;
         }
 
-        const PixelDesc &pd = image.pixelDesc();
+        const PixelFormat &pd = image.pixelFormat();
         for(size_t p = 0; p < pd.planeCount(); ++p) {
-                size_t planeBytes = pd.pixelFormat().planeSize(p, image.width(), image.height());
+                size_t planeBytes = pd.memLayout().planeSize(p, image.width(), image.height());
                 int64_t written = file.write(image.data(p), planeBytes);
                 if(written < 0 || static_cast<size_t>(written) != planeBytes) {
                         promekiErr("RawYUV save '%s': short write on plane %zu (expected %zu, wrote %lld)",

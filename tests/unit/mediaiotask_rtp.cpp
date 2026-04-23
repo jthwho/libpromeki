@@ -20,7 +20,7 @@
 #include <promeki/imagedesc.h>
 #include <promeki/mediadesc.h>
 #include <promeki/audiodesc.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/framerate.h>
 #include <promeki/metadata.h>
 #include <promeki/udpsocket.h>
@@ -28,7 +28,6 @@
 #include <promeki/sdpsession.h>
 #include <promeki/file.h>
 #include <promeki/filepath.h>
-#include <promeki/codec.h>
 #include <promeki/mediaconfig.h>
 #include <cstdio>
 #include <cstring>
@@ -45,7 +44,7 @@ namespace {
  * per frame).
  */
 Frame::Ptr makeTinyRgbFrame(size_t w, size_t h, uint8_t fill) {
-        Image img(w, h, PixelDesc(PixelDesc::RGB8_sRGB));
+        Image img(w, h, PixelFormat(PixelFormat::RGB8_sRGB));
         img.fill(static_cast<char>(fill));
         Frame::Ptr frame = Frame::Ptr::create();
         frame.modify()->imageList().pushToBack(Image::Ptr::create(std::move(img)));
@@ -56,7 +55,7 @@ Frame::Ptr makeTinyRgbFrame(size_t w, size_t h, uint8_t fill) {
  * @brief Builds a zeroed 16-bit-LE interleaved audio frame.
  */
 Frame::Ptr makePcmAudioFrame(size_t samples, unsigned int channels) {
-        AudioDesc desc(AudioDesc::PCMI_S16LE, 48000.0f, channels);
+        AudioDesc desc(AudioFormat::PCMI_S16LE, 48000.0f, channels);
         Audio audio(desc, samples);
         audio.zero();
         Frame::Ptr frame = Frame::Ptr::create();
@@ -182,7 +181,7 @@ TEST_CASE("MediaIOTask_Rtp_NoActiveStreamsFails") {
         MediaDesc md;
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.imageList().pushToBack(
-                ImageDesc(Size2Du32(16, 16), PixelDesc(PixelDesc::RGB8_sRGB)));
+                ImageDesc(Size2Du32(16, 16), PixelFormat(PixelFormat::RGB8_sRGB)));
         io->setExpectedDesc(md);
 
         CHECK(io->open(MediaIO::Sink).isError());
@@ -219,7 +218,7 @@ TEST_CASE("MediaIOTask_Rtp_VideoLoopbackSingleFrame") {
         MediaDesc md;
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.imageList().pushToBack(
-                ImageDesc(Size2Du32(W, H), PixelDesc(PixelDesc::RGB8_sRGB)));
+                ImageDesc(Size2Du32(W, H), PixelFormat(PixelFormat::RGB8_sRGB)));
         io->setExpectedDesc(md);
 
         REQUIRE(io->open(MediaIO::Sink).isOk());
@@ -250,7 +249,7 @@ TEST_CASE("MediaIOTask_Rtp_VideoLoopbackSingleFrame") {
 // ============================================================================
 //
 // Exercises the full JPEG XS dispatch path: MediaIOTask_Rtp picks
-// RtpPayloadJpegXs for a compressed JPEG_XS_* PixelDesc, prepends a
+// RtpPayloadJpegXs for a compressed JPEG_XS_* PixelFormat, prepends a
 // 4-byte RFC 9134 header to each fragment, and advertises jxsv/90000
 // in the SDP with a complete fmtp line.  The bitstream content is
 // synthetic — we only care that the dispatch and wire format are
@@ -277,11 +276,11 @@ TEST_CASE("MediaIOTask_Rtp_JpegXsLoopbackSingleFrame") {
         // Advertise a 10-bit 4:2:2 JPEG XS stream.  The task uses the
         // ImageDesc to configure the payload handler and the SDP, so
         // everything downstream of this MediaDesc is driven by the
-        // compressed PixelDesc we pick here.
+        // compressed PixelFormat we pick here.
         MediaDesc md;
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
-                PixelDesc(PixelDesc::JPEG_XS_YUV10_422_Rec709)));
+                PixelFormat(PixelFormat::JPEG_XS_YUV10_422_Rec709)));
         io->setExpectedDesc(md);
         REQUIRE(io->open(MediaIO::Sink).isOk());
 
@@ -293,7 +292,7 @@ TEST_CASE("MediaIOTask_Rtp_JpegXsLoopbackSingleFrame") {
         }
         Image jxsImg = Image::fromCompressedData(
                 jxsBytes.data(), jxsBytes.size(),
-                W, H, PixelDesc(PixelDesc::JPEG_XS_YUV10_422_Rec709));
+                W, H, PixelFormat(PixelFormat::JPEG_XS_YUV10_422_Rec709));
         REQUIRE(jxsImg.isValid());
         REQUIRE(jxsImg.isCompressed());
 
@@ -342,7 +341,7 @@ TEST_CASE("MediaIOTask_Rtp_JpegXsLoopbackSingleFrame") {
 TEST_CASE("MediaIOTask_Rtp_JpegXsSdpFormat") {
         // Verify the SDP emitted for a JPEG XS stream carries the
         // RFC 9134 rtpmap and a fmtp with the mandatory parameters
-        // plus the per-PixelDesc sampling / depth / geometry.
+        // plus the per-PixelFormat sampling / depth / geometry.
         MediaIO::Config cfg = MediaIO::defaultConfig("Rtp");
         cfg.set(MediaConfig::VideoRtpDestination,
                 SocketAddress(Ipv4Address(239, 10, 11, 12), 6000));
@@ -353,7 +352,7 @@ TEST_CASE("MediaIOTask_Rtp_JpegXsSdpFormat") {
         MediaDesc md;
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.imageList().pushToBack(ImageDesc(Size2Du32(1920, 1080),
-                PixelDesc(PixelDesc::JPEG_XS_YUV10_422_Rec709)));
+                PixelFormat(PixelFormat::JPEG_XS_YUV10_422_Rec709)));
         io->setExpectedDesc(md);
         REQUIRE(io->open(MediaIO::Sink).isOk());
 
@@ -398,7 +397,7 @@ TEST_CASE("MediaIOTask_Rtp_JpegXsMultiPacketFragmentation") {
         MediaDesc md;
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
-                PixelDesc(PixelDesc::JPEG_XS_YUV8_422_Rec709)));
+                PixelFormat(PixelFormat::JPEG_XS_YUV8_422_Rec709)));
         io->setExpectedDesc(md);
         REQUIRE(io->open(MediaIO::Sink).isOk());
 
@@ -410,7 +409,7 @@ TEST_CASE("MediaIOTask_Rtp_JpegXsMultiPacketFragmentation") {
         }
         Image jxsImg = Image::fromCompressedData(
                 jxsBytes.data(), jxsBytes.size(),
-                W, H, PixelDesc(PixelDesc::JPEG_XS_YUV8_422_Rec709));
+                W, H, PixelFormat(PixelFormat::JPEG_XS_YUV8_422_Rec709));
         REQUIRE(jxsImg.isValid());
 
         Frame::Ptr frame = Frame::Ptr::create();
@@ -470,7 +469,7 @@ TEST_CASE("MediaIOTask_Rtp_AudioLoopbackS16") {
         MediaDesc md;
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.audioList().pushToBack(
-                AudioDesc(AudioDesc::PCMI_S16LE, 48000.0f, 2));
+                AudioDesc(AudioFormat::PCMI_S16LE, 48000.0f, 2));
         io->setExpectedDesc(md);
 
         REQUIRE(io->open(MediaIO::Sink).isOk());
@@ -540,7 +539,7 @@ TEST_CASE("MediaIOTask_Rtp_AudioAcceptsFloat32") {
         MediaDesc md;
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.audioList().pushToBack(
-                AudioDesc(AudioDesc::PCMI_Float32LE, 48000.0f, 2));
+                AudioDesc(AudioFormat::PCMI_Float32LE, 48000.0f, 2));
         io->setExpectedDesc(md);
 
         REQUIRE(io->open(MediaIO::Sink).isOk());
@@ -548,7 +547,7 @@ TEST_CASE("MediaIOTask_Rtp_AudioAcceptsFloat32") {
         // 1600 Float32 samples → becomes 33 L16 RTP packets on the wire.
         Frame::Ptr frame;
         {
-                AudioDesc ad(AudioDesc::PCMI_Float32LE, 48000.0f, 2);
+                AudioDesc ad(AudioFormat::PCMI_Float32LE, 48000.0f, 2);
                 Audio audio(ad, 1600);
                 audio.zero();
                 frame = Frame::Ptr::create();
@@ -587,7 +586,7 @@ TEST_CASE("MediaIOTask_Rtp_AudioNoDriftAcrossFrames") {
         MediaDesc md;
         md.setFrameRate(FrameRate(FrameRate::FPS_29_97));
         md.audioList().pushToBack(
-                AudioDesc(AudioDesc::PCMI_S16LE, 48000.0f, 2));
+                AudioDesc(AudioFormat::PCMI_S16LE, 48000.0f, 2));
         io->setExpectedDesc(md);
 
         REQUIRE(io->open(MediaIO::Sink).isOk());
@@ -713,7 +712,7 @@ TEST_CASE("MediaIOTask_Rtp_SaveSdpToFile") {
         MediaDesc md;
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.imageList().pushToBack(
-                ImageDesc(Size2Du32(320, 240), PixelDesc(PixelDesc::RGB8_sRGB)));
+                ImageDesc(Size2Du32(320, 240), PixelFormat(PixelFormat::RGB8_sRGB)));
         io->setExpectedDesc(md);
         REQUIRE(io->open(MediaIO::Sink).isOk());
 
@@ -760,9 +759,9 @@ TEST_CASE("MediaIOTask_Rtp_AdjacentPortsNoCollision") {
         MediaDesc md;
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.imageList().pushToBack(
-                ImageDesc(Size2Du32(320, 240), PixelDesc(PixelDesc::RGB8_sRGB)));
+                ImageDesc(Size2Du32(320, 240), PixelFormat(PixelFormat::RGB8_sRGB)));
         md.audioList().pushToBack(
-                AudioDesc(AudioDesc::PCMI_S16LE, 48000.0f, 2));
+                AudioDesc(AudioFormat::PCMI_S16LE, 48000.0f, 2));
         io->setExpectedDesc(md);
         REQUIRE(io->open(MediaIO::Sink).isOk());
 
@@ -801,7 +800,7 @@ TEST_CASE("MediaIOTask_Rtp_GetSdpParams") {
         MediaDesc md;
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.imageList().pushToBack(
-                ImageDesc(Size2Du32(160, 120), PixelDesc(PixelDesc::RGB8_sRGB)));
+                ImageDesc(Size2Du32(160, 120), PixelFormat(PixelFormat::RGB8_sRGB)));
         io->setExpectedDesc(md);
         REQUIRE(io->open(MediaIO::Sink).isOk());
 
@@ -850,7 +849,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_JpegXs_Loopback") {
         MediaDesc rxMd;
         rxMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         rxMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
-                PixelDesc(PixelDesc::JPEG_XS_YUV10_422_Rec709)));
+                PixelFormat(PixelFormat::JPEG_XS_YUV10_422_Rec709)));
         rx->setExpectedDesc(rxMd);
         REQUIRE(rx->open(MediaIO::Source).isOk());
 
@@ -865,7 +864,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_JpegXs_Loopback") {
         MediaDesc txMd;
         txMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         txMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
-                PixelDesc(PixelDesc::JPEG_XS_YUV10_422_Rec709)));
+                PixelFormat(PixelFormat::JPEG_XS_YUV10_422_Rec709)));
         tx->setExpectedDesc(txMd);
         REQUIRE(tx->open(MediaIO::Sink).isOk());
 
@@ -881,7 +880,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_JpegXs_Loopback") {
         }
         Image jxsImg = Image::fromCompressedData(
                 jxsBytes.data(), jxsBytes.size(),
-                W, H, PixelDesc(PixelDesc::JPEG_XS_YUV10_422_Rec709));
+                W, H, PixelFormat(PixelFormat::JPEG_XS_YUV10_422_Rec709));
         REQUIRE(jxsImg.isValid());
         REQUIRE(jxsImg.isCompressed());
 
@@ -903,7 +902,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_JpegXs_Loopback") {
         CHECK(rxImg.isCompressed());
         CHECK(rxImg.width()  == W);
         CHECK(rxImg.height() == H);
-        CHECK(rxImg.pixelDesc().id() == PixelDesc::JPEG_XS_YUV10_422_Rec709);
+        CHECK(rxImg.pixelFormat().id() == PixelFormat::JPEG_XS_YUV10_422_Rec709);
 
         // The reassembled bitstream must match the one we sent.
         const Buffer::Ptr &plane = rxImg.plane(0);
@@ -939,7 +938,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_RawVideo_Loopback") {
         MediaDesc rxMd;
         rxMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         rxMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
-                PixelDesc(PixelDesc::RGB8_sRGB)));
+                PixelFormat(PixelFormat::RGB8_sRGB)));
         rx->setExpectedDesc(rxMd);
         REQUIRE(rx->open(MediaIO::Source).isOk());
 
@@ -952,7 +951,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_RawVideo_Loopback") {
         MediaDesc txMd;
         txMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         txMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
-                PixelDesc(PixelDesc::RGB8_sRGB)));
+                PixelFormat(PixelFormat::RGB8_sRGB)));
         tx->setExpectedDesc(txMd);
         REQUIRE(tx->open(MediaIO::Sink).isOk());
 
@@ -1005,7 +1004,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_L16Audio_Loopback") {
         MediaDesc rxMd;
         rxMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         rxMd.audioList().pushToBack(
-                AudioDesc(AudioDesc::PCMI_S16BE, RATE, CH));
+                AudioDesc(AudioFormat::PCMI_S16BE, RATE, CH));
         rx->setExpectedDesc(rxMd);
         REQUIRE(rx->open(MediaIO::Source).isOk());
 
@@ -1018,7 +1017,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_L16Audio_Loopback") {
         MediaDesc txMd;
         txMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         txMd.audioList().pushToBack(
-                AudioDesc(AudioDesc::PCMI_S16LE, RATE, CH));
+                AudioDesc(AudioFormat::PCMI_S16LE, RATE, CH));
         tx->setExpectedDesc(txMd);
         REQUIRE(tx->open(MediaIO::Sink).isOk());
 
@@ -1115,7 +1114,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_Multicast_RawVideo") {
         MediaDesc rxMd;
         rxMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         rxMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
-                PixelDesc(PixelDesc::RGB8_sRGB)));
+                PixelFormat(PixelFormat::RGB8_sRGB)));
         rx->setExpectedDesc(rxMd);
         REQUIRE(rx->open(MediaIO::Source).isOk());
 
@@ -1130,7 +1129,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_Multicast_RawVideo") {
         MediaDesc txMd;
         txMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         txMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
-                PixelDesc(PixelDesc::RGB8_sRGB)));
+                PixelFormat(PixelFormat::RGB8_sRGB)));
         tx->setExpectedDesc(txMd);
         REQUIRE(tx->open(MediaIO::Sink).isOk());
 
@@ -1188,7 +1187,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_CreateForFileRead_Sdp") {
         MediaDesc txMd;
         txMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         txMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
-                PixelDesc(PixelDesc::RGB8_sRGB)));
+                PixelFormat(PixelFormat::RGB8_sRGB)));
         tx->setExpectedDesc(txMd);
         REQUIRE(tx->open(MediaIO::Sink).isOk());
 
@@ -1205,7 +1204,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_CreateForFileRead_Sdp") {
         MediaDesc rxMd;
         rxMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         rxMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
-                PixelDesc(PixelDesc::RGB8_sRGB)));
+                PixelFormat(PixelFormat::RGB8_sRGB)));
         rx->setExpectedDesc(rxMd);
         REQUIRE(rx->open(MediaIO::Source).isOk());
 
@@ -1276,7 +1275,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_SdpSessionDirect") {
         MediaDesc txMd;
         txMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         txMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
-                PixelDesc(PixelDesc::JPEG_XS_YUV10_422_Rec709)));
+                PixelFormat(PixelFormat::JPEG_XS_YUV10_422_Rec709)));
         tx->setExpectedDesc(txMd);
         REQUIRE(tx->open(MediaIO::Sink).isOk());
 
@@ -1288,7 +1287,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_SdpSessionDirect") {
         }
         Image jxs = Image::fromCompressedData(
                 jxsBytes.data(), jxsBytes.size(), W, H,
-                PixelDesc(PixelDesc::JPEG_XS_YUV10_422_Rec709));
+                PixelFormat(PixelFormat::JPEG_XS_YUV10_422_Rec709));
         Frame::Ptr txFrame = Frame::Ptr::create();
         txFrame.modify()->imageList().pushToBack(Image::Ptr::create(std::move(jxs)));
         CHECK(tx->writeFrame(txFrame).isOk());
@@ -1300,7 +1299,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_SdpSessionDirect") {
         const Image &rxImg = *rxFrame->imageList()[0];
         CHECK(rxImg.width()  == W);
         CHECK(rxImg.height() == H);
-        CHECK(rxImg.pixelDesc().id() == PixelDesc::JPEG_XS_YUV10_422_Rec709);
+        CHECK(rxImg.pixelFormat().id() == PixelFormat::JPEG_XS_YUV10_422_Rec709);
 
         tx->close();
         rx->close();
@@ -1335,7 +1334,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_SdpOnly_JpegXs") {
         MediaDesc txMd;
         txMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         txMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
-                PixelDesc(PixelDesc::JPEG_XS_YUV10_422_Rec709)));
+                PixelFormat(PixelFormat::JPEG_XS_YUV10_422_Rec709)));
         tx->setExpectedDesc(txMd);
         REQUIRE(tx->open(MediaIO::Sink).isOk());
 
@@ -1357,7 +1356,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_SdpOnly_JpegXs") {
         }
         Image jxs = Image::fromCompressedData(
                 jxsBytes.data(), jxsBytes.size(), W, H,
-                PixelDesc(PixelDesc::JPEG_XS_YUV10_422_Rec709));
+                PixelFormat(PixelFormat::JPEG_XS_YUV10_422_Rec709));
         REQUIRE(jxs.isValid());
         Frame::Ptr txFrame = Frame::Ptr::create();
         txFrame.modify()->imageList().pushToBack(Image::Ptr::create(std::move(jxs)));
@@ -1370,7 +1369,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_SdpOnly_JpegXs") {
         const Image &rxImg = *rxFrame->imageList()[0];
         CHECK(rxImg.width()  == W);
         CHECK(rxImg.height() == H);
-        CHECK(rxImg.pixelDesc().id() == PixelDesc::JPEG_XS_YUV10_422_Rec709);
+        CHECK(rxImg.pixelFormat().id() == PixelFormat::JPEG_XS_YUV10_422_Rec709);
         const Buffer::Ptr &plane = rxImg.plane(0);
         REQUIRE(plane);
         CHECK(plane->size() == jxsBytes.size());
@@ -1406,12 +1405,12 @@ TEST_CASE("MediaIOTask_Rtp_Reader_Mjpeg_Loopback") {
         // JpegVideoEncoder session — Image::convert is CSC-only after
         // task 36; the encoder side lives behind the VideoEncoder
         // contract now.
-        Image rgb(W, H, PixelDesc(PixelDesc::RGB8_sRGB));
+        Image rgb(W, H, PixelFormat(PixelFormat::RGB8_sRGB));
         rgb.fill(static_cast<char>(0x80));
         MediaConfig jpegCfg;
         jpegCfg.set(MediaConfig::JpegQuality, 85);
         Image jpeg = promeki::tests::encodeImageToCompressed(
-                rgb, PixelDesc(PixelDesc::JPEG_YUV8_422_Rec601_Full), jpegCfg);
+                rgb, PixelFormat(PixelFormat::JPEG_YUV8_422_Rec601_Full), jpegCfg);
         REQUIRE(jpeg.isValid());
         REQUIRE(jpeg.isCompressed());
 
@@ -1424,7 +1423,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_Mjpeg_Loopback") {
         MediaDesc rxMd;
         rxMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         rxMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
-                PixelDesc(PixelDesc::JPEG_YUV8_422_Rec601_Full)));
+                PixelFormat(PixelFormat::JPEG_YUV8_422_Rec601_Full)));
         rx->setExpectedDesc(rxMd);
         REQUIRE(rx->open(MediaIO::Source).isOk());
 
@@ -1437,7 +1436,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_Mjpeg_Loopback") {
         MediaDesc txMd;
         txMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         txMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
-                PixelDesc(PixelDesc::JPEG_YUV8_422_Rec601_Full)));
+                PixelFormat(PixelFormat::JPEG_YUV8_422_Rec601_Full)));
         tx->setExpectedDesc(txMd);
         REQUIRE(tx->open(MediaIO::Sink).isOk());
 
@@ -1465,7 +1464,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_Mjpeg_Loopback") {
         // session — this is the real test that the rebuilt headers
         // are accepted by libjpeg-turbo.
         Image decoded = promeki::tests::decodeCompressedToImage(
-                rxImg, PixelDesc(PixelDesc::RGB8_sRGB));
+                rxImg, PixelFormat(PixelFormat::RGB8_sRGB));
         CHECK(decoded.isValid());
         CHECK_FALSE(decoded.isCompressed());
         if(decoded.isValid()) {
@@ -1506,7 +1505,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_LoadSdp_RawVideo") {
         MediaDesc txMd;
         txMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         txMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
-                PixelDesc(PixelDesc::RGB8_sRGB)));
+                PixelFormat(PixelFormat::RGB8_sRGB)));
         tx->setExpectedDesc(txMd);
         REQUIRE(tx->open(MediaIO::Sink).isOk());
 
@@ -1532,7 +1531,7 @@ TEST_CASE("MediaIOTask_Rtp_Reader_LoadSdp_RawVideo") {
         MediaDesc rxMd;
         rxMd.setFrameRate(FrameRate(FrameRate::FPS_30));
         rxMd.imageList().pushToBack(ImageDesc(Size2Du32(W, H),
-                PixelDesc(PixelDesc::RGB8_sRGB)));
+                PixelFormat(PixelFormat::RGB8_sRGB)));
         rx->setExpectedDesc(rxMd);
         REQUIRE(rx->open(MediaIO::Source).isOk());
 

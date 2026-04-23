@@ -27,8 +27,8 @@
 #include <promeki/color.h>
 #include <promeki/colormodel.h>
 #include <promeki/memspace.h>
+#include <promeki/pixelmemlayout.h>
 #include <promeki/pixelformat.h>
-#include <promeki/pixeldesc.h>
 #include <promeki/enum.h>
 #include <promeki/enums.h>
 #include <promeki/json.h>
@@ -1221,9 +1221,9 @@ TEST_CASE("DataStream: round-trip Variant MemSpace") {
         }
 }
 
-TEST_CASE("DataStream: round-trip Variant PixelFormat") {
+TEST_CASE("DataStream: round-trip Variant PixelMemLayout") {
         WriterFixture f;
-        PixelFormat pf(PixelFormat::I_4x8);
+        PixelMemLayout pf(PixelMemLayout::I_4x8);
         Variant vpf(pf);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
@@ -1236,15 +1236,15 @@ TEST_CASE("DataStream: round-trip Variant PixelFormat") {
                 Variant val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(val.type() == Variant::TypePixelFormat);
-                PixelFormat out = val.get<PixelFormat>();
-                CHECK(out.id() == PixelFormat::I_4x8);
+                CHECK(val.type() == Variant::TypePixelMemLayout);
+                PixelMemLayout out = val.get<PixelMemLayout>();
+                CHECK(out.id() == PixelMemLayout::I_4x8);
         }
 }
 
-TEST_CASE("DataStream: round-trip Variant PixelDesc") {
+TEST_CASE("DataStream: round-trip Variant PixelFormat") {
         WriterFixture f;
-        PixelDesc pd(PixelDesc::RGB8_sRGB);
+        PixelFormat pd(PixelFormat::RGB8_sRGB);
         Variant vpd(pd);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
@@ -1257,9 +1257,9 @@ TEST_CASE("DataStream: round-trip Variant PixelDesc") {
                 Variant val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(val.type() == Variant::TypePixelDesc);
-                PixelDesc out = val.get<PixelDesc>();
-                CHECK(out.id() == PixelDesc::RGB8_sRGB);
+                CHECK(val.type() == Variant::TypePixelFormat);
+                PixelFormat out = val.get<PixelFormat>();
+                CHECK(out.id() == PixelFormat::RGB8_sRGB);
         }
 }
 
@@ -1554,9 +1554,9 @@ TEST_CASE("DataStream: direct round-trip MemSpace") {
         }
 }
 
-TEST_CASE("DataStream: direct round-trip PixelFormat") {
+TEST_CASE("DataStream: direct round-trip PixelMemLayout") {
         WriterFixture f;
-        PixelFormat pf(PixelFormat::I_422_3x8);
+        PixelMemLayout pf(PixelMemLayout::I_422_3x8);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << pf;
@@ -1564,16 +1564,16 @@ TEST_CASE("DataStream: direct round-trip PixelFormat") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                PixelFormat out;
+                PixelMemLayout out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(out.id() == PixelFormat::I_422_3x8);
+                CHECK(out.id() == PixelMemLayout::I_422_3x8);
         }
 }
 
-TEST_CASE("DataStream: direct round-trip PixelDesc") {
+TEST_CASE("DataStream: direct round-trip PixelFormat") {
         WriterFixture f;
-        PixelDesc pd(PixelDesc::BGR8_sRGB);
+        PixelFormat pd(PixelFormat::BGR8_sRGB);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << pd;
@@ -1581,10 +1581,10 @@ TEST_CASE("DataStream: direct round-trip PixelDesc") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                PixelDesc out;
+                PixelFormat out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(out.id() == PixelDesc::BGR8_sRGB);
+                CHECK(out.id() == PixelFormat::BGR8_sRGB);
         }
 }
 
@@ -2415,7 +2415,7 @@ TEST_CASE("DataStream: round-trip XYZColor") {
 
 TEST_CASE("DataStream: round-trip AudioDesc") {
         WriterFixture f;
-        AudioDesc desc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        AudioDesc desc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         desc.metadata().set(Metadata::Title, String("test track"));
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
@@ -2428,7 +2428,7 @@ TEST_CASE("DataStream: round-trip AudioDesc") {
                 AudioDesc out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(out.dataType() == AudioDesc::PCMI_S16LE);
+                CHECK(out.format().id() == AudioFormat::PCMI_S16LE);
                 CHECK(out.sampleRate() == 48000.0f);
                 CHECK(out.channels() == 2);
                 CHECK(out.metadata().get(Metadata::Title).get<String>() == String("test track"));
@@ -2437,7 +2437,7 @@ TEST_CASE("DataStream: round-trip AudioDesc") {
 
 TEST_CASE("DataStream: round-trip ImageDesc") {
         WriterFixture f;
-        ImageDesc desc(1920, 1080, PixelDesc::RGBA8_sRGB);
+        ImageDesc desc(1920, 1080, PixelFormat::RGBA8_sRGB);
         desc.setLinePad(16);
         desc.setLineAlign(64);
         desc.setVideoScanMode(VideoScanMode::InterlacedEvenFirst);
@@ -2455,7 +2455,7 @@ TEST_CASE("DataStream: round-trip ImageDesc") {
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(out.width() == 1920);
                 CHECK(out.height() == 1080);
-                CHECK(out.pixelDesc().id() == PixelDesc::RGBA8_sRGB);
+                CHECK(out.pixelFormat().id() == PixelFormat::RGBA8_sRGB);
                 CHECK(out.linePad() == 16);
                 CHECK(out.lineAlign() == 64);
                 CHECK(out.videoScanMode() == VideoScanMode::InterlacedEvenFirst);
@@ -2467,8 +2467,8 @@ TEST_CASE("DataStream: round-trip MediaDesc") {
         WriterFixture f;
         MediaDesc desc;
         desc.setFrameRate(FrameRate(FrameRate::RationalType(24000u, 1001u)));
-        desc.imageList().pushToBack(ImageDesc(1920, 1080, PixelDesc::RGBA8_sRGB));
-        desc.audioList().pushToBack(AudioDesc(AudioDesc::PCMI_S24LE, 48000.0f, 6));
+        desc.imageList().pushToBack(ImageDesc(1920, 1080, PixelFormat::RGBA8_sRGB));
+        desc.audioList().pushToBack(AudioDesc(AudioFormat::PCMI_S24LE, 48000.0f, 6));
         desc.metadata().set(Metadata::Title, String("big clip"));
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
@@ -2487,7 +2487,7 @@ TEST_CASE("DataStream: round-trip MediaDesc") {
                 CHECK(out.imageList()[0].width() == 1920);
                 CHECK(out.imageList()[0].height() == 1080);
                 REQUIRE(out.audioList().size() == 1);
-                CHECK(out.audioList()[0].dataType() == AudioDesc::PCMI_S24LE);
+                CHECK(out.audioList()[0].format().id() == AudioFormat::PCMI_S24LE);
                 CHECK(out.audioList()[0].channels() == 6);
                 CHECK(out.metadata().get(Metadata::Title).get<String>() == String("big clip"));
         }

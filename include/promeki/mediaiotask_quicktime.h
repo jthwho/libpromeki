@@ -79,18 +79,18 @@ class MediaIOTask_QuickTime : public MediaIOTask {
                 Error proposeInput(const MediaDesc &offered,
                                    MediaDesc *preferred) const override;
 
-                // True when @p pd is a PixelDesc this writer knows
+                // True when @p pd is a PixelFormat this writer knows
                 // how to serialise into a valid QuickTime sample
                 // entry plus mdat payload.  See proposeInput() for
                 // the supported set and the rationale for each
                 // omission.
-                static bool isSupportedPixelDesc(const PixelDesc &pd);
+                static bool isSupportedPixelFormat(const PixelFormat &pd);
 
-                // Picks the closest writer-supported PixelDesc for
+                // Picks the closest writer-supported PixelFormat for
                 // an offered shape, preserving bit depth, chroma
                 // subsampling, and YUV / RGB family where possible
                 // so the planner-inserted CSC stays cheap.
-                static PixelDesc pickSupportedPixelDesc(const PixelDesc &offered);
+                static PixelFormat pickSupportedPixelFormat(const PixelFormat &offered);
 
                 /** @brief Build a Frame for the requested video sample. */
                 Error readVideoFrame(const FrameNumber &frameIndex, Frame::Ptr &outFrame);

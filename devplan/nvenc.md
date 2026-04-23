@@ -23,13 +23,13 @@
 - `ContentLightLevel` (`include/promeki/contentlightlevel.h`, `src/core/contentlightlevel.cpp`) — CTA-861.3 / ITU-T H.265 Annex D MaxCLL + MaxFALL. Added as a Variant type (`TypeContentLightLevel`).
 - Both types register as Variant payloads in `include/promeki/variant.h` (X-macro list).
 
-### New PixelDesc / PixelFormat / VideoCodec entries
+### New PixelFormat / PixelMemLayout / VideoCodec entries
 
-- `PixelDesc::AV1` (ID 161) — compressed AV1 (fourcc `av01`), backed by `PixelFormat::P_420_3x10_LE` and `VideoCodec::AV1`.
-- `PixelDesc::YUV8_444_Planar_Rec709` (ID 162) — 8-bit YCbCr 4:4:4 planar, Rec.709 limited range.
-- `PixelDesc::YUV10_444_Planar_LE_Rec709` (ID 163) — 10-bit YCbCr 4:4:4 planar LE.
-- `PixelFormat::P_444_3x10_LE` (ID 81) — 3 planes, 10-bit LE in 16-bit words, 4:4:4.
-- `VideoCodec::AV1` gains `compressedPixelDescs = { PixelDesc::AV1 }` in `src/core/videocodec.cpp`.
+- `PixelFormat::AV1` (ID 161) — compressed AV1 (fourcc `av01`), backed by `PixelMemLayout::P_420_3x10_LE` and `VideoCodec::AV1`.
+- `PixelFormat::YUV8_444_Planar_Rec709` (ID 162) — 8-bit YCbCr 4:4:4 planar, Rec.709 limited range.
+- `PixelFormat::YUV10_444_Planar_LE_Rec709` (ID 163) — 10-bit YCbCr 4:4:4 planar LE.
+- `PixelMemLayout::P_444_3x10_LE` (ID 81) — 3 planes, 10-bit LE in 16-bit words, 4:4:4.
+- `VideoCodec::AV1` gains `compressedPixelFormats = { PixelFormat::AV1 }` in `src/core/videocodec.cpp`.
 
 ### New MediaConfig keys
 
@@ -46,7 +46,7 @@ In `include/promeki/mediaconfig.h`:
 | `VideoColorPrimaries` | Enum(ColorPrimaries) | Auto | VUI / AV1 color primaries (ISO/IEC 23091-4). Auto derives from first frame's ColorModel. |
 | `VideoTransferCharacteristics` | Enum(TransferCharacteristics) | Auto | VUI / AV1 transfer characteristics. Auto derives SDR curve; HDR (PQ / HLG) must be set explicitly. |
 | `VideoMatrixCoefficients` | Enum(MatrixCoefficients) | Auto | VUI / AV1 matrix coefficients. Auto derives from ColorModel. |
-| `VideoRange` | Enum(VideoRange) | Unknown | Studio (Limited) / PC (Full) range. Unknown derives from PixelDesc::videoRange(). |
+| `VideoRange` | Enum(VideoRange) | Unknown | Studio (Limited) / PC (Full) range. Unknown derives from PixelFormat::videoRange(). |
 | `HdrMasteringDisplay` | MasteringDisplay | — | Stream-level SMPTE ST 2086. |
 | `HdrContentLightLevel` | ContentLightLevel | — | Stream-level CTA-861.3. |
 
@@ -68,7 +68,7 @@ In `include/promeki/metadata.h`:
 
 The previous NV12-only first-cut has been generalised:
 
-- **Format dispatch table** (`kFormatTable`) — six entries covering NV12, P010, NV16, P210, YUV444, YUV444_10BIT. Each row encodes the NVENC buffer format, chroma format IDC, bit depth, bytes per pixel Y, UV height divisor, and plane count. `lookupFormat(PixelDesc::ID)` searches the table; `supportedInputs()` now enumerates it.
+- **Format dispatch table** (`kFormatTable`) — six entries covering NV12, P010, NV16, P210, YUV444, YUV444_10BIT. Each row encodes the NVENC buffer format, chroma format IDC, bit depth, bytes per pixel Y, UV height divisor, and plane count. `lookupFormat(PixelFormat::ID)` searches the table; `supportedInputs()` now enumerates it.
 - **Codec dispatch** — `Codec_H264`, `Codec_HEVC`, `Codec_AV1` (enum extended in `include/promeki/nvencvideoencoder.h`). Registered under names `"H264"`, `"HEVC"`, `"AV1"` via `VideoEncoder::registerEncoder` and also wired into the typed `VideoCodec::createEncoder` hook via `VideoCodec::registerData`.
 - **Caps query** — `populateCaps()` queries `NV_ENC_CAPS_SUPPORT_{10BIT,422,444,LOSSLESS,LOOKAHEAD,TEMPORAL_AQ,ALPHA_LAYER_ENCODING}` and `NV_ENC_CAPS_NUM_MAX_BFRAMES` once per session. `validateFormatCaps()` rejects formats the GPU can't do.
 - **Profile / level mapping** — `h264ProfileGuid`, `hevcProfileGuid`, `av1ProfileGuid`, and `h264Level`, `hevcLevel`, `av1Level` translate the caller's string (`"high"`, `"main10"`, `"4.1"`, etc.) to NVENC GUIDs / enums. Empty strings trigger autoselect based on format (chroma / bit depth).
@@ -169,7 +169,7 @@ The NVENC header documents `qpPrimeYZeroTransformBypassFlag` as "set this to 1, 
 - `nvenc-functest`: links and builds clean.
 - `unittest-promeki`: 4030/4030 passing.
 - `nvenc-functest` on real hardware: 85/85 passing at `--frames 8` (2026-04-17) including the new `testTimecode`, `testColorDescription`, and `testEncodeDecodeRoundTrip` groups.
-- `unittest-promeki`: 4032/4032 passing including the new `PixelDesc::videoRange` and `ColorModel::toH273` tests.
+- `unittest-promeki`: 4032/4032 passing including the new `PixelFormat::videoRange` and `ColorModel::toH273` tests.
 
 ---
 
@@ -187,7 +187,7 @@ Follow-up items from the initial review. Small cleanups from the review landed a
 - **Test section banners flush stdout** — a `section()` helper replaces the raw `std::printf("\n--- X ---\n")`. Any future panic will leave evidence of which group was active in the pre-panic log.
 - **Timecode SEI** — `MediaConfig::VideoTimecodeSEI` (bool) toggles H.264 `enableTimeCode` + `outputPictureTimingSEI` or HEVC `outputTimeCodeSEI` at init; per frame, `Metadata::Timecode` on the source Image is translated through `toNvencTimeCode()` into `NV_ENC_TIME_CODE` on `NV_ENC_PIC_PARAMS_H264::timeCode` / `_HEVC::timeCode`. Drop-frame is signalled via `cntDroppedFrames`. Frames with no Timecode set `skipClockTimestampInsertion = 1` rather than emitting zeros. AV1 emits a warn-once and skips (NVENC has no AV1 timecode OBU path). The `NV_ENC_TIME_CODE` struct lives inline inside the pic-params struct, so no slot-resident storage is needed (unlike the HDR pointers from fix #1). Exposed through `MediaIOTask_VideoEncoder::formatDesc`.
 
-- **VUI / AV1 color description** — four new MediaConfig keys (`VideoColorPrimaries`, `VideoTransferCharacteristics`, `VideoMatrixCoefficients`, `VideoRange`) drive `NV_ENC_CONFIG_H264_VUI_PARAMETERS` / `NV_ENC_CONFIG_HEVC_VUI_PARAMETERS` / `NV_ENC_CONFIG_AV1`. All four default to "Auto" / "Unknown" (numeric sentinel 255 / 0) and get resolved against the first frame's PixelDesc at session init: `ColorModel::toH273()` provides the (primaries, transfer, matrix) triplet for well-known color models, and `PixelDesc::videoRange()` provides the range. Explicit config values bypass the resolver, so HDR10 callers set `TransferCharacteristics::SMPTE2084` etc. verbatim. `Unspecified` (2) on a primaries/transfer/matrix field remains available as a "suppress signalling" opt-out. Landed alongside three infrastructure pieces: **(a)** new `VideoRange { Unknown, Limited, Full }` TypedEnum; **(b)** new `PixelDesc::Data::videoRange` field + `PixelDesc::videoRange()` accessor, auto-populated at `registerData()` time from the existing `compSemantics[0]` min/max so the 132 existing factories keep working unchanged; **(c)** new `ColorModel::toH273()` static helper (library-first — reusable by future x264/VAAPI/etc. backends).
+- **VUI / AV1 color description** — four new MediaConfig keys (`VideoColorPrimaries`, `VideoTransferCharacteristics`, `VideoMatrixCoefficients`, `VideoRange`) drive `NV_ENC_CONFIG_H264_VUI_PARAMETERS` / `NV_ENC_CONFIG_HEVC_VUI_PARAMETERS` / `NV_ENC_CONFIG_AV1`. All four default to "Auto" / "Unknown" (numeric sentinel 255 / 0) and get resolved against the first frame's PixelFormat at session init: `ColorModel::toH273()` provides the (primaries, transfer, matrix) triplet for well-known color models, and `PixelFormat::videoRange()` provides the range. Explicit config values bypass the resolver, so HDR10 callers set `TransferCharacteristics::SMPTE2084` etc. verbatim. `Unspecified` (2) on a primaries/transfer/matrix field remains available as a "suppress signalling" opt-out. Landed alongside three infrastructure pieces: **(a)** new `VideoRange { Unknown, Limited, Full }` TypedEnum; **(b)** new `PixelFormat::Data::videoRange` field + `PixelFormat::videoRange()` accessor, auto-populated at `registerData()` time from the existing `compSemantics[0]` min/max so the 132 existing factories keep working unchanged; **(c)** new `ColorModel::toH273()` static helper (library-first — reusable by future x264/VAAPI/etc. backends).
   - Known gap: the auto-derivation can't distinguish SDR gamma vs. PQ vs. HLG because the ColorModel table doesn't model HDR curves yet. Documented in the MediaConfig key descriptions; HDR callers set the transfer explicitly.
 
 - **NVDEC: bitstream → Metadata round-trip** — NVDEC now surfaces everything an NVENC round-trip cares about on the decoded `Image`'s `Metadata`:
@@ -414,19 +414,19 @@ Modified:
 - `include/promeki/mediaconfig.h` — twelve new MediaConfig keys (including `VideoTimecodeSEI`, `VideoColorPrimaries`, `VideoTransferCharacteristics`, `VideoMatrixCoefficients`, `VideoRange`).
 - `include/promeki/metadata.h` — `ForceKeyframe`, `MasteringDisplay`, `ContentLightLevel`, `VideoColorPrimaries`, `VideoTransferCharacteristics`, `VideoMatrixCoefficients`, `VideoRange` (the last four are stamped on decoded Images by `NvdecVideoDecoder`).
 - `include/promeki/colormodel.h` / `src/core/colormodel.cpp` — new `ColorModel::H273` struct + `ColorModel::toH273()` static helper.
-- `include/promeki/pixeldesc.h` / `src/core/pixeldesc.cpp` — new `Data::videoRange` field, `PixelDesc::videoRange()` accessor, auto-derivation at `registerData()` time from `compSemantics[0]` min/max.
+- `include/promeki/pixelformat.h` / `src/core/pixelformat.cpp` — new `Data::videoRange` field, `PixelFormat::videoRange()` accessor, auto-derivation at `registerData()` time from `compSemantics[0]` min/max.
 - `src/proav/nvdecvideodecoder.cpp` — VUI color-description parsing from `CUVIDEOFORMAT::video_signal_description`, SEI parsing via `pfnGetSEIMsg` (H.264 pic_timing / HEVC time_code / mastering display / CLL), plus `configure()` override keys and a bit-level `BitReader` for the timing SEI.
 - `src/proav/mediaiotask_videodecoder.cpp` — FormatDesc exposes the four VUI override keys.
-- `tests/unit/colormodel.cpp`, `tests/unit/pixeldesc.cpp` — tests for the new helpers.
+- `tests/unit/colormodel.cpp`, `tests/unit/pixelformat.cpp` — tests for the new helpers.
 - `include/promeki/nvencvideoencoder.h` — `Codec_AV1` added to `Codec` enum; description updated.
-- `include/promeki/pixeldesc.h` — AV1 / YUV8_444_Planar_Rec709 / YUV10_444_Planar_LE_Rec709.
-- `include/promeki/pixelformat.h` — `P_444_3x10_LE`.
+- `include/promeki/pixelformat.h` — AV1 / YUV8_444_Planar_Rec709 / YUV10_444_Planar_LE_Rec709.
+- `include/promeki/pixelmemlayout.h` — `P_444_3x10_LE`.
 - `include/promeki/variant.h` — `TypeMasteringDisplay`, `TypeContentLightLevel` registrations + includes.
-- `src/core/pixeldesc.cpp` — factories + registrations for the three new PixelDescs.
-- `src/core/pixelformat.cpp` — factory + registration for `P_444_3x10_LE`.
-- `src/core/videocodec.cpp` — `VideoCodec::AV1` gains `compressedPixelDescs`.
+- `src/core/pixelformat.cpp` — factories + registrations for the three new PixelFormats.
+- `src/core/pixelmemlayout.cpp` — factory + registration for `P_444_3x10_LE`.
+- `src/core/videocodec.cpp` — `VideoCodec::AV1` gains `compressedPixelFormats`.
 - `src/proav/mediaiotask_videoencoder.cpp` — FormatDesc exposes new config keys (incl. `VideoTimecodeSEI`, `VideoColorPrimaries`, `VideoTransferCharacteristics`, `VideoMatrixCoefficients`, `VideoRange`); `ForceKeyframe` wiring.
-- `src/proav/nvencvideoencoder.cpp` — the main backend. Timecode SEI wiring (`toNvencTimeCode()`, per-frame `Metadata::Timecode` translation). VUI color description wiring: `populateVuiColorDescription()` helper for H.264/HEVC, direct-field population for AV1, `Impl::resolveColorDescription()` folds Auto/Unknown against the first frame's `PixelDesc::colorModel()` / `videoRange()`. Interlaced support: `_cfgScanMode` / `_effectiveScanMode` resolution at `ensureSession()` time; `toNvencDisplayPicStruct()` mapping; `toNvencTimeCode()` takes a `VideoScanMode` parameter; per-frame `Metadata::VideoScanMode` override path. **Second-investigation interlaced fixes:** H.264 now sets `enableTimeCode = 1` whenever `outputPictureTimingSEI = 1` (was the kernel-panic shape Vector A); HEVC interlaced uses `outputTimeCodeSEI = 1` rather than `outputPictureTimingSEI = 1` (Vector B) and warns-once that pic_struct lands in HEVC Time Code SEI rather than pic_timing.
+- `src/proav/nvencvideoencoder.cpp` — the main backend. Timecode SEI wiring (`toNvencTimeCode()`, per-frame `Metadata::Timecode` translation). VUI color description wiring: `populateVuiColorDescription()` helper for H.264/HEVC, direct-field population for AV1, `Impl::resolveColorDescription()` folds Auto/Unknown against the first frame's `PixelFormat::colorModel()` / `videoRange()`. Interlaced support: `_cfgScanMode` / `_effectiveScanMode` resolution at `ensureSession()` time; `toNvencDisplayPicStruct()` mapping; `toNvencTimeCode()` takes a `VideoScanMode` parameter; per-frame `Metadata::VideoScanMode` override path. **Second-investigation interlaced fixes:** H.264 now sets `enableTimeCode = 1` whenever `outputPictureTimingSEI = 1` (was the kernel-panic shape Vector A); HEVC interlaced uses `outputTimeCodeSEI = 1` rather than `outputPictureTimingSEI = 1` (Vector B) and warns-once that pic_struct lands in HEVC Time Code SEI rather than pic_timing.
 - `tests/func/nvenc/main.cpp` — added `testTimecode` (6 codec × mode combos), `testColorDescription` (8 codec × color-description combos covering Auto derivation, explicit HDR10 / HLG / full-range / Unspecified), `testEncodeDecodeRoundTrip` (HEVC HDR10 + H.264 Rec.709 active round-trips, plus 2 skipped interlaced round-trip cases preserved inside `if(false)` for future re-enablement), and `testInterlaced` (7 codec × scan-mode combos asserting encoder accepts the config and emits packets). **Panic-resistant logging:** new `--log PATH` CLI option (default `/mnt/data/tmp/promeki/nvenc-functest.log`, `-` to disable); `logf()` helper that mirrors every line to stdout AND a log file with `fflush(3)` + `fsync(2)` after each write; `tryStart(label)` markers paired with each `PASS` / `FAIL` / `SKIP` so the last log line before any future panic identifies the offending sub-case.
 - `tests/func/CMakeLists.txt` — include `nvenc/`.
 - `tests/unit/mediaiotask_videoencoder.cpp`, `tests/unit/videocodec_registry.cpp` — adjustments for new surfaces.

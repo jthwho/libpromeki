@@ -20,6 +20,7 @@
  *                       / `--pipeline` short-circuits.
  */
 
+#include <atomic>
 #include <cstdio>
 
 #include <promeki/application.h>
@@ -40,6 +41,7 @@
 #include <promeki/mediadesc.h>
 #include <promeki/mediaio.h>
 #include <promeki/mediaiodescription.h>
+#include <promeki/mediaiotask_inspector.h>
 #include <promeki/url.h>
 #include <promeki/mediapipeline.h>
 #include <promeki/mediapipelineconfig.h>
@@ -67,6 +69,61 @@ using namespace promeki;
 using namespace mediaplay;
 
 namespace {
+
+// Documented in --help.  Stable, hand-picked so adding new Error
+// codes can't renumber them.  Also used by scripts/roundtrip-codecs.sh.
+constexpr int ExitOk                      = 0;
+constexpr int ExitGeneric                 = 1;
+constexpr int ExitPipelineBuild           = 10;
+constexpr int ExitPipelineOpen            = 11;
+constexpr int ExitPipelineStart           = 12;
+constexpr int ExitPipelineRuntime         = 13;
+constexpr int ExitInspectorDiscontinuity  = 21;
+
+/**
+ * @brief Builds a MediaIO around a freshly-constructed
+ *        @ref MediaIOTask_Inspector so mediaplay can retain a typed
+ *        handle for post-run snapshot polling.
+ *
+ * Mirrors the SDL injection path: the task can't stay anonymous because
+ * the caller (main) needs to pull @c snapshot() off it after
+ * @c app.exec() returns to compute the inspector pass/fail exit code.
+ * The MediaIO takes ownership of the task via @ref MediaIO::adoptTask
+ * and will delete it from its own destructor, so the caller only owns
+ * the MediaIO pointer.
+ *
+ * @param stage The pipeline-config stage record to draw config /
+ *              metadata from.  @c stage.type is expected to be
+ *              @c "Inspector".
+ * @param[out] taskOut Typed pointer to the adopted task, used later
+ *              for @c snapshot() — MediaIO still owns it.
+ * @return The new MediaIO (ready for @c pipeline.injectStage), or
+ *         @c nullptr on adoption failure.
+ */
+MediaIO *createInspectorStage(const MediaPipelineConfig::Stage &stage,
+                              MediaIOTask_Inspector **taskOut) {
+        auto *task = new MediaIOTask_Inspector();
+        auto *io = new MediaIO();
+        MediaIO::Config cfg = MediaIO::defaultConfig(String("Inspector"));
+        // Copy any per-stage config keys supplied via --dc onto the
+        // backend default so --dc InspectorTests:Timestamp etc. still
+        // works when mediaplay is the one constructing the task.
+        const auto stageIds = stage.config.ids();
+        for(size_t i = 0; i < stageIds.size(); ++i) {
+                cfg.set(stageIds[i], stage.config.get(stageIds[i]));
+        }
+        io->setConfig(cfg);
+        Error e = io->adoptTask(task);
+        if(e.isError()) {
+                fprintf(stderr, "Error: adoptTask(Inspector) failed: %s\n",
+                        e.desc().cstr());
+                delete io;
+                delete task;
+                return nullptr;
+        }
+        if(taskOut != nullptr) *taskOut = task;
+        return io;
+}
 
 /**
  * @brief Handles mediaplay's legacy `--probe` short-circuit.
@@ -298,7 +355,22 @@ int main(int argc, char **argv) {
         Options opts;
         if(!parseOptions(argc, argv, opts)) {
                 fprintf(stderr, "Use --help for usage information.\n");
-                return 1;
+                return ExitGeneric;
+        }
+
+        // --list-codecs short-circuit.  No Application / pipeline
+        // state is needed — the codec registries are populated at
+        // static-init time by the linked-in backend libraries, so we
+        // can walk them and exit.  Documented in --help.
+        if(opts.listCodecs != Options::ListCodecsNone) {
+                CodecTsvKind kind = CodecTsvKind::All;
+                if(opts.listCodecs == Options::ListCodecsVideo) {
+                        kind = CodecTsvKind::Video;
+                } else if(opts.listCodecs == Options::ListCodecsAudio) {
+                        kind = CodecTsvKind::Audio;
+                }
+                printCodecsTsv(kind);
+                return ExitOk;
         }
 
         // Bump the logger threshold to Info when the user wants any
@@ -315,7 +387,7 @@ int main(int argc, char **argv) {
            && !opts.loadPipelinePath.isEmpty()) {
                 fprintf(stderr,
                         "Error: --save-pipeline and --pipeline are mutually exclusive.\n");
-                return 1;
+                return ExitGeneric;
         }
 
         Application  app(argc, argv);
@@ -342,11 +414,11 @@ int main(int argc, char **argv) {
                         fprintf(stderr, "Error: failed to load pipeline '%s': %s\n",
                                 opts.loadPipelinePath.cstr(),
                                 lerr.desc().cstr());
-                        return 1;
+                        return ExitGeneric;
                 }
         } else {
                 Error berr = buildConfigFromOptions(opts, pipelineCfg);
-                if(berr.isError()) return 1;
+                if(berr.isError()) return ExitGeneric;
         }
 
         if(!opts.savePipelinePath.isEmpty()) {
@@ -356,11 +428,11 @@ int main(int argc, char **argv) {
                         fprintf(stderr, "Error: saveToFile '%s' failed: %s\n",
                                 opts.savePipelinePath.cstr(),
                                 serr.desc().cstr());
-                        return 1;
+                        return ExitGeneric;
                 }
                 fprintf(stdout, "Pipeline saved to %s\n",
                         opts.savePipelinePath.cstr());
-                return 0;
+                return ExitOk;
         }
 
         const bool statsEnabled = (opts.statsInterval > 0.0);
@@ -379,16 +451,45 @@ int main(int argc, char **argv) {
         // so the planner and --describe paths can reach the live
         // instances.
         promeki::Map<String, MediaIO *> injectedMap;
+        // Inspector stages mediaplay injected itself — we keep typed
+        // handles here so we can poll @c snapshot() after the run
+        // completes and convert it to a pass/fail exit code.  Map
+        // from the stage name (as declared in the pipeline config)
+        // to the task pointer we adopted into the MediaIO.
+        promeki::Map<String, MediaIOTask_Inspector *> inspectorTasks;
         for(size_t i = 0; i < pipelineCfg.stages().size(); ++i) {
                 const MediaPipelineConfig::Stage &s = pipelineCfg.stages()[i];
-                if(s.type != kStageSdl) continue;
-                MediaIO *player = createSdlStage(s, ui, statsEnabled);
-                if(player == nullptr) {
-                        delete ui.audioOutput;
-                        delete ui.window;
-                        return 1;
+                if(s.type == kStageSdl) {
+                        MediaIO *player = createSdlStage(s, ui, statsEnabled);
+                        if(player == nullptr) {
+                                delete ui.audioOutput;
+                                delete ui.window;
+                                return ExitGeneric;
+                        }
+                        injectedMap.insert(s.name, player);
+                } else if(s.type == String("Inspector")) {
+                        // Always inject Inspector stages so main() can
+                        // poll @c snapshot() after the run and surface
+                        // any reported discontinuity as a dedicated exit
+                        // code.  The pipeline-level @c --frame-count cap
+                        // already guarantees the inspector receives the
+                        // requested number of frames, so a separate
+                        // "expected frames" flag is no longer needed.
+                        MediaIOTask_Inspector *task = nullptr;
+                        MediaIO *io = createInspectorStage(s, &task);
+                        if(io == nullptr) {
+                                delete ui.audioOutput;
+                                delete ui.window;
+                                return ExitGeneric;
+                        }
+                        if(statsEnabled) {
+                                MediaIO::Config c = io->config();
+                                c.set(MediaConfig::EnableBenchmark, true);
+                                io->setConfig(c);
+                        }
+                        injectedMap.insert(s.name, io);
+                        inspectorTasks.insert(s.name, task);
                 }
-                injectedMap.insert(s.name, player);
         }
 
         // Cleanup helper for the --plan / --describe early-exit paths
@@ -421,7 +522,7 @@ int main(int argc, char **argv) {
                                 }
                         }
                         cleanupInjected();
-                        return 1;
+                        return ExitPipelineBuild;
                 }
                 fprintf(stdout, "Planner inserted %zu bridge stage(s).\n",
                         planned.stages().size() - pipelineCfg.stages().size());
@@ -499,7 +600,7 @@ int main(int argc, char **argv) {
                                 "Error: --write-stats '%s' open failed: %s\n",
                                 opts.writeStatsPath.cstr(), oe.desc().cstr());
                         delete statsFile;
-                        return 1;
+                        return ExitGeneric;
                 }
         }
 
@@ -512,6 +613,17 @@ int main(int argc, char **argv) {
                 for(size_t i = 0; i < stages.size(); ++i) {
                         stages[i].config.set(MediaConfig::EnableBenchmark, true);
                 }
+        }
+
+        // --- Frame-count cap ---
+        // Push the CLI override onto the config last so it wins over
+        // anything carried by a loaded preset — users running
+        // `--pipeline foo.json --frame-count 60` expect the CLI value
+        // to take priority.  Zero / unset means "unlimited" on both
+        // sides, so skip the assignment in that case to preserve any
+        // preset-defined cap.
+        if(opts.frameCount > 0) {
+                pipelineCfg.setFrameCount(FrameCount(opts.frameCount));
         }
 
         // --- Inject the SDL stages we built earlier into the pipeline ---
@@ -541,7 +653,7 @@ int main(int argc, char **argv) {
                                        : "");
                 delete ui.audioOutput;
                 delete ui.window;
-                return 1;
+                return ExitPipelineBuild;
         }
 
         // Attach BenchmarkReporters after build, before open, so the
@@ -566,7 +678,7 @@ int main(int argc, char **argv) {
                 for(auto *r : reporters) delete r;
                 delete ui.audioOutput;
                 delete ui.window;
-                return 1;
+                return ExitPipelineOpen;
         }
 
         // One-line description of the live pipeline for humans.
@@ -577,46 +689,42 @@ int main(int argc, char **argv) {
                 }
         }
 
-        // --- Frame-count limit wiring ---
-        // The first stage in topological order is the source; counting
-        // its successful frameReady signals is a close-enough proxy
-        // for "frames pumped".  Uses a long-lived lambda-captured
-        // counter so we don't need to heap-allocate state.
-        int64_t framesCounted = 0;
-        {
-                StringList names = pipeline.stageNames();
-                const int64_t limit = opts.frameCount;
-                if(limit > 0 && !names.isEmpty()) {
-                        MediaIO *sourceIO = pipeline.stage(names[0]);
-                        if(sourceIO != nullptr) {
-                                sourceIO->frameReadySignal.connect(
-                                        [&framesCounted, limit]() {
-                                                if(++framesCounted >= limit) {
-                                                        Application::quit(0);
-                                                }
-                                        }, &pipeline);
-                        }
-                }
-        }
-
+        // Runtime-error latch.  @c pipelineErrorSignal fires from the
+        // stage's owning thread (not the main EventLoop), so the flag
+        // is an atomic that main() reads after @c app.exec() returns
+        // to produce the final exit code.  We latch only the first
+        // error to avoid overwriting a more interesting root cause
+        // with a downstream fallout error.
+        std::atomic<bool> runtimeErrorLatched{false};
         pipeline.pipelineErrorSignal.connect(
-                [](const String &stageName, Error err) {
+                [&runtimeErrorLatched](const String &stageName, Error err) {
                         fprintf(stderr, "Pipeline error at '%s': %s\n",
                                 stageName.cstr(), err.desc().cstr());
+                        bool expected = false;
+                        runtimeErrorLatched.compare_exchange_strong(expected, true);
                 }, &pipeline);
         // finishedSignal now fires at the END of the close cascade
         // (alongside closedSignal), so just use it for a diagnostic
         // line when the run wasn't clean — the actual quit happens
         // from closedSignal below.
-        pipeline.finishedSignal.connect([](bool clean) {
+        pipeline.finishedSignal.connect([&runtimeErrorLatched](bool clean) {
                 if(!clean) {
                         fprintf(stderr, "Pipeline did not finish cleanly.\n");
+                        bool expected = false;
+                        runtimeErrorLatched.compare_exchange_strong(expected, true);
                 }
         }, &pipeline);
         // Cascade finished — drive the actual EventLoop quit now that
-        // every stage has drained and released its resources.
-        pipeline.closedSignal.connect([](Error err) {
-                Application::quit(err.isOk() ? 0 : 1);
+        // every stage has drained and released its resources.  Pass
+        // the close-cascade error through to the exit-code logic via
+        // the same latch so the caller sees "pipeline runtime error"
+        // rather than a generic failure.
+        pipeline.closedSignal.connect([&runtimeErrorLatched](Error err) {
+                if(err.isError()) {
+                        bool expected = false;
+                        runtimeErrorLatched.compare_exchange_strong(expected, true);
+                }
+                Application::quit(err.isOk() ? ExitOk : ExitPipelineRuntime);
         }, &pipeline);
 
         // Intercept Ctrl-C / signal-driven quit so the pipeline has a
@@ -717,7 +825,7 @@ int main(int argc, char **argv) {
                         statsFile->close();
                         delete statsFile;
                 }
-                return 1;
+                return ExitPipelineStart;
         }
 
         int rc = app.exec();
@@ -757,6 +865,36 @@ int main(int argc, char **argv) {
         }
 
         if(opts.memStats) MemSpace::logAllStats();
+
+        // --- Final exit code resolution ---
+        //
+        // The ordering matters: a pipeline runtime error should win
+        // over an Inspector-reported discontinuity, since a mid-run
+        // failure is almost always the cause of any downstream
+        // frame-continuity break.  A clean run with a discontinuity
+        // still reports @ref ExitInspectorDiscontinuity so scripts
+        // (scripts/roundtrip-codecs.sh and friends) can distinguish
+        // "pipeline didn't make it" from "pipeline made it but the
+        // frames don't hang together".
+        int finalRc = rc;
+        if(runtimeErrorLatched.load()) {
+                finalRc = ExitPipelineRuntime;
+        } else if(!inspectorTasks.isEmpty()) {
+                int64_t totalDisc = 0;
+                for(auto it = inspectorTasks.begin();
+                    it != inspectorTasks.end(); ++it) {
+                        InspectorSnapshot snap = it->second->snapshot();
+                        totalDisc += snap.totalDiscontinuities;
+                }
+                if(totalDisc > 0) {
+                        fprintf(stderr,
+                                "Inspector reported %lld discontinuit%s\n",
+                                (long long)totalDisc,
+                                totalDisc == 1 ? "y" : "ies");
+                        finalRc = ExitInspectorDiscontinuity;
+                }
+        }
+
         promekiLogSync();
-        return rc;
+        return finalRc;
 }

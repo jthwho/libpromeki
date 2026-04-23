@@ -129,7 +129,7 @@ class SDLPlayerTask : public MediaIOTask {
                 // strand can drain to CmdClose.
                 void cancelBlockingWork() override;
 
-                PixelDesc pickNativePixelDesc(const PixelDesc &offered) const;
+                PixelFormat pickNativePixelFormat(const PixelFormat &offered) const;
 
                 // Spawns the pull thread.  Caller must hold
                 // @ref _clockMutex and guarantee no thread is already

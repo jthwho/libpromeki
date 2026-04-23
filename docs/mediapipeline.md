@@ -82,6 +82,7 @@ operational or close-time error was observed.
 ```json
 {
   "metadata": { "Title": "TPG to MOV + display", "Author": "libpromeki" },
+  "frameCount": 300,
   "stages": [
     {
       "name": "source",
@@ -91,7 +92,7 @@ operational or close-time error was observed.
         "VideoEnabled":    true,
         "VideoPattern":    "ColorBars",
         "VideoSize":       "1920x1080",
-        "VideoPixelDesc":  "YUV422_10_BT709_Limited",
+        "VideoPixelFormat":  "YUV422_10_BT709_Limited",
         "AudioEnabled":    true,
         "AudioMode":       "Tone"
       }
@@ -100,7 +101,7 @@ operational or close-time error was observed.
       "name": "csc",
       "type": "CSC",
       "mode": "Transform",
-      "config": { "OutputPixelDesc": "RGBA8_sRGB" }
+      "config": { "OutputPixelFormat": "RGBA8_sRGB" }
     },
     {
       "name": "display",
@@ -129,6 +130,20 @@ round-trip via `VariantDatabase::toJson` /
 `include/promeki/mediaconfig.h` is expressible. The `mode`
 string uses `MediaPipelineConfig::modeName` — one of
 `"Source"`, `"Sink"`, `"Transform"`, or `"NotOpen"`.
+
+The top-level `frameCount` key is optional: when present and
+positive, it caps the number of frames the pipeline will deliver
+to each sink. The cap is enforced at runtime — once a sink has
+received its target count the pipeline closes that sink cleanly
+(its trailer / finalization still fires) and then cascades the
+close to upstream stages; frames produced by a source after the
+cap has been reached are silently dropped. For interframe-coded
+stages (`VideoCodec::CodingTemporal`) the cut is deferred to the
+next `Frame::isSafeCutPoint` — i.e. the next frame that begins a
+new GOP — so a sink always ends on a sequence of complete GOPs,
+even if that means writing up to one extra GOP beyond the target.
+Omit the key (or set it to `0`) to let the pipeline run until
+every source naturally hits EOS.
 
 ## Topology rules {#mediapipeline_topology}
 
@@ -210,8 +225,8 @@ MediaPipelineConfig::Stage csc;
 csc.name = "csc";
 csc.type = "CSC";
 csc.mode = MediaIO::Transform;
-csc.config.set(MediaConfig::OutputPixelDesc,
-               PixelDesc(PixelDesc::RGBA8_sRGB));
+csc.config.set(MediaConfig::OutputPixelFormat,
+               PixelFormat(PixelFormat::RGBA8_sRGB));
 cfg.addStage(csc);
 
 MediaPipelineConfig::Stage sink;

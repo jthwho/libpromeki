@@ -250,7 +250,7 @@ static MediaIO::Config::SpecMap imageFileConfigSpecs() {
         // formats (RawYUV) that can't derive the
         // geometry from the file itself.
         s(MediaConfig::VideoSize, Size2Du32());
-        s(MediaConfig::VideoPixelFormat, PixelDesc());
+        s(MediaConfig::VideoPixelFormat, PixelFormat());
         s(MediaConfig::FrameRate, MediaIOTask_ImageFile::DefaultFrameRate);
         s(MediaConfig::SequenceHead,
           int32_t(MediaIOTask_ImageFile::DefaultSequenceHead));
@@ -472,7 +472,7 @@ Error MediaIOTask_ImageFile::openSingle(MediaIOCommandOpen &cmd,
                 // For headerless formats, set hint image from config
                 Size2Du32 hintSize = cfg.getAs<Size2Du32>(MediaConfig::VideoSize, Size2Du32());
                 if(hintSize.width() > 0 && hintSize.height() > 0) {
-                        PixelDesc pd = cfg.getAs<PixelDesc>(MediaConfig::VideoPixelFormat, PixelDesc());
+                        PixelFormat pd = cfg.getAs<PixelFormat>(MediaConfig::VideoPixelFormat, PixelFormat());
                         if(pd.isValid()) {
                                 Image hint(hintSize.width(), hintSize.height(), pd.id());
                                 imgFile.setImage(hint);
@@ -490,7 +490,7 @@ Error MediaIOTask_ImageFile::openSingle(MediaIOCommandOpen &cmd,
 
                 if(!_frame->imageList().isEmpty()) {
                         const Image &img = *_frame->imageList()[0];
-                        ImageDesc idesc(img.width(), img.height(), img.pixelDesc().id());
+                        ImageDesc idesc(img.width(), img.height(), img.pixelFormat().id());
                         mediaDesc.imageList().pushToBack(idesc);
                 }
 
@@ -554,7 +554,7 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
         int64_t head = -1;
         int64_t tail = -1;
         Size2Du32 hintSize  = cfg.getAs<Size2Du32>(MediaConfig::VideoSize, Size2Du32());
-        PixelDesc hintPixel = cfg.getAs<PixelDesc>(MediaConfig::VideoPixelFormat, PixelDesc());
+        PixelFormat hintPixel = cfg.getAs<PixelFormat>(MediaConfig::VideoPixelFormat, PixelFormat());
         Metadata  sidecarMeta;
         FrameRate sidecarFps;
         String    sidecarAudioFile;         // From .imgseq "audioFile" field
@@ -594,8 +594,8 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                 if(seq.videoSize().width() > 0 && seq.videoSize().height() > 0) {
                         hintSize = seq.videoSize();
                 }
-                if(seq.pixelDesc().isValid()) {
-                        hintPixel = seq.pixelDesc();
+                if(seq.pixelFormat().isValid()) {
+                        hintPixel = seq.pixelFormat();
                 }
                 sidecarMeta = seq.metadata();
                 sidecarAudioFile = seq.audioFile();
@@ -634,8 +634,8 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                                            seq.videoSize().height() > 0) {
                                                 hintSize = seq.videoSize();
                                         }
-                                        if(seq.pixelDesc().isValid()) {
-                                                hintPixel = seq.pixelDesc();
+                                        if(seq.pixelFormat().isValid()) {
+                                                hintPixel = seq.pixelFormat();
                                         }
                                         sidecarMeta = seq.metadata();
                                         sidecarAudioFile = seq.audioFile();
@@ -654,7 +654,7 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
         _seqDir       = dir;
         _seqMetadata  = sidecarMeta;
         _seqSize      = hintSize;
-        _seqPixelDesc = hintPixel;
+        _seqPixelFormat = hintPixel;
 
         // Determine the per-file ImageFile::ID from the pattern
         // suffix; MediaConfig::ImageFileID = 0 (ImageFile::Invalid) in the
@@ -736,8 +736,8 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                 String firstPath = (dir / pattern.name(static_cast<int>(head))).toString();
                 ImageFile imgFile(_imageFileID);
                 imgFile.setFilename(firstPath);
-                if(_seqSize.width() > 0 && _seqSize.height() > 0 && _seqPixelDesc.isValid()) {
-                        Image hint(_seqSize.width(), _seqSize.height(), _seqPixelDesc.id());
+                if(_seqSize.width() > 0 && _seqSize.height() > 0 && _seqPixelFormat.isValid()) {
+                        Image hint(_seqSize.width(), _seqSize.height(), _seqPixelFormat.id());
                         imgFile.setImage(hint);
                 }
                 Error err = imgFile.load(_ioConfig);
@@ -749,7 +749,7 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                 const Frame &f = imgFile.frame();
                 if(!f.imageList().isEmpty()) {
                         const Image &img = *f.imageList()[0];
-                        ImageDesc idesc(img.width(), img.height(), img.pixelDesc().id());
+                        ImageDesc idesc(img.width(), img.height(), img.pixelFormat().id());
                         mediaDesc.imageList().pushToBack(idesc);
                 }
 
@@ -893,7 +893,7 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                 if(!cmd.pendingMediaDesc.imageList().isEmpty()) {
                         const ImageDesc &id = cmd.pendingMediaDesc.imageList()[0];
                         _seqSize = id.size();
-                        _seqPixelDesc = id.pixelDesc();
+                        _seqPixelFormat = id.pixelFormat();
                 }
 
                 Metadata meta = cmd.pendingMetadata;
@@ -1007,8 +1007,8 @@ Error MediaIOTask_ImageFile::writeImgSeqSidecar() {
         if(_seqSize.width() > 0 && _seqSize.height() > 0) {
                 seq.setVideoSize(_seqSize);
         }
-        if(_seqPixelDesc.isValid()) {
-                seq.setPixelDesc(_seqPixelDesc);
+        if(_seqPixelFormat.isValid()) {
+                seq.setPixelFormat(_seqPixelFormat);
         }
         if(!_sidecarAudioName.isEmpty()) {
                 seq.setAudioFile(_sidecarAudioName);
@@ -1090,7 +1090,7 @@ Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandClose &cmd) {
         _seqAtEnd = false;
         _seqMetadata = Metadata();
         _seqSize = Size2Du32();
-        _seqPixelDesc = PixelDesc();
+        _seqPixelFormat = PixelFormat();
 
         _sidecarAudio = AudioFile();
         _sidecarAudioDesc = AudioDesc();
@@ -1142,8 +1142,8 @@ Error MediaIOTask_ImageFile::readSequence(MediaIOCommandRead &cmd) {
 
         ImageFile imgFile(_imageFileID);
         imgFile.setFilename(fn);
-        if(_seqSize.width() > 0 && _seqSize.height() > 0 && _seqPixelDesc.isValid()) {
-                Image hint(_seqSize.width(), _seqSize.height(), _seqPixelDesc.id());
+        if(_seqSize.width() > 0 && _seqSize.height() > 0 && _seqPixelFormat.isValid()) {
+                Image hint(_seqSize.width(), _seqSize.height(), _seqPixelFormat.id());
                 imgFile.setImage(hint);
         }
         Error err = imgFile.load(_ioConfig);
@@ -1321,31 +1321,31 @@ String extractExt(const String &path) {
         return path.mid(dot + 1).toLower();
 }
 
-// Returns component[0] bits for an uncompressed PixelDesc, or 0 for
-// compressed / invalid PixelDescs.
-int componentBits(const PixelDesc &pd) {
+// Returns component[0] bits for an uncompressed PixelFormat, or 0 for
+// compressed / invalid PixelFormats.
+int componentBits(const PixelFormat &pd) {
         if(!pd.isValid() || pd.isCompressed()) return 0;
-        if(pd.pixelFormat().compCount() == 0) return 0;
-        return static_cast<int>(pd.pixelFormat().compDesc(0).bits);
+        if(pd.memLayout().compCount() == 0) return 0;
+        return static_cast<int>(pd.memLayout().compDesc(0).bits);
 }
 
 // True when the source's ColorModel family is YCbCr (luma + chroma-
 // difference) — used to pick a YUV-family writer target so the
 // inserted CSC stays inside the matching colour space when possible.
-// PixelFormat::sampling() alone can't answer this: RGB formats are
+// PixelMemLayout::sampling() alone can't answer this: RGB formats are
 // also Sampling444, so we have to look at the ColorModel::type
 // instead.
-bool isYuvSource(const PixelDesc &pd) {
+bool isYuvSource(const PixelFormat &pd) {
         if(!pd.isValid()) return false;
         return pd.colorModel().type() == ColorModel::TypeYCbCr;
 }
 
 } // namespace
 
-PixelDesc MediaIOTask_ImageFile::preferredWriterPixelDesc(
-        const String &filename, const PixelDesc &source) const {
+PixelFormat MediaIOTask_ImageFile::preferredWriterPixelFormat(
+        const String &filename, const PixelFormat &source) const {
         const String ext = extractExt(filename);
-        if(ext.isEmpty()) return PixelDesc();
+        if(ext.isEmpty()) return PixelFormat();
 
         const int srcBits = componentBits(source);
 
@@ -1358,10 +1358,10 @@ PixelDesc MediaIOTask_ImageFile::preferredWriterPixelDesc(
         // 16-bit today, so we advertise that variant; 12-bit has no
         // writer support yet and falls through to 10-bit DPX.
         if(ext == "dpx" || ext == "cin") {
-                if(srcBits >= 16) return PixelDesc(PixelDesc::RGB16_BE_sRGB);
-                if(srcBits >= 10) return PixelDesc(PixelDesc::RGB10_DPX_sRGB);
-                if(srcBits >= 8)  return PixelDesc(PixelDesc::RGBA8_sRGB);
-                return PixelDesc(PixelDesc::RGB10_DPX_sRGB);
+                if(srcBits >= 16) return PixelFormat(PixelFormat::RGB16_BE_sRGB);
+                if(srcBits >= 10) return PixelFormat(PixelFormat::RGB10_DPX_sRGB);
+                if(srcBits >= 8)  return PixelFormat(PixelFormat::RGBA8_sRGB);
+                return PixelFormat(PixelFormat::RGB10_DPX_sRGB);
         }
 
         // ---- JPEG / JPG ----
@@ -1369,41 +1369,41 @@ PixelDesc MediaIOTask_ImageFile::preferredWriterPixelDesc(
         // closest to the source so the inserted CSC stays cheap.
         if(ext == "jpg" || ext == "jpeg" || ext == "jfif") {
                 return isYuvSource(source)
-                        ? PixelDesc(PixelDesc::YUV8_422_Planar_Rec709)
-                        : PixelDesc(PixelDesc::RGBA8_sRGB);
+                        ? PixelFormat(PixelFormat::YUV8_422_Planar_Rec709)
+                        : PixelFormat(PixelFormat::RGBA8_sRGB);
         }
 
         // ---- PNG ----
         // libspng round-trips 8-bit and 16-bit RGBA.
         if(ext == "png") {
-                if(srcBits >= 16) return PixelDesc(PixelDesc::RGBA16_LE_sRGB);
-                return PixelDesc(PixelDesc::RGBA8_sRGB);
+                if(srcBits >= 16) return PixelFormat(PixelFormat::RGBA16_LE_sRGB);
+                return PixelFormat(PixelFormat::RGBA8_sRGB);
         }
 
         // ---- TGA ----
         // 8-bit RGB(A) only.
-        if(ext == "tga") return PixelDesc(PixelDesc::RGBA8_sRGB);
+        if(ext == "tga") return PixelFormat(PixelFormat::RGBA8_sRGB);
 
         // ---- SGI ----
         // 8 or 16-bit RGB(A).  SGI stores 16-bit channels big-endian on
         // disk, so we ask the pipeline for a BE-ordered input and let
         // the writer copy the bytes through unchanged.
         if(ext == "sgi" || ext == "rgb" || ext == "rgba" || ext == "bw") {
-                if(srcBits >= 16) return PixelDesc(PixelDesc::RGBA16_BE_sRGB);
-                return PixelDesc(PixelDesc::RGBA8_sRGB);
+                if(srcBits >= 16) return PixelFormat(PixelFormat::RGBA16_BE_sRGB);
+                return PixelFormat(PixelFormat::RGBA8_sRGB);
         }
 
         // ---- PNM family ----
         // 8 or 16-bit RGB.  PNM 16-bit is big-endian on disk per the
         // Netpbm specification, matching what our writer produces.
         if(ext == "pnm" || ext == "ppm" || ext == "pgm" || ext == "pbm") {
-                if(srcBits >= 16) return PixelDesc(PixelDesc::RGB16_BE_sRGB);
-                return PixelDesc(PixelDesc::RGB8_sRGB);
+                if(srcBits >= 16) return PixelFormat(PixelFormat::RGB16_BE_sRGB);
+                return PixelFormat(PixelFormat::RGB8_sRGB);
         }
 
         // For unknown extensions return invalid — the proposeInput
         // override then accepts whatever was offered.
-        return PixelDesc();
+        return PixelFormat();
 }
 
 Error MediaIOTask_ImageFile::proposeInput(const MediaDesc &offered,
@@ -1420,8 +1420,8 @@ Error MediaIOTask_ImageFile::proposeInput(const MediaDesc &offered,
         const String filename = cfg.contains(MediaConfig::Filename)
                 ? cfg.getAs<String>(MediaConfig::Filename) : String();
 
-        const PixelDesc &offeredPd = offered.imageList()[0].pixelDesc();
-        const PixelDesc target = preferredWriterPixelDesc(filename, offeredPd);
+        const PixelFormat &offeredPd = offered.imageList()[0].pixelFormat();
+        const PixelFormat target = preferredWriterPixelFormat(filename, offeredPd);
 
         if(!target.isValid() || target == offeredPd) {
                 *preferred = offered;

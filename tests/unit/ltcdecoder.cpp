@@ -146,7 +146,7 @@ TEST_CASE("LtcDecoder_DecodeAudio_Float32Stereo") {
     // Build a float32 stereo Audio of the same length, with LTC on
     // channel 0 and silence on channel 1.  This is the same shape the
     // TPG produces when AudioMode == LTC.
-    AudioDesc stereoDesc(AudioDesc::PCMI_Float32LE, 48000.0f, 2);
+    AudioDesc stereoDesc(AudioFormat::PCMI_Float32LE, 48000.0f, 2);
     Audio stereo(stereoDesc, mono.size());
     stereo.resize(mono.size());
     float *out = stereo.data<float>();
@@ -170,7 +170,7 @@ TEST_CASE("LtcDecoder_DecodeAudio_Float32Stereo") {
 
 TEST_CASE("LtcDecoder_DecodeAudio_RejectsMismatchedSampleRate") {
     LtcDecoder dec(48000);
-    AudioDesc desc(AudioDesc::PCMI_Float32LE, 44100.0f, 2);
+    AudioDesc desc(AudioFormat::PCMI_Float32LE, 44100.0f, 2);
     Audio audio(desc, 1024);
     audio.resize(1024);
     auto results = dec.decode(audio, 0);
@@ -179,7 +179,7 @@ TEST_CASE("LtcDecoder_DecodeAudio_RejectsMismatchedSampleRate") {
 
 TEST_CASE("LtcDecoder_DecodeAudio_RejectsBadChannelIndex") {
     LtcDecoder dec(48000);
-    AudioDesc desc(AudioDesc::PCMI_Float32LE, 48000.0f, 2);
+    AudioDesc desc(AudioFormat::PCMI_Float32LE, 48000.0f, 2);
     Audio audio(desc, 1024);
     audio.resize(1024);
     auto results = dec.decode(audio, 5);   // out-of-range

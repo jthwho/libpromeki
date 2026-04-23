@@ -157,11 +157,11 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                 .setDefault(Size2Du32())
                                 .setDescription("Image dimensions."));
 
-                /// @brief PixelDesc — stage video pixel description (target format for
+                /// @brief PixelFormat — stage video pixel description (target format for
                 /// generators, hint for headerless readers).
                 PROMEKI_DECLARE_ID(VideoPixelFormat,
-                        VariantSpec().setType(Variant::TypePixelDesc)
-                                .setDefault(PixelDesc())
+                        VariantSpec().setType(Variant::TypePixelFormat)
+                                .setDefault(PixelFormat())
                                 .setDescription("Video pixel description."));
 
                 /// @brief int — 0-based video track index to use (-1 = auto).
@@ -583,11 +583,11 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                 // CSC (MediaIOTask_CSC)
                 // ============================================================
 
-                /// @brief PixelDesc — target pixel description for the converter
+                /// @brief PixelFormat — target pixel description for the converter
                 /// stage (@c Invalid = video pass-through).
-                PROMEKI_DECLARE_ID(OutputPixelDesc,
-                        VariantSpec().setType(Variant::TypePixelDesc)
-                                .setDefault(PixelDesc())
+                PROMEKI_DECLARE_ID(OutputPixelFormat,
+                        VariantSpec().setType(Variant::TypePixelFormat)
+                                .setDefault(PixelFormat())
                                 .setDescription("Target pixel description (Invalid = pass-through)."));
 
                 /// @brief Enum @ref AudioDataType — target audio sample format
@@ -775,9 +775,9 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                 // without thinking about byte-vs-bit conversions.
 
                 /// @brief int — target / average bitrate in kbit/s.
-                /// Honoured by @c VideoRateControl::CBR and
-                /// @c VideoRateControl::VBR.  Ignored by
-                /// @c VideoRateControl::CQP.  Codec default: 5000.
+                /// Honoured by @c RateControlMode::CBR and
+                /// @c RateControlMode::VBR.  Ignored by
+                /// @c RateControlMode::CQP.  Codec default: 5000.
                 PROMEKI_DECLARE_ID(BitrateKbps,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(5000))
@@ -785,7 +785,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                 .setDescription("Target / average bitrate in kbit/s."));
 
                 /// @brief int — maximum (peak) bitrate in kbit/s.  Only
-                /// meaningful for @c VideoRateControl::VBR; CBR ignores
+                /// meaningful for @c RateControlMode::VBR; CBR ignores
                 /// it, CQP ignores it.  Codec default: 0 (no cap).
                 PROMEKI_DECLARE_ID(MaxBitrateKbps,
                         VariantSpec().setType(Variant::TypeS32)
@@ -793,12 +793,12 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                 .setMin(int32_t(0))
                                 .setDescription("Peak bitrate in kbit/s (VBR only; 0 = uncapped)."));
 
-                /// @brief Enum @ref VideoRateControl — rate-control mode.
+                /// @brief Enum @ref RateControlMode — rate-control mode.
                 /// Codec default: VBR.
                 PROMEKI_DECLARE_ID(VideoRcMode,
                         VariantSpec().setType(Variant::TypeEnum)
-                                .setDefault(promeki::VideoRateControl::VBR)
-                                .setEnumType(promeki::VideoRateControl::Type)
+                                .setDefault(promeki::RateControlMode::VBR)
+                                .setEnumType(promeki::RateControlMode::Type)
                                 .setDescription("Video rate-control mode (CBR / VBR / CQP)."));
 
                 /// @brief int — GOP length in frames (distance between
@@ -933,7 +933,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                 /// Numeric values per ISO/IEC 23091-4 / ITU-T H.273.
                 ///
                 /// Default @c Auto lets the encoder derive the value from
-                /// the first input frame's PixelDesc / ColorModel (Rec.709
+                /// the first input frame's PixelFormat / ColorModel (Rec.709
                 /// → @c BT709, Rec.2020 → @c BT2020, sRGB → @c BT709, …).
                 /// Set @c Unspecified to suppress the color-description
                 /// block entirely, or pick a specific value to override.
@@ -964,7 +964,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                 /// signalled in the VUI.  Numeric values per ISO/IEC 23091-4
                 /// / ITU-T H.273.
                 ///
-                /// Default @c Auto derives from the input PixelDesc's
+                /// Default @c Auto derives from the input PixelFormat's
                 /// ColorModel (RGB models → @c RGB, YCbCr_Rec709 →
                 /// @c BT709, YCbCr_Rec2020 → @c BT2020_NCL, …).
                 PROMEKI_DECLARE_ID(VideoMatrixCoefficients,
@@ -979,8 +979,8 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                 /// HEVC) or AV1 @c colorRange field.
                 ///
                 /// Default @c Unknown means "derive from the first input
-                /// frame's @ref PixelDesc::videoRange".  Callers can force
-                /// @c Limited or @c Full to override the PixelDesc-derived
+                /// frame's @ref PixelFormat::videoRange".  Callers can force
+                /// @c Limited or @c Full to override the PixelFormat-derived
                 /// signalling (rarely useful, but covers formats whose
                 /// on-wire representation disagrees with their source
                 /// convention).
@@ -1086,6 +1086,66 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                 .setDescription("Audio codec for the audio encoder / "
                                                 "decoder backends "
                                                 "(e.g. \"AAC\", \"Opus\", \"FLAC\")."));
+
+                /// @brief String — backend name override for codec
+                /// resolution.  When non-empty, AudioCodec /
+                /// VideoCodec @c createEncoder / @c createDecoder pin
+                /// the backend registered under that name via
+                /// @c AudioCodec::registerBackend /
+                /// @c VideoCodec::registerBackend (e.g. @c "Native",
+                /// @c "FFmpeg", @c "NVENC") instead of falling back to
+                /// the highest-weight registered backend.  Equivalent
+                /// to writing the codec as @c "Codec:Backend" in the
+                /// string form of @c AudioCodec / @c VideoCodec.
+                /// Empty (the default) means "let the registry pick".
+                PROMEKI_DECLARE_ID(CodecBackend,
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Optional codec backend name pinning a "
+                                                "specific codec backend (empty = let the "
+                                                "registry pick)."));
+
+                /// @brief Bool — permits the pipeline planner to pick a
+                /// different backend than the user's pinned selection
+                /// when the pinned backend can't satisfy the source.
+                ///
+                /// When @c false (the default), the planner must honor
+                /// whichever backend the caller pinned on
+                /// @c AudioCodec / @c VideoCodec (or via @c CodecBackend),
+                /// and reports an error if that backend can't handle
+                /// the incoming frames / packets.  When @c true, the
+                /// planner may silently substitute a better-matched
+                /// registered backend — useful when a @c MediaConfig is
+                /// reused across pipelines where one of them happens
+                /// to lack the originally-preferred backend.
+                PROMEKI_DECLARE_ID(AllowCodecBackendOverride,
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(false)
+                                .setDescription("Allow the planner to pick a different "
+                                                "backend than the one pinned by the "
+                                                "caller (default: false)."));
+
+                /// @brief Enum @ref OpusApplication — Opus encoder
+                /// application mode (@c Voip / @c Audio / @c LowDelay).
+                /// Backend default: @c Audio.
+                PROMEKI_DECLARE_ID(OpusApplication,
+                        VariantSpec().setType(Variant::TypeEnum)
+                                .setDefault(promeki::OpusApplication::Audio)
+                                .setEnumType(promeki::OpusApplication::Type)
+                                .setDescription("Opus encoder application mode "
+                                                "(Voip / Audio / LowDelay)."));
+
+                /// @brief float — Opus encoder frame size in
+                /// milliseconds.  Valid values per libopus: 2.5, 5,
+                /// 10, 20, 40, 60.  Backend default: 20 (good
+                /// trade-off between latency and coding efficiency).
+                PROMEKI_DECLARE_ID(OpusFrameSizeMs,
+                        VariantSpec().setType(Variant::TypeFloat)
+                                .setDefault(20.0f)
+                                .setMin(2.5f)
+                                .setMax(60.0f)
+                                .setDescription("Opus encoder frame size in milliseconds "
+                                                "(2.5, 5, 10, 20, 40, or 60)."));
 
                 // ============================================================
                 // CSC pipeline

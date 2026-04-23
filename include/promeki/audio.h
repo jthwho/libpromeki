@@ -14,7 +14,7 @@
 #include <promeki/audiodesc.h>
 #include <promeki/buffer.h>
 #include <promeki/list.h>
-#include <promeki/mediapacket.h>
+#include <promeki/audiopacket.h>
 #include <promeki/stringlist.h>
 #include <promeki/variantlookup.h>
 
@@ -30,17 +30,17 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par Compressed audio
  * An Audio object can also carry a compressed bitstream such as
- * AAC, Opus, or MP3. A compressed Audio uses an AudioDesc whose
- * @c codecFourCC() is non-zero (and whose @c dataType() is typically
- * @c Invalid since the encoded stream has no single bit depth). The
- * raw encoded bytes live in the object's single buffer. Use
- * @c isCompressed() to test, @c compressedSize() to get the byte
+ * AAC, Opus, or MP3.  A compressed Audio uses an @ref AudioDesc whose
+ * @ref AudioFormat is one of the compressed entries (e.g.
+ * @c AudioFormat::Opus) — @ref AudioFormat::isCompressed is true for
+ * those.  The raw encoded bytes live in the object's single buffer.
+ * Use @c isCompressed() to test, @c compressedSize() to get the byte
  * count, and @c Audio::fromBuffer() to adopt an existing
  * @c Buffer::Ptr without copying.
  *
  * @par Example
  * @code
- * AudioDesc desc(48000, 2, AudioDesc::Float32);
+ * AudioDesc desc(AudioFormat(AudioFormat::PCMI_Float32LE), 48000, 2);
  * Audio audio(desc, 1024);  // 1024 samples
  *
  * // Shared ownership for pipeline passing
@@ -76,10 +76,11 @@ class Audio {
                  *
                  * Used for both compressed bitstreams and PCM where the
                  * caller already has the bytes in a @c Buffer::Ptr (e.g.
-                 * from @c File::readBulk). For compressed audio,
-                 * @p desc must have a non-zero @c codecFourCC(); for
-                 * PCM audio, the buffer size must be a whole multiple
-                 * of the PCM frame size (channels × bytesPerSample).
+                 * from @c File::readBulk).  For compressed audio,
+                 * @p desc must use a compressed @ref AudioFormat (one
+                 * where @c AudioFormat::isCompressed is true); for PCM
+                 * audio, the buffer size must be a whole multiple of
+                 * the PCM frame size (channels × bytesPerSample).
                  *
                  * @param buffer The buffer to adopt.
                  * @param desc   The audio format descriptor (compressed or PCM).
@@ -109,6 +110,34 @@ class Audio {
 
                 /** @brief Returns true if this Audio carries a compressed bitstream. */
                 bool isCompressed() const { return _desc.isCompressed(); }
+
+                /**
+                 * @brief Returns true when stopping the stream before this
+                 *        audio unit leaves the decoded output intact.
+                 *
+                 * Uncompressed PCM is always a safe cut.  A compressed
+                 * unit is safe when the codec's
+                 * @ref AudioCodec::packetIndependence is
+                 * @ref AudioCodec::PacketIndependenceEvery (every packet
+                 * decodes standalone — e.g. Opus); otherwise the unit
+                 * carries no safe cut point — audio packets do not use
+                 * per-packet keyframe flags, so codecs whose
+                 * independence is @c PacketIndependenceKeyframe cannot
+                 * be safely cut from an @c Audio-level query.  A codec
+                 * with @ref AudioCodec::PacketIndependenceInvalid
+                 * returns @c false — we have no evidence the stream can
+                 * be safely truncated here.
+                 *
+                 * Used by @ref Frame::isSafeCutPoint and by
+                 * @ref MediaPipeline to honour a pipeline-wide frame
+                 * count without leaving an audio packet that won't
+                 * decode on its own.
+                 *
+                 * @return @c true when stopping before this audio unit
+                 *         is safe, @c false when prior packets would be
+                 *         needed to decode it.
+                 */
+                bool isSafeCutPoint() const;
 
                 /**
                  * @brief Returns the number of bytes in the compressed bitstream.
@@ -160,16 +189,16 @@ class Audio {
                  * the descriptor / timing metadata.  Null for
                  * uncompressed PCM audio.
                  */
-                const MediaPacket::Ptr &packet() const {
+                const AudioPacket::Ptr &packet() const {
                         return _packet;
                 }
 
                 /**
                  * @brief Replaces the attached compressed-bitstream packet.
                  *
-                 * Pass a null @ref MediaPacket::Ptr to clear.
+                 * Pass a null @ref AudioPacket::Ptr to clear.
                  */
-                void setPacket(MediaPacket::Ptr pkt) {
+                void setPacket(AudioPacket::Ptr pkt) {
                         _packet = std::move(pkt);
                 }
 
@@ -226,10 +255,13 @@ class Audio {
                  * and sample count but with audio data converted to the target format.
                  * When the source is native float, this is a single-pass conversion.
                  *
-                 * @param format The target AudioDesc::DataType.
-                 * @return A new Audio object in the target format, or an invalid Audio on failure.
+                 * @param format The target @ref AudioFormat.  Must be a
+                 *               PCM format — compressed formats are not
+                 *               valid conversion targets.
+                 * @return A new Audio object in the target format, or an
+                 *         invalid Audio on failure.
                  */
-                Audio convertTo(AudioDesc::DataType format) const;
+                Audio convert(const AudioFormat &format) const;
 
                 /**
                  * @brief Resizes the sample count to a value between 0 and maxSamples().
@@ -260,7 +292,7 @@ class Audio {
                  * data type, sample / frame counts, compression
                  * flags), the backing @ref Buffer summary, metadata
                  * entries via @ref Metadata::dump, and a single line
-                 * about the attached @ref MediaPacket when present.
+                 * about the attached @ref AudioPacket when present.
                  *
                  * @param indent Leading whitespace to prefix every line.
                  * @return A @ref StringList (one entry per line).
@@ -272,7 +304,7 @@ class Audio {
                 AudioDesc         _desc;
                 size_t            _samples = 0;
                 size_t            _maxSamples = 0;
-                MediaPacket::Ptr  _packet;
+                AudioPacket::Ptr  _packet;
 
                 bool allocate(const MemSpace &ms);
 };

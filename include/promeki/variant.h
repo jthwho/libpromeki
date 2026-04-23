@@ -34,10 +34,11 @@
 #include <promeki/color.h>
 #include <promeki/list.h>
 #include <promeki/audiocodec.h>
+#include <promeki/audioformat.h>
 #include <promeki/colormodel.h>
 #include <promeki/memspace.h>
+#include <promeki/pixelmemlayout.h>
 #include <promeki/pixelformat.h>
-#include <promeki/pixeldesc.h>
 #include <promeki/videocodec.h>
 #include <promeki/masteringdisplay.h>
 #include <promeki/contentlightlevel.h>
@@ -98,10 +99,11 @@ PROMEKI_NAMESPACE_BEGIN
  * | TypeColor     | `Color`             |
  * | TypeColorModel | `ColorModel`      |
  * | TypeMemSpace  | `MemSpace`          |
- * | TypePixelFormat | `PixelFormat`     |
- * | TypePixelDesc | `PixelDesc`         |
+ * | TypePixelMemLayout | `PixelMemLayout`     |
+ * | TypePixelFormat | `PixelFormat`         |
  * | TypeVideoCodec | `VideoCodec`       |
  * | TypeAudioCodec | `AudioCodec`       |
+ * | TypeAudioFormat | `AudioFormat`     |
  * | TypeEnum      | `Enum`              |
  * | TypeEnumList  | `EnumList`          |
  *
@@ -155,10 +157,11 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeColor, Color)             \
         X(TypeColorModel, ColorModel)   \
         X(TypeMemSpace, MemSpace)       \
-        X(TypePixelFormat, PixelFormat) \
-        X(TypePixelDesc, PixelDesc)     \
+        X(TypePixelMemLayout, PixelMemLayout) \
+        X(TypePixelFormat, PixelFormat)     \
         X(TypeVideoCodec, VideoCodec)   \
         X(TypeAudioCodec, AudioCodec)   \
+        X(TypeAudioFormat, AudioFormat) \
         X(TypeEnum, Enum)               \
         X(TypeEnumList, EnumList)       \
         X(TypeMasteringDisplay, MasteringDisplay) \
@@ -176,10 +179,11 @@ namespace detail {
         /** @brief True for TypeRegistry wrapper types that have an integer ID. */
         template <typename T> struct is_type_registry : std::false_type {};
         template <> struct is_type_registry<AudioCodec>   : std::true_type {};
+        template <> struct is_type_registry<AudioFormat>  : std::true_type {};
         template <> struct is_type_registry<ColorModel>   : std::true_type {};
         template <> struct is_type_registry<MemSpace>     : std::true_type {};
-        template <> struct is_type_registry<PixelFormat>  : std::true_type {};
-        template <> struct is_type_registry<PixelDesc>    : std::true_type {};
+        template <> struct is_type_registry<PixelMemLayout>  : std::true_type {};
+        template <> struct is_type_registry<PixelFormat>    : std::true_type {};
         template <> struct is_type_registry<VideoCodec>   : std::true_type {};
         template <typename T> inline constexpr bool is_type_registry_v = is_type_registry<T>::value;
 }
@@ -344,10 +348,11 @@ template <typename... Types> class VariantImpl {
                                 case TypeColor:
                                 case TypeColorModel:
                                 case TypeMemSpace:
+                                case TypePixelMemLayout:
                                 case TypePixelFormat:
-                                case TypePixelDesc:
                                 case TypeVideoCodec:
                                 case TypeAudioCodec:
+                                case TypeAudioFormat:
                                 case TypeEnum:
                                 case TypeEnumList:
                                 case TypeUrl:

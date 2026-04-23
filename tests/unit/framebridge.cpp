@@ -18,7 +18,7 @@
 #include <promeki/audiodesc.h>
 #include <promeki/imagedesc.h>
 #include <promeki/framerate.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/metadata.h>
 #include <promeki/uuid.h>
 #include <promeki/dir.h>
@@ -47,8 +47,8 @@ static FrameBridge::Config makeConfig() {
         cfg.mediaDesc.setFrameRate(FrameRate(FrameRate::FPS_30));
         cfg.mediaDesc.imageList().pushToBack(
                 ImageDesc(Size2Du32(64, 48),
-                          PixelDesc(PixelDesc::RGB8_sRGB)));
-        cfg.audioDesc = AudioDesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+                          PixelFormat(PixelFormat::RGB8_sRGB)));
+        cfg.audioDesc = AudioDesc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         cfg.ringDepth = 2;
         return cfg;
 }

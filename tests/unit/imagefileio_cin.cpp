@@ -125,8 +125,8 @@ TEST_CASE("ImageFileIO Cineon: load synthetic file") {
         const char *fn = "/tmp/promeki_cin_synth.cin";
         const size_t w = 64, h = 48;
 
-        PixelDesc pd(PixelDesc::RGB10_DPX_sRGB);
-        size_t imageBytes = pd.pixelFormat().planeSize(0, w, h);
+        PixelFormat pd(PixelFormat::RGB10_DPX_sRGB);
+        size_t imageBytes = pd.memLayout().planeSize(0, w, h);
         size_t headerSize = sizeof(TestCineonHeader);
         size_t totalSize = headerSize + imageBytes;
 
@@ -189,7 +189,7 @@ TEST_CASE("ImageFileIO Cineon: load synthetic file") {
         REQUIRE(img.isValid());
         CHECK(img.width() == w);
         CHECK(img.height() == h);
-        CHECK(img.pixelDesc().id() == PixelDesc::RGB10_DPX_sRGB);
+        CHECK(img.pixelFormat().id() == PixelFormat::RGB10_DPX_sRGB);
         CHECK(std::memcmp(img.data(), imgData, imageBytes) == 0);
 
         std::remove(fn);

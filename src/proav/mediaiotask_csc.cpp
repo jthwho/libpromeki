@@ -25,7 +25,7 @@ namespace {
 
 // Returns a coarse "chroma resolution rank" for sorting — bigger
 // number = more chroma samples per pixel = higher fidelity.  Used to
-// detect lossy chroma subsampling between two PixelFormats.
+// detect lossy chroma subsampling between two PixelMemLayouts.
 //
 // 4:2:0 and 4:1:1 both carry one chroma sample per four luma samples,
 // but distribute it differently (4:2:0 halves both axes; 4:1:1 keeps
@@ -33,13 +33,13 @@ namespace {
 // so the planner doesn't treat a 4:2:0 → 4:1:1 crossover as free: it
 // isn't (the chroma grid is rewritten), and NV12-style 4:2:0 is the
 // far more common hardware-friendly layout, so 4:2:0 outranks 4:1:1.
-int chromaRank(PixelFormat::Sampling s) {
+int chromaRank(PixelMemLayout::Sampling s) {
         switch(s) {
-                case PixelFormat::Sampling444: return 4;
-                case PixelFormat::Sampling422: return 2;
-                case PixelFormat::Sampling420: return 1;
-                case PixelFormat::Sampling411: return 0;
-                case PixelFormat::SamplingUndefined: default: return 4;
+                case PixelMemLayout::Sampling444: return 4;
+                case PixelMemLayout::Sampling422: return 2;
+                case PixelMemLayout::Sampling420: return 1;
+                case PixelMemLayout::Sampling411: return 0;
+                case PixelMemLayout::SamplingUndefined: default: return 4;
         }
 }
 
@@ -58,7 +58,7 @@ int chromaRank(PixelFormat::Sampling s) {
 //
 // The bonus is capped to never make a lossy conversion cheaper than
 // a same-bit-depth one — quality dominates speed by design.
-int cscBridgeCost(const PixelDesc &from, const PixelDesc &to) {
+int cscBridgeCost(const PixelFormat &from, const PixelFormat &to) {
         if(from == to) return 0;
 
         // Base cost for any CSC hop — the conversion is precision-
@@ -72,18 +72,18 @@ int cscBridgeCost(const PixelDesc &from, const PixelDesc &to) {
         // pays 200, 12-bit → 8-bit pays 400).  The penalty is large
         // enough that the planner picks a same-depth path even if
         // the alternative needs a chroma resample.
-        const int fromBits = from.pixelFormat().compCount() > 0
-                ? static_cast<int>(from.pixelFormat().compDesc(0).bits) : 0;
-        const int toBits   = to.pixelFormat().compCount() > 0
-                ? static_cast<int>(to.pixelFormat().compDesc(0).bits)   : 0;
+        const int fromBits = from.memLayout().compCount() > 0
+                ? static_cast<int>(from.memLayout().compDesc(0).bits) : 0;
+        const int toBits   = to.memLayout().compCount() > 0
+                ? static_cast<int>(to.memLayout().compDesc(0).bits)   : 0;
         if(toBits > 0 && fromBits > 0 && toBits < fromBits) {
                 cost += 100 * (fromBits - toBits);
         }
 
         // Chroma-subsampling penalty — going from finer to coarser
         // chroma loses information (e.g. 4:4:4 → 4:2:0 pays 150).
-        const int fromChroma = chromaRank(from.pixelFormat().sampling());
-        const int toChroma   = chromaRank(to.pixelFormat().sampling());
+        const int fromChroma = chromaRank(from.memLayout().sampling());
+        const int toChroma   = chromaRank(to.memLayout().sampling());
         if(toChroma < fromChroma) {
                 cost += 75 * (fromChroma - toChroma);
         }
@@ -110,8 +110,8 @@ bool cscBridge(const MediaDesc &from,
         // uncompressed pixel descriptions.  Anything compressed on
         // either end goes to VideoEncoder / VideoDecoder.
         if(from.imageList().isEmpty() || to.imageList().isEmpty()) return false;
-        const PixelDesc &fromPd = from.imageList()[0].pixelDesc();
-        const PixelDesc &toPd   = to.imageList()[0].pixelDesc();
+        const PixelFormat &fromPd = from.imageList()[0].pixelFormat();
+        const PixelFormat &toPd   = to.imageList()[0].pixelFormat();
         if(!fromPd.isValid() || !toPd.isValid())   return false;
         if(fromPd.isCompressed() || toPd.isCompressed()) return false;
 
@@ -132,7 +132,7 @@ bool cscBridge(const MediaDesc &from,
                 const AudioDesc &b = to.audioList()[i];
                 if(a.sampleRate() != b.sampleRate()) return false;
                 if(a.channels()   != b.channels())   return false;
-                if(a.dataType()   != b.dataType())   return false;
+                if(a.format().id()   != b.format().id())   return false;
         }
 
         // No work to do — let the planner skip inserting a CSC.
@@ -140,7 +140,7 @@ bool cscBridge(const MediaDesc &from,
 
         if(outConfig != nullptr) {
                 *outConfig = MediaIO::defaultConfig("CSC");
-                outConfig->set(MediaConfig::OutputPixelDesc, toPd);
+                outConfig->set(MediaConfig::OutputPixelFormat, toPd);
         }
         if(outCost != nullptr) {
                 *outCost = cscBridgeCost(fromPd, toPd);
@@ -165,7 +165,7 @@ MediaIO::FormatDesc MediaIOTask_CSC::formatDesc() {
                         specs.insert(id, gs ? VariantSpec(*gs).setDefault(def)
                                             : VariantSpec().setDefault(def));
                 };
-                s(MediaConfig::OutputPixelDesc, PixelDesc());
+                s(MediaConfig::OutputPixelFormat, PixelFormat());
                 s(MediaConfig::Capacity, int32_t(4));
                 return specs;
         };
@@ -183,8 +183,8 @@ Error MediaIOTask_CSC::executeCmd(MediaIOCommandOpen &cmd) {
 
         const MediaIO::Config &cfg = cmd.config;
 
-        _outputPixelDesc = cfg.getAs<PixelDesc>(MediaConfig::OutputPixelDesc, PixelDesc());
-        _outputPixelDescSet = _outputPixelDesc.isValid();
+        _outputPixelFormat = cfg.getAs<PixelFormat>(MediaConfig::OutputPixelFormat, PixelFormat());
+        _outputPixelFormatSet = _outputPixelFormat.isValid();
 
         _capacity = cfg.getAs<int>(MediaConfig::Capacity, 4);
         if(_capacity < 1) _capacity = 1;
@@ -194,7 +194,7 @@ Error MediaIOTask_CSC::executeCmd(MediaIOCommandOpen &cmd) {
 
         for(const auto &srcImg : cmd.pendingMediaDesc.imageList()) {
                 ImageDesc id = srcImg;
-                if(_outputPixelDescSet) id = ImageDesc(srcImg.size(), _outputPixelDesc);
+                if(_outputPixelFormatSet) id = ImageDesc(srcImg.size(), _outputPixelFormat);
                 outDesc.imageList().pushToBack(id);
         }
 
@@ -222,8 +222,8 @@ Error MediaIOTask_CSC::executeCmd(MediaIOCommandOpen &cmd) {
 Error MediaIOTask_CSC::executeCmd(MediaIOCommandClose &cmd) {
         (void)cmd;
         _outputQueue.clear();
-        _outputPixelDesc = PixelDesc();
-        _outputPixelDescSet = false;
+        _outputPixelFormat = PixelFormat();
+        _outputPixelFormatSet = false;
         _frameCount = 0;
         _readCount = 0;
         _framesConverted = 0;
@@ -237,31 +237,31 @@ Error MediaIOTask_CSC::convertImage(const Image &input, Image &output) {
                 return Error::Invalid;
         }
 
-        if(!_outputPixelDescSet) {
+        if(!_outputPixelFormatSet) {
                 output = input;
                 return Error::Ok;
         }
 
-        if(input.pixelDesc() == _outputPixelDesc) {
+        if(input.pixelFormat() == _outputPixelFormat) {
                 output = input;
                 return Error::Ok;
         }
 
-        if(input.pixelDesc().isCompressed() || _outputPixelDesc.isCompressed()) {
+        if(input.pixelFormat().isCompressed() || _outputPixelFormat.isCompressed()) {
                 promekiErr("MediaIOTask_CSC: %s -> %s is a compression hop; "
                            "use MediaIOTask_VideoEncoder / MediaIOTask_VideoDecoder",
-                           input.pixelDesc().name().cstr(),
-                           _outputPixelDesc.name().cstr());
+                           input.pixelFormat().name().cstr(),
+                           _outputPixelFormat.name().cstr());
                 return Error::NotSupported;
         }
 
         MediaConfig convertConfig;
-        Image converted = input.convert(_outputPixelDesc, input.metadata(),
+        Image converted = input.convert(_outputPixelFormat, input.metadata(),
                                         convertConfig);
         if(!converted.isValid()) {
                 promekiErr("MediaIOTask_CSC: convert %s -> %s failed",
-                           input.pixelDesc().name().cstr(),
-                           _outputPixelDesc.name().cstr());
+                           input.pixelFormat().name().cstr(),
+                           _outputPixelFormat.name().cstr());
                 return Error::ConversionFailed;
         }
         output = std::move(converted);
@@ -354,10 +354,10 @@ Error MediaIOTask_CSC::describe(MediaIODescription *out) const {
         // signal; consumers walk producibleFormats for the
         // configured target pixel desc when one is set.
 
-        if(_outputPixelDescSet) {
+        if(_outputPixelFormatSet) {
                 MediaDesc preferred;
                 preferred.imageList().pushToBack(
-                        ImageDesc(Size2Du32(0, 0), _outputPixelDesc));
+                        ImageDesc(Size2Du32(0, 0), _outputPixelFormat));
                 out->setPreferredFormat(preferred);
                 out->producibleFormats().pushToBack(preferred);
         }
@@ -372,14 +372,14 @@ Error MediaIOTask_CSC::proposeInput(const MediaDesc &offered,
         // compressed.  The planner will route compressed inputs
         // through a VideoDecoder bridge instead.
         for(const auto &img : offered.imageList()) {
-                if(img.pixelDesc().isCompressed()) {
+                if(img.pixelFormat().isCompressed()) {
                         return Error::NotSupported;
                 }
         }
 
         // CSC accepts any uncompressed shape as-is — it will run
         // the configured Image::convert on each frame.  The output
-        // shape is governed by OutputPixelDesc, not the input.
+        // shape is governed by OutputPixelFormat, not the input.
         *preferred = offered;
         return Error::Ok;
 }
@@ -389,7 +389,7 @@ Error MediaIOTask_CSC::proposeOutput(const MediaDesc &requested,
         if(achievable == nullptr) return Error::Invalid;
 
         // CSC's output shape is fully determined by the input shape
-        // plus its OutputPixelDesc config (and any other Output*
+        // plus its OutputPixelFormat config (and any other Output*
         // overrides the planner may have set).  Whatever the
         // planner asks for, what we'll actually produce is what
         // applyOutputOverrides yields — relay that back.

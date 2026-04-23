@@ -384,11 +384,15 @@ void DataStream::writeMemSpaceData(const MemSpace &val) {
         *this << static_cast<uint32_t>(val.id());
 }
 
+void DataStream::writePixelMemLayoutData(const PixelMemLayout &val) {
+        writeStringData(val.name());
+}
+
 void DataStream::writePixelFormatData(const PixelFormat &val) {
         writeStringData(val.name());
 }
 
-void DataStream::writePixelDescData(const PixelDesc &val) {
+void DataStream::writeAudioFormatData(const AudioFormat &val) {
         writeStringData(val.name());
 }
 
@@ -594,16 +598,22 @@ MemSpace DataStream::readMemSpaceData() {
         return MemSpace(static_cast<MemSpace::ID>(id));
 }
 
+PixelMemLayout DataStream::readPixelMemLayoutData() {
+        String s = readStringData();
+        if(_status != Ok) return PixelMemLayout();
+        return PixelMemLayout::lookup(s);
+}
+
 PixelFormat DataStream::readPixelFormatData() {
         String s = readStringData();
         if(_status != Ok) return PixelFormat();
         return PixelFormat::lookup(s);
 }
 
-PixelDesc DataStream::readPixelDescData() {
+AudioFormat DataStream::readAudioFormatData() {
         String s = readStringData();
-        if(_status != Ok) return PixelDesc();
-        return PixelDesc::lookup(s);
+        if(_status != Ok) return AudioFormat();
+        return value(AudioFormat::lookup(s));
 }
 
 Enum DataStream::readEnumData() {
@@ -828,15 +838,21 @@ DataStream &DataStream::operator<<(const MemSpace &val) {
         return *this;
 }
 
+DataStream &DataStream::operator<<(const PixelMemLayout &val) {
+        writeTag(TypePixelMemLayout);
+        writePixelMemLayoutData(val);
+        return *this;
+}
+
 DataStream &DataStream::operator<<(const PixelFormat &val) {
         writeTag(TypePixelFormat);
         writePixelFormatData(val);
         return *this;
 }
 
-DataStream &DataStream::operator<<(const PixelDesc &val) {
-        writeTag(TypePixelDesc);
-        writePixelDescData(val);
+DataStream &DataStream::operator<<(const AudioFormat &val) {
+        writeTag(TypeAudioFormat);
+        writeAudioFormatData(val);
         return *this;
 }
 
@@ -938,8 +954,9 @@ DataStream &DataStream::operator<<(const Variant &val) {
                 case Variant::TypeColor:      *this << val.get<Color>(); break;
                 case Variant::TypeColorModel: *this << val.get<ColorModel>(); break;
                 case Variant::TypeMemSpace:   *this << val.get<MemSpace>(); break;
-                case Variant::TypePixelFormat: *this << val.get<PixelFormat>(); break;
-                case Variant::TypePixelDesc:  *this << val.get<PixelDesc>(); break;
+                case Variant::TypePixelMemLayout: *this << val.get<PixelMemLayout>(); break;
+                case Variant::TypePixelFormat:  *this << val.get<PixelFormat>(); break;
+                case Variant::TypeAudioFormat:  *this << val.get<AudioFormat>(); break;
                 case Variant::TypeEnum:       *this << val.get<Enum>(); break;
                 case Variant::TypeEnumList:   *this << val.get<EnumList>(); break;
                 case Variant::TypeMediaTimeStamp: *this << val.get<MediaTimeStamp>(); break;
@@ -1139,15 +1156,21 @@ DataStream &DataStream::operator>>(MemSpace &val) {
         return *this;
 }
 
+DataStream &DataStream::operator>>(PixelMemLayout &val) {
+        if(!readTag(TypePixelMemLayout)) { val = PixelMemLayout(); return *this; }
+        val = readPixelMemLayoutData();
+        return *this;
+}
+
 DataStream &DataStream::operator>>(PixelFormat &val) {
         if(!readTag(TypePixelFormat)) { val = PixelFormat(); return *this; }
         val = readPixelFormatData();
         return *this;
 }
 
-DataStream &DataStream::operator>>(PixelDesc &val) {
-        if(!readTag(TypePixelDesc)) { val = PixelDesc(); return *this; }
-        val = readPixelDescData();
+DataStream &DataStream::operator>>(AudioFormat &val) {
+        if(!readTag(TypeAudioFormat)) { val = AudioFormat(); return *this; }
+        val = readAudioFormatData();
         return *this;
 }
 
@@ -1307,8 +1330,9 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                 case TypeColor:       val = readColorData(); break;
                 case TypeColorModel:  val = readColorModelData(); break;
                 case TypeMemSpace:    val = readMemSpaceData(); break;
-                case TypePixelFormat: val = readPixelFormatData(); break;
-                case TypePixelDesc:   val = readPixelDescData(); break;
+                case TypePixelMemLayout: val = readPixelMemLayoutData(); break;
+                case TypePixelFormat:   val = readPixelFormatData(); break;
+                case TypeAudioFormat:   val = readAudioFormatData(); break;
                 case TypeEnum:        val = readEnumData(); break;
                 case TypeEnumList:    val = readEnumListData(); break;
                 case TypeMediaTimeStamp: {

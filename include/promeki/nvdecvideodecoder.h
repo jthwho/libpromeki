@@ -9,7 +9,7 @@
 
 #include <promeki/namespace.h>
 #include <promeki/config.h>
-#include <promeki/codec.h>
+#include <promeki/videodecoder.h>
 
 #if PROMEKI_ENABLE_NVDEC
 
@@ -19,8 +19,9 @@ PROMEKI_NAMESPACE_BEGIN
  * @brief Hardware H.264 / HEVC video decoder backed by NVIDIA NVDEC.
  * @ingroup proav
  *
- * Registered under the codec names @c "H264" and @c "HEVC" so the
- * generic @ref VideoDecoder::createDecoder factory returns an
+ * Registered under the typed @c "Nvidia" backend for
+ * @ref VideoCodec::H264 and @ref VideoCodec::HEVC so the generic
+ * @ref VideoCodec::createDecoder factory returns an
  * @ref NvdecVideoDecoder when the build has NVDEC enabled.  The
  * decoder presentation surface is always NV12 in 8-bit (10-bit
  * P010 support is a follow-up); callers that want a different
@@ -50,7 +51,8 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par Example
  * @code
- * VideoDecoder *dec = VideoDecoder::createDecoder("H264");
+ * auto res = VideoCodec(VideoCodec::H264).createDecoder();
+ * VideoDecoder *dec = value(res);
  * dec->configure(MediaConfig());
  * dec->submitPacket(*pkt);
  * while(Image img = dec->receiveFrame()) { sink.render(img); }
@@ -76,14 +78,16 @@ class NvdecVideoDecoder : public VideoDecoder {
                 /** @brief Destructor — tears down the NVDEC session if one was opened. */
                 ~NvdecVideoDecoder() override;
 
-                String name() const override;
-                String description() const override;
-                PixelDesc inputPixelDesc() const override;
-                List<int> supportedOutputs() const override;
+                /**
+                 * @brief Static view of the decoder's emitted uncompressed output list.
+                 *
+                 * Exposed for the @ref VideoCodec backend registry.
+                 */
+                static List<int> supportedOutputList();
 
                 void configure(const MediaConfig &config) override;
-                Error submitPacket(const MediaPacket &packet) override;
-                Image receiveFrame() override;
+                Error submitPacket(const VideoPacket::Ptr &packet) override;
+                Image::Ptr receiveFrame() override;
                 Error flush() override;
                 Error reset() override;
 

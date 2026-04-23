@@ -630,7 +630,7 @@ class MediaIO : public ObjectBase {
                          *   - Populate @p outConfig with the
                          *     @ref MediaConfig the planner should use
                          *     when instantiating the bridge stage
-                         *     (e.g. set @c OutputPixelDesc on a CSC
+                         *     (e.g. set @c OutputPixelFormat on a CSC
                          *     bridge).
                          *   - Set @p outCost to the unitless quality
                          *     cost of the conversion (lower = higher

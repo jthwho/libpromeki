@@ -14,7 +14,7 @@
 #include <promeki/frame.h>
 #include <promeki/image.h>
 #include <promeki/audio.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/dir.h>
 #include <promeki/enums.h>
 
@@ -32,7 +32,7 @@ Frame::Ptr sampleFrame(int64_t idx) {
                             String::sprintf("frame-%lld", (long long)idx));
         raw->metadata().set(Metadata::Title, String("pmdf-mediaio-test"));
 
-        ImageDesc idesc(Size2Du32(16, 8), PixelDesc::RGB8_sRGB);
+        ImageDesc idesc(Size2Du32(16, 8), PixelFormat::RGB8_sRGB);
         idesc.setVideoScanMode(VideoScanMode::Progressive);
         Image::Ptr img = Image::Ptr::create(idesc);
         uint8_t *d = static_cast<uint8_t *>(img->data(0));

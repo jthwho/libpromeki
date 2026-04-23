@@ -21,7 +21,7 @@
 #include <promeki/image.h>
 #include <promeki/imagefile.h>
 #include <promeki/mediapacket.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/buffer.h>
 #include <promeki/videocodec.h>
 #include <cstdio>
@@ -32,8 +32,8 @@ using namespace promeki;
 namespace {
 
 Image makeRgb8Frame(int width, int height, uint8_t fill) {
-        PixelDesc pd(PixelDesc::RGB8_sRGB);
-        const size_t bytes = pd.pixelFormat().planeSize(0, width, height);
+        PixelFormat pd(PixelFormat::RGB8_sRGB);
+        const size_t bytes = pd.memLayout().planeSize(0, width, height);
         auto buf = Buffer::Ptr::create(bytes);
         buf.modify()->fill(static_cast<char>(fill));
         buf.modify()->setSize(bytes);
@@ -58,7 +58,7 @@ TEST_CASE("MediaIOTask_VideoDecoder: open without VideoCodec defers to auto-dete
 
         MediaDesc srcDesc;
         srcDesc.imageList().pushToBack(
-                ImageDesc(Size2Du32(8, 4), PixelDesc(PixelDesc::H264)));
+                ImageDesc(Size2Du32(8, 4), PixelFormat(PixelFormat::H264)));
         io->setExpectedDesc(srcDesc);
 
         Error err = io->open(MediaIO::Transform);
@@ -73,12 +73,12 @@ TEST_CASE("MediaIOTask_VideoDecoder: encoder → decoder round-trip via passthro
 
         // -- Encoder stage (passthrough codec) --
         MediaIO::Config encCfg = MediaIO::defaultConfig("VideoEncoder");
-        encCfg.set(MediaConfig::VideoCodec, VideoCodec::lookup("Passthrough"));
+        encCfg.set(MediaConfig::VideoCodec, value(VideoCodec::lookup("Passthrough")));
         MediaIO *enc = MediaIO::create(encCfg);
         REQUIRE(enc != nullptr);
         MediaDesc srcDesc;
         srcDesc.imageList().pushToBack(
-                ImageDesc(Size2Du32(kW, kH), PixelDesc(PixelDesc::RGB8_sRGB)));
+                ImageDesc(Size2Du32(kW, kH), PixelFormat(PixelFormat::RGB8_sRGB)));
         enc->setExpectedDesc(srcDesc);
         REQUIRE(enc->open(MediaIO::Transform) == Error::Ok);
 
@@ -98,13 +98,13 @@ TEST_CASE("MediaIOTask_VideoDecoder: encoder → decoder round-trip via passthro
 
         // -- Decoder stage (passthrough codec) --
         MediaIO::Config decCfg = MediaIO::defaultConfig("VideoDecoder");
-        decCfg.set(MediaConfig::VideoCodec, VideoCodec::lookup("Passthrough"));
-        // PassthroughVideoDecoder reads VideoSize + OutputPixelDesc
+        decCfg.set(MediaConfig::VideoCodec, value(VideoCodec::lookup("Passthrough")));
+        // PassthroughVideoDecoder reads VideoSize + OutputPixelFormat
         // out of the MediaConfig at configure() time to recreate the
         // uncompressed Image it rebuilds in receiveFrame().
         decCfg.set(MediaConfig::VideoSize, Size2Du32(kW, kH));
-        decCfg.set(MediaConfig::OutputPixelDesc,
-                   PixelDesc(PixelDesc::RGB8_sRGB));
+        decCfg.set(MediaConfig::OutputPixelFormat,
+                   PixelFormat(PixelFormat::RGB8_sRGB));
         MediaIO *dec = MediaIO::create(decCfg);
         REQUIRE(dec != nullptr);
         MediaDesc encDesc = enc->mediaDesc();
@@ -143,7 +143,7 @@ TEST_CASE("MediaIOTask_VideoDecoder: encoder → decoder round-trip via passthro
 #if PROMEKI_ENABLE_JPEGXS
 // Full end-to-end path for an intraframe codec: a compressed JPEG XS
 // file loaded via ImageFile carries its bitstream as an attached
-// MediaPacket on the compressed Image, which is what
+// VideoPacket on the compressed Image, which is what
 // MediaIOTask_VideoDecoder consumes.  Both the explicit VideoCodec
 // route and the auto-detect route must produce an uncompressed
 // Image from the loaded Frame.
@@ -153,7 +153,7 @@ TEST_CASE("MediaIOTask_VideoDecoder: decodes a JPEG XS file via Image::packet") 
 
         // Write a real JPEG XS bitstream to a scratch file.
         const char *fn = "/tmp/promeki_mediaio_jxs_decode.jxs";
-        Image src(kW, kH, PixelDesc(PixelDesc::YUV8_422_Planar_Rec709));
+        Image src(kW, kH, PixelFormat(PixelFormat::YUV8_422_Planar_Rec709));
         REQUIRE(src.isValid());
         {
                 uint8_t *luma = static_cast<uint8_t *>(src.data(0));
@@ -171,7 +171,7 @@ TEST_CASE("MediaIOTask_VideoDecoder: decodes a JPEG XS file via Image::packet") 
         REQUIRE(sf.save() == Error::Ok);
 
         // Load it back — the Frame must carry a compressed Image with
-        // an attached MediaPacket (the upstream invariant the decoder
+        // an attached VideoPacket (the upstream invariant the decoder
         // relies on).
         ImageFile lf(ImageFile::JpegXS);
         lf.setFilename(fn);
@@ -193,7 +193,7 @@ TEST_CASE("MediaIOTask_VideoDecoder: decodes a JPEG XS file via Image::packet") 
                 MediaDesc srcDesc;
                 srcDesc.imageList().pushToBack(
                         ImageDesc(Size2Du32(kW, kH),
-                                  PixelDesc(PixelDesc::JPEG_XS_YUV8_422_Rec709)));
+                                  PixelFormat(PixelFormat::JPEG_XS_YUV8_422_Rec709)));
                 dec->setExpectedDesc(srcDesc);
                 REQUIRE(dec->open(MediaIO::Transform) == Error::Ok);
 

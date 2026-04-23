@@ -142,7 +142,7 @@ always check `pictureDecoded` before reading the other fields.
 Pulls one channel of the frame's audio (selected by
 `MediaConfig::InspectorLtcChannel`, default channel 0) and
 feeds it through `LtcDecoder`. The decoder is format-agnostic:
-any `AudioDesc::DataType` is accepted (PCMI_S8, PCMI_S16LE,
+any `AudioFormat` is accepted (PCMI_S8, PCMI_S16LE,
 PCMI_Float32LE, ...). The most recently recovered timecode is
 reported in `InspectorEvent::ltcTimecode` along with the
 within-chunk sample offset of the LTC sync word in
@@ -480,7 +480,7 @@ pull them out separately from the routine info-level traffic.
 
 - **The image data decoder uses the slow CSC path.** The first
   implementation runs every band-decode through
-  `Image::convert(RGBA8_sRGB)`, which works for every `PixelDesc`
+  `Image::convert(RGBA8_sRGB)`, which works for every `PixelFormat`
   but isn't free. Hand-rolled fast paths per-format are a future
   enhancement; until then the inspector is fine for QA / monitoring
   use but not for fully-loaded production paths.

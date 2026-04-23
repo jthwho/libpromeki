@@ -61,7 +61,7 @@ class Image;
  *      and the payload is returned.
  *
  * @par Lifetime and reuse
- * Construct one decoder per (PixelDesc, image dimensions) pair and
+ * Construct one decoder per (PixelFormat, image dimensions) pair and
  * reuse it across many frames — the per-decode allocation is just a
  * scratch RGBA8 conversion buffer, which gets re-allocated lazily
  * for each band.

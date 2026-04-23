@@ -374,7 +374,7 @@ Error AudioBuffer::pushLocked(const void *data, size_t samples, const AudioDesc 
         if(_capacity - _count < samples) return Error::NoSpace;
 
         // Fast path: formats match -> direct memcpy.
-        if(srcFormat.dataType() == _format.dataType()) {
+        if(srcFormat.format().id() == _format.format().id()) {
                 writeBytesAtTail(static_cast<const uint8_t *>(data), samples);
                 return Error::Ok;
         }
@@ -453,7 +453,7 @@ Error AudioBuffer::push(const void *data, size_t samples, const AudioDesc &srcFo
 AudioBuffer::PopResult AudioBuffer::pop(Audio &audio, size_t samples) {
         if(!audio.isValid()) return PopResult(0, Error::FormatMismatch);
         Mutex::Locker lock(_mutex);
-        if(audio.desc().dataType() != _format.dataType() ||
+        if(audio.desc().format().id() != _format.format().id() ||
            audio.desc().sampleRate() != _format.sampleRate() ||
            audio.desc().channels() != _format.channels()) {
                 return PopResult(0, Error::FormatMismatch);
@@ -477,7 +477,7 @@ AudioBuffer::PopResult AudioBuffer::pop(void *dst, size_t samples) {
 AudioBuffer::PopResult AudioBuffer::popWait(Audio &audio, size_t samples, unsigned int timeoutMs) {
         if(!audio.isValid()) return PopResult(0, Error::FormatMismatch);
         Mutex::Locker lock(_mutex);
-        if(audio.desc().dataType() != _format.dataType() ||
+        if(audio.desc().format().id() != _format.format().id() ||
            audio.desc().sampleRate() != _format.sampleRate() ||
            audio.desc().channels() != _format.channels()) {
                 return PopResult(0, Error::FormatMismatch);

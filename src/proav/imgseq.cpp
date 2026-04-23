@@ -28,7 +28,7 @@ constexpr const char *kFieldHead      = "head";
 constexpr const char *kFieldTail      = "tail";
 constexpr const char *kFieldFrameRate = "frameRate";
 constexpr const char *kFieldVideoSize = "videoSize";
-constexpr const char *kFieldPixelDesc = "pixelDesc";
+constexpr const char *kFieldPixelFormat = "pixelFormat";
 constexpr const char *kFieldMetadata  = "metadata";
 constexpr const char *kFieldAudioFile = "audioFile";
 
@@ -141,14 +141,14 @@ ImgSeq ImgSeq::fromJson(const JsonObject &json, Error *err) {
                 }
         }
 
-        if(json.contains(kFieldPixelDesc)) {
-                String pdStr = json.getString(kFieldPixelDesc);
-                PixelDesc pd = PixelDesc::lookup(pdStr);
+        if(json.contains(kFieldPixelFormat)) {
+                String pdStr = json.getString(kFieldPixelFormat);
+                PixelFormat pd = PixelFormat::lookup(pdStr);
                 if(pd.isValid()) {
-                        ret.setPixelDesc(pd);
+                        ret.setPixelFormat(pd);
                 } else {
                         promekiWarn("ImgSeq::fromJson: invalid '%s' value '%s'",
-                                kFieldPixelDesc, pdStr.cstr());
+                                kFieldPixelFormat, pdStr.cstr());
                 }
         }
 
@@ -188,8 +188,8 @@ JsonObject ImgSeq::toJson() const {
         if(_videoSize.width() > 0 && _videoSize.height() > 0) {
                 root.set(kFieldVideoSize, _videoSize.toString());
         }
-        if(_pixelDesc.isValid()) {
-                root.set(kFieldPixelDesc, _pixelDesc.name());
+        if(_pixelFormat.isValid()) {
+                root.set(kFieldPixelFormat, _pixelFormat.name());
         }
         if(!_audioFile.isEmpty()) {
                 root.set(kFieldAudioFile, _audioFile);

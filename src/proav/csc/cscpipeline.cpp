@@ -91,7 +91,7 @@ CSCPipeline::Stage &CSCPipeline::Stage::operator=(Stage &&other) noexcept {
 
 // --- Pipeline construction ---
 
-CSCPipeline::CSCPipeline(const PixelDesc &src, const PixelDesc &dst,
+CSCPipeline::CSCPipeline(const PixelFormat &src, const PixelFormat &dst,
                          const MediaConfig &config)
         : _srcDesc(src), _dstDesc(dst), _config(config) {
         _useSimd = resolveUseSimd(_config);
@@ -111,8 +111,8 @@ CSCPipeline::CSCPipeline(const PixelDesc &src, const PixelDesc &dst,
 
 namespace {
 
-using CacheKey = std::tuple<const PixelDesc::Data *,
-                            const PixelDesc::Data *,
+using CacheKey = std::tuple<const PixelFormat::Data *,
+                            const PixelFormat::Data *,
                             bool>;
 
 struct CacheEntry {
@@ -124,7 +124,7 @@ static Map<CacheKey, CacheEntry> g_cache;
 
 } // anonymous
 
-CSCPipeline::Ptr CSCPipeline::cached(const PixelDesc &src, const PixelDesc &dst,
+CSCPipeline::Ptr CSCPipeline::cached(const PixelFormat &src, const PixelFormat &dst,
                                      const MediaConfig &config) {
         // Mirror the useSimd derivation from the instance constructor
         // so cache keys line up with actual pipeline behavior.
@@ -330,9 +330,9 @@ static void kernelMonoExpand(const CSCPipeline::Stage *stage,
 // Compute semantic buffer mapping: maps component index to SoA buffer
 // index based on the component's semantic meaning.
 // R/Y -> buf 0, G/Cb -> buf 1, B/Cr -> buf 2, A -> buf 3.
-static void computeSemBufMap(const PixelDesc &pd, int *semBufMap) {
-        const PixelDesc::Data *pdd = pd.data();
-        int cc = static_cast<int>(pd.pixelFormat().compCount());
+static void computeSemBufMap(const PixelFormat &pd, int *semBufMap) {
+        const PixelFormat::Data *pdd = pd.data();
+        int cc = static_cast<int>(pd.memLayout().compCount());
         for(int c = 0; c < cc; c++) {
                 const String &abbrev = pdd->compSemantics[c].abbrev;
                 if(abbrev == "R" || abbrev == "Y")       semBufMap[c] = 0;
@@ -344,10 +344,10 @@ static void computeSemBufMap(const PixelDesc &pd, int *semBufMap) {
         return;
 }
 
-void CSCPipeline::buildUnpackStage(const PixelDesc &pd, Stage &stage) {
+void CSCPipeline::buildUnpackStage(const PixelFormat &pd, Stage &stage) {
         stage.type = StageUnpack;
-        const PixelFormat &pf = pd.pixelFormat();
-        const PixelFormat::Data *pfd = pf.data();
+        const PixelMemLayout &pf = pd.memLayout();
+        const PixelMemLayout::Data *pfd = pf.data();
 
         stage.pixelCompCount = static_cast<int>(pfd->compCount);
         stage.bitsPerComp = static_cast<int>(pfd->comps[0].bits);
@@ -381,10 +381,10 @@ void CSCPipeline::buildUnpackStage(const PixelDesc &pd, Stage &stage) {
         return;
 }
 
-void CSCPipeline::buildPackStage(const PixelDesc &pd, Stage &stage) {
+void CSCPipeline::buildPackStage(const PixelFormat &pd, Stage &stage) {
         stage.type = StagePack;
-        const PixelFormat &pf = pd.pixelFormat();
-        const PixelFormat::Data *pfd = pf.data();
+        const PixelMemLayout &pf = pd.memLayout();
+        const PixelMemLayout::Data *pfd = pf.data();
 
         stage.pixelCompCount = static_cast<int>(pfd->compCount);
         stage.bitsPerComp = static_cast<int>(pfd->comps[0].bits);
@@ -418,9 +418,9 @@ void CSCPipeline::buildPackStage(const PixelDesc &pd, Stage &stage) {
         return;
 }
 
-void CSCPipeline::buildRangeStage(const PixelDesc &pd, Stage &stage, bool isInput) {
-        const PixelDesc::Data *pdd = pd.data();
-        int cc = static_cast<int>(pd.pixelFormat().compCount());
+void CSCPipeline::buildRangeStage(const PixelFormat &pd, Stage &stage, bool isInput) {
+        const PixelFormat::Data *pdd = pd.data();
+        int cc = static_cast<int>(pd.memLayout().compCount());
 
         // Determine color component count (excluding alpha)
         int colorComps = pd.hasAlpha() ? cc - 1 : cc;
@@ -626,8 +626,8 @@ void CSCPipeline::compile() {
         const ColorModel::Data *srcCMD = srcCM.data();
         const ColorModel::Data *dstCMD = dstCM.data();
 
-        int srcBits = static_cast<int>(_srcDesc.pixelFormat().data()->comps[0].bits);
-        int dstBits = static_cast<int>(_dstDesc.pixelFormat().data()->comps[0].bits);
+        int srcBits = static_cast<int>(_srcDesc.memLayout().data()->comps[0].bits);
+        int dstBits = static_cast<int>(_dstDesc.memLayout().data()->comps[0].bits);
 
         bool srcIsYCbCr = (srcCMD->type == ColorModel::TypeYCbCr);
         bool dstIsYCbCr = (dstCMD->type == ColorModel::TypeYCbCr);
@@ -690,9 +690,9 @@ void CSCPipeline::compile() {
         // Broadcast the normalized luma from buffer[0] into buffers 1
         // and 2 so every downstream stage sees three identical grays.
         {
-                int srcCC = static_cast<int>(_srcDesc.pixelFormat().compCount());
+                int srcCC = static_cast<int>(_srcDesc.memLayout().compCount());
                 int srcColorComps = _srcDesc.hasAlpha() ? srcCC - 1 : srcCC;
-                int dstCC = static_cast<int>(_dstDesc.pixelFormat().compCount());
+                int dstCC = static_cast<int>(_dstDesc.memLayout().compCount());
                 int dstColorComps = _dstDesc.hasAlpha() ? dstCC - 1 : dstCC;
                 if(srcColorComps == 1 && dstColorComps >= 3) {
                         Stage s;
@@ -787,7 +787,7 @@ Error CSCPipeline::execute(const Image &src, Image &dst) const {
 
         // Identity: copy planes directly
         if(_identity) {
-                int planeCount = static_cast<int>(src.pixelDesc().planeCount());
+                int planeCount = static_cast<int>(src.pixelFormat().planeCount());
                 for(int p = 0; p < planeCount; p++) {
                         size_t planeSize = src.plane(p)->size();
                         std::memcpy(dst.data(p), src.data(p), planeSize);
@@ -811,14 +811,14 @@ Error CSCPipeline::execute(const Image &src, Image &dst) const {
 
                         for(int p = 0; p < srcPlaneCount; p++) {
                                 size_t stride = src.lineStride(p);
-                                const PixelFormat::PlaneDesc &pd = _srcDesc.pixelFormat().planeDesc(p);
+                                const PixelMemLayout::PlaneDesc &pd = _srcDesc.memLayout().planeDesc(p);
                                 size_t planeY = y / pd.vSubsampling;
                                 srcLinePtrs[p] = static_cast<const uint8_t *>(src.data(p)) + planeY * stride;
                                 srcStrides[p] = stride;
                         }
                         for(int p = 0; p < dstPlaneCount; p++) {
                                 size_t stride = dst.lineStride(p);
-                                const PixelFormat::PlaneDesc &pd = _dstDesc.pixelFormat().planeDesc(p);
+                                const PixelMemLayout::PlaneDesc &pd = _dstDesc.memLayout().planeDesc(p);
                                 size_t planeY = y / pd.vSubsampling;
                                 dstLinePtrs[p] = static_cast<uint8_t *>(dst.data(p)) + planeY * stride;
                                 dstStrides[p] = stride;
@@ -845,14 +845,14 @@ Error CSCPipeline::execute(const Image &src, Image &dst) const {
 
                 for(int p = 0; p < srcPlaneCount; p++) {
                         size_t stride = src.lineStride(p);
-                        const PixelFormat::PlaneDesc &pd = _srcDesc.pixelFormat().planeDesc(p);
+                        const PixelMemLayout::PlaneDesc &pd = _srcDesc.memLayout().planeDesc(p);
                         size_t planeY = y / pd.vSubsampling;
                         srcLinePtrs[p] = static_cast<const uint8_t *>(src.data(p)) + planeY * stride;
                         srcStrides[p] = stride;
                 }
                 for(int p = 0; p < dstPlaneCount; p++) {
                         size_t stride = dst.lineStride(p);
-                        const PixelFormat::PlaneDesc &pd = _dstDesc.pixelFormat().planeDesc(p);
+                        const PixelMemLayout::PlaneDesc &pd = _dstDesc.memLayout().planeDesc(p);
                         size_t planeY = y / pd.vSubsampling;
                         dstLinePtrs[p] = static_cast<uint8_t *>(dst.data(p)) + planeY * stride;
                         dstStrides[p] = stride;

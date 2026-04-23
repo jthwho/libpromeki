@@ -81,7 +81,7 @@ TEST_CASE("MediaIO_QuickTime: open uncompressed UYVY fixture") {
         REQUIRE(md.imageList().size() == 1);
         CHECK(md.imageList()[0].size().width() == 16);
         CHECK(md.imageList()[0].size().height() == 16);
-        CHECK(md.imageList()[0].pixelDesc().id() == PixelDesc::YUV8_422_UYVY_Rec709);
+        CHECK(md.imageList()[0].pixelFormat().id() == PixelFormat::YUV8_422_UYVY_Rec709);
 
         REQUIRE(md.frameRate().isValid());
         CHECK(md.frameRate().rational().toDouble() == doctest::Approx(24.0).epsilon(0.01));
@@ -116,7 +116,7 @@ TEST_CASE("MediaIO_QuickTime: open ProRes fixture yields a compressed Image") {
         const Image &img = *frame->imageList()[0];
         CHECK(img.isValid());
         CHECK(img.isCompressed());
-        CHECK(img.pixelDesc().id() == PixelDesc::ProRes_422_Proxy);
+        CHECK(img.pixelFormat().id() == PixelFormat::ProRes_422_Proxy);
         CHECK(img.compressedSize() > 0);
         CHECK(img.width() == 16);
         CHECK(img.height() == 16);
@@ -137,7 +137,7 @@ TEST_CASE("MediaIO_QuickTime: opens AAC-in-MP4 and exposes compressed audio samp
         const AudioDesc &ad = io->mediaDesc().audioList()[0];
         CHECK(ad.isValid());
         CHECK(ad.isCompressed());
-        CHECK(ad.codecFourCC() == FourCC("mp4a"));
+        CHECK(ad.format().id() == AudioFormat::AAC);
         CHECK(ad.channels() == 2);
         CHECK(ad.sampleRate() == doctest::Approx(48000.0f));
 
@@ -154,7 +154,7 @@ TEST_CASE("MediaIO_QuickTime: opens AAC-in-MP4 and exposes compressed audio samp
         CHECK(audio.isValid());
         CHECK(audio.isCompressed());
         CHECK(audio.compressedSize() > 0);
-        CHECK(audio.desc().codecFourCC() == FourCC("mp4a"));
+        CHECK(audio.desc().format().id() == AudioFormat::AAC);
 
         io->close();
         delete io;
@@ -172,7 +172,7 @@ TEST_CASE("MediaIO_QuickTime: refuses non-PCM audio with NotSupported") {
         CHECK(err.isOk());
         CHECK(io->mediaDesc().audioList().size() == 1);
         const AudioDesc &ad = io->mediaDesc().audioList()[0];
-        CHECK(ad.dataType() == AudioDesc::PCMI_S16LE);
+        CHECK(ad.format().id() == AudioFormat::PCMI_S16LE);
         CHECK(ad.channels() == 2);
         io->close();
         delete io;
@@ -243,7 +243,7 @@ TEST_CASE("MediaIO_QuickTime: round-trip uncompressed video via MediaIO") {
                 MediaDesc md;
                 md.setFrameRate(FrameRate(FrameRate::RationalType(24, 1)));
                 md.imageList().pushToBack(ImageDesc(Size2Du32(16, 16),
-                        PixelDesc(PixelDesc::YUV8_422_UYVY_Rec709)));
+                        PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709)));
                 io->setExpectedDesc(md);
 
                 REQUIRE(io->open(MediaIO::Sink).isOk());
@@ -252,7 +252,7 @@ TEST_CASE("MediaIO_QuickTime: round-trip uncompressed video via MediaIO") {
                 for(int f = 0; f < 3; ++f) {
                         Frame::Ptr frame = Frame::Ptr::create();
                         Image img(Size2Du32(16, 16),
-                                  PixelDesc(PixelDesc::YUV8_422_UYVY_Rec709));
+                                  PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709));
                         std::memset(img.plane(0)->data(), 0x20 + f, 512);
                         img.plane(0)->setSize(512);
                         frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
@@ -310,9 +310,9 @@ TEST_CASE("MediaIO_QuickTime: round-trip video + audio via MediaIO") {
                 MediaDesc md;
                 md.setFrameRate(FrameRate(FrameRate::RationalType(24, 1)));
                 md.imageList().pushToBack(ImageDesc(Size2Du32(16, 16),
-                        PixelDesc(PixelDesc::YUV8_422_UYVY_Rec709)));
+                        PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709)));
                 // Source audio is native float.
-                md.audioList().pushToBack(AudioDesc(AudioDesc::PCMI_Float32LE,
+                md.audioList().pushToBack(AudioDesc(AudioFormat::PCMI_Float32LE,
                                                     sampleRate, 2));
 
                 MediaIO *io = MediaIO::create(cfg);
@@ -327,13 +327,13 @@ TEST_CASE("MediaIO_QuickTime: round-trip video + audio via MediaIO") {
 
                         // Video frame: 16x16 UYVY, filled with per-frame byte.
                         Image img(Size2Du32(16, 16),
-                                  PixelDesc(PixelDesc::YUV8_422_UYVY_Rec709));
+                                  PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709));
                         std::memset(img.plane(0)->data(), 0x30 + f, 512);
                         img.plane(0)->setSize(512);
                         frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
 
                         // Audio frame: float32 stereo, deterministic ramp.
-                        AudioDesc fdesc(AudioDesc::PCMI_Float32LE, sampleRate, 2);
+                        AudioDesc fdesc(AudioFormat::PCMI_Float32LE, sampleRate, 2);
                         Audio audio(fdesc, samplesPerFrame);
                         float *a = audio.data<float>();
                         for(size_t i = 0; i < samplesPerFrame; ++i) {
@@ -361,7 +361,7 @@ TEST_CASE("MediaIO_QuickTime: round-trip video + audio via MediaIO") {
                 CHECK(io->mediaDesc().imageList().size() == 1);
                 REQUIRE(io->mediaDesc().audioList().size() == 1);
                 const AudioDesc &ad = io->mediaDesc().audioList()[0];
-                CHECK(ad.dataType() == AudioDesc::PCMI_S16LE);
+                CHECK(ad.format().id() == AudioFormat::PCMI_S16LE);
                 CHECK(ad.channels() == 2);
                 CHECK(ad.sampleRate() == doctest::Approx(48000.0f));
                 CHECK(io->frameCount() == frames);
@@ -378,7 +378,7 @@ TEST_CASE("MediaIO_QuickTime: round-trip video + audio via MediaIO") {
                         // Audio
                         REQUIRE(frame->audioList().size() == 1);
                         const Audio &audio = *frame->audioList()[0];
-                        CHECK(audio.desc().dataType() == AudioDesc::PCMI_S16LE);
+                        CHECK(audio.desc().format().id() == AudioFormat::PCMI_S16LE);
                         CHECK(audio.samples() == samplesPerFrame);
                         // First sample of frame 0 should be near 0.
                         const int16_t *s = audio.data<int16_t>();
@@ -407,7 +407,7 @@ TEST_CASE("MediaIO_QuickTime: round-trip compressed (ProRes) bytes pass through"
                 MediaDesc md;
                 md.setFrameRate(FrameRate(FrameRate::RationalType(25, 1)));
                 md.imageList().pushToBack(ImageDesc(Size2Du32(64, 64),
-                        PixelDesc(PixelDesc::ProRes_422_HQ)));
+                        PixelFormat(PixelFormat::ProRes_422_HQ)));
 
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
@@ -419,7 +419,7 @@ TEST_CASE("MediaIO_QuickTime: round-trip compressed (ProRes) bytes pass through"
                         Buffer::Ptr buf = makeFilledBuffer(sizes[f], static_cast<uint8_t>(0xC0 + f));
                         Image img = Image::fromCompressedData(
                                 buf->data(), buf->size(), 64, 64,
-                                PixelDesc(PixelDesc::ProRes_422_HQ));
+                                PixelFormat(PixelFormat::ProRes_422_HQ));
                         Frame::Ptr frame = Frame::Ptr::create();
                         frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
                         REQUIRE(io->writeFrame(frame).isOk());
@@ -434,8 +434,8 @@ TEST_CASE("MediaIO_QuickTime: round-trip compressed (ProRes) bytes pass through"
                 REQUIRE(io != nullptr);
                 REQUIRE(io->open(MediaIO::Source).isOk());
                 CHECK(io->frameCount() == 3);
-                CHECK(io->mediaDesc().imageList()[0].pixelDesc().id() ==
-                      PixelDesc::ProRes_422_HQ);
+                CHECK(io->mediaDesc().imageList()[0].pixelFormat().id() ==
+                      PixelFormat::ProRes_422_HQ);
 
                 static const size_t sizes[] = { 800, 850, 900 };
                 for(int f = 0; f < 3; ++f) {

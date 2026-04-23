@@ -10,8 +10,8 @@
 #include <promeki/imagedataencoder.h>
 #include <promeki/image.h>
 #include <promeki/imagedesc.h>
-#include <promeki/pixeldesc.h>
 #include <promeki/pixelformat.h>
+#include <promeki/pixelmemlayout.h>
 #include <promeki/crc.h>
 #include <promeki/mediaio.h>
 #include <promeki/mediaconfig.h>
@@ -74,8 +74,8 @@ DecodedRow decodeRow(const uint8_t *line, size_t cellBytes, uint8_t whiteByte) {
 }
 
 // Build an empty image of the given format and clear it.
-Image makeImage(size_t w, size_t h, PixelDesc::ID id) {
-        Image img(w, h, PixelDesc(id));
+Image makeImage(size_t w, size_t h, PixelFormat::ID id) {
+        Image img(w, h, PixelFormat(id));
         img.fill(0);
         return img;
 }
@@ -87,7 +87,7 @@ Image makeImage(size_t w, size_t h, PixelDesc::ID id) {
 // ============================================================================
 
 TEST_CASE("ImageDataEncoder constructs for RGBA8 1920x1080") {
-        ImageDesc desc(1920, 1080, PixelDesc::RGBA8_sRGB);
+        ImageDesc desc(1920, 1080, PixelFormat::RGBA8_sRGB);
         ImageDataEncoder enc(desc);
         REQUIRE(enc.isValid());
         // 1920 / 76 = 25 px per cell, alignment 1 → 25.
@@ -97,7 +97,7 @@ TEST_CASE("ImageDataEncoder constructs for RGBA8 1920x1080") {
 }
 
 TEST_CASE("ImageDataEncoder picks v210-aligned cell width") {
-        ImageDesc desc(1920, 1080, PixelDesc::YUV10_422_v210_Rec709);
+        ImageDesc desc(1920, 1080, PixelFormat::YUV10_422_v210_Rec709);
         ImageDataEncoder enc(desc);
         REQUIRE(enc.isValid());
         // 1920 / 76 = 25 px raw, rounded down to v210's 6-pixel block → 24.
@@ -111,7 +111,7 @@ TEST_CASE("ImageDataEncoder picks v210-aligned cell width") {
 TEST_CASE("ImageDataEncoder picks 4:2:2-planar-aligned cell width") {
         // P_422_3x8 has chroma hSubsampling = 2, so cell width must be
         // even.  The greedy max is floor(1920/76) = 25 → 24.
-        ImageDesc desc(1920, 1080, PixelDesc::YUV8_422_Planar_Rec709);
+        ImageDesc desc(1920, 1080, PixelFormat::YUV8_422_Planar_Rec709);
         ImageDataEncoder enc(desc);
         REQUIRE(enc.isValid());
         CHECK(enc.bitWidth() == 24);
@@ -119,7 +119,7 @@ TEST_CASE("ImageDataEncoder picks 4:2:2-planar-aligned cell width") {
 
 TEST_CASE("ImageDataEncoder fails when image too narrow") {
         // 75 pixels can't even hold a single 76-bit cell at width 1.
-        ImageDesc desc(75, 8, PixelDesc::RGBA8_sRGB);
+        ImageDesc desc(75, 8, PixelFormat::RGBA8_sRGB);
         ImageDataEncoder enc(desc);
         CHECK_FALSE(enc.isValid());
 }
@@ -129,11 +129,11 @@ TEST_CASE("ImageDataEncoder fails when image too narrow") {
 // ============================================================================
 
 TEST_CASE("ImageDataEncoder RGBA8 single-item round-trip") {
-        ImageDesc desc(1920, 64, PixelDesc::RGBA8_sRGB);
+        ImageDesc desc(1920, 64, PixelFormat::RGBA8_sRGB);
         ImageDataEncoder enc(desc);
         REQUIRE(enc.isValid());
 
-        Image img = makeImage(1920, 64, PixelDesc::RGBA8_sRGB);
+        Image img = makeImage(1920, 64, PixelFormat::RGBA8_sRGB);
         const uint64_t payload = 0x0123456789ABCDEFull;
         ImageDataEncoder::Item item{ 0, 16, payload };
         REQUIRE(enc.encode(img, item).isOk());
@@ -161,11 +161,11 @@ TEST_CASE("ImageDataEncoder RGBA8 single-item round-trip") {
 }
 
 TEST_CASE("ImageDataEncoder RGBA8 two-item produces distinct rows") {
-        ImageDesc desc(1920, 64, PixelDesc::RGBA8_sRGB);
+        ImageDesc desc(1920, 64, PixelFormat::RGBA8_sRGB);
         ImageDataEncoder enc(desc);
         REQUIRE(enc.isValid());
 
-        Image img = makeImage(1920, 64, PixelDesc::RGBA8_sRGB);
+        Image img = makeImage(1920, 64, PixelFormat::RGBA8_sRGB);
         const uint64_t pa = 0xAAAAAAAAAAAAAAAAull;
         const uint64_t pb = 0x5555555555555555ull;
 
@@ -199,13 +199,13 @@ TEST_CASE("ImageDataEncoder RGBA8 two-item produces distinct rows") {
 TEST_CASE("ImageDataEncoder YUV8_422 round-trip on luma byte 0") {
         // YUYV interleaved layout: byte 0 of each macropixel is Y0.
         // Limited-range Rec.709: Y' white = 235, Y' black = 16.
-        ImageDesc desc(1920, 32, PixelDesc::YUV8_422_Rec709);
+        ImageDesc desc(1920, 32, PixelFormat::YUV8_422_Rec709);
         ImageDataEncoder enc(desc);
         REQUIRE(enc.isValid());
         // pixelsPerBlock = 2 (YUYV macropixel) → 1920/76=25 → /2*2 = 24.
         CHECK(enc.bitWidth() == 24);
 
-        Image img = makeImage(1920, 32, PixelDesc::YUV8_422_Rec709);
+        Image img = makeImage(1920, 32, PixelFormat::YUV8_422_Rec709);
 
         const uint64_t payload = 0xDEADBEEFCAFEBABEull;
         REQUIRE(enc.encode(img, ImageDataEncoder::Item{0, 16, payload}).isOk());
@@ -227,13 +227,13 @@ TEST_CASE("ImageDataEncoder YUV8_422 round-trip on luma byte 0") {
 // ============================================================================
 
 TEST_CASE("ImageDataEncoder planar 4:2:2 luma carries pattern, chroma uniform") {
-        ImageDesc desc(1920, 32, PixelDesc::YUV8_422_Planar_Rec709);
+        ImageDesc desc(1920, 32, PixelFormat::YUV8_422_Planar_Rec709);
         ImageDataEncoder enc(desc);
         REQUIRE(enc.isValid());
         // hSub = 2 chroma → cell width must be even.
         CHECK((enc.bitWidth() % 2) == 0);
 
-        Image img = makeImage(1920, 32, PixelDesc::YUV8_422_Planar_Rec709);
+        Image img = makeImage(1920, 32, PixelFormat::YUV8_422_Planar_Rec709);
         const uint64_t payload = 0x1122334455667788ull;
         REQUIRE(enc.encode(img, ImageDataEncoder::Item{0, 16, payload}).isOk());
 
@@ -285,12 +285,12 @@ TEST_CASE("ImageDataEncoder planar 4:2:2 luma carries pattern, chroma uniform") 
 // ============================================================================
 
 TEST_CASE("ImageDataEncoder v210 single-item round-trip") {
-        ImageDesc desc(1920, 32, PixelDesc::YUV10_422_v210_Rec709);
+        ImageDesc desc(1920, 32, PixelFormat::YUV10_422_v210_Rec709);
         ImageDataEncoder enc(desc);
         REQUIRE(enc.isValid());
         CHECK(enc.bitWidth() == 24);  // multiple of 6 v210 block
 
-        Image img(1920, 32, PixelDesc::YUV10_422_v210_Rec709);
+        Image img(1920, 32, PixelFormat::YUV10_422_v210_Rec709);
         img.fill(0);
 
         const uint64_t payload = 0xF00DBABECAFEBEEFull;
@@ -357,11 +357,11 @@ TEST_CASE("ImageDataEncoder v210 single-item round-trip") {
 // ============================================================================
 
 TEST_CASE("ImageDataEncoder rejects out-of-range items") {
-        ImageDesc desc(1920, 32, PixelDesc::RGBA8_sRGB);
+        ImageDesc desc(1920, 32, PixelFormat::RGBA8_sRGB);
         ImageDataEncoder enc(desc);
         REQUIRE(enc.isValid());
 
-        Image img = makeImage(1920, 32, PixelDesc::RGBA8_sRGB);
+        Image img = makeImage(1920, 32, PixelFormat::RGBA8_sRGB);
         // Item runs past the bottom of the image.
         ImageDataEncoder::Item bad{ 24, 16, 0 };
         Error err = enc.encode(img, bad);
@@ -370,12 +370,12 @@ TEST_CASE("ImageDataEncoder rejects out-of-range items") {
 }
 
 TEST_CASE("ImageDataEncoder rejects mismatched image descriptor") {
-        ImageDesc desc(1920, 32, PixelDesc::RGBA8_sRGB);
+        ImageDesc desc(1920, 32, PixelFormat::RGBA8_sRGB);
         ImageDataEncoder enc(desc);
         REQUIRE(enc.isValid());
 
         // Build an image of a different size — encode must refuse.
-        Image other = makeImage(1280, 32, PixelDesc::RGBA8_sRGB);
+        Image other = makeImage(1280, 32, PixelFormat::RGBA8_sRGB);
         Error err = enc.encode(other, ImageDataEncoder::Item{0, 16, 0});
         CHECK(err.isError());
         CHECK(err.code() == Error::InvalidArgument);
@@ -393,7 +393,7 @@ TEST_CASE("ImageDataEncoder end-to-end via TPG MediaIO") {
         const uint32_t kStreamId = 0xC0FFEEAAu;
         MediaIO::Config cfg = MediaIO::defaultConfig("TPG");
         cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p30));
-        cfg.set(MediaConfig::VideoPixelFormat, PixelDesc(PixelDesc::RGBA8_sRGB));
+        cfg.set(MediaConfig::VideoPixelFormat, PixelFormat(PixelFormat::RGBA8_sRGB));
         cfg.set(MediaConfig::TimecodeEnabled, true);
         cfg.set(MediaConfig::TimecodeStart, String("01:00:00:00"));
         cfg.set(MediaConfig::TpgDataEncoderEnabled, true);
@@ -415,7 +415,7 @@ TEST_CASE("ImageDataEncoder end-to-end via TPG MediaIO") {
 
         const Image &img = *frame->imageList()[0];
         REQUIRE(img.width() == 1920);
-        REQUIRE(img.pixelDesc().id() == PixelDesc::RGBA8_sRGB);
+        REQUIRE(img.pixelFormat().id() == PixelFormat::RGBA8_sRGB);
 
         // Reconstruct the encoder's geometry parameters so the
         // decoder loop can walk cells at the right pitch.  These must

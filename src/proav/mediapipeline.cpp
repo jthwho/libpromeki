@@ -257,6 +257,29 @@ Error MediaPipeline::build(const MediaPipelineConfig &config, bool autoplan) {
                 _sources[r.from].edges.pushToBack(es);
         }
 
+        // Mark every edge whose target is not itself a producer (i.e. the
+        // target has no outgoing routes) as a sink edge so drainSource
+        // knows which edges honour the frame-count cap.  The second pass
+        // runs after the first because _sources is only fully populated
+        // once every route has been visited.
+        for(auto it = _sources.begin(); it != _sources.end(); ++it) {
+                SourceState &ss = it->second;
+                for(size_t i = 0; i < ss.edges.size(); ++i) {
+                        EdgeState &es = ss.edges[i];
+                        es.isSinkEdge = !_sources.contains(es.toName);
+                }
+        }
+
+        // Cache the pipeline-wide frame-count cap (zero == no cap).
+        // Unknown / infinite / empty FrameCount states all mean "unlimited"
+        // and collapse to zero here so drainSource's hot-path check is a
+        // single integer compare.
+        if(_config.frameCount().isFinite() && !_config.frameCount().isEmpty()) {
+                _frameCountLimit = _config.frameCount().value();
+        } else {
+                _frameCountLimit = 0;
+        }
+
         Error tErr = topologicallySort(_topoOrder);
         if(tErr.isError()) {
                 destroyStages();
@@ -665,6 +688,7 @@ void MediaPipeline::drainSource(const String &srcName) {
                         bool blocked = false;
                         for(size_t i = 0; i < ss.edges.size(); ++i) {
                                 const EdgeState &e = ss.edges[i];
+                                if(e.doneByLimit) continue;
                                 if(e.to == nullptr) return;
                                 if(e.to->writesAccepted() <= 0) {
                                         blocked = true;
@@ -720,9 +744,50 @@ void MediaPipeline::drainSource(const String &srcName) {
 
                 _framesProduced.fetchAndAdd(1);
 
+                bool sinkReachedLimit = false;
                 for(size_t i = 0; i < ss.edges.size(); ++i) {
                         EdgeState &e = ss.edges[i];
                         if(e.to == nullptr) continue;
+                        // Previously-saturated edges stay dark: the sink
+                        // has been handed its close() and any further
+                        // write would race the backend's NotOpen latch.
+                        if(e.doneByLimit) continue;
+
+                        // Frame-count cutoff.  Honoured only on edges
+                        // terminating at a true sink (no outgoing routes)
+                        // and only when a per-pipeline cap is configured.
+                        // The cap is crossed as soon as framesWritten
+                        // reaches it; we still need to wait for the next
+                        // @ref Frame::isSafeCutPoint to land so the GOP
+                        // containing the cap stays complete.  Honouring
+                        // the cap takes precedence over the normal write,
+                        // so the sink never sees the cut frame.
+                        //
+                        // The sink itself isn't closed here — doing so
+                        // would race the pipeline-level @ref initiateClose
+                        // below (a fast sink can emit closedSignal before
+                        // the pipeline's handler is wired).  Instead the
+                        // EOF cascade triggered via initiateClose + each
+                        // source's synthetic EOS closes every downstream,
+                        // which is exactly the behaviour we want.
+                        if(_frameCountLimit > 0
+                           && e.isSinkEdge
+                           && e.framesWritten >= _frameCountLimit
+                           && frame.isValid()
+                           && frame->isSafeCutPoint()) {
+                                if(!e.doneByLimit) {
+                                        promekiDebug(
+                                                "MediaPipeline::drainSource[%s] "
+                                                "edge '%s' reached frame-count "
+                                                "cap (%lld).",
+                                                srcName.cstr(), e.toName.cstr(),
+                                                (long long)_frameCountLimit);
+                                        sinkReachedLimit = true;
+                                }
+                                e.doneByLimit = true;
+                                continue;
+                        }
+
                         Error werr = e.to->writeFrame(frame, false);
                         if(werr.isError()) {
                                 // During close the back-pressure gate
@@ -754,8 +819,40 @@ void MediaPipeline::drainSource(const String &srcName) {
                                 }
                                 return;
                         }
+                        // Only count edges that actually consume the
+                        // frame for the cap — transforms along the way
+                        // don't participate in the per-sink accounting.
+                        if(e.isSinkEdge) e.framesWritten++;
+                }
+
+                // Once every sink edge has seen its cap, kick the
+                // pipeline close so sources stop reading and any
+                // frames already in flight get dropped on the floor.
+                if(sinkReachedLimit && allSinkEdgesDoneByLimit()) {
+                        promekiDebug("MediaPipeline::drainSource[%s] all sink "
+                                     "edges saturated; initiating close.",
+                                     srcName.cstr());
+                        initiateClose(/*clean=*/true);
+                        return;
                 }
         }
+}
+
+bool MediaPipeline::allSinkEdgesDoneByLimit() const {
+        bool seenSinkEdge = false;
+        for(auto it = _sources.cbegin(); it != _sources.cend(); ++it) {
+                const SourceState &ss = it->second;
+                for(size_t i = 0; i < ss.edges.size(); ++i) {
+                        const EdgeState &e = ss.edges[i];
+                        if(!e.isSinkEdge) continue;
+                        seenSinkEdge = true;
+                        if(!e.doneByLimit) return false;
+                }
+        }
+        // An all-done verdict on a pipeline with no sink edges would
+        // short-circuit the close path on pure-transform graphs; make
+        // the empty case a no-op instead.
+        return seenSinkEdge;
 }
 
 void MediaPipeline::onWriteError(const String &stageName, Error err) {

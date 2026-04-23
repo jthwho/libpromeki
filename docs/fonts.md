@@ -80,7 +80,7 @@ Switching pixel formats triggers a full invalidation in subclasses.
 ### FastFont: Timecode Overlay {#font_example_fast}
 
 ```cpp
-Image img(1920, 1080, PixelDesc::RGB8_sRGB);
+Image img(1920, 1080, PixelFormat::RGB8_sRGB);
 FastFont ff(img.createPaintEngine());
 ff.setFontFilename("/path/to/font.ttf");
 ff.setFontSize(48);
@@ -95,7 +95,7 @@ ff.drawText("01:00:00:01", 100, 200); // reuses cached glyphs
 ### BasicFont: Transparent Overlay {#font_example_basic}
 
 ```cpp
-Image img(1920, 1080, PixelDesc::RGBA8_sRGB);
+Image img(1920, 1080, PixelFormat::RGBA8_sRGB);
 BasicFont bf(img.createPaintEngine());
 bf.setFontFilename("/path/to/font.ttf");
 bf.setFontSize(24);

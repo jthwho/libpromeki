@@ -51,7 +51,7 @@ uint64_t macEpochNow() {
 }
 
 /** @brief Returns the QuickTime FourCC to put in the @c stsd entry for @p pd. */
-FourCC quickTimeCodecFourCC(const PixelDesc &pd) {
+FourCC quickTimeCodecFourCC(const PixelFormat &pd) {
         if(pd.fourccList().isEmpty()) return FourCC('\0', '\0', '\0', '\0');
         return pd.fourccList()[0];
 }
@@ -71,14 +71,14 @@ FourCC quickTimeCodecFourCC(const PixelDesc &pd) {
  *        mediaiotask_quicktime.cpp). See devplan/fixme.md entry
  *        "QuickTime: Little-Endian Float Audio Storage".
  */
-FourCC pcmFourCCForDataType(AudioDesc::DataType dt) {
+FourCC pcmFourCCForDataType(AudioFormat::ID dt) {
         switch(dt) {
-                case AudioDesc::PCMI_S16LE:    return FourCC("sowt");
-                case AudioDesc::PCMI_S16BE:    return FourCC("twos");
-                case AudioDesc::PCMI_S24BE:    return FourCC("in24");
-                case AudioDesc::PCMI_S32BE:    return FourCC("in32");
-                case AudioDesc::PCMI_Float32BE: return FourCC("fl32");
-                case AudioDesc::PCMI_U8:       return FourCC("raw ");
+                case AudioFormat::PCMI_S16LE:    return FourCC("sowt");
+                case AudioFormat::PCMI_S16BE:    return FourCC("twos");
+                case AudioFormat::PCMI_S24BE:    return FourCC("in24");
+                case AudioFormat::PCMI_S32BE:    return FourCC("in32");
+                case AudioFormat::PCMI_Float32BE: return FourCC("fl32");
+                case AudioFormat::PCMI_U8:       return FourCC("raw ");
                 default:
                         // FIXME: lpcm fallback needs a pcmC extension atom to
                         // carry endianness / float flag. Without it, players
@@ -175,13 +175,13 @@ uint64_t gcd64(uint64_t a, uint64_t b) {
  * conversion (see @ref QuickTimeWriter::writeSample) and the
  * configuration record is extracted from the first keyframe.
  *
- * For all other codecs the first entry in the @c PixelDesc
+ * For all other codecs the first entry in the @c PixelFormat
  * FourCC list is used.  See ISO/IEC 14496-15 §5.3.3.1.1 and
  * §8.3.3.1.1.
  */
-FourCC quickTimeVideoSampleEntryFourCC(const PixelDesc &pd) {
-        if(pd.id() == PixelDesc::H264) return FourCC("avc1");
-        if(pd.id() == PixelDesc::HEVC) return FourCC("hvc1");
+FourCC quickTimeVideoSampleEntryFourCC(const PixelFormat &pd) {
+        if(pd.id() == PixelFormat::H264) return FourCC("avc1");
+        if(pd.id() == PixelFormat::HEVC) return FourCC("hvc1");
         return quickTimeCodecFourCC(pd);
 }
 
@@ -209,7 +209,7 @@ void appendStsdBox(AtomWriter &w, const QuickTimeWriterTrack &t) {
         auto stsd = w.beginFullBox(kStsd, 0, 0);
         w.writeU32(1);                    // entry_count
         if(t.type == QuickTime::Video) {
-                FourCC codec = quickTimeVideoSampleEntryFourCC(t.pixelDesc);
+                FourCC codec = quickTimeVideoSampleEntryFourCC(t.pixelFormat);
                 auto vse = w.beginBox(codec);
                 w.writeU32(0); w.writeU16(0);     // reserved[6]
                 w.writeU16(1);                    // data_reference_index
@@ -224,8 +224,8 @@ void appendStsdBox(AtomWriter &w, const QuickTimeWriterTrack &t) {
                 w.writeFixed16_16(72.0);          // vert res
                 w.writeU32(0);                    // data size
                 w.writeU16(1);                    // frame count
-                w.writePascalString(t.pixelDesc.name(), 32);
-                w.writeU16(t.pixelDesc.hasAlpha() ? 32 : 24); // depth
+                w.writePascalString(t.pixelFormat.name(), 32);
+                w.writeU16(t.pixelFormat.hasAlpha() ? 32 : 24); // depth
                 w.writeS16(-1);                   // pre-defined color table id
                 // Codec-specific extension boxes (e.g. avcC / hvcC).
                 // Live as child boxes of the visual sample entry, so
@@ -239,7 +239,7 @@ void appendStsdBox(AtomWriter &w, const QuickTimeWriterTrack &t) {
                 }
                 w.endBox(vse);
         } else if(t.type == QuickTime::Audio) {
-                FourCC codec = pcmFourCCForDataType(t.audioDesc.dataType());
+                FourCC codec = pcmFourCCForDataType(t.audioDesc.format().id());
                 auto ase = w.beginBox(codec);
                 w.writeU32(0); w.writeU16(0);     // reserved[6]
                 w.writeU16(1);                    // data_reference_index
@@ -424,7 +424,7 @@ void QuickTimeWriter::close() {
 // Track registration
 // ---------------------------------------------------------------------------
 
-Error QuickTimeWriter::addVideoTrack(const PixelDesc &codec, const Size2Du32 &size,
+Error QuickTimeWriter::addVideoTrack(const PixelFormat &codec, const Size2Du32 &size,
                                      const FrameRate &frameRate, uint32_t *outTrackId) {
         if(!_isOpen) return Error::NotOpen;
         if(!codec.isValid()) return Error::InvalidArgument;
@@ -438,7 +438,7 @@ Error QuickTimeWriter::addVideoTrack(const PixelDesc &codec, const Size2Du32 &si
         // as the per-sample duration. e.g. 24 fps → timescale 24, duration 1.
         // 23.976 (24000/1001) → timescale 24000, duration 1001.
         t.timescale = frameRate.rational().numerator();
-        t.pixelDesc = codec;
+        t.pixelFormat = codec;
         t.size      = size;
         _writeTracks.pushToBack(t);
         if(outTrackId != nullptr) *outTrackId = t.id;
@@ -522,9 +522,9 @@ Error QuickTimeWriter::writeSample(uint32_t trackId, const QuickTime::Sample &sa
         // @c codecConfigBox in its stsd entry.
         Buffer::Ptr convertedPayload;
         const bool isH264 = (t.type == QuickTime::Video &&
-                             t.pixelDesc.id() == PixelDesc::H264);
+                             t.pixelFormat.id() == PixelFormat::H264);
         const bool isHEVC = (t.type == QuickTime::Video &&
-                             t.pixelDesc.id() == PixelDesc::HEVC);
+                             t.pixelFormat.id() == PixelFormat::HEVC);
         if(isH264 || isHEVC) {
                 BufferView srcView(sample.data, 0, sample.data->size());
                 if(!t.codecConfigBox && sample.keyframe) {

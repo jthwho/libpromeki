@@ -13,7 +13,7 @@
 #include <promeki/mediadesc.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/metadata.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/colormodel.h>
 #include <promeki/logger.h>
 
@@ -154,11 +154,11 @@ Error MediaIOTask_Burn::burnFrame(const Frame::Ptr &input, Frame::Ptr &output) {
                         Image::Ptr &imgPtr = outRaw->imageList()[i];
                         if(!imgPtr.isValid()) continue;
 
-                        if(!imgPtr->pixelDesc().hasPaintEngine()) {
+                        if(!imgPtr->pixelFormat().hasPaintEngine()) {
                                 if(!_notPaintableWarned) {
                                         promekiWarn("MediaIOTask_Burn: pixel format %s "
                                                     "has no paint engine; skipping burn",
-                                                    imgPtr->pixelDesc().name().cstr());
+                                                    imgPtr->pixelFormat().name().cstr());
                                         _notPaintableWarned = true;
                                 }
                                 continue;
@@ -231,7 +231,7 @@ int MediaIOTask_Burn::pendingOutput() const {
 // ---- Introspection / negotiation ----
 //
 // Burn is a pure passthrough transform — output shape == input shape.
-// The only constraint is that the video PixelDesc must have a paint
+// The only constraint is that the video PixelFormat must have a paint
 // engine, because the overlay goes through VideoTestPattern::applyBurn
 // which needs one.  We advertise that constraint via proposeInput so
 // the planner splices in a CSC ahead of us when the upstream produces
@@ -247,7 +247,7 @@ Error MediaIOTask_Burn::proposeInput(const MediaDesc &offered,
                 *preferred = offered;
                 return Error::Ok;
         }
-        const PixelDesc &pd = offered.imageList()[0].pixelDesc();
+        const PixelFormat &pd = offered.imageList()[0].pixelFormat();
         if(pd.isValid() && !pd.isCompressed() && pd.hasPaintEngine()) {
                 *preferred = offered;
                 return Error::Ok;
@@ -257,11 +257,11 @@ Error MediaIOTask_Burn::proposeInput(const MediaDesc &offered,
         // a same-family paintable substitute via the shared helper so
         // every transform backend picks the same fallback; the planner
         // chooses the cheapest bridge chain that satisfies the gap.
-        const PixelDesc target = defaultUncompressedPixelDesc(pd);
+        const PixelFormat target = defaultUncompressedPixelFormat(pd);
         MediaDesc want = offered;
         ImageDesc::List &imgs = want.imageList();
         for(size_t i = 0; i < imgs.size(); ++i) {
-                imgs[i].setPixelDesc(target);
+                imgs[i].setPixelFormat(target);
         }
         *preferred = want;
         return Error::Ok;

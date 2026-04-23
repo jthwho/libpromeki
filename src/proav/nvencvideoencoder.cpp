@@ -13,7 +13,7 @@
 #include <promeki/mediaconfig.h>
 #include <promeki/image.h>
 #include <promeki/imagedesc.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/buffer.h>
 #include <promeki/cuda.h>
 #include <promeki/framerate.h>
@@ -88,13 +88,13 @@ bool loadNvenc() {
 }
 
 // ---------------------------------------------------------------------------
-// Format dispatch table.  Each row maps a PixelDesc to the NVENC
+// Format dispatch table.  Each row maps a PixelFormat to the NVENC
 // buffer format, chroma / bit-depth config values, and the byte
 // geometry needed by the generic uploadFrame() routine.
 // ---------------------------------------------------------------------------
 
 struct FormatEntry {
-        PixelDesc::ID           pixelDescId;
+        PixelFormat::ID           pixelFormatId;
         NV_ENC_BUFFER_FORMAT    nvencFmt;
         uint32_t                chromaFormatIDC;  // 1=420, 2=422, 3=444
         NV_ENC_BIT_DEPTH        inputBitDepth;
@@ -105,29 +105,29 @@ struct FormatEntry {
 };
 
 static constexpr FormatEntry kFormatTable[] = {
-        { PixelDesc::YUV8_420_SemiPlanar_Rec709,
+        { PixelFormat::YUV8_420_SemiPlanar_Rec709,
           NV_ENC_BUFFER_FORMAT_NV12, 1,
           NV_ENC_BIT_DEPTH_8, NV_ENC_BIT_DEPTH_8, 1, 2, 2 },
-        { PixelDesc::YUV10_420_SemiPlanar_LE_Rec709,
+        { PixelFormat::YUV10_420_SemiPlanar_LE_Rec709,
           NV_ENC_BUFFER_FORMAT_YUV420_10BIT, 1,
           NV_ENC_BIT_DEPTH_10, NV_ENC_BIT_DEPTH_10, 2, 2, 2 },
-        { PixelDesc::YUV8_422_SemiPlanar_Rec709,
+        { PixelFormat::YUV8_422_SemiPlanar_Rec709,
           NV_ENC_BUFFER_FORMAT_NV16, 2,
           NV_ENC_BIT_DEPTH_8, NV_ENC_BIT_DEPTH_8, 1, 1, 2 },
-        { PixelDesc::YUV10_422_SemiPlanar_LE_Rec709,
+        { PixelFormat::YUV10_422_SemiPlanar_LE_Rec709,
           NV_ENC_BUFFER_FORMAT_P210, 2,
           NV_ENC_BIT_DEPTH_10, NV_ENC_BIT_DEPTH_10, 2, 1, 2 },
-        { PixelDesc::YUV8_444_Planar_Rec709,
+        { PixelFormat::YUV8_444_Planar_Rec709,
           NV_ENC_BUFFER_FORMAT_YUV444, 3,
           NV_ENC_BIT_DEPTH_8, NV_ENC_BIT_DEPTH_8, 1, 1, 3 },
-        { PixelDesc::YUV10_444_Planar_LE_Rec709,
+        { PixelFormat::YUV10_444_Planar_LE_Rec709,
           NV_ENC_BUFFER_FORMAT_YUV444_10BIT, 3,
           NV_ENC_BIT_DEPTH_10, NV_ENC_BIT_DEPTH_10, 2, 1, 3 },
 };
 
-const FormatEntry *lookupFormat(PixelDesc::ID id) {
+const FormatEntry *lookupFormat(PixelFormat::ID id) {
         for(const auto &e : kFormatTable) {
-                if(e.pixelDescId == id) return &e;
+                if(e.pixelFormatId == id) return &e;
         }
         return nullptr;
 }
@@ -137,8 +137,8 @@ const FormatEntry *lookupFormat(PixelDesc::ID id) {
 // ---------------------------------------------------------------------------
 
 NV_ENC_PARAMS_RC_MODE toNvencRc(const Enum &rc) {
-        if(rc == VideoRateControl::CBR) return NV_ENC_PARAMS_RC_CBR;
-        if(rc == VideoRateControl::CQP) return NV_ENC_PARAMS_RC_CONSTQP;
+        if(rc == RateControlMode::CBR) return NV_ENC_PARAMS_RC_CBR;
+        if(rc == RateControlMode::CQP) return NV_ENC_PARAMS_RC_CONSTQP;
         return NV_ENC_PARAMS_RC_VBR;
 }
 
@@ -447,11 +447,11 @@ class NvencVideoEncoder::Impl {
                         if(!frame.isValid() || frame.planes().isEmpty()) {
                                 return setError(Error::Invalid, "invalid frame");
                         }
-                        const FormatEntry *fmt = lookupFormat(frame.pixelDesc().id());
+                        const FormatEntry *fmt = lookupFormat(frame.pixelFormat().id());
                         if(!fmt) {
                                 return setError(Error::PixelFormatNotSupported,
                                         String::sprintf("NvencVideoEncoder: unsupported input format %s",
-                                                frame.pixelDesc().name().cstr()));
+                                                frame.pixelFormat().name().cstr()));
                         }
                         if(Error err = ensureSession(frame.width(), frame.height(), fmt,
                                                      frame.desc().videoScanMode());
@@ -588,7 +588,7 @@ class NvencVideoEncoder::Impl {
                         return Error::Ok;
                 }
 
-                MediaPacket::Ptr receivePacket() {
+                VideoPacket::Ptr receivePacket() {
                         if(!_pendingPackets.empty()) {
                                 auto pkt = _pendingPackets.front();
                                 _pendingPackets.pop_front();
@@ -605,13 +605,13 @@ class NvencVideoEncoder::Impl {
 
                         if(_eosPending && _inFlight.empty()) {
                                 _eosPending = false;
-                                auto pkt = MediaPacket::Ptr::create();
-                                pkt.modify()->setPixelDesc(outputPixelDesc());
-                                pkt.modify()->addFlag(MediaPacket::EndOfStream);
+                                auto pkt = VideoPacket::Ptr::create();
+                                pkt.modify()->setPixelFormat(outputPixelFormat());
+                                pkt.modify()->markEndOfStream();
                                 return pkt;
                         }
 
-                        return MediaPacket::Ptr();
+                        return VideoPacket::Ptr();
                 }
 
                 Error flush() {
@@ -647,10 +647,10 @@ class NvencVideoEncoder::Impl {
                         return Error::Ok;
                 }
 
-                PixelDesc outputPixelDesc() const {
-                        if(_codec == Codec_H264) return PixelDesc(PixelDesc::H264);
-                        if(_codec == Codec_AV1)  return PixelDesc(PixelDesc::AV1);
-                        return PixelDesc(PixelDesc::HEVC);
+                PixelFormat outputPixelFormat() const {
+                        if(_codec == Codec_H264) return PixelFormat(PixelFormat::H264);
+                        if(_codec == Codec_AV1)  return PixelFormat(PixelFormat::AV1);
+                        return PixelFormat(PixelFormat::HEVC);
                 }
 
                 Error lastError() const { return _lastError; }
@@ -717,8 +717,8 @@ class NvencVideoEncoder::Impl {
                 // re-resolve Enum lookups.  Special values:
                 //
                 //   255 — "Auto" / "Unknown" — resolve from the first
-                //         frame's PixelDesc::colorModel() /
-                //         PixelDesc::videoRange() when ensureSession()
+                //         frame's PixelFormat::colorModel() /
+                //         PixelFormat::videoRange() when ensureSession()
                 //         runs.
                 //   0   — unset; treat as Unspecified on the wire.
                 //   1..22 — spec-registered value written verbatim.
@@ -768,7 +768,7 @@ class NvencVideoEncoder::Impl {
                 // these instead of the raw _colorPrimaries / _videoRange
                 // members so an explicit @c Unspecified still flows
                 // through unchanged while @c Auto / @c Unknown are
-                // folded against the first frame's PixelDesc.
+                // folded against the first frame's PixelFormat.
                 struct ResolvedColorDesc {
                         uint32_t primaries = 0;
                         uint32_t transfer  = 0;
@@ -777,14 +777,14 @@ class NvencVideoEncoder::Impl {
                 };
 
                 // Resolve the cached Auto/Unspecified/Unknown sentinels
-                // against _fmt->pixelDescId, giving each VUI field its
+                // against _fmt->pixelFormatId, giving each VUI field its
                 // concrete value for this session.  Caller-supplied
                 // explicit values (BT709, SMPTE2084, Limited, ...) pass
                 // through untouched so a downstream HDR10 override is
                 // always honoured.  Must be called after _fmt is set.
                 ResolvedColorDesc resolveColorDescription() const {
                         ResolvedColorDesc out;
-                        const PixelDesc pd(_fmt->pixelDescId);
+                        const PixelFormat pd(_fmt->pixelFormatId);
                         const ColorModel::H273 h = ColorModel::toH273(pd.colorModel().id());
 
                         out.primaries = (_colorPrimaries == 255u) ? h.primaries : _colorPrimaries;
@@ -1368,7 +1368,7 @@ class NvencVideoEncoder::Impl {
                         return Error::Ok;
                 }
 
-                MediaPacket::Ptr lockAndBuildPacket(Slot *slot) {
+                VideoPacket::Ptr lockAndBuildPacket(Slot *slot) {
                         NV_ENC_LOCK_BITSTREAM lb{};
                         lb.version = NV_ENC_LOCK_BITSTREAM_VER;
                         lb.outputBitstream = slot->out;
@@ -1376,7 +1376,7 @@ class NvencVideoEncoder::Impl {
                         if(st != NV_ENC_SUCCESS) {
                                 setError(Error::LibraryFailure,
                                         String::sprintf("nvEncLockBitstream failed (%d)", (int)st));
-                                return MediaPacket::Ptr();
+                                return VideoPacket::Ptr();
                         }
 
                         auto buf = Buffer::Ptr::create(lb.bitstreamSizeInBytes);
@@ -1388,14 +1388,14 @@ class NvencVideoEncoder::Impl {
 
                         gNvenc.nvEncUnlockBitstream(_encoder, slot->out);
 
-                        auto pkt = MediaPacket::Ptr::create(buf, outputPixelDesc());
+                        auto pkt = VideoPacket::Ptr::create(buf, outputPixelFormat());
                         pkt.modify()->setPts(slot->pts);
                         pkt.modify()->setDts(slot->pts);
-                        if(isKey) pkt.modify()->addFlag(MediaPacket::Keyframe);
+                        if(isKey) pkt.modify()->addFlag(VideoPacket::Keyframe);
                         // Carry per-image metadata across the codec
                         // boundary: things like Timecode and user keys
                         // that don't live in the H.264 / HEVC bitstream
-                        // ride along on the MediaPacket and get
+                        // ride along on the VideoPacket and get
                         // re-applied to the decoded Image by the
                         // matching VideoDecoder.
                         if(!slot->imageMeta.isEmpty()) {
@@ -1435,7 +1435,7 @@ class NvencVideoEncoder::Impl {
                         _eosPending = false;
                 }
 
-                std::deque<MediaPacket::Ptr> _pendingPackets;
+                std::deque<VideoPacket::Ptr> _pendingPackets;
 };
 
 // ---------------------------------------------------------------------------
@@ -1447,41 +1447,26 @@ NvencVideoEncoder::NvencVideoEncoder(Codec codec)
 
 NvencVideoEncoder::~NvencVideoEncoder() { delete _impl; }
 
-String NvencVideoEncoder::name() const {
-        if(_codec == Codec_H264) return String("H264");
-        if(_codec == Codec_AV1)  return String("AV1");
-        return String("HEVC");
-}
-
-String NvencVideoEncoder::description() const {
-        if(_codec == Codec_H264) return String("NVIDIA NVENC H.264 hardware encoder");
-        if(_codec == Codec_AV1)  return String("NVIDIA NVENC AV1 hardware encoder");
-        return String("NVIDIA NVENC HEVC hardware encoder");
-}
-
-PixelDesc NvencVideoEncoder::outputPixelDesc() const {
-        return _impl->outputPixelDesc();
-}
-
 List<int> NvencVideoEncoder::supportedInputList() {
         List<int> ret;
         for(const auto &e : kFormatTable) {
-                ret.pushToBack(static_cast<int>(e.pixelDescId));
+                ret.pushToBack(static_cast<int>(e.pixelFormatId));
         }
         return ret;
-}
-
-List<int> NvencVideoEncoder::supportedInputs() const {
-        return supportedInputList();
 }
 
 void NvencVideoEncoder::configure(const MediaConfig &config) {
         _impl->configure(config);
 }
 
-Error NvencVideoEncoder::submitFrame(const Image &frame, const MediaTimeStamp &pts) {
+Error NvencVideoEncoder::submitFrame(const Image::Ptr &frame, const MediaTimeStamp &pts) {
         _impl->clearError();
-        Error err = _impl->submitFrame(frame, pts, _requestKey);
+        if(!frame.isValid()) {
+                _lastError        = Error::Invalid;
+                _lastErrorMessage = "NvencVideoEncoder: null frame Ptr";
+                return _lastError;
+        }
+        Error err = _impl->submitFrame(*frame, pts, _requestKey);
         _requestKey = false;
         // Propagate the last error onto the public-facing storage so
         // callers reading lastError() / lastErrorMessage() see the same
@@ -1491,7 +1476,7 @@ Error NvencVideoEncoder::submitFrame(const Image &frame, const MediaTimeStamp &p
         return err;
 }
 
-MediaPacket::Ptr NvencVideoEncoder::receivePacket() {
+VideoPacket::Ptr NvencVideoEncoder::receivePacket() {
         return _impl->receivePacket();
 }
 
@@ -1514,53 +1499,48 @@ Error NvencVideoEncoder::reset() {
 void NvencVideoEncoder::requestKeyframe() { _requestKey = true; }
 
 // ---------------------------------------------------------------------------
-// Factory registration.  Two surfaces:
-//   1. The legacy string-keyed VideoEncoder::registerEncoder registry —
-//      what MediaIOTask_VideoEncoder still looks up via MediaConfig::VideoCodec.
-//   2. The typed VideoCodec::H264 / VideoCodec::HEVC factory hooks —
-//      the long-term path; populated by re-registering each codec's
-//      Data record with createEncoder filled in.
-// Both surfaces will collapse into one once MediaConfig::VideoCodec
-// flips from TypeString to TypeVideoCodec.
+// Backend registration — typed (codec, backend) pair on the
+// VideoEncoder registry.  Registered under the "Nvidia" backend name
+// for H264 / HEVC / AV1.
 // ---------------------------------------------------------------------------
 
 namespace {
 
 struct NvencRegistrar {
         NvencRegistrar() {
-                auto h264Factory = []() -> VideoEncoder * {
-                        return new NvencVideoEncoder(NvencVideoEncoder::Codec_H264);
-                };
-                auto hevcFactory = []() -> VideoEncoder * {
-                        return new NvencVideoEncoder(NvencVideoEncoder::Codec_HEVC);
-                };
-                auto av1Factory = []() -> VideoEncoder * {
-                        return new NvencVideoEncoder(NvencVideoEncoder::Codec_AV1);
-                };
-
-                VideoEncoder::registerEncoder("H264", h264Factory);
-                VideoEncoder::registerEncoder("HEVC", hevcFactory);
-                VideoEncoder::registerEncoder("AV1",  av1Factory);
+                auto bk = VideoCodec::registerBackend("Nvidia");
+                if(error(bk).isError()) return;
+                const VideoCodec::Backend backend = value(bk);
 
                 const List<int> nvencInputs = NvencVideoEncoder::supportedInputList();
-                if(VideoCodec h264(VideoCodec::H264); h264.isValid()) {
-                        VideoCodec::Data d = *h264.data();
-                        d.createEncoder = h264Factory;
-                        d.encoderSupportedInputs = nvencInputs;
-                        VideoCodec::registerData(std::move(d));
-                }
-                if(VideoCodec hevc(VideoCodec::HEVC); hevc.isValid()) {
-                        VideoCodec::Data d = *hevc.data();
-                        d.createEncoder = hevcFactory;
-                        d.encoderSupportedInputs = nvencInputs;
-                        VideoCodec::registerData(std::move(d));
-                }
-                if(VideoCodec av1(VideoCodec::AV1); av1.isValid()) {
-                        VideoCodec::Data d = *av1.data();
-                        d.createEncoder = av1Factory;
-                        d.encoderSupportedInputs = nvencInputs;
-                        VideoCodec::registerData(std::move(d));
-                }
+
+                VideoEncoder::registerBackend({
+                        .codecId         = VideoCodec::H264,
+                        .backend         = backend,
+                        .weight          = BackendWeight::Vendored,
+                        .supportedInputs = nvencInputs,
+                        .factory         = []() -> VideoEncoder * {
+                                return new NvencVideoEncoder(NvencVideoEncoder::Codec_H264);
+                        },
+                });
+                VideoEncoder::registerBackend({
+                        .codecId         = VideoCodec::HEVC,
+                        .backend         = backend,
+                        .weight          = BackendWeight::Vendored,
+                        .supportedInputs = nvencInputs,
+                        .factory         = []() -> VideoEncoder * {
+                                return new NvencVideoEncoder(NvencVideoEncoder::Codec_HEVC);
+                        },
+                });
+                VideoEncoder::registerBackend({
+                        .codecId         = VideoCodec::AV1,
+                        .backend         = backend,
+                        .weight          = BackendWeight::Vendored,
+                        .supportedInputs = nvencInputs,
+                        .factory         = []() -> VideoEncoder * {
+                                return new NvencVideoEncoder(NvencVideoEncoder::Codec_AV1);
+                        },
+                });
         }
 };
 

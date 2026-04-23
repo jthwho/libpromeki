@@ -316,7 +316,7 @@ static Variant coerceLiteralToKey(const Variant &literal, const String &keyPath,
         // string through @ref Timecode::fromString directly and
         // adopt the context's mode.  Other typed comparisons fall
         // through to @ref Variant::operator== which already performs
-        // cross-type conversion (e.g. PixelDesc from String via its
+        // cross-type conversion (e.g. PixelFormat from String via its
         // own string constructor).
         if(context.type() == Variant::TypeTimecode) {
                 auto [tc, pe] = Timecode::fromString(literal.get<String>());

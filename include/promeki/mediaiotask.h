@@ -11,7 +11,7 @@
 #include <promeki/clock.h>
 #include <promeki/error.h>
 #include <promeki/mediaio.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -87,8 +87,8 @@ class MediaIOTask {
                  * of @ref MediaConfig keys to express "given this input
                  * shape, produce this output":
                  *
-                 *  - @ref MediaConfig::OutputPixelDesc      — replaces the
-                 *    @ref ImageDesc::pixelDesc of every video image.
+                 *  - @ref MediaConfig::OutputPixelFormat      — replaces the
+                 *    @ref ImageDesc::pixelFormat of every video image.
                  *  - @ref MediaConfig::OutputFrameRate      — replaces
                  *    @ref MediaDesc::frameRate.
                  *  - @ref MediaConfig::OutputAudioRate      — replaces
@@ -96,9 +96,9 @@ class MediaIOTask {
                  *  - @ref MediaConfig::OutputAudioChannels  — replaces
                  *    @ref AudioDesc::channels on every audio entry.
                  *  - @ref MediaConfig::OutputAudioDataType  — replaces
-                 *    @ref AudioDesc::dataType on every audio entry.
+                 *    @ref AudioDesc::format on every audio entry.
                  *
-                 * Keys at their default (invalid PixelDesc, invalid
+                 * Keys at their default (invalid PixelFormat, invalid
                  * FrameRate, zero audio rate / channels, invalid Enum)
                  * mean "inherit from input" — the corresponding field
                  * passes through unchanged.
@@ -117,7 +117,7 @@ class MediaIOTask {
                                                      const MediaConfig &config);
 
                 /**
-                 * @brief Returns a canonical uncompressed PixelDesc that
+                 * @brief Returns a canonical uncompressed PixelFormat that
                  *        stays in the same family as @p source.
                  *
                  * Transform backends that refuse compressed or
@@ -128,14 +128,14 @@ class MediaIOTask {
                  * gap.  The helper keeps the mapping in one place so
                  * the fallback does not drift between backends.
                  *
-                 *  - YCbCr sources → @ref PixelDesc::YUV8_422_Rec709
-                 *  - RGB / other → @ref PixelDesc::RGBA8_sRGB
+                 *  - YCbCr sources → @ref PixelFormat::YUV8_422_Rec709
+                 *  - RGB / other → @ref PixelFormat::RGBA8_sRGB
                  *
                  * @param source The compressed or paint-engine-less
-                 *               input PixelDesc.
-                 * @return A canonical uncompressed PixelDesc.
+                 *               input PixelFormat.
+                 * @return A canonical uncompressed PixelFormat.
                  */
-                static PixelDesc defaultUncompressedPixelDesc(const PixelDesc &source);
+                static PixelFormat defaultUncompressedPixelFormat(const PixelFormat &source);
 
         protected:
                 // ---- Live-telemetry helpers ----

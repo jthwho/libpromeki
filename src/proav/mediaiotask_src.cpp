@@ -30,8 +30,8 @@ bool srcBridge(const MediaDesc &from,
                int *outCost) {
         // Pixel side must match (SRC is audio-only).
         if(!from.imageList().isEmpty() && !to.imageList().isEmpty()) {
-                if(from.imageList()[0].pixelDesc() !=
-                   to.imageList()[0].pixelDesc()) return false;
+                if(from.imageList()[0].pixelFormat() !=
+                   to.imageList()[0].pixelFormat()) return false;
         }
         if(from.audioList().isEmpty() || to.audioList().isEmpty()) return false;
 
@@ -42,13 +42,13 @@ bool srcBridge(const MediaDesc &from,
         // channel changes are handled by FrameSync.
         if(a.sampleRate() != b.sampleRate()) return false;
         if(a.channels()   != b.channels())   return false;
-        if(a.dataType()   == b.dataType())   return false;
-        if(b.dataType()   == AudioDesc::Invalid) return false;
+        if(a.format().id()   == b.format().id())   return false;
+        if(b.format().id()   == AudioFormat::Invalid) return false;
 
         if(outConfig != nullptr) {
                 *outConfig = MediaIO::defaultConfig("SRC");
                 outConfig->set(MediaConfig::OutputAudioDataType,
-                               AudioDataType(b.dataType()));
+                               AudioDataType(b.format().id()));
         }
         if(outCost != nullptr) {
                 // Sample-format conversion is precision-preserving
@@ -101,8 +101,8 @@ Error MediaIOTask_SRC::executeCmd(MediaIOCommandOpen &cmd) {
                 promekiErr("MediaIOTask_SRC: unknown audio data type");
                 return Error::InvalidArgument;
         }
-        _outputAudioDataType = static_cast<AudioDesc::DataType>(adtEnum.value());
-        _outputAudioDataTypeSet = (_outputAudioDataType != AudioDesc::Invalid);
+        _outputAudioDataType = static_cast<AudioFormat::ID>(adtEnum.value());
+        _outputAudioDataTypeSet = (_outputAudioDataType != AudioFormat::Invalid);
 
         _capacity = cfg.getAs<int>(MediaConfig::Capacity, 4);
         if(_capacity < 1) _capacity = 1;
@@ -145,7 +145,7 @@ Error MediaIOTask_SRC::executeCmd(MediaIOCommandOpen &cmd) {
 Error MediaIOTask_SRC::executeCmd(MediaIOCommandClose &cmd) {
         (void)cmd;
         _outputQueue.clear();
-        _outputAudioDataType = AudioDesc::Invalid;
+        _outputAudioDataType = AudioFormat::Invalid;
         _outputAudioDataTypeSet = false;
         _frameCount = 0;
         _readCount = 0;
@@ -173,8 +173,8 @@ Error MediaIOTask_SRC::convertFrame(const Frame::Ptr &input, Frame::Ptr &output)
 
                 Audio dstAudio;
                 if(_outputAudioDataTypeSet &&
-                   srcAudio.desc().dataType() != _outputAudioDataType) {
-                        dstAudio = srcAudio.convertTo(_outputAudioDataType);
+                   srcAudio.desc().format().id() != _outputAudioDataType) {
+                        dstAudio = srcAudio.convert(_outputAudioDataType);
                         if(!dstAudio.isValid()) {
                                 promekiErr("MediaIOTask_SRC: audio convertTo failed");
                                 return Error::ConversionFailed;
@@ -255,7 +255,7 @@ Error MediaIOTask_SRC::proposeInput(const MediaDesc &offered,
         // uncompressed PCM audio.  Compressed audio belongs to a
         // future audio-decoder stage.
         for(const auto &ad : offered.audioList()) {
-                if(ad.dataType() == AudioDesc::Invalid) {
+                if(!ad.format().isValid() || ad.isCompressed()) {
                         return Error::NotSupported;
                 }
         }

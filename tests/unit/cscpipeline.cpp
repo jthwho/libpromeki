@@ -48,7 +48,7 @@ static const MediaConfig &scalarConfig() {
 }
 
 static Image makeUniformRGBA8(uint8_t r, uint8_t g, uint8_t b, size_t w = 2) {
-        Image img(w, 1, PixelDesc::RGBA8_sRGB);
+        Image img(w, 1, PixelFormat::RGBA8_sRGB);
         if(!img.isValid()) return img;
         uint8_t *data = static_cast<uint8_t *>(img.data());
         for(size_t x = 0; x < w; x++) {
@@ -61,7 +61,7 @@ static Image makeUniformRGBA8(uint8_t r, uint8_t g, uint8_t b, size_t w = 2) {
 }
 
 static Image makeUniformRGBA10LE(uint16_t r, uint16_t g, uint16_t b, size_t w = 2) {
-        Image img(w, 1, PixelDesc::RGBA10_LE_sRGB);
+        Image img(w, 1, PixelFormat::RGBA10_LE_sRGB);
         if(!img.isValid()) return img;
         uint16_t *data = static_cast<uint16_t *>(img.data());
         for(size_t x = 0; x < w; x++) {
@@ -74,7 +74,7 @@ static Image makeUniformRGBA10LE(uint16_t r, uint16_t g, uint16_t b, size_t w = 
 }
 
 static Image makeGradientRGBA8(size_t w, size_t h) {
-        Image img(w, h, PixelDesc::RGBA8_sRGB);
+        Image img(w, h, PixelFormat::RGBA8_sRGB);
         if(!img.isValid()) return img;
         uint8_t *data = static_cast<uint8_t *>(img.data());
         for(size_t i = 0; i < w * h; i++) {
@@ -89,7 +89,7 @@ static Image makeGradientRGBA8(size_t w, size_t h) {
 static Image makeColorBars8(size_t w = 160, size_t h = 2) {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::ColorBars);
-        return gen.create(ImageDesc(w, h, PixelDesc::RGBA8_sRGB));
+        return gen.create(ImageDesc(w, h, PixelFormat::RGBA8_sRGB));
 }
 
 // 100% SMPTE color bar definitions
@@ -152,25 +152,25 @@ TEST_CASE("CSC infrastructure") {
         }
 
         SUBCASE("pipeline identity") {
-                CSCPipeline p(PixelDesc::RGBA8_sRGB, PixelDesc::RGBA8_sRGB);
+                CSCPipeline p(PixelFormat::RGBA8_sRGB, PixelFormat::RGBA8_sRGB);
                 CHECK(p.isValid());
                 CHECK(p.isIdentity());
         }
 
         SUBCASE("pipeline fast path detection") {
-                CSCPipeline fp(PixelDesc::RGBA8_sRGB, PixelDesc::YUV8_422_Rec709);
+                CSCPipeline fp(PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_422_Rec709);
                 CHECK(fp.isFastPath());
-                CSCPipeline sp(PixelDesc::RGBA8_sRGB, PixelDesc::YUV8_422_Rec709, scalarConfig());
+                CSCPipeline sp(PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_422_Rec709, scalarConfig());
                 CHECK_FALSE(sp.isFastPath());
                 CHECK(sp.stageCount() > 0);
         }
 
         SUBCASE("identity memcpy") {
-                Image src(16, 8, PixelDesc::RGBA8_sRGB);
+                Image src(16, 8, PixelFormat::RGBA8_sRGB);
                 REQUIRE(src.isValid());
                 uint8_t *d = static_cast<uint8_t *>(src.data());
                 for(size_t i = 0; i < 16 * 8 * 4; i++) d[i] = static_cast<uint8_t>(i & 0xFF);
-                Image dst = src.convert(PixelDesc::RGBA8_sRGB, src.metadata());
+                Image dst = src.convert(PixelFormat::RGBA8_sRGB, src.metadata());
                 CHECK(std::memcmp(src.data(), dst.data(), 16 * 8 * 4) == 0);
         }
 }
@@ -222,7 +222,7 @@ TEST_CASE("CSC L2: scalar pipeline vs Color::convert") {
                 colorToYCbCr8(refYCbCr, refY, refCb, refCr);
 
                 Image src = makeUniformRGBA8(bar.r, bar.g, bar.b);
-                Image dst = src.convert(PixelDesc::YUV8_422_Rec709, src.metadata(), scalarConfig());
+                Image dst = src.convert(PixelFormat::YUV8_422_Rec709, src.metadata(), scalarConfig());
                 REQUIRE(dst.isValid());
 
                 int pipeY, pipeCb, pipeCr;
@@ -244,7 +244,7 @@ TEST_CASE("CSC L2: scalar pipeline vs Color::convert") {
 TEST_CASE("CSC L3: VideoTestPattern bars through scalar pipeline") {
         Image src = makeColorBars8();
         REQUIRE(src.isValid());
-        Image dst = src.convert(PixelDesc::YUV8_422_Rec709, src.metadata(), scalarConfig());
+        Image dst = src.convert(PixelFormat::YUV8_422_Rec709, src.metadata(), scalarConfig());
         REQUIRE(dst.isValid());
 
         int barWidth = 160 / 8;
@@ -277,10 +277,10 @@ TEST_CASE("CSC L4: VideoTestPattern bars through fast path") {
         Image src = makeColorBars8();
         REQUIRE(src.isValid());
         // Default config -> fast path
-        Image dst = src.convert(PixelDesc::YUV8_422_Rec709, src.metadata());
+        Image dst = src.convert(PixelFormat::YUV8_422_Rec709, src.metadata());
         REQUIRE(dst.isValid());
 
-        CSCPipeline p(PixelDesc::RGBA8_sRGB, PixelDesc::YUV8_422_Rec709);
+        CSCPipeline p(PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_422_Rec709);
         REQUIRE(p.isFastPath());
 
         int barWidth = 160 / 8;
@@ -302,9 +302,9 @@ TEST_CASE("CSC L4: VideoTestPattern bars through fast path") {
 TEST_CASE("CSC L4: 75% bars through fast path") {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::ColorBars75);
-        Image src = gen.create(ImageDesc(160, 2, PixelDesc::RGBA8_sRGB));
+        Image src = gen.create(ImageDesc(160, 2, PixelFormat::RGBA8_sRGB));
         REQUIRE(src.isValid());
-        Image dst = src.convert(PixelDesc::YUV8_422_Rec709, src.metadata());
+        Image dst = src.convert(PixelFormat::YUV8_422_Rec709, src.metadata());
         REQUIRE(dst.isValid());
 
         int barWidth = 160 / 8;
@@ -332,9 +332,9 @@ TEST_CASE("CSC L5: round-trip RGB -> YCbCr -> RGB") {
         REQUIRE(src.isValid());
 
         SUBCASE("fast path round-trip") {
-                Image yuv = src.convert(PixelDesc::YUV8_422_Rec709, src.metadata());
+                Image yuv = src.convert(PixelFormat::YUV8_422_Rec709, src.metadata());
                 REQUIRE(yuv.isValid());
-                Image back = yuv.convert(PixelDesc::RGBA8_sRGB, Metadata());
+                Image back = yuv.convert(PixelFormat::RGBA8_sRGB, Metadata());
                 REQUIRE(back.isValid());
 
                 // Measure per-bar round-trip error
@@ -357,8 +357,8 @@ TEST_CASE("CSC L5: round-trip RGB -> YCbCr -> RGB") {
         }
 
         SUBCASE("scalar path round-trip") {
-                Image yuv = src.convert(PixelDesc::YUV8_422_Rec709, src.metadata(), scalarConfig());
-                Image back = yuv.convert(PixelDesc::RGBA8_sRGB, Metadata(), scalarConfig());
+                Image yuv = src.convert(PixelFormat::YUV8_422_Rec709, src.metadata(), scalarConfig());
+                Image back = yuv.convert(PixelFormat::RGBA8_sRGB, Metadata(), scalarConfig());
                 REQUIRE(back.isValid());
                 // Scalar round-trip goes through sRGB EOTF -> Rec.709 OETF ->
                 // YCbCr matrix -> inverse matrix -> Rec.709 EOTF -> sRGB OETF.
@@ -377,29 +377,29 @@ TEST_CASE("CSC L6: cross-format consistency") {
         Image src = makeColorBars8();
         REQUIRE(src.isValid());
 
-        PixelDesc::ID targets[] = {
-                PixelDesc::YUV8_422_Rec709,
-                PixelDesc::YUV8_422_UYVY_Rec709,
-                PixelDesc::YUV8_422_Planar_Rec709,
-                PixelDesc::YUV8_422_SemiPlanar_Rec709,
+        PixelFormat::ID targets[] = {
+                PixelFormat::YUV8_422_Rec709,
+                PixelFormat::YUV8_422_UYVY_Rec709,
+                PixelFormat::YUV8_422_Planar_Rec709,
+                PixelFormat::YUV8_422_SemiPlanar_Rec709,
         };
 
         // Convert to YUYV as reference
-        Image refImg = src.convert(PixelDesc::YUV8_422_Rec709, src.metadata());
+        Image refImg = src.convert(PixelFormat::YUV8_422_Rec709, src.metadata());
         REQUIRE(refImg.isValid());
 
         int barWidth = 160 / 8;
 
         for(auto targetID : targets) {
-                PixelDesc target(targetID);
-                if(target.id() == PixelDesc::YUV8_422_Rec709) continue;
+                PixelFormat target(targetID);
+                if(target.id() == PixelFormat::YUV8_422_Rec709) continue;
 
                 Image dst = src.convert(target, src.metadata());
                 REQUIRE(dst.isValid());
 
                 // Convert both back to RGBA8 and compare
-                Image refBack = refImg.convert(PixelDesc::RGBA8_sRGB, Metadata());
-                Image dstBack = dst.convert(PixelDesc::RGBA8_sRGB, Metadata());
+                Image refBack = refImg.convert(PixelFormat::RGBA8_sRGB, Metadata());
+                Image dstBack = dst.convert(PixelFormat::RGBA8_sRGB, Metadata());
                 REQUIRE(refBack.isValid());
                 REQUIRE(dstBack.isValid());
 
@@ -424,10 +424,10 @@ TEST_CASE("CSC L7: 10-bit bar values") {
         // supports RGBA10_LE natively).
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::ColorBars);
-        Image src10 = gen.create(ImageDesc(160, 2, PixelDesc::RGBA10_LE_sRGB));
+        Image src10 = gen.create(ImageDesc(160, 2, PixelFormat::RGBA10_LE_sRGB));
         REQUIRE(src10.isValid());
 
-        Image dst = src10.convert(PixelDesc::YUV10_422_UYVY_LE_Rec709, src10.metadata());
+        Image dst = src10.convert(PixelFormat::YUV10_422_UYVY_LE_Rec709, src10.metadata());
         REQUIRE(dst.isValid());
 
         // 10-bit BT.709 integer reference values computed from the
@@ -468,14 +468,14 @@ TEST_CASE("CSC L7: 10-bit bar values") {
 
 TEST_CASE("CSC L8: range boundaries 8-bit") {
         // Black -> Y=16, Cb=Cr=128
-        Image b = makeUniformRGBA8(0, 0, 0).convert(PixelDesc::YUV8_422_Rec709, Metadata());
+        Image b = makeUniformRGBA8(0, 0, 0).convert(PixelFormat::YUV8_422_Rec709, Metadata());
         REQUIRE(b.isValid());
         const uint8_t *bd = static_cast<const uint8_t *>(b.data());
         CHECK(bd[0] == 16);  CHECK(bd[1] == 128);  CHECK(bd[3] == 128);
 
         // White -> Y=235, Cb=Cr≈128 (±1 LSB for Cb due to the BT.709
         // integer matrix's row sum being -1 instead of 0).
-        Image w = makeUniformRGBA8(255, 255, 255).convert(PixelDesc::YUV8_422_Rec709, Metadata());
+        Image w = makeUniformRGBA8(255, 255, 255).convert(PixelFormat::YUV8_422_Rec709, Metadata());
         REQUIRE(w.isValid());
         const uint8_t *wd = static_cast<const uint8_t *>(w.data());
         CHECK(wd[0] == 235);
@@ -483,7 +483,7 @@ TEST_CASE("CSC L8: range boundaries 8-bit") {
         CHECK(std::abs((int)wd[3] - 128) <= 1);
 
         // Gray -> achromatic (Cb=Cr=128)
-        Image g = makeUniformRGBA8(128, 128, 128).convert(PixelDesc::YUV8_422_Rec709, Metadata());
+        Image g = makeUniformRGBA8(128, 128, 128).convert(PixelFormat::YUV8_422_Rec709, Metadata());
         REQUIRE(g.isValid());
         const uint8_t *gd = static_cast<const uint8_t *>(g.data());
         CHECK(gd[1] == 128);  CHECK(gd[3] == 128);
@@ -491,12 +491,12 @@ TEST_CASE("CSC L8: range boundaries 8-bit") {
 }
 
 TEST_CASE("CSC L8: range boundaries 10-bit") {
-        Image b = makeUniformRGBA10LE(0, 0, 0).convert(PixelDesc::YUV10_422_UYVY_LE_Rec709, Metadata());
+        Image b = makeUniformRGBA10LE(0, 0, 0).convert(PixelFormat::YUV10_422_UYVY_LE_Rec709, Metadata());
         REQUIRE(b.isValid());
         const uint16_t *bd = static_cast<const uint16_t *>(b.data());
         CHECK(bd[1] == 64);  CHECK(bd[0] == 512);  CHECK(bd[2] == 512);
 
-        Image w = makeUniformRGBA10LE(1023, 1023, 1023).convert(PixelDesc::YUV10_422_UYVY_LE_Rec709, Metadata());
+        Image w = makeUniformRGBA10LE(1023, 1023, 1023).convert(PixelFormat::YUV10_422_UYVY_LE_Rec709, Metadata());
         REQUIRE(w.isValid());
         const uint16_t *wd = static_cast<const uint16_t *>(w.data());
         CHECK(std::abs((int)wd[1] - 940) <= 2);
@@ -506,16 +506,16 @@ TEST_CASE("CSC L8: range boundaries 10-bit") {
 
 TEST_CASE("CSC L8: range boundaries 12-bit") {
         auto make12 = [](uint16_t r, uint16_t g, uint16_t b) {
-                return makeUniformRGBA10LE(r, g, b); // reuse; PixelDesc handles bit depth
+                return makeUniformRGBA10LE(r, g, b); // reuse; PixelFormat handles bit depth
         };
 
         SUBCASE("black 12-bit UYVY Rec.709") {
                 Image src = makeUniformRGBA10LE(0, 0, 0); // 10-bit zeros = 12-bit zeros when upconverted
-                Image src12 = src.convert(PixelDesc::RGBA12_LE_sRGB, Metadata(), scalarConfig());
+                Image src12 = src.convert(PixelFormat::RGBA12_LE_sRGB, Metadata(), scalarConfig());
                 REQUIRE(src12.isValid());
-                Image dst = src12.convert(PixelDesc::YUV12_422_UYVY_LE_Rec709, Metadata());
+                Image dst = src12.convert(PixelFormat::YUV12_422_UYVY_LE_Rec709, Metadata());
                 REQUIRE(dst.isValid());
-                CSCPipeline p(PixelDesc::RGBA12_LE_sRGB, PixelDesc::YUV12_422_UYVY_LE_Rec709);
+                CSCPipeline p(PixelFormat::RGBA12_LE_sRGB, PixelFormat::YUV12_422_UYVY_LE_Rec709);
                 CHECK(p.isFastPath());
                 const uint16_t *yuv = static_cast<const uint16_t *>(dst.data());
                 CHECK(std::abs((int)yuv[1] - 256) <= 2);   // Y ~ 256
@@ -524,44 +524,44 @@ TEST_CASE("CSC L8: range boundaries 12-bit") {
         }
 
         SUBCASE("black 12-bit Planar 420 Rec.709") {
-                Image src(2, 2, PixelDesc::RGBA12_LE_sRGB);
+                Image src(2, 2, PixelFormat::RGBA12_LE_sRGB);
                 REQUIRE(src.isValid());
                 src.fill(0);
-                Image dst = src.convert(PixelDesc::YUV12_420_Planar_LE_Rec709, Metadata());
+                Image dst = src.convert(PixelFormat::YUV12_420_Planar_LE_Rec709, Metadata());
                 REQUIRE(dst.isValid());
-                CHECK(dst.pixelDesc().pixelFormat().planeCount() == 3);
+                CHECK(dst.pixelFormat().memLayout().planeCount() == 3);
                 const uint16_t *yp = static_cast<const uint16_t *>(dst.data(0));
                 CHECK(std::abs((int)yp[0] - 256) <= 2);
         }
 
         SUBCASE("black 12-bit NV12 Rec.709") {
-                Image src(2, 2, PixelDesc::RGBA12_LE_sRGB);
+                Image src(2, 2, PixelFormat::RGBA12_LE_sRGB);
                 REQUIRE(src.isValid());
                 src.fill(0);
-                Image dst = src.convert(PixelDesc::YUV12_420_SemiPlanar_LE_Rec709, Metadata());
+                Image dst = src.convert(PixelFormat::YUV12_420_SemiPlanar_LE_Rec709, Metadata());
                 REQUIRE(dst.isValid());
-                CHECK(dst.pixelDesc().pixelFormat().planeCount() == 2);
+                CHECK(dst.pixelFormat().memLayout().planeCount() == 2);
                 const uint16_t *yp = static_cast<const uint16_t *>(dst.data(0));
                 CHECK(std::abs((int)yp[0] - 256) <= 2);
         }
 
         SUBCASE("black 12-bit Planar 422 Rec.709") {
-                Image src(2, 1, PixelDesc::RGBA12_LE_sRGB);
+                Image src(2, 1, PixelFormat::RGBA12_LE_sRGB);
                 REQUIRE(src.isValid());
                 src.fill(0);
-                Image dst = src.convert(PixelDesc::YUV12_422_Planar_LE_Rec709, Metadata());
+                Image dst = src.convert(PixelFormat::YUV12_422_Planar_LE_Rec709, Metadata());
                 REQUIRE(dst.isValid());
                 const uint16_t *yp = static_cast<const uint16_t *>(dst.data(0));
                 CHECK(std::abs((int)yp[0] - 256) <= 2);
         }
 
         SUBCASE("black 12-bit UYVY Rec.2020") {
-                Image src(2, 1, PixelDesc::RGBA12_LE_sRGB);
+                Image src(2, 1, PixelFormat::RGBA12_LE_sRGB);
                 REQUIRE(src.isValid());
                 src.fill(0);
-                Image dst = src.convert(PixelDesc::YUV12_422_UYVY_LE_Rec2020, Metadata());
+                Image dst = src.convert(PixelFormat::YUV12_422_UYVY_LE_Rec2020, Metadata());
                 REQUIRE(dst.isValid());
-                CSCPipeline p(PixelDesc::RGBA12_LE_sRGB, PixelDesc::YUV12_422_UYVY_LE_Rec2020);
+                CSCPipeline p(PixelFormat::RGBA12_LE_sRGB, PixelFormat::YUV12_422_UYVY_LE_Rec2020);
                 CHECK(p.isFastPath());
                 const uint16_t *yuv = static_cast<const uint16_t *>(dst.data());
                 CHECK(std::abs((int)yuv[1] - 256) <= 2);
@@ -569,12 +569,12 @@ TEST_CASE("CSC L8: range boundaries 12-bit") {
         }
 
         SUBCASE("black 12-bit Planar 420 Rec.2020") {
-                Image src(2, 2, PixelDesc::RGBA12_LE_sRGB);
+                Image src(2, 2, PixelFormat::RGBA12_LE_sRGB);
                 REQUIRE(src.isValid());
                 src.fill(0);
-                Image dst = src.convert(PixelDesc::YUV12_420_Planar_LE_Rec2020, Metadata());
+                Image dst = src.convert(PixelFormat::YUV12_420_Planar_LE_Rec2020, Metadata());
                 REQUIRE(dst.isValid());
-                CSCPipeline p(PixelDesc::RGBA12_LE_sRGB, PixelDesc::YUV12_420_Planar_LE_Rec2020);
+                CSCPipeline p(PixelFormat::RGBA12_LE_sRGB, PixelFormat::YUV12_420_Planar_LE_Rec2020);
                 CHECK(p.isFastPath());
                 const uint16_t *yp = static_cast<const uint16_t *>(dst.data(0));
                 CHECK(std::abs((int)yp[0] - 256) <= 2);
@@ -582,24 +582,24 @@ TEST_CASE("CSC L8: range boundaries 12-bit") {
 
         SUBCASE("12-bit round-trips") {
                 // Verify all 12-bit fast paths produce valid round-trip output
-                Image src(4, 2, PixelDesc::RGBA12_LE_sRGB);
+                Image src(4, 2, PixelFormat::RGBA12_LE_sRGB);
                 REQUIRE(src.isValid());
                 uint16_t *d = static_cast<uint16_t *>(src.data());
                 for(int i = 0; i < 4 * 2 * 4; i++) d[i] = 2048;
 
-                PixelDesc::ID targets[] = {
-                        PixelDesc::YUV12_422_UYVY_LE_Rec709,
-                        PixelDesc::YUV12_422_Planar_LE_Rec709,
-                        PixelDesc::YUV12_420_Planar_LE_Rec709,
-                        PixelDesc::YUV12_420_SemiPlanar_LE_Rec709,
-                        PixelDesc::YUV12_422_UYVY_LE_Rec2020,
-                        PixelDesc::YUV12_420_Planar_LE_Rec2020,
+                PixelFormat::ID targets[] = {
+                        PixelFormat::YUV12_422_UYVY_LE_Rec709,
+                        PixelFormat::YUV12_422_Planar_LE_Rec709,
+                        PixelFormat::YUV12_420_Planar_LE_Rec709,
+                        PixelFormat::YUV12_420_SemiPlanar_LE_Rec709,
+                        PixelFormat::YUV12_422_UYVY_LE_Rec2020,
+                        PixelFormat::YUV12_420_Planar_LE_Rec2020,
                 };
                 for(auto tid : targets) {
-                        PixelDesc target(tid);
+                        PixelFormat target(tid);
                         Image yuv = src.convert(target, Metadata());
                         REQUIRE(yuv.isValid());
-                        Image back = yuv.convert(PixelDesc::RGBA12_LE_sRGB, Metadata());
+                        Image back = yuv.convert(PixelFormat::RGBA12_LE_sRGB, Metadata());
                         INFO("12-bit round-trip: " << target.name());
                         CHECK(back.isValid());
                 }
@@ -607,11 +607,11 @@ TEST_CASE("CSC L8: range boundaries 12-bit") {
 
         SUBCASE("white 12-bit UYVY Rec.709") {
                 // Create white in 12-bit (4095)
-                Image src(2, 1, PixelDesc::RGBA12_LE_sRGB);
+                Image src(2, 1, PixelFormat::RGBA12_LE_sRGB);
                 REQUIRE(src.isValid());
                 uint16_t *d = static_cast<uint16_t *>(src.data());
                 for(int i = 0; i < 8; i++) d[i] = 4095;
-                Image dst = src.convert(PixelDesc::YUV12_422_UYVY_LE_Rec709, Metadata());
+                Image dst = src.convert(PixelFormat::YUV12_422_UYVY_LE_Rec709, Metadata());
                 REQUIRE(dst.isValid());
                 const uint16_t *yuv = static_cast<const uint16_t *>(dst.data());
                 CHECK(std::abs((int)yuv[1] - 3760) <= 2);  // Y ~ 3760
@@ -622,40 +622,40 @@ TEST_CASE("CSC L8: range boundaries 12-bit") {
 
 TEST_CASE("CSC L8: edge cases") {
         SUBCASE("1px wide") {
-                Image s(1, 1, PixelDesc::RGBA8_sRGB);
+                Image s(1, 1, PixelFormat::RGBA8_sRGB);
                 s.fill(128);
-                CHECK(s.convert(PixelDesc::YUV8_422_Rec709, Metadata()).isValid());
+                CHECK(s.convert(PixelFormat::YUV8_422_Rec709, Metadata()).isValid());
         }
         SUBCASE("odd width 7 YUYV") {
-                Image s(7, 1, PixelDesc::RGBA8_sRGB);
+                Image s(7, 1, PixelFormat::RGBA8_sRGB);
                 s.fill(128);
-                Image d = s.convert(PixelDesc::YUV8_422_Rec709, Metadata());
+                Image d = s.convert(PixelFormat::YUV8_422_Rec709, Metadata());
                 CHECK(d.isValid());
-                CHECK(d.convert(PixelDesc::RGBA8_sRGB, Metadata()).isValid());
+                CHECK(d.convert(PixelFormat::RGBA8_sRGB, Metadata()).isValid());
         }
         SUBCASE("odd width 7 planar 422") {
-                Image s(7, 1, PixelDesc::RGBA8_sRGB);
+                Image s(7, 1, PixelFormat::RGBA8_sRGB);
                 s.fill(128);
-                CHECK(s.convert(PixelDesc::YUV8_422_Planar_Rec709, Metadata()).isValid());
+                CHECK(s.convert(PixelFormat::YUV8_422_Planar_Rec709, Metadata()).isValid());
         }
         SUBCASE("odd width 7 NV12") {
-                Image s(7, 2, PixelDesc::RGBA8_sRGB);
+                Image s(7, 2, PixelFormat::RGBA8_sRGB);
                 s.fill(128);
-                CHECK(s.convert(PixelDesc::YUV8_420_SemiPlanar_Rec709, Metadata()).isValid());
+                CHECK(s.convert(PixelFormat::YUV8_420_SemiPlanar_Rec709, Metadata()).isValid());
         }
         SUBCASE("v210 width 8") {
-                Image s(8, 1, PixelDesc::RGBA10_LE_sRGB);
+                Image s(8, 1, PixelFormat::RGBA10_LE_sRGB);
                 REQUIRE(s.isValid());
                 uint16_t *d = static_cast<uint16_t *>(s.data());
                 for(int i = 0; i < 8 * 4; i++) d[i] = 512;
-                CHECK(s.convert(PixelDesc::YUV10_422_v210_Rec709, Metadata()).isValid());
+                CHECK(s.convert(PixelFormat::YUV10_422_v210_Rec709, Metadata()).isValid());
         }
         SUBCASE("HD 1920 round-trip") {
-                Image s(1920, 1, PixelDesc::RGBA8_sRGB);
+                Image s(1920, 1, PixelFormat::RGBA8_sRGB);
                 s.fill(128);
-                Image d = s.convert(PixelDesc::YUV8_422_Rec709, Metadata());
+                Image d = s.convert(PixelFormat::YUV8_422_Rec709, Metadata());
                 CHECK(d.isValid());
-                Image b = d.convert(PixelDesc::RGBA8_sRGB, Metadata());
+                Image b = d.convert(PixelFormat::RGBA8_sRGB, Metadata());
                 CHECK(b.isValid());
                 CHECK(b.width() == 1920);
         }
@@ -668,8 +668,8 @@ TEST_CASE("CSC L8: edge cases") {
 TEST_CASE("CSC L9: Rec.601 coefficient validation") {
         // Rec.601 and Rec.709 must produce different luma for non-achromatic colors
         Image src = makeUniformRGBA8(200, 100, 50);
-        Image y709 = src.convert(PixelDesc::YUV8_422_Rec709, src.metadata(), scalarConfig());
-        Image y601 = src.convert(PixelDesc::YUV8_422_Rec601, src.metadata(), scalarConfig());
+        Image y709 = src.convert(PixelFormat::YUV8_422_Rec709, src.metadata(), scalarConfig());
+        Image y601 = src.convert(PixelFormat::YUV8_422_Rec601, src.metadata(), scalarConfig());
         REQUIRE(y709.isValid());
         REQUIRE(y601.isValid());
 
@@ -681,8 +681,8 @@ TEST_CASE("CSC L9: Rec.601 coefficient validation") {
 
 TEST_CASE("CSC L9: VideoTestPattern bars Rec.601 vs Rec.709") {
         Image src = makeColorBars8();
-        Image yuv709 = src.convert(PixelDesc::YUV8_422_Rec709, src.metadata());
-        Image yuv601 = src.convert(PixelDesc::YUV8_422_Rec601, src.metadata());
+        Image yuv709 = src.convert(PixelFormat::YUV8_422_Rec709, src.metadata());
+        Image yuv601 = src.convert(PixelFormat::YUV8_422_Rec601, src.metadata());
         REQUIRE(yuv709.isValid());
         REQUIRE(yuv601.isValid());
 
@@ -698,22 +698,22 @@ TEST_CASE("CSC L9: VideoTestPattern bars Rec.601 vs Rec.709") {
 
 TEST_CASE("CSC L9: Rec.601 round-trips") {
         Image src = makeGradientRGBA8(8, 2);
-        SUBCASE("YUYV Rec.601")  { CHECK(src.convert(PixelDesc::YUV8_422_Rec601, src.metadata()).isValid()); }
-        SUBCASE("UYVY Rec.601")  { CHECK(src.convert(PixelDesc::YUV8_422_UYVY_Rec601, src.metadata()).isValid()); }
-        SUBCASE("NV12 Rec.601")  { CHECK(src.convert(PixelDesc::YUV8_420_SemiPlanar_Rec601, src.metadata()).isValid()); }
-        SUBCASE("Planar Rec.601"){ CHECK(src.convert(PixelDesc::YUV8_420_Planar_Rec601, src.metadata()).isValid()); }
+        SUBCASE("YUYV Rec.601")  { CHECK(src.convert(PixelFormat::YUV8_422_Rec601, src.metadata()).isValid()); }
+        SUBCASE("UYVY Rec.601")  { CHECK(src.convert(PixelFormat::YUV8_422_UYVY_Rec601, src.metadata()).isValid()); }
+        SUBCASE("NV12 Rec.601")  { CHECK(src.convert(PixelFormat::YUV8_420_SemiPlanar_Rec601, src.metadata()).isValid()); }
+        SUBCASE("Planar Rec.601"){ CHECK(src.convert(PixelFormat::YUV8_420_Planar_Rec601, src.metadata()).isValid()); }
 }
 
 TEST_CASE("CSC L9: Rec.2020 10-bit") {
         SUBCASE("black and white") {
                 Image b = makeUniformRGBA10LE(0, 0, 0);
-                Image d = b.convert(PixelDesc::YUV10_422_UYVY_LE_Rec2020, Metadata());
+                Image d = b.convert(PixelFormat::YUV10_422_UYVY_LE_Rec2020, Metadata());
                 REQUIRE(d.isValid());
                 const uint16_t *yuv = static_cast<const uint16_t *>(d.data());
                 CHECK(yuv[1] == 64);  CHECK(yuv[0] == 512);  CHECK(yuv[2] == 512);
 
                 Image w = makeUniformRGBA10LE(1023, 1023, 1023);
-                Image dw = w.convert(PixelDesc::YUV10_422_UYVY_LE_Rec2020, Metadata());
+                Image dw = w.convert(PixelFormat::YUV10_422_UYVY_LE_Rec2020, Metadata());
                 REQUIRE(dw.isValid());
                 const uint16_t *ywuv = static_cast<const uint16_t *>(dw.data());
                 CHECK(std::abs((int)ywuv[1] - 940) <= 2);
@@ -721,8 +721,8 @@ TEST_CASE("CSC L9: Rec.2020 10-bit") {
 
         SUBCASE("Rec.2020 vs Rec.709 differ") {
                 Image g = makeUniformRGBA10LE(0, 1023, 0);
-                Image y709 = g.convert(PixelDesc::YUV10_422_UYVY_LE_Rec709, Metadata());
-                Image y2020 = g.convert(PixelDesc::YUV10_422_UYVY_LE_Rec2020, Metadata());
+                Image y709 = g.convert(PixelFormat::YUV10_422_UYVY_LE_Rec709, Metadata());
+                Image y2020 = g.convert(PixelFormat::YUV10_422_UYVY_LE_Rec2020, Metadata());
                 REQUIRE(y709.isValid());
                 REQUIRE(y2020.isValid());
                 int l709  = static_cast<const uint16_t *>(y709.data())[1];
@@ -740,22 +740,22 @@ TEST_CASE("CSC planar format coverage") {
         REQUIRE(src.isValid());
 
         SUBCASE("422 planar") {
-                Image y = src.convert(PixelDesc::YUV8_422_Planar_Rec709, src.metadata());
+                Image y = src.convert(PixelFormat::YUV8_422_Planar_Rec709, src.metadata());
                 REQUIRE(y.isValid());
-                CHECK(y.pixelDesc().pixelFormat().planeCount() == 3);
-                CHECK(y.convert(PixelDesc::RGBA8_sRGB, Metadata()).isValid());
+                CHECK(y.pixelFormat().memLayout().planeCount() == 3);
+                CHECK(y.convert(PixelFormat::RGBA8_sRGB, Metadata()).isValid());
         }
-        SUBCASE("420 planar")     { CHECK(src.convert(PixelDesc::YUV8_420_Planar_Rec709, src.metadata()).isValid()); }
-        SUBCASE("NV12")           { CHECK(src.convert(PixelDesc::YUV8_420_SemiPlanar_Rec709, src.metadata()).isValid()); }
-        SUBCASE("NV21")           { CHECK(src.convert(PixelDesc::YUV8_420_NV21_Rec709, src.metadata()).isValid()); }
-        SUBCASE("NV16")           { CHECK(src.convert(PixelDesc::YUV8_422_SemiPlanar_Rec709, src.metadata()).isValid()); }
-        SUBCASE("411")            { CHECK(src.convert(PixelDesc::YUV8_411_Planar_Rec709, src.metadata()).isValid()); }
+        SUBCASE("420 planar")     { CHECK(src.convert(PixelFormat::YUV8_420_Planar_Rec709, src.metadata()).isValid()); }
+        SUBCASE("NV12")           { CHECK(src.convert(PixelFormat::YUV8_420_SemiPlanar_Rec709, src.metadata()).isValid()); }
+        SUBCASE("NV21")           { CHECK(src.convert(PixelFormat::YUV8_420_NV21_Rec709, src.metadata()).isValid()); }
+        SUBCASE("NV16")           { CHECK(src.convert(PixelFormat::YUV8_422_SemiPlanar_Rec709, src.metadata()).isValid()); }
+        SUBCASE("411")            { CHECK(src.convert(PixelFormat::YUV8_411_Planar_Rec709, src.metadata()).isValid()); }
 
         SUBCASE("planar vs interleaved equivalence (scalar)") {
-                Image yP = src.convert(PixelDesc::YUV8_422_Planar_Rec709, src.metadata(), scalarConfig());
-                Image yI = src.convert(PixelDesc::YUV8_422_Rec709, src.metadata(), scalarConfig());
-                Image bP = yP.convert(PixelDesc::RGBA8_sRGB, Metadata(), scalarConfig());
-                Image bI = yI.convert(PixelDesc::RGBA8_sRGB, Metadata(), scalarConfig());
+                Image yP = src.convert(PixelFormat::YUV8_422_Planar_Rec709, src.metadata(), scalarConfig());
+                Image yI = src.convert(PixelFormat::YUV8_422_Rec709, src.metadata(), scalarConfig());
+                Image bP = yP.convert(PixelFormat::RGBA8_sRGB, Metadata(), scalarConfig());
+                Image bI = yI.convert(PixelFormat::RGBA8_sRGB, Metadata(), scalarConfig());
                 REQUIRE(bP.isValid());
                 REQUIRE(bI.isValid());
                 const uint8_t *rp = static_cast<const uint8_t *>(bP.data());
@@ -770,10 +770,10 @@ TEST_CASE("CSC planar format coverage") {
 
         SUBCASE("NV12 vs NV21 equivalence") {
                 Image s = makeUniformRGBA8(200, 100, 50, 8);
-                Image nv12 = s.convert(PixelDesc::YUV8_420_SemiPlanar_Rec709, Metadata());
-                Image nv21 = s.convert(PixelDesc::YUV8_420_NV21_Rec709, Metadata());
-                Image r12 = nv12.convert(PixelDesc::RGBA8_sRGB, Metadata());
-                Image r21 = nv21.convert(PixelDesc::RGBA8_sRGB, Metadata());
+                Image nv12 = s.convert(PixelFormat::YUV8_420_SemiPlanar_Rec709, Metadata());
+                Image nv21 = s.convert(PixelFormat::YUV8_420_NV21_Rec709, Metadata());
+                Image r12 = nv12.convert(PixelFormat::RGBA8_sRGB, Metadata());
+                Image r21 = nv21.convert(PixelFormat::RGBA8_sRGB, Metadata());
                 REQUIRE(r12.isValid());
                 REQUIRE(r21.isValid());
                 const uint8_t *d12 = static_cast<const uint8_t *>(r12.data());
@@ -798,9 +798,9 @@ TEST_CASE("CSC BGRA8 <-> RGBA8 scalar correctness") {
         REQUIRE(src.isValid());
 
         // Convert RGBA8 -> BGRA8 -> RGBA8 through the scalar pipeline
-        Image bgra = src.convert(PixelDesc::BGRA8_sRGB, src.metadata(), scalarConfig());
+        Image bgra = src.convert(PixelFormat::BGRA8_sRGB, src.metadata(), scalarConfig());
         REQUIRE(bgra.isValid());
-        Image back = bgra.convert(PixelDesc::RGBA8_sRGB, Metadata(), scalarConfig());
+        Image back = bgra.convert(PixelFormat::RGBA8_sRGB, Metadata(), scalarConfig());
         REQUIRE(back.isValid());
 
         const uint8_t *orig = static_cast<const uint8_t *>(src.data());
@@ -819,26 +819,26 @@ TEST_CASE("CSC BGRA8 <-> RGBA8 scalar correctness") {
 }
 
 TEST_CASE("CSC fast-path cross-validation") {
-        struct Pair { PixelDesc::ID src; PixelDesc::ID dst; int tolerance; };
+        struct Pair { PixelFormat::ID src; PixelFormat::ID dst; int tolerance; };
         Pair pairs[] = {
-                {PixelDesc::RGBA8_sRGB,               PixelDesc::RGB8_sRGB,  0},
-                {PixelDesc::RGB8_sRGB,                PixelDesc::RGBA8_sRGB, 0},
-                {PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_422_Rec709, 35},
-                {PixelDesc::YUV8_422_Rec709,          PixelDesc::RGBA8_sRGB, 35},
-                {PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_422_UYVY_Rec709, 35},
-                {PixelDesc::YUV8_422_UYVY_Rec709,     PixelDesc::RGBA8_sRGB, 35},
-                {PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_420_SemiPlanar_Rec709, 35},
-                {PixelDesc::YUV8_420_SemiPlanar_Rec709, PixelDesc::RGBA8_sRGB, 35},
-                {PixelDesc::RGB8_sRGB,                PixelDesc::YUV8_420_SemiPlanar_Rec709, 35},
-                {PixelDesc::YUV8_420_SemiPlanar_Rec709, PixelDesc::RGB8_sRGB,  35},
-                {PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_420_NV21_Rec709, 35},
-                {PixelDesc::YUV8_420_NV21_Rec709,     PixelDesc::RGBA8_sRGB, 35},
-                {PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_422_SemiPlanar_Rec709, 35},
-                {PixelDesc::YUV8_422_SemiPlanar_Rec709, PixelDesc::RGBA8_sRGB, 35},
-                {PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_422_Planar_Rec709, 35},
-                {PixelDesc::YUV8_422_Planar_Rec709,   PixelDesc::RGBA8_sRGB, 35},
-                {PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_420_Planar_Rec709, 35},
-                {PixelDesc::YUV8_420_Planar_Rec709,   PixelDesc::RGBA8_sRGB, 35},
+                {PixelFormat::RGBA8_sRGB,               PixelFormat::RGB8_sRGB,  0},
+                {PixelFormat::RGB8_sRGB,                PixelFormat::RGBA8_sRGB, 0},
+                {PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_422_Rec709, 35},
+                {PixelFormat::YUV8_422_Rec709,          PixelFormat::RGBA8_sRGB, 35},
+                {PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_422_UYVY_Rec709, 35},
+                {PixelFormat::YUV8_422_UYVY_Rec709,     PixelFormat::RGBA8_sRGB, 35},
+                {PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_420_SemiPlanar_Rec709, 35},
+                {PixelFormat::YUV8_420_SemiPlanar_Rec709, PixelFormat::RGBA8_sRGB, 35},
+                {PixelFormat::RGB8_sRGB,                PixelFormat::YUV8_420_SemiPlanar_Rec709, 35},
+                {PixelFormat::YUV8_420_SemiPlanar_Rec709, PixelFormat::RGB8_sRGB,  35},
+                {PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_420_NV21_Rec709, 35},
+                {PixelFormat::YUV8_420_NV21_Rec709,     PixelFormat::RGBA8_sRGB, 35},
+                {PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_422_SemiPlanar_Rec709, 35},
+                {PixelFormat::YUV8_422_SemiPlanar_Rec709, PixelFormat::RGBA8_sRGB, 35},
+                {PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_422_Planar_Rec709, 35},
+                {PixelFormat::YUV8_422_Planar_Rec709,   PixelFormat::RGBA8_sRGB, 35},
+                {PixelFormat::RGBA8_sRGB,               PixelFormat::YUV8_420_Planar_Rec709, 35},
+                {PixelFormat::YUV8_420_Planar_Rec709,   PixelFormat::RGBA8_sRGB, 35},
         };
 
         // Exercise several widths so the SIMD fast-paths get hit at
@@ -858,12 +858,12 @@ TEST_CASE("CSC fast-path cross-validation") {
                 REQUIRE(src.isValid());
 
                 for(const auto &p : pairs) {
-                        PixelDesc srcPD(p.src);
-                        PixelDesc dstPD(p.dst);
+                        PixelFormat srcPD(p.src);
+                        PixelFormat dstPD(p.dst);
                         CSCPipeline fp(srcPD, dstPD);
                         REQUIRE(fp.isFastPath());
 
-                        Image fpSrc = (p.src == PixelDesc::RGBA8_sRGB) ? src :
+                        Image fpSrc = (p.src == PixelFormat::RGBA8_sRGB) ? src :
                                       src.convert(srcPD, src.metadata(), scalarConfig());
                         REQUIRE(fpSrc.isValid());
 
@@ -894,13 +894,13 @@ TEST_CASE("CSC fast-path cross-validation") {
 // Mono source expansion
 // =========================================================================
 //
-// Converting a single-component (grayscale / mono) PixelDesc to a
+// Converting a single-component (grayscale / mono) PixelFormat to a
 // multi-component RGB target needs to broadcast the luma into every
 // color channel — otherwise the unused buffers 1 and 2 leak zeros into
 // G and B and the image displays entirely in the red channel.
 
 static Image makeMonoRamp8(size_t w = 32, size_t h = 2) {
-        Image img(w, h, PixelDesc::Mono8_sRGB);
+        Image img(w, h, PixelFormat::Mono8_sRGB);
         if(!img.isValid()) return img;
         uint8_t *data = static_cast<uint8_t *>(img.data());
         for(size_t y = 0; y < h; y++) {
@@ -916,9 +916,9 @@ TEST_CASE("CSC Mono8_sRGB -> RGBA8_sRGB round-trips as gray") {
         Image src = makeMonoRamp8();
         REQUIRE(src.isValid());
 
-        Image dst = src.convert(PixelDesc(PixelDesc::RGBA8_sRGB), src.metadata());
+        Image dst = src.convert(PixelFormat(PixelFormat::RGBA8_sRGB), src.metadata());
         REQUIRE(dst.isValid());
-        REQUIRE(dst.pixelDesc().id() == PixelDesc::RGBA8_sRGB);
+        REQUIRE(dst.pixelFormat().id() == PixelFormat::RGBA8_sRGB);
         CHECK(dst.width() == src.width());
         CHECK(dst.height() == src.height());
 
@@ -951,9 +951,9 @@ TEST_CASE("CSC Mono8_sRGB -> RGB8_sRGB round-trips as gray") {
         Image src = makeMonoRamp8();
         REQUIRE(src.isValid());
 
-        Image dst = src.convert(PixelDesc(PixelDesc::RGB8_sRGB), src.metadata());
+        Image dst = src.convert(PixelFormat(PixelFormat::RGB8_sRGB), src.metadata());
         REQUIRE(dst.isValid());
-        REQUIRE(dst.pixelDesc().id() == PixelDesc::RGB8_sRGB);
+        REQUIRE(dst.pixelFormat().id() == PixelFormat::RGB8_sRGB);
 
         const uint8_t *srcData = static_cast<const uint8_t *>(src.data());
         const uint8_t *dstData = static_cast<const uint8_t *>(dst.data());
@@ -980,10 +980,10 @@ TEST_CASE("CSC Mono8_sRGB -> YUV8_422_Rec709 produces neutral chroma") {
         Image src = makeMonoRamp8(/*w=*/32, /*h=*/2);
         REQUIRE(src.isValid());
 
-        Image dst = src.convert(PixelDesc(PixelDesc::YUV8_422_Rec709),
+        Image dst = src.convert(PixelFormat(PixelFormat::YUV8_422_Rec709),
                                 src.metadata(), scalarConfig());
         REQUIRE(dst.isValid());
-        REQUIRE(dst.pixelDesc().id() == PixelDesc::YUV8_422_Rec709);
+        REQUIRE(dst.pixelFormat().id() == PixelFormat::YUV8_422_Rec709);
 
         int prevY = -1;
         int minY = 255, maxY = 0;
@@ -1013,16 +1013,16 @@ TEST_CASE("CSC Mono8_sRGB -> YUV8_422_Rec709 produces neutral chroma") {
 // =========================================================================
 
 TEST_CASE("CSCPipeline::cached returns a valid compiled pipeline") {
-        PixelDesc src = PixelDesc::RGBA8_sRGB;
-        PixelDesc dst = PixelDesc::YUV8_422_Rec709;
+        PixelFormat src = PixelFormat::RGBA8_sRGB;
+        PixelFormat dst = PixelFormat::YUV8_422_Rec709;
         auto p = CSCPipeline::cached(src, dst);
         REQUIRE(p.isValid());
         CHECK(p->isValid());
 }
 
 TEST_CASE("CSCPipeline::cached returns the same object on repeated calls") {
-        PixelDesc src = PixelDesc::RGBA8_sRGB;
-        PixelDesc dst = PixelDesc::YUV8_422_Rec709;
+        PixelFormat src = PixelFormat::RGBA8_sRGB;
+        PixelFormat dst = PixelFormat::YUV8_422_Rec709;
         auto p1 = CSCPipeline::cached(src, dst);
         auto p2 = CSCPipeline::cached(src, dst);
         REQUIRE(p1.isValid());
@@ -1032,8 +1032,8 @@ TEST_CASE("CSCPipeline::cached returns the same object on repeated calls") {
 }
 
 TEST_CASE("CSCPipeline::cached is distinct per format pair") {
-        auto p709 = CSCPipeline::cached(PixelDesc::RGBA8_sRGB, PixelDesc::YUV8_422_Rec709);
-        auto p601 = CSCPipeline::cached(PixelDesc::RGBA8_sRGB, PixelDesc::YUV8_422_Rec601);
+        auto p709 = CSCPipeline::cached(PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_422_Rec709);
+        auto p601 = CSCPipeline::cached(PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_422_Rec601);
         REQUIRE(p709.isValid());
         REQUIRE(p601.isValid());
         // Different dst format -> different compiled pipeline.
@@ -1043,8 +1043,8 @@ TEST_CASE("CSCPipeline::cached is distinct per format pair") {
 TEST_CASE("CSCPipeline::cached produces correct output") {
         // Verify that the cached pipeline executes identically to a
         // freshly constructed pipeline for the same format pair.
-        PixelDesc srcDesc = PixelDesc::RGBA8_sRGB;
-        PixelDesc dstDesc = PixelDesc::YUV8_422_Rec709;
+        PixelFormat srcDesc = PixelFormat::RGBA8_sRGB;
+        PixelFormat dstDesc = PixelFormat::YUV8_422_Rec709;
 
         Image src(8, 1, srcDesc);
         REQUIRE(src.isValid());
@@ -1089,7 +1089,7 @@ TEST_CASE("CSCPipeline::cached produces correct output") {
 
 TEST_CASE("v210 RGBA8 fast path: RGBA8 -> v210 round-trip via RGBA8") {
         // Build a solid-color RGBA8 source.
-        Image src(8, 1, PixelDesc::RGBA8_sRGB);
+        Image src(8, 1, PixelFormat::RGBA8_sRGB);
         REQUIRE(src.isValid());
         uint8_t *sp = static_cast<uint8_t *>(src.data());
         for(int i = 0; i < 8; i++) {
@@ -1100,14 +1100,14 @@ TEST_CASE("v210 RGBA8 fast path: RGBA8 -> v210 round-trip via RGBA8") {
         }
 
         // RGBA8 -> v210
-        Image v210 = src.convert(PixelDesc::YUV10_422_v210_Rec709, src.metadata());
+        Image v210 = src.convert(PixelFormat::YUV10_422_v210_Rec709, src.metadata());
         REQUIRE(v210.isValid());
-        CHECK(v210.pixelDesc().id() == PixelDesc::YUV10_422_v210_Rec709);
+        CHECK(v210.pixelFormat().id() == PixelFormat::YUV10_422_v210_Rec709);
 
         // v210 -> RGBA8
-        Image back = v210.convert(PixelDesc::RGBA8_sRGB, v210.metadata());
+        Image back = v210.convert(PixelFormat::RGBA8_sRGB, v210.metadata());
         REQUIRE(back.isValid());
-        CHECK(back.pixelDesc().id() == PixelDesc::RGBA8_sRGB);
+        CHECK(back.pixelFormat().id() == PixelFormat::RGBA8_sRGB);
         CHECK(back.width() == src.width());
 
         // Each pixel should round-trip within 4 LSB (8-bit quantisation
@@ -1127,12 +1127,12 @@ TEST_CASE("v210 RGBA8 fast path: RGBA8 -> v210 round-trip via RGBA8") {
 
 TEST_CASE("v210 RGBA8 fast path: v210 -> RGBA8 does not crash on 1920-wide image") {
         // Construct a 1920-wide RGBA8 image and convert to v210, then back.
-        Image src(1920, 1, PixelDesc::RGBA8_sRGB);
+        Image src(1920, 1, PixelFormat::RGBA8_sRGB);
         REQUIRE(src.isValid());
         src.fill(128);
-        Image v210 = src.convert(PixelDesc::YUV10_422_v210_Rec709, src.metadata());
+        Image v210 = src.convert(PixelFormat::YUV10_422_v210_Rec709, src.metadata());
         REQUIRE(v210.isValid());
-        Image back = v210.convert(PixelDesc::RGBA8_sRGB, v210.metadata());
+        Image back = v210.convert(PixelFormat::RGBA8_sRGB, v210.metadata());
         REQUIRE(back.isValid());
         CHECK(back.width() == 1920);
 }
@@ -1144,7 +1144,7 @@ TEST_CASE("v210 RGBA8 fast path: v210 -> RGBA8 does not crash on 1920-wide image
 TEST_CASE("CSC YUYV8 -> UYVY8 byte-swap correctness") {
         // Build a 4-pixel YUYV image with known byte values.
         // YUYV byte order per pair: [Y0, Cb, Y1, Cr]
-        Image src(4, 1, PixelDesc::YUV8_422_Rec709);
+        Image src(4, 1, PixelFormat::YUV8_422_Rec709);
         REQUIRE(src.isValid());
         uint8_t *sp = static_cast<uint8_t *>(src.data());
         // Pair 0: Y0=16, Cb=128, Y1=235, Cr=200
@@ -1152,9 +1152,9 @@ TEST_CASE("CSC YUYV8 -> UYVY8 byte-swap correctness") {
         // Pair 1: Y0=100, Cb=64, Y1=180, Cr=192
         sp[4] = 100; sp[5] = 64;  sp[6] = 180; sp[7] = 192;
 
-        Image dst = src.convert(PixelDesc::YUV8_422_UYVY_Rec709, src.metadata());
+        Image dst = src.convert(PixelFormat::YUV8_422_UYVY_Rec709, src.metadata());
         REQUIRE(dst.isValid());
-        CHECK(dst.pixelDesc().id() == PixelDesc::YUV8_422_UYVY_Rec709);
+        CHECK(dst.pixelFormat().id() == PixelFormat::YUV8_422_UYVY_Rec709);
 
         // UYVY byte order per pair: [Cb, Y0, Cr, Y1]
         const uint8_t *dp = static_cast<const uint8_t *>(dst.data());
@@ -1171,16 +1171,16 @@ TEST_CASE("CSC YUYV8 -> UYVY8 byte-swap correctness") {
 }
 
 TEST_CASE("CSC UYVY8 -> YUYV8 byte-swap correctness") {
-        Image src(4, 1, PixelDesc::YUV8_422_UYVY_Rec709);
+        Image src(4, 1, PixelFormat::YUV8_422_UYVY_Rec709);
         REQUIRE(src.isValid());
         uint8_t *sp = static_cast<uint8_t *>(src.data());
         // UYVY pair: [Cb, Y0, Cr, Y1]
         sp[0] = 128; sp[1] = 16;  sp[2] = 200; sp[3] = 235;
         sp[4] = 64;  sp[5] = 100; sp[6] = 192; sp[7] = 180;
 
-        Image dst = src.convert(PixelDesc::YUV8_422_Rec709, src.metadata());
+        Image dst = src.convert(PixelFormat::YUV8_422_Rec709, src.metadata());
         REQUIRE(dst.isValid());
-        CHECK(dst.pixelDesc().id() == PixelDesc::YUV8_422_Rec709);
+        CHECK(dst.pixelFormat().id() == PixelFormat::YUV8_422_Rec709);
 
         // YUYV pair: [Y0, Cb, Y1, Cr]
         const uint8_t *dp = static_cast<const uint8_t *>(dst.data());
@@ -1195,15 +1195,15 @@ TEST_CASE("CSC UYVY8 -> YUYV8 byte-swap correctness") {
 }
 
 TEST_CASE("CSC YUYV8 <-> UYVY8 round-trip is lossless") {
-        Image src(320, 4, PixelDesc::YUV8_422_Rec709);
+        Image src(320, 4, PixelFormat::YUV8_422_Rec709);
         REQUIRE(src.isValid());
         uint8_t *sp = static_cast<uint8_t *>(src.data());
         size_t nbytes = src.lineStride() * src.height();
         for(size_t i = 0; i < nbytes; i++) sp[i] = static_cast<uint8_t>(i & 0xFF);
 
-        Image uyvy = src.convert(PixelDesc::YUV8_422_UYVY_Rec709, src.metadata());
+        Image uyvy = src.convert(PixelFormat::YUV8_422_UYVY_Rec709, src.metadata());
         REQUIRE(uyvy.isValid());
-        Image back = uyvy.convert(PixelDesc::YUV8_422_Rec709, uyvy.metadata());
+        Image back = uyvy.convert(PixelFormat::YUV8_422_Rec709, uyvy.metadata());
         REQUIRE(back.isValid());
 
         const uint8_t *bp = static_cast<const uint8_t *>(back.data());

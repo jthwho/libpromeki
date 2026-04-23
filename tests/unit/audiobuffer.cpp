@@ -17,8 +17,8 @@ using namespace promeki;
 
 namespace {
 
-AudioDesc s16LE48k2ch() { return AudioDesc(AudioDesc::PCMI_S16LE, 48000.0f, 2); }
-AudioDesc f32LE48k2ch() { return AudioDesc(AudioDesc::PCMI_Float32LE, 48000.0f, 2); }
+AudioDesc s16LE48k2ch() { return AudioDesc(AudioFormat::PCMI_S16LE, 48000.0f, 2); }
+AudioDesc f32LE48k2ch() { return AudioDesc(AudioFormat::PCMI_Float32LE, 48000.0f, 2); }
 
 } // namespace
 
@@ -197,7 +197,7 @@ TEST_CASE("AudioBuffer: push float32, pop int16 at same rate") {
 
 TEST_CASE("AudioBuffer: push with mismatched sample rate resamples") {
         AudioBuffer ab(s16LE48k2ch(), 64);
-        AudioDesc src44(AudioDesc::PCMI_S16LE, 44100.0f, 2);
+        AudioDesc src44(AudioFormat::PCMI_S16LE, 44100.0f, 2);
         int16_t samples[4] = {};
         // With PROMEKI_ENABLE_SRC the push resamples; without it,
         // it returns NotSupported.
@@ -210,7 +210,7 @@ TEST_CASE("AudioBuffer: push with mismatched sample rate resamples") {
 
 TEST_CASE("AudioBuffer: push with mismatched channel count returns NotSupported") {
         AudioBuffer ab(s16LE48k2ch(), 64);
-        AudioDesc srcMono(AudioDesc::PCMI_S16LE, 48000.0f, 1);
+        AudioDesc srcMono(AudioFormat::PCMI_S16LE, 48000.0f, 1);
         int16_t samples[4] = {};
         CHECK(ab.push(samples, 2, srcMono) == Error::NotSupported);
 }

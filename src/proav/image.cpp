@@ -10,6 +10,7 @@
 #include <promeki/logger.h>
 #include <promeki/util.h>
 #include <promeki/mediaconfig.h>
+#include <promeki/videocodec.h>
 #if PROMEKI_ENABLE_CSC
 #include <promeki/cscpipeline.h>
 #endif
@@ -21,7 +22,7 @@ Image::Image(const ImageDesc &desc, const MemSpace &ms) : _desc(desc) {
 }
 
 bool Image::allocate(const MemSpace &ms) {
-        const PixelDesc &pd = _desc.pixelDesc();
+        const PixelFormat &pd = _desc.pixelFormat();
         int planes = pd.planeCount();
         Buffer::PtrList list;
         for(int i = 0; i < planes; i++) {
@@ -39,7 +40,7 @@ bool Image::allocate(const MemSpace &ms) {
 }
 
 Image Image::fromCompressedData(const void *data, size_t size,
-                                size_t width, size_t height, const PixelDesc &pd,
+                                size_t width, size_t height, const PixelFormat &pd,
                                 const Metadata &metadata) {
         ImageDesc desc(width, height, pd);
         desc.metadata() = metadata;
@@ -52,7 +53,7 @@ Image Image::fromCompressedData(const void *data, size_t size,
 }
 
 Image Image::fromBuffer(const Buffer::Ptr &buffer,
-                        size_t width, size_t height, const PixelDesc &pd,
+                        size_t width, size_t height, const PixelFormat &pd,
                         const Metadata &metadata) {
         if(!buffer.isValid() || buffer->size() == 0) return Image();
         // Compressed codecs always have a single contiguous bitstream
@@ -81,23 +82,23 @@ Image Image::fromBuffer(const Buffer::Ptr &buffer,
         return img;
 }
 
-Image Image::convert(const PixelDesc &pd, const Metadata &metadata,
+Image Image::convert(const PixelFormat &pd, const Metadata &metadata,
                      const MediaConfig &config) const {
         if(!isValid() || !pd.isValid()) return Image();
-        if(pixelDesc() == pd) return *this;
+        if(pixelFormat() == pd) return *this;
 
         // Image::convert is the CSC entry point — strictly uncompressed
         // → uncompressed.  Compression / decompression flows through
         // VideoEncoder / VideoDecoder sessions (typically driven by
         // MediaIOTask_VideoEncoder / MediaIOTask_VideoDecoder), which
         // can amortise codec state across frames.  Refusing
-        // compressed PixelDescs here keeps the abstraction layered:
+        // compressed PixelFormats here keeps the abstraction layered:
         // CSC for pixel-format work, codec sessions for compression.
         if(isCompressed() || pd.isCompressed()) {
                 promekiErr("Image::convert: compressed pixel descriptions are not "
                            "supported here (src='%s', dst='%s'); use a VideoEncoder / "
                            "VideoDecoder session instead",
-                           pixelDesc().name().cstr(), pd.name().cstr());
+                           pixelFormat().name().cstr(), pd.name().cstr());
                 return Image();
         }
 
@@ -111,7 +112,7 @@ Image Image::convert(const PixelDesc &pd, const Metadata &metadata,
         // For repeat conversions between the same format pair, this
         // skips CSCPipeline::compile() entirely on every call after
         // the first.
-        CSCPipeline::Ptr pipeline = CSCPipeline::cached(pixelDesc(), pd, config);
+        CSCPipeline::Ptr pipeline = CSCPipeline::cached(pixelFormat(), pd, config);
         if(!pipeline.isValid() || !pipeline->isValid()) return Image();
 
         Error err = pipeline->execute(*this, dst);
@@ -120,6 +121,25 @@ Image Image::convert(const PixelDesc &pd, const Metadata &metadata,
 #else
         return Image();
 #endif
+}
+
+bool Image::isSafeCutPoint() const {
+        if(!isValid()) return false;
+        const PixelFormat &pf = _desc.pixelFormat();
+        if(!pf.isCompressed()) return true;
+        const VideoCodec &codec = pf.videoCodec();
+        // A compressed pixel format with no codec identity is a
+        // malformed record — treat as unsafe rather than guessing.
+        if(!codec.isValid()) return false;
+        // Intra-only streams have no inter-frame dependencies — every
+        // coded image is a valid random-access point.
+        if(codec.codingType() != VideoCodec::CodingTemporal) return true;
+        // Temporal codec: the current access unit is only a safe cut
+        // point when it carries the Keyframe flag on its attached
+        // VideoPacket.  No packet means we have no evidence and must
+        // be conservative.
+        const VideoPacket::Ptr &pkt = _packet;
+        return pkt.isValid() && pkt->isKeyframe();
 }
 
 StringList Image::dump(const String &indent) const {
@@ -146,6 +166,7 @@ StringList Image::dump(const String &indent) const {
                                                 static_cast<unsigned>(_packet->flags()),
                                                 _packet->size());
         }
+
         StringList mdLines = _desc.metadata().dump();
         if(!mdLines.isEmpty()) {
                 out += indent + "Meta:";
@@ -168,13 +189,13 @@ PROMEKI_LOOKUP_REGISTER(Image)
                 [](const Image &i) -> std::optional<Variant> {
                         return Variant(i.desc().size());
                 })
-        .scalar("PixelDesc",
-                [](const Image &i) -> std::optional<Variant> {
-                        return Variant(i.desc().pixelDesc());
-                })
         .scalar("PixelFormat",
                 [](const Image &i) -> std::optional<Variant> {
                         return Variant(i.desc().pixelFormat());
+                })
+        .scalar("PixelMemLayout",
+                [](const Image &i) -> std::optional<Variant> {
+                        return Variant(i.desc().memLayout());
                 })
         .scalar("ColorModel",
                 [](const Image &i) -> std::optional<Variant> {

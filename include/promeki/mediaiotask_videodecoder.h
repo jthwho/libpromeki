@@ -10,8 +10,8 @@
 #include <promeki/namespace.h>
 #include <promeki/mediaiotask.h>
 #include <promeki/mediaconfig.h>
-#include <promeki/codec.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/videodecoder.h>
+#include <promeki/pixelformat.h>
 #include <promeki/string.h>
 #include <promeki/videocodec.h>
 
@@ -38,8 +38,8 @@ PROMEKI_NAMESPACE_BEGIN
  *     @c open().
  *  -# **Auto-detect** — omit @ref MediaConfig::VideoCodec.  The task
  *     defers decoder creation until the first @c writeFrame() call,
- *     where it inspects the incoming @ref MediaPacket::pixelDesc and
- *     resolves the codec via @ref VideoCodec::fromPixelDesc.
+ *     where it inspects the incoming @ref MediaPacket::pixelFormat and
+ *     resolves the codec via @ref VideoCodec::fromPixelFormat.
  *
  * @par Mode support
  *
@@ -49,8 +49,8 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
- * | @ref MediaConfig::VideoCodec       | VideoCodec | (auto)  | Codec to use.  When omitted the codec is detected from the first packet's @ref MediaPacket::pixelDesc. |
- * | @ref MediaConfig::OutputPixelDesc  | PixelDesc  | Invalid | Desired uncompressed output format. Empty / Invalid means "use decoder's native". |
+ * | @ref MediaConfig::VideoCodec       | VideoCodec | (auto)  | Codec to use.  When omitted the codec is detected from the first packet's @ref MediaPacket::pixelFormat. |
+ * | @ref MediaConfig::OutputPixelFormat  | PixelFormat  | Invalid | Desired uncompressed output format. Empty / Invalid means "use decoder's native". |
  * | @ref MediaConfig::Capacity         | int        | 8       | Output FIFO depth. |
  *
  * @par Example — explicit codec
@@ -58,7 +58,7 @@ PROMEKI_NAMESPACE_BEGIN
  * MediaIO::Config cfg;
  * cfg.set(MediaConfig::Type,          "VideoDecoder");
  * cfg.set(MediaConfig::VideoCodec,     "H264");
- * cfg.set(MediaConfig::OutputPixelDesc, PixelDesc(PixelDesc::YUV8_420_SemiPlanar_Rec709));
+ * cfg.set(MediaConfig::OutputPixelFormat, PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709));
  * MediaIO *dec = MediaIO::create(cfg);
  * dec->setExpectedDesc(compressedDesc);
  * dec->open(MediaIO::Transform);
@@ -124,8 +124,8 @@ class MediaIOTask_VideoDecoder : public MediaIOTask {
                 MediaConfig           _config;
                 VideoCodec            _codec;
                 VideoDecoder         *_decoder = nullptr;
-                PixelDesc             _outputPixelDesc;
-                bool                  _outputPixelDescSet = false;
+                PixelFormat             _outputPixelFormat;
+                bool                  _outputPixelFormatSet = false;
                 int                   _capacity = 8;
                 List<Frame::Ptr>      _outputQueue;
 

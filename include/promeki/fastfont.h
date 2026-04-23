@@ -41,7 +41,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par Example
  * @code
- * Image img(1920, 1080, PixelDesc::RGB8_sRGB);
+ * Image img(1920, 1080, PixelFormat::RGB8_sRGB);
  * FastFont ff(img.createPaintEngine());
  * ff.setFontFilename("/path/to/font.ttf");
  * ff.setFontSize(48);

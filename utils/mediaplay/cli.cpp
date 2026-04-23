@@ -124,7 +124,7 @@ void usage() {
                 "  --sc <K:V>                Set one source stage config key.\n"
                 "                            Repeatable.  Passing `K:list`\n"
                 "                            lists valid values for Enum,\n"
-                "                            EnumList, and PixelDesc keys.\n"
+                "                            EnumList, and PixelFormat keys.\n"
                 "                            Passing `K:help` shows the key's\n"
                 "                            type, range, and description.\n"
                 "  --sm <K:V>                Set one source stage metadata key\n"
@@ -169,9 +169,20 @@ void usage() {
                 "                            you expect.  Use --frame-count\n"
                 "                            when you want a specific\n"
                 "                            number of output frames.\n"
-                "  --frame-count <N>         Stop after N frames (0 = unlimited).\n"
-                "                            Use this to bound the actual\n"
-                "                            output length in frames.\n"
+                "  --frame-count <N>         Require the pipeline to deliver\n"
+                "                            exactly N frames to each sink\n"
+                "                            (0 = unlimited).  Runs through\n"
+                "                            MediaPipelineConfig::frameCount\n"
+                "                            — once a sink has received N\n"
+                "                            frames at the next safe cut\n"
+                "                            point (keyframe boundary for\n"
+                "                            interframe codecs) the pipeline\n"
+                "                            closes that sink and drops\n"
+                "                            further source output on the\n"
+                "                            floor.  Interframe streams may\n"
+                "                            overshoot by up to one GOP so\n"
+                "                            the sink ends on a complete\n"
+                "                            sequence of GOPs.\n"
                 "  --verbose                 Print periodic progress stats.\n"
                 "  --stats                   Enable live MediaIO telemetry.\n"
                 "                            Prints a BytesPerSecond /\n"
@@ -218,6 +229,30 @@ void usage() {
                 "  --describe                Instantiate every stage, call\n"
                 "                            MediaIO::describe on each, dump the\n"
                 "                            summary, and exit.\n"
+                "\n"
+                "Inspector-driven pass/fail:\n"
+                "  Every Inspector sink is injected automatically so mediaplay\n"
+                "  can poll its snapshot at shutdown.  Any discontinuity reported\n"
+                "  by Inspector surfaces as exit code 21 below.\n"
+                "\n"
+                "Codec enumeration:\n"
+                "  --list-codecs [video|audio|all]\n"
+                "                            Print a tab-separated list of codec /\n"
+                "                            backend pairs, one per line, and exit.\n"
+                "                            Columns: kind, codec, backend, enc, dec\n"
+                "                            (yes / no).  Codecs with no registered\n"
+                "                            backend are omitted entirely.  Default\n"
+                "                            argument is 'all'.  Intended for scripts\n"
+                "                            (see scripts/roundtrip-codecs.sh).\n"
+                "\n"
+                "Exit codes (applicable to all runs):\n"
+                "   0  Success.\n"
+                "   1  Generic failure (CLI, argparse, setup).\n"
+                "  10  Pipeline build failed (planner could not resolve).\n"
+                "  11  Pipeline open failed.\n"
+                "  12  Pipeline start failed.\n"
+                "  13  Pipeline runtime error (pipelineErrorSignal fired).\n"
+                "  21  Inspector discontinuity detected.\n"
                 "\n"
                 "Misc:\n"
                 "  -h, --help                Show this help text and the schema.\n");
@@ -361,8 +396,13 @@ bool parseOptions(int argc, char **argv, Options &opts) {
                          return 0;
                  })},
                 {0, "frame-count",
-                 "Stop after N frames",
+                 "Deliver exactly N frames to each sink (0 = unlimited)",
                  CmdLineParser::OptionIntCallback([&](int v) {
+                         if(v < 0) {
+                                 fprintf(stderr,
+                                         "Error: --frame-count must be >= 0\n");
+                                 return 1;
+                         }
                          opts.frameCount = v;
                          return 0;
                  })},
@@ -455,6 +495,26 @@ bool parseOptions(int argc, char **argv, Options &opts) {
                          }
                          return 0;
                  })},
+
+                {0, "list-codecs",
+                 "Print codec/backend list (video|audio|all) as TSV and exit",
+                 CmdLineParser::OptionStringCallback([&](const String &s) {
+                         if(s == "video") {
+                                 opts.listCodecs = Options::ListCodecsVideo;
+                         } else if(s == "audio") {
+                                 opts.listCodecs = Options::ListCodecsAudio;
+                         } else if(s == "all" || s.isEmpty()) {
+                                 opts.listCodecs = Options::ListCodecsAll;
+                         } else {
+                                 fprintf(stderr,
+                                         "Error: --list-codecs must be 'video', "
+                                         "'audio', or 'all' (got '%s')\n",
+                                         s.cstr());
+                                 return 1;
+                         }
+                         return 0;
+                 })},
+
         });
 
         int r = parser.parseMain(argc, argv);

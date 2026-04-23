@@ -19,7 +19,7 @@
 #include <promeki/audio.h>
 #include <promeki/frame.h>
 #include <promeki/framerate.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/metadata.h>
 #include <promeki/uuid.h>
 #include <promeki/dir.h>
@@ -42,19 +42,19 @@ MediaDesc makeMediaDesc() {
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.imageList().pushToBack(
                 ImageDesc(Size2Du32(64, 48),
-                          PixelDesc(PixelDesc::RGB8_sRGB)));
+                          PixelFormat(PixelFormat::RGB8_sRGB)));
         return md;
 }
 
 AudioDesc makeAudioDesc() {
-        return AudioDesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        return AudioDesc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
 }
 
 Frame::Ptr makeFrame(uint8_t fill) {
         Frame::Ptr f = Frame::Ptr::create();
         Image::Ptr img = Image::Ptr::create(
                 ImageDesc(Size2Du32(64, 48),
-                          PixelDesc(PixelDesc::RGB8_sRGB)));
+                          PixelFormat(PixelFormat::RGB8_sRGB)));
         for(int p = 0; p < img->desc().planeCount(); ++p) {
                 std::memset(img->plane(p)->data(), fill,
                             img->plane(p)->size());

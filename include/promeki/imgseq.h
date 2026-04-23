@@ -14,7 +14,7 @@
 #include <promeki/numname.h>
 #include <promeki/framerate.h>
 #include <promeki/size2d.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/metadata.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -31,7 +31,7 @@ class JsonObject;
  * - The filename pattern (a @c NumName — e.g. @c "shot_####.dpx")
  * - The head and tail frame numbers (inclusive range)
  * - Optional @c FrameRate, @c Size2Du32 "videoSize" hint, and
- *   @c PixelDesc for headerless formats
+ *   @c PixelFormat for headerless formats
  * - Optional @c Metadata passthrough carried alongside each frame
  *
  * The class is also the in-memory representation of the @c .imgseq
@@ -52,7 +52,7 @@ class JsonObject;
  *     "tail":      100,
  *     "frameRate": "24/1",
  *     "videoSize": "1920x1080",
- *     "pixelDesc": "YUV_10_422_DPX",
+ *     "pixelFormat": "YUV_10_422_DPX",
  *     "metadata":  { "Title": "Shot 01" }
  * }
  * @endcode
@@ -221,10 +221,10 @@ class ImgSeq {
                 void setVideoSize(const Size2Du32 &val) { _videoSize = val; }
 
                 /** @brief Returns the optional pixel descriptor (for headerless formats). */
-                const PixelDesc &pixelDesc() const { return _pixelDesc; }
+                const PixelFormat &pixelFormat() const { return _pixelFormat; }
 
                 /** @brief Sets the optional pixel descriptor. */
-                void setPixelDesc(const PixelDesc &val) { _pixelDesc = val; }
+                void setPixelFormat(const PixelFormat &val) { _pixelFormat = val; }
 
                 /**
                  * @brief Returns the sidecar audio file path.
@@ -285,7 +285,7 @@ class ImgSeq {
                 size_t          _tail = 0;
                 FrameRate       _frameRate;
                 Size2Du32       _videoSize;
-                PixelDesc       _pixelDesc;
+                PixelFormat       _pixelFormat;
                 String          _audioFile;
                 Metadata        _metadata;
                 FilePath        _sidecarPath;

@@ -118,6 +118,25 @@ struct Options {
          *        enables the stats collector (default interval: 1s).
          */
         promeki::String                 writeStatsPath;
+
+        /**
+         * @brief Controls @c --list-codecs short-circuit behaviour.
+         *
+         * @c None (the default) runs mediaplay normally; the other
+         * values ask @c main to print the codec listing and exit
+         * before touching any pipeline state.  Only codecs that have
+         * at least one registered encoder or decoder backend are
+         * reported; codecs with no backends are omitted entirely so
+         * machine consumers (the roundtrip script) don't have to
+         * filter them out.
+         */
+        enum ListCodecsKind {
+                ListCodecsNone  = 0,    ///< Do not list codecs.
+                ListCodecsVideo = 1,    ///< List VideoCodec backends.
+                ListCodecsAudio = 2,    ///< List AudioCodec backends.
+                ListCodecsAll   = 3     ///< List both VideoCodec and AudioCodec backends.
+        };
+        ListCodecsKind                  listCodecs  = ListCodecsNone;
 };
 
 /**

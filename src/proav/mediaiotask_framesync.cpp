@@ -16,7 +16,7 @@
 #include <promeki/mediaconfig.h>
 #include <promeki/mediaiodescription.h>
 #include <promeki/metadata.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -35,8 +35,8 @@ bool framesyncBridge(const MediaDesc &from,
         // Pixel descriptions must already match — pixel conversion
         // is CSC's job; FrameSync only re-times.
         if(!from.imageList().isEmpty() && !to.imageList().isEmpty()) {
-                if(from.imageList()[0].pixelDesc() !=
-                   to.imageList()[0].pixelDesc()) return false;
+                if(from.imageList()[0].pixelFormat() !=
+                   to.imageList()[0].pixelFormat()) return false;
                 if(from.imageList()[0].size() !=
                    to.imageList()[0].size()) return false;
         }
@@ -51,7 +51,7 @@ bool framesyncBridge(const MediaDesc &from,
                 const AudioDesc &b = to.audioList()[0];
                 audioRateDiffers     = a.sampleRate() != b.sampleRate();
                 audioChannelsDiffer  = a.channels()   != b.channels();
-                audioDataTypeDiffers = a.dataType()   != b.dataType();
+                audioDataTypeDiffers = a.format().id()   != b.format().id();
         }
 
         // Nothing to do — let the planner skip insertion.
@@ -75,9 +75,9 @@ bool framesyncBridge(const MediaDesc &from,
                                 outConfig->set(MediaConfig::OutputAudioChannels,
                                                static_cast<int>(dst.channels()));
                         }
-                        if(audioDataTypeDiffers && dst.dataType() != AudioDesc::Invalid) {
+                        if(audioDataTypeDiffers && dst.format().id() != AudioFormat::Invalid) {
                                 outConfig->set(MediaConfig::OutputAudioDataType,
-                                               AudioDataType(dst.dataType()));
+                                               AudioDataType(dst.format().id()));
                         }
                 }
         }
@@ -157,14 +157,14 @@ Error MediaIOTask_FrameSync::executeCmd(MediaIOCommandOpen &cmd) {
         if(adesc.isValid()) {
                 float outRate = cfg.getAs<float>(MediaConfig::OutputAudioRate, 0.0f);
                 int outChannels = cfg.getAs<int>(MediaConfig::OutputAudioChannels, 0);
-                AudioDesc::DataType outDt = adesc.dataType();
+                AudioFormat::ID outDt = adesc.format().id();
 
                 Error adtErr;
                 Enum adtEnum = cfg.get(MediaConfig::OutputAudioDataType)
                                    .asEnum(AudioDataType::Type, &adtErr);
                 if(adtErr.isOk() && adtEnum.hasListedValue() &&
-                   static_cast<AudioDesc::DataType>(adtEnum.value()) != AudioDesc::Invalid) {
-                        outDt = static_cast<AudioDesc::DataType>(adtEnum.value());
+                   static_cast<AudioFormat::ID>(adtEnum.value()) != AudioFormat::Invalid) {
+                        outDt = static_cast<AudioFormat::ID>(adtEnum.value());
                 }
 
                 adesc = AudioDesc(
@@ -288,7 +288,7 @@ Error MediaIOTask_FrameSync::proposeInput(const MediaDesc &offered,
                 *preferred = offered;
                 return Error::Ok;
         }
-        const PixelDesc &pd = offered.imageList()[0].pixelDesc();
+        const PixelFormat &pd = offered.imageList()[0].pixelFormat();
         if(!pd.isValid() || !pd.isCompressed()) {
                 // Uncompressed (or unknown) — FrameSync has no opinion
                 // on the shape; it just re-times whatever it receives.
@@ -301,11 +301,11 @@ Error MediaIOTask_FrameSync::proposeInput(const MediaDesc &offered,
         // would outright break on any non-keyframe repeat.  Ask for a
         // same-family uncompressed substitute via the shared helper;
         // the planner's VideoDecoder bridge closes the gap in one hop.
-        const PixelDesc target = defaultUncompressedPixelDesc(pd);
+        const PixelFormat target = defaultUncompressedPixelFormat(pd);
         MediaDesc want = offered;
         ImageDesc::List &imgs = want.imageList();
         for(size_t i = 0; i < imgs.size(); ++i) {
-                imgs[i].setPixelDesc(target);
+                imgs[i].setPixelFormat(target);
         }
         *preferred = want;
         return Error::Ok;

@@ -54,7 +54,7 @@
 #include <promeki/mediaiotask_inspector.h>
 #include <promeki/mediapipeline.h>
 #include <promeki/mediapipelineconfig.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/regex.h>
 #include <promeki/size2d.h>
 #include <promeki/string.h>
@@ -182,7 +182,7 @@ struct Case {
         String      backendName;    // "ImageFile", "QuickTime", ...
         String      extension;      // "dpx", "mov", ...
         VideoCodec  codec;          // invalid for raw / container-default cases
-        PixelDesc   pixelDesc;      // forced video pixel format (invalid = backend default)
+        PixelFormat   pixelFormat;      // forced video pixel format (invalid = backend default)
         bool        isSequence = false;  // true for file-per-frame formats
 };
 
@@ -238,13 +238,13 @@ static bool extensionNeedsHeaderlessHints(const String &ext) {
 }
 
 // Probe @p io 's sink at @ref MediaIO::proposeInput with every
-// uncompressed @ref PixelDesc currently registered; keep the ones it
+// uncompressed @ref PixelFormat currently registered; keep the ones it
 // accepts unchanged.  The sink does not need to be open — probe lives
 // entirely on the task's proposeInput virtual, which the ImageFile
 // and QuickTime tasks both implement synchronously against the
 // offered desc.
-static List<PixelDesc> nativePixelDescs(MediaIO *io) {
-        List<PixelDesc> out;
+static List<PixelFormat> nativePixelFormats(MediaIO *io) {
+        List<PixelFormat> out;
         if(io == nullptr) return out;
 
         // The probe raster just needs to be a plausible size so that
@@ -252,9 +252,9 @@ static List<PixelDesc> nativePixelDescs(MediaIO *io) {
         // subsampled formats) the planar layout is well-defined.
         const Size2Du32 probeSize(1920, 1080);
 
-        PixelDesc::IDList ids = PixelDesc::registeredIDs();
+        PixelFormat::IDList ids = PixelFormat::registeredIDs();
         for(size_t i = 0; i < ids.size(); ++i) {
-                PixelDesc pd(ids[i]);
+                PixelFormat pd(ids[i]);
                 if(!pd.isValid()) continue;
                 if(pd.isCompressed()) continue;
 
@@ -268,7 +268,7 @@ static List<PixelDesc> nativePixelDescs(MediaIO *io) {
                 Error e = io->proposeInput(offered, &preferred);
                 if(e.isError()) continue;
                 if(preferred.imageList().isEmpty()) continue;
-                if(preferred.imageList()[0].pixelDesc() != pd) continue;
+                if(preferred.imageList()[0].pixelFormat() != pd) continue;
 
                 out.pushToBack(pd);
         }
@@ -283,7 +283,7 @@ static List<PixelDesc> nativePixelDescs(MediaIO *io) {
 // proposeInput reads the config's @ref MediaConfig::Filename to
 // resolve the extension — @ref createForFileWrite stamps that key
 // for us.
-static List<PixelDesc> nativePixelDescsFor(const String &backendName,
+static List<PixelFormat> nativePixelFormatsFor(const String &backendName,
                                             const String &extension) {
         // Path only needs to exist in the form the task expects; the
         // file is never created because the sink is never opened.
@@ -302,7 +302,7 @@ static List<PixelDesc> nativePixelDescsFor(const String &backendName,
                 io = MediaIO::create(cfg);
                 if(io == nullptr) return {};
         }
-        List<PixelDesc> out = nativePixelDescs(io);
+        List<PixelFormat> out = nativePixelFormats(io);
         delete io;
         return out;
 }
@@ -372,7 +372,7 @@ static List<Case> buildCases() {
                                 c.backendName = fd.name;
                                 c.extension   = ext;
                                 c.codec       = VideoCodec();
-                                c.pixelDesc   = PixelDesc();
+                                c.pixelFormat   = PixelFormat();
                                 c.isSequence  = isImgSeq;
                                 if(isImgSeq && isPrimary) {
                                         c.label = fd.name;
@@ -387,15 +387,15 @@ static List<Case> buildCases() {
                         // only — aliases would just duplicate rows.
                         if(!isPrimary) continue;
 
-                        List<PixelDesc> natives =
-                                nativePixelDescsFor(fd.name, ext);
+                        List<PixelFormat> natives =
+                                nativePixelFormatsFor(fd.name, ext);
                         for(size_t k = 0; k < natives.size(); ++k) {
-                                const PixelDesc &pd = natives[k];
+                                const PixelFormat &pd = natives[k];
                                 Case c;
                                 c.backendName = fd.name;
                                 c.extension   = ext;
                                 c.codec       = VideoCodec();
-                                c.pixelDesc   = pd;
+                                c.pixelFormat   = pd;
                                 c.isSequence  = isImgSeq;
                                 if(isImgSeq) {
                                         c.label = fd.name + String(":") + pd.name();
@@ -409,7 +409,7 @@ static List<Case> buildCases() {
 
                 // Codec matrix for container backends.  Each codec
                 // gets one smoke case (default compressed variant)
-                // plus one case per entry in @ref compressedPixelDescs
+                // plus one case per entry in @ref compressedPixelFormats
                 // — JPEG, for example, registers 10 variants covering
                 // YUV / RGB + Rec.601 / Rec.709 + limited / full range.
                 // The smoke case makes codec-level plumbing (NVENC
@@ -429,14 +429,14 @@ static List<Case> buildCases() {
                                         c.backendName = fd.name;
                                         c.extension   = primaryExt;
                                         c.codec       = vc;
-                                        c.pixelDesc   = PixelDesc();
+                                        c.pixelFormat   = PixelFormat();
                                         c.isSequence  = false;
                                         c.label = fd.name + String(":") + primaryExt
                                                 + String(":") + vc.name();
                                         cases.pushToBack(c);
                                 }
 
-                                // One case per compressed PixelDesc the
+                                // One case per compressed PixelFormat the
                                 // codec's registry entry covers.  The
                                 // pipeline's planner uses
                                 // @c VideoPixelFormat set on the
@@ -450,16 +450,16 @@ static List<Case> buildCases() {
                                 // label like "mov:H264:H264" just adds
                                 // noise to the report.
                                 const List<int> &variants =
-                                        vc.compressedPixelDescs();
+                                        vc.compressedPixelFormats();
                                 if(variants.size() <= 1) continue;
                                 for(size_t k = 0; k < variants.size(); ++k) {
-                                        PixelDesc pd(PixelDesc::ID(variants[k]));
+                                        PixelFormat pd(PixelFormat::ID(variants[k]));
                                         if(!pd.isValid()) continue;
                                         Case c;
                                         c.backendName = fd.name;
                                         c.extension   = primaryExt;
                                         c.codec       = vc;
-                                        c.pixelDesc   = pd;
+                                        c.pixelFormat   = pd;
                                         c.isSequence  = false;
                                         c.label = fd.name + String(":") + primaryExt
                                                 + String(":") + vc.name()
@@ -533,14 +533,14 @@ static bool ensureParentDir(const String &path) {
 
 // TPG source stage.  Binary data encoder + LTC on by default so the
 // inspector has something to validate on the read side.  When
-// @p tpgPixelDesc is valid, TPG is asked to produce frames in that
+// @p tpgPixelFormat is valid, TPG is asked to produce frames in that
 // pixel format — for uncompressed-matrix cases this drives the sink
 // end-to-end without a CSC hop.  For compressed-matrix cases the
 // TPG stays on its default RGB8 and the encoder stage carries the
 // compressed variant selection via VideoPixelFormat instead.
 static MediaPipelineConfig::Stage makeTpgStage(const Options &opts,
                                                 uint32_t streamId,
-                                                const PixelDesc &tpgPixelDesc) {
+                                                const PixelFormat &tpgPixelFormat) {
         MediaPipelineConfig::Stage s;
         s.name = String("tpg");
         s.type = String("TPG");
@@ -553,8 +553,8 @@ static MediaPipelineConfig::Stage makeTpgStage(const Options &opts,
         s.config.set(MediaConfig::TimecodeEnabled,      true);
         s.config.set(MediaConfig::TpgDataEncoderEnabled, true);
         s.config.set(MediaConfig::StreamID,             streamId);
-        if(tpgPixelDesc.isValid() && !tpgPixelDesc.isCompressed()) {
-                s.config.set(MediaConfig::VideoPixelFormat, tpgPixelDesc);
+        if(tpgPixelFormat.isValid() && !tpgPixelFormat.isCompressed()) {
+                s.config.set(MediaConfig::VideoPixelFormat, tpgPixelFormat);
         }
         return s;
 }
@@ -564,10 +564,10 @@ static MediaPipelineConfig::Stage makeTpgStage(const Options &opts,
 // TPG's picture-data band well enough for the inspector to recover
 // the frame number / stream id stamps.  When @p variant is valid it
 // selects the compressed output variant the codec should produce —
-// e.g. the difference between @c PixelDesc::JPEG_YUV8_420_Rec709 and
-// @c PixelDesc::JPEG_YUV8_422_Rec601 is exactly this selection.
+// e.g. the difference between @c PixelFormat::JPEG_YUV8_420_Rec709 and
+// @c PixelFormat::JPEG_YUV8_422_Rec601 is exactly this selection.
 static MediaPipelineConfig::Stage makeEncoderStage(const VideoCodec &codec,
-                                                    const PixelDesc &variant) {
+                                                    const PixelFormat &variant) {
         MediaPipelineConfig::Stage s;
         s.name = String("enc");
         s.type = String("VideoEncoder");
@@ -586,7 +586,7 @@ static MediaPipelineConfig::Stage makeEncoderStage(const VideoCodec &codec,
         // VideoPixelFormat on the encoder stage is read by the
         // backend (and consulted by the planner) as "produce this
         // compressed variant".  Only forward valid compressed
-        // PixelDescs here — other shapes would make no sense on an
+        // PixelFormats here — other shapes would make no sense on an
         // encoder output.
         if(variant.isValid() && variant.isCompressed()) {
                 s.config.set(MediaConfig::VideoPixelFormat, variant);
@@ -636,14 +636,14 @@ static MediaPipelineConfig buildWriteConfig(const Case &c,
                                              const Options &opts,
                                              uint32_t streamId) {
         MediaPipelineConfig cfg;
-        // For raw (no codec) cases the case's PixelDesc is the TPG
+        // For raw (no codec) cases the case's PixelFormat is the TPG
         // output format; for compressed cases it's the encoder's
         // output variant and TPG stays on its default.
-        const PixelDesc tpgPd = c.codec.isValid() ? PixelDesc() : c.pixelDesc;
+        const PixelFormat tpgPd = c.codec.isValid() ? PixelFormat() : c.pixelFormat;
         cfg.addStage(makeTpgStage(opts, streamId, tpgPd));
         String prev = String("tpg");
         if(c.codec.isValid()) {
-                cfg.addStage(makeEncoderStage(c.codec, c.pixelDesc));
+                cfg.addStage(makeEncoderStage(c.codec, c.pixelFormat));
                 cfg.addRoute(prev, String("enc"));
                 prev = String("enc");
         }

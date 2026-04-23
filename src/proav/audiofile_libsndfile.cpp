@@ -131,17 +131,17 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                                 return 0;
                         }
                         if(pcm) {
-                                switch(_desc.dataType()) {
-                                        case AudioDesc::PCMI_Float32LE: ret |= (SF_FORMAT_FLOAT | SF_ENDIAN_LITTLE); break;
-                                        case AudioDesc::PCMI_Float32BE: ret |= (SF_FORMAT_FLOAT | SF_ENDIAN_BIG); break;
-                                        case AudioDesc::PCMI_S8: ret |= SF_FORMAT_PCM_S8; break;
-                                        case AudioDesc::PCMI_U8: ret |= SF_FORMAT_PCM_U8; break;
-                                        case AudioDesc::PCMI_S16LE: ret |= (SF_FORMAT_PCM_16 | SF_ENDIAN_LITTLE); break;
-                                        case AudioDesc::PCMI_S16BE: ret |= (SF_FORMAT_PCM_16 | SF_ENDIAN_BIG); break;
-                                        case AudioDesc::PCMI_S24LE: ret |= (SF_FORMAT_PCM_24 | SF_ENDIAN_LITTLE); break;
-                                        case AudioDesc::PCMI_S24BE: ret |= (SF_FORMAT_PCM_24 | SF_ENDIAN_BIG); break;
-                                        case AudioDesc::PCMI_S32LE: ret |= (SF_FORMAT_PCM_32 | SF_ENDIAN_LITTLE); break;
-                                        case AudioDesc::PCMI_S32BE: ret |= (SF_FORMAT_PCM_32 | SF_ENDIAN_BIG); break;
+                                switch(_desc.format().id()) {
+                                        case AudioFormat::PCMI_Float32LE: ret |= (SF_FORMAT_FLOAT | SF_ENDIAN_LITTLE); break;
+                                        case AudioFormat::PCMI_Float32BE: ret |= (SF_FORMAT_FLOAT | SF_ENDIAN_BIG); break;
+                                        case AudioFormat::PCMI_S8: ret |= SF_FORMAT_PCM_S8; break;
+                                        case AudioFormat::PCMI_U8: ret |= SF_FORMAT_PCM_U8; break;
+                                        case AudioFormat::PCMI_S16LE: ret |= (SF_FORMAT_PCM_16 | SF_ENDIAN_LITTLE); break;
+                                        case AudioFormat::PCMI_S16BE: ret |= (SF_FORMAT_PCM_16 | SF_ENDIAN_BIG); break;
+                                        case AudioFormat::PCMI_S24LE: ret |= (SF_FORMAT_PCM_24 | SF_ENDIAN_LITTLE); break;
+                                        case AudioFormat::PCMI_S24BE: ret |= (SF_FORMAT_PCM_24 | SF_ENDIAN_BIG); break;
+                                        case AudioFormat::PCMI_S32LE: ret |= (SF_FORMAT_PCM_32 | SF_ENDIAN_LITTLE); break;
+                                        case AudioFormat::PCMI_S32BE: ret |= (SF_FORMAT_PCM_32 | SF_ENDIAN_BIG); break;
                                         default:
                                                 promekiWarn("computeLibSndFormat: incompatible audio desc: %s",
                                                         _desc.toString().cstr());
@@ -206,29 +206,29 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                                 le = (major != SF_FORMAT_AIFF);
                         }
 
-                        AudioDesc::DataType dt = AudioDesc::Invalid;
+                        AudioFormat::ID dt = AudioFormat::Invalid;
                         switch(sub) {
                                 case SF_FORMAT_PCM_S8:
-                                        dt = AudioDesc::PCMI_S8;
+                                        dt = AudioFormat::PCMI_S8;
                                         break;
                                 case SF_FORMAT_PCM_U8:
-                                        dt = AudioDesc::PCMI_U8;
+                                        dt = AudioFormat::PCMI_U8;
                                         break;
                                 case SF_FORMAT_PCM_16:
-                                        dt = le ? AudioDesc::PCMI_S16LE : AudioDesc::PCMI_S16BE;
+                                        dt = le ? AudioFormat::PCMI_S16LE : AudioFormat::PCMI_S16BE;
                                         break;
                                 case SF_FORMAT_PCM_24:
-                                        dt = le ? AudioDesc::PCMI_S24LE : AudioDesc::PCMI_S24BE;
+                                        dt = le ? AudioFormat::PCMI_S24LE : AudioFormat::PCMI_S24BE;
                                         break;
                                 case SF_FORMAT_PCM_32:
-                                        dt = le ? AudioDesc::PCMI_S32LE : AudioDesc::PCMI_S32BE;
+                                        dt = le ? AudioFormat::PCMI_S32LE : AudioFormat::PCMI_S32BE;
                                         break;
                                 case SF_FORMAT_FLOAT:
-                                        dt = le ? AudioDesc::PCMI_Float32LE : AudioDesc::PCMI_Float32BE;
+                                        dt = le ? AudioFormat::PCMI_Float32LE : AudioFormat::PCMI_Float32BE;
                                         break;
                                 case SF_FORMAT_VORBIS:
                                         // Vorbis decoded as native float.
-                                        dt = AudioDesc::PCMI_Float32LE;
+                                        dt = AudioFormat::PCMI_Float32LE;
                                         break;
                                 default:
                                         promekiWarn("computeDesc: unsupported subformat 0x%x", sub);
@@ -393,19 +393,19 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                                 return Error::Invalid;
                         }
                         sf_count_t ct = 0;
-                        switch(_desc.dataType()) {
-                                case AudioDesc::PCMI_Float32LE:
-                                case AudioDesc::PCMI_Float32BE:
+                        switch(_desc.format().id()) {
+                                case AudioFormat::PCMI_Float32LE:
+                                case AudioFormat::PCMI_Float32BE:
                                         ct = sf_writef_float(_file, audio.data<float>(), audio.samples());
                                         break;
 
-                                case AudioDesc::PCMI_S16LE:
-                                case AudioDesc::PCMI_S16BE:
+                                case AudioFormat::PCMI_S16LE:
+                                case AudioFormat::PCMI_S16BE:
                                         ct = sf_writef_short(_file, audio.data<int16_t>(), audio.samples());
                                         break;
 
-                                case AudioDesc::PCMI_S32LE:
-                                case AudioDesc::PCMI_S32BE:
+                                case AudioFormat::PCMI_S32LE:
+                                case AudioFormat::PCMI_S32BE:
                                         ct = sf_writef_int(_file, audio.data<int32_t>(), audio.samples());
                                         break;
 
@@ -427,19 +427,19 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                         Audio audio(_desc, samples);
 
                         sf_count_t ct = 0;
-                        switch(_desc.dataType()) {
-                                case AudioDesc::PCMI_Float32LE:
-                                case AudioDesc::PCMI_Float32BE:
+                        switch(_desc.format().id()) {
+                                case AudioFormat::PCMI_Float32LE:
+                                case AudioFormat::PCMI_Float32BE:
                                         ct = sf_readf_float(_file, audio.data<float>(), audio.samples());
                                         break;
 
-                                case AudioDesc::PCMI_S16LE:
-                                case AudioDesc::PCMI_S16BE:
+                                case AudioFormat::PCMI_S16LE:
+                                case AudioFormat::PCMI_S16BE:
                                         ct = sf_readf_short(_file, audio.data<int16_t>(), audio.samples());
                                         break;
 
-                                case AudioDesc::PCMI_S32LE:
-                                case AudioDesc::PCMI_S32BE:
+                                case AudioFormat::PCMI_S32LE:
+                                case AudioFormat::PCMI_S32BE:
                                         ct = sf_readf_int(_file, audio.data<int32_t>(), audio.samples());
                                         break;
 

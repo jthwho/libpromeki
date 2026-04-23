@@ -12,7 +12,7 @@
 #include <vector>
 #include <promeki/imagedatadecoder.h>
 #include <promeki/image.h>
-#include <promeki/pixelformat.h>
+#include <promeki/pixelmemlayout.h>
 #include <promeki/crc.h>
 #include <promeki/logger.h>
 
@@ -176,8 +176,8 @@ Image extractSliceRgba(const Image &src,
                        uint32_t firstLine, uint32_t lineCount,
                        size_t maxVSub,
                        uint32_t &sliceFirstOut) {
-        const PixelDesc &pd = src.pixelDesc();
-        const PixelFormat &pf = pd.pixelFormat();
+        const PixelFormat &pd = src.pixelFormat();
+        const PixelMemLayout &pf = pd.memLayout();
         const size_t srcWidth = src.width();
 
         // Snap the band to a vSub-aligned region so the chroma rows
@@ -209,7 +209,7 @@ Image extractSliceRgba(const Image &src,
 
         // Convert the slice to RGBA8 once; the decoder reads luma
         // out of the R channel from the converted strip.
-        return slice.convert(PixelDesc(PixelDesc::RGBA8_sRGB), Metadata());
+        return slice.convert(PixelFormat(PixelFormat::RGBA8_sRGB), Metadata());
 }
 
 // Builds the @c imageWidth-long luma array from the converted RGBA8
@@ -253,10 +253,10 @@ void extractLumaRow(const Image &rgba,
 ImageDataDecoder::ImageDataDecoder(const ImageDesc &desc) : _desc(desc) {
         if(!_desc.isValid()) return;
 
-        const PixelDesc &pd = _desc.pixelDesc();
+        const PixelFormat &pd = _desc.pixelFormat();
         if(!pd.isValid() || pd.isCompressed()) return;
 
-        const PixelFormat &pf = pd.pixelFormat();
+        const PixelMemLayout &pf = pd.memLayout();
 
         // Compute the same alignment quantum the encoder uses, so the
         // expected bit width matches what the encoder would have
@@ -396,7 +396,7 @@ Error ImageDataDecoder::decode(const Image &img, const List<Band> &bands,
         if(!_valid) return Error::Invalid;
         if(!img.isValid()) return Error::Invalid;
         if(img.desc().size() != _desc.size() ||
-           img.desc().pixelDesc() != _desc.pixelDesc()) {
+           img.desc().pixelFormat() != _desc.pixelFormat()) {
                 return Error::InvalidArgument;
         }
 
@@ -415,7 +415,7 @@ ImageDataDecoder::decode(const Image &img, const Band &band) const {
         }
         if(!img.isValid() ||
            img.desc().size() != _desc.size() ||
-           img.desc().pixelDesc() != _desc.pixelDesc()) {
+           img.desc().pixelFormat() != _desc.pixelFormat()) {
                 DecodedItem item;
                 item.error = Error::InvalidArgument;
                 return item;

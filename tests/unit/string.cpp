@@ -539,6 +539,47 @@ TEST_CASE("String_ResizeAndClear") {
 }
 
 // ============================================================================
+// isIdentifier
+// ============================================================================
+
+TEST_CASE("String_IsIdentifier") {
+        // Typical valid C identifiers.
+        CHECK(String("foo").isIdentifier());
+        CHECK(String("Foo").isIdentifier());
+        CHECK(String("_foo").isIdentifier());
+        CHECK(String("__foo__").isIdentifier());
+        CHECK(String("f").isIdentifier());
+        CHECK(String("_").isIdentifier());
+        CHECK(String("foo_bar").isIdentifier());
+        CHECK(String("foo123").isIdentifier());
+        CHECK(String("Opus").isIdentifier());
+        CHECK(String("HEVC10Bit").isIdentifier());
+
+        // Empty is not an identifier.
+        CHECK_FALSE(String().isIdentifier());
+        CHECK_FALSE(String("").isIdentifier());
+
+        // Leading digit — not allowed.
+        CHECK_FALSE(String("1foo").isIdentifier());
+        CHECK_FALSE(String("0").isIdentifier());
+        CHECK_FALSE(String("9abc").isIdentifier());
+
+        // Non-ASCII letter — isIdentifier only accepts plain ASCII.
+        // Spaces, punctuation, operators — not allowed.
+        CHECK_FALSE(String("foo bar").isIdentifier());
+        CHECK_FALSE(String("foo-bar").isIdentifier());
+        CHECK_FALSE(String("foo.bar").isIdentifier());
+        CHECK_FALSE(String("foo:bar").isIdentifier());
+        CHECK_FALSE(String("foo/bar").isIdentifier());
+        CHECK_FALSE(String("foo+bar").isIdentifier());
+        CHECK_FALSE(String("foo,bar").isIdentifier());
+        CHECK_FALSE(String(" foo").isIdentifier());
+        CHECK_FALSE(String("foo ").isIdentifier());
+        CHECK_FALSE(String("\t").isIdentifier());
+        CHECK_FALSE(String("\n").isIdentifier());
+}
+
+// ============================================================================
 // startsWith / endsWith edge cases
 // ============================================================================
 

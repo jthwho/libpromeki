@@ -147,7 +147,7 @@ user to read planner code.
 A typical `TPG → QuickTime mp4` pipeline. TPG generates
 RGBA8_sRGB by default; the H.264 encoder upstream of QuickTime
 needs NV12. The planner inserts a single `CSC` stage with
-`OutputPixelDesc` set to `YUV8_420_SemiPlanar_Rec709`.
+`OutputPixelFormat` set to `YUV8_420_SemiPlanar_Rec709`.
 
 ```
 // Before planning:
@@ -161,7 +161,7 @@ needs NV12. The planner inserts a single `CSC` stage with
 
 H.264 file → SDL display. The planner inserts a
 `VideoDecoder` configured with `VideoCodec=H264` and
-`OutputPixelDesc` set to whatever the SDL widget reports as its
+`OutputPixelFormat` set to whatever the SDL widget reports as its
 preferred input via `MediaIO::proposeInput`.
 
 ### Compressed → different compressed codec {#mediaplanner_ex_codec_transitive}

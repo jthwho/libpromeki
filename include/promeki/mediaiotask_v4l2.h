@@ -18,7 +18,7 @@
 #include <promeki/imagedesc.h>
 #include <promeki/audiodesc.h>
 #include <promeki/audiobuffer.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/framerate.h>
 #include <promeki/image.h>
 #include <promeki/queue.h>
@@ -80,8 +80,8 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par V4L2 pixel format mapping
  *
- * Common V4L2 pixel formats are mapped to PixelDesc IDs:
- * | V4L2                 | PixelDesc                          |
+ * Common V4L2 pixel formats are mapped to PixelFormat IDs:
+ * | V4L2                 | PixelFormat                          |
  * |----------------------|------------------------------------|
  * | V4L2_PIX_FMT_YUYV   | YUV8_422_Rec709                    |
  * | V4L2_PIX_FMT_UYVY   | YUV8_422_UYVY_Rec709               |
@@ -97,7 +97,7 @@ PROMEKI_NAMESPACE_BEGIN
  * | @ref MediaConfig::V4l2BufferCount  | int      | 4       | MMAP buffer count (2-32). |
  * | @ref MediaConfig::V4l2AudioDevice  | String   | "auto"  | ALSA device for paired audio. "auto" = auto-detect, "none"/empty = disabled. |
  * | @ref MediaConfig::VideoSize        | Size2Du32| 1920x1080 | Requested capture resolution. |
- * | @ref MediaConfig::VideoPixelFormat | PixelDesc| YUV8_422_Rec709 | Requested pixel format. |
+ * | @ref MediaConfig::VideoPixelFormat | PixelFormat| YUV8_422_Rec709 | Requested pixel format. |
  * | @ref MediaConfig::FrameRate        | FrameRate| 30/1    | Requested capture frame rate. |
  * | @ref MediaConfig::AudioRate        | float    | 48000   | ALSA capture sample rate. |
  * | @ref MediaConfig::AudioChannels    | int      | 2       | ALSA capture channel count. |
@@ -140,11 +140,11 @@ class MediaIOTask_V4L2 : public MediaIOTask {
                 /** @brief Destructor. */
                 ~MediaIOTask_V4L2() override;
 
-                /** @brief Maps a V4L2 pixel format fourcc to a PixelDesc::ID. */
-                static PixelDesc::ID v4l2ToPixelDesc(uint32_t v4l2fmt);
+                /** @brief Maps a V4L2 pixel format fourcc to a PixelFormat::ID. */
+                static PixelFormat::ID v4l2ToPixelFormat(uint32_t v4l2fmt);
 
-                /** @brief Maps a PixelDesc::ID to a V4L2 pixel format fourcc. */
-                static uint32_t pixelDescToV4l2(PixelDesc::ID pd);
+                /** @brief Maps a PixelFormat::ID to a V4L2 pixel format fourcc. */
+                static uint32_t pixelFormatToV4l2(PixelFormat::ID pd);
 
         private:
                 Error executeCmd(MediaIOCommandOpen &cmd) override;

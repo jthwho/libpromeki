@@ -97,6 +97,7 @@ endif()
 option(PROMEKI_ENABLE_JPEGXS   "Include JPEG XS codec (SVT-JPEG-XS, x86-64 + nasm/yasm)" ${PROMEKI_ENABLE_JPEGXS_DEFAULT})
 option(PROMEKI_ENABLE_FREETYPE "Include FreeType font rendering"        ON)
 option(PROMEKI_ENABLE_AUDIO    "Include audio file I/O (libsndfile)"    ON)
+option(PROMEKI_ENABLE_OPUS     "Include Opus audio codec (libopus)"     ON)
 option(PROMEKI_ENABLE_SRC      "Include audio resampling (libsamplerate)" ON)
 option(PROMEKI_ENABLE_CSC      "Include color space conversion (Highway SIMD)" ON)
 option(PROMEKI_ENABLE_CIRF     "Include the built-in :/.PROMEKI/ resource set" ON)
@@ -179,6 +180,7 @@ option(PROMEKI_USE_SYSTEM_LIBJPEG       "Use system libjpeg instead of vendored"
 option(PROMEKI_USE_SYSTEM_SVT_JPEG_XS   "Use system SVT-JPEG-XS instead of vendored"    OFF)
 option(PROMEKI_USE_SYSTEM_FREETYPE      "Use system freetype instead of vendored"       OFF)
 option(PROMEKI_USE_SYSTEM_SNDFILE       "Use system libsndfile instead of vendored"     OFF)
+option(PROMEKI_USE_SYSTEM_OPUS          "Use system libopus instead of vendored"        OFF)
 option(PROMEKI_USE_SYSTEM_SAMPLERATE   "Use system libsamplerate instead of vendored"  OFF)
 option(PROMEKI_USE_SYSTEM_NLOHMANN_JSON "Use system nlohmann_json instead of vendored"  OFF)
 option(PROMEKI_USE_SYSTEM_VTC           "Use system libvtc instead of vendored"         OFF)
@@ -265,6 +267,9 @@ if(PROMEKI_ENABLE_FREETYPE AND NOT PROMEKI_ENABLE_PROAV)
 endif()
 if(PROMEKI_ENABLE_AUDIO AND NOT PROMEKI_ENABLE_PROAV)
     message(FATAL_ERROR "PROMEKI_ENABLE_AUDIO requires PROMEKI_ENABLE_PROAV")
+endif()
+if(PROMEKI_ENABLE_OPUS AND NOT PROMEKI_ENABLE_PROAV)
+    message(FATAL_ERROR "PROMEKI_ENABLE_OPUS requires PROMEKI_ENABLE_PROAV")
 endif()
 if(PROMEKI_ENABLE_SRC AND NOT PROMEKI_ENABLE_PROAV)
     message(FATAL_ERROR "PROMEKI_ENABLE_SRC requires PROMEKI_ENABLE_PROAV")
@@ -692,6 +697,43 @@ if(PROMEKI_ENABLE_AUDIO)
     endif()
 endif()
 
+# --- libopus ---
+# Vendored opus is a static library (.a) so the IMPORTED_LOCATION
+# matches the install prefix's lib path.  Built with all of opus's
+# optional flags (custom modes, programs, testing, framework, DRED,
+# OSCE, pkg-config, CMake config) turned off — the codec backend
+# only needs the encoder / decoder API and we keep the build small.
+if(PROMEKI_ENABLE_OPUS)
+    if(PROMEKI_USE_SYSTEM_OPUS)
+        find_package(Opus REQUIRED)
+        set(PROMEKI_OPUS_TARGET Opus::opus)
+    else()
+        ExternalProject_Add(
+            libopus-ep
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/opus
+            CMAKE_ARGS
+                -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
+                -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+                -DBUILD_SHARED_LIBS=OFF
+                -DOPUS_BUILD_SHARED_LIBRARY=OFF
+                -DOPUS_BUILD_PROGRAMS=OFF
+                -DOPUS_BUILD_TESTING=OFF
+                -DOPUS_CUSTOM_MODES=OFF
+                -DOPUS_INSTALL_PKG_CONFIG_MODULE=OFF
+                -DOPUS_INSTALL_CMAKE_CONFIG_MODULE=OFF
+                -DOPUS_DRED=OFF
+                -DOPUS_OSCE=OFF
+            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libopus.a
+        )
+        add_library(promeki_opus_vendored STATIC IMPORTED)
+        set_target_properties(promeki_opus_vendored PROPERTIES
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libopus.a
+        )
+        add_dependencies(promeki_opus_vendored libopus-ep)
+        set(PROMEKI_OPUS_TARGET promeki_opus_vendored)
+    endif()
+endif()
+
 # --- libsamplerate ---
 if(PROMEKI_ENABLE_SRC)
     if(PROMEKI_USE_SYSTEM_SAMPLERATE)
@@ -772,6 +814,8 @@ set(PROMEKI_HEADERS
     include/promeki/ciepoint.h
     include/promeki/ciewavelengthtable.h
     include/promeki/audiocodec.h
+    include/promeki/audioformat.h
+    include/promeki/backendweight.h
     include/promeki/cmdlineparser.h
     include/promeki/color.h
     include/promeki/colormodel.h
@@ -822,8 +866,8 @@ set(PROMEKI_HEADERS
     include/promeki/objectbase.h
     include/promeki/obfuscatedstring.h
     include/promeki/pidcontroller.h
-    include/promeki/pixeldesc.h
     include/promeki/pixelformat.h
+    include/promeki/pixelmemlayout.h
     include/promeki/platform.h
     include/promeki/point.h
     include/promeki/process.h
@@ -899,6 +943,7 @@ set(PROMEKI_SOURCES
     src/core/contentlightlevel.cpp
     src/core/masteringdisplay.cpp
     src/core/audiocodec.cpp
+    src/core/audioformat.cpp
     src/core/crashhandler.cpp
     src/core/crc.cpp
     src/core/cuda.cpp
@@ -946,8 +991,8 @@ set(PROMEKI_SOURCES
     src/core/objectbase.cpp
     src/core/periodiccallback.cpp
     src/core/pidcontroller.cpp
-    src/core/pixeldesc.cpp
     src/core/pixelformat.cpp
+    src/core/pixelmemlayout.cpp
     src/core/point.cpp
     src/core/process.cpp
     src/core/random.cpp
@@ -1052,14 +1097,17 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/audio.h
         include/promeki/audioblock.h
         include/promeki/audiobuffer.h
+        include/promeki/audiodecoder.h
         include/promeki/audiodesc.h
+        include/promeki/audioencoder.h
         include/promeki/audiofile.h
         include/promeki/audiofilefactory.h
         include/promeki/audiogen.h
         include/promeki/audiotestpattern.h
         include/promeki/basicfont.h
         include/promeki/benchmarkreporter.h
-        include/promeki/codec.h
+        include/promeki/videoencoder.h
+        include/promeki/videodecoder.h
         include/promeki/encodeddesc.h
         include/promeki/fastfont.h
         include/promeki/font.h
@@ -1071,9 +1119,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/imagefile.h
         include/promeki/imagefileio.h
         include/promeki/imgseq.h
-        include/promeki/jpegimagecodec.h
         include/promeki/jpegvideocodec.h
-        include/promeki/jpegxsimagecodec.h
         include/promeki/ltcdecoder.h
         include/promeki/ltcencoder.h
         include/promeki/mediaio.h
@@ -1107,13 +1153,16 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/audio.cpp
         src/proav/audioblock.cpp
         src/proav/audiobuffer.cpp
+        src/proav/audiodecoder.cpp
         src/proav/audiodesc.cpp
+        src/proav/audioencoder.cpp
         src/proav/audiofile.cpp
         src/proav/audiofilefactory.cpp
         src/proav/audiogen.cpp
         src/proav/audiotestpattern.cpp
         src/proav/benchmarkreporter.cpp
-        src/proav/codec.cpp
+        src/proav/videoencoder.cpp
+        src/proav/videodecoder.cpp
         src/proav/encodeddesc.cpp
         src/proav/frame.cpp
         src/proav/framebridge.cpp
@@ -1133,7 +1182,6 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/imagefileio_tga.cpp
         src/proav/imagefileio_sgi.cpp
         src/proav/imagefileio_pnm.cpp
-        src/proav/jpegimagecodec.cpp
         src/proav/jpegvideocodec.cpp
         src/proav/ltcdecoder.cpp
         src/proav/ltcencoder.cpp
@@ -1146,6 +1194,8 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/mediapipelinestats.cpp
         src/proav/pipelinestats.cpp
         src/proav/mediapacket.cpp
+        src/proav/videopacket.cpp
+        src/proav/audiopacket.cpp
         src/proav/mediaiotask.cpp
         src/proav/mediaiotask_csc.cpp
         src/proav/mediaiotask_src.cpp
@@ -1175,8 +1225,10 @@ if(PROMEKI_ENABLE_PROAV)
 
     # Feature-gated proav sources
     if(PROMEKI_ENABLE_JPEG)
-        # jpegimagecodec is always included when proav is on; this gate
-        # controls linking against libjpeg (codec uses it internally)
+        # jpegvideocodec is always included when proav is on; this gate
+        # controls linking against libjpeg (codec uses it internally
+        # via the libjpeg-turbo plumbing folded into JpegVideoEncoder /
+        # JpegVideoDecoder).
         list(APPEND PROMEKI_SOURCES src/proav/imagefileio_jpeg.cpp)
     endif()
     if(PROMEKI_ENABLE_JPEGXS)
@@ -1187,7 +1239,6 @@ if(PROMEKI_ENABLE_PROAV)
             include/promeki/jpegxsvideocodec.h
         )
         list(APPEND PROMEKI_SOURCES
-            src/proav/jpegxsimagecodec.cpp
             src/proav/jpegxsvideocodec.cpp
             src/proav/imagefileio_jpegxs.cpp
         )
@@ -1197,6 +1248,13 @@ if(PROMEKI_ENABLE_PROAV)
         # directly, so the whole file is gated — stubs are not useful
         # when nvEncodeAPI.h is missing.
         list(APPEND PROMEKI_SOURCES src/proav/nvencvideoencoder.cpp)
+    endif()
+    if(PROMEKI_ENABLE_OPUS)
+        # Native libopus AudioEncoder / AudioDecoder backend.  Gated on
+        # PROMEKI_ENABLE_OPUS because the file includes <opus/opus.h>
+        # directly; without the vendored or system libopus there is no
+        # header to include.
+        list(APPEND PROMEKI_SOURCES src/proav/opusaudiocodec.cpp)
     endif()
     if(PROMEKI_ENABLE_NVDEC)
         # Same story as NVENC — the backend compiles only when the
@@ -1386,6 +1444,13 @@ if(PROMEKI_ENABLE_PROAV)
     if(NOT PROMEKI_USE_SYSTEM_SNDFILE AND PROMEKI_ENABLE_AUDIO)
         target_include_directories(promeki PRIVATE ${PROMEKI_THIRDPARTY_PREFIX}/include)
     endif()
+    if(NOT PROMEKI_USE_SYSTEM_OPUS AND PROMEKI_ENABLE_OPUS)
+        # Vendored opus installs its public headers under include/opus/.
+        target_include_directories(promeki PRIVATE
+            ${PROMEKI_THIRDPARTY_PREFIX}/include
+            ${PROMEKI_THIRDPARTY_PREFIX}/include/opus
+        )
+    endif()
     if(NOT PROMEKI_USE_SYSTEM_SAMPLERATE AND PROMEKI_ENABLE_SRC)
         target_include_directories(promeki PRIVATE ${PROMEKI_THIRDPARTY_PREFIX}/include)
     endif()
@@ -1422,6 +1487,10 @@ if(PROMEKI_ENABLE_PROAV)
     if(PROMEKI_ENABLE_AUDIO)
         target_link_libraries(promeki PRIVATE ${PROMEKI_SNDFILE_TARGET})
         target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_SNDFILE)
+    endif()
+    if(PROMEKI_ENABLE_OPUS)
+        target_link_libraries(promeki PRIVATE ${PROMEKI_OPUS_TARGET})
+        target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_OPUS)
     endif()
     if(PROMEKI_ENABLE_SRC)
         target_link_libraries(promeki PRIVATE ${PROMEKI_SAMPLERATE_TARGET})
@@ -1717,7 +1786,9 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/array.cpp
         tests/unit/atomic.cpp
         tests/unit/audiocodec.cpp
+        tests/unit/audioformat.cpp
         tests/unit/audiolevel.cpp
+        tests/unit/backendweight.cpp
         tests/unit/typeregistry_isolation.cpp
         tests/unit/benchmarkrunner.cpp
         tests/unit/buffer.cpp
@@ -1791,7 +1862,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/periodiccallback.cpp
         tests/unit/pair.cpp
         tests/unit/pidcontroller.cpp
-        tests/unit/pixelformat.cpp
+        tests/unit/pixelmemlayout.cpp
         tests/unit/point.cpp
         tests/unit/priorityqueue.cpp
         tests/unit/process.cpp
@@ -1878,9 +1949,11 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/audioblock.cpp
             tests/unit/audiobuffer.cpp
             tests/unit/audiodesc.cpp
+            tests/unit/audioencoder.cpp
+            tests/unit/audiopacket.cpp
             tests/unit/audiofilefactory.cpp
             tests/unit/audiotestpattern.cpp
-            tests/unit/codec.cpp
+            $<$<BOOL:${PROMEKI_ENABLE_OPUS}>:tests/unit/opusaudiocodec.cpp>
             tests/unit/encodeddesc.cpp
             tests/unit/fastfont.cpp
             tests/unit/basicfont.cpp
@@ -1899,7 +1972,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/imagefileio_sgi.cpp
             tests/unit/imagefileio_pnm.cpp
             tests/unit/imgseq.cpp
-            tests/unit/jpegimagecodec.cpp
+            tests/unit/jpegvideocodec.cpp
             tests/unit/ltcdecoder.cpp
             tests/unit/ltcencoder.cpp
             tests/unit/mediadesc.cpp
@@ -1929,9 +2002,10 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/mediaiotask_quicktime.cpp
             tests/unit/mediaiotask_rtp.cpp
             tests/unit/paintengine.cpp
-            tests/unit/pixeldesc.cpp
+            tests/unit/pixelformat.cpp
             tests/unit/videocodec.cpp
             tests/unit/videocodec_registry.cpp
+            tests/unit/videopacket.cpp
             tests/unit/quicktime.cpp
             tests/unit/videotestpattern.cpp
         )
@@ -1952,7 +2026,7 @@ if(PROMEKI_BUILD_TESTS)
         endif()
         if(PROMEKI_ENABLE_JPEGXS)
             list(APPEND UNITTEST_SOURCES
-                tests/unit/jpegxsimagecodec.cpp
+                tests/unit/jpegxsvideocodec.cpp
                 tests/unit/imagefileio_jpegxs.cpp
             )
         endif()

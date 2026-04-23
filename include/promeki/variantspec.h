@@ -309,8 +309,8 @@ class VariantSpec {
                  *
                  * Supported types: bool (true/false/yes/no/1/0), all
                  * integer and float widths, String, Size2Du32, FrameRate,
-                 * Rational, Timecode, DateTime, Color, PixelDesc,
-                 * PixelFormat, ColorModel, Enum, StringList, and
+                 * Rational, Timecode, DateTime, Color, PixelFormat,
+                 * PixelMemLayout, ColorModel, Enum, StringList, and
                  * SocketAddress (when network is enabled).
                  *
                  * @param str The string to parse.

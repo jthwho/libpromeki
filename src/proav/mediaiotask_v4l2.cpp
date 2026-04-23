@@ -24,8 +24,8 @@
 #include <promeki/image.h>
 #include <promeki/audio.h>
 #include <promeki/frame.h>
-#include <promeki/mediapacket.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/videopacket.h>
+#include <promeki/pixelformat.h>
 #include <promeki/mediadesc.h>
 #include <promeki/metadata.h>
 #include <promeki/timestamp.h>
@@ -56,35 +56,35 @@ static const ClockDomain V4L2KernelClock(_v4l2KernelClockID);
 static const ClockDomain AlsaClock(_alsaClockID);
 
 // ============================================================================
-// V4L2 ↔ PixelDesc mapping
+// V4L2 ↔ PixelFormat mapping
 // ============================================================================
 
 struct V4l2FormatMapping {
         uint32_t        v4l2;
-        PixelDesc::ID   pd;
+        PixelFormat::ID   pd;
 };
 
 static const V4l2FormatMapping formatMap[] = {
-        { V4L2_PIX_FMT_YUYV,   PixelDesc::YUV8_422_Rec709                 },
-        { V4L2_PIX_FMT_UYVY,   PixelDesc::YUV8_422_UYVY_Rec709           },
-        { V4L2_PIX_FMT_NV12,   PixelDesc::YUV8_420_SemiPlanar_Rec709     },
-        { V4L2_PIX_FMT_RGB24,  PixelDesc::RGB8_sRGB                       },
-        { V4L2_PIX_FMT_BGR24,  PixelDesc::BGR8_sRGB                       },
-        { V4L2_PIX_FMT_MJPEG,  PixelDesc::JPEG_YUV8_422_Rec709           },
-        { V4L2_PIX_FMT_JPEG,   PixelDesc::JPEG_YUV8_422_Rec709           },
-        { V4L2_PIX_FMT_ABGR32, PixelDesc::BGRA8_sRGB                     },
+        { V4L2_PIX_FMT_YUYV,   PixelFormat::YUV8_422_Rec709                 },
+        { V4L2_PIX_FMT_UYVY,   PixelFormat::YUV8_422_UYVY_Rec709           },
+        { V4L2_PIX_FMT_NV12,   PixelFormat::YUV8_420_SemiPlanar_Rec709     },
+        { V4L2_PIX_FMT_RGB24,  PixelFormat::RGB8_sRGB                       },
+        { V4L2_PIX_FMT_BGR24,  PixelFormat::BGR8_sRGB                       },
+        { V4L2_PIX_FMT_MJPEG,  PixelFormat::JPEG_YUV8_422_Rec709           },
+        { V4L2_PIX_FMT_JPEG,   PixelFormat::JPEG_YUV8_422_Rec709           },
+        { V4L2_PIX_FMT_ABGR32, PixelFormat::BGRA8_sRGB                     },
 };
 
 static constexpr int FormatMapCount = sizeof(formatMap) / sizeof(formatMap[0]);
 
-PixelDesc::ID MediaIOTask_V4L2::v4l2ToPixelDesc(uint32_t v4l2fmt) {
+PixelFormat::ID MediaIOTask_V4L2::v4l2ToPixelFormat(uint32_t v4l2fmt) {
         for(int i = 0; i < FormatMapCount; i++) {
                 if(formatMap[i].v4l2 == v4l2fmt) return formatMap[i].pd;
         }
-        return PixelDesc::Invalid;
+        return PixelFormat::Invalid;
 }
 
-uint32_t MediaIOTask_V4L2::pixelDescToV4l2(PixelDesc::ID pd) {
+uint32_t MediaIOTask_V4L2::pixelFormatToV4l2(PixelFormat::ID pd) {
         for(int i = 0; i < FormatMapCount; i++) {
                 if(formatMap[i].pd == pd) return formatMap[i].v4l2;
         }
@@ -464,9 +464,9 @@ static List<MediaDesc> v4l2QueryDevice(const MediaIO::Config &config) {
         std::memset(&fmtdesc, 0, sizeof(fmtdesc));
         fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         while(xioctl(fd, VIDIOC_ENUM_FMT, &fmtdesc) == 0) {
-                PixelDesc::ID pdId = MediaIOTask_V4L2::v4l2ToPixelDesc(
+                PixelFormat::ID pdId = MediaIOTask_V4L2::v4l2ToPixelFormat(
                         fmtdesc.pixelformat);
-                if(pdId == PixelDesc::Invalid) {
+                if(pdId == PixelFormat::Invalid) {
                         fmtdesc.index++;
                         continue;
                 }
@@ -562,7 +562,7 @@ MediaIO::FormatDesc MediaIOTask_V4L2::formatDesc() {
                         s(MediaConfig::V4l2AudioDevice, String("auto"));
                         // Video
                         s(MediaConfig::VideoSize,       Size2Du32(1920, 1080));
-                        s(MediaConfig::VideoPixelFormat, PixelDesc(PixelDesc::YUV8_422_Rec709));
+                        s(MediaConfig::VideoPixelFormat, PixelFormat(PixelFormat::YUV8_422_Rec709));
                         s(MediaConfig::FrameRate,       FrameRate(FrameRate::FPS_30));
                         // Audio
                         s(MediaConfig::AudioRate,       48000.0f);
@@ -657,9 +657,9 @@ Error MediaIOTask_V4L2::openVideo(const MediaIO::Config &cfg) {
         // hits.  This allows a request for 1920x1080 YUYV to
         // automatically fall back to 1920x1080 MJPEG.
         Size2Du32 reqSize = cfg.getAs<Size2Du32>(MediaConfig::VideoSize, Size2Du32(1920, 1080));
-        PixelDesc reqPd = cfg.getAs<PixelDesc>(MediaConfig::VideoPixelFormat,
-                                               PixelDesc(PixelDesc::YUV8_422_Rec709));
-        uint32_t v4l2fmt = pixelDescToV4l2(reqPd.id());
+        PixelFormat reqPd = cfg.getAs<PixelFormat>(MediaConfig::VideoPixelFormat,
+                                               PixelFormat(PixelFormat::YUV8_422_Rec709));
+        uint32_t v4l2fmt = pixelFormatToV4l2(reqPd.id());
         if(v4l2fmt == 0) v4l2fmt = V4L2_PIX_FMT_YUYV;
 
         // Helper: attempt S_FMT with a given V4L2 pixel format and
@@ -702,14 +702,14 @@ Error MediaIOTask_V4L2::openVideo(const MediaIO::Config &cfg) {
         }
 
         // Read back what the driver actually selected
-        PixelDesc::ID actualPd = v4l2ToPixelDesc(fmt.fmt.pix.pixelformat);
-        if(actualPd == PixelDesc::Invalid) {
+        PixelFormat::ID actualPd = v4l2ToPixelFormat(fmt.fmt.pix.pixelformat);
+        if(actualPd == PixelFormat::Invalid) {
                 promekiErr("MediaIOTask_V4L2: driver selected unsupported pixel format 0x%08x",
                            fmt.fmt.pix.pixelformat);
                 return Error::NotSupported;
         }
         if(fmt.fmt.pix.pixelformat != v4l2fmt) {
-                PixelDesc selectedPd(actualPd);
+                PixelFormat selectedPd(actualPd);
                 promekiInfo("MediaIOTask_V4L2: pixel format changed from %s to %s "
                             "to achieve %ux%u",
                             reqPd.name().cstr(), selectedPd.name().cstr(),
@@ -756,7 +756,7 @@ Error MediaIOTask_V4L2::openVideo(const MediaIO::Config &cfg) {
         promekiDebug("MediaIOTask_V4L2: negotiated %ux%u %s @ %s "
                      "(requested %ux%u %s @ %s)",
                      _imageDesc.size().width(), _imageDesc.size().height(),
-                     PixelDesc(actualPd).name().cstr(),
+                     PixelFormat(actualPd).name().cstr(),
                      _frameRate.toString().cstr(),
                      reqSize.width(), reqSize.height(),
                      reqPd.name().cstr(),
@@ -927,7 +927,7 @@ Error MediaIOTask_V4L2::openAudio(const MediaIO::Config &cfg) {
                 return Error::DeviceError;
         }
 
-        // Use float32 native format to match AudioDesc::NativeType
+        // Use float32 native format to match AudioFormat::NativeFloat
         err = snd_pcm_hw_params_set_format(_pcm, hwparams, SND_PCM_FORMAT_FLOAT_LE);
         if(err < 0) {
                 // Fall back to S16_LE if float is not supported
@@ -937,10 +937,10 @@ Error MediaIOTask_V4L2::openAudio(const MediaIO::Config &cfg) {
                                    snd_strerror(err));
                         return Error::DeviceError;
                 }
-                _audioDesc = AudioDesc(AudioDesc::PCMI_S16LE, sampleRate,
+                _audioDesc = AudioDesc(AudioFormat::PCMI_S16LE, sampleRate,
                                        static_cast<unsigned int>(channels));
         } else {
-                _audioDesc = AudioDesc(AudioDesc::PCMI_Float32LE, sampleRate,
+                _audioDesc = AudioDesc(AudioFormat::PCMI_Float32LE, sampleRate,
                                        static_cast<unsigned int>(channels));
         }
 
@@ -976,7 +976,7 @@ Error MediaIOTask_V4L2::openAudio(const MediaIO::Config &cfg) {
         // Update the audio desc with the actual rate the driver selected
         if(rate != static_cast<unsigned int>(sampleRate)) {
                 promekiWarn("MediaIOTask_V4L2: ALSA sample rate adjusted to %u", rate);
-                _audioDesc = AudioDesc(_audioDesc.dataType(),
+                _audioDesc = AudioDesc(_audioDesc.format().id(),
                                        static_cast<float>(rate),
                                        static_cast<unsigned int>(channels));
         }
@@ -997,7 +997,7 @@ Error MediaIOTask_V4L2::openAudio(const MediaIO::Config &cfg) {
         // not here — each captured frame carries the natural sample
         // count from its capture window.
         size_t ringCapacity = rate * 2;
-        AudioDesc ringDesc(AudioDesc::NativeType,
+        AudioDesc ringDesc(AudioFormat::NativeFloat,
                            static_cast<float>(rate),
                            static_cast<unsigned int>(channels));
         _audioRing = AudioBuffer(ringDesc, ringCapacity);
@@ -1007,7 +1007,7 @@ Error MediaIOTask_V4L2::openAudio(const MediaIO::Config &cfg) {
         promekiDebug("MediaIOTask_V4L2: ALSA opened %s  format=%s  rate=%u  "
                      "channels=%d  bufferSize=%lu  ringCapacity=%zu",
                      alsaDev.cstr(),
-                     _audioDesc.dataTypeName().cstr(),
+                     _audioDesc.format().name().cstr(),
                      rate, channels,
                      static_cast<unsigned long>(bufferSize),
                      ringCapacity);
@@ -1050,7 +1050,7 @@ void MediaIOTask_V4L2::videoCaptureLoop() {
         promekiDebug("MediaIOTask_V4L2: video capture thread started  "
                      "image=%ux%u %s  queueDepth=%d",
                      _imageDesc.size().width(), _imageDesc.size().height(),
-                     PixelDesc(_imageDesc.pixelDesc()).name().cstr(),
+                     PixelFormat(_imageDesc.pixelFormat()).name().cstr(),
                      VideoQueueDepth);
         while(!_stopFlag.load(std::memory_order_acquire)) {
                 // Poll with a short timeout so we can check _stopFlag
@@ -1186,7 +1186,7 @@ void MediaIOTask_V4L2::videoCaptureLoop() {
                 TimeStamp captureTime{TimeStamp::Clock::time_point{
                         std::chrono::nanoseconds{captureNs}}};
 
-                PixelDesc pd(_imageDesc.pixelDesc());
+                PixelFormat pd(_imageDesc.pixelFormat());
                 Buffer::Ptr imgBuf = Buffer::Ptr::create(bytesUsed);
                 std::memcpy(imgBuf->data(), src, bytesUsed);
                 imgBuf->setSize(bytesUsed);
@@ -1222,16 +1222,16 @@ void MediaIOTask_V4L2::videoCaptureLoop() {
                 }
                 Image::Ptr imgPtr = Image::Ptr::create(img);
 
-                // Compressed captures (MJPEG, etc.) need a MediaPacket
+                // Compressed captures (MJPEG, etc.) need a VideoPacket
                 // pointing at the encoded bytes so a downstream
                 // VideoDecoder can find the bitstream via the
                 // Image::packet accessor.  Every V4L2 capture is a
                 // keyframe (no inter-frame prediction at this layer).
                 if(pd.isCompressed()) {
-                        auto pkt = MediaPacket::Ptr::create(imgBuf, pd);
+                        auto pkt = VideoPacket::Ptr::create(imgBuf, pd);
                         pkt.modify()->setPts(captureMts);
                         pkt.modify()->setDts(captureMts);
-                        pkt.modify()->addFlag(MediaPacket::Keyframe);
+                        pkt.modify()->addFlag(VideoPacket::Keyframe);
                         imgPtr.modify()->setPacket(std::move(pkt));
                 }
 
@@ -1254,7 +1254,7 @@ void MediaIOTask_V4L2::audioCaptureLoop() {
         Thread::setCurrentThreadName("v4l2-audio");
         promekiDebug("MediaIOTask_V4L2: audio capture thread started  "
                      "format=%s  rate=%.0f  channels=%u  chunkSamples=512",
-                     _audioDesc.dataTypeName().cstr(),
+                     _audioDesc.format().name().cstr(),
                      _audioDesc.sampleRate(),
                      _audioDesc.channels());
         // Read in chunks of ~512 samples at a time

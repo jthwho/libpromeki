@@ -79,7 +79,7 @@ Library classes should use the library's own container/type wrappers (`List`, `M
 ## QuickTime: Little-Endian Float Audio Storage
 
 **Files:** `src/proav/mediaiotask_quicktime.cpp` (`pickStorageFormat`), `src/proav/quicktime_writer.cpp` (`pcmFourCCForDataType`)
-**FIXME:** Little-endian float (`AudioDesc::PCMI_Float32LE`) has no single-FourCC mapping in the QuickTime sample-entry format. The QuickTime `fl32` FourCC is big-endian float; for little-endian float, the spec requires the generic `lpcm` FourCC plus a `pcmC` extension atom describing endianness and the "sample is float" flag.
+**FIXME:** Little-endian float (`AudioFormat::PCMI_Float32LE`) has no single-FourCC mapping in the QuickTime sample-entry format. The QuickTime `fl32` FourCC is big-endian float; for little-endian float, the spec requires the generic `lpcm` FourCC plus a `pcmC` extension atom describing endianness and the "sample is float" flag.
 
 Current workaround in `MediaIOTask_QuickTime::pickStorageFormat()` promotes incoming `PCMI_Float32LE` sources to `PCMI_S16LE` for storage — widely compatible but lossy (32-bit float → 16-bit int).
 
@@ -93,7 +93,7 @@ Current workaround in `MediaIOTask_QuickTime::pickStorageFormat()` promotes inco
 
 ## QuickTime: `raw ` Codec Byte Order — BGR vs RGB Disagreement
 
-**Files:** `src/core/pixeldesc.cpp` (`makeRGB8`), `src/proav/quicktime_writer.cpp` (visual sample entry writer)
+**Files:** `src/core/pixelformat.cpp` (`makeRGB8`), `src/proav/quicktime_writer.cpp` (visual sample entry writer)
 **FIXME:** Players disagree on the byte order of the QuickTime `raw ` codec tag with depth 24.
 
 The QuickTime File Format Specification historically defines `raw ` as **B, G, R** byte order per pixel. Modern ffmpeg, VLC, and our own reader treat `raw ` as **R, G, B** byte order (the order ffmpeg's `rawvideo` encoder emits). mplayer follows the historical QT spec and reports `VIDEO: [BGR] 320x180 24bpp` for our files — which means it will swap red and blue channels on display.
@@ -102,12 +102,12 @@ Reproduction: ffmpeg decodes our `RGB8_sRGB` → `raw ` output and produces corr
 
 Options for a proper fix:
 - **(a)** Switch our `RGB8_sRGB` plane layout to BGR and swap on encode. Matches the official QT spec but requires byte-swapping on every frame write (and a full code-path audit for anything that touches RGB8_sRGB bytes directly).
-- **(b)** Use a different PixelDesc whose QuickTime FourCC unambiguously encodes the byte order (e.g. a dedicated `BGR8_sRGB` entry with `raw ` as its QT FourCC, and keep `RGB8_sRGB` for paths that write to containers that use RGB order natively).
+- **(b)** Use a different PixelFormat whose QuickTime FourCC unambiguously encodes the byte order (e.g. a dedicated `BGR8_sRGB` entry with `raw ` as its QT FourCC, and keep `RGB8_sRGB` for paths that write to containers that use RGB order natively).
 - **(c)** Route 24-bit RGB through a different QuickTime codec tag that modern players all agree is RGB (e.g. emit the rarer `BGR ` four-letter code or use a proprietary FourCC and hope for the best — not recommended).
 
 Short-term mitigation: test playback in VLC / ffplay / QuickTime Player (the widely-used players all agree on RGB for `raw ` 24-bit). mplayer is the outlier. Document the disagreement rather than chase the long tail.
 
-- [ ] Pick option (a) or (b) — lean toward (b) for cleanliness, since it keeps `RGB8_sRGB` meaning what it says and isolates the container-specific byte order to a separate PixelDesc.
+- [ ] Pick option (a) or (b) — lean toward (b) for cleanliness, since it keeps `RGB8_sRGB` meaning what it says and isolates the container-specific byte order to a separate PixelFormat.
 - [ ] Add a mplayer playback test once one of the above fixes is in place.
 
 ---
@@ -187,13 +187,13 @@ The writer side (`buildBextXmpPacket`) also hand-rolls XML by string concatenati
 
 - [ ] Monitor SVT-JPEG-XS upstream for a fix to the `send_picture` validation (the bug is in the mismatch between `pi->comps_num = 3` and `image_buffer_alloc` filling only component 0 for packed formats).
 - [ ] Once fixed upstream: add `RGB8_sRGB` → `COLOUR_FORMAT_PACKED_YUV444_OR_RGB` back to `classifyInput()` and update `JPEG_XS_RGB8_sRGB` `encodeSources` to include `RGB8_sRGB` directly, bypassing the CSC deinterleave on encode.
-- [ ] Optional: add 10/12-bit planar RGB encode/decode (SVT supports `PLANAR_YUV444_OR_RGB` at all bit depths; needs new `P_444_3x10_LE` PixelFormat + `RGB10_Planar_LE_sRGB` PixelDesc + CSC fast paths).
+- [ ] Optional: add 10/12-bit planar RGB encode/decode (SVT supports `PLANAR_YUV444_OR_RGB` at all bit depths; needs new `P_444_3x10_LE` PixelMemLayout + `RGB10_Planar_LE_sRGB` PixelFormat + CSC fast paths).
 
 ---
 
 ## JPEG XS: additional matrix / range / colour-space variants
 
-**Files:** `src/core/pixeldesc.cpp`, `src/proav/jpegxsimagecodec.cpp`
+**Files:** `src/core/pixelformat.cpp`, `src/proav/jpegxsimagecodec.cpp`
 **FIXME:** The first-pass codec exposes only the Rec.709 limited-range YUV family (`JPEG_XS_{YUV8,YUV10,YUV12}_{422,420}_Rec709`). JPEG XS itself is colour-space agnostic — matrix / range / primaries live out-of-band in the container (ISO/IEC 21122-3 sample entry) or the SDP (RFC 9134 `a=fmtp`), never in the bitstream — so adding more variants is purely a bookkeeping exercise once real workflows need them.
 
 Likely additions when an upstream caller actually asks for them:
@@ -203,24 +203,24 @@ Likely additions when an upstream caller actually asks for them:
 - `JPEG_XS_*_SemiPlanar_*` (NV12 / NV16) — if a zero-copy path from a hardware decoder wants to avoid the deinterleave cost on the input side (SVT needs planar, so the codec would have to run the NV-planar → fully-planar split like the JPEG codec already does).
 
 - [ ] Wait for a concrete upstream need before expanding the matrix; the current Rec.709 limited-range default matches ST 2110 JPEG XS carriage.
-- [ ] When adding, follow the JPEG variant pattern in `pixeldesc.cpp` (`makeJPEG_XS_YUV` helper already structured for this) and extend `classifyInput()` / `defaultDecodeTarget()` accordingly.
+- [ ] When adding, follow the JPEG variant pattern in `pixelformat.cpp` (`makeJPEG_XS_YUV` helper already structured for this) and extend `classifyInput()` / `defaultDecodeTarget()` accordingly.
 - [ ] Extend the codec's validation in `decode()` to match on the new uncompressed targets.
 
 ---
 
 ## JPEG XS: QuickTime / ISO-BMFF container support (jxsm sample entry)
 
-**Files:** `src/proav/quicktime_writer.cpp` (visual sample entry writer, `quickTimeCodecFourCC`), `src/proav/quicktime_reader.cpp` (video sample-entry parse path and `pixelDescForQuickTimeFourCC`), `src/proav/mediaiotask_quicktime.cpp` (`pickStorageFormat`)
-**FIXME:** `JpegXsImageCodec` can encode and decode JPEG XS and every `JPEG_XS_*` PixelDesc already carries `fourccList = { "jxsm" }`, but the QuickTime reader/writer does not implement the ISO/IEC 21122-3 Annex C sample entry. The writer currently closes the `jxsm` sample entry immediately after the base `VisualSampleEntry` header with no codec-specific child boxes (`quicktime_writer.cpp:847-903`), and the reader's `pixelDescForQuickTimeFourCC()` (`quicktime_reader.cpp:33-41`) does a linear scan that always returns the first `JPEG_XS_*` variant (id 153) regardless of the actual codestream — the `VisualSampleEntry.depth` field is skipped (`quicktime_reader.cpp:466`) and the sample-entry parser never walks child boxes inside the entry (the remainder is `(void)entryRemain;` at line 531).
+**Files:** `src/proav/quicktime_writer.cpp` (visual sample entry writer, `quickTimeCodecFourCC`), `src/proav/quicktime_reader.cpp` (video sample-entry parse path and `pixelFormatForQuickTimeFourCC`), `src/proav/mediaiotask_quicktime.cpp` (`pickStorageFormat`)
+**FIXME:** `JpegXsImageCodec` can encode and decode JPEG XS and every `JPEG_XS_*` PixelFormat already carries `fourccList = { "jxsm" }`, but the QuickTime reader/writer does not implement the ISO/IEC 21122-3 Annex C sample entry. The writer currently closes the `jxsm` sample entry immediately after the base `VisualSampleEntry` header with no codec-specific child boxes (`quicktime_writer.cpp:847-903`), and the reader's `pixelFormatForQuickTimeFourCC()` (`quicktime_reader.cpp:33-41`) does a linear scan that always returns the first `JPEG_XS_*` variant (id 153) regardless of the actual codestream — the `VisualSampleEntry.depth` field is skipped (`quicktime_reader.cpp:466`) and the sample-entry parser never walks child boxes inside the entry (the remainder is `(void)entryRemain;` at line 531).
 
 **Blocked on ISO/IEC 21122-3:2024 procurement.** Implementation will be a byte-exact spec-compliant reader and writer per Annex C ("Use of JPEG XS codestreams in the ISOBMFF — Motion JPEG XS"). Registered 4CCs per the MP4 Registration Authority (`github.com/mp4ra/mp4ra.github.io`): `jxsm` (sample entry), `jxpl` (Profile and Level), `jpvi` (Video Information), `jpvs` (Video Support), `jptp` (Video Transport Parameter).
 
 - [ ] Obtain ISO/IEC 21122-3:2024 (`iso.org/standard/86420.html`).
 - [ ] Implement the `jxsm` sample entry writer in `quicktime_writer.cpp` with all mandatory child boxes (`jxpl`, `jpvi`, and whatever else Annex C requires) byte-exact to the spec. Cite clause numbers in code comments.
 - [ ] Implement sample-entry child-box parsing in `quicktime_reader.cpp`: walk child boxes until `entrySize` is exhausted (replacing the `(void)entryRemain;` at line 531), parse the JPEG XS boxes and the standard `colr` box, actually read `VisualSampleEntry.depth` (currently skipped at line 466).
-- [ ] Map the parsed sample entry back to the correct `JPEG_XS_*` PixelDesc variant using the spec's fields (bit depth, sampling, colour model).
-- [ ] Route `JPEG_XS_*` PixelDescs through `MediaIOTask_QuickTime::pickStorageFormat()` as their own storage format.
-- [ ] Round-trip test `tests/quicktime_jpegxs.cpp`: write → read for each of the seven `JPEG_XS_*` PixelDescs, verify decoded frame matches source within codec tolerance.
+- [ ] Map the parsed sample entry back to the correct `JPEG_XS_*` PixelFormat variant using the spec's fields (bit depth, sampling, colour model).
+- [ ] Route `JPEG_XS_*` PixelFormats through `MediaIOTask_QuickTime::pickStorageFormat()` as their own storage format.
+- [ ] Round-trip test `tests/quicktime_jpegxs.cpp`: write → read for each of the seven `JPEG_XS_*` PixelFormats, verify decoded frame matches source within codec tolerance.
 - [ ] External interop test: verify the written `.mov` opens in whatever JPEG XS-in-MOV consumers exist at the time of implementation.
 
 ---
@@ -236,7 +236,7 @@ Slice mode requires:
 - **Unpack path**: reassembly by RTP timestamp is the same, but verification should check the per-frame packet counter for gaps / reordering.
 - **SDP**: the `a=fmtp` line must carry `packetization-mode=1` so receivers know to expect slice boundaries at packet boundaries.
 
-- [ ] Add `MediaConfig::JpegXsSlicePacketization` key; plumb into `JpegXsImageCodec` encoder init.
+- [ ] Add `MediaConfig::JpegXsSlicePacketization` key; plumb into `JpegXsVideoEncoder` encoder init.
 - [ ] Extend `RtpPayloadJpegXs::pack()` with a K=1 branch that maps encoder slices 1:1 to RTP packets.
 - [ ] Update `RtpPayloadJpegXs::unpack()` to verify per-frame packet counter for gap detection.
 - [ ] Update `buildJpegXsFmtp()` to emit `packetization-mode=1` when slice mode is active.
@@ -247,9 +247,9 @@ Slice mode requires:
 ## QuickTimeWriter: compressed audio input path is missing
 
 **File:** `src/proav/quicktime_writer.cpp` (`addAudioTrack`, `writeSample` audio branch)
-**FIXME:** The writer side treats audio samples as raw PCM only. `addAudioTrack()` requires a valid `AudioDesc::DataType` (PCM bytes per sample); it does not accept a compressed `AudioDesc` with `codecFourCC()` set. The reader side handles compressed audio cleanly (after the Phase 6 AudioDesc/Audio extensions), so this is an asymmetric gap that blocks remux-style workflows (open a compressed source, write it to a new container without transcoding).
+**FIXME:** The writer side treats audio samples as raw PCM only. `addAudioTrack()` requires a PCM `AudioFormat`; it does not accept an `AudioDesc` whose `AudioFormat` is a compressed entry (`Opus`, `AAC`, …). The reader side handles compressed audio cleanly (after the Phase 6 AudioDesc/Audio extensions), so this is an asymmetric gap that blocks remux-style workflows (open a compressed source, write it to a new container without transcoding).
 
-- [ ] Update `addAudioTrack()` to accept compressed AudioDesc (non-zero `codecFourCC()`).
+- [ ] Update `addAudioTrack()` to accept an `AudioDesc` whose `AudioFormat::isCompressed()` is true.
 - [ ] In `writeSample()` audio branch, when the track is compressed, write each sample as one variable-size entry (with its own duration / size / keyframe flags) rather than treating it as a constant-size PCM chunk.
 - [ ] In `appendTrak()` stsd emission, when the track is compressed, emit the correct sample entry form (ISO-BMFF `mp4a` / `Opus` / etc.) with any required extension atoms (`esds` for AAC, `dOps` for Opus, etc.) — at minimum a stub that carries the codec-specific config bytes supplied via the track metadata.
 - [ ] Extend MediaIOTask_QuickTime writer path to accept compressed audio frames (currently refuses via the non-PCM guard in `setupWriterFromFrame`).
@@ -269,7 +269,7 @@ JPEG itself supports optional markers that can carry color information:
 
 However, standard RFC 2435 senders strip all markers and transmit only the entropy-coded data + quantization tables. Our own `RtpPayloadJpeg::unpack()` reconstructs a bare JFIF (SOI/DQT/SOF0/DHT/SOS/ECS/EOI) with none of these APP markers. Non-standard MJPEG-over-RTP implementations that send complete JFIF frames (typically with a dynamic PT) could include these markers, but the current reader does not inspect them.
 
-- [ ] Parse APP2 ICC profile from reassembled JFIF when present — extract primaries/matrix/TRC and map to the closest PixelDesc variant (Rec.601 vs Rec.709, full vs limited).
+- [ ] Parse APP2 ICC profile from reassembled JFIF when present — extract primaries/matrix/TRC and map to the closest PixelFormat variant (Rec.601 vs Rec.709, full vs limited).
 - [ ] Parse APP14 Adobe marker for the color transform byte as a secondary signal.
 - [ ] Consider a `MediaConfig::VideoColorModel` override key so callers can force Rec.709 / limited range for broadcast sources that use JPEG transport without color metadata.
 

@@ -251,6 +251,17 @@ template<typename T> struct IsSharedObject<T, std::void_t<decltype(&T::_promeki_
 template<typename T, bool CopyOnWrite = true, typename ST = std::conditional_t<IsSharedObject<T>::value, T, SharedPtrProxy<T>>>
 class SharedPtr {
     public:
+        // All SharedPtr instantiations are friends of each other so the
+        // upcast/downcast helpers can reach the private _data pointer
+        // across type boundaries.
+        template<typename OT, bool OCoW, typename OST> friend class SharedPtr;
+
+        // sharedPointerCast needs access to _data for the dynamic_cast
+        // round-trip; befriend every instantiation of the free function.
+        template<typename DerivedT, typename BaseT, bool CoWT, typename STT>
+        friend SharedPtr<DerivedT, CoWT, DerivedT>
+        sharedPointerCast(const SharedPtr<BaseT, CoWT, STT> &sp);
+
         static constexpr bool isNative = IsSharedObject<T>::value;
 
         // Any attempt to modify the object when it's shared (i.e. a reference
@@ -262,6 +273,39 @@ class SharedPtr {
 
         SharedPtr(const SharedPtr &sp) : _data(sp._data) { acquire(); }
         SharedPtr(SharedPtr &&sp) noexcept : _data(sp._data) { sp._data = nullptr; }
+
+        /**
+         * @brief Implicit upcast from SharedPtr of a derived native type.
+         *
+         * Only participates in overload resolution when @c U publicly
+         * derives from @c T, @c U != @c T, both types are native shared
+         * objects, and both use the default storage type (storage = the
+         * object itself).  This lets a @c SharedPtr<VideoPacket>
+         * convert to a @c SharedPtr<MediaPacket> without cloning, with
+         * the refcount sitting on the shared base's @c _promeki_refct.
+         */
+        template<typename U, bool UCoW, typename UST,
+                 typename = std::enable_if_t<
+                     std::is_base_of_v<T, U> &&
+                     !std::is_same_v<T, U> &&
+                     IsSharedObject<T>::value &&
+                     IsSharedObject<U>::value &&
+                     std::is_same_v<UST, U>>>
+        SharedPtr(const SharedPtr<U, UCoW, UST> &sp) : _data(sp._data) {
+            acquire();
+        }
+
+        template<typename U, bool UCoW, typename UST,
+                 typename = std::enable_if_t<
+                     std::is_base_of_v<T, U> &&
+                     !std::is_same_v<T, U> &&
+                     IsSharedObject<T>::value &&
+                     IsSharedObject<U>::value &&
+                     std::is_same_v<UST, U>>>
+        SharedPtr(SharedPtr<U, UCoW, UST> &&sp) noexcept : _data(sp._data) {
+            sp._data = nullptr;
+        }
+
         ~SharedPtr() { release(); }
 
         template<typename... Args>
@@ -402,5 +446,40 @@ class SharedPtr {
 
 };
 
+/**
+ * @brief Dynamic downcast across a polymorphic SharedPtr hierarchy.
+ * @ingroup util
+ *
+ * Returns a @c SharedPtr<Derived> that shares ownership with @p sp when
+ * the pointee is actually a @c Derived (or further derived from it),
+ * and an empty @c SharedPtr<Derived> otherwise.  Both @c Base and
+ * @c Derived must be native shared objects (use @ref PROMEKI_SHARED /
+ * @ref PROMEKI_SHARED_DERIVED).  The original @c sp is left unchanged.
+ *
+ * @par Example
+ * @code
+ * MediaPacket::Ptr mp = encoder->receivePacket();
+ * if(auto vp = sharedPointerCast<VideoPacket>(mp)) {
+ *         // vp is VideoPacket::Ptr sharing ownership with mp
+ * }
+ * @endcode
+ */
+template<typename Derived, typename Base, bool CoW, typename ST>
+SharedPtr<Derived, CoW, Derived>
+sharedPointerCast(const SharedPtr<Base, CoW, ST> &sp) {
+    static_assert(IsSharedObject<Base>::value,
+                  "sharedPointerCast requires native shared objects");
+    static_assert(IsSharedObject<Derived>::value,
+                  "sharedPointerCast requires native shared objects");
+    static_assert(std::is_base_of_v<Base, Derived>,
+                  "Derived must publicly derive from Base");
+    SharedPtr<Derived, CoW, Derived> result;
+    if(sp.isNull()) return result;
+    Derived *d = dynamic_cast<Derived *>(sp._data);
+    if(d == nullptr) return result;
+    result._data = d;
+    result._data->_promeki_refct.inc();
+    return result;
+}
 
 PROMEKI_NAMESPACE_END

@@ -82,7 +82,8 @@ void MediaPipelineConfig::addRoute(const String &from, const String &to) {
 bool MediaPipelineConfig::operator==(const MediaPipelineConfig &other) const {
         return _stages == other._stages
             && _routes == other._routes
-            && _pipelineMetadata == other._pipelineMetadata;
+            && _pipelineMetadata == other._pipelineMetadata
+            && _frameCount == other._frameCount;
 }
 
 // ============================================================================
@@ -92,6 +93,12 @@ bool MediaPipelineConfig::operator==(const MediaPipelineConfig &other) const {
 JsonObject MediaPipelineConfig::toJson() const {
         JsonObject j;
         if(!_pipelineMetadata.isEmpty()) j.set("metadata", _pipelineMetadata.toJson());
+        // Only serialize frameCount when it is a concrete positive limit.
+        // The default (unknown / infinite / empty) is "no cap" and round-
+        // trips through the absence of the key.
+        if(_frameCount.isFinite() && !_frameCount.isEmpty()) {
+                j.set("frameCount", _frameCount.value());
+        }
 
         JsonArray stageArr;
         for(size_t i = 0; i < _stages.size(); ++i) {
@@ -131,6 +138,17 @@ MediaPipelineConfig MediaPipelineConfig::fromJson(const JsonObject &obj, Error *
                 cfg._pipelineMetadata = Metadata::fromJson(obj.getObject("metadata"), &mErr);
                 if(mErr.isError()) {
                         promekiWarn("MediaPipelineConfig::fromJson: pipeline metadata invalid.");
+                        good = false;
+                }
+        }
+
+        if(obj.contains("frameCount")) {
+                Error fcErr;
+                int64_t fc = obj.getInt("frameCount", &fcErr);
+                if(fcErr.isOk() && fc >= 0) {
+                        cfg._frameCount = FrameCount(fc);
+                } else {
+                        promekiWarn("MediaPipelineConfig::fromJson: frameCount must be a non-negative integer.");
                         good = false;
                 }
         }
@@ -463,6 +481,9 @@ StringList MediaPipelineConfig::describe() const {
                         out.pushToBack(String("  ") + md[i]);
                 }
         }
+        if(_frameCount.isFinite() && !_frameCount.isEmpty()) {
+                out.pushToBack(String("Frame count limit: ") + _frameCount.toString());
+        }
 
         out.pushToBack(String("Stages (") + String::number(_stages.size()) + "):");
         for(size_t i = 0; i < _stages.size(); ++i) {
@@ -581,6 +602,7 @@ DataStream &operator<<(DataStream &stream, const MediaPipelineConfig &c) {
         stream << c.pipelineMetadata();
         stream << c.stages();
         stream << c.routes();
+        stream << c.frameCount();
         return stream;
 }
 
@@ -592,12 +614,15 @@ DataStream &operator>>(DataStream &stream, MediaPipelineConfig &c) {
         Metadata meta;
         MediaPipelineConfig::StageList stageList;
         MediaPipelineConfig::RouteList routeList;
+        FrameCount frameCount;
         stream >> meta;
         stream >> stageList;
         stream >> routeList;
+        stream >> frameCount;
         c.setPipelineMetadata(meta);
         c.stages() = std::move(stageList);
         c.routes() = std::move(routeList);
+        c.setFrameCount(frameCount);
         return stream;
 }
 

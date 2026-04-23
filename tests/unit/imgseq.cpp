@@ -13,7 +13,7 @@
 #include <promeki/numname.h>
 #include <promeki/framerate.h>
 #include <promeki/size2d.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/metadata.h>
 #include <promeki/json.h>
 
@@ -37,7 +37,7 @@ TEST_CASE("ImgSeq: default construction is invalid") {
         CHECK(seq.tail() == 0);
         CHECK(seq.length() == 0);
         CHECK_FALSE(seq.frameRate().isValid());
-        CHECK_FALSE(seq.pixelDesc().isValid());
+        CHECK_FALSE(seq.pixelFormat().isValid());
 }
 
 TEST_CASE("ImgSeq: populated accessors round-trip") {
@@ -47,7 +47,7 @@ TEST_CASE("ImgSeq: populated accessors round-trip") {
         seq.setTail(20);
         seq.setFrameRate(FrameRate(FrameRate::FPS_24));
         seq.setVideoSize(Size2Du32(1920, 1080));
-        seq.setPixelDesc(PixelDesc(PixelDesc::RGB8_sRGB));
+        seq.setPixelFormat(PixelFormat(PixelFormat::RGB8_sRGB));
 
         CHECK(seq.isValid());
         CHECK(seq.name().prefix() == "shot_");
@@ -59,7 +59,7 @@ TEST_CASE("ImgSeq: populated accessors round-trip") {
         CHECK(seq.length() == 11);
         CHECK(seq.frameRate() == FrameRate(FrameRate::FPS_24));
         CHECK(seq.videoSize() == Size2Du32(1920, 1080));
-        CHECK(seq.pixelDesc().id() == PixelDesc::RGB8_sRGB);
+        CHECK(seq.pixelFormat().id() == PixelFormat::RGB8_sRGB);
 }
 
 TEST_CASE("ImgSeq: frameFileName computes correct filename") {
@@ -119,7 +119,7 @@ TEST_CASE("ImgSeq: toJson omits empty optional fields") {
         // not appear in the JSON.
         CHECK_FALSE(root.contains("frameRate"));
         CHECK_FALSE(root.contains("videoSize"));
-        CHECK_FALSE(root.contains("pixelDesc"));
+        CHECK_FALSE(root.contains("pixelFormat"));
         CHECK_FALSE(root.contains("metadata"));
 }
 

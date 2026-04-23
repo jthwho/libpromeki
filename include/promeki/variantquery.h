@@ -142,10 +142,10 @@ bool evalVariantQuery(const VariantQueryNode *root, const VariantQueryContext &c
  *   literal is coerced to the key's declared type by consulting
  *   @c VariantLookup<T>::specFor so queries like
  *   @c Meta.Timecode == "01:00:00:00" and
- *   @c Meta.OutputPixelDesc == "RGBA8_sRGB" work out of the box.
+ *   @c Meta.OutputPixelFormat == "RGBA8_sRGB" work out of the box.
  *   When no spec is declared, @ref Variant "Variant's" own cross-type
  *   conversion still handles common cases (e.g.
- *   @c Image[0].PixelDesc == "RGBA8_sRGB").
+ *   @c Image[0].PixelFormat == "RGBA8_sRGB").
  * - @c < / @c <= / @c > / @c >= — ordering.  Tries numeric (both sides
  *   convertible to @c double), else @ref Timecode (when one side is
  *   a Timecode), else String lexicographic.  Returns false when
@@ -165,7 +165,7 @@ bool evalVariantQuery(const VariantQueryNode *root, const VariantQueryContext &c
  *     if(q.match(*f)) std::cout << "match\n";
  * }
  *
- * VariantQuery<Image>::parse("Width > 1920 && PixelDesc == \"RGBA8_sRGB\"");
+ * VariantQuery<Image>::parse("Width > 1920 && PixelFormat == \"RGBA8_sRGB\"");
  * VariantQuery<Audio>::parse("Channels == 2 && SampleRate >= 48000");
  * @endcode
  *

@@ -29,7 +29,7 @@ class File;
  * PMDF (ProMEKI Debug Frame) is a bespoke container built for
  * debugging: the intent is to capture every bit of information a
  * @ref Frame carries — every image plane, every audio sample,
- * every metadata key, every attached @ref MediaPacket — and then
+ * every metadata key, every attached packet — and then
  * read it back producing a structurally identical @ref Frame.
  * It is @em not an interoperable format; even between promeki
  * versions the reader enforces the major-version field on the
@@ -171,9 +171,9 @@ class DebugMediaFile : public ObjectBase {
                  * @brief Appends @p frame to the file.
                  *
                  * Serialises the frame's metadata, config update,
-                 * every image (with ImageDesc, MediaPacket, and raw
+                 * every image (with ImageDesc, VideoPacket, and raw
                  * plane bytes) and every audio track (AudioDesc,
-                 * MediaPacket, raw sample bytes) into a single FRAM
+                 * AudioPacket, raw sample bytes) into a single FRAM
                  * chunk.  Valid only in @c Mode::Write.
                  *
                  * @param frame The frame to write.  Must be valid.

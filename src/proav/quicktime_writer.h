@@ -34,7 +34,7 @@ struct QuickTimeWriterTrack {
         uint32_t              timescale = 0;     ///< mdia.mdhd timescale.
         FrameRate             frameRate;
         // Video specifics:
-        PixelDesc             pixelDesc;
+        PixelFormat             pixelFormat;
         Size2Du32             size;
         /**
          * @brief Codec-specific sample-description extension payload
@@ -114,7 +114,7 @@ class QuickTimeWriter : public QuickTime::Impl {
 
                 Error setLayout(QuickTime::Layout layout) override;
 
-                Error addVideoTrack(const PixelDesc &codec, const Size2Du32 &size,
+                Error addVideoTrack(const PixelFormat &codec, const Size2Du32 &size,
                                     const FrameRate &frameRate, uint32_t *outTrackId) override;
                 Error addAudioTrack(const AudioDesc &desc, uint32_t *outTrackId) override;
                 Error addTimecodeTrack(const Timecode &startTimecode,

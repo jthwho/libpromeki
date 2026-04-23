@@ -18,7 +18,7 @@
 #include <promeki/fourcc.h>
 #include <promeki/framerate.h>
 #include <promeki/size2d.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/audiodesc.h>
 #include <promeki/mediadesc.h>
 #include <promeki/metadata.h>
@@ -42,7 +42,7 @@ class IODevice;
  * @c Image::fromCompressedData) are responsible for running any codec.
  *
  * Tracks are exposed as a plain list; each Track carries its codec
- * (as a PixelDesc for video, an AudioDesc for audio), frame rate,
+ * (as a PixelFormat for video, an AudioDesc for audio), frame rate,
  * sample count, language, and per-track metadata. Container-level
  * metadata (from @c udta) is available via @c containerMetadata().
  *
@@ -52,7 +52,7 @@ class IODevice;
  * if(qt.open() == Error::Ok) {
  *     for(const QuickTime::Track &tk : qt.tracks()) {
  *         if(tk.type() == QuickTime::Video) {
- *             // tk.pixelDesc() identifies the codec (H264, ProRes, ...)
+ *             // tk.pixelFormat() identifies the codec (H264, ProRes, ...)
  *         }
  *     }
  * }
@@ -137,7 +137,7 @@ class QuickTime {
                                 /** @brief Returns the human-readable track name (if any). */
                                 const String    &name() const        { return _name; }
                                 /** @brief Returns the video pixel description (codec). */
-                                const PixelDesc &pixelDesc() const   { return _pixelDesc; }
+                                const PixelFormat &pixelFormat() const   { return _pixelFormat; }
                                 /** @brief Returns the video dimensions in pixels. */
                                 const Size2Du32 &size() const        { return _size; }
                                 /** @brief Returns the audio description (channel layout, rate). */
@@ -180,7 +180,7 @@ class QuickTime {
                                 /** @brief Sets the human-readable track name. */
                                 void setName(const String &s)            { _name = s; }
                                 /** @brief Sets the video pixel description (codec). */
-                                void setPixelDesc(const PixelDesc &pd)   { _pixelDesc = pd; }
+                                void setPixelFormat(const PixelFormat &pd)   { _pixelFormat = pd; }
                                 /** @brief Sets the video dimensions. */
                                 void setSize(const Size2Du32 &s)         { _size = s; }
                                 /** @brief Sets the audio description. */
@@ -203,7 +203,7 @@ class QuickTime {
                                 uint64_t  _sampleCount = 0;
                                 String    _language;
                                 String    _name;
-                                PixelDesc _pixelDesc;
+                                PixelFormat _pixelFormat;
                                 Size2Du32 _size;
                                 AudioDesc _audioDesc;
                                 Metadata  _metadata;
@@ -324,7 +324,7 @@ class QuickTime {
                                  * @param outTrackId If non-null, receives the assigned track ID.
                                  * @return Error::Ok on success.
                                  */
-                                virtual Error addVideoTrack(const PixelDesc &codec,
+                                virtual Error addVideoTrack(const PixelFormat &codec,
                                                             const Size2Du32 &size,
                                                             const FrameRate &frameRate,
                                                             uint32_t *outTrackId);
@@ -514,7 +514,7 @@ class QuickTime {
                 }
 
                 /** @brief Adds a video track to the writer. */
-                Error addVideoTrack(const PixelDesc &codec, const Size2Du32 &size,
+                Error addVideoTrack(const PixelFormat &codec, const Size2Du32 &size,
                                     const FrameRate &frameRate, uint32_t *outTrackId = nullptr) {
                         return d.modify()->addVideoTrack(codec, size, frameRate, outTrackId);
                 }

@@ -16,7 +16,7 @@
 #include <promeki/mediaio.h>
 #include <promeki/mediaiodescription.h>
 #include <promeki/mediaiotask.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/set.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
@@ -260,8 +260,8 @@ bool findCodecTransitive(const MediaDesc &from,
                          const MediaPipelinePlanner::Policy &policy,
                          promeki::List<BridgeStep> *out) {
         if(from.imageList().isEmpty() || to.imageList().isEmpty()) return false;
-        const PixelDesc &fromPd = from.imageList()[0].pixelDesc();
-        const PixelDesc &toPd   = to.imageList()[0].pixelDesc();
+        const PixelFormat &fromPd = from.imageList()[0].pixelFormat();
+        const PixelFormat &toPd   = to.imageList()[0].pixelFormat();
         if(!fromPd.isCompressed() || !toPd.isCompressed()) return false;
         if(policy.excludedBridges.contains("VideoDecoder")) return false;
         if(policy.excludedBridges.contains("VideoEncoder")) return false;
@@ -274,7 +274,7 @@ bool findCodecTransitive(const MediaDesc &from,
         MediaDesc intermediate = to;
         if(!intermediate.imageList().isEmpty()) {
                 ImageDesc &img = intermediate.imageList()[0];
-                img.setPixelDesc(PixelDesc(PixelDesc::YUV8_420_SemiPlanar_Rec709));
+                img.setPixelFormat(PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709));
         }
 
         BridgeStep dec, enc;
@@ -433,8 +433,8 @@ Error resolveRoute(const MediaPipelineConfig::Route &route,
                                 "    codec-transitive (Decoder+Encoder): not applicable "
                                 "(missing image desc).");
                 } else {
-                        const PixelDesc &fromPd = producedDesc.imageList()[0].pixelDesc();
-                        const PixelDesc &toPd   = target.imageList()[0].pixelDesc();
+                        const PixelFormat &fromPd = producedDesc.imageList()[0].pixelFormat();
+                        const PixelFormat &toPd   = target.imageList()[0].pixelFormat();
                         if(!fromPd.isCompressed() || !toPd.isCompressed()) {
                                 appendDiagnostic(diagnostic,
                                         "    codec-transitive (Decoder+Encoder): not applicable "
@@ -717,7 +717,11 @@ Error MediaPipelinePlanner::plan(const MediaPipelineConfig &in,
         // 5. Seed the output with every input stage's metadata and
         // every input stage's declaration.  Routes we re-emit as we
         // walk them so we can splice bridges in at the right point.
+        // Pipeline-wide settings (metadata, frame-count cap) are
+        // preserved verbatim — the planner only splices bridges; the
+        // user's runtime caps should survive planning unchanged.
         out->setPipelineMetadata(in.pipelineMetadata());
+        out->setFrameCount(in.frameCount());
         for(const auto &s : in.stages()) out->addStage(s);
 
         // 6. Walk routes in topological order so produced descs flow

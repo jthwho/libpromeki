@@ -317,7 +317,7 @@ inline const AudioPattern AudioPattern::Iec60958    { 17 };
 /**
  * @brief Well-known Enum type for chroma subsampling modes.
  *
- * Mirrors @c JpegImageCodec::Subsampling in value and order.  Used as the
+ * Mirrors @c JpegVideoEncoder::Subsampling in value and order.  Used as the
  * value type for @ref MediaConfig::JpegSubsampling and anywhere else a
  * simple 4:4:4 / 4:2:2 / 4:2:0 selection is needed.
  */
@@ -342,16 +342,16 @@ inline const ChromaSubsampling ChromaSubsampling::YUV420 { 2 };
 /**
  * @brief Well-known Enum type for audio sample formats.
  *
- * Mirrors @c AudioDesc::DataType in value and order.  Used as the value
+ * Mirrors @c AudioFormat::ID in value and order.  Used as the value
  * type for any config key that selects an audio sample format (e.g.
  * @c MediaConfig::OutputAudioDataType).
  *
- * The integer values match the @c AudioDesc::DataType enumeration so
- * callers can convert in either direction via a plain @c static_cast
- * on @c Enum::value().  The string names also match — e.g.
- * @c "PCMI_S16LE", @c "PCMI_Float32LE" — so legacy code that still
- * passes strings through @c AudioDesc::stringToDataType keeps working
- * when the same string is fed through the Enum lookup path.
+ * The integer values match the @c AudioFormat::ID enumeration for
+ * PCM interleaved formats so callers can convert in either direction
+ * via a plain @c static_cast on @c Enum::value().  The string names
+ * also match — e.g. @c "PCMI_S16LE", @c "PCMI_Float32LE" — so code
+ * that round-trips through @c AudioFormat::lookup keeps working when
+ * the same string is fed through the Enum lookup path.
  */
 class AudioDataType : public TypedEnum<AudioDataType> {
         public:
@@ -1036,42 +1036,49 @@ inline const InspectorTest InspectorTest::AudioSamples { 5 };
 inline const InspectorTest InspectorTest::CaptureStats { 6 };
 
 /**
- * @brief Well-known Enum type for video-encoder rate-control modes.
+ * @brief Well-known Enum type for codec rate-control modes (audio + video).
  *
- * Selects the rate-control strategy a @ref VideoEncoder uses when
- * producing a bitstream.
+ * Selects the rate-control strategy a codec uses when producing a
+ * bitstream.  Single shared enum so audio and video sides of the codec
+ * API can describe and configure rate-control with the same vocabulary.
  *
- * - @c CBR — constant bitrate.  The encoder targets @ref
- *   MediaConfig::BitrateKbps with as little short-term variation as
- *   possible.  Use for live streaming, broadcast contribution, and
+ * - @c CBR — constant bitrate.  The encoder targets
+ *   @ref MediaConfig::BitrateKbps with as little short-term variation
+ *   as possible.  Use for live streaming, broadcast contribution, and
  *   any transport where bandwidth must be tightly bounded.
  * - @c VBR — variable bitrate.  The encoder targets an average
  *   bitrate but allows short-term variation to preserve quality on
  *   complex content.  Use for file storage where the average
  *   matters but instantaneous peaks do not.
+ * - @c ABR — average bitrate.  Long-term average is held to the
+ *   target while short-term rate is allowed to drift more freely than
+ *   under VBR.  Common on audio codecs (MP3, AAC).
  * - @c CQP — constant quantization parameter.  The encoder ignores
- *   @c BitrateKbps and instead holds quality constant by using a
- *   fixed QP; the resulting bitrate varies with content complexity.
- *   Use for testing / quality analysis where reproducible quality
- *   matters more than bitrate.
+ *   the bitrate target and instead holds quality constant; the
+ *   resulting bitrate varies with content complexity.  Use for
+ *   testing / quality analysis where reproducible quality matters
+ *   more than bitrate.  Common on video codecs.
  */
-class VideoRateControl : public TypedEnum<VideoRateControl> {
+class RateControlMode : public TypedEnum<RateControlMode> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("VideoRateControl", 1,
+                PROMEKI_REGISTER_ENUM_TYPE("RateControlMode", 1,
                                 { "CBR", 0 },
                                 { "VBR", 1 },
-                                { "CQP", 2 });  // default: VBR
+                                { "ABR", 2 },
+                                { "CQP", 3 });  // default: VBR
 
-                using TypedEnum<VideoRateControl>::TypedEnum;
+                using TypedEnum<RateControlMode>::TypedEnum;
 
-                static const VideoRateControl CBR;
-                static const VideoRateControl VBR;
-                static const VideoRateControl CQP;
+                static const RateControlMode CBR;
+                static const RateControlMode VBR;
+                static const RateControlMode ABR;
+                static const RateControlMode CQP;
 };
 
-inline const VideoRateControl VideoRateControl::CBR { 0 };
-inline const VideoRateControl VideoRateControl::VBR { 1 };
-inline const VideoRateControl VideoRateControl::CQP { 2 };
+inline const RateControlMode RateControlMode::CBR { 0 };
+inline const RateControlMode RateControlMode::VBR { 1 };
+inline const RateControlMode RateControlMode::ABR { 2 };
+inline const RateControlMode RateControlMode::CQP { 3 };
 
 /**
  * @brief Well-known Enum type for video-encoder speed / quality presets.
@@ -1118,6 +1125,43 @@ inline const VideoEncoderPreset VideoEncoderPreset::HighQuality     { 3 };
 inline const VideoEncoderPreset VideoEncoderPreset::Lossless        { 4 };
 
 /**
+ * @brief Well-known Enum type for the Opus encoder application mode.
+ *
+ * Maps directly onto libopus's @c OPUS_APPLICATION_* constants:
+ *
+ *  - @c Voip      → @c OPUS_APPLICATION_VOIP — best quality at a given
+ *                   bitrate for voice; emphasises voice intelligibility
+ *                   over musical fidelity.
+ *  - @c Audio     → @c OPUS_APPLICATION_AUDIO — best quality at a given
+ *                   bitrate for music and most non-voice content.
+ *  - @c LowDelay  → @c OPUS_APPLICATION_RESTRICTED_LOWDELAY — disables
+ *                   the speech-optimised mode and drops the additional
+ *                   look-ahead, lowering algorithmic delay at a small
+ *                   quality cost.
+ *
+ * Selected via @ref MediaConfig::OpusApplication; the codec default is
+ * @c Audio so general-purpose pipelines get full-fidelity behaviour
+ * without explicit configuration.
+ */
+class OpusApplication : public TypedEnum<OpusApplication> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("OpusApplication", 1,
+                                { "Voip",     0 },
+                                { "Audio",    1 },
+                                { "LowDelay", 2 });  // default: Audio
+
+                using TypedEnum<OpusApplication>::TypedEnum;
+
+                static const OpusApplication Voip;
+                static const OpusApplication Audio;
+                static const OpusApplication LowDelay;
+};
+
+inline const OpusApplication OpusApplication::Voip     { 0 };
+inline const OpusApplication OpusApplication::Audio    { 1 };
+inline const OpusApplication OpusApplication::LowDelay { 2 };
+
+/**
  * @brief Well-known Enum type for video value range (aka quantization
  *        range / full-range flag).
  *
@@ -1125,10 +1169,10 @@ inline const VideoEncoderPreset VideoEncoderPreset::Lossless        { 4 };
  * Y'CbCr luma, 16..240 on the chroma channels, and the bit-depth
  * scaling of those values for 10/12/16-bit.  @c Full means the whole
  * digital range (0..255 on 8-bit, 0..2^N-1 in general).  @c Unknown is
- * the "auto-derive" / "not declared" default used by @ref PixelDesc
+ * the "auto-derive" / "not declared" default used by @ref PixelFormat
  * entries that pre-date the field being explicit, and by
  * @ref MediaConfig keys that want downstream code to infer the range
- * from the accompanying @ref PixelDesc.
+ * from the accompanying @ref PixelFormat.
  *
  * The numeric values are local to libpromeki and do @em not match any
  * codec-specific on-wire representation.  Encoders translate to
@@ -1171,7 +1215,7 @@ class ColorPrimaries : public TypedEnum<ColorPrimaries> {
                 // outside the 0..22 H.273 value range so it can never
                 // collide with a spec-registered primary.  Encoders
                 // that see @c Auto resolve it by inspecting the input
-                // PixelDesc's ColorModel at session init time.
+                // PixelFormat's ColorModel at session init time.
                 PROMEKI_REGISTER_ENUM_TYPE("ColorPrimaries", 255,
                                 { "BT709",       1 },
                                 { "Unspecified", 2 },
@@ -1310,7 +1354,7 @@ class MatrixCoefficients : public TypedEnum<MatrixCoefficients> {
         public:
                 // @c Auto (numeric 255) sits outside the 0..11 H.273
                 // range.  Encoders resolve @c Auto from the input
-                // PixelDesc's ColorModel (RGB models → @c RGB,
+                // PixelFormat's ColorModel (RGB models → @c RGB,
                 // YCbCr_Rec709 → @c BT709, YCbCr_Rec2020 → @c BT2020_NCL,
                 // etc.) at session init time.
                 PROMEKI_REGISTER_ENUM_TYPE("MatrixCoefficients", 255,

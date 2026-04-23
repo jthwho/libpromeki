@@ -22,7 +22,7 @@
 #include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/ltcdecoder.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/mediatimestamp.h>
 #include <promeki/metadata.h>
 #include <promeki/timecode.h>
@@ -454,7 +454,7 @@ Error MediaIOTask_Inspector::executeCmd(MediaIOCommandClose &cmd) {
 
 void MediaIOTask_Inspector::decompressImages(Frame &frame) {
         // Walk every image in the frame; any that carries a
-        // compressed PixelDesc gets replaced in-place with the
+        // compressed PixelFormat gets replaced in-place with the
         // decompressed output of Image::convert().  The target
         // format is the first entry in the codec's decodeTargets
         // list — guaranteed to be a native decode format so
@@ -467,12 +467,12 @@ void MediaIOTask_Inspector::decompressImages(Frame &frame) {
                 Image::Ptr &imgPtr = images[i];
                 if(!imgPtr.isValid() || !imgPtr->isCompressed()) continue;
 
-                const PixelDesc &srcPd = imgPtr->desc().pixelDesc();
-                PixelDesc targetPd;
+                const PixelFormat &srcPd = imgPtr->desc().pixelFormat();
+                PixelFormat targetPd;
                 if(!srcPd.decodeTargets().isEmpty()) {
-                        targetPd = PixelDesc(srcPd.decodeTargets()[0]);
+                        targetPd = PixelFormat(srcPd.decodeTargets()[0]);
                 } else {
-                        targetPd = PixelDesc(PixelDesc::RGBA8_sRGB);
+                        targetPd = PixelFormat(PixelFormat::RGBA8_sRGB);
                 }
 
                 Image decoded = imgPtr->convert(targetPd, imgPtr->metadata());
@@ -1223,14 +1223,14 @@ void MediaIOTask_Inspector::runCaptureStats(const Frame &frame,
         String videoDeltaMs   = String("-");
         String imgWidth       = String("-");
         String imgHeight      = String("-");
-        String pixelFormat    = String("-");
+        String pixelFormat      = String("-");
         String imageBytes     = String("-");
         if(!frame.imageList().isEmpty()) {
                 const Image::Ptr &imgPtr = frame.imageList()[0];
                 if(imgPtr.isValid()) {
                         imgWidth    = String::number(imgPtr->size().width());
                         imgHeight   = String::number(imgPtr->size().height());
-                        pixelFormat = PixelDesc(imgPtr->desc().pixelDesc()).name();
+                        pixelFormat   = PixelFormat(imgPtr->desc().pixelFormat()).name();
                         imageBytes  = String::number(static_cast<int64_t>(
                                 imageByteSize(*imgPtr)));
 
@@ -1268,7 +1268,7 @@ void MediaIOTask_Inspector::runCaptureStats(const Frame &frame,
                         const AudioDesc &ad = audPtr->desc();
                         audioSamples  = String::number(static_cast<int64_t>(
                                 audPtr->samples()));
-                        audioFormat   = ad.dataTypeName();
+                        audioFormat   = ad.format().name();
                         audioRateHz   = String::sprintf("%.2f", ad.sampleRate());
                         audioChannels = String::number(static_cast<int64_t>(
                                 ad.channels()));

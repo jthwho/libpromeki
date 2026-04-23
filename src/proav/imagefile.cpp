@@ -8,7 +8,7 @@
 #include <promeki/imagefile.h>
 #include <promeki/imagefileio.h>
 #include <promeki/image.h>
-#include <promeki/mediapacket.h>
+#include <promeki/videopacket.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -23,7 +23,7 @@ Error ImageFile::load(const MediaConfig &config) {
         Error err = _io->load(*this, config);
         if(err.isError()) return err;
 
-        // Attach a MediaPacket to every compressed Image the backend
+        // Attach a VideoPacket to every compressed Image the backend
         // loaded — plane 0 already holds the encoded bitstream, so we
         // just wrap it as a zero-copy packet and hand the ownership
         // over to the Image.  A downstream @ref VideoDecoder consumes
@@ -35,8 +35,8 @@ Error ImageFile::load(const MediaConfig &config) {
                 if(imgPtr->packet().isValid()) continue;
                 const Buffer::Ptr &plane = imgPtr->plane(0);
                 if(!plane.isValid() || plane->size() == 0) continue;
-                auto pkt = MediaPacket::Ptr::create(plane, imgPtr->pixelDesc());
-                pkt.modify()->addFlag(MediaPacket::Keyframe);
+                auto pkt = VideoPacket::Ptr::create(plane, imgPtr->pixelFormat());
+                pkt.modify()->addFlag(VideoPacket::Keyframe);
                 imgPtr.modify()->setPacket(std::move(pkt));
         }
         return Error::Ok;

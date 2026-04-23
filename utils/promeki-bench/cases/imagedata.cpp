@@ -5,7 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  *
  * @ref ImageDataEncoder / @ref ImageDataDecoder benchmark cases for
- * promeki-bench.  Each (PixelDesc, dimensions) pair is registered as
+ * promeki-bench.  Each (PixelFormat, dimensions) pair is registered as
  * an individual @ref BenchmarkCase so baseline tracking and
  * regression comparisons can attribute deltas to the right format.
  *
@@ -21,7 +21,7 @@
  *
  * | Key                  | Type        | Default      | Description                                       |
  * |----------------------|-------------|--------------|---------------------------------------------------|
- * | `imagedata.format+=` | StringList  | (see below)  | PixelDesc names to bench                          |
+ * | `imagedata.format+=` | StringList  | (see below)  | PixelFormat names to bench                          |
  * | `imagedata.size+=`   | StringList  | "1920x1080"  | Image dimensions, repeatable, e.g. "3840x2160"    |
  *
  * Defaults: the four formats the encoder + decoder unit tests
@@ -41,7 +41,7 @@
 #include <promeki/imagedatadecoder.h>
 #include <promeki/image.h>
 #include <promeki/imagedesc.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/list.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
@@ -59,20 +59,20 @@ struct ImageSize {
 };
 
 struct CaseSpec {
-        PixelDesc::ID pd;
+        PixelFormat::ID pd;
         ImageSize     size;
 };
 
 /**
- * @brief Looks up a PixelDesc by name and warns on miss.
+ * @brief Looks up a PixelFormat by name and warns on miss.
  */
-PixelDesc::ID resolveImageDataFormat(const String &name) {
-        PixelDesc pd = PixelDesc::lookup(name);
+PixelFormat::ID resolveImageDataFormat(const String &name) {
+        PixelFormat pd = PixelFormat::lookup(name);
         if(pd.isValid()) return pd.id();
         std::fprintf(stderr,
-                     "promeki-bench: imagedata: unknown PixelDesc '%s'\n",
+                     "promeki-bench: imagedata: unknown PixelFormat '%s'\n",
                      name.cstr());
-        return PixelDesc::Invalid;
+        return PixelFormat::Invalid;
 }
 
 /**
@@ -120,8 +120,8 @@ List<ImageSize> resolveSizes() {
  * cheapest (interleaved 8-bit) and most expensive (v210 packed
  * 10-bit) paths the encoder / decoder support.
  */
-List<PixelDesc::ID> resolveFormats() {
-        List<PixelDesc::ID> out;
+List<PixelFormat::ID> resolveFormats() {
+        List<PixelFormat::ID> out;
         StringList names = benchParams().getStringList(String("imagedata.format"));
         if(names.isEmpty()) {
                 names.pushToBack(String("RGBA8_sRGB"));
@@ -130,8 +130,8 @@ List<PixelDesc::ID> resolveFormats() {
                 names.pushToBack(String("YUV10_422_v210_Rec709"));
         }
         for(const auto &n : names) {
-                PixelDesc::ID id = resolveImageDataFormat(n);
-                if(id == PixelDesc::Invalid) continue;
+                PixelFormat::ID id = resolveImageDataFormat(n);
+                if(id == PixelFormat::Invalid) continue;
                 out.pushToBack(id);
         }
         return out;
@@ -156,7 +156,7 @@ String sizeLabel(ImageSize sz) {
 
 String caseName(const char *prefix, const CaseSpec &cs) {
         return String(prefix) + "_" + sizeLabel(cs.size) + "_" +
-               PixelDesc(cs.pd).name();
+               PixelFormat(cs.pd).name();
 }
 
 /**
@@ -181,7 +181,7 @@ List<ImageDataEncoder::Item> buildDefaultItems() {
 BenchmarkCase::Function buildEncoderCase(CaseSpec spec) {
         return [spec](BenchmarkState &state) {
                 ImageDesc desc(spec.size.width, spec.size.height,
-                               PixelDesc(spec.pd));
+                               PixelFormat(spec.pd));
                 ImageDataEncoder encoder(desc);
                 if(!encoder.isValid()) {
                         // Image too narrow for the format's alignment
@@ -194,7 +194,7 @@ BenchmarkCase::Function buildEncoderCase(CaseSpec spec) {
                 }
 
                 Image img(spec.size.width, spec.size.height,
-                          PixelDesc(spec.pd));
+                          PixelFormat(spec.pd));
                 if(!img.isValid()) {
                         state.setCounter(String("invalid"), 1.0);
                         for(auto _ : state) (void)_;
@@ -229,7 +229,7 @@ BenchmarkCase::Function buildEncoderCase(CaseSpec spec) {
                 state.setCounter(String("bit_width_px"),
                                  static_cast<double>(encoder.bitWidth()));
                 state.setLabel(sizeLabel(spec.size) + " " +
-                               PixelDesc(spec.pd).name() +
+                               PixelFormat(spec.pd).name() +
                                " encode (32-line band)");
         };
 }
@@ -244,7 +244,7 @@ BenchmarkCase::Function buildEncoderCase(CaseSpec spec) {
 BenchmarkCase::Function buildDecoderCase(CaseSpec spec) {
         return [spec](BenchmarkState &state) {
                 ImageDesc desc(spec.size.width, spec.size.height,
-                               PixelDesc(spec.pd));
+                               PixelFormat(spec.pd));
                 ImageDataEncoder encoder(desc);
                 if(!encoder.isValid()) {
                         state.setCounter(String("invalid"), 1.0);
@@ -253,7 +253,7 @@ BenchmarkCase::Function buildDecoderCase(CaseSpec spec) {
                 }
 
                 Image img(spec.size.width, spec.size.height,
-                          PixelDesc(spec.pd));
+                          PixelFormat(spec.pd));
                 if(!img.isValid()) {
                         state.setCounter(String("invalid"), 1.0);
                         for(auto _ : state) (void)_;
@@ -302,7 +302,7 @@ BenchmarkCase::Function buildDecoderCase(CaseSpec spec) {
                 state.setCounter(String("bit_width_px"),
                                  static_cast<double>(decoder.expectedBitWidth()));
                 state.setLabel(sizeLabel(spec.size) + " " +
-                               PixelDesc(spec.pd).name() +
+                               PixelFormat(spec.pd).name() +
                                " decode (32-line band)");
         };
 }
@@ -317,14 +317,14 @@ void registerImageDataCases() {
                         caseName("encode", spec),
                         String("ImageDataEncoder.encode — ") +
                                 sizeLabel(spec.size) + " " +
-                                PixelDesc(spec.pd).name(),
+                                PixelFormat(spec.pd).name(),
                         buildEncoderCase(spec)));
                 BenchmarkRunner::registerCase(BenchmarkCase(
                         suite,
                         caseName("decode", spec),
                         String("ImageDataDecoder.decode — ") +
                                 sizeLabel(spec.size) + " " +
-                                PixelDesc(spec.pd).name(),
+                                PixelFormat(spec.pd).name(),
                         buildDecoderCase(spec)));
         }
 }
@@ -332,7 +332,7 @@ void registerImageDataCases() {
 String imageDataParamHelp() {
         return String(
                 "imagedata suite parameters:\n"
-                "  imagedata.format+=<name> Add a PixelDesc to the bench set.  Default:\n"
+                "  imagedata.format+=<name> Add a PixelFormat to the bench set.  Default:\n"
                 "                             RGBA8_sRGB, YUV8_422_Rec709,\n"
                 "                             YUV8_422_Planar_Rec709, YUV10_422_v210_Rec709\n"
                 "  imagedata.size+=WxH      Add an image size (default: 1920x1080).  May\n"

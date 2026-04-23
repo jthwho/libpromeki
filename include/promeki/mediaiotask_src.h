@@ -19,8 +19,8 @@ PROMEKI_NAMESPACE_BEGIN
  * @ingroup proav
  *
  * ReadWrite MediaIO that accepts a frame on @c writeFrame(), converts
- * each audio track to the configured output @ref AudioDataType via
- * @ref Audio::convertTo, and emits the result on @c readFrame().
+ * each audio track to the configured output @ref AudioFormat via
+ * @ref Audio::convert, and emits the result on @c readFrame().
  * Video images and metadata are forwarded unchanged.
  *
  * If no @ref MediaConfig::OutputAudioDataType is set (or it is
@@ -101,7 +101,7 @@ class MediaIOTask_SRC : public MediaIOTask {
 
                 Error convertFrame(const Frame::Ptr &input, Frame::Ptr &output);
 
-                AudioDesc::DataType             _outputAudioDataType = AudioDesc::Invalid;
+                AudioFormat::ID             _outputAudioDataType = AudioFormat::Invalid;
                 bool                            _outputAudioDataTypeSet = false;
                 int                             _capacity = 4;
 

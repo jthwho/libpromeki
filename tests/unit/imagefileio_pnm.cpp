@@ -24,10 +24,10 @@ TEST_CASE("ImageFileIO PNM: handler is registered") {
 
 TEST_CASE("ImageFileIO PNM: PPM P6 RGB8 round-trip") {
         const char *fn = "/tmp/promeki_pnm_p6.ppm";
-        Image src(64, 48, PixelDesc(PixelDesc::RGB8_sRGB));
+        Image src(64, 48, PixelFormat(PixelFormat::RGB8_sRGB));
         REQUIRE(src.isValid());
         uint8_t *data = static_cast<uint8_t *>(src.data());
-        size_t bytes = src.pixelDesc().pixelFormat().planeSize(0, 64, 48);
+        size_t bytes = src.pixelFormat().memLayout().planeSize(0, 64, 48);
         for(size_t i = 0; i < bytes; ++i) data[i] = static_cast<uint8_t>((i * 7) & 0xFF);
 
         ImageFile sf(ImageFile::PNM);
@@ -42,7 +42,7 @@ TEST_CASE("ImageFileIO PNM: PPM P6 RGB8 round-trip") {
         REQUIRE(dst.isValid());
         CHECK(dst.width() == 64);
         CHECK(dst.height() == 48);
-        CHECK(dst.pixelDesc().id() == PixelDesc::RGB8_sRGB);
+        CHECK(dst.pixelFormat().id() == PixelFormat::RGB8_sRGB);
         CHECK(std::memcmp(src.data(), dst.data(), bytes) == 0);
 
         std::remove(fn);
@@ -50,10 +50,10 @@ TEST_CASE("ImageFileIO PNM: PPM P6 RGB8 round-trip") {
 
 TEST_CASE("ImageFileIO PNM: PGM P5 Mono8 round-trip") {
         const char *fn = "/tmp/promeki_pnm_p5.pgm";
-        Image src(64, 48, PixelDesc(PixelDesc::Mono8_sRGB));
+        Image src(64, 48, PixelFormat(PixelFormat::Mono8_sRGB));
         REQUIRE(src.isValid());
         uint8_t *data = static_cast<uint8_t *>(src.data());
-        size_t bytes = src.pixelDesc().pixelFormat().planeSize(0, 64, 48);
+        size_t bytes = src.pixelFormat().memLayout().planeSize(0, 64, 48);
         for(size_t i = 0; i < bytes; ++i) data[i] = static_cast<uint8_t>(i & 0xFF);
 
         ImageFile sf(ImageFile::PNM);
@@ -66,7 +66,7 @@ TEST_CASE("ImageFileIO PNM: PGM P5 Mono8 round-trip") {
         CHECK(lf.load() == Error::Ok);
         Image dst = lf.image();
         REQUIRE(dst.isValid());
-        CHECK(dst.pixelDesc().id() == PixelDesc::Mono8_sRGB);
+        CHECK(dst.pixelFormat().id() == PixelFormat::Mono8_sRGB);
         CHECK(std::memcmp(src.data(), dst.data(), bytes) == 0);
 
         std::remove(fn);
@@ -74,10 +74,10 @@ TEST_CASE("ImageFileIO PNM: PGM P5 Mono8 round-trip") {
 
 TEST_CASE("ImageFileIO PNM: PPM P6 RGB16 round-trip") {
         const char *fn = "/tmp/promeki_pnm_p6_16.ppm";
-        Image src(32, 24, PixelDesc(PixelDesc::RGB16_BE_sRGB));
+        Image src(32, 24, PixelFormat(PixelFormat::RGB16_BE_sRGB));
         REQUIRE(src.isValid());
         uint8_t *data = static_cast<uint8_t *>(src.data());
-        size_t bytes = src.pixelDesc().pixelFormat().planeSize(0, 32, 24);
+        size_t bytes = src.pixelFormat().memLayout().planeSize(0, 32, 24);
         for(size_t i = 0; i < bytes; ++i) data[i] = static_cast<uint8_t>((i * 3) & 0xFF);
 
         ImageFile sf(ImageFile::PNM);
@@ -90,7 +90,7 @@ TEST_CASE("ImageFileIO PNM: PPM P6 RGB16 round-trip") {
         CHECK(lf.load() == Error::Ok);
         Image dst = lf.image();
         REQUIRE(dst.isValid());
-        CHECK(dst.pixelDesc().id() == PixelDesc::RGB16_BE_sRGB);
+        CHECK(dst.pixelFormat().id() == PixelFormat::RGB16_BE_sRGB);
         CHECK(std::memcmp(src.data(), dst.data(), bytes) == 0);
 
         std::remove(fn);

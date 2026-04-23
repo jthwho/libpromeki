@@ -11,7 +11,7 @@
 #include <promeki/string.h>
 #include <promeki/sharedptr.h>
 #include <promeki/size2d.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/metadata.h>
 #include <promeki/enums.h>
 
@@ -29,8 +29,8 @@ class SdpMediaDescription;
  *
  * @par Example
  * @code
- * ImageDesc desc(1920, 1080, PixelDesc::RGBA8_sRGB);
- * size_t stride = desc.pixelDesc().lineStride(0, desc);
+ * ImageDesc desc(1920, 1080, PixelFormat::RGBA8_sRGB);
+ * size_t stride = desc.pixelFormat().lineStride(0, desc);
  * int planes = desc.planeCount();
  * @endcode
  */
@@ -54,8 +54,8 @@ class ImageDesc {
                  * @param sz The image dimensions.
                  * @param pd The pixel description.
                  */
-                ImageDesc(const Size2Du32 &sz, const PixelDesc &pd) :
-                        _size(sz), _pixelDesc(pd) { }
+                ImageDesc(const Size2Du32 &sz, const PixelFormat &pd) :
+                        _size(sz), _pixelFormat(pd) { }
 
                 /**
                  * @brief Constructs an image description from width, height, and pixel description.
@@ -63,8 +63,8 @@ class ImageDesc {
                  * @param h  The image height in pixels.
                  * @param pd The pixel description.
                  */
-                ImageDesc(size_t w, size_t h, const PixelDesc &pd) :
-                        _size(Size2Du32(w, h)), _pixelDesc(pd) { }
+                ImageDesc(size_t w, size_t h, const PixelFormat &pd) :
+                        _size(Size2Du32(w, h)), _pixelFormat(pd) { }
 
                 /**
                  * @brief Derives an ImageDesc from an SDP media description.
@@ -77,7 +77,7 @@ class ImageDesc {
                  *  - @c jxsv  (RFC 9134 JPEG XS) — geometry comes from
                  *             @c width= / @c height= in the fmtp line;
                  *             sampling and depth pick one of the
-                 *             @c JPEG_XS_* @ref PixelDesc entries.
+                 *             @c JPEG_XS_* @ref PixelFormat entries.
                  *             Defaults to @c JPEG_XS_YUV10_422_Rec709
                  *             when fmtp is incomplete.
                  *  - @c raw   (RFC 4175 uncompressed) — geometry and
@@ -108,11 +108,11 @@ class ImageDesc {
                 static ImageDesc fromSdp(const SdpMediaDescription &md);
 
                 /**
-                 * @brief Resolves a JPEG PixelDesc from ST 2110-20
+                 * @brief Resolves a JPEG PixelFormat from ST 2110-20
                  * colorimetry and RANGE parameters plus subsampling.
                  *
                  * Used by the deferred JPEG geometry path in the RTP
-                 * reader to pick the correct PixelDesc variant when
+                 * reader to pick the correct PixelFormat variant when
                  * colorimetry/RANGE are available from the SDP fmtp
                  * line.  When @p colorimetry is empty, defaults to
                  * Rec.601 full range (JFIF standard).
@@ -122,9 +122,9 @@ class ImageDesc {
                  * @param range       "FULL" or "NARROW" (empty = FULL).
                  * @param is420       True for 4:2:0, false for 4:2:2.
                  * @param isRgb       True for RGB (overrides subsampling).
-                 * @return The matching PixelDesc::ID.
+                 * @return The matching PixelFormat::ID.
                  */
-                static PixelDesc::ID jpegPixelDescFromSdp(
+                static PixelFormat::ID jpegPixelFormatFromSdp(
                         const String &colorimetry,
                         const String &range,
                         bool is420,
@@ -141,7 +141,7 @@ class ImageDesc {
                  *
                  *  - @b JPEG — rtpmap @c JPEG/90000, fmtp with
                  *    ST 2110-20 @c colorimetry and @c RANGE derived
-                 *    from the PixelDesc's ColorModel and component
+                 *    from the PixelFormat's ColorModel and component
                  *    range.
                  *  - @b JPEG @b XS — rtpmap @c jxsv/90000, fmtp
                  *    with @c sampling, @c depth, @c width, @c height,
@@ -152,7 +152,7 @@ class ImageDesc {
                  *    ST 2110-20.
                  *
                  * Returns an empty @c SdpMediaDescription if the
-                 * ImageDesc is invalid or the PixelDesc is not
+                 * ImageDesc is invalid or the PixelFormat is not
                  * supported.
                  *
                  * @param payloadType RTP payload type (0-127).
@@ -166,31 +166,31 @@ class ImageDesc {
                  * @return true if valid.
                  */
                 bool isValid() const {
-                        return _size.isValid() && _pixelDesc.isValid();
+                        return _size.isValid() && _pixelFormat.isValid();
                 }
 
                 /**
                  * @brief Returns the pixel description.
-                 * @return A const reference to the PixelDesc.
+                 * @return A const reference to the PixelFormat.
                  */
-                const PixelDesc &pixelDesc() const {
-                        return _pixelDesc;
+                const PixelFormat &pixelFormat() const {
+                        return _pixelFormat;
                 }
 
                 /**
                  * @brief Sets the pixel description.
                  * @param pd The pixel description.
                  */
-                void setPixelDesc(const PixelDesc &pd) {
-                        _pixelDesc = pd;
+                void setPixelFormat(const PixelFormat &pd) {
+                        _pixelFormat = pd;
                 }
 
                 /**
                  * @brief Returns the pixel format (memory layout) from the pixel description.
-                 * @return A const reference to the PixelFormat.
+                 * @return A const reference to the PixelMemLayout.
                  */
-                const PixelFormat &pixelFormat() const {
-                        return _pixelDesc.pixelFormat();
+                const PixelMemLayout &memLayout() const {
+                        return _pixelFormat.memLayout();
                 }
 
                 /**
@@ -198,7 +198,7 @@ class ImageDesc {
                  * @return A const reference to the ColorModel.
                  */
                 const ColorModel &colorModel() const {
-                        return _pixelDesc.colorModel();
+                        return _pixelFormat.colorModel();
                 }
 
                 /**
@@ -316,7 +316,7 @@ class ImageDesc {
                  * @return The plane count.
                  */
                 int planeCount() const {
-                        return _pixelDesc.planeCount();
+                        return _pixelFormat.planeCount();
                 }
 
                 /**
@@ -325,9 +325,9 @@ class ImageDesc {
                  */
                 String toString() const {
                         String ret = _size.toString();
-                        if(_pixelDesc.isValid()) {
+                        if(_pixelFormat.isValid()) {
                                 ret += ' ';
-                                ret += _pixelDesc.name();
+                                ret += _pixelFormat.name();
                         }
                         return ret;
                 }
@@ -365,7 +365,7 @@ class ImageDesc {
                             && _linePad       == other._linePad
                             && _lineAlign     == other._lineAlign
                             && _videoScanMode == other._videoScanMode
-                            && _pixelDesc     == other._pixelDesc;
+                            && _pixelFormat     == other._pixelFormat;
                 }
 
         private:
@@ -373,12 +373,12 @@ class ImageDesc {
                 size_t                  _linePad = 0;
                 size_t                  _lineAlign = 1;
                 VideoScanMode           _videoScanMode = VideoScanMode::Unknown;
-                PixelDesc               _pixelDesc;
+                PixelFormat               _pixelFormat;
                 Metadata                _metadata;
 };
 
 /**
- * @brief Writes an ImageDesc as tag + size + pixelDesc + linePad + lineAlign
+ * @brief Writes an ImageDesc as tag + size + pixelFormat + linePad + lineAlign
  *        + videoScanMode + metadata.
  * @param stream The stream to write to.
  * @param desc   The ImageDesc to serialize.
@@ -387,7 +387,7 @@ class ImageDesc {
 inline DataStream &operator<<(DataStream &stream, const ImageDesc &desc) {
         stream.writeTag(DataStream::TypeImageDesc);
         stream << desc.size();
-        stream << desc.pixelDesc();
+        stream << desc.pixelFormat();
         stream << static_cast<uint64_t>(desc.linePad());
         stream << static_cast<uint64_t>(desc.lineAlign());
         stream << static_cast<uint32_t>(desc.videoScanMode().value());
@@ -404,7 +404,7 @@ inline DataStream &operator<<(DataStream &stream, const ImageDesc &desc) {
 inline DataStream &operator>>(DataStream &stream, ImageDesc &desc) {
         if(!stream.readTag(DataStream::TypeImageDesc)) { desc = ImageDesc(); return stream; }
         Size2Du32 size;
-        PixelDesc pd;
+        PixelFormat pd;
         uint64_t linePad = 0, lineAlign = 1;
         uint32_t scanValue = 0;
         Metadata meta;

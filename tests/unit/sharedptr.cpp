@@ -812,3 +812,100 @@ TEST_CASE("SharedPtr_MoveFromShared") {
     c.clear();
     CHECK(objectsAlive == 0);
 }
+
+// ============================================================================
+// Implicit upcast: SharedPtr<Derived> -> SharedPtr<Base>
+// ============================================================================
+
+TEST_CASE("SharedPtr_ImplicitUpcastCopy") {
+    objectsAlive = 0;
+    auto d = SharedPtr<Derived>::create(42);
+    CHECK(d.referenceCount() == 1);
+
+    // Copy-construct a base pointer from the derived pointer — both
+    // should share ownership of the same underlying object.
+    SharedPtr<Base> b = d;
+    CHECK(b.isValid());
+    CHECK(d.isValid());
+    CHECK(d.referenceCount() == 2);
+    CHECK(b.referenceCount() == 2);
+    CHECK(b->value == 42);
+    CHECK(b->getType() == "Derived");  // virtual dispatch survives the upcast
+    CHECK(objectsAlive == 1);
+
+    d.clear();
+    CHECK(b.referenceCount() == 1);
+    CHECK(objectsAlive == 1);
+
+    b.clear();
+    CHECK(objectsAlive == 0);
+}
+
+TEST_CASE("SharedPtr_ImplicitUpcastMove") {
+    objectsAlive = 0;
+    auto d = SharedPtr<Derived>::create(7);
+
+    // Move-construct a base pointer from the derived pointer — the
+    // original must be left null, refcount must stay at 1.
+    SharedPtr<Base> b = std::move(d);
+    CHECK(d.isNull());
+    CHECK(b.isValid());
+    CHECK(b.referenceCount() == 1);
+    CHECK(b->value == 7);
+    CHECK(b->getType() == "Derived");
+    CHECK(objectsAlive == 1);
+
+    b.clear();
+    CHECK(objectsAlive == 0);
+}
+
+// ============================================================================
+// sharedPointerCast: runtime downcast
+// ============================================================================
+
+TEST_CASE("SharedPtr_sharedPointerCast_Success") {
+    objectsAlive = 0;
+    SharedPtr<Base> b = SharedPtr<Derived>::create(99);
+    CHECK(b.referenceCount() == 1);
+
+    auto d = sharedPointerCast<Derived>(b);
+    REQUIRE(d.isValid());
+    CHECK(d->value == 99);
+    CHECK(d->getType() == "Derived");
+
+    // Both pointers share ownership of the same underlying object.
+    CHECK(b.referenceCount() == 2);
+    CHECK(d.referenceCount() == 2);
+    CHECK(objectsAlive == 1);
+
+    b.clear();
+    d.clear();
+    CHECK(objectsAlive == 0);
+}
+
+TEST_CASE("SharedPtr_sharedPointerCast_WrongType") {
+    objectsAlive = 0;
+    // The pointee is a plain Base, not a Derived — the cast must
+    // fail and leave the source pointer untouched.
+    SharedPtr<Base> b = SharedPtr<Base>::create(5);
+    CHECK(b.referenceCount() == 1);
+
+    auto d = sharedPointerCast<Derived>(b);
+    CHECK(d.isNull());
+    CHECK(b.isValid());
+    CHECK(b.referenceCount() == 1);
+    CHECK(objectsAlive == 1);
+
+    b.clear();
+    CHECK(objectsAlive == 0);
+}
+
+TEST_CASE("SharedPtr_sharedPointerCast_NullInput") {
+    objectsAlive = 0;
+    SharedPtr<Base> b;  // null
+    CHECK(b.isNull());
+
+    auto d = sharedPointerCast<Derived>(b);
+    CHECK(d.isNull());
+    CHECK(objectsAlive == 0);
+}

@@ -12,7 +12,8 @@
 
 #include <promeki/mediaiotask_imagefile.h>
 #include <promeki/audiocodec.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
+#include <promeki/set.h>
 #include <promeki/size2d.h>
 #include <promeki/videocodec.h>
 #include <promeki/textstream.h>
@@ -122,10 +123,10 @@ void listEnumTypeAndExit(const String &keyLabel, Enum::Type type,
 }
 
 void listPixelFormatsAndExit(const String &keyLabel) {
-        fprintf(stdout, "%s (PixelDesc):\n", keyLabel.cstr());
-        PixelDesc::IDList ids = PixelDesc::registeredIDs();
+        fprintf(stdout, "%s (PixelFormat):\n", keyLabel.cstr());
+        PixelFormat::IDList ids = PixelFormat::registeredIDs();
         for(size_t i = 0; i < ids.size(); i++) {
-                PixelDesc pd(ids[i]);
+                PixelFormat pd(ids[i]);
                 fprintf(stdout, "  %-32s %s\n",
                         pd.name().cstr(), pd.desc().cstr());
         }
@@ -145,6 +146,78 @@ void listVideoCodecsAndExit(const String &keyLabel) {
                         vc.name().cstr(), caps.cstr(), vc.description().cstr());
         }
         std::exit(0);
+}
+
+namespace {
+
+// Emit a single "kind\tcodec\tbackend\tenc\tdec" line.  The backend
+// handle's name() is looked up through its StringRegistry, so the
+// value round-trips through `VideoCodec::fromString("name:backend")`
+// in mediaplay's --cc VideoCodec:<name:backend> flow without any
+// case massaging.
+template<typename CodecT>
+void emitCodecBackendRow(const char *kind,
+                         const CodecT &codec,
+                         const typename CodecT::Backend &backend,
+                         bool canEnc, bool canDec) {
+        fprintf(stdout, "%s\t%s\t%s\t%s\t%s\n",
+                kind,
+                codec.name().cstr(),
+                backend.name().cstr(),
+                canEnc ? "yes" : "no",
+                canDec ? "yes" : "no");
+}
+
+// Walk one codec family's registry and emit one row per (codec,
+// backend) pair that has at least one direction (enc or dec)
+// registered.  Backends with no encoder AND no decoder for the codec
+// are omitted — by construction every emitted row's combined flags
+// are at least "yes no" or "no yes".
+template<typename CodecT>
+void printCodecFamilyTsv(const char *kind) {
+        auto ids = CodecT::registeredIDs();
+        for(size_t i = 0; i < ids.size(); ++i) {
+                CodecT codec(ids[i]);
+                if(!codec.isValid()) continue;
+
+                auto encBackends = codec.availableEncoderBackends();
+                auto decBackends = codec.availableDecoderBackends();
+
+                // Union of encoder and decoder backend sets, in a
+                // stable order: encoder list first (preserving its
+                // registration order), then decoder-only backends
+                // appended afterwards.  A Set<uint64_t> of IDs tracks
+                // which backends we've already emitted so the
+                // decoder pass can skip duplicates without needing
+                // hash ordering on Backend itself.
+                Set<uint64_t> seen;
+                for(size_t j = 0; j < encBackends.size(); ++j) {
+                        const auto &b = encBackends[j];
+                        seen.insert(b.id());
+                        bool canEnc = true;
+                        bool canDec = false;
+                        for(size_t k = 0; k < decBackends.size(); ++k) {
+                                if(decBackends[k] == b) { canDec = true; break; }
+                        }
+                        emitCodecBackendRow(kind, codec, b, canEnc, canDec);
+                }
+                for(size_t j = 0; j < decBackends.size(); ++j) {
+                        const auto &b = decBackends[j];
+                        if(!seen.insert(b.id()).second()) continue;
+                        emitCodecBackendRow(kind, codec, b, false, true);
+                }
+        }
+}
+
+}  // namespace
+
+void printCodecsTsv(CodecTsvKind kind) {
+        if(kind == CodecTsvKind::Video || kind == CodecTsvKind::All) {
+                printCodecFamilyTsv<VideoCodec>("video");
+        }
+        if(kind == CodecTsvKind::Audio || kind == CodecTsvKind::All) {
+                printCodecFamilyTsv<AudioCodec>("audio");
+        }
 }
 
 void listAudioCodecsAndExit(const String &keyLabel) {
@@ -210,7 +283,7 @@ Error applyStageConfig(StageSpec &stage, const String &stageLabel) {
                                         spec->acceptsType(Variant::TypeEnumList);
                                 listEnumTypeAndExit(label, spec->enumType(), isEnumList);
                         }
-                        if(spec && spec->acceptsType(Variant::TypePixelDesc)) {
+                        if(spec && spec->acceptsType(Variant::TypePixelFormat)) {
                                 listPixelFormatsAndExit(label);
                         }
                         if(spec && spec->acceptsType(Variant::TypeVideoCodec)) {
@@ -221,7 +294,7 @@ Error applyStageConfig(StageSpec &stage, const String &stageLabel) {
                         }
                         fprintf(stderr,
                                 "Error: %s: 'list' is only supported for Enum, "
-                                "EnumList, PixelDesc, VideoCodec, and AudioCodec keys\n",
+                                "EnumList, PixelFormat, VideoCodec, and AudioCodec keys\n",
                                 label.cstr());
                         return Error::NotSupported;
                 }

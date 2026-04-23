@@ -25,48 +25,48 @@ using namespace quicktime_atom;
 namespace {
 
 /**
- * @brief Look up a PixelDesc by QuickTime FourCC.
+ * @brief Look up a PixelFormat by QuickTime FourCC.
  *
- * Walks the registered PixelDesc list and returns the first entry whose
- * fourccList contains @p code. Returns an invalid PixelDesc if no match.
+ * Walks the registered PixelFormat list and returns the first entry whose
+ * fourccList contains @p code. Returns an invalid PixelFormat if no match.
  */
-PixelDesc pixelDescForQuickTimeFourCC(FourCC code) {
-        for(PixelDesc::ID id : PixelDesc::registeredIDs()) {
-                PixelDesc pd(id);
+PixelFormat pixelFormatForQuickTimeFourCC(FourCC code) {
+        for(PixelFormat::ID id : PixelFormat::registeredIDs()) {
+                PixelFormat pd(id);
                 for(const FourCC &f : pd.fourccList()) {
                         if(f == code) return pd;
                 }
         }
-        return PixelDesc();
+        return PixelFormat();
 }
 
 /**
  * @brief Translate a QuickTime PCM audio sample-entry FourCC into an
- *        AudioDesc::DataType.
+ *        AudioFormat::ID.
  *
  * Returns Invalid for non-PCM or unknown FourCCs — the reader surfaces
  * this via an invalid AudioDesc so the MediaIOTask layer can decide
  * whether to refuse the track.
  */
-AudioDesc::DataType pcmDataTypeForFourCC(FourCC code, uint16_t bitsPerSample) {
-        if(code == FourCC("sowt")) return AudioDesc::PCMI_S16LE;
-        if(code == FourCC("twos")) return AudioDesc::PCMI_S16BE;
-        if(code == FourCC("in24")) return AudioDesc::PCMI_S24BE;
-        if(code == FourCC("in32")) return AudioDesc::PCMI_S32BE;
-        if(code == FourCC("fl32")) return AudioDesc::PCMI_Float32BE;
-        if(code == FourCC("raw ")) return AudioDesc::PCMI_U8;
+AudioFormat::ID pcmDataTypeForFourCC(FourCC code, uint16_t bitsPerSample) {
+        if(code == FourCC("sowt")) return AudioFormat::PCMI_S16LE;
+        if(code == FourCC("twos")) return AudioFormat::PCMI_S16BE;
+        if(code == FourCC("in24")) return AudioFormat::PCMI_S24BE;
+        if(code == FourCC("in32")) return AudioFormat::PCMI_S32BE;
+        if(code == FourCC("fl32")) return AudioFormat::PCMI_Float32BE;
+        if(code == FourCC("raw ")) return AudioFormat::PCMI_U8;
         if(code == FourCC("lpcm")) {
                 // Best-effort guess based on bit depth; real flag handling
                 // will land with Phase 2's full stsd parser.
                 switch(bitsPerSample) {
-                        case 8:  return AudioDesc::PCMI_S8;
-                        case 16: return AudioDesc::PCMI_S16LE;
-                        case 24: return AudioDesc::PCMI_S24LE;
-                        case 32: return AudioDesc::PCMI_S32LE;
+                        case 8:  return AudioFormat::PCMI_S8;
+                        case 16: return AudioFormat::PCMI_S16LE;
+                        case 24: return AudioFormat::PCMI_S24LE;
+                        case 32: return AudioFormat::PCMI_S32LE;
                         default: break;
                 }
         }
-        return AudioDesc::Invalid;
+        return AudioFormat::Invalid;
 }
 
 /**
@@ -474,26 +474,23 @@ Error QuickTimeReader::parseTrak(int64_t payloadOffset, int64_t payloadEnd) {
                                         entryRemain -= 16;
                                 }
                                 if(!stream.isError() && channels > 0 && sr > 0) {
-                                        AudioDesc::DataType dt = pcmDataTypeForFourCC(entryType, sampleSize);
-                                        if(dt != AudioDesc::Invalid) {
+                                        AudioFormat::ID dt = pcmDataTypeForFourCC(entryType, sampleSize);
+                                        if(dt != AudioFormat::Invalid) {
                                                 // Recognized PCM format.
                                                 track.setAudioDesc(AudioDesc(dt, static_cast<float>(sr), channels));
                                         } else {
                                                 // Unrecognized FourCC — assume it's a compressed
-                                                // codec (AAC mp4a, Opus Opus, AC-3 ac-3, MP3,
-                                                // etc.) and build an AudioDesc that carries the
-                                                // codec tag as-is. The MediaIOTask layer surfaces
-                                                // this via Audio::fromBuffer so consumers can
-                                                // decode through their own codec subsystem.
-                                                AudioDesc adesc;
-                                                adesc.setCodecFourCC(entryType);
-                                                // Channels and sample rate still apply to the
-                                                // decoded output; stash them via the internal
-                                                // fields — AudioDesc's only public setters
-                                                // take them through the PCM constructor, so we
-                                                // build via setSampleRate/setChannels.
-                                                adesc.setSampleRate(static_cast<float>(sr));
-                                                adesc.setChannels(channels);
+                                                // codec (AAC mp4a, Opus, AC-3 ac-3, MP3, etc.).
+                                                // Map the FourCC to the matching compressed
+                                                // AudioFormat entry; if we don't know it, fall
+                                                // back to an invalid AudioDesc.  The MediaIOTask
+                                                // layer surfaces compressed audio via
+                                                // Audio::fromBuffer so consumers can decode
+                                                // through their own codec subsystem.
+                                                AudioFormat compFmt = AudioFormat::lookupByFourCC(entryType);
+                                                AudioDesc adesc(compFmt,
+                                                                static_cast<float>(sr),
+                                                                channels);
                                                 track.setAudioDesc(adesc);
                                         }
                                 }
@@ -980,9 +977,9 @@ Error QuickTimeReader::parseVideoSampleEntry(quicktime_atom::ReadStream &stream,
         if(w > 0 && h > 0) {
                 track.setSize(Size2Du32(w, h));
         }
-        PixelDesc pd = pixelDescForQuickTimeFourCC(entryType);
+        PixelFormat pd = pixelFormatForQuickTimeFourCC(entryType);
         if(pd.isValid()) {
-                track.setPixelDesc(pd);
+                track.setPixelFormat(pd);
         } else {
                 promekiWarn("QuickTime: unknown video codec FourCC '%c%c%c%c'",
                         (entryType.value() >> 24) & 0xff,
@@ -1460,7 +1457,7 @@ Error QuickTimeReader::parseTrun(int64_t trunPayloadOffset, int64_t trunPayloadE
         const bool isPcmAudio =
                 (trackRef.type() == QuickTime::Audio) &&
                 trackRef.audioDesc().isValid() &&
-                (trackRef.audioDesc().dataType() != AudioDesc::Invalid);
+                !trackRef.audioDesc().isCompressed();
         if(isPcmAudio) {
                 const uint32_t pcmStride =
                         static_cast<uint32_t>(trackRef.audioDesc().bytesPerSampleStride());
@@ -1713,8 +1710,8 @@ void QuickTimeReader::buildMediaDesc() {
         bool rateSet = false;
 
         for(const QuickTime::Track &tk : _tracks) {
-                if(tk.type() == QuickTime::Video && tk.pixelDesc().isValid()) {
-                        ImageDesc idesc(tk.size(), tk.pixelDesc());
+                if(tk.type() == QuickTime::Video && tk.pixelFormat().isValid()) {
+                        ImageDesc idesc(tk.size(), tk.pixelFormat());
                         md.imageList().pushToBack(idesc);
                         if(!rateSet && tk.frameRate().isValid()) {
                                 md.setFrameRate(tk.frameRate());

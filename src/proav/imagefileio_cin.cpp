@@ -298,10 +298,10 @@ Error ImageFileIO_Cineon::load(ImageFile &imageFile, const MediaConfig &config) 
 
         size_t w = hdr.img.chan[0].width;
         size_t h = hdr.img.chan[0].height;
-        PixelDesc pd(PixelDesc::RGB10_DPX_sRGB);
+        PixelFormat pd(PixelFormat::RGB10_DPX_sRGB);
 
         // Read image data using readBulk for DIO
-        size_t imageBytes = pd.pixelFormat().planeSize(0, w, h);
+        size_t imageBytes = pd.memLayout().planeSize(0, w, h);
 
         err = file.seek(hdr.file.offset);
         if(err.isError()) { file.close(); return err; }

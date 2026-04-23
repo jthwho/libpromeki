@@ -19,7 +19,7 @@
 #include <promeki/frame.h>
 #include <promeki/framerate.h>
 #include <promeki/videoformat.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/uuid.h>
 
 using namespace promeki;

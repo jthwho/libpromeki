@@ -14,7 +14,7 @@
 #include <promeki/imagefile.h>
 #include <promeki/file.h>
 #include <promeki/buffer.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/metadata.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -30,15 +30,15 @@ PROMEKI_DEBUG(PNG)
 static constexpr size_t PNG_DIO_FALLBACK_ALIGN = 4096;
 
 // ===========================================================================
-// PixelDesc <-> PNG IHDR mapping
+// PixelFormat <-> PNG IHDR mapping
 // ===========================================================================
 //
 // PNG natively encodes only the byte-order-natural color types listed below.
 // Multibyte (16-bit) values are big-endian on the wire, so we can pass our
-// `_BE_sRGB` PixelDescs straight through to libspng. The `_LE_sRGB` variants
+// `_BE_sRGB` PixelFormats straight through to libspng. The `_LE_sRGB` variants
 // require a 16-bit byte swap into a temporary buffer before encoding.
 //
-// PixelDescs that PNG cannot represent (BGR/ARGB/ABGR component orders,
+// PixelFormats that PNG cannot represent (BGR/ARGB/ABGR component orders,
 // 10/12-bit packed formats, planar/semi-planar/YCbCr, float, palette as
 // output) are intentionally rejected here. Callers should run
 // Image::convert() upstream to land in one of the supported descs.
@@ -50,74 +50,74 @@ struct PngFormat {
         bool    swap16;        ///< true → input is little-endian 16-bit, swap to big-endian before encoding
 };
 
-static bool pngFormatFromPixelDesc(PixelDesc::ID id, PngFormat &out) {
+static bool pngFormatFromPixelFormat(PixelFormat::ID id, PngFormat &out) {
         switch(id) {
-                case PixelDesc::Mono8_sRGB:     out = { SPNG_COLOR_TYPE_GRAYSCALE,       8,  1, false }; return true;
-                case PixelDesc::Mono16_BE_sRGB: out = { SPNG_COLOR_TYPE_GRAYSCALE,       16, 1, false }; return true;
-                case PixelDesc::Mono16_LE_sRGB: out = { SPNG_COLOR_TYPE_GRAYSCALE,       16, 1, true  }; return true;
-                case PixelDesc::RGB8_sRGB:      out = { SPNG_COLOR_TYPE_TRUECOLOR,       8,  3, false }; return true;
-                case PixelDesc::RGB16_BE_sRGB:  out = { SPNG_COLOR_TYPE_TRUECOLOR,       16, 3, false }; return true;
-                case PixelDesc::RGB16_LE_sRGB:  out = { SPNG_COLOR_TYPE_TRUECOLOR,       16, 3, true  }; return true;
-                case PixelDesc::RGBA8_sRGB:     out = { SPNG_COLOR_TYPE_TRUECOLOR_ALPHA, 8,  4, false }; return true;
-                case PixelDesc::RGBA16_BE_sRGB: out = { SPNG_COLOR_TYPE_TRUECOLOR_ALPHA, 16, 4, false }; return true;
-                case PixelDesc::RGBA16_LE_sRGB: out = { SPNG_COLOR_TYPE_TRUECOLOR_ALPHA, 16, 4, true  }; return true;
+                case PixelFormat::Mono8_sRGB:     out = { SPNG_COLOR_TYPE_GRAYSCALE,       8,  1, false }; return true;
+                case PixelFormat::Mono16_BE_sRGB: out = { SPNG_COLOR_TYPE_GRAYSCALE,       16, 1, false }; return true;
+                case PixelFormat::Mono16_LE_sRGB: out = { SPNG_COLOR_TYPE_GRAYSCALE,       16, 1, true  }; return true;
+                case PixelFormat::RGB8_sRGB:      out = { SPNG_COLOR_TYPE_TRUECOLOR,       8,  3, false }; return true;
+                case PixelFormat::RGB16_BE_sRGB:  out = { SPNG_COLOR_TYPE_TRUECOLOR,       16, 3, false }; return true;
+                case PixelFormat::RGB16_LE_sRGB:  out = { SPNG_COLOR_TYPE_TRUECOLOR,       16, 3, true  }; return true;
+                case PixelFormat::RGBA8_sRGB:     out = { SPNG_COLOR_TYPE_TRUECOLOR_ALPHA, 8,  4, false }; return true;
+                case PixelFormat::RGBA16_BE_sRGB: out = { SPNG_COLOR_TYPE_TRUECOLOR_ALPHA, 16, 4, false }; return true;
+                case PixelFormat::RGBA16_LE_sRGB: out = { SPNG_COLOR_TYPE_TRUECOLOR_ALPHA, 16, 4, true  }; return true;
                 default: return false;
         }
 }
 
-// Map an IHDR to the PixelDesc we should allocate plus the libspng decode
+// Map an IHDR to the PixelFormat we should allocate plus the libspng decode
 // format we need to ask for. SPNG_FMT_RAW gives us PNG-natural byte order
 // (matches the *_BE_sRGB variants directly). For sub-byte / palette /
 // gray+alpha sources we ask libspng to expand to a supported representation:
 //   - 1/2/4-bit grayscale  → expanded to G8           → Mono8_sRGB
 //   - 8-bit gray+alpha     → expanded to RGBA8        → RGBA8_sRGB
 //   - 8-bit palette        → expanded to RGBA8        → RGBA8_sRGB (covers tRNS)
-// 16-bit gray+alpha is intentionally refused — there's no native PixelDesc
+// 16-bit gray+alpha is intentionally refused — there's no native PixelFormat
 // and the demand is essentially zero.
-static PixelDesc::ID pixelDescFromIhdr(const spng_ihdr &ihdr, int &spngFmtOut) {
+static PixelFormat::ID pixelFormatFromIhdr(const spng_ihdr &ihdr, int &spngFmtOut) {
         switch(ihdr.color_type) {
                 case SPNG_COLOR_TYPE_GRAYSCALE:
                         if(ihdr.bit_depth <= 8) {
                                 spngFmtOut = SPNG_FMT_G8;
-                                return PixelDesc::Mono8_sRGB;
+                                return PixelFormat::Mono8_sRGB;
                         }
                         if(ihdr.bit_depth == 16) {
                                 spngFmtOut = SPNG_FMT_RAW;
-                                return PixelDesc::Mono16_BE_sRGB;
+                                return PixelFormat::Mono16_BE_sRGB;
                         }
                         break;
                 case SPNG_COLOR_TYPE_TRUECOLOR:
                         if(ihdr.bit_depth == 8) {
                                 spngFmtOut = SPNG_FMT_RAW;
-                                return PixelDesc::RGB8_sRGB;
+                                return PixelFormat::RGB8_sRGB;
                         }
                         if(ihdr.bit_depth == 16) {
                                 spngFmtOut = SPNG_FMT_RAW;
-                                return PixelDesc::RGB16_BE_sRGB;
+                                return PixelFormat::RGB16_BE_sRGB;
                         }
                         break;
                 case SPNG_COLOR_TYPE_TRUECOLOR_ALPHA:
                         if(ihdr.bit_depth == 8) {
                                 spngFmtOut = SPNG_FMT_RAW;
-                                return PixelDesc::RGBA8_sRGB;
+                                return PixelFormat::RGBA8_sRGB;
                         }
                         if(ihdr.bit_depth == 16) {
                                 spngFmtOut = SPNG_FMT_RAW;
-                                return PixelDesc::RGBA16_BE_sRGB;
+                                return PixelFormat::RGBA16_BE_sRGB;
                         }
                         break;
                 case SPNG_COLOR_TYPE_GRAYSCALE_ALPHA:
                         if(ihdr.bit_depth <= 8) {
                                 spngFmtOut = SPNG_FMT_RGBA8;
-                                return PixelDesc::RGBA8_sRGB;
+                                return PixelFormat::RGBA8_sRGB;
                         }
                         // 16-bit gray+alpha falls through to refusal.
                         break;
                 case SPNG_COLOR_TYPE_INDEXED:
                         spngFmtOut = SPNG_FMT_RGBA8;
-                        return PixelDesc::RGBA8_sRGB;
+                        return PixelFormat::RGBA8_sRGB;
         }
-        return PixelDesc::Invalid;
+        return PixelFormat::Invalid;
 }
 
 // In-place 16-bit byte swap. Used for the LE → BE conversion on save.
@@ -164,9 +164,9 @@ Error ImageFileIO_PNG::save(ImageFile &imageFile, const MediaConfig &config) con
         }
 
         PngFormat pf;
-        if(!pngFormatFromPixelDesc(image.pixelDesc().id(), pf)) {
+        if(!pngFormatFromPixelFormat(image.pixelFormat().id(), pf)) {
                 promekiErr("PNG save '%s': pixel format '%s' not supported",
-                           filename.cstr(), image.pixelDesc().name().cstr());
+                           filename.cstr(), image.pixelFormat().name().cstr());
                 return Error::PixelFormatNotSupported;
         }
 
@@ -230,7 +230,7 @@ Error ImageFileIO_PNG::save(ImageFile &imageFile, const MediaConfig &config) con
 
         // Color management: prefer an explicit gAMA chunk if metadata
         // carries one, otherwise tag as sRGB (perceptual intent). Every
-        // PNG-supported PixelDesc in the table above is sRGB-tagged.
+        // PNG-supported PixelFormat in the table above is sRGB-tagged.
         if(image.metadata().contains(Metadata::Gamma)) {
                 double gamma = image.metadata().get(Metadata::Gamma).get<double>();
                 if(gamma > 0.0) spng_set_gama(ctx, gamma);
@@ -241,7 +241,7 @@ Error ImageFileIO_PNG::save(ImageFile &imageFile, const MediaConfig &config) con
         // SPNG_FMT_RAW tells libspng "input is already in PNG wire format"
         // — i.e. big-endian for 16-bit samples, no conversion. SPNG_FMT_PNG
         // would treat the input as host-endian and byte-swap 16-bit data
-        // into BE on its way out, which would corrupt our BE PixelDescs and
+        // into BE on its way out, which would corrupt our BE PixelFormats and
         // unwind the explicit LE→BE swap we just did for the LE variants.
         sret = spng_encode_image(ctx, pixelData, packedSize, SPNG_FMT_RAW, SPNG_ENCODE_FINALIZE);
         if(sret) {
@@ -391,8 +391,8 @@ Error ImageFileIO_PNG::load(ImageFile &imageFile, const MediaConfig &config) con
         }
 
         int spngFmt = 0;
-        PixelDesc::ID pdId = pixelDescFromIhdr(ihdr, spngFmt);
-        if(pdId == PixelDesc::Invalid) {
+        PixelFormat::ID pdId = pixelFormatFromIhdr(ihdr, spngFmt);
+        if(pdId == PixelFormat::Invalid) {
                 promekiErr("PNG load '%s': unsupported PNG format (color_type=%d, bit_depth=%d)",
                            filename.cstr(), ihdr.color_type, ihdr.bit_depth);
                 spng_ctx_free(ctx);
@@ -408,7 +408,7 @@ Error ImageFileIO_PNG::load(ImageFile &imageFile, const MediaConfig &config) con
                 return Error::DecodeFailed;
         }
 
-        Image image(ihdr.width, ihdr.height, PixelDesc(pdId));
+        Image image(ihdr.width, ihdr.height, PixelFormat(pdId));
         if(!image.isValid()) {
                 spng_ctx_free(ctx);
                 promekiErr("PNG load '%s': failed to allocate %ux%u image",
@@ -418,7 +418,7 @@ Error ImageFileIO_PNG::load(ImageFile &imageFile, const MediaConfig &config) con
 
         // libspng decodes into a tightly-packed contiguous buffer. The
         // proav Image plane is also tightly packed (no row padding) for
-        // every PixelDesc we map here, so the sizes must match exactly.
+        // every PixelFormat we map here, so the sizes must match exactly.
         const size_t planeBytes = image.lineStride(0) * ihdr.height;
         if(decodedSize != planeBytes) {
                 spng_ctx_free(ctx);
@@ -435,11 +435,11 @@ Error ImageFileIO_PNG::load(ImageFile &imageFile, const MediaConfig &config) con
                 return Error::DecodeFailed;
         }
 
-        // Color management: an sRGB chunk wins (the PixelDesc already
+        // Color management: an sRGB chunk wins (the PixelFormat already
         // carries that color model). Otherwise, if a gAMA chunk is
         // present, stash it in metadata. With neither chunk present we
         // assume sRGB per the PNG spec recommendation, which matches the
-        // PixelDesc default — nothing to do.
+        // PixelFormat default — nothing to do.
         uint8_t srgbIntent = 0;
         if(spng_get_srgb(ctx, &srgbIntent) != SPNG_OK) {
                 double gamma = 0.0;

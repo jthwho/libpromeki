@@ -9,7 +9,7 @@
 
 #include <promeki/namespace.h>
 #include <promeki/mediaiotask.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/image.h>
 #include <promeki/list.h>
 
@@ -20,11 +20,11 @@ PROMEKI_NAMESPACE_BEGIN
  * @ingroup proav
  *
  * ReadWrite MediaIO that accepts a frame on @c writeFrame(), converts
- * each uncompressed video image to the configured output @ref PixelDesc
+ * each uncompressed video image to the configured output @ref PixelFormat
  * via @ref Image::convert, and emits the result on @c readFrame().
  * Audio and metadata are forwarded unchanged.
  *
- * If no @ref MediaConfig::OutputPixelDesc is set (or it is invalid),
+ * If no @ref MediaConfig::OutputPixelFormat is set (or it is invalid),
  * video images pass through unchanged.  Compressed pixel formats are
  * rejected — use @ref MediaIOTask_VideoEncoder /
  * @ref MediaIOTask_VideoDecoder for codec transitions.
@@ -45,7 +45,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
- * | @ref MediaConfig::OutputPixelDesc | PixelDesc | Invalid (pass-through) | Target video pixel description. |
+ * | @ref MediaConfig::OutputPixelFormat | PixelFormat | Invalid (pass-through) | Target video pixel description. |
  * | @ref MediaConfig::Capacity        | int       | 4                      | Maximum output FIFO depth. |
  *
  * @par Stats keys
@@ -60,8 +60,8 @@ PROMEKI_NAMESPACE_BEGIN
  * @code
  * MediaIO::Config cfg;
  * cfg.set(MediaConfig::Type, "CSC");
- * cfg.set(MediaConfig::OutputPixelDesc,
- *         PixelDesc(PixelDesc::RGBA8_sRGB));
+ * cfg.set(MediaConfig::OutputPixelFormat,
+ *         PixelFormat(PixelFormat::RGBA8_sRGB));
  * MediaIO *io = MediaIO::create(cfg);
  * io->open(MediaIO::Transform);
  * io->writeFrame(inputFrame);
@@ -105,8 +105,8 @@ class MediaIOTask_CSC : public MediaIOTask {
                 Error convertImage(const Image &input, Image &output);
                 Error convertFrame(const Frame::Ptr &input, Frame::Ptr &output);
 
-                PixelDesc                       _outputPixelDesc;
-                bool                            _outputPixelDescSet = false;
+                PixelFormat                       _outputPixelFormat;
+                bool                            _outputPixelFormatSet = false;
                 int                             _capacity = 4;
 
                 List<Frame::Ptr>                _outputQueue;

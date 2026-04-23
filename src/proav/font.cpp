@@ -70,7 +70,7 @@ void Font::setPaintEngine(const PaintEngine &pe) {
         // image copy) would otherwise thrash the glyph cache on every
         // frame even though nothing observable has changed.
         const bool formatChanged =
-                (_paintEngine.pixelDesc() != pe.pixelDesc());
+                (_paintEngine.pixelFormat() != pe.pixelFormat());
         _paintEngine = pe;
         if(formatChanged) onStateChanged();
 }
@@ -87,7 +87,7 @@ bool Font::isValid() const {
         // What we do require is a positive font size and a paint
         // engine bound to a real pixel format — without those the
         // font cannot actually render anything.
-        return _fontSize > 0 && _paintEngine.pixelDesc().isValid();
+        return _fontSize > 0 && _paintEngine.pixelFormat().isValid();
 }
 
 String Font::effectiveFilename() const {

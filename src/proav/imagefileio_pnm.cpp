@@ -164,20 +164,20 @@ Error ImageFileIO_PNM::load(ImageFile &imageFile, const MediaConfig &config) con
         if(p < end && (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n')) ++p;
 
         // Determine pixel format
-        PixelDesc::ID pdId;
+        PixelFormat::ID pdId;
         if(pnmIsColor(type)) {
-                pdId = (maxval >= 256) ? PixelDesc::RGB16_BE_sRGB : PixelDesc::RGB8_sRGB;
+                pdId = (maxval >= 256) ? PixelFormat::RGB16_BE_sRGB : PixelFormat::RGB8_sRGB;
         } else {
-                pdId = (maxval >= 256) ? PixelDesc::Mono16_BE_sRGB : PixelDesc::Mono8_sRGB;
+                pdId = (maxval >= 256) ? PixelFormat::Mono16_BE_sRGB : PixelFormat::Mono8_sRGB;
         }
 
-        Image image(width, height, PixelDesc(pdId));
+        Image image(width, height, PixelFormat(pdId));
         if(!image.isValid()) {
                 promekiErr("PNM load '%s': failed to allocate image", filename.cstr());
                 return Error::NoMem;
         }
 
-        size_t imageBytes = image.pixelDesc().pixelFormat().planeSize(0, width, height);
+        size_t imageBytes = image.pixelFormat().memLayout().planeSize(0, width, height);
 
         if(pnmIsBinary(type)) {
                 // Binary: direct copy
@@ -209,7 +209,7 @@ Error ImageFileIO_PNM::load(ImageFile &imageFile, const MediaConfig &config) con
         frame.imageList().pushToBack(Image::Ptr::create(image));
         imageFile.setFrame(frame);
         promekiDebug("PNM load '%s': %ux%u %s (%s)", filename.cstr(), width, height,
-                     PixelDesc(pdId).name().cstr(), magic);
+                     PixelFormat(pdId).name().cstr(), magic);
         return Error::Ok;
 }
 
@@ -230,20 +230,20 @@ Error ImageFileIO_PNM::save(ImageFile &imageFile, const MediaConfig &config) con
         // Determine PNM type from pixel format
         const char *magic;
         unsigned int maxval;
-        PixelDesc::ID pdId = image.pixelDesc().id();
+        PixelFormat::ID pdId = image.pixelFormat().id();
 
         switch(pdId) {
-                case PixelDesc::RGB8_sRGB:
+                case PixelFormat::RGB8_sRGB:
                         magic = "P6"; maxval = 255; break;
-                case PixelDesc::RGB16_BE_sRGB:
+                case PixelFormat::RGB16_BE_sRGB:
                         magic = "P6"; maxval = 65535; break;
-                case PixelDesc::Mono8_sRGB:
+                case PixelFormat::Mono8_sRGB:
                         magic = "P5"; maxval = 255; break;
-                case PixelDesc::Mono16_BE_sRGB:
+                case PixelFormat::Mono16_BE_sRGB:
                         magic = "P5"; maxval = 65535; break;
                 default:
                         promekiErr("PNM save '%s': unsupported pixel format '%s'",
-                                   filename.cstr(), image.pixelDesc().name().cstr());
+                                   filename.cstr(), image.pixelFormat().name().cstr());
                         return Error::PixelFormatNotSupported;
         }
 
@@ -252,7 +252,7 @@ Error ImageFileIO_PNM::save(ImageFile &imageFile, const MediaConfig &config) con
         int headerLen = std::snprintf(header, sizeof(header), "%s\n%zu %zu\n%u\n",
                                       magic, image.width(), image.height(), maxval);
 
-        size_t imageBytes = image.pixelDesc().pixelFormat().planeSize(0, image.width(), image.height());
+        size_t imageBytes = image.pixelFormat().memLayout().planeSize(0, image.width(), image.height());
 
         File file(filename);
         Error err = file.open(File::WriteOnly, File::Create | File::Truncate);
@@ -271,7 +271,7 @@ Error ImageFileIO_PNM::save(ImageFile &imageFile, const MediaConfig &config) con
 
         file.close();
         promekiDebug("PNM save '%s': %zux%zu %s", filename.cstr(),
-                     image.width(), image.height(), image.pixelDesc().name().cstr());
+                     image.width(), image.height(), image.pixelFormat().name().cstr());
         return Error::Ok;
 }
 

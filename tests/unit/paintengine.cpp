@@ -8,14 +8,14 @@
 #include <doctest/doctest.h>
 #include <promeki/paintengine.h>
 #include <promeki/image.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/color.h>
 
 using namespace promeki;
 
 TEST_CASE("PaintEngine: default construction") {
         PaintEngine pe;
-        CHECK_FALSE(pe.pixelDesc().isValid());
+        CHECK_FALSE(pe.pixelFormat().isValid());
 }
 
 TEST_CASE("PaintEngine: plotLine horizontal line") {
@@ -75,7 +75,7 @@ TEST_CASE("PaintEngine: plotLine negative direction vertical") {
 // ============================================================================
 
 TEST_CASE("PaintEngine: fillRect") {
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
         auto black = pe.createPixel(0, 0, 0);
         pe.fill(black);
@@ -100,7 +100,7 @@ TEST_CASE("PaintEngine: fillRect") {
 }
 
 TEST_CASE("PaintEngine: drawRect") {
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
         auto black = pe.createPixel(0, 0, 0);
         pe.fill(black);
@@ -123,7 +123,7 @@ TEST_CASE("PaintEngine: drawRect") {
 }
 
 TEST_CASE("PaintEngine: fillCircle") {
-        Image img(128, 128, PixelDesc::RGB8_sRGB);
+        Image img(128, 128, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
         auto black = pe.createPixel(0, 0, 0);
         pe.fill(black);
@@ -142,7 +142,7 @@ TEST_CASE("PaintEngine: fillCircle") {
 }
 
 TEST_CASE("PaintEngine: drawCircle") {
-        Image img(128, 128, PixelDesc::RGB8_sRGB);
+        Image img(128, 128, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
         auto black = pe.createPixel(0, 0, 0);
         pe.fill(black);
@@ -161,7 +161,7 @@ TEST_CASE("PaintEngine: drawCircle") {
 }
 
 TEST_CASE("PaintEngine: fillEllipse") {
-        Image img(128, 128, PixelDesc::RGB8_sRGB);
+        Image img(128, 128, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
         auto black = pe.createPixel(0, 0, 0);
         pe.fill(black);
@@ -180,7 +180,7 @@ TEST_CASE("PaintEngine: fillEllipse") {
 }
 
 TEST_CASE("PaintEngine: drawEllipse") {
-        Image img(128, 128, PixelDesc::RGB8_sRGB);
+        Image img(128, 128, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
         auto black = pe.createPixel(0, 0, 0);
         pe.fill(black);
@@ -201,7 +201,7 @@ TEST_CASE("PaintEngine: drawEllipse") {
 // ============================================================================
 
 TEST_CASE("PaintEngine: fillRect zero width") {
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
         auto white = pe.createPixel(65535, 65535, 65535);
         size_t drawn = pe.fillRect(white, Rect<int32_t>(10, 10, 0, 10));
@@ -209,7 +209,7 @@ TEST_CASE("PaintEngine: fillRect zero width") {
 }
 
 TEST_CASE("PaintEngine: fillRect zero height") {
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
         auto white = pe.createPixel(65535, 65535, 65535);
         size_t drawn = pe.fillRect(white, Rect<int32_t>(10, 10, 10, 0));
@@ -217,7 +217,7 @@ TEST_CASE("PaintEngine: fillRect zero height") {
 }
 
 TEST_CASE("PaintEngine: drawRect zero width") {
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
         auto white = pe.createPixel(65535, 65535, 65535);
         size_t drawn = pe.drawRect(white, Rect<int32_t>(10, 10, 0, 10));
@@ -225,7 +225,7 @@ TEST_CASE("PaintEngine: drawRect zero width") {
 }
 
 TEST_CASE("PaintEngine: drawRect zero height") {
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
         auto white = pe.createPixel(65535, 65535, 65535);
         size_t drawn = pe.drawRect(white, Rect<int32_t>(10, 10, 10, 0));
@@ -233,7 +233,7 @@ TEST_CASE("PaintEngine: drawRect zero height") {
 }
 
 TEST_CASE("PaintEngine: drawCircle zero radius") {
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
         auto white = pe.createPixel(65535, 65535, 65535);
         // Zero radius should still draw the center point
@@ -242,7 +242,7 @@ TEST_CASE("PaintEngine: drawCircle zero radius") {
 }
 
 TEST_CASE("PaintEngine: fillCircle zero radius") {
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
         auto white = pe.createPixel(65535, 65535, 65535);
         size_t drawn = pe.fillCircle(white, Point2Di32(32, 32), 0);
@@ -250,7 +250,7 @@ TEST_CASE("PaintEngine: fillCircle zero radius") {
 }
 
 TEST_CASE("PaintEngine: drawEllipse zero radii") {
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
         auto white = pe.createPixel(65535, 65535, 65535);
         size_t drawn = pe.drawEllipse(white, Point2Di32(32, 32), Size2Du32(0, 0));
@@ -258,7 +258,7 @@ TEST_CASE("PaintEngine: drawEllipse zero radii") {
 }
 
 TEST_CASE("PaintEngine: fillEllipse zero radii") {
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
         auto white = pe.createPixel(65535, 65535, 65535);
         size_t drawn = pe.fillEllipse(white, Point2Di32(32, 32), Size2Du32(0, 0));
@@ -266,7 +266,7 @@ TEST_CASE("PaintEngine: fillEllipse zero radii") {
 }
 
 TEST_CASE("PaintEngine: drawRect exact point count") {
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
         auto white = pe.createPixel(65535, 65535, 65535);
         // 10x10 rect outline: top=10 + bottom=10 + left=8 + right=8 = 36 points
@@ -275,7 +275,7 @@ TEST_CASE("PaintEngine: drawRect exact point count") {
 }
 
 TEST_CASE("PaintEngine: fillRect 1x1") {
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
         auto white = pe.createPixel(65535, 65535, 65535);
         size_t drawn = pe.fillRect(white, Rect<int32_t>(10, 10, 1, 1));
@@ -283,7 +283,7 @@ TEST_CASE("PaintEngine: fillRect 1x1") {
 }
 
 TEST_CASE("PaintEngine: drawRect 1x1") {
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+        Image img(64, 64, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
         auto white = pe.createPixel(65535, 65535, 65535);
         // 1x1 rect outline: top=1 + bottom=1 (same pixel) + no sides => 2 points drawn to same pixel
@@ -292,7 +292,7 @@ TEST_CASE("PaintEngine: drawRect 1x1") {
 }
 
 TEST_CASE("PaintEngine: createPixel scales uint16 to uint8") {
-        Image img(16, 16, PixelDesc::RGB8_sRGB);
+        Image img(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
 
         // Full white: 65535 -> 255
@@ -326,7 +326,7 @@ TEST_CASE("PaintEngine: createPixel scales uint16 to uint8") {
 }
 
 TEST_CASE("PaintEngine: createPixel scales uint16 to uint8 RGBA") {
-        Image img(16, 16, PixelDesc::RGBA8_sRGB);
+        Image img(16, 16, PixelFormat::RGBA8_sRGB);
         PaintEngine pe = img.createPaintEngine();
 
         // Mid-intensity red with mid alpha
@@ -340,7 +340,7 @@ TEST_CASE("PaintEngine: createPixel scales uint16 to uint8 RGBA") {
 }
 
 TEST_CASE("PaintEngine: createPixel RGBA8 with explicit alpha") {
-        Image img(16, 16, PixelDesc::RGBA8_sRGB);
+        Image img(16, 16, PixelFormat::RGBA8_sRGB);
         PaintEngine pe = img.createPaintEngine();
 
         // 4-component: explicit alpha scaling
@@ -360,7 +360,7 @@ TEST_CASE("PaintEngine: createPixel RGBA8 with explicit alpha") {
 }
 
 TEST_CASE("PaintEngine: createPixel monochrome (1-component) RGB8") {
-        Image img(16, 16, PixelDesc::RGB8_sRGB);
+        Image img(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
 
         // 1-component gray: should spread to all 3 channels
@@ -387,7 +387,7 @@ TEST_CASE("PaintEngine: createPixel monochrome (1-component) RGB8") {
 }
 
 TEST_CASE("PaintEngine: createPixel monochrome (1-component) RGBA8") {
-        Image img(16, 16, PixelDesc::RGBA8_sRGB);
+        Image img(16, 16, PixelFormat::RGBA8_sRGB);
         PaintEngine pe = img.createPaintEngine();
 
         // 1-component gray on RGBA8: R=G=B=gray, A=0xFF
@@ -401,7 +401,7 @@ TEST_CASE("PaintEngine: createPixel monochrome (1-component) RGBA8") {
 }
 
 TEST_CASE("PaintEngine: createPixel 2-component returns empty") {
-        Image img(16, 16, PixelDesc::RGB8_sRGB);
+        Image img(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
 
         // 2-component is invalid for both RGB8 and RGBA8 — should return empty pixel
@@ -414,7 +414,7 @@ TEST_CASE("PaintEngine: createPixel 2-component returns empty") {
 // ============================================================================
 
 TEST_CASE("PaintEngine: createPixel from Color RGB8") {
-        Image img(16, 16, PixelDesc::RGB8_sRGB);
+        Image img(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
 
         auto pixel = pe.createPixel(Color::White);
@@ -429,7 +429,7 @@ TEST_CASE("PaintEngine: createPixel from Color RGB8") {
 }
 
 TEST_CASE("PaintEngine: createPixel from Color red") {
-        Image img(16, 16, PixelDesc::RGB8_sRGB);
+        Image img(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
 
         auto pixel = pe.createPixel(Color::Red);
@@ -441,7 +441,7 @@ TEST_CASE("PaintEngine: createPixel from Color red") {
 }
 
 TEST_CASE("PaintEngine: createPixel from Color mid-values") {
-        Image img(16, 16, PixelDesc::RGB8_sRGB);
+        Image img(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
 
         Color c(128, 64, 32);
@@ -454,7 +454,7 @@ TEST_CASE("PaintEngine: createPixel from Color mid-values") {
 }
 
 TEST_CASE("PaintEngine: createPixel from Color RGBA8") {
-        Image img(16, 16, PixelDesc::RGBA8_sRGB);
+        Image img(16, 16, PixelFormat::RGBA8_sRGB);
         PaintEngine pe = img.createPaintEngine();
 
         Color c(200, 100, 50, 128);
@@ -468,7 +468,7 @@ TEST_CASE("PaintEngine: createPixel from Color RGBA8") {
 }
 
 TEST_CASE("PaintEngine: createPixel from Color black") {
-        Image img(16, 16, PixelDesc::RGB8_sRGB);
+        Image img(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine pe = img.createPaintEngine();
 
         auto pixel = pe.createPixel(Color::Black);
@@ -485,12 +485,12 @@ TEST_CASE("PaintEngine: createPixel from Color black") {
 
 TEST_CASE("PaintEngine: blit full image") {
         // Create a source image filled with red
-        Image src(8, 8, PixelDesc::RGB8_sRGB);
+        Image src(8, 8, PixelFormat::RGB8_sRGB);
         PaintEngine srcPe = src.createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Red));
 
         // Create a destination filled with black
-        Image dst(16, 16, PixelDesc::RGB8_sRGB);
+        Image dst(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine dstPe = dst.createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 
@@ -515,11 +515,11 @@ TEST_CASE("PaintEngine: blit full image") {
 }
 
 TEST_CASE("PaintEngine: blit clipped at right/bottom edge") {
-        Image src(8, 8, PixelDesc::RGB8_sRGB);
+        Image src(8, 8, PixelFormat::RGB8_sRGB);
         PaintEngine srcPe = src.createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Green));
 
-        Image dst(16, 16, PixelDesc::RGB8_sRGB);
+        Image dst(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine dstPe = dst.createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 
@@ -544,11 +544,11 @@ TEST_CASE("PaintEngine: blit clipped at right/bottom edge") {
 }
 
 TEST_CASE("PaintEngine: blit completely outside returns true") {
-        Image src(8, 8, PixelDesc::RGB8_sRGB);
+        Image src(8, 8, PixelFormat::RGB8_sRGB);
         PaintEngine srcPe = src.createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Red));
 
-        Image dst(16, 16, PixelDesc::RGB8_sRGB);
+        Image dst(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine dstPe = dst.createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 
@@ -565,11 +565,11 @@ TEST_CASE("PaintEngine: blit completely outside returns true") {
 }
 
 TEST_CASE("PaintEngine: blit with negative dest clips left/top") {
-        Image src(8, 8, PixelDesc::RGB8_sRGB);
+        Image src(8, 8, PixelFormat::RGB8_sRGB);
         PaintEngine srcPe = src.createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Blue));
 
-        Image dst(16, 16, PixelDesc::RGB8_sRGB);
+        Image dst(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine dstPe = dst.createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 
@@ -600,13 +600,13 @@ TEST_CASE("PaintEngine: blit with negative dest clips left/top") {
 }
 
 TEST_CASE("PaintEngine: blit sub-region of source") {
-        Image src(16, 16, PixelDesc::RGB8_sRGB);
+        Image src(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine srcPe = src.createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Red));
         // Fill a small region green
         srcPe.fillRect(srcPe.createPixel(Color::Green), Rect<int32_t>(4, 4, 4, 4));
 
-        Image dst(16, 16, PixelDesc::RGB8_sRGB);
+        Image dst(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine dstPe = dst.createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 
@@ -627,11 +627,11 @@ TEST_CASE("PaintEngine: blit sub-region of source") {
 }
 
 TEST_CASE("PaintEngine: blit mismatched pixel format returns false") {
-        Image src(8, 8, PixelDesc::RGBA8_sRGB);
+        Image src(8, 8, PixelFormat::RGBA8_sRGB);
         PaintEngine srcPe = src.createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Red));
 
-        Image dst(16, 16, PixelDesc::RGB8_sRGB);
+        Image dst(16, 16, PixelFormat::RGB8_sRGB);
         PaintEngine dstPe = dst.createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 
@@ -647,11 +647,11 @@ TEST_CASE("PaintEngine: blit mismatched pixel format returns false") {
 }
 
 TEST_CASE("PaintEngine: blit mismatched RGBA dst from RGB src returns false") {
-        Image src(8, 8, PixelDesc::RGB8_sRGB);
+        Image src(8, 8, PixelFormat::RGB8_sRGB);
         PaintEngine srcPe = src.createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Red));
 
-        Image dst(16, 16, PixelDesc::RGBA8_sRGB);
+        Image dst(16, 16, PixelFormat::RGBA8_sRGB);
         PaintEngine dstPe = dst.createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 
@@ -664,11 +664,11 @@ TEST_CASE("PaintEngine: blit mismatched RGBA dst from RGB src returns false") {
 // ============================================================================
 
 TEST_CASE("PaintEngine: RGBA8 blit full image") {
-        Image src(8, 8, PixelDesc::RGBA8_sRGB);
+        Image src(8, 8, PixelFormat::RGBA8_sRGB);
         PaintEngine srcPe = src.createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Red));
 
-        Image dst(16, 16, PixelDesc::RGBA8_sRGB);
+        Image dst(16, 16, PixelFormat::RGBA8_sRGB);
         PaintEngine dstPe = dst.createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 
@@ -695,11 +695,11 @@ TEST_CASE("PaintEngine: RGBA8 blit full image") {
 TEST_CASE("PaintEngine: RGBA8 blit at high Y coordinate") {
         // Regression test: RGBA8 blit had a clipping bug where
         // srcHeight was incorrectly reduced when destY was large.
-        Image src(4, 4, PixelDesc::RGBA8_sRGB);
+        Image src(4, 4, PixelFormat::RGBA8_sRGB);
         PaintEngine srcPe = src.createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Red));
 
-        Image dst(32, 1080, PixelDesc::RGBA8_sRGB);
+        Image dst(32, 1080, PixelFormat::RGBA8_sRGB);
         PaintEngine dstPe = dst.createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 
@@ -719,11 +719,11 @@ TEST_CASE("PaintEngine: RGBA8 blit at high Y coordinate") {
 
 TEST_CASE("PaintEngine: RGBA8 blit at lower half of large image") {
         // Specifically tests destY > size.height()/2, which triggered the bug.
-        Image src(10, 60, PixelDesc::RGBA8_sRGB);
+        Image src(10, 60, PixelFormat::RGBA8_sRGB);
         PaintEngine srcPe = src.createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Green));
 
-        Image dst(1920, 1080, PixelDesc::RGBA8_sRGB);
+        Image dst(1920, 1080, PixelFormat::RGBA8_sRGB);
         PaintEngine dstPe = dst.createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 
@@ -748,11 +748,11 @@ TEST_CASE("PaintEngine: RGBA8 blit at lower half of large image") {
 }
 
 TEST_CASE("PaintEngine: RGBA8 blit clipped at right/bottom edge") {
-        Image src(8, 8, PixelDesc::RGBA8_sRGB);
+        Image src(8, 8, PixelFormat::RGBA8_sRGB);
         PaintEngine srcPe = src.createPaintEngine();
         srcPe.fill(srcPe.createPixel(Color::Blue));
 
-        Image dst(16, 16, PixelDesc::RGBA8_sRGB);
+        Image dst(16, 16, PixelFormat::RGBA8_sRGB);
         PaintEngine dstPe = dst.createPaintEngine();
         dstPe.fill(dstPe.createPixel(Color::Black));
 

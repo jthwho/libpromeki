@@ -15,7 +15,7 @@
 #include <promeki/rtppacket.h>
 #include <promeki/sdpsession.h>
 #include <promeki/socketaddress.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/audiodesc.h>
 #include <promeki/audiobuffer.h>
 #include <promeki/histogram.h>
@@ -49,7 +49,7 @@ class Thread;
  * @par Supported streams (writer mode)
  *
  * - **Video** — MJPEG (RFC 2435) via @ref RtpPayloadJpeg when the
- *   input @ref PixelDesc is in the JPEG family, or RFC 4175 raw
+ *   input @ref PixelFormat is in the JPEG family, or RFC 4175 raw
  *   video via @ref RtpPayloadRawVideo for 8-bit interleaved
  *   uncompressed formats (first pass; proper ST 2110-20 pgroup
  *   sizing for 10/12-bit lands later).  @b Pick @b the @b right
@@ -58,12 +58,12 @@ class Thread;
  *   vs full) inside the bitstream, so a strict JFIF consumer
  *   like ffplay always decodes with Rec.601 full-range math.
  *   For correct playback in ffplay / browsers / any libjpeg-based
- *   receiver, use @c PixelDesc::JPEG_YUV8_422_Rec601_Full or
- *   @c PixelDesc::JPEG_YUV8_420_Rec601_Full.  Broadcast / SDI /
+ *   receiver, use @c PixelFormat::JPEG_YUV8_422_Rec601_Full or
+ *   @c PixelFormat::JPEG_YUV8_420_Rec601_Full.  Broadcast / SDI /
  *   ST 2110 pipelines that expect limited-range Rec.709 JPEG
  *   should use the unsuffixed @c JPEG_YUV8_422_Rec709 variant
  *   (the library-wide YCbCr default).  See the
- *   @ref pixeldesc.h enum documentation for the full 2 × 2 × 2
+ *   @ref pixelformat.h enum documentation for the full 2 × 2 × 2
  *   matrix × range × subsampling grid.
  * - **Audio** — L16 (RFC 3551 / AES67) via @ref RtpPayloadL16.
  *   Input can arrive in any PCM data type that @ref AudioBuffer
@@ -266,9 +266,9 @@ class Thread;
  * mediaDesc.setFrameRate(FrameRate(FrameRate::FPS_30));
  * mediaDesc.imageList().pushToBack(
  *         ImageDesc(Size2Du32(1920, 1080),
- *                   PixelDesc(PixelDesc::JPEG_YUV8_422_Rec601_Full)));
+ *                   PixelFormat(PixelFormat::JPEG_YUV8_422_Rec601_Full)));
  * mediaDesc.audioList().pushToBack(
- *         AudioDesc(AudioDesc::PCMI_S16LE, 48000.0f, 2));
+ *         AudioDesc(AudioFormat::PCMI_S16LE, 48000.0f, 2));
  *
  * MediaIO::Config cfg;
  * cfg.set(MediaConfig::Type, "Rtp");
@@ -535,12 +535,12 @@ class MediaIOTask_Rtp : public MediaIOTask {
                 // Mode
                 bool            _readerMode = false;
 
-                // RFC 4175 wire-format PixelDesc.  When the input
+                // RFC 4175 wire-format PixelFormat.  When the input
                 // pixel format doesn't match what RFC 4175 expects
                 // on the wire (e.g. YUYV vs UYVY), sendVideo()
                 // calls Image::convert() to the wire format before
                 // packing.  Invalid means no conversion needed.
-                PixelDesc       _videoWirePixelDesc;
+                PixelFormat       _videoWirePixelFormat;
 
                 // Reader runtime
                 Queue<Frame::Ptr> _readerQueue;

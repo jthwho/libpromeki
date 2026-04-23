@@ -40,12 +40,12 @@ an attached `MediaPacket`. The default `proposeInput` says "accept
 anything," so the planner routes an uncompressed source straight in and
 the first `executeCmd(Write)` fails at runtime. `proposeInput` must reject
 any offered `MediaDesc` whose first image is not compressed. `describe`
-can advertise `acceptableFormats` as "every compressed PixelDesc" (from
+can advertise `acceptableFormats` as "every compressed PixelFormat" (from
 the registered `VideoCodec` list) so the planner sees the real contract.
 
 ### 2. `mediaiotask_burn.cpp` — silent passthrough assumption *(priority 1)*
 
-Burn requires `PixelDesc::hasPaintEngine() == true` but never advertises
+Burn requires `PixelFormat::hasPaintEngine() == true` but never advertises
 that constraint. Today non-paintable input triggers a one-shot warning
 and silent passthrough.
 
@@ -65,14 +65,14 @@ extension-based logic into `describe()` when `canBeSink`.
 
 ### 4. `mediaiotask_imagefile.cpp` — missing `describe` *(priority 2)*
 
-`preferredWriterPixelDesc` covers DPX/PNG/JPEG/TGA/SGI/PNM per-extension
+`preferredWriterPixelFormat` covers DPX/PNG/JPEG/TGA/SGI/PNM per-extension
 bit-depth picks. `describe().acceptableFormats()` is not populated, so
 introspection is blind for sink mode. Lift the per-extension table into
 `describe()`.
 
 ### 5. `mediaiotask_quicktime.cpp` — missing `describe` *(priority 2)*
 
-`isSupportedPixelDesc()` already enumerates the writer-supported set.
+`isSupportedPixelFormat()` already enumerates the writer-supported set.
 One `describe()` that pushes each into `acceptableFormats` is enough.
 
 ### 6. `mediaiotask_v4l2.cpp` — header explicitly defers; improvement possible

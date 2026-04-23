@@ -13,10 +13,9 @@
 #include <promeki/image.h>
 #include <promeki/file.h>
 #include <promeki/buffer.h>
-#include <promeki/pixeldesc.h>
-#include <promeki/jpegxsimagecodec.h>
-#include <promeki/codec.h>
-#include <promeki/mediapacket.h>
+#include <promeki/pixelformat.h>
+#include <promeki/videoencoder.h>
+#include <promeki/videopacket.h>
 #include <promeki/videocodec.h>
 #include <promeki/metadata.h>
 
@@ -35,19 +34,19 @@ PROMEKI_DEBUG(JPEGXS)
 // svt_jpeg_xs_decoder_init, filling an svt_jpeg_xs_image_config_t
 // with the intrinsic frame geometry (width, height, bit_depth,
 // colour_format, components_num).  We use that to identify the
-// correct compressed PixelDesc::ID for the loaded Image.  The
+// correct compressed PixelFormat::ID for the loaded Image.  The
 // decoder handle is closed immediately after probing — we only
 // need the header information, not a full decode.
 
 namespace {
 
-static PixelDesc::ID probeJpegXsHeader(const void *data, size_t size,
+static PixelFormat::ID probeJpegXsHeader(const void *data, size_t size,
                                        size_t &widthOut, size_t &heightOut) {
         // JPEG XS codestreams begin with SOC marker 0xFF10.  Reject
         // obviously non-JPEG-XS data before touching SVT.
-        if(size < 4) return PixelDesc::Invalid;
+        if(size < 4) return PixelFormat::Invalid;
         const uint8_t *p = static_cast<const uint8_t *>(data);
-        if(p[0] != 0xFF || p[1] != 0x10) return PixelDesc::Invalid;
+        if(p[0] != 0xFF || p[1] != 0x10) return PixelFormat::Invalid;
 
         svt_jpeg_xs_decoder_api_t dec = {};
         dec.use_cpu_flags      = CPU_FLAGS_ALL;
@@ -64,35 +63,35 @@ static PixelDesc::ID probeJpegXsHeader(const void *data, size_t size,
                 size,
                 &cfg);
         if(err != SvtJxsErrorNone) {
-                return PixelDesc::Invalid;
+                return PixelFormat::Invalid;
         }
 
         widthOut  = cfg.width;
         heightOut = cfg.height;
 
-        PixelDesc::ID id = PixelDesc::Invalid;
+        PixelFormat::ID id = PixelFormat::Invalid;
         const bool is422 = (cfg.format == COLOUR_FORMAT_PLANAR_YUV422);
         const bool is420 = (cfg.format == COLOUR_FORMAT_PLANAR_YUV420);
 
         if(is422) {
                 switch(cfg.bit_depth) {
-                        case 8:  id = PixelDesc::JPEG_XS_YUV8_422_Rec709;  break;
-                        case 10: id = PixelDesc::JPEG_XS_YUV10_422_Rec709; break;
-                        case 12: id = PixelDesc::JPEG_XS_YUV12_422_Rec709; break;
+                        case 8:  id = PixelFormat::JPEG_XS_YUV8_422_Rec709;  break;
+                        case 10: id = PixelFormat::JPEG_XS_YUV10_422_Rec709; break;
+                        case 12: id = PixelFormat::JPEG_XS_YUV12_422_Rec709; break;
                         default: break;
                 }
         } else if(is420) {
                 switch(cfg.bit_depth) {
-                        case 8:  id = PixelDesc::JPEG_XS_YUV8_420_Rec709;  break;
-                        case 10: id = PixelDesc::JPEG_XS_YUV10_420_Rec709; break;
-                        case 12: id = PixelDesc::JPEG_XS_YUV12_420_Rec709; break;
+                        case 8:  id = PixelFormat::JPEG_XS_YUV8_420_Rec709;  break;
+                        case 10: id = PixelFormat::JPEG_XS_YUV10_420_Rec709; break;
+                        case 12: id = PixelFormat::JPEG_XS_YUV12_420_Rec709; break;
                         default: break;
                 }
         } else if(cfg.format == COLOUR_FORMAT_PLANAR_YUV444_OR_RGB) {
                 // The decoder reports 4:4:4/RGB streams as planar.  We
-                // only have an 8-bit RGB PixelDesc today; 10/12-bit
+                // only have an 8-bit RGB PixelFormat today; 10/12-bit
                 // would need new entries.
-                if(cfg.bit_depth == 8) id = PixelDesc::JPEG_XS_RGB8_sRGB;
+                if(cfg.bit_depth == 8) id = PixelFormat::JPEG_XS_RGB8_sRGB;
         }
 
         svt_jpeg_xs_decoder_close(&dec);
@@ -130,9 +129,9 @@ PROMEKI_REGISTER_IMAGEFILEIO(ImageFileIO_JpegXS);
 // returned Image is compressed (isCompressed() == true) and its single
 // plane points at the raw JPEG XS codestream bytes.  Consumers that
 // need uncompressed pixels run the image through Image::convert() —
-// the dispatcher routes compressed inputs to JpegXsImageCodec::decode()
-// automatically.  The pass-through path (JXS file → JXS file) avoids
-// any re-encode.
+// the dispatcher routes compressed inputs through a JpegXsVideoDecoder
+// session automatically.  The pass-through path (JXS file → JXS file)
+// avoids any re-encode.
 
 Error ImageFileIO_JpegXS::load(ImageFile &imageFile, const MediaConfig &config) const {
         (void)config;
@@ -182,14 +181,14 @@ Error ImageFileIO_JpegXS::load(ImageFile &imageFile, const MediaConfig &config) 
 
         size_t width = 0;
         size_t height = 0;
-        PixelDesc::ID pdId = probeJpegXsHeader(fileBuf->data(), fileBuf->size(),
+        PixelFormat::ID pdId = probeJpegXsHeader(fileBuf->data(), fileBuf->size(),
                                                width, height);
-        if(pdId == PixelDesc::Invalid) {
+        if(pdId == PixelFormat::Invalid) {
                 promekiErr("JPEG XS load '%s': header probe failed", filename.cstr());
                 return Error::CorruptData;
         }
 
-        Image img = Image::fromBuffer(fileBuf, width, height, PixelDesc(pdId));
+        Image img = Image::fromBuffer(fileBuf, width, height, PixelFormat(pdId));
         if(!img.isValid()) {
                 promekiErr("JPEG XS load '%s': Image::fromBuffer failed", filename.cstr());
                 return Error::Invalid;
@@ -207,7 +206,7 @@ Error ImageFileIO_JpegXS::load(ImageFile &imageFile, const MediaConfig &config) 
 //   1. Input is already a compressed JPEG XS bitstream: write the
 //      payload bytes verbatim (zero-loss pass-through).
 //
-//   2. Input is uncompressed planar YUV that JpegXsImageCodec accepts
+//   2. Input is uncompressed planar YUV that JpegXsVideoEncoder accepts
 //      directly: Image::convert() dispatches to the codec without a
 //      preparatory CSC.
 //
@@ -216,14 +215,14 @@ Error ImageFileIO_JpegXS::load(ImageFile &imageFile, const MediaConfig &config) 
 //      and then encodes.
 //
 // Paths (2) and (3) are handled uniformly by calling Image::convert()
-// with a JPEG XS PixelDesc target.  The target subtype is chosen to
+// with a JPEG XS PixelFormat target.  The target subtype is chosen to
 // match the input's bit depth and subsampling where possible; otherwise
 // we fall back to JPEG_XS_YUV8_422_Rec709 which is the most common
 // broadcast format.
 //
 // MediaConfig::JpegXsBpp / MediaConfig::JpegXsDecomposition on @p
 // config flow straight through Image::convert() into
-// JpegXsImageCodec::configure().
+// JpegXsVideoEncoder::configure().
 
 Error ImageFileIO_JpegXS::save(ImageFile &imageFile, const MediaConfig &config) const {
         const String &filename = imageFile.filename();
@@ -234,7 +233,7 @@ Error ImageFileIO_JpegXS::save(ImageFile &imageFile, const MediaConfig &config) 
         }
 
         // Pass-through: keep the existing JPEG XS bitstream exactly.
-        if(image.isCompressed() && image.pixelDesc().videoCodec().id() == VideoCodec::JPEG_XS) {
+        if(image.isCompressed() && image.pixelFormat().videoCodec().id() == VideoCodec::JPEG_XS) {
                 const void *payload = image.data(0);
                 const size_t payloadSize = image.compressedSize();
                 if(payload == nullptr || payloadSize == 0) {
@@ -271,101 +270,101 @@ Error ImageFileIO_JpegXS::save(ImageFile &imageFile, const MediaConfig &config) 
         if(image.isCompressed()) {
                 promekiErr("JPEG XS save '%s': unsupported compressed input codec '%s'",
                            filename.cstr(),
-                           image.pixelDesc().videoCodec().name().cstr());
+                           image.pixelFormat().videoCodec().name().cstr());
                 return Error::NotSupported;
         }
 
         // Pick a JPEG XS subtype that matches the input's bit depth
         // and subsampling to avoid an extra CSC hop where possible.
-        PixelDesc::ID targetId = PixelDesc::JPEG_XS_YUV8_422_Rec709;
-        switch(image.pixelDesc().id()) {
+        PixelFormat::ID targetId = PixelFormat::JPEG_XS_YUV8_422_Rec709;
+        switch(image.pixelFormat().id()) {
                 // 4:2:2 planar inputs — match bit depth directly.
-                case PixelDesc::YUV8_422_Planar_Rec709:
-                        targetId = PixelDesc::JPEG_XS_YUV8_422_Rec709;
+                case PixelFormat::YUV8_422_Planar_Rec709:
+                        targetId = PixelFormat::JPEG_XS_YUV8_422_Rec709;
                         break;
-                case PixelDesc::YUV10_422_Planar_LE_Rec709:
-                        targetId = PixelDesc::JPEG_XS_YUV10_422_Rec709;
+                case PixelFormat::YUV10_422_Planar_LE_Rec709:
+                        targetId = PixelFormat::JPEG_XS_YUV10_422_Rec709;
                         break;
-                case PixelDesc::YUV12_422_Planar_LE_Rec709:
-                        targetId = PixelDesc::JPEG_XS_YUV12_422_Rec709;
+                case PixelFormat::YUV12_422_Planar_LE_Rec709:
+                        targetId = PixelFormat::JPEG_XS_YUV12_422_Rec709;
                         break;
                 // 4:2:0 planar inputs — match bit depth directly.
-                case PixelDesc::YUV8_420_Planar_Rec709:
-                        targetId = PixelDesc::JPEG_XS_YUV8_420_Rec709;
+                case PixelFormat::YUV8_420_Planar_Rec709:
+                        targetId = PixelFormat::JPEG_XS_YUV8_420_Rec709;
                         break;
-                case PixelDesc::YUV10_420_Planar_LE_Rec709:
-                        targetId = PixelDesc::JPEG_XS_YUV10_420_Rec709;
+                case PixelFormat::YUV10_420_Planar_LE_Rec709:
+                        targetId = PixelFormat::JPEG_XS_YUV10_420_Rec709;
                         break;
-                case PixelDesc::YUV12_420_Planar_LE_Rec709:
-                        targetId = PixelDesc::JPEG_XS_YUV12_420_Rec709;
+                case PixelFormat::YUV12_420_Planar_LE_Rec709:
+                        targetId = PixelFormat::JPEG_XS_YUV12_420_Rec709;
                         break;
                 // Interleaved 4:2:2 — encode as 8-bit 4:2:2.
-                case PixelDesc::YUV8_422_Rec709:
-                case PixelDesc::YUV8_422_UYVY_Rec709:
-                        targetId = PixelDesc::JPEG_XS_YUV8_422_Rec709;
+                case PixelFormat::YUV8_422_Rec709:
+                case PixelFormat::YUV8_422_UYVY_Rec709:
+                        targetId = PixelFormat::JPEG_XS_YUV8_422_Rec709;
                         break;
                 // 4:2:0 semi-planar — encode as 8-bit 4:2:0.
-                case PixelDesc::YUV8_420_SemiPlanar_Rec709:
-                        targetId = PixelDesc::JPEG_XS_YUV8_420_Rec709;
+                case PixelFormat::YUV8_420_SemiPlanar_Rec709:
+                        targetId = PixelFormat::JPEG_XS_YUV8_420_Rec709;
                         break;
                 // RGB inputs — encode as packed RGB directly.  The SVT
                 // encoder deinterleaves to planar internally with
                 // AVX2/AVX512 fast paths.
-                case PixelDesc::RGB8_sRGB:
-                case PixelDesc::RGB8_Planar_sRGB:
-                        targetId = PixelDesc::JPEG_XS_RGB8_sRGB;
+                case PixelFormat::RGB8_sRGB:
+                case PixelFormat::RGB8_Planar_sRGB:
+                        targetId = PixelFormat::JPEG_XS_RGB8_sRGB;
                         break;
                 default:
                         // RGBA, mono, and anything else: fall back to
                         // JPEG XS RGB when the input is an RGB-family
                         // format, otherwise YUV 4:2:2.
-                        if(image.pixelDesc().colorModel().id() == ColorModel::sRGB)
-                                targetId = PixelDesc::JPEG_XS_RGB8_sRGB;
+                        if(image.pixelFormat().colorModel().id() == ColorModel::sRGB)
+                                targetId = PixelFormat::JPEG_XS_RGB8_sRGB;
                         else
-                                targetId = PixelDesc::JPEG_XS_YUV8_422_Rec709;
+                                targetId = PixelFormat::JPEG_XS_YUV8_422_Rec709;
                         break;
         }
 
         // Same JpegVideoEncoder bridging used by ImageFileIO_JPEG —
         // one-shot session, configure with the chosen sub-target,
         // submit, pull the packet, write its bytes.
-        VideoEncoder *enc = VideoCodec(VideoCodec::JPEG_XS).createEncoder();
-        if(enc == nullptr) {
-                promekiErr("JPEG XS save '%s': no JpegXsVideoEncoder factory registered",
-                           filename.cstr());
+        MediaConfig encCfg = config;
+        encCfg.set(MediaConfig::OutputPixelFormat, PixelFormat(targetId));
+        auto encResult = VideoCodec(VideoCodec::JPEG_XS).createEncoder(&encCfg);
+        if(error(encResult).isError()) {
+                promekiErr("JPEG XS save '%s': createEncoder failed: %s",
+                           filename.cstr(), error(encResult).name().cstr());
                 return Error::NotSupported;
         }
-        MediaConfig encCfg = config;
-        encCfg.set(MediaConfig::OutputPixelDesc, PixelDesc(targetId));
-        enc->configure(encCfg);
+        VideoEncoder *enc = value(encResult);
 
         Image encodeInput = image;
-        const auto &sources = PixelDesc(targetId).encodeSources();
+        const auto &sources = PixelFormat(targetId).encodeSources();
         bool sourceOk = sources.isEmpty();
-        for(PixelDesc::ID s : sources) {
-                if(image.pixelDesc().id() == s) { sourceOk = true; break; }
+        for(PixelFormat::ID s : sources) {
+                if(image.pixelFormat().id() == s) { sourceOk = true; break; }
         }
         if(!sourceOk && !sources.isEmpty()) {
-                encodeInput = image.convert(PixelDesc(sources[0]),
+                encodeInput = image.convert(PixelFormat(sources[0]),
                                             image.metadata(), config);
                 if(!encodeInput.isValid()) {
                         delete enc;
                         promekiErr("JPEG XS save '%s': prep CSC %s -> %s failed",
                                    filename.cstr(),
-                                   image.pixelDesc().name().cstr(),
-                                   PixelDesc(sources[0]).name().cstr());
+                                   image.pixelFormat().name().cstr(),
+                                   PixelFormat(sources[0]).name().cstr());
                         return Error::ConversionFailed;
                 }
         }
 
-        if(Error e = enc->submitFrame(encodeInput); e.isError()) {
+        if(Error e = enc->submitFrame(Image::Ptr::create(std::move(encodeInput))); e.isError()) {
                 String msg = enc->lastErrorMessage();
                 delete enc;
                 promekiErr("JPEG XS save '%s': encode failed: %s",
                            filename.cstr(), msg.isEmpty() ? e.name().cstr() : msg.cstr());
                 return e;
         }
-        MediaPacket::Ptr pkt = enc->receivePacket();
+        VideoPacket::Ptr pkt = enc->receivePacket();
         delete enc;
         if(!pkt) {
                 promekiErr("JPEG XS save '%s': encoder produced no packet",

@@ -45,7 +45,7 @@ String cscParamHelp();
  * @brief Registers ImageDataEncoder + ImageDataDecoder cases.
  *
  * Reads `imagedata.format` and `imagedata.size` from BenchParams to
- * decide which (PixelDesc, dimensions) pairs to register.
+ * decide which (PixelFormat, dimensions) pairs to register.
  */
 void registerImageDataCases();
 

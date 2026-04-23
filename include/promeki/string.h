@@ -920,6 +920,29 @@ class String {
                 }
 
                 /**
+                 * @brief Returns true when this string is a valid C identifier.
+                 *
+                 * A C identifier is non-empty, starts with a letter or
+                 * underscore, and contains only ASCII letters, digits,
+                 * and underscores thereafter.  Used by registry-facing
+                 * name validation (codec names, backend tags, …) to
+                 * guarantee the string is safe to embed in generated
+                 * code, use as a map key without escaping, and round-
+                 * trip through JSON / shell / URL parsers without
+                 * quoting.
+                 */
+                bool isIdentifier() const {
+                        if(isEmpty()) return false;
+                        auto c0 = d->charAt(0);
+                        if(!c0.isAlpha() && c0.codepoint() != '_') return false;
+                        for(size_t i = 1; i < d->length(); ++i) {
+                                auto c = d->charAt(i);
+                                if(!c.isAlphaNumeric() && c.codepoint() != '_') return false;
+                        }
+                        return true;
+                }
+
+                /**
                  * @brief Returns a copy with all occurrences of @p find replaced
                  *        by @p replacement.
                  */

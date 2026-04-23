@@ -345,9 +345,21 @@ class MediaPipeline : public ObjectBase {
                 // refuse a frame we just confirmed there was room
                 // for.  Async write failures arrive on
                 // @c writeErrorSignal.
+                //
+                // @c framesWritten counts frames successfully submitted to
+                // this edge's sink for the pipeline-wide frame-count
+                // cap (@ref MediaPipelineConfig::frameCount).  @c isSinkEdge
+                // is cached at build time so drainSource doesn't re-walk
+                // the route table on the hot path.  @c doneByLimit flips
+                // once the cap has been honoured for this edge — drainSource
+                // then skips it so no further writes (or NotOpen errors)
+                // reach the freshly-closed sink.
                 struct EdgeState {
                         String   toName;
                         MediaIO *to = nullptr;
+                        int64_t  framesWritten = 0;
+                        bool     isSinkEdge = false;
+                        bool     doneByLimit = false;
                 };
 
                 // Each source-or-transit stage owns one SourceState entry.
@@ -366,6 +378,16 @@ class MediaPipeline : public ObjectBase {
 
                 void drainSource(const String &srcName);
                 void onWriteError(const String &stageName, Error err);
+
+                /**
+                 * @brief Returns true when every sink-terminating edge in
+                 *        the pipeline has reached the frame-count cap.
+                 *
+                 * Used by @ref drainSource to decide when to initiate
+                 * the graceful close cascade: once every sink edge is
+                 * marked @c doneByLimit there's nothing left to drive.
+                 */
+                bool allSinkEdgesDoneByLimit() const;
 
                 /**
                  * @brief Common entry point for every close trigger
@@ -456,6 +478,14 @@ class MediaPipeline : public ObjectBase {
                 Atomic<int64_t>                       _pipelineErrors{0};
                 ElapsedTimer                          _uptime;
                 bool                                  _uptimeStarted = false;
+
+                // Pipeline-wide frame-count cap, cached at build time
+                // from @ref MediaPipelineConfig::frameCount.  Zero means
+                // "no cap" (matches the @ref FrameCount::isFinite() gate).
+                // Non-zero values cause drainSource to count frames per
+                // outgoing sink edge and close each sink once its count
+                // crosses the cap at the next safe cut point.
+                int64_t                               _frameCountLimit = 0;
 };
 
 PROMEKI_NAMESPACE_END

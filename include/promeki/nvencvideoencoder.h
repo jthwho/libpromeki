@@ -9,7 +9,7 @@
 
 #include <promeki/namespace.h>
 #include <promeki/config.h>
-#include <promeki/codec.h>
+#include <promeki/videoencoder.h>
 
 #if PROMEKI_ENABLE_NVENC
 
@@ -19,16 +19,17 @@ PROMEKI_NAMESPACE_BEGIN
  * @brief Hardware H.264 / HEVC / AV1 video encoder backed by NVIDIA NVENC.
  * @ingroup proav
  *
- * Registered under the codec names @c "H264", @c "HEVC", and @c "AV1", so
- * callers ask for this backend through the generic
- * @ref VideoEncoder::createEncoder factory rather than constructing
+ * Registered under the typed @c "Nvidia" backend for
+ * @ref VideoCodec::H264, @ref VideoCodec::HEVC, and @ref VideoCodec::AV1,
+ * so callers ask for this backend through the generic
+ * @ref VideoCodec::createEncoder factory rather than constructing
  * it directly.  The constructor picks which codec the instance emits
  * via its @ref Codec parameter, and the class maps
  * @ref MediaConfig rate-control knobs onto the matching NVENC
  * parameters during @ref configure.
  *
  * Compiled only when @c PROMEKI_ENABLE_NVENC is defined.  When the
- * build does not have NVENC, @c VideoEncoder::createEncoder("H264")
+ * build does not have NVENC, @c VideoCodec(VideoCodec::H264).createEncoder()
  * still works if any other H.264 backend is registered; the CPU
  * fallback path is a separate concern.
  *
@@ -42,7 +43,7 @@ PROMEKI_NAMESPACE_BEGIN
  * uninitialised.
  *
  * @par Supported input formats (v1)
- * Only @ref PixelDesc::YUV8_420_SemiPlanar_Rec709 (NV12) is accepted
+ * Only @ref PixelFormat::YUV8_420_SemiPlanar_Rec709 (NV12) is accepted
  * for the first cut.  Callers with RGB or other YCbCr sources should
  * convert first via @ref Image::convert.  Additional formats (NV12
  * BT.601, 10-bit P010, device-memory buffers for zero-copy) will be
@@ -50,12 +51,12 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par Example
  * @code
- * VideoEncoder *enc = VideoEncoder::createEncoder("H264");
  * MediaConfig cfg;
  * cfg.set(MediaConfig::BitrateKbps, 8000);
  * cfg.set(MediaConfig::GopLength,   60);
  * cfg.set(MediaConfig::VideoPreset, VideoEncoderPreset::LowLatency);
- * enc->configure(cfg);
+ * auto res = VideoCodec(VideoCodec::H264).createEncoder(&cfg);
+ * VideoEncoder *enc = value(res);
  *
  * for(const Image &nv12 : source) {
  *         enc->submitFrame(nv12);
@@ -84,24 +85,19 @@ class NvencVideoEncoder : public VideoEncoder {
                 /** @brief Destructor — tears down the NVENC session if one was opened. */
                 ~NvencVideoEncoder() override;
 
-                String name() const override;
-                String description() const override;
-                PixelDesc outputPixelDesc() const override;
-                List<int> supportedInputs() const override;
-
                 /**
-                 * @brief Static view of the encoder's @ref supportedInputs list.
+                 * @brief Static view of the encoder's accepted uncompressed input list.
                  *
-                 * Exposed for the @ref VideoCodec registry so planners
-                 * can query supported inputs without instantiating an
-                 * encoder session.
+                 * Exposed for the @ref VideoCodec backend registry so
+                 * planners can query supported inputs without
+                 * instantiating an encoder session.
                  */
                 static List<int> supportedInputList();
 
                 void configure(const MediaConfig &config) override;
-                Error submitFrame(const Image &frame,
+                Error submitFrame(const Image::Ptr &frame,
                                   const MediaTimeStamp &pts = MediaTimeStamp()) override;
-                MediaPacket::Ptr receivePacket() override;
+                VideoPacket::Ptr receivePacket() override;
                 Error flush() override;
                 Error reset() override;
                 void requestKeyframe() override;

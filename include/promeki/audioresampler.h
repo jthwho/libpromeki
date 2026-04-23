@@ -26,7 +26,7 @@ PROMEKI_NAMESPACE_BEGIN
  * smoothly interpolates between the old and new ratios.
  *
  * All input must be in the native interleaved float32 format
- * (AudioDesc::NativeType).  Use Audio::convertTo() or AudioDesc's
+ * (AudioFormat::NativeFloat).  Use Audio::convert() or AudioDesc's
  * samplesToFloat() helper to convert before feeding data in.
  *
  * The resampler is not internally thread-safe; the caller must

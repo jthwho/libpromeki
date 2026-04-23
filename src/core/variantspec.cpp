@@ -13,8 +13,8 @@
 #include <promeki/enumlist.h>
 #include <promeki/framerate.h>
 #include <promeki/audiocodec.h>
-#include <promeki/pixeldesc.h>
 #include <promeki/pixelformat.h>
+#include <promeki/pixelmemlayout.h>
 #include <promeki/rational.h>
 #include <promeki/videocodec.h>
 #include <promeki/videoformat.h>
@@ -88,10 +88,11 @@ String singleTypeName(Variant::Type t, Enum::Type enumType) {
                 case Variant::TypeColor:        return "Color";
                 case Variant::TypeColorModel:   return "ColorModel";
                 case Variant::TypeMemSpace:     return "MemSpace";
-                case Variant::TypePixelFormat:  return "PixelFormat";
-                case Variant::TypePixelDesc:    return "PixelDesc";
+                case Variant::TypePixelMemLayout:  return "PixelMemLayout";
+                case Variant::TypePixelFormat:    return "PixelFormat";
                 case Variant::TypeVideoCodec:   return "VideoCodec";
                 case Variant::TypeAudioCodec:   return "AudioCodec";
+                case Variant::TypeAudioFormat:  return "AudioFormat";
                 case Variant::TypeEnum: {
                         if(enumType.isValid()) return String("Enum ") + enumType.name();
                         return "Enum";
@@ -196,13 +197,13 @@ Variant parseAsType(Variant::Type type, Enum::Type enumType,
                         if(!c.isValid()) break;
                         return Variant(c);
                 }
-                case Variant::TypePixelDesc: {
-                        PixelDesc pd = PixelDesc::lookup(str);
+                case Variant::TypePixelFormat: {
+                        PixelFormat pd = PixelFormat::lookup(str);
                         if(!pd.isValid()) break;
                         return Variant(pd);
                 }
-                case Variant::TypePixelFormat: {
-                        PixelFormat pf = PixelFormat::lookup(str);
+                case Variant::TypePixelMemLayout: {
+                        PixelMemLayout pf = PixelMemLayout::lookup(str);
                         if(!pf.isValid()) break;
                         return Variant(pf);
                 }
@@ -212,14 +213,19 @@ Variant parseAsType(Variant::Type type, Enum::Type enumType,
                         return Variant(cm);
                 }
                 case Variant::TypeVideoCodec: {
-                        VideoCodec vc = VideoCodec::lookup(str);
-                        if(!vc.isValid()) break;
-                        return Variant(vc);
+                        auto r = VideoCodec::fromString(str);
+                        if(error(r).isError()) break;
+                        return Variant(value(r));
                 }
                 case Variant::TypeAudioCodec: {
-                        AudioCodec ac = AudioCodec::lookup(str);
-                        if(!ac.isValid()) break;
-                        return Variant(ac);
+                        auto r = AudioCodec::fromString(str);
+                        if(error(r).isError()) break;
+                        return Variant(value(r));
+                }
+                case Variant::TypeAudioFormat: {
+                        auto r = AudioFormat::fromString(str);
+                        if(error(r).isError()) break;
+                        return Variant(value(r));
                 }
                 case Variant::TypeEnum: {
                         if(!enumType.isValid()) break;

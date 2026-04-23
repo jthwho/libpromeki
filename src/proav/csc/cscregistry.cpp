@@ -18,12 +18,12 @@ static Map<FastPathKey, CSCRegistry::LineFuncPtr> &registry() {
         return r;
 }
 
-void CSCRegistry::registerFastPath(const PixelDesc &src, const PixelDesc &dst, LineFuncPtr func) {
+void CSCRegistry::registerFastPath(const PixelFormat &src, const PixelFormat &dst, LineFuncPtr func) {
         registry()[FastPathKey(static_cast<int>(src.id()), static_cast<int>(dst.id()))] = func;
         return;
 }
 
-CSCRegistry::LineFuncPtr CSCRegistry::lookupFastPath(const PixelDesc &src, const PixelDesc &dst) {
+CSCRegistry::LineFuncPtr CSCRegistry::lookupFastPath(const PixelFormat &src, const PixelFormat &dst) {
         auto &r = registry();
         FastPathKey key(static_cast<int>(src.id()), static_cast<int>(dst.id()));
         if(r.contains(key)) return r[key];

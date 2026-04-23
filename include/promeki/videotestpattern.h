@@ -61,7 +61,7 @@ class FastFont;
  * repeated draws of the same characters at the same size/color are a
  * memcpy per scanline with no per-pixel alpha blending — see
  * @ref fonts.  The image must be in a paintable pixel format
- * (@c PixelDesc::hasPaintEngine() == true); @c applyBurn() returns
+ * (@c PixelFormat::hasPaintEngine() == true); @c applyBurn() returns
  * @c Error::NotSupported on non-paintable formats.
  *
  * @par Example
@@ -71,7 +71,7 @@ class FastFont;
  *
  * // Static pattern, no burn: the first create() renders, subsequent
  * // calls return the cached image via shallow copy.
- * ImageDesc desc(1920, 1080, PixelDesc::RGB8_sRGB);
+ * ImageDesc desc(1920, 1080, PixelFormat::RGB8_sRGB);
  * Image a = gen.create(desc);  // renders colorbars
  * Image b = gen.create(desc);  // returns cache
  *
@@ -231,7 +231,7 @@ class VideoTestPattern {
                  *
                  * @param img      Target image.  Must be valid and in a
                  *                 paintable pixel format
-                 *                 (@c PixelDesc::hasPaintEngine() ==
+                 *                 (@c PixelFormat::hasPaintEngine() ==
                  *                 true).  Mutated in place.
                  * @param burnText Text to draw.  May contain @c '\n'
                  *                 for multi-line.
@@ -299,7 +299,7 @@ class VideoTestPattern {
                 mutable Image   _cachedImages[CacheSlotCount];
                 mutable size_t  _cacheW = 0;
                 mutable size_t  _cacheH = 0;
-                mutable int     _cachePixelDescId = 0;
+                mutable int     _cachePixelFormatId = 0;
 
                 // Burn font — lazily constructed the first time burn
                 // actually runs, because FastFont needs a PaintEngine
@@ -334,12 +334,12 @@ class VideoTestPattern {
                                          Builder &&build) const {
                         if(_cacheW != desc.width()
                            || _cacheH != desc.height()
-                           || _cachePixelDescId != static_cast<int>(desc.pixelDesc().id())) {
+                           || _cachePixelFormatId != static_cast<int>(desc.pixelFormat().id())) {
                                 invalidateImageCache();
                                 _cacheW = desc.width();
                                 _cacheH = desc.height();
-                                _cachePixelDescId =
-                                        static_cast<int>(desc.pixelDesc().id());
+                                _cachePixelFormatId =
+                                        static_cast<int>(desc.pixelFormat().id());
                         }
                         Image &slot = _cachedImages[slotIndex];
                         if(!slot.isValid()) {

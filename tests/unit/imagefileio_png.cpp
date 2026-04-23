@@ -42,8 +42,8 @@ static void fillPattern(Image &image) {
         }
 }
 
-static void pngRoundTrip(const char *fn, size_t w, size_t h, PixelDesc::ID pdId) {
-        Image src(w, h, PixelDesc(pdId));
+static void pngRoundTrip(const char *fn, size_t w, size_t h, PixelFormat::ID pdId) {
+        Image src(w, h, PixelFormat(pdId));
         REQUIRE(src.isValid());
         fillPattern(src);
 
@@ -59,7 +59,7 @@ static void pngRoundTrip(const char *fn, size_t w, size_t h, PixelDesc::ID pdId)
         REQUIRE(dst.isValid());
         CHECK(dst.width() == w);
         CHECK(dst.height() == h);
-        CHECK(dst.pixelDesc().id() == pdId);
+        CHECK(dst.pixelFormat().id() == pdId);
         CHECK(std::memcmp(src.data(0), dst.data(0),
                           src.lineStride(0) * h) == 0);
 
@@ -71,8 +71,8 @@ static void pngRoundTrip(const char *fn, size_t w, size_t h, PixelDesc::ID pdId)
 // variant, so we verify that the round-trip lands in the BE form and
 // that byte-swapping it matches the original LE bytes.
 static void pngLeRoundTrip(const char *fn, size_t w, size_t h,
-                           PixelDesc::ID leId, PixelDesc::ID beId) {
-        Image src(w, h, PixelDesc(leId));
+                           PixelFormat::ID leId, PixelFormat::ID beId) {
+        Image src(w, h, PixelFormat(leId));
         REQUIRE(src.isValid());
         fillPattern(src);
 
@@ -86,7 +86,7 @@ static void pngLeRoundTrip(const char *fn, size_t w, size_t h,
         CHECK(lf.load() == Error::Ok);
         Image dst = lf.image();
         REQUIRE(dst.isValid());
-        CHECK(dst.pixelDesc().id() == beId);
+        CHECK(dst.pixelFormat().id() == beId);
 
         // Compare byte-swapped BE output to the original LE bytes.
         const uint16_t *srcPixels = static_cast<const uint16_t *>(src.data(0));
@@ -110,27 +110,27 @@ static void pngLeRoundTrip(const char *fn, size_t w, size_t h,
 // ============================================================================
 
 TEST_CASE("ImageFileIO PNG: Mono8 round-trip") {
-        pngRoundTrip("/tmp/promeki_png_mono8.png", 64, 48, PixelDesc::Mono8_sRGB);
+        pngRoundTrip("/tmp/promeki_png_mono8.png", 64, 48, PixelFormat::Mono8_sRGB);
 }
 
 TEST_CASE("ImageFileIO PNG: RGB8 round-trip") {
-        pngRoundTrip("/tmp/promeki_png_rgb8.png", 64, 48, PixelDesc::RGB8_sRGB);
+        pngRoundTrip("/tmp/promeki_png_rgb8.png", 64, 48, PixelFormat::RGB8_sRGB);
 }
 
 TEST_CASE("ImageFileIO PNG: RGBA8 round-trip") {
-        pngRoundTrip("/tmp/promeki_png_rgba8.png", 64, 48, PixelDesc::RGBA8_sRGB);
+        pngRoundTrip("/tmp/promeki_png_rgba8.png", 64, 48, PixelFormat::RGBA8_sRGB);
 }
 
 TEST_CASE("ImageFileIO PNG: Mono16 BE round-trip") {
-        pngRoundTrip("/tmp/promeki_png_mono16.png", 32, 24, PixelDesc::Mono16_BE_sRGB);
+        pngRoundTrip("/tmp/promeki_png_mono16.png", 32, 24, PixelFormat::Mono16_BE_sRGB);
 }
 
 TEST_CASE("ImageFileIO PNG: RGB16 BE round-trip") {
-        pngRoundTrip("/tmp/promeki_png_rgb16.png", 32, 24, PixelDesc::RGB16_BE_sRGB);
+        pngRoundTrip("/tmp/promeki_png_rgb16.png", 32, 24, PixelFormat::RGB16_BE_sRGB);
 }
 
 TEST_CASE("ImageFileIO PNG: RGBA16 BE round-trip") {
-        pngRoundTrip("/tmp/promeki_png_rgba16.png", 32, 24, PixelDesc::RGBA16_BE_sRGB);
+        pngRoundTrip("/tmp/promeki_png_rgba16.png", 32, 24, PixelFormat::RGBA16_BE_sRGB);
 }
 
 // ============================================================================
@@ -139,17 +139,17 @@ TEST_CASE("ImageFileIO PNG: RGBA16 BE round-trip") {
 
 TEST_CASE("ImageFileIO PNG: Mono16 LE round-trip (byte-swapped)") {
         pngLeRoundTrip("/tmp/promeki_png_mono16le.png", 32, 24,
-                       PixelDesc::Mono16_LE_sRGB, PixelDesc::Mono16_BE_sRGB);
+                       PixelFormat::Mono16_LE_sRGB, PixelFormat::Mono16_BE_sRGB);
 }
 
 TEST_CASE("ImageFileIO PNG: RGB16 LE round-trip (byte-swapped)") {
         pngLeRoundTrip("/tmp/promeki_png_rgb16le.png", 32, 24,
-                       PixelDesc::RGB16_LE_sRGB, PixelDesc::RGB16_BE_sRGB);
+                       PixelFormat::RGB16_LE_sRGB, PixelFormat::RGB16_BE_sRGB);
 }
 
 TEST_CASE("ImageFileIO PNG: RGBA16 LE round-trip (byte-swapped)") {
         pngLeRoundTrip("/tmp/promeki_png_rgba16le.png", 32, 24,
-                       PixelDesc::RGBA16_LE_sRGB, PixelDesc::RGBA16_BE_sRGB);
+                       PixelFormat::RGBA16_LE_sRGB, PixelFormat::RGBA16_BE_sRGB);
 }
 
 // ============================================================================
@@ -157,7 +157,7 @@ TEST_CASE("ImageFileIO PNG: RGBA16 LE round-trip (byte-swapped)") {
 // ============================================================================
 
 TEST_CASE("ImageFileIO PNG: RGBA8 1920x1080 round-trip") {
-        pngRoundTrip("/tmp/promeki_png_rgba8_hd.png", 1920, 1080, PixelDesc::RGBA8_sRGB);
+        pngRoundTrip("/tmp/promeki_png_rgba8_hd.png", 1920, 1080, PixelFormat::RGBA8_sRGB);
 }
 
 // ============================================================================
@@ -165,7 +165,7 @@ TEST_CASE("ImageFileIO PNG: RGBA8 1920x1080 round-trip") {
 // ============================================================================
 
 TEST_CASE("ImageFileIO PNG: save BGR8 returns PixelFormatNotSupported") {
-        Image src(16, 16, PixelDesc::BGR8_sRGB);
+        Image src(16, 16, PixelFormat::BGR8_sRGB);
         REQUIRE(src.isValid());
         src.fill(0x42);
 
@@ -177,7 +177,7 @@ TEST_CASE("ImageFileIO PNG: save BGR8 returns PixelFormatNotSupported") {
 }
 
 TEST_CASE("ImageFileIO PNG: save YUV returns PixelFormatNotSupported") {
-        Image src(16, 16, PixelDesc::YUV8_422_UYVY_Rec709);
+        Image src(16, 16, PixelFormat::YUV8_422_UYVY_Rec709);
         REQUIRE(src.isValid());
         src.fill(0x80);
 
@@ -216,7 +216,7 @@ TEST_CASE("ImageFileIO PNG: load garbage file returns error") {
 TEST_CASE("ImageFileIO PNG: load truncated file returns error") {
         // Build a real PNG first, then truncate it to something past the
         // signature but well short of the data.
-        Image src(64, 64, PixelDesc::RGBA8_sRGB);
+        Image src(64, 64, PixelFormat::RGBA8_sRGB);
         REQUIRE(src.isValid());
         fillPattern(src);
 
@@ -248,7 +248,7 @@ TEST_CASE("ImageFileIO PNG: load truncated file returns error") {
 
 TEST_CASE("ImageFileIO PNG: gAMA metadata round-trip") {
         const char *fn = "/tmp/promeki_png_gamma.png";
-        Image src(32, 32, PixelDesc::RGB8_sRGB);
+        Image src(32, 32, PixelFormat::RGB8_sRGB);
         REQUIRE(src.isValid());
         src.fill(0x7F);
         src.metadata().set(Metadata::Gamma, 2.2);

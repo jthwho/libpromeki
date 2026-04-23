@@ -82,7 +82,7 @@ color science, and timecode.
 - `AudioDesc` — sample type, rate, and channel layout
 - `MediaDesc` — combined frame rate, image layers, audio groups, and
   metadata for a complete media stream
-- `PixelFormat` / `PixelDesc` — extensive pixel format registry with
+- `PixelMemLayout` / `PixelFormat` — extensive pixel format registry with
   78 pixel formats and 132 pixel descriptors covering interleaved,
   planar, and semi-planar layouts (RGB, YCbCr, Bayer, DPX-packed, and
   more)

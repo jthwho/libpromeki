@@ -357,35 +357,35 @@ static void swapRGBAtoARGB(uint8_t *data, size_t pixelCount) {
         }
 }
 
-static PixelDesc::ID dpxPixelDesc(const DPXHeader *hdr, bool bigEndian) {
+static PixelFormat::ID dpxPixelFormat(const DPXHeader *hdr, bool bigEndian) {
         const auto &elm = hdr->imgelm[0];
         switch(elm.bitdepth) {
                 case 8:
                         switch(elm.desc) {
-                                case 50:  return PixelDesc::RGB8_sRGB;   // RGB byte order (3 components)
-                                case 51:  return PixelDesc::RGBA8_sRGB;  // RGBA byte order
-                                case 52:  return PixelDesc::RGBA8_sRGB;  // ABGR byte order (swapped after read)
-                                case 100: return PixelDesc::YUV8_Rec709;
+                                case 50:  return PixelFormat::RGB8_sRGB;   // RGB byte order (3 components)
+                                case 51:  return PixelFormat::RGBA8_sRGB;  // RGBA byte order
+                                case 52:  return PixelFormat::RGBA8_sRGB;  // ABGR byte order (swapped after read)
+                                case 100: return PixelFormat::YUV8_Rec709;
                         }
                         break;
                 case 10:
                         switch(elm.desc) {
                                 case 50:
-                                        return bigEndian ? PixelDesc::RGB10_DPX_sRGB
-                                                         : PixelDesc::RGB10_DPX_LE_sRGB;
+                                        return bigEndian ? PixelFormat::RGB10_DPX_sRGB
+                                                         : PixelFormat::RGB10_DPX_LE_sRGB;
                                 case 100:
                                         switch(elm.packing) {
-                                                case 1: return PixelDesc::YUV10_DPX_Rec709;
-                                                case 2: return PixelDesc::YUV10_DPX_B_Rec709;
+                                                case 1: return PixelFormat::YUV10_DPX_Rec709;
+                                                case 2: return PixelFormat::YUV10_DPX_B_Rec709;
                                         }
                                         break;
                         }
                         break;
                 case 16:
-                        if(elm.desc == 50) return PixelDesc::RGB16_BE_sRGB;
+                        if(elm.desc == 50) return PixelFormat::RGB16_BE_sRGB;
                         break;
         }
-        return PixelDesc::Invalid;
+        return PixelFormat::Invalid;
 }
 
 // Returns true when @p pdId was recognized and the element was
@@ -393,41 +393,41 @@ static PixelDesc::ID dpxPixelDesc(const DPXHeader *hdr, bool bigEndian) {
 // memset'd to 0xFF by dpxInit) and the caller must refuse the save —
 // otherwise we'd emit a file whose header claims desc=255/bitdepth=255
 // and no reader would be able to decode it.
-static bool setDPXImageElement(DPXHeader *hdr, PixelDesc::ID pdId) {
+static bool setDPXImageElement(DPXHeader *hdr, PixelFormat::ID pdId) {
         auto &elm = hdr->imgelm[0];
         elm.endoflinepadding = 0;
         elm.endofimagepadding = 0;
         switch(pdId) {
-                case PixelDesc::RGB8_sRGB:
+                case PixelFormat::RGB8_sRGB:
                         elm.desc = 50; elm.bitdepth = 8; elm.packing = 1;
                         hdr->tvinfo.blackcode = 0.0f; hdr->tvinfo.whitecode = 255.0f;
                         return true;
-                case PixelDesc::RGBA8_sRGB:
+                case PixelFormat::RGBA8_sRGB:
                         elm.desc = 51; elm.bitdepth = 8; elm.packing = 1;
                         hdr->tvinfo.blackcode = 0.0f; hdr->tvinfo.whitecode = 255.0f;
                         return true;
-                case PixelDesc::ARGB8_sRGB:
+                case PixelFormat::ARGB8_sRGB:
                         elm.desc = 51; elm.bitdepth = 8; elm.packing = 1;
                         hdr->tvinfo.blackcode = 0.0f; hdr->tvinfo.whitecode = 255.0f;
                         return true;
-                case PixelDesc::YUV8_Rec709:
+                case PixelFormat::YUV8_Rec709:
                         elm.desc = 100; elm.bitdepth = 8; elm.packing = 1;
                         hdr->tvinfo.blackcode = 16.0f; hdr->tvinfo.whitecode = 235.0f;
                         return true;
-                case PixelDesc::RGB10_DPX_sRGB:
-                case PixelDesc::RGB10_DPX_LE_sRGB:
+                case PixelFormat::RGB10_DPX_sRGB:
+                case PixelFormat::RGB10_DPX_LE_sRGB:
                         elm.desc = 50; elm.bitdepth = 10; elm.packing = 1;
                         hdr->tvinfo.blackcode = 0.0f; hdr->tvinfo.whitecode = 1023.0f;
                         return true;
-                case PixelDesc::YUV10_DPX_Rec709:
+                case PixelFormat::YUV10_DPX_Rec709:
                         elm.desc = 100; elm.bitdepth = 10; elm.packing = 1;
                         hdr->tvinfo.blackcode = 64.0f; hdr->tvinfo.whitecode = 940.0f;
                         return true;
-                case PixelDesc::YUV10_DPX_B_Rec709:
+                case PixelFormat::YUV10_DPX_B_Rec709:
                         elm.desc = 100; elm.bitdepth = 10; elm.packing = 2;
                         hdr->tvinfo.blackcode = 64.0f; hdr->tvinfo.whitecode = 940.0f;
                         return true;
-                case PixelDesc::RGB16_BE_sRGB:
+                case PixelFormat::RGB16_BE_sRGB:
                         elm.desc = 50; elm.bitdepth = 16; elm.packing = 1;
                         hdr->tvinfo.blackcode = 0.0f; hdr->tvinfo.whitecode = 65535.0f;
                         return true;
@@ -662,12 +662,12 @@ static Audio readEmbeddedAudio(const Buffer &buf) {
 
         if(user->type == AUDIO_MAGIC_V1 && user->size >= static_cast<int32_t>(sizeof(DPXAudioHeaderV1))) {
                 const auto *ahdr = reinterpret_cast<const DPXAudioHeaderV1 *>(buf.data());
-                AudioDesc::DataType dt = AudioDesc::Invalid;
+                AudioFormat::ID dt = AudioFormat::Invalid;
                 switch(ahdr->bps) {
-                        case 1: dt = AudioDesc::PCMI_S8;    break;
-                        case 2: dt = AudioDesc::PCMI_S16LE; break;
-                        case 3: dt = AudioDesc::PCMI_S24LE; break;
-                        case 4: dt = AudioDesc::PCMI_S32LE; break;
+                        case 1: dt = AudioFormat::PCMI_S8;    break;
+                        case 2: dt = AudioFormat::PCMI_S16LE; break;
+                        case 3: dt = AudioFormat::PCMI_S24LE; break;
+                        case 4: dt = AudioFormat::PCMI_S32LE; break;
                         default: return Audio();
                 }
                 AudioDesc desc(dt, static_cast<float>(ahdr->rate), static_cast<unsigned int>(ahdr->chans));
@@ -682,18 +682,18 @@ static Audio readEmbeddedAudio(const Buffer &buf) {
 
         if(user->type == AUDIO_MAGIC_V2 && user->size >= static_cast<int32_t>(sizeof(DPXAudioHeaderV2))) {
                 const auto *ahdr = reinterpret_cast<const DPXAudioHeaderV2 *>(buf.data());
-                // V2 stores the AudioDesc::DataType directly as the model field.
+                // V2 stores the AudioFormat::ID directly as the model field.
                 // Map the legacy Meki model IDs to our DataType.
                 // Legacy IDs: Meki_S8=600, Meki_S16LE=601, Meki_S24LE=602, Meki_S32LE=603
-                AudioDesc::DataType dt = AudioDesc::Invalid;
+                AudioFormat::ID dt = AudioFormat::Invalid;
                 switch(ahdr->model) {
-                        case 600: dt = AudioDesc::PCMI_S8;    break;
-                        case 601: dt = AudioDesc::PCMI_S16LE; break;
-                        case 602: dt = AudioDesc::PCMI_S24LE; break;
-                        case 603: dt = AudioDesc::PCMI_S32LE; break;
+                        case 600: dt = AudioFormat::PCMI_S8;    break;
+                        case 601: dt = AudioFormat::PCMI_S16LE; break;
+                        case 602: dt = AudioFormat::PCMI_S24LE; break;
+                        case 603: dt = AudioFormat::PCMI_S32LE; break;
                         default:
                                 // Try interpreting as native DataType enum
-                                dt = static_cast<AudioDesc::DataType>(ahdr->model);
+                                dt = static_cast<AudioFormat::ID>(ahdr->model);
                                 break;
                 }
                 AudioDesc desc(dt, static_cast<float>(ahdr->rate), static_cast<unsigned int>(ahdr->chans));
@@ -716,7 +716,7 @@ static size_t writeEmbeddedAudio(uint8_t *dest, const Audio &audio) {
         ahdr.user.type = AUDIO_MAGIC_V2;
         size_t dataBytes = audio.desc().bufferSize(audio.samples());
         ahdr.user.size = static_cast<int32_t>(sizeof(DPXAudioHeaderV2) + dataBytes);
-        ahdr.model = static_cast<uint32_t>(audio.desc().dataType());
+        ahdr.model = static_cast<uint32_t>(audio.desc().format().id());
         ahdr.samps = static_cast<int32_t>(audio.samples());
         ahdr.chans = static_cast<int32_t>(audio.desc().channels());
         ahdr.rate  = static_cast<int32_t>(audio.desc().sampleRate());
@@ -795,8 +795,8 @@ Error ImageFileIO_DPX::load(ImageFile &imageFile, const MediaConfig &config) con
         }
 
         // 4. Determine pixel format
-        PixelDesc::ID pdId = dpxPixelDesc(&hdr, bigEndian);
-        if(pdId == PixelDesc::Invalid) {
+        PixelFormat::ID pdId = dpxPixelFormat(&hdr, bigEndian);
+        if(pdId == PixelFormat::Invalid) {
                 promekiErr("DPX load '%s': unsupported format (desc=%d, depth=%d, packing=%d)",
                            filename.cstr(), hdr.imgelm[0].desc,
                            hdr.imgelm[0].bitdepth, hdr.imgelm[0].packing);
@@ -806,7 +806,7 @@ Error ImageFileIO_DPX::load(ImageFile &imageFile, const MediaConfig &config) con
 
         size_t w = hdr.imginfo.width;
         size_t h = hdr.imginfo.height;
-        PixelDesc pd(pdId);
+        PixelFormat pd(pdId);
 
         // 5. Read user data section (may contain embedded audio)
         Audio audio;
@@ -821,7 +821,7 @@ Error ImageFileIO_DPX::load(ImageFile &imageFile, const MediaConfig &config) con
         }
 
         // 6. Read image data using readBulk for automatic direct I/O
-        size_t imageBytes = pd.pixelFormat().planeSize(0, w, h);
+        size_t imageBytes = pd.memLayout().planeSize(0, w, h);
 
         err = file.seek(hdr.finfo.offset);
         if(err.isError()) {
@@ -897,7 +897,7 @@ Error ImageFileIO_DPX::save(ImageFile &imageFile, const MediaConfig &config) con
 
         const String &filename = imageFile.filename();
         const Metadata &meta = frame.metadata();
-        PixelDesc::ID pdId = image.pixelDesc().id();
+        PixelFormat::ID pdId = image.pixelFormat().id();
 
         // 1. Calculate sizes
         size_t headerSize = sizeof(DPXHeader);
@@ -912,7 +912,7 @@ Error ImageFileIO_DPX::save(ImageFile &imageFile, const MediaConfig &config) con
         }
         headerSize = ALIGN_UP(headerSize, DPX_ALIGN);
 
-        size_t imageBytes = image.pixelDesc().pixelFormat().planeSize(0, image.width(), image.height());
+        size_t imageBytes = image.pixelFormat().memLayout().planeSize(0, image.width(), image.height());
         size_t imagePadded = ALIGN_UP(imageBytes, DPX_ALIGN);
         size_t totalSize = headerSize + imagePadded;
 
@@ -944,7 +944,7 @@ Error ImageFileIO_DPX::save(ImageFile &imageFile, const MediaConfig &config) con
         if(!setDPXImageElement(hdr, pdId)) {
                 promekiErr("DPX save '%s': pixel format '%s' is not supported "
                            "by this writer",
-                           filename.cstr(), image.pixelDesc().name().cstr());
+                           filename.cstr(), image.pixelFormat().name().cstr());
                 return Error::PixelFormatNotSupported;
         }
         setDPXTransferCharacteristic(hdr);
@@ -953,7 +953,7 @@ Error ImageFileIO_DPX::save(ImageFile &imageFile, const MediaConfig &config) con
         hdr->tvinfo.syncoffset = 0;
 
         // 5. Byte-swap header for big-endian formats
-        bool needFlip = (pdId == PixelDesc::RGB10_DPX_sRGB);
+        bool needFlip = (pdId == PixelFormat::RGB10_DPX_sRGB);
         if(needFlip) {
                 DPXHeader flipped;
                 dpxFlipHeader(&flipped, hdr);
@@ -981,7 +981,7 @@ Error ImageFileIO_DPX::save(ImageFile &imageFile, const MediaConfig &config) con
         // 8. Prepare image write buffer.
         //    - ARGB8 needs byte-swap to RGBA for DPX descriptor 51.
         //    - DIO padding needs a separate aligned buffer when imagePadded > imageBytes.
-        bool needPixelSwap = (pdId == PixelDesc::ARGB8_sRGB);
+        bool needPixelSwap = (pdId == PixelFormat::ARGB8_sRGB);
         Buffer imgWriteBuf;
         const void *imgWritePtr = image.data();
         if(needPixelSwap || imagePadded > imageBytes) {
@@ -1014,7 +1014,7 @@ Error ImageFileIO_DPX::save(ImageFile &imageFile, const MediaConfig &config) con
 
         file.close();
         promekiDebug("DPX save '%s': %zux%zu %s", filename.cstr(),
-                     image.width(), image.height(), image.pixelDesc().name().cstr());
+                     image.width(), image.height(), image.pixelFormat().name().cstr());
         return Error::Ok;
 }
 

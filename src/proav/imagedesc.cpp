@@ -29,62 +29,62 @@ static const char *sdpColorimetry(const ColorModel &cm) {
         }
 }
 
-// Determine quantization range from the PixelDesc's first component
+// Determine quantization range from the PixelFormat's first component
 // semantics.  Full range: min=0, limited: min>0 (typically 16).
-static const char *sdpRange(const PixelDesc &pd) {
-        const PixelDesc::CompSemantic &cs = pd.compSemantic(0);
+static const char *sdpRange(const PixelFormat &pd) {
+        const PixelFormat::CompSemantic &cs = pd.compSemantic(0);
         // RGB is always full range; for YCbCr, check the luma floor.
         if(pd.colorModel().type() == ColorModel::TypeRGB) return "FULL";
         return (cs.rangeMin > 0.0f) ? "NARROW" : "FULL";
 }
 
-// Map ST 2110-20 colorimetry + RANGE + subsampling to a JPEG PixelDesc.
+// Map ST 2110-20 colorimetry + RANGE + subsampling to a JPEG PixelFormat.
 // @p is420 selects 4:2:0 vs 4:2:2; @p isRgb overrides both to RGB.
-// Returns PixelDesc::Invalid for unrecognised combinations.
-static PixelDesc::ID jpegPixelDescFromColorimetry(
+// Returns PixelFormat::Invalid for unrecognised combinations.
+static PixelFormat::ID jpegPixelFormatFromColorimetry(
                 const String &colorimetry,
                 const String &range,
                 bool is420,
                 bool isRgb) {
-        if(isRgb) return PixelDesc::JPEG_RGB8_sRGB;
+        if(isRgb) return PixelFormat::JPEG_RGB8_sRGB;
 
         bool full = range.isEmpty() || range == "FULL";
 
         if(colorimetry.isEmpty() || colorimetry == "BT601-5") {
-                if(is420) return full ? PixelDesc::JPEG_YUV8_420_Rec601_Full
-                                     : PixelDesc::JPEG_YUV8_420_Rec601;
-                return full ? PixelDesc::JPEG_YUV8_422_Rec601_Full
-                            : PixelDesc::JPEG_YUV8_422_Rec601;
+                if(is420) return full ? PixelFormat::JPEG_YUV8_420_Rec601_Full
+                                     : PixelFormat::JPEG_YUV8_420_Rec601;
+                return full ? PixelFormat::JPEG_YUV8_422_Rec601_Full
+                            : PixelFormat::JPEG_YUV8_422_Rec601;
         }
         if(colorimetry == "BT709-2" || colorimetry == "BT709") {
-                if(is420) return full ? PixelDesc::JPEG_YUV8_420_Rec709_Full
-                                     : PixelDesc::JPEG_YUV8_420_Rec709;
-                return full ? PixelDesc::JPEG_YUV8_422_Rec709_Full
-                            : PixelDesc::JPEG_YUV8_422_Rec709;
+                if(is420) return full ? PixelFormat::JPEG_YUV8_420_Rec709_Full
+                                     : PixelFormat::JPEG_YUV8_420_Rec709;
+                return full ? PixelFormat::JPEG_YUV8_422_Rec709_Full
+                            : PixelFormat::JPEG_YUV8_422_Rec709;
         }
         // Unknown colorimetry — fall back to Rec.601 full (JFIF default).
-        if(is420) return full ? PixelDesc::JPEG_YUV8_420_Rec601_Full
-                             : PixelDesc::JPEG_YUV8_420_Rec601;
-        return full ? PixelDesc::JPEG_YUV8_422_Rec601_Full
-                    : PixelDesc::JPEG_YUV8_422_Rec601;
+        if(is420) return full ? PixelFormat::JPEG_YUV8_420_Rec601_Full
+                             : PixelFormat::JPEG_YUV8_420_Rec601;
+        return full ? PixelFormat::JPEG_YUV8_422_Rec601_Full
+                    : PixelFormat::JPEG_YUV8_422_Rec601;
 }
 
 // Map an fmtp "sampling=YCbCr-4:2:2" + "depth=N" combo to a JPEG XS
-// PixelDesc.  Returns PixelDesc::Invalid for any unrecognised
+// PixelFormat.  Returns PixelFormat::Invalid for any unrecognised
 // combination so the caller can fall back to the library default.
-static PixelDesc::ID jpegXsPixelDescFromFmtp(const String &sampling,
+static PixelFormat::ID jpegXsPixelFormatFromFmtp(const String &sampling,
                                               const String &depth) {
         int d = depth.toInt();
         if(sampling == "YCbCr-4:2:2") {
-                if(d == 8)  return PixelDesc::JPEG_XS_YUV8_422_Rec709;
-                if(d == 10) return PixelDesc::JPEG_XS_YUV10_422_Rec709;
-                if(d == 12) return PixelDesc::JPEG_XS_YUV12_422_Rec709;
+                if(d == 8)  return PixelFormat::JPEG_XS_YUV8_422_Rec709;
+                if(d == 10) return PixelFormat::JPEG_XS_YUV10_422_Rec709;
+                if(d == 12) return PixelFormat::JPEG_XS_YUV12_422_Rec709;
         } else if(sampling == "YCbCr-4:2:0") {
-                if(d == 8)  return PixelDesc::JPEG_XS_YUV8_420_Rec709;
-                if(d == 10) return PixelDesc::JPEG_XS_YUV10_420_Rec709;
-                if(d == 12) return PixelDesc::JPEG_XS_YUV12_420_Rec709;
+                if(d == 8)  return PixelFormat::JPEG_XS_YUV8_420_Rec709;
+                if(d == 10) return PixelFormat::JPEG_XS_YUV10_420_Rec709;
+                if(d == 12) return PixelFormat::JPEG_XS_YUV12_420_Rec709;
         }
-        return PixelDesc::Invalid;
+        return PixelFormat::Invalid;
 }
 
 ImageDesc ImageDesc::fromSdp(const SdpMediaDescription &md) {
@@ -96,7 +96,7 @@ ImageDesc ImageDesc::fromSdp(const SdpMediaDescription &md) {
         if(rm.encoding == "jxsv") {
                 // RFC 9134 JPEG XS.  Geometry + sampling + depth
                 // live in the fmtp line.  Fall back to the library
-                // default PixelDesc (10-bit 4:2:2 Rec.709) when the
+                // default PixelFormat (10-bit 4:2:2 Rec.709) when the
                 // fmtp combo is incomplete or unrecognised — that is
                 // the most common ST 2110-22 shape and gives a
                 // useful answer even for terse SDPs.
@@ -105,15 +105,15 @@ ImageDesc ImageDesc::fromSdp(const SdpMediaDescription &md) {
                 int h = params.value("height").toInt();
                 if(w <= 0 || h <= 0) return ImageDesc();
 
-                PixelDesc::ID pdId = jpegXsPixelDescFromFmtp(
+                PixelFormat::ID pdId = jpegXsPixelFormatFromFmtp(
                         params.value("sampling"),
                         params.value("depth"));
-                if(pdId == PixelDesc::Invalid) {
-                        pdId = PixelDesc::JPEG_XS_YUV10_422_Rec709;
+                if(pdId == PixelFormat::Invalid) {
+                        pdId = PixelFormat::JPEG_XS_YUV10_422_Rec709;
                 }
                 return ImageDesc(Size2Du32(static_cast<uint32_t>(w),
                                             static_cast<uint32_t>(h)),
-                                  PixelDesc(pdId));
+                                  PixelFormat(pdId));
         }
 
         if(rm.encoding == "raw") {
@@ -135,35 +135,35 @@ ImageDesc ImageDesc::fromSdp(const SdpMediaDescription &md) {
                 bool full = range.isEmpty() || range == "FULL";
                 bool isRec709 = colorimetry == "BT709-2" || colorimetry == "BT709";
 
-                PixelDesc::ID pdId = PixelDesc::Invalid;
+                PixelFormat::ID pdId = PixelFormat::Invalid;
                 if(sampling == "RGBA") {
-                        if(depth == 8) pdId = PixelDesc::RGBA8_sRGB;
+                        if(depth == 8) pdId = PixelFormat::RGBA8_sRGB;
                 } else if(sampling == "RGB") {
-                        if(depth == 8) pdId = PixelDesc::RGB8_sRGB;
+                        if(depth == 8) pdId = PixelFormat::RGB8_sRGB;
                 } else if(sampling == "YCbCr-4:2:2") {
                         // RFC 4175 wire format is Cb-Y-Cr-Y (UYVY)
                         // for all 4:2:2 depths.
                         if(depth == 8) {
-                                if(isRec709) pdId = PixelDesc::YUV8_422_UYVY_Rec709;
-                                else         pdId = PixelDesc::YUV8_422_UYVY_Rec601;
+                                if(isRec709) pdId = PixelFormat::YUV8_422_UYVY_Rec709;
+                                else         pdId = PixelFormat::YUV8_422_UYVY_Rec601;
                         } else if(depth == 10) {
-                                pdId = PixelDesc::YUV10_422_UYVY_LE_Rec709;
+                                pdId = PixelFormat::YUV10_422_UYVY_LE_Rec709;
                         }
                 } else if(sampling == "YCbCr-4:2:0") {
                         if(depth == 8) {
-                                pdId = PixelDesc::YUV8_420_Planar_Rec709;
+                                pdId = PixelFormat::YUV8_420_Planar_Rec709;
                         }
                 }
                 // Full-range YCbCr variants are not yet in the
-                // uncompressed PixelDesc catalog, so the RANGE
+                // uncompressed PixelFormat catalog, so the RANGE
                 // parameter is noted but does not change the ID.
                 // RGB is always full range regardless.
                 (void)full;
 
-                if(pdId == PixelDesc::Invalid) return ImageDesc();
+                if(pdId == PixelFormat::Invalid) return ImageDesc();
                 return ImageDesc(Size2Du32(static_cast<uint32_t>(w),
                                             static_cast<uint32_t>(h)),
-                                  PixelDesc(pdId));
+                                  PixelFormat(pdId));
         }
 
         // "JPEG" (RFC 2435) carries geometry in the packet header,
@@ -172,18 +172,18 @@ ImageDesc ImageDesc::fromSdp(const SdpMediaDescription &md) {
         return ImageDesc();
 }
 
-PixelDesc::ID ImageDesc::jpegPixelDescFromSdp(
+PixelFormat::ID ImageDesc::jpegPixelFormatFromSdp(
                 const String &colorimetry,
                 const String &range,
                 bool is420,
                 bool isRgb) {
-        return jpegPixelDescFromColorimetry(colorimetry, range, is420, isRgb);
+        return jpegPixelFormatFromColorimetry(colorimetry, range, is420, isRgb);
 }
 
 SdpMediaDescription ImageDesc::toSdp(uint8_t payloadType) const {
         if(!isValid()) return SdpMediaDescription();
 
-        const PixelDesc &pd = pixelDesc();
+        const PixelFormat &pd = pixelFormat();
         const char *colorimetry = sdpColorimetry(pd.colorModel());
         const char *range       = sdpRange(pd);
 
@@ -227,17 +227,17 @@ SdpMediaDescription ImageDesc::toSdp(uint8_t payloadType) const {
                 const char *sampling = nullptr;
                 int depth = 0;
                 switch(pd.id()) {
-                        case PixelDesc::JPEG_XS_YUV8_422_Rec709:
+                        case PixelFormat::JPEG_XS_YUV8_422_Rec709:
                                 sampling = "YCbCr-4:2:2"; depth = 8;  break;
-                        case PixelDesc::JPEG_XS_YUV10_422_Rec709:
+                        case PixelFormat::JPEG_XS_YUV10_422_Rec709:
                                 sampling = "YCbCr-4:2:2"; depth = 10; break;
-                        case PixelDesc::JPEG_XS_YUV12_422_Rec709:
+                        case PixelFormat::JPEG_XS_YUV12_422_Rec709:
                                 sampling = "YCbCr-4:2:2"; depth = 12; break;
-                        case PixelDesc::JPEG_XS_YUV8_420_Rec709:
+                        case PixelFormat::JPEG_XS_YUV8_420_Rec709:
                                 sampling = "YCbCr-4:2:0"; depth = 8;  break;
-                        case PixelDesc::JPEG_XS_YUV10_420_Rec709:
+                        case PixelFormat::JPEG_XS_YUV10_420_Rec709:
                                 sampling = "YCbCr-4:2:0"; depth = 10; break;
-                        case PixelDesc::JPEG_XS_YUV12_420_Rec709:
+                        case PixelFormat::JPEG_XS_YUV12_420_Rec709:
                                 sampling = "YCbCr-4:2:0"; depth = 12; break;
                         default:
                                 return SdpMediaDescription();
@@ -262,14 +262,14 @@ SdpMediaDescription ImageDesc::toSdp(uint8_t payloadType) const {
 
                 // Derive sampling from the pixel format's subsampling mode.
                 const char *sampling = nullptr;
-                const PixelFormat &pf = pd.pixelFormat();
+                const PixelMemLayout &pf = pd.memLayout();
                 if(pd.colorModel().type() == ColorModel::TypeRGB) {
                         sampling = pd.hasAlpha() ? "RGBA" : "RGB";
                 } else {
                         switch(pf.sampling()) {
-                                case PixelFormat::Sampling422: sampling = "YCbCr-4:2:2"; break;
-                                case PixelFormat::Sampling420: sampling = "YCbCr-4:2:0"; break;
-                                case PixelFormat::Sampling411: sampling = "YCbCr-4:1:1"; break;
+                                case PixelMemLayout::Sampling422: sampling = "YCbCr-4:2:2"; break;
+                                case PixelMemLayout::Sampling420: sampling = "YCbCr-4:2:0"; break;
+                                case PixelMemLayout::Sampling411: sampling = "YCbCr-4:1:1"; break;
                                 default:                       sampling = "YCbCr-4:4:4"; break;
                         }
                 }

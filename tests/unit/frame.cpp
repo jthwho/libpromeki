@@ -7,10 +7,13 @@
 
 #include <doctest/doctest.h>
 #include <promeki/frame.h>
+#include <promeki/audio.h>
+#include <promeki/audiodesc.h>
+#include <promeki/audioformat.h>
 #include <promeki/mediadesc.h>
-#include <promeki/mediapacket.h>
+#include <promeki/videopacket.h>
 #include <promeki/buffer.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/enums.h>
 
 using namespace promeki;
@@ -31,11 +34,11 @@ TEST_CASE("Frame: videoFormat uses FrameRate metadata and per-image scan") {
         Frame f;
         f.metadata().set(Metadata::FrameRate, FrameRate(FrameRate::FPS_29_97));
 
-        ImageDesc hdDesc(Size2Du32(1920, 1080), PixelDesc::RGBA8_sRGB);
+        ImageDesc hdDesc(Size2Du32(1920, 1080), PixelFormat::RGBA8_sRGB);
         hdDesc.setVideoScanMode(VideoScanMode::InterlacedEvenFirst);
         f.imageList().pushToBack(Image::Ptr::create(hdDesc));
 
-        ImageDesc uhdDesc(Size2Du32(3840, 2160), PixelDesc::RGBA8_sRGB);
+        ImageDesc uhdDesc(Size2Du32(3840, 2160), PixelFormat::RGBA8_sRGB);
         uhdDesc.setVideoScanMode(VideoScanMode::Progressive);
         f.imageList().pushToBack(Image::Ptr::create(uhdDesc));
 
@@ -56,7 +59,7 @@ TEST_CASE("Frame: videoFormat returns invalid for out-of-range or missing rate")
         CHECK_FALSE(f.videoFormat(0).isValid());
 
         auto img = Image::Ptr::create(
-                ImageDesc(Size2Du32(1920, 1080), PixelDesc::RGBA8_sRGB));
+                ImageDesc(Size2Du32(1920, 1080), PixelFormat::RGBA8_sRGB));
         f.imageList().pushToBack(img);
 
         // FrameRate metadata missing — videoFormat cannot be built.
@@ -74,12 +77,12 @@ TEST_CASE("Frame: mediaDesc assembles from state") {
         f.metadata().set(Metadata::FrameRate, FrameRate(FrameRate::FPS_24));
         f.metadata().set(Metadata::Title, String("clip"));
 
-        ImageDesc imgDesc(Size2Du32(1920, 1080), PixelDesc::RGBA8_sRGB);
+        ImageDesc imgDesc(Size2Du32(1920, 1080), PixelFormat::RGBA8_sRGB);
         imgDesc.setVideoScanMode(VideoScanMode::Progressive);
         f.imageList().pushToBack(Image::Ptr::create(imgDesc));
 
         auto aud = Audio::Ptr::create(
-                AudioDesc(AudioDesc::PCMI_Float32LE, 48000.0f, 2), 1024);
+                AudioDesc(AudioFormat::PCMI_Float32LE, 48000.0f, 2), 1024);
         f.audioList().pushToBack(aud);
 
         MediaDesc md = f.mediaDesc();
@@ -109,13 +112,13 @@ TEST_CASE("Frame: makeString resolves metadata, frame scalars, and Image[N]/Audi
         f.metadata().set(Metadata::Title, String("clip"));
         f.metadata().set(Metadata::Timecode, Timecode(Timecode::NDF24, 1, 0, 0, 0));
 
-        ImageDesc imgDesc(Size2Du32(1920, 1080), PixelDesc::RGBA8_sRGB);
+        ImageDesc imgDesc(Size2Du32(1920, 1080), PixelFormat::RGBA8_sRGB);
         imgDesc.setVideoScanMode(VideoScanMode::Progressive);
         Image::Ptr img = Image::Ptr::create(imgDesc);
         img.modify()->metadata().set(Metadata::FrameNumber, FrameNumber(42));
         f.imageList().pushToBack(img);
 
-        AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        AudioDesc adesc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         Audio::Ptr aud = Audio::Ptr::create(adesc, 1024);
         aud.modify()->metadata().set(Metadata::Album, String("studio"));
         f.audioList().pushToBack(aud);
@@ -127,7 +130,7 @@ TEST_CASE("Frame: makeString resolves metadata, frame scalars, and Image[N]/Audi
               == String("imgs=1 auds=1"));
 
         // Subscripted descent into image: scalars and metadata both work.
-        CHECK(VariantLookup<Frame>::format(f, "{Image[0].Size} {Image[0].PixelDesc}")
+        CHECK(VariantLookup<Frame>::format(f, "{Image[0].Size} {Image[0].PixelFormat}")
               == String("1920x1080 RGBA8_sRGB"));
         CHECK(VariantLookup<Frame>::format(f, "frame#{Image[0].Meta.FrameNumber}")
               == String("frame#42"));
@@ -140,7 +143,7 @@ TEST_CASE("Frame: makeString resolves metadata, frame scalars, and Image[N]/Audi
 
         // VideoFormat / VideoFormat[N] reuse the frame's FrameRate.
         f.metadata().set(Metadata::FrameRate, FrameRate(FrameRate::FPS_29_97));
-        ImageDesc imgDesc2(Size2Du32(3840, 2160), PixelDesc::RGBA8_sRGB);
+        ImageDesc imgDesc2(Size2Du32(3840, 2160), PixelFormat::RGBA8_sRGB);
         imgDesc2.setVideoScanMode(VideoScanMode::Progressive);
         f.imageList().pushToBack(Image::Ptr::create(imgDesc2));
 
@@ -172,7 +175,7 @@ TEST_CASE("Frame: makeString resolves metadata, frame scalars, and Image[N]/Audi
 }
 
 TEST_CASE("Image: makeString resolves metadata and scalar keys") {
-        ImageDesc desc(Size2Du32(640, 480), PixelDesc::RGBA8_sRGB);
+        ImageDesc desc(Size2Du32(640, 480), PixelFormat::RGBA8_sRGB);
         desc.setLinePad(8);
         desc.setLineAlign(16);
         desc.setVideoScanMode(VideoScanMode::Progressive);
@@ -181,7 +184,7 @@ TEST_CASE("Image: makeString resolves metadata and scalar keys") {
 
         CHECK(VariantLookup<Image>::format(img, "{Width}x{Height}") == String("640x480"));
         CHECK(VariantLookup<Image>::format(img, "{Size}") == String("640x480"));
-        CHECK(VariantLookup<Image>::format(img, "{PixelDesc} planes={PlaneCount}")
+        CHECK(VariantLookup<Image>::format(img, "{PixelFormat} planes={PlaneCount}")
               == String("RGBA8_sRGB planes=1"));
         CHECK(VariantLookup<Image>::format(img, "pad={LinePad} align={LineAlign}")
               == String("pad=8 align=16"));
@@ -193,7 +196,7 @@ TEST_CASE("Image: makeString resolves metadata and scalar keys") {
 }
 
 TEST_CASE("Audio: makeString resolves metadata and scalar keys") {
-        AudioDesc desc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        AudioDesc desc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         Audio aud(desc, 256);
         aud.metadata().set(Metadata::Album, String("LiveSet"));
 
@@ -201,13 +204,13 @@ TEST_CASE("Audio: makeString resolves metadata and scalar keys") {
               == String("48000.0Hz 2ch"));
         CHECK(VariantLookup<Audio>::format(aud, "{Samples}/{MaxSamples} ({Frames})")
               == String("256/256 (512)"));
-        CHECK(VariantLookup<Audio>::format(aud, "type={DataType} compressed={IsCompressed}")
+        CHECK(VariantLookup<Audio>::format(aud, "type={Format} compressed={IsCompressed}")
               == String("type=PCMI_S16LE compressed=false"));
         CHECK(VariantLookup<Audio>::format(aud, "{Meta.Album}") == String("LiveSet"));
 }
 
 TEST_CASE("Image: resolveKey returns typed Variant values") {
-        ImageDesc desc(Size2Du32(1920, 1080), PixelDesc::RGBA8_sRGB);
+        ImageDesc desc(Size2Du32(1920, 1080), PixelFormat::RGBA8_sRGB);
         desc.setLinePad(8);
         desc.setLineAlign(16);
         desc.setVideoScanMode(VideoScanMode::Progressive);
@@ -222,9 +225,9 @@ TEST_CASE("Image: resolveKey returns typed Variant values") {
         REQUIRE(height.has_value());
         CHECK(height->get<uint32_t>() == 1080);
 
-        auto pd = VariantLookup<Image>::resolve(img, "PixelDesc");
+        auto pd = VariantLookup<Image>::resolve(img, "PixelFormat");
         REQUIRE(pd.has_value());
-        CHECK(pd->get<PixelDesc>() == PixelDesc(PixelDesc::RGBA8_sRGB));
+        CHECK(pd->get<PixelFormat>() == PixelFormat(PixelFormat::RGBA8_sRGB));
 
         auto planes = VariantLookup<Image>::resolve(img, "PlaneCount");
         REQUIRE(planes.has_value());
@@ -241,7 +244,7 @@ TEST_CASE("Image: resolveKey returns typed Variant values") {
 }
 
 TEST_CASE("Audio: resolveKey returns typed Variant values") {
-        AudioDesc desc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        AudioDesc desc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         Audio aud(desc, 256);
         aud.metadata().set(Metadata::Album, String("LiveSet"));
 
@@ -274,13 +277,13 @@ TEST_CASE("Frame: resolveKey returns typed Variant values and dispatches subscri
         f.metadata().set(Metadata::Timecode, Timecode(Timecode::NDF24, 1, 0, 0, 0));
         f.metadata().set(Metadata::FrameRate, FrameRate(FrameRate::FPS_29_97));
 
-        ImageDesc imgDesc(Size2Du32(1920, 1080), PixelDesc::RGBA8_sRGB);
+        ImageDesc imgDesc(Size2Du32(1920, 1080), PixelFormat::RGBA8_sRGB);
         imgDesc.setVideoScanMode(VideoScanMode::Progressive);
         Image::Ptr img = Image::Ptr::create(imgDesc);
         img.modify()->metadata().set(Metadata::FrameNumber, FrameNumber(42));
         f.imageList().pushToBack(img);
 
-        AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        AudioDesc adesc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         Audio::Ptr aud = Audio::Ptr::create(adesc, 1024);
         aud.modify()->metadata().set(Metadata::Album, String("studio"));
         f.audioList().pushToBack(aud);
@@ -335,7 +338,7 @@ TEST_CASE("Frame: resolveKey returns typed Variant values and dispatches subscri
 
 TEST_CASE("Frame: assign writes through Meta database and child Image metadata") {
         Frame f;
-        ImageDesc imgDesc(Size2Du32(1920, 1080), PixelDesc::RGBA8_sRGB);
+        ImageDesc imgDesc(Size2Du32(1920, 1080), PixelFormat::RGBA8_sRGB);
         f.imageList().pushToBack(Image::Ptr::create(imgDesc));
 
         // Write into frame-level metadata via Meta. prefix.
@@ -359,7 +362,7 @@ TEST_CASE("Frame: assign writes through Meta database and child Image metadata")
 }
 
 TEST_CASE("Image: dump emits scalar keys, planes, and metadata") {
-        ImageDesc desc(Size2Du32(1920, 1080), PixelDesc::RGBA8_sRGB);
+        ImageDesc desc(Size2Du32(1920, 1080), PixelFormat::RGBA8_sRGB);
         desc.setVideoScanMode(VideoScanMode::Progressive);
         Image img(desc);
         img.metadata().set(Metadata::Title, String("frame0"));
@@ -373,7 +376,7 @@ TEST_CASE("Image: dump emits scalar keys, planes, and metadata") {
         String joined;
         for(const String &ln : lines) { joined += ln; joined += '\n'; }
         CHECK(joined.contains("Size: 1920x1080"));
-        CHECK(joined.contains("PixelDesc: RGBA8_sRGB"));
+        CHECK(joined.contains("PixelFormat: RGBA8_sRGB"));
         CHECK(joined.contains("PlaneCount: 1"));
         CHECK(joined.contains("Plane[0]:"));
         CHECK(joined.contains("Meta:"));
@@ -382,14 +385,14 @@ TEST_CASE("Image: dump emits scalar keys, planes, and metadata") {
 }
 
 TEST_CASE("Image: dump respects indent") {
-        Image img(ImageDesc(Size2Du32(320, 240), PixelDesc::RGBA8_sRGB));
+        Image img(ImageDesc(Size2Du32(320, 240), PixelFormat::RGBA8_sRGB));
         StringList lines = img.dump(String("    "));
         REQUIRE_FALSE(lines.isEmpty());
         for(const String &ln : lines) CHECK(ln.startsWith("    "));
 }
 
 TEST_CASE("Audio: dump emits scalar keys, buffer, and metadata") {
-        AudioDesc desc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        AudioDesc desc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         Audio aud(desc, 256);
         aud.metadata().set(Metadata::Album, String("LiveSet"));
 
@@ -401,7 +404,7 @@ TEST_CASE("Audio: dump emits scalar keys, buffer, and metadata") {
         CHECK(joined.contains("48000"));
         CHECK(joined.contains("Channels: 2"));
         CHECK(joined.contains("Samples: 256"));
-        CHECK(joined.contains("DataType: PCMI_S16LE"));
+        CHECK(joined.contains("Format: PCMI_S16LE"));
         CHECK(joined.contains("Buffer:"));
         CHECK(joined.contains("Meta:"));
         CHECK(joined.contains("Album"));
@@ -413,13 +416,13 @@ TEST_CASE("Frame: dump includes scalar keys, metadata, images, audio") {
         f.metadata().set(Metadata::Title, String("clip"));
         f.metadata().set(Metadata::FrameRate, FrameRate(FrameRate::FPS_24));
 
-        ImageDesc idesc(Size2Du32(1920, 1080), PixelDesc::RGBA8_sRGB);
+        ImageDesc idesc(Size2Du32(1920, 1080), PixelFormat::RGBA8_sRGB);
         idesc.setVideoScanMode(VideoScanMode::Progressive);
         Image::Ptr img = Image::Ptr::create(idesc);
         img.modify()->metadata().set(Metadata::FrameNumber, FrameNumber(42));
         f.imageList().pushToBack(img);
 
-        AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        AudioDesc adesc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         Audio::Ptr aud = Audio::Ptr::create(adesc, 1024);
         f.audioList().pushToBack(aud);
 
@@ -468,23 +471,100 @@ TEST_CASE("Frame: dump on empty frame omits optional sections") {
         CHECK_FALSE(joined.contains("Audio["));
 }
 
-TEST_CASE("Image: carries its compressed MediaPacket") {
+TEST_CASE("Frame::isSafeCutPoint: empty frame is trivially safe") {
+        Frame f;
+        CHECK(f.isSafeCutPoint());
+        CHECK(f.isSafeCutPoint(Frame::CutPointVideoOnly));
+        CHECK(f.isSafeCutPoint(Frame::CutPointAudioOnly));
+}
+
+TEST_CASE("Frame::isSafeCutPoint: uncompressed images are always safe") {
+        Frame f;
+        f.imageList().pushToBack(Image::Ptr::create(
+                ImageDesc(Size2Du32(1920, 1080), PixelFormat::RGBA8_sRGB)));
+        CHECK(f.isSafeCutPoint());
+        CHECK(f.isSafeCutPoint(Frame::CutPointVideoOnly));
+}
+
+TEST_CASE("Frame::isSafeCutPoint: intra-only compressed is always safe") {
+        // JPEG is intra-only — every frame is independently decodable, so
+        // every frame is a valid cut point regardless of packet flags.
+        ImageDesc desc(Size2Du32(16, 1),
+                       PixelFormat(PixelFormat::JPEG_RGB8_sRGB));
+        auto imgPtr = Image::Ptr::create(desc);
+        Frame f;
+        f.imageList().pushToBack(imgPtr);
+        CHECK(f.isSafeCutPoint());
+}
+
+TEST_CASE("Frame::isSafeCutPoint: temporal codec requires keyframe packet") {
+        ImageDesc desc(Size2Du32(16, 1), PixelFormat(PixelFormat::H264));
         auto buf = Buffer::Ptr::create(32);
         buf.modify()->setSize(16);
-        Image img = Image::fromBuffer(buf, 16, 1, PixelDesc(PixelDesc::H264));
+
+        // No packet attached -> unsafe (we have no evidence it's a keyframe).
+        {
+                auto imgPtr = Image::Ptr::create(desc);
+                CHECK_FALSE(imgPtr->isSafeCutPoint());
+        }
+
+        // Packet without Keyframe flag -> unsafe (P/B frame mid-GOP).
+        {
+                auto imgPtr = Image::Ptr::create(desc);
+                auto pkt = VideoPacket::Ptr::create(buf,
+                        PixelFormat(PixelFormat::H264));
+                imgPtr.modify()->setPacket(pkt);
+                CHECK_FALSE(imgPtr->isSafeCutPoint());
+
+                Frame f;
+                f.imageList().pushToBack(imgPtr);
+                CHECK_FALSE(f.isSafeCutPoint());
+                CHECK_FALSE(f.isSafeCutPoint(Frame::CutPointVideoOnly));
+                // Audio-only scope ignores the unsafe video frame — empty
+                // audio list is trivially safe.
+                CHECK(f.isSafeCutPoint(Frame::CutPointAudioOnly));
+        }
+
+        // Packet with Keyframe flag -> safe cut.
+        {
+                auto imgPtr = Image::Ptr::create(desc);
+                auto pkt = VideoPacket::Ptr::create(buf,
+                        PixelFormat(PixelFormat::H264));
+                pkt.modify()->addFlag(VideoPacket::Keyframe);
+                imgPtr.modify()->setPacket(pkt);
+                CHECK(imgPtr->isSafeCutPoint());
+
+                Frame f;
+                f.imageList().pushToBack(imgPtr);
+                CHECK(f.isSafeCutPoint());
+        }
+}
+
+TEST_CASE("Frame::isSafeCutPoint: uncompressed audio is always safe") {
+        Frame f;
+        AudioDesc desc(AudioFormat(AudioFormat::PCMI_S16LE), 48000.0f, 2);
+        f.audioList().pushToBack(Audio::Ptr::create(desc, 480));
+        CHECK(f.isSafeCutPoint());
+        CHECK(f.isSafeCutPoint(Frame::CutPointAudioOnly));
+}
+
+TEST_CASE("Image: carries its compressed VideoPacket") {
+        auto buf = Buffer::Ptr::create(32);
+        buf.modify()->setSize(16);
+        Image img = Image::fromBuffer(buf, 16, 1, PixelFormat(PixelFormat::H264));
         REQUIRE(img.isValid());
         CHECK(img.isCompressed());
         CHECK_FALSE(img.packet().isValid());
 
-        auto pkt = MediaPacket::Ptr::create(buf, PixelDesc(PixelDesc::H264));
-        pkt.modify()->addFlag(MediaPacket::Keyframe);
+        auto pkt = VideoPacket::Ptr::create(buf, PixelFormat(PixelFormat::H264));
+        pkt.modify()->addFlag(VideoPacket::Keyframe);
         img.setPacket(pkt);
 
         REQUIRE(img.packet().isValid());
         CHECK(img.packet()->isKeyframe());
-        CHECK(img.packet()->pixelDesc().id() == PixelDesc::H264);
+        CHECK(img.packet()->pixelFormat().id() == PixelFormat::H264);
         CHECK(img.packet()->buffer().ptr() == buf.ptr());
 
-        img.setPacket(MediaPacket::Ptr());
+        img.setPacket(VideoPacket::Ptr());
         CHECK_FALSE(img.packet().isValid());
 }

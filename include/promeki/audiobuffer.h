@@ -107,9 +107,9 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par Example
  * @code
- * AudioBuffer fifo(AudioDesc(AudioDesc::PCMI_S16LE, 48000, 2));
+ * AudioBuffer fifo(AudioDesc(AudioFormat::PCMI_S16LE, 48000, 2));
  * fifo.reserve(48000);                    // 1 second of headroom
- * fifo.setInputFormat(AudioDesc::NativeType, 48000, 2);
+ * fifo.setInputFormat(AudioFormat::NativeFloat, 48000, 2);
  *
  * // Producer thread
  * Audio chunk(nativeDesc, 1602);

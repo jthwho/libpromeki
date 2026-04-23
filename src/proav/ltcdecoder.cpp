@@ -47,7 +47,7 @@ LtcDecoder::DecodedList LtcDecoder::decode(const Audio &audio, int channelIndex)
         // Fast path: native int8 mono on channel 0 — feed straight
         // through to libvtc with no conversion.
         if(channels == 1 && channelIndex == 0 &&
-           desc.dataType() == AudioDesc::PCMI_S8) {
+           desc.format().id() == AudioFormat::PCMI_S8) {
                 return decode(audio.data<int8_t>(), samples);
         }
 

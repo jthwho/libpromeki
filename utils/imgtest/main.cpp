@@ -45,7 +45,7 @@ static Image buildTestImage(size_t w, size_t h) {
         // Start with color bars in the top portion
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::ColorBars);
-        ImageDesc desc(w, h, PixelDesc(PixelDesc::RGBA8_sRGB));
+        ImageDesc desc(w, h, PixelFormat(PixelFormat::RGBA8_sRGB));
         Image img = gen.create(desc);
 
         PaintEngine pe = img.createPaintEngine();
@@ -164,7 +164,7 @@ static Image buildTestImage(size_t w, size_t h) {
 struct TestCase {
         const char    *filename;
         int            formatId;
-        PixelDesc::ID  pixelDesc;
+        PixelFormat::ID  pixelFormat;
 };
 
 int main(int argc, char **argv) {
@@ -184,7 +184,7 @@ int main(int argc, char **argv) {
         }
 
         // Derive format-specific source images
-        Image rgb8(w, h, PixelDesc(PixelDesc::RGB8_sRGB));
+        Image rgb8(w, h, PixelFormat(PixelFormat::RGB8_sRGB));
         {
                 const uint8_t *src = static_cast<const uint8_t *>(master.data());
                 uint8_t *dst = static_cast<uint8_t *>(rgb8.data());
@@ -195,7 +195,7 @@ int main(int argc, char **argv) {
                 }
         }
 
-        Image mono8(w, h, PixelDesc(PixelDesc::Mono8_sRGB));
+        Image mono8(w, h, PixelFormat(PixelFormat::Mono8_sRGB));
         {
                 const uint8_t *src = static_cast<const uint8_t *>(master.data());
                 uint8_t *dst = static_cast<uint8_t *>(mono8.data());
@@ -207,21 +207,21 @@ int main(int argc, char **argv) {
 
         TestCase tests[] = {
                 // DPX — use RGB (no alpha) to avoid GM's inverted-matte convention
-                { "dpx_rgb8.dpx",      ImageFile::DPX, PixelDesc::RGB8_sRGB },
-                { "dpx_rgb10_be.dpx",  ImageFile::DPX, PixelDesc::RGB10_DPX_sRGB },
-                { "dpx_rgb16.dpx",     ImageFile::DPX, PixelDesc::RGB16_BE_sRGB },
+                { "dpx_rgb8.dpx",      ImageFile::DPX, PixelFormat::RGB8_sRGB },
+                { "dpx_rgb10_be.dpx",  ImageFile::DPX, PixelFormat::RGB10_DPX_sRGB },
+                { "dpx_rgb16.dpx",     ImageFile::DPX, PixelFormat::RGB16_BE_sRGB },
 
                 // TGA
-                { "tga_rgba8.tga",     ImageFile::TGA, PixelDesc::RGBA8_sRGB },
+                { "tga_rgba8.tga",     ImageFile::TGA, PixelFormat::RGBA8_sRGB },
 
                 // SGI
-                { "sgi_mono8.sgi",     ImageFile::SGI, PixelDesc::Mono8_sRGB },
-                { "sgi_rgb8.sgi",      ImageFile::SGI, PixelDesc::RGB8_sRGB },
-                { "sgi_rgba8.sgi",     ImageFile::SGI, PixelDesc::RGBA8_sRGB },
+                { "sgi_mono8.sgi",     ImageFile::SGI, PixelFormat::Mono8_sRGB },
+                { "sgi_rgb8.sgi",      ImageFile::SGI, PixelFormat::RGB8_sRGB },
+                { "sgi_rgba8.sgi",     ImageFile::SGI, PixelFormat::RGBA8_sRGB },
 
                 // PNM
-                { "pnm_rgb8.ppm",      ImageFile::PNM, PixelDesc::RGB8_sRGB },
-                { "pnm_mono8.pgm",     ImageFile::PNM, PixelDesc::Mono8_sRGB },
+                { "pnm_rgb8.ppm",      ImageFile::PNM, PixelFormat::RGB8_sRGB },
+                { "pnm_mono8.pgm",     ImageFile::PNM, PixelFormat::Mono8_sRGB },
         };
 
         int pass = 0, fail = 0;
@@ -230,19 +230,19 @@ int main(int argc, char **argv) {
                 std::snprintf(path, sizeof(path), "%s/%s", outDir, tc.filename);
 
                 const Image *src = &master;
-                if(tc.pixelDesc == PixelDesc::RGB8_sRGB)  src = &rgb8;
-                if(tc.pixelDesc == PixelDesc::Mono8_sRGB) src = &mono8;
+                if(tc.pixelFormat == PixelFormat::RGB8_sRGB)  src = &rgb8;
+                if(tc.pixelFormat == PixelFormat::Mono8_sRGB) src = &mono8;
 
                 Image saveImg;
-                if(src->pixelDesc().id() == tc.pixelDesc) {
+                if(src->pixelFormat().id() == tc.pixelFormat) {
                         saveImg = *src;
                 } else {
-                        saveImg = master.convert(PixelDesc(tc.pixelDesc), Metadata());
+                        saveImg = master.convert(PixelFormat(tc.pixelFormat), Metadata());
                         if(!saveImg.isValid()) {
-                                saveImg = Image(w, h, PixelDesc(tc.pixelDesc));
+                                saveImg = Image(w, h, PixelFormat(tc.pixelFormat));
                                 if(saveImg.isValid()) {
                                         uint8_t *p = static_cast<uint8_t *>(saveImg.data());
-                                        size_t bytes = saveImg.pixelDesc().pixelFormat().planeSize(0, w, h);
+                                        size_t bytes = saveImg.pixelFormat().memLayout().planeSize(0, w, h);
                                         for(size_t i = 0; i < bytes; ++i)
                                                 p[i] = static_cast<uint8_t>((i * 7) & 0xFF);
                                 }
@@ -258,7 +258,7 @@ int main(int argc, char **argv) {
                         ++fail;
                 } else {
                         std::printf("OK   %-30s  %zux%zu %s\n", tc.filename,
-                                    w, h, PixelDesc(tc.pixelDesc).name().cstr());
+                                    w, h, PixelFormat(tc.pixelFormat).name().cstr());
                         ++pass;
                 }
         }

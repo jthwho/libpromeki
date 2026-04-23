@@ -87,10 +87,10 @@ TEST_CASE("QuickTime: open uncompressed UYVY .mov fixture") {
         CHECK(v.size().width() == 16);
         CHECK(v.size().height() == 16);
         CHECK(v.sampleCount() == 2);
-        CHECK(v.pixelDesc().isValid());
-        // 2vuy maps to YUV8_422_UYVY_Rec709 (already in PixelDesc).
-        CHECK(v.pixelDesc().id() == PixelDesc::YUV8_422_UYVY_Rec709);
-        CHECK_FALSE(v.pixelDesc().isCompressed());
+        CHECK(v.pixelFormat().isValid());
+        // 2vuy maps to YUV8_422_UYVY_Rec709 (already in PixelFormat).
+        CHECK(v.pixelFormat().id() == PixelFormat::YUV8_422_UYVY_Rec709);
+        CHECK_FALSE(v.pixelFormat().isCompressed());
 
         // Frame rate ~24 fps.
         REQUIRE(v.frameRate().isValid());
@@ -118,14 +118,14 @@ TEST_CASE("QuickTime: open ProRes 422 Proxy .mov fixture") {
         CHECK(v.size().width() == 16);
         CHECK(v.size().height() == 16);
         CHECK(v.sampleCount() == 2);
-        CHECK(v.pixelDesc().isValid());
-        CHECK(v.pixelDesc().isCompressed());
-        CHECK(v.pixelDesc().id() == PixelDesc::ProRes_422_Proxy);
+        CHECK(v.pixelFormat().isValid());
+        CHECK(v.pixelFormat().isCompressed());
+        CHECK(v.pixelFormat().id() == PixelFormat::ProRes_422_Proxy);
         // ProRes used to share the single string codec name "prores"
         // across all six variants; with the typed VideoCodec registry
         // each variant is its own codec ID, so we just verify we got
-        // the matching VideoCodec for the ProRes_422_Proxy PixelDesc.
-        CHECK(v.pixelDesc().videoCodec().id() == VideoCodec::ProRes_422_Proxy);
+        // the matching VideoCodec for the ProRes_422_Proxy PixelFormat.
+        CHECK(v.pixelFormat().videoCodec().id() == VideoCodec::ProRes_422_Proxy);
 
         REQUIRE(v.frameRate().isValid());
         double fps = v.frameRate().rational().toDouble();
@@ -157,14 +157,14 @@ TEST_CASE("QuickTime: open H.264 + PCM .mov fixture") {
         // Video assertions
         CHECK(video->size().width() == 16);
         CHECK(video->size().height() == 16);
-        CHECK(video->pixelDesc().isValid());
-        CHECK(video->pixelDesc().id() == PixelDesc::H264);
-        CHECK(video->pixelDesc().isCompressed());
+        CHECK(video->pixelFormat().isValid());
+        CHECK(video->pixelFormat().id() == PixelFormat::H264);
+        CHECK(video->pixelFormat().isCompressed());
         REQUIRE(video->frameRate().isValid());
 
         // Audio assertions: sowt → PCMI_S16LE, 48 kHz, 2 channels
         CHECK(audio->audioDesc().isValid());
-        CHECK(audio->audioDesc().dataType() == AudioDesc::PCMI_S16LE);
+        CHECK(audio->audioDesc().format().id() == AudioFormat::PCMI_S16LE);
         CHECK(audio->audioDesc().channels() == 2);
         CHECK(audio->audioDesc().sampleRate() == doctest::Approx(48000.0));
 }
@@ -306,7 +306,7 @@ TEST_CASE("QuickTime: open fragmented MP4 fixture") {
         CHECK(v.type() == QuickTime::Video);
         CHECK(v.size().width() == 16);
         CHECK(v.size().height() == 16);
-        CHECK(v.pixelDesc().id() == PixelDesc::H264);
+        CHECK(v.pixelFormat().id() == PixelFormat::H264);
 
         // Three fragments × one frame each.
         CHECK(v.sampleCount() == 3);
@@ -376,7 +376,7 @@ TEST_CASE("QuickTimeWriter: round-trip uncompressed UYVY video") {
                 REQUIRE(qt.open() == Error::Ok);
 
                 uint32_t vid = 0;
-                REQUIRE(qt.addVideoTrack(PixelDesc(PixelDesc::YUV8_422_UYVY_Rec709),
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709),
                                          Size2Du32(16, 16),
                                          FrameRate(FrameRate::RationalType(24, 1)),
                                          &vid) == Error::Ok);
@@ -402,7 +402,7 @@ TEST_CASE("QuickTimeWriter: round-trip uncompressed UYVY video") {
                 CHECK(v.size().width() == 16);
                 CHECK(v.size().height() == 16);
                 CHECK(v.sampleCount() == 4);
-                CHECK(v.pixelDesc().id() == PixelDesc::YUV8_422_UYVY_Rec709);
+                CHECK(v.pixelFormat().id() == PixelFormat::YUV8_422_UYVY_Rec709);
                 REQUIRE(v.frameRate().isValid());
                 CHECK(v.frameRate().rational().toDouble() == doctest::Approx(24.0));
 
@@ -431,7 +431,7 @@ TEST_CASE("QuickTimeWriter: round-trip ProRes pass-through video") {
                 REQUIRE(qt.open() == Error::Ok);
 
                 uint32_t vid = 0;
-                REQUIRE(qt.addVideoTrack(PixelDesc(PixelDesc::ProRes_422_HQ),
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::ProRes_422_HQ),
                                          Size2Du32(64, 64),
                                          FrameRate(FrameRate::RationalType(25, 1)),
                                          &vid) == Error::Ok);
@@ -453,8 +453,8 @@ TEST_CASE("QuickTimeWriter: round-trip ProRes pass-through video") {
                 REQUIRE(qt.open() == Error::Ok);
                 REQUIRE(qt.tracks().size() == 1);
                 const QuickTime::Track &v = qt.tracks()[0];
-                CHECK(v.pixelDesc().id() == PixelDesc::ProRes_422_HQ);
-                CHECK(v.pixelDesc().isCompressed());
+                CHECK(v.pixelFormat().id() == PixelFormat::ProRes_422_HQ);
+                CHECK(v.pixelFormat().isCompressed());
                 CHECK(v.size().width() == 64);
                 CHECK(v.size().height() == 64);
                 CHECK(v.sampleCount() == 3);
@@ -485,7 +485,7 @@ TEST_CASE("QuickTimeWriter: variable-duration sample table is preserved") {
                 QuickTime qt = QuickTime::createWriter(tmp);
                 REQUIRE(qt.open() == Error::Ok);
                 uint32_t vid = 0;
-                REQUIRE(qt.addVideoTrack(PixelDesc(PixelDesc::YUV8_422_UYVY_Rec709),
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709),
                                          Size2Du32(16, 16),
                                          FrameRate(FrameRate::RationalType(24, 1)),
                                          &vid) == Error::Ok);
@@ -536,7 +536,7 @@ TEST_CASE("QuickTimeWriter: keyframe flags survive round trip via stss") {
                 // we're exercising the stss plumbing, not codec-specific
                 // bitstream handling, and the writer's H.264/HEVC paths
                 // insist on well-formed Annex-B input.
-                REQUIRE(qt.addVideoTrack(PixelDesc(PixelDesc::JPEG_YUV8_422_Rec709),
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::JPEG_YUV8_422_Rec709),
                                          Size2Du32(32, 32),
                                          FrameRate(FrameRate::RationalType(24, 1)),
                                          &vid) == Error::Ok);
@@ -582,7 +582,7 @@ TEST_CASE("QuickTimeWriter: fragmented layout round-trip (video only)") {
                 REQUIRE(qt.open() == Error::Ok);
 
                 uint32_t vid = 0;
-                REQUIRE(qt.addVideoTrack(PixelDesc(PixelDesc::YUV8_422_UYVY_Rec709),
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709),
                                          Size2Du32(16, 16),
                                          FrameRate(FrameRate::RationalType(24, 1)),
                                          &vid) == Error::Ok);
@@ -606,7 +606,7 @@ TEST_CASE("QuickTimeWriter: fragmented layout round-trip (video only)") {
                 REQUIRE(qt.open() == Error::Ok);
                 REQUIRE(qt.tracks().size() == 1);
                 CHECK(qt.tracks()[0].sampleCount() == 10);
-                CHECK(qt.tracks()[0].pixelDesc().id() == PixelDesc::YUV8_422_UYVY_Rec709);
+                CHECK(qt.tracks()[0].pixelFormat().id() == PixelFormat::YUV8_422_UYVY_Rec709);
 
                 for(uint64_t i = 0; i < 10; ++i) {
                         QuickTime::Sample s;
@@ -628,7 +628,7 @@ TEST_CASE("QuickTimeWriter: fragmented layout round-trip (video + audio)") {
         const String tmp = "/tmp/qt_writer_frag_av.mov";
         std::remove(tmp.cstr());
 
-        const AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        const AudioDesc adesc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
         const size_t samplesPerFrame = 2000;  // 24 fps × 2000 = 48000/s
         const size_t audioBytesPerFrame = samplesPerFrame * 4;
 
@@ -638,7 +638,7 @@ TEST_CASE("QuickTimeWriter: fragmented layout round-trip (video + audio)") {
                 REQUIRE(qt.open() == Error::Ok);
 
                 uint32_t vid = 0, aid = 0;
-                REQUIRE(qt.addVideoTrack(PixelDesc(PixelDesc::YUV8_422_UYVY_Rec709),
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709),
                                          Size2Du32(16, 16),
                                          FrameRate(FrameRate::RationalType(24, 1)),
                                          &vid) == Error::Ok);
@@ -724,7 +724,7 @@ TEST_CASE("QuickTimeWriter: fragmented file is playable after simulated crash") 
                 REQUIRE(qt.setLayout(QuickTime::LayoutFragmented) == Error::Ok);
                 REQUIRE(qt.open() == Error::Ok);
                 uint32_t vid = 0;
-                REQUIRE(qt.addVideoTrack(PixelDesc(PixelDesc::YUV8_422_UYVY_Rec709),
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709),
                                          Size2Du32(16, 16),
                                          FrameRate(FrameRate::RationalType(24, 1)),
                                          &vid) == Error::Ok);
@@ -857,7 +857,7 @@ void writeSingleFrameWithMeta(const String &path, const Metadata &meta) {
         REQUIRE(qt.open() == Error::Ok);
         qt.setContainerMetadata(meta);
         uint32_t vid = 0;
-        REQUIRE(qt.addVideoTrack(PixelDesc(PixelDesc::YUV8_422_UYVY_Rec709),
+        REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709),
                                  Size2Du32(16, 16),
                                  FrameRate(FrameRate::RationalType(24, 1)),
                                  &vid) == Error::Ok);
@@ -998,7 +998,7 @@ TEST_CASE("QuickTimeWriter: empty container metadata omits udta") {
         QuickTime qt = QuickTime::createWriter(tmp);
         REQUIRE(qt.open() == Error::Ok);
         uint32_t vid = 0;
-        REQUIRE(qt.addVideoTrack(PixelDesc(PixelDesc::YUV8_422_UYVY_Rec709),
+        REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709),
                                  Size2Du32(16, 16),
                                  FrameRate(FrameRate::RationalType(24, 1)),
                                  &vid) == Error::Ok);
@@ -1039,7 +1039,7 @@ TEST_CASE("QuickTimeWriter: fragmented layout emits udta in the init moov") {
                 REQUIRE(qt.open() == Error::Ok);
                 qt.setContainerMetadata(in);
                 uint32_t vid = 0;
-                REQUIRE(qt.addVideoTrack(PixelDesc(PixelDesc::YUV8_422_UYVY_Rec709),
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709),
                                          Size2Du32(16, 16),
                                          FrameRate(FrameRate::RationalType(24, 1)),
                                          &vid) == Error::Ok);
@@ -1140,7 +1140,7 @@ TEST_CASE("QuickTimeWriter: H.264 Annex-B input is stored as AVCC with avcC box"
                 QuickTime qt = QuickTime::createWriter(tmp);
                 REQUIRE(qt.open() == Error::Ok);
                 uint32_t vid = 0;
-                REQUIRE(qt.addVideoTrack(PixelDesc(PixelDesc::H264),
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::H264),
                                          Size2Du32(16, 16),
                                          FrameRate(FrameRate::RationalType(24, 1)),
                                          &vid) == Error::Ok);
@@ -1173,13 +1173,13 @@ TEST_CASE("QuickTimeWriter: H.264 Annex-B input is stored as AVCC with avcC box"
                 CHECK(file[avcCOffset + 4 + 4] == 0xff);
         }
 
-        SUBCASE("reader resolves the avc1 track as PixelDesc::H264") {
+        SUBCASE("reader resolves the avc1 track as PixelFormat::H264") {
                 QuickTime qt = QuickTime::createReader(tmp);
                 REQUIRE(qt.open() == Error::Ok);
                 REQUIRE(qt.tracks().size() == 1);
                 const QuickTime::Track &v = qt.tracks()[0];
                 CHECK(v.type() == QuickTime::Video);
-                CHECK(v.pixelDesc().id() == PixelDesc::H264);
+                CHECK(v.pixelFormat().id() == PixelFormat::H264);
                 CHECK(v.sampleCount() == 1);
         }
 

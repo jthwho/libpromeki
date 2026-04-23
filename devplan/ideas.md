@@ -19,7 +19,7 @@
 
 7. We need to work on AudioDesc to make it first class like the other *Desc object.  We should
    be able to use it as if it's an enum in Variant.  *Today `AudioDesc` is a plain value class
-   holding sample rate / channels / format — unlike `PixelDesc`, `ColorModel`, `PixelFormat`
+   holding sample rate / channels / format — unlike `PixelFormat`, `ColorModel`, `PixelMemLayout`
    which are registry-backed `TypeRegistry` wrappers with stable IDs and a Variant type.  Plan:
    pick whichever pieces of AudioDesc identify a "named" format (e.g. `PCMI_Float32LE @ 48k @
    stereo`), promote those to registered IDs, and add `TypeAudioDesc` to the Variant X-macro so
@@ -170,8 +170,13 @@
           consoleTraceEnabled()/setConsoleTraceEnabled(); test output reduced
           from ~1064 lines to 6 lines.
 
-24. PixelFormat needs a new name like PixelMemDesc and PixelFormat should become PixelDesc.  Then we
-    need to make sure we're using PixelFormat (not PixelDesc) across all library names and strings.
+24. ~~PixelFormat needs a new name like PixelMemDesc and PixelFormat should become PixelDesc.  Then we
+    need to make sure we're using PixelFormat (not PixelDesc) across all library names and strings.~~
+    **DONE (2026-04-22)**: The rename swapped the names — what was `PixelFormat` (pure memory layout)
+    became `PixelMemLayout`, and what was `PixelDesc` (full color-model-carrying descriptor) became
+    `PixelFormat`. All library names, strings, test names, docs, and Variant type tags were migrated
+    in a single sweep. Variant tags: `TypePixelDesc` removed, `TypePixelMemLayout` added, existing
+    `TypePixelFormat` now carries the former `PixelDesc` payload.
 
 25. Fix the TPG LTC generation when fps is > 30
 

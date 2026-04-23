@@ -254,8 +254,8 @@ class H264Bitstream {
  * AvcDecoderConfig::parse(avccPayload, cfg);
  * Buffer::Ptr psAnnexB;
  * cfg.toAnnexB(psAnnexB);
- * decoder.submitPacket(MediaPacket(psAnnexB, PixelDesc::H264,
- *                                  MediaPacket::ParameterSet));
+ * decoder.submitPacket(VideoPacket(psAnnexB, PixelFormat::H264,
+ *                                  VideoPacket::ParameterSet));
  * @endcode
  *
  * @par Extended-profile fields not modeled

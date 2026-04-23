@@ -52,8 +52,9 @@ class Timecode;
 class Color;
 class ColorModel;
 class MemSpace;
+class PixelMemLayout;
 class PixelFormat;
-class PixelDesc;
+class AudioFormat;
 class Enum;
 class EnumList;
 class StringList;
@@ -237,8 +238,8 @@ class DataStream {
                         TypeColor       = 0x17, ///< @brief Color (length-prefixed string)
                         TypeColorModel  = 0x18, ///< @brief ColorModel (length-prefixed name)
                         TypeMemSpace    = 0x19, ///< @brief MemSpace (tagged uint32 ID)
-                        TypePixelFormat = 0x1A, ///< @brief PixelFormat (length-prefixed name)
-                        TypePixelDesc   = 0x1B, ///< @brief PixelDesc (length-prefixed name)
+                        TypePixelMemLayout = 0x1A, ///< @brief PixelMemLayout (length-prefixed name)
+                        TypePixelFormat   = 0x1B, ///< @brief PixelFormat (length-prefixed name)
                         TypeEnum        = 0x1C, ///< @brief Enum (length-prefixed qualified name)
                         TypeStringList  = 0x1D, ///< @brief StringList (tagged uint32 count + N strings)
                         TypeRect        = 0x1E, ///< @brief Rect<T> (four tagged primitives)
@@ -280,7 +281,8 @@ class DataStream {
                         TypeFrameNumber         = 0x43, ///< @brief FrameNumber (length-prefixed string round-trip)
                         TypeFrameCount          = 0x44, ///< @brief FrameCount (length-prefixed string round-trip)
                         TypeMediaDuration       = 0x45, ///< @brief MediaDuration (length-prefixed string round-trip)
-                        TypeUrl                 = 0x46  ///< @brief Url (length-prefixed string round-trip)
+                        TypeUrl                 = 0x46, ///< @brief Url (length-prefixed string round-trip)
+                        TypeAudioFormat         = 0x47  ///< @brief AudioFormat (length-prefixed name)
                 };
 
                 /** @brief Current wire format version. */
@@ -475,10 +477,12 @@ class DataStream {
                 DataStream &operator<<(const ColorModel &val);
                 /** @brief Writes a MemSpace as its numeric ID. */
                 DataStream &operator<<(const MemSpace &val);
+                /** @brief Writes a PixelMemLayout as its name. */
+                DataStream &operator<<(const PixelMemLayout &val);
                 /** @brief Writes a PixelFormat as its name. */
                 DataStream &operator<<(const PixelFormat &val);
-                /** @brief Writes a PixelDesc as its name. */
-                DataStream &operator<<(const PixelDesc &val);
+                /** @brief Writes an AudioFormat as its name. */
+                DataStream &operator<<(const AudioFormat &val);
                 /** @brief Writes an Enum as its qualified "TypeName::ValueName" string. */
                 DataStream &operator<<(const Enum &val);
                 /** @brief Writes an EnumList as its type name + tagged count + tagged int32 values. */
@@ -559,10 +563,12 @@ class DataStream {
                 DataStream &operator>>(ColorModel &val);
                 /** @brief Reads a MemSpace from a tagged uint32 ID. */
                 DataStream &operator>>(MemSpace &val);
+                /** @brief Reads a PixelMemLayout by name. */
+                DataStream &operator>>(PixelMemLayout &val);
                 /** @brief Reads a PixelFormat by name. */
                 DataStream &operator>>(PixelFormat &val);
-                /** @brief Reads a PixelDesc by name. */
-                DataStream &operator>>(PixelDesc &val);
+                /** @brief Reads an AudioFormat by name. */
+                DataStream &operator>>(AudioFormat &val);
                 /** @brief Reads an Enum from its qualified "TypeName::ValueName" string. */
                 DataStream &operator>>(Enum &val);
                 /** @brief Reads an EnumList from type name + tagged count + tagged int32 values. */
@@ -740,8 +746,9 @@ class DataStream {
                 void writeColorData(const Color &val);
                 void writeColorModelData(const ColorModel &val);
                 void writeMemSpaceData(const MemSpace &val);
+                void writePixelMemLayoutData(const PixelMemLayout &val);
                 void writePixelFormatData(const PixelFormat &val);
-                void writePixelDescData(const PixelDesc &val);
+                void writeAudioFormatData(const AudioFormat &val);
                 void writeEnumData(const Enum &val);
                 void writeEnumListData(const EnumList &val);
                 void writeStringListData(const StringList &val);
@@ -770,8 +777,9 @@ class DataStream {
                 Color     readColorData();
                 ColorModel readColorModelData();
                 MemSpace  readMemSpaceData();
+                PixelMemLayout readPixelMemLayoutData();
                 PixelFormat readPixelFormatData();
-                PixelDesc readPixelDescData();
+                AudioFormat readAudioFormatData();
                 Enum      readEnumData();
                 EnumList  readEnumListData();
                 StringList readStringListData();

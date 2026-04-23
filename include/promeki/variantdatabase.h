@@ -298,7 +298,7 @@ class VariantDatabase {
                  * @ref Metadata::fromJson) to restore the right
                  * @ref Variant type for keys whose native form is
                  * richer than a plain JSON primitive — @c Size2D,
-                 * @c PixelDesc, @c Enum, @c Color, @c FrameRate, etc.
+                 * @c PixelFormat, @c Enum, @c Color, @c FrameRate, etc.
                  * @ref JsonObject::setFromVariant serializes those as
                  * their string form on the way out; this routine
                  * asks the registered @ref VariantSpec to re-parse

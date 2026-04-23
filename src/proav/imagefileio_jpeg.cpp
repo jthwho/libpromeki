@@ -15,13 +15,12 @@
 #include <promeki/imagefileio.h>
 #include <promeki/imagefile.h>
 #include <promeki/image.h>
-#include <promeki/codec.h>
-#include <promeki/mediapacket.h>
+#include <promeki/videoencoder.h>
+#include <promeki/videopacket.h>
 #include <promeki/videocodec.h>
 #include <promeki/file.h>
 #include <promeki/buffer.h>
-#include <promeki/pixeldesc.h>
-#include <promeki/jpegimagecodec.h>
+#include <promeki/pixelformat.h>
 #include <promeki/metadata.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -34,11 +33,11 @@ PROMEKI_DEBUG(JPEG)
 //
 // libjpeg reads enough of the bitstream to report width, height, colour
 // space and the per-component sampling factors without touching any
-// scanlines.  We use that to decide which JPEG_xxx PixelDesc best
-// describes the file on disk.  The PixelDesc is stored on the resulting
+// scanlines.  We use that to decide which JPEG_xxx PixelFormat best
+// describes the file on disk.  The PixelFormat is stored on the resulting
 // Image so downstream consumers can decide whether to pass the bitstream
 // through verbatim (JPEG → JPEG copy) or let Image::convert() route it
-// to JpegImageCodec::decode() for rendering.
+// through a JpegVideoDecoder session for rendering.
 
 namespace {
 
@@ -53,10 +52,10 @@ static void probeErrorExit(j_common_ptr cinfo) {
 }
 
 // Probes the JPEG bitstream at @p data for dimensions and the best-matching
-// JPEG PixelDesc.  On success, fills @p widthOut / @p heightOut and returns
-// the chosen PixelDesc::ID.  Returns PixelDesc::Invalid if the header can't
+// JPEG PixelFormat.  On success, fills @p widthOut / @p heightOut and returns
+// the chosen PixelFormat::ID.  Returns PixelFormat::Invalid if the header can't
 // be parsed.
-static PixelDesc::ID probeJpegHeader(const void *data, size_t size,
+static PixelFormat::ID probeJpegHeader(const void *data, size_t size,
                                      size_t &widthOut, size_t &heightOut) {
         jpeg_decompress_struct dinfo;
         ProbeErrorMgr jerr;
@@ -64,7 +63,7 @@ static PixelDesc::ID probeJpegHeader(const void *data, size_t size,
         jerr.pub.error_exit = probeErrorExit;
         if(setjmp(jerr.jmpBuf)) {
                 jpeg_destroy_decompress(&dinfo);
-                return PixelDesc::Invalid;
+                return PixelFormat::Invalid;
         }
         jpeg_create_decompress(&dinfo);
         jpeg_mem_src(&dinfo,
@@ -72,39 +71,39 @@ static PixelDesc::ID probeJpegHeader(const void *data, size_t size,
                      static_cast<unsigned long>(size));
         if(jpeg_read_header(&dinfo, TRUE) != JPEG_HEADER_OK) {
                 jpeg_destroy_decompress(&dinfo);
-                return PixelDesc::Invalid;
+                return PixelFormat::Invalid;
         }
 
         widthOut  = dinfo.image_width;
         heightOut = dinfo.image_height;
 
-        PixelDesc::ID id = PixelDesc::JPEG_RGB8_sRGB;
+        PixelFormat::ID id = PixelFormat::JPEG_RGB8_sRGB;
         switch(dinfo.jpeg_color_space) {
                 case JCS_GRAYSCALE:
                 case JCS_RGB:
-                        id = PixelDesc::JPEG_RGB8_sRGB;
+                        id = PixelFormat::JPEG_RGB8_sRGB;
                         break;
                 case JCS_YCbCr: {
                         // Component 0 carries the luma sampling factors.
                         // h=2,v=2 → 4:2:0; h=2,v=1 → 4:2:2; h=1,v=1 → 4:4:4.
-                        // 4:4:4 has no dedicated JPEG PixelDesc today, so
+                        // 4:4:4 has no dedicated JPEG PixelFormat today, so
                         // we tag it as 4:2:2 (the chroma siting is close
                         // enough for description purposes and the decode
                         // targets are a superset).
                         const int hs = dinfo.comp_info[0].h_samp_factor;
                         const int vs = dinfo.comp_info[0].v_samp_factor;
                         if(hs == 2 && vs == 2) {
-                                id = PixelDesc::JPEG_YUV8_420_Rec709;
+                                id = PixelFormat::JPEG_YUV8_420_Rec709;
                         } else {
-                                id = PixelDesc::JPEG_YUV8_422_Rec709;
+                                id = PixelFormat::JPEG_YUV8_422_Rec709;
                         }
                         break;
                 }
                 default:
                         // Unusual colour spaces (CMYK, YCCK, BG_RGB, ...):
-                        // tag as generic JPEG RGB and let JpegImageCodec
+                        // tag as generic JPEG RGB and let JpegVideoDecoder
                         // handle the conversion on decode.
-                        id = PixelDesc::JPEG_RGB8_sRGB;
+                        id = PixelFormat::JPEG_RGB8_sRGB;
                         break;
         }
         jpeg_destroy_decompress(&dinfo);
@@ -140,8 +139,8 @@ PROMEKI_REGISTER_IMAGEFILEIO(ImageFileIO_JPEG);
 // JPEG load keeps the bitstream intact: the returned Image is compressed
 // (isCompressed() == true) and its single plane points at the raw JPEG
 // bytes.  Consumers that need uncompressed pixels run the image through
-// Image::convert() — the dispatcher routes compressed inputs to
-// JpegImageCodec::decode() automatically.  The pass-through MediaIO copy
+// Image::convert() — the dispatcher routes compressed inputs through a
+// JpegVideoDecoder session automatically.  The pass-through MediaIO copy
 // path (JPEG file → JPEG file) therefore avoids any re-encode.
 
 Error ImageFileIO_JPEG::load(ImageFile &imageFile, const MediaConfig &config) const {
@@ -196,16 +195,16 @@ Error ImageFileIO_JPEG::load(ImageFile &imageFile, const MediaConfig &config) co
 
         size_t width = 0;
         size_t height = 0;
-        PixelDesc::ID pdId = probeJpegHeader(fileBuf->data(), fileBuf->size(),
+        PixelFormat::ID pdId = probeJpegHeader(fileBuf->data(), fileBuf->size(),
                                              width, height);
-        if(pdId == PixelDesc::Invalid) {
+        if(pdId == PixelFormat::Invalid) {
                 promekiErr("JPEG load '%s': header probe failed", filename.cstr());
                 return Error::CorruptData;
         }
 
         // Zero-copy wrap: the Image adopts fileBuf as plane 0 and the
         // compressedSize metadata is set from the buffer length.
-        Image img = Image::fromBuffer(fileBuf, width, height, PixelDesc(pdId));
+        Image img = Image::fromBuffer(fileBuf, width, height, PixelFormat(pdId));
         if(!img.isValid()) {
                 promekiErr("JPEG load '%s': Image::fromBuffer failed", filename.cstr());
                 return Error::Invalid;
@@ -224,7 +223,7 @@ Error ImageFileIO_JPEG::load(ImageFile &imageFile, const MediaConfig &config) co
 //      == "JPEG"): write the payload bytes verbatim.  This is the fast
 //      pass-through that MediaIO uses for zero-loss JPEG copies.
 //
-//   2. Input is uncompressed and JpegImageCodec accepts its PixelDesc
+//   2. Input is uncompressed and JpegVideoEncoder accepts its PixelFormat
 //      directly: Image::convert() dispatches to the codec without a
 //      preparatory CSC.
 //
@@ -233,13 +232,13 @@ Error ImageFileIO_JPEG::load(ImageFile &imageFile, const MediaConfig &config) co
 //      then encodes.
 //
 // Paths (2) and (3) are handled uniformly by calling Image::convert() with
-// a JPEG PixelDesc target.  The target subtype is chosen to maximise the
+// a JPEG PixelFormat target.  The target subtype is chosen to maximise the
 // chance of avoiding an intermediate CSC for common source formats:
 // JPEG_YUV8_422_Rec709 for YUV inputs, JPEG_RGB8_sRGB for RGB/mono
 // inputs, falling back to RGB for anything else.
 //
 // MediaConfig::JpegQuality / MediaConfig::JpegSubsampling on @p config
-// flow straight through Image::convert() into JpegImageCodec::configure(),
+// flow straight through Image::convert() into JpegVideoEncoder::configure(),
 // so callers can write `mediaplay -oc JpegQuality:95 -o out.jpg` and have
 // it take effect on the file backend exactly the same way it would on the
 // converter backend.
@@ -253,7 +252,7 @@ Error ImageFileIO_JPEG::save(ImageFile &imageFile, const MediaConfig &config) co
         }
 
         // Pass-through: keep the existing JPEG bitstream exactly.
-        if(image.isCompressed() && image.pixelDesc().videoCodec().id() == VideoCodec::JPEG) {
+        if(image.isCompressed() && image.pixelFormat().videoCodec().id() == VideoCodec::JPEG) {
                 const void *payload = image.data(0);
                 const size_t payloadSize = image.compressedSize();
                 if(payload == nullptr || payloadSize == 0) {
@@ -289,28 +288,28 @@ Error ImageFileIO_JPEG::save(ImageFile &imageFile, const MediaConfig &config) co
         if(image.isCompressed()) {
                 promekiErr("JPEG save '%s': unsupported compressed input codec '%s'",
                            filename.cstr(),
-                           image.pixelDesc().videoCodec().name().cstr());
+                           image.pixelFormat().videoCodec().name().cstr());
                 return Error::NotSupported;
         }
 
         // Pick a JPEG subtype that matches the input colour family to
         // avoid an extra CSC hop where possible.
-        PixelDesc::ID targetId = PixelDesc::JPEG_RGB8_sRGB;
-        switch(image.pixelDesc().id()) {
-                case PixelDesc::YUV8_422_Rec709:
-                case PixelDesc::YUV8_422_UYVY_Rec709:
-                case PixelDesc::YUV8_422_Planar_Rec709:
-                        targetId = PixelDesc::JPEG_YUV8_422_Rec709;
+        PixelFormat::ID targetId = PixelFormat::JPEG_RGB8_sRGB;
+        switch(image.pixelFormat().id()) {
+                case PixelFormat::YUV8_422_Rec709:
+                case PixelFormat::YUV8_422_UYVY_Rec709:
+                case PixelFormat::YUV8_422_Planar_Rec709:
+                        targetId = PixelFormat::JPEG_YUV8_422_Rec709;
                         break;
-                case PixelDesc::YUV8_420_Planar_Rec709:
-                case PixelDesc::YUV8_420_SemiPlanar_Rec709:
-                        targetId = PixelDesc::JPEG_YUV8_420_Rec709;
+                case PixelFormat::YUV8_420_Planar_Rec709:
+                case PixelFormat::YUV8_420_SemiPlanar_Rec709:
+                        targetId = PixelFormat::JPEG_YUV8_420_Rec709;
                         break;
-                case PixelDesc::RGBA8_sRGB:
-                        targetId = PixelDesc::JPEG_RGBA8_sRGB;
+                case PixelFormat::RGBA8_sRGB:
+                        targetId = PixelFormat::JPEG_RGBA8_sRGB;
                         break;
                 default:
-                        targetId = PixelDesc::JPEG_RGB8_sRGB;
+                        targetId = PixelFormat::JPEG_RGB8_sRGB;
                         break;
         }
 
@@ -319,51 +318,50 @@ Error ImageFileIO_JPEG::save(ImageFile &imageFile, const MediaConfig &config) co
         // each compressor lives behind the VideoEncoder contract so
         // pipelines can amortise its session state across frames.  For
         // a single-image file save we just create, configure, push,
-        // pull, destroy.
-        VideoEncoder *enc = VideoCodec(VideoCodec::JPEG).createEncoder();
-        if(enc == nullptr) {
-                promekiErr("JPEG save '%s': no JpegVideoEncoder factory registered",
-                           filename.cstr());
+        // pull, destroy.  Forward the caller's MediaConfig and force
+        // the chosen JPEG sub-target so the encoder lands on the
+        // format we picked above instead of its own default.
+        MediaConfig encCfg = config;
+        encCfg.set(MediaConfig::OutputPixelFormat, PixelFormat(targetId));
+        auto encResult = VideoCodec(VideoCodec::JPEG).createEncoder(&encCfg);
+        if(error(encResult).isError()) {
+                promekiErr("JPEG save '%s': createEncoder failed: %s",
+                           filename.cstr(), error(encResult).name().cstr());
                 return Error::NotSupported;
         }
-        // Forward the caller's MediaConfig and force the chosen JPEG
-        // sub-target so the encoder lands on the format we picked
-        // above instead of its own default.
-        MediaConfig encCfg = config;
-        encCfg.set(MediaConfig::OutputPixelDesc, PixelDesc(targetId));
-        enc->configure(encCfg);
+        VideoEncoder *enc = value(encResult);
 
         // The encoder happily accepts the source image as-is when its
-        // PixelDesc is in supportedInputs(); otherwise we run a CSC to
+        // PixelFormat is in supportedInputs(); otherwise we run a CSC to
         // the codec's preferred encode source (typically the YUV
         // variant matching the chosen target's chroma subsampling).
         Image encodeInput = image;
-        const auto &sources = PixelDesc(targetId).encodeSources();
+        const auto &sources = PixelFormat(targetId).encodeSources();
         bool sourceOk = sources.isEmpty();
-        for(PixelDesc::ID s : sources) {
-                if(image.pixelDesc().id() == s) { sourceOk = true; break; }
+        for(PixelFormat::ID s : sources) {
+                if(image.pixelFormat().id() == s) { sourceOk = true; break; }
         }
         if(!sourceOk && !sources.isEmpty()) {
-                encodeInput = image.convert(PixelDesc(sources[0]),
+                encodeInput = image.convert(PixelFormat(sources[0]),
                                             image.metadata(), config);
                 if(!encodeInput.isValid()) {
                         delete enc;
                         promekiErr("JPEG save '%s': prep CSC %s -> %s failed",
                                    filename.cstr(),
-                                   image.pixelDesc().name().cstr(),
-                                   PixelDesc(sources[0]).name().cstr());
+                                   image.pixelFormat().name().cstr(),
+                                   PixelFormat(sources[0]).name().cstr());
                         return Error::ConversionFailed;
                 }
         }
 
-        if(Error e = enc->submitFrame(encodeInput); e.isError()) {
+        if(Error e = enc->submitFrame(Image::Ptr::create(std::move(encodeInput))); e.isError()) {
                 String msg = enc->lastErrorMessage();
                 delete enc;
                 promekiErr("JPEG save '%s': encode failed: %s",
                            filename.cstr(), msg.isEmpty() ? e.name().cstr() : msg.cstr());
                 return e;
         }
-        MediaPacket::Ptr pkt = enc->receivePacket();
+        VideoPacket::Ptr pkt = enc->receivePacket();
         delete enc;
         if(!pkt) {
                 promekiErr("JPEG save '%s': encoder produced no packet",

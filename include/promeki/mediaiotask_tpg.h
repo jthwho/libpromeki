@@ -45,7 +45,7 @@ PROMEKI_NAMESPACE_BEGIN
  * |-----|------|---------|-------------|
  * | @ref MediaConfig::VideoEnabled     | bool      | true       | Enable video generation. |
  * | @ref MediaConfig::VideoPattern     | Enum @ref VideoPattern | ColorBars | Pattern selector. |
- * | @ref MediaConfig::VideoPixelFormat | PixelDesc | RGB8_sRGB  | Pixel description. |
+ * | @ref MediaConfig::VideoPixelFormat | PixelFormat | RGB8_sRGB  | Pixel description. |
  * | @ref MediaConfig::VideoSolidColor  | Color     | Black      | Fill color for SolidColor pattern. |
  * | @ref MediaConfig::VideoMotion      | double    | 0.0        | Motion speed. |
  *

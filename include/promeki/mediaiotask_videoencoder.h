@@ -10,7 +10,7 @@
 #include <promeki/namespace.h>
 #include <promeki/mediaiotask.h>
 #include <promeki/mediaconfig.h>
-#include <promeki/codec.h>
+#include <promeki/videoencoder.h>
 #include <promeki/mediapacket.h>
 #include <promeki/string.h>
 #include <promeki/videocodec.h>
@@ -26,14 +26,14 @@ PROMEKI_NAMESPACE_BEGIN
  * @c writeFrame(), feeds @ref Image "image[0]" into the encoder via
  * @ref VideoEncoder::submitFrame, and drains @ref
  * VideoEncoder::receivePacket producing one output Frame per emitted
- * @ref MediaPacket.  Audio tracks on the source Frame are forwarded
+ * @ref VideoPacket.  Audio tracks on the source Frame are forwarded
  * alongside each output packet so downstream stages still see them
  * on the same PTS.
  *
  * The registered backend name is @c "VideoEncoder"; callers pick a
  * concrete codec via the @ref MediaConfig::VideoCodec key (e.g.
  * @c "H264", @c "HEVC") — the task looks up the matching factory
- * through @ref VideoEncoder::createEncoder.
+ * through @ref VideoCodec::createEncoder.
  *
  * @par Mode support
  *
@@ -52,9 +52,9 @@ PROMEKI_NAMESPACE_BEGIN
  *   support needs an EOS protocol between the pipeline and this
  *   task and is deferred.
  * - No SPS/PPS/VPS extraction — parameter sets are concatenated with
- *   the first IDR in a single @ref MediaPacket, which is what the
+ *   the first IDR in a single @ref VideoPacket, which is what the
  *   NVENC backend naturally emits.  Splitting them into their own
- *   @ref MediaPacket::ParameterSet packets (using the @ref BufferView
+ *   @ref VideoPacket::ParameterSet packets (using the @ref BufferView
  *   slicing we just landed) comes when the RTP H.264 / MP4 sinks
  *   need it.
  *
@@ -65,7 +65,7 @@ PROMEKI_NAMESPACE_BEGIN
  * | @ref MediaConfig::VideoCodec        | String                    | (required) | Codec factory name (@c "H264", @c "HEVC"). |
  * | @ref MediaConfig::BitrateKbps      | int                       | 5000       | Target / average bitrate. |
  * | @ref MediaConfig::MaxBitrateKbps   | int                       | 0          | Peak bitrate (VBR; 0 = uncapped). |
- * | @ref MediaConfig::VideoRcMode      | Enum @ref VideoRateControl| VBR        | Rate-control mode (CBR / VBR / CQP). |
+ * | @ref MediaConfig::VideoRcMode      | Enum @ref RateControlMode| VBR        | Rate-control mode (CBR / VBR / CQP). |
  * | @ref MediaConfig::GopLength        | int                       | 60         | GOP length in frames. |
  * | @ref MediaConfig::IdrInterval      | int                       | 0          | IDR interval (0 = same as GOP length). |
  * | @ref MediaConfig::BFrames          | int                       | 0          | B-frames between references. |
@@ -141,7 +141,7 @@ class MediaIOTask_VideoEncoder : public MediaIOTask {
                 // FIFO of submitted source Frames awaiting a matching
                 // packet from the encoder.  One entry is pushed per
                 // successful submitFrame() and popped per emitted
-                // MediaPacket; the pairing is order-preserving because
+                // VideoPacket; the pairing is order-preserving because
                 // the encoder runs in 1-in / 1-out sync mode (no
                 // B-frames, no look-ahead).  Needed to preserve the
                 // source frame's metadata + audio across the

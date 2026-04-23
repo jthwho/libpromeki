@@ -10,6 +10,7 @@
 #include <cstring>
 #include <limits>
 #include <promeki/audio.h>
+#include <promeki/audiocodec.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -50,19 +51,21 @@ Audio Audio::fromCompressedData(const void *data, size_t size, const AudioDesc &
         return fromBuffer(Buffer::Ptr::create(std::move(buf)), desc);
 }
 
-Audio Audio::convertTo(AudioDesc::DataType format) const {
-        if(!isValid()) return Audio();
-        if(_desc.dataType() == format) return *this;
-
-        const AudioDesc::Format *srcFmt = AudioDesc::lookupFormat(_desc.dataType());
-        const AudioDesc::Format *dstFmt = AudioDesc::lookupFormat(format);
-        if(srcFmt == nullptr || dstFmt == nullptr) return Audio();
-        if(dstFmt->bytesPerSample == 0) return Audio();
+Audio Audio::convert(const AudioFormat &format) const {
+        if(!isValid() || !format.isValid()) return Audio();
+        if(_desc.format() == format) return *this;
+        if(format.bytesPerSample() == 0) return Audio();
 
         AudioDesc dstDesc(format, _desc.sampleRate(), _desc.channels());
         if(!dstDesc.isValid()) return Audio();
 
-        Audio result(dstDesc, _samples);
+        // Allocate destination in the same MemSpace as the source so
+        // the conversion stays put.  If the source isn't host-readable,
+        // bail — Audio's sample conversion kernels are CPU-only.
+        const MemSpace &srcMs = _buffer->memSpace();
+        if(!srcMs.isHostAccessible(_buffer->allocation())) return Audio();
+
+        Audio result(dstDesc, _samples, srcMs);
         if(!result.isValid()) return Audio();
 
         size_t totalSamples = _samples * _desc.channels();
@@ -70,25 +73,28 @@ Audio Audio::convertTo(AudioDesc::DataType format) const {
         uint8_t *dstData = static_cast<uint8_t *>(result._buffer->data());
 
         // Fast path: source is native float — single pass, no intermediate buffer
-        if(_desc.dataType() == AudioDesc::NativeType) {
+        if(_desc.format().id() == AudioFormat::NativeFloat) {
                 const float *floatData = reinterpret_cast<const float *>(srcData);
-                dstFmt->floatToSamples(dstData, floatData, totalSamples);
+                format.floatToSamples(dstData, floatData, totalSamples);
                 return result;
         }
 
         // Fast path: target is native float — single pass
-        if(format == AudioDesc::NativeType) {
+        if(format.id() == AudioFormat::NativeFloat) {
                 float *floatData = reinterpret_cast<float *>(dstData);
-                srcFmt->samplesToFloat(floatData, srcData, totalSamples);
+                _desc.format().samplesToFloat(floatData, srcData, totalSamples);
                 return result;
         }
 
-        // General case: source → float → target (two passes)
-        float *tmp = static_cast<float *>(std::malloc(totalSamples * sizeof(float)));
-        if(tmp == nullptr) return Audio();
-        srcFmt->samplesToFloat(tmp, srcData, totalSamples);
-        dstFmt->floatToSamples(dstData, tmp, totalSamples);
-        std::free(tmp);
+        // General case: source → float → target (two passes).  Stage
+        // the float scratch in the same MemSpace as the source so we
+        // don't bypass the pool with std::malloc.
+        Buffer::Ptr tmpBuf = Buffer::Ptr::create(
+                totalSamples * sizeof(float), Buffer::DefaultAlign, srcMs);
+        if(!tmpBuf->isValid()) return Audio();
+        float *tmp = static_cast<float *>(tmpBuf->data());
+        _desc.format().samplesToFloat(tmp, srcData, totalSamples);
+        format.floatToSamples(dstData, tmp, totalSamples);
         return result;
 }
 
@@ -104,22 +110,36 @@ bool Audio::allocate(const MemSpace &ms) {
         return true;
 }
 
-namespace {
-
-String codecFourCCString(const AudioDesc &desc) {
-        FourCC fc = desc.codecFourCC();
-        uint32_t raw = fc.value();
-        if(raw == 0) return String();
-        char buf[5];
-        buf[0] = static_cast<char>((raw >> 24) & 0xFF);
-        buf[1] = static_cast<char>((raw >> 16) & 0xFF);
-        buf[2] = static_cast<char>((raw >>  8) & 0xFF);
-        buf[3] = static_cast<char>( raw        & 0xFF);
-        buf[4] = '\0';
-        return String(buf);
+bool Audio::isSafeCutPoint() const {
+        if(!isValid()) return false;
+        const AudioFormat &fmt = _desc.format();
+        if(!fmt.isCompressed()) return true;
+        const AudioCodec &codec = fmt.audioCodec();
+        // A compressed format with no codec identity is a malformed
+        // record — treat as unsafe rather than guessing.
+        if(!codec.isValid()) return false;
+        switch(codec.packetIndependence()) {
+                case AudioCodec::PacketIndependenceEvery:
+                        // Opus, PCM-in-container, FLAC frames — every
+                        // packet decodes standalone.
+                        return true;
+                case AudioCodec::PacketIndependenceKeyframe:
+                        // Codec marks discrete sync points, but
+                        // AudioPacket carries no per-packet keyframe
+                        // flag — callers needing this level of cut
+                        // precision must inspect the codec-specific
+                        // subclass they emitted.
+                        return false;
+                case AudioCodec::PacketIndependenceInter:
+                        // Inter-dependent codecs (MP3 bit reservoir, AAC-LTP)
+                        // have no random-access point inside the bitstream
+                        // — every packet depends on prior state.
+                        return false;
+                case AudioCodec::PacketIndependenceInvalid:
+                        return false;
+        }
+        return false;
 }
-
-} // namespace
 
 StringList Audio::dump(const String &indent) const {
         StringList out;
@@ -134,10 +154,9 @@ StringList Audio::dump(const String &indent) const {
                                                 _buffer->size(), _buffer->allocSize(), _buffer->align());
         }
         if(_packet.isValid()) {
-                out += indent + String::sprintf("Packet: pts=%s dts=%s flags=0x%08x size=%zu",
+                out += indent + String::sprintf("Packet: pts=%s dts=%s size=%zu",
                                                 _packet->pts().toString().cstr(),
                                                 _packet->dts().toString().cstr(),
-                                                static_cast<unsigned>(_packet->flags()),
                                                 _packet->size());
         }
         StringList mdLines = _desc.metadata().dump();
@@ -158,9 +177,9 @@ PROMEKI_LOOKUP_REGISTER(Audio)
                 [](const Audio &a) -> std::optional<Variant> {
                         return Variant(static_cast<uint32_t>(a.desc().channels()));
                 })
-        .scalar("DataType",
+        .scalar("Format",
                 [](const Audio &a) -> std::optional<Variant> {
-                        return Variant(a.desc().dataTypeName());
+                        return Variant(a.desc().format());
                 })
         .scalar("Samples",
                 [](const Audio &a) -> std::optional<Variant> {
@@ -193,10 +212,6 @@ PROMEKI_LOOKUP_REGISTER(Audio)
         .scalar("CompressedSize",
                 [](const Audio &a) -> std::optional<Variant> {
                         return Variant(static_cast<uint64_t>(a.compressedSize()));
-                })
-        .scalar("CodecFourCC",
-                [](const Audio &a) -> std::optional<Variant> {
-                        return Variant(codecFourCCString(a.desc()));
                 })
         .database<"Metadata">("Meta",
                 [](const Audio &a) -> const VariantDatabase<"Metadata"> * {

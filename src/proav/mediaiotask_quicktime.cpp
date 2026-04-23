@@ -18,7 +18,7 @@
 #include <promeki/frame.h>
 #include <promeki/audio.h>
 #include <promeki/mediadesc.h>
-#include <promeki/mediapacket.h>
+#include <promeki/videopacket.h>
 #include <promeki/metadata.h>
 #include <promeki/timecode.h>
 #include <promeki/logger.h>
@@ -56,10 +56,10 @@ namespace {
  */
 AudioDesc pickStorageFormat(const AudioDesc &src) {
         if(!src.isValid()) return src;
-        switch(src.dataType()) {
-                case AudioDesc::PCMI_Float32LE:
+        switch(src.format().id()) {
+                case AudioFormat::PCMI_Float32LE:
                         // FIXME: promotes 32-bit float to 16-bit int, losing precision.
-                        return AudioDesc(AudioDesc::PCMI_S16LE, src.sampleRate(), src.channels());
+                        return AudioDesc(AudioFormat::PCMI_S16LE, src.sampleRate(), src.channels());
                 default:
                         return src;
         }
@@ -227,12 +227,12 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandOpen &cmd) {
                         return Error::NotSupported;
                 }
 
-                // Accept both PCM and compressed audio tracks. For PCM the
-                // reader produces an AudioDesc with a valid DataType; for
-                // compressed codecs (AAC, Opus, etc.) the reader sets
-                // codecFourCC() and leaves DataType = Invalid. In both
-                // cases AudioDesc::isValid() is true and we pass samples
-                // through to the consumer.
+                // Accept both PCM and compressed audio tracks.  For PCM the
+                // reader produces an AudioDesc whose AudioFormat is a PCM
+                // variant; for compressed codecs (AAC, Opus, etc.) the
+                // reader picks the matching compressed AudioFormat entry.
+                // In both cases AudioDesc::isValid() is true and we pass
+                // samples through to the consumer.
                 if(_audioTrackIndex >= 0) {
                         const QuickTime::Track &at = _qt.tracks()[_audioTrackIndex];
                         if(!at.audioDesc().isValid()) {
@@ -246,7 +246,7 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandOpen &cmd) {
                 MediaDesc mediaDesc;
                 if(_videoTrackIndex >= 0) {
                         const QuickTime::Track &vt = _qt.tracks()[_videoTrackIndex];
-                        ImageDesc idesc(vt.size(), vt.pixelDesc());
+                        ImageDesc idesc(vt.size(), vt.pixelFormat());
                         mediaDesc.imageList().pushToBack(idesc);
                         if(vt.frameRate().isValid()) {
                                 mediaDesc.setFrameRate(vt.frameRate());
@@ -333,7 +333,7 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandOpen &cmd) {
         if(!cmd.pendingMediaDesc.imageList().isEmpty() && _frameRate.isValid()) {
                 const ImageDesc &idesc = cmd.pendingMediaDesc.imageList()[0];
                 uint32_t vid = 0;
-                err = _qt.addVideoTrack(idesc.pixelDesc(), idesc.size(),
+                err = _qt.addVideoTrack(idesc.pixelFormat(), idesc.size(),
                                         _frameRate, &vid);
                 if(err.isError()) return err;
                 _writerVideoTrackId = vid;
@@ -428,7 +428,7 @@ Error MediaIOTask_QuickTime::readVideoFrame(const FrameNumber &frameIndex, Frame
         //     sample buffer.  planeSize() gives each slice's size and
         //     they're packed back-to-back with no per-plane padding
         //     in QuickTime uncompressed tracks.
-        const PixelDesc &samplePd = vt.pixelDesc();
+        const PixelFormat &samplePd = vt.pixelFormat();
         const size_t sampleWidth  = vt.size().width();
         const size_t sampleHeight = vt.size().height();
         Image img;
@@ -474,8 +474,8 @@ Error MediaIOTask_QuickTime::readVideoFrame(const FrameNumber &frameIndex, Frame
         // mutating through imgPtr after the list already holds a
         // reference detaches a copy and leaves the list's Image
         // without the packet.
-        const bool isH264 = (vt.pixelDesc().id() == PixelDesc::H264);
-        const bool isHEVC = (vt.pixelDesc().id() == PixelDesc::HEVC);
+        const bool isH264 = (vt.pixelFormat().id() == PixelFormat::H264);
+        const bool isHEVC = (vt.pixelFormat().id() == PixelFormat::HEVC);
         if((isH264 || isHEVC) && vt.codecConfig().isValid()) {
                 Buffer::Ptr annexB;
                 Error cerr = H264Bitstream::avccToAnnexB(
@@ -518,8 +518,8 @@ Error MediaIOTask_QuickTime::readVideoFrame(const FrameNumber &frameIndex, Frame
                                         }
                                 }
                         }
-                        auto pkt = MediaPacket::Ptr::create(payload, vt.pixelDesc());
-                        if(s.keyframe) pkt.modify()->addFlag(MediaPacket::Keyframe);
+                        auto pkt = VideoPacket::Ptr::create(payload, vt.pixelFormat());
+                        if(s.keyframe) pkt.modify()->addFlag(VideoPacket::Keyframe);
                         imgPtr.modify()->setPacket(std::move(pkt));
                 }
         } else if(samplePd.isCompressed() && !imgPtr->packet().isValid()) {
@@ -533,8 +533,8 @@ Error MediaIOTask_QuickTime::readVideoFrame(const FrameNumber &frameIndex, Frame
                 // intraframe formats.
                 const Buffer::Ptr &plane = imgPtr->plane(0);
                 if(plane.isValid() && plane->size() > 0) {
-                        auto pkt = MediaPacket::Ptr::create(plane, samplePd);
-                        if(s.keyframe) pkt.modify()->addFlag(MediaPacket::Keyframe);
+                        auto pkt = VideoPacket::Ptr::create(plane, samplePd);
+                        if(s.keyframe) pkt.modify()->addFlag(VideoPacket::Keyframe);
                         imgPtr.modify()->setPacket(std::move(pkt));
                 }
         }
@@ -661,11 +661,11 @@ Error MediaIOTask_QuickTime::setupWriterFromFrame(const Frame &frame) {
         // the packet — but since a MediaPacket alone does not know the
         // picture's resolution, packet-only track registration is only
         // possible when pendingMediaDesc was supplied at open time.
-        PixelDesc inferPixelDesc;
+        PixelFormat inferPixelFormat;
         Size2Du32 inferSize;
         if(!frame.imageList().isEmpty()) {
                 const Image &img = *frame.imageList()[0];
-                inferPixelDesc = img.pixelDesc();
+                inferPixelFormat = img.pixelFormat();
                 inferSize      = img.size();
         } else {
                 promekiErr("MediaIOTask_QuickTime: cannot infer writer tracks; first frame has no image");
@@ -677,7 +677,7 @@ Error MediaIOTask_QuickTime::setupWriterFromFrame(const Frame &frame) {
                 promekiWarn("MediaIOTask_QuickTime: no frame rate provided; defaulting to 24/1");
         }
         uint32_t vid = 0;
-        Error err = _qt.addVideoTrack(inferPixelDesc, inferSize, _frameRate, &vid);
+        Error err = _qt.addVideoTrack(inferPixelFormat, inferSize, _frameRate, &vid);
         if(err.isError()) return err;
         _writerVideoTrackId = vid;
 
@@ -785,9 +785,9 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandWrite &cmd) {
         s.keyframe = true;
 
         const Image &img = *frame.imageList()[0];
-        const MediaPacket::Ptr &pktPtr = img.packet();
+        const VideoPacket::Ptr &pktPtr = img.packet();
         if(pktPtr.isValid()) {
-                const MediaPacket &pkt = *pktPtr;
+                const VideoPacket &pkt = *pktPtr;
                 const BufferView &view = pkt.view();
                 if(!view.isValid() || view.size() == 0) {
                         promekiWarn("MediaIOTask_QuickTime: packet has no payload; skipping");
@@ -817,7 +817,7 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandWrite &cmd) {
                 // need each plane concatenated back-to-back into a single
                 // contiguous sample because QuickTime's uncompressed sample
                 // entries carry exactly one mdat payload per frame.
-                const PixelDesc &imgPd = img.pixelDesc();
+                const PixelFormat &imgPd = img.pixelFormat();
                 const int pc = imgPd.planeCount();
                 if(!imgPd.isCompressed() && pc > 1) {
                         size_t total = 0;
@@ -934,32 +934,32 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandSeek &cmd) {
 //   - Uncompressed YUV semi-planar: NV12, NV16.
 //
 // NV21 deliberately omitted — it has a fourcc registered in our
-// PixelDesc DB but no QuickTime reader interprets it.  Same for
+// PixelFormat DB but no QuickTime reader interprets it.  Same for
 // 10-bit planar / semi-planar YUV variants beyond v210.
 
-bool MediaIOTask_QuickTime::isSupportedPixelDesc(const PixelDesc &pd) {
+bool MediaIOTask_QuickTime::isSupportedPixelFormat(const PixelFormat &pd) {
         if(!pd.isValid()) return false;
         switch(pd.id()) {
                 // Compressed video that the writer either passes
                 // through verbatim or post-processes (avcC/hvcC).
-                case PixelDesc::H264:
-                case PixelDesc::HEVC:
-                case PixelDesc::AV1:
+                case PixelFormat::H264:
+                case PixelFormat::HEVC:
+                case PixelFormat::AV1:
                 // JPEG (MJPEG in a QuickTime container) — every
-                // variant the JpegImageCodec produces is byte-for-
+                // variant the JpegVideoEncoder produces is byte-for-
                 // byte compatible with the "mjpg"/"JPEG" sample
                 // entry, so the planner can route any of them
                 // straight through the writer without re-encoding.
-                case PixelDesc::JPEG_RGB8_sRGB:
-                case PixelDesc::JPEG_RGBA8_sRGB:
-                case PixelDesc::JPEG_YUV8_422_Rec709:
-                case PixelDesc::JPEG_YUV8_420_Rec709:
-                case PixelDesc::JPEG_YUV8_422_Rec601:
-                case PixelDesc::JPEG_YUV8_420_Rec601:
-                case PixelDesc::JPEG_YUV8_422_Rec709_Full:
-                case PixelDesc::JPEG_YUV8_420_Rec709_Full:
-                case PixelDesc::JPEG_YUV8_422_Rec601_Full:
-                case PixelDesc::JPEG_YUV8_420_Rec601_Full:
+                case PixelFormat::JPEG_RGB8_sRGB:
+                case PixelFormat::JPEG_RGBA8_sRGB:
+                case PixelFormat::JPEG_YUV8_422_Rec709:
+                case PixelFormat::JPEG_YUV8_420_Rec709:
+                case PixelFormat::JPEG_YUV8_422_Rec601:
+                case PixelFormat::JPEG_YUV8_420_Rec601:
+                case PixelFormat::JPEG_YUV8_422_Rec709_Full:
+                case PixelFormat::JPEG_YUV8_420_Rec709_Full:
+                case PixelFormat::JPEG_YUV8_422_Rec601_Full:
+                case PixelFormat::JPEG_YUV8_420_Rec601_Full:
                 // JPEG XS is deliberately NOT listed here: the writer
                 // can produce a "jxsv" sample entry but the reader has
                 // no complementary container path wired up yet, so any
@@ -968,67 +968,67 @@ bool MediaIOTask_QuickTime::isSupportedPixelDesc(const PixelDesc &pd) {
                 // the reader catches up, add the JPEG_XS_* variants
                 // here so the planner stops routing them through an
                 // encoder bridge.
-                case PixelDesc::ProRes_422_Proxy:
-                case PixelDesc::ProRes_422_LT:
-                case PixelDesc::ProRes_422:
-                case PixelDesc::ProRes_422_HQ:
-                case PixelDesc::ProRes_4444:
-                case PixelDesc::ProRes_4444_XQ:
+                case PixelFormat::ProRes_422_Proxy:
+                case PixelFormat::ProRes_422_LT:
+                case PixelFormat::ProRes_422:
+                case PixelFormat::ProRes_422_HQ:
+                case PixelFormat::ProRes_4444:
+                case PixelFormat::ProRes_4444_XQ:
                 // Uncompressed RGB.
-                case PixelDesc::RGB8_sRGB:
-                case PixelDesc::RGBA8_sRGB:
+                case PixelFormat::RGB8_sRGB:
+                case PixelFormat::RGBA8_sRGB:
                 // Uncompressed YUV 4:2:2 8-bit packed.
-                case PixelDesc::YUV8_422_Rec709:
-                case PixelDesc::YUV8_422_Rec601:
-                case PixelDesc::YUV8_422_UYVY_Rec709:
-                case PixelDesc::YUV8_422_UYVY_Rec601:
+                case PixelFormat::YUV8_422_Rec709:
+                case PixelFormat::YUV8_422_Rec601:
+                case PixelFormat::YUV8_422_UYVY_Rec709:
+                case PixelFormat::YUV8_422_UYVY_Rec601:
                 // Uncompressed YUV 4:2:2 10-bit packed (v210).
-                case PixelDesc::YUV10_422_v210_Rec709:
+                case PixelFormat::YUV10_422_v210_Rec709:
                 // Uncompressed YUV 4:2:2 planar 8-bit (I422).
-                case PixelDesc::YUV8_422_Planar_Rec709:
+                case PixelFormat::YUV8_422_Planar_Rec709:
                 // Uncompressed YUV 4:2:0 planar 8-bit (I420).
-                case PixelDesc::YUV8_420_Planar_Rec709:
-                case PixelDesc::YUV8_420_Planar_Rec601:
+                case PixelFormat::YUV8_420_Planar_Rec709:
+                case PixelFormat::YUV8_420_Planar_Rec601:
                 // Uncompressed YUV 4:2:0 / 4:2:2 semi-planar 8-bit.
-                case PixelDesc::YUV8_420_SemiPlanar_Rec709:
-                case PixelDesc::YUV8_420_SemiPlanar_Rec601:
-                case PixelDesc::YUV8_422_SemiPlanar_Rec709:
+                case PixelFormat::YUV8_420_SemiPlanar_Rec709:
+                case PixelFormat::YUV8_420_SemiPlanar_Rec601:
+                case PixelFormat::YUV8_422_SemiPlanar_Rec709:
                         return true;
                 default:
                         return false;
         }
 }
 
-PixelDesc MediaIOTask_QuickTime::pickSupportedPixelDesc(const PixelDesc &offered) {
-        if(isSupportedPixelDesc(offered)) return offered;
+PixelFormat MediaIOTask_QuickTime::pickSupportedPixelFormat(const PixelFormat &offered) {
+        if(isSupportedPixelFormat(offered)) return offered;
 
         // Compressed-but-unsupported sources need to be transcoded —
         // hand off to the planner via VideoEncoder.  Indicate the
         // canonical mp4 codec.
-        if(offered.isCompressed()) return PixelDesc(PixelDesc::H264);
+        if(offered.isCompressed()) return PixelFormat(PixelFormat::H264);
 
         const bool offerYuv = offered.isValid()
                 && offered.colorModel().type() == ColorModel::TypeYCbCr;
         const int  offerBits = (offered.isValid()
-                && offered.pixelFormat().compCount() > 0)
-                ? static_cast<int>(offered.pixelFormat().compDesc(0).bits)
+                && offered.memLayout().compCount() > 0)
+                ? static_cast<int>(offered.memLayout().compDesc(0).bits)
                 : 8;
 
         if(offerYuv) {
                 // YUV source: pick the closest supported YUV form by
                 // chroma subsampling and bit depth.
-                const auto sampling = offered.pixelFormat().sampling();
-                if(offerBits >= 10 && sampling != PixelFormat::Sampling420) {
-                        return PixelDesc(PixelDesc::YUV10_422_v210_Rec709);
+                const auto sampling = offered.memLayout().sampling();
+                if(offerBits >= 10 && sampling != PixelMemLayout::Sampling420) {
+                        return PixelFormat(PixelFormat::YUV10_422_v210_Rec709);
                 }
-                if(sampling == PixelFormat::Sampling420) {
-                        return PixelDesc(PixelDesc::YUV8_420_SemiPlanar_Rec709);
+                if(sampling == PixelMemLayout::Sampling420) {
+                        return PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709);
                 }
-                return PixelDesc(PixelDesc::YUV8_422_Rec709);
+                return PixelFormat(PixelFormat::YUV8_422_Rec709);
         }
         // RGB source — match alpha presence; QT supports 8-bit RGB
         // and RGBA only.
-        return PixelDesc(PixelDesc::RGBA8_sRGB);
+        return PixelFormat(PixelFormat::RGBA8_sRGB);
 }
 
 Error MediaIOTask_QuickTime::proposeInput(const MediaDesc &offered,
@@ -1042,8 +1042,8 @@ Error MediaIOTask_QuickTime::proposeInput(const MediaDesc &offered,
                 return Error::Ok;
         }
 
-        const PixelDesc &offeredPd = offered.imageList()[0].pixelDesc();
-        const PixelDesc target = pickSupportedPixelDesc(offeredPd);
+        const PixelFormat &offeredPd = offered.imageList()[0].pixelFormat();
+        const PixelFormat target = pickSupportedPixelFormat(offeredPd);
         if(target == offeredPd) {
                 *preferred = offered;
                 return Error::Ok;

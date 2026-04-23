@@ -27,7 +27,7 @@
 #include <promeki/mediaio.h>
 #include <promeki/mediaiodescription.h>
 #include <promeki/mediaiotask.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/size2d.h>
 #include <promeki/videocodec.h>
 
@@ -42,30 +42,30 @@ const MediaIO::FormatDesc *findFormat(const String &name) {
         return nullptr;
 }
 
-MediaDesc makeUncompressedDesc(uint32_t w, uint32_t h, PixelDesc::ID pdId,
+MediaDesc makeUncompressedDesc(uint32_t w, uint32_t h, PixelFormat::ID pdId,
                                FrameRate::WellKnownRate rate = FrameRate::FPS_30) {
         MediaDesc md;
         md.setFrameRate(FrameRate(rate));
         md.imageList().pushToBack(
-                ImageDesc(Size2Du32(w, h), PixelDesc(pdId)));
+                ImageDesc(Size2Du32(w, h), PixelFormat(pdId)));
         return md;
 }
 
-MediaDesc makeCompressedDesc(uint32_t w, uint32_t h, PixelDesc::ID compressedId) {
+MediaDesc makeCompressedDesc(uint32_t w, uint32_t h, PixelFormat::ID compressedId) {
         MediaDesc md;
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         md.imageList().pushToBack(
-                ImageDesc(Size2Du32(w, h), PixelDesc(compressedId)));
+                ImageDesc(Size2Du32(w, h), PixelFormat(compressedId)));
         return md;
 }
 
-MediaDesc makeAudioDesc(float rate, unsigned channels, AudioDesc::DataType dt) {
+MediaDesc makeAudioDesc(float rate, unsigned channels, AudioFormat::ID dt) {
         MediaDesc md;
         md.setFrameRate(FrameRate(FrameRate::FPS_30));
         AudioDesc ad;
         ad.setSampleRate(rate);
         ad.setChannels(channels);
-        ad.setDataType(dt);
+        ad.setFormat(dt);
         md.audioList().pushToBack(ad);
         return md;
 }
@@ -81,17 +81,17 @@ TEST_CASE("MediaIO_Bridge_CSC_AcceptsPixelFormatGap") {
         REQUIRE(desc != nullptr);
         REQUIRE(static_cast<bool>(desc->bridge));
 
-        const MediaDesc from = makeUncompressedDesc(1920, 1080, PixelDesc::RGBA8_sRGB);
+        const MediaDesc from = makeUncompressedDesc(1920, 1080, PixelFormat::RGBA8_sRGB);
         const MediaDesc to   = makeUncompressedDesc(1920, 1080,
-                                                    PixelDesc::YUV8_420_SemiPlanar_Rec709);
+                                                    PixelFormat::YUV8_420_SemiPlanar_Rec709);
 
         MediaIO::Config cfg;
         int cost = -1;
         const bool applies = desc->bridge(from, to, &cfg, &cost);
         CHECK(applies);
         CHECK(cfg.getAs<String>(MediaConfig::Type) == "CSC");
-        CHECK(cfg.getAs<PixelDesc>(MediaConfig::OutputPixelDesc).id() ==
-              PixelDesc::YUV8_420_SemiPlanar_Rec709);
+        CHECK(cfg.getAs<PixelFormat>(MediaConfig::OutputPixelFormat).id() ==
+              PixelFormat::YUV8_420_SemiPlanar_Rec709);
         // Lossy chroma subsampling pushes the cost into the bounded-
         // error band but stays under "heavily lossy" (< 1000).
         CHECK(cost > 50);
@@ -102,14 +102,14 @@ TEST_CASE("MediaIO_Bridge_CSC_RejectsCompressedEnds") {
         const MediaIO::FormatDesc *desc = findFormat("CSC");
         REQUIRE(static_cast<bool>(desc->bridge));
 
-        const MediaDesc fromCompressed = makeCompressedDesc(1920, 1080, PixelDesc::H264);
+        const MediaDesc fromCompressed = makeCompressedDesc(1920, 1080, PixelFormat::H264);
         const MediaDesc toUncompressed = makeUncompressedDesc(1920, 1080,
-                                                              PixelDesc::RGBA8_sRGB);
+                                                              PixelFormat::RGBA8_sRGB);
         CHECK_FALSE(desc->bridge(fromCompressed, toUncompressed, nullptr, nullptr));
 
         const MediaDesc fromUncompressed = makeUncompressedDesc(1920, 1080,
-                                                                PixelDesc::RGBA8_sRGB);
-        const MediaDesc toCompressed     = makeCompressedDesc(1920, 1080, PixelDesc::H264);
+                                                                PixelFormat::RGBA8_sRGB);
+        const MediaDesc toCompressed     = makeCompressedDesc(1920, 1080, PixelFormat::H264);
         CHECK_FALSE(desc->bridge(fromUncompressed, toCompressed, nullptr, nullptr));
 }
 
@@ -119,8 +119,8 @@ TEST_CASE("MediaIO_Bridge_CSC_RejectsRasterMismatch") {
         const MediaIO::FormatDesc *desc = findFormat("CSC");
         REQUIRE(static_cast<bool>(desc->bridge));
 
-        const MediaDesc from = makeUncompressedDesc(1920, 1080, PixelDesc::RGBA8_sRGB);
-        const MediaDesc to   = makeUncompressedDesc(1280,  720, PixelDesc::RGBA8_sRGB);
+        const MediaDesc from = makeUncompressedDesc(1920, 1080, PixelFormat::RGBA8_sRGB);
+        const MediaDesc to   = makeUncompressedDesc(1280,  720, PixelFormat::RGBA8_sRGB);
         CHECK_FALSE(desc->bridge(from, to, nullptr, nullptr));
 }
 
@@ -128,7 +128,7 @@ TEST_CASE("MediaIO_Bridge_CSC_RejectsIdentity") {
         const MediaIO::FormatDesc *desc = findFormat("CSC");
         REQUIRE(static_cast<bool>(desc->bridge));
 
-        const MediaDesc same = makeUncompressedDesc(1920, 1080, PixelDesc::RGBA8_sRGB);
+        const MediaDesc same = makeUncompressedDesc(1920, 1080, PixelFormat::RGBA8_sRGB);
         // No work for CSC to do — it must decline so the planner
         // doesn't insert a no-op stage.
         CHECK_FALSE(desc->bridge(same, same, nullptr, nullptr));
@@ -142,8 +142,8 @@ TEST_CASE("MediaIO_Bridge_CSC_Cost_FastPathBonus") {
         const MediaIO::FormatDesc *desc = findFormat("CSC");
         REQUIRE(static_cast<bool>(desc->bridge));
 
-        const MediaDesc rgba8 = makeUncompressedDesc(1920, 1080, PixelDesc::RGBA8_sRGB);
-        const MediaDesc bgra8 = makeUncompressedDesc(1920, 1080, PixelDesc::BGRA8_sRGB);
+        const MediaDesc rgba8 = makeUncompressedDesc(1920, 1080, PixelFormat::RGBA8_sRGB);
+        const MediaDesc bgra8 = makeUncompressedDesc(1920, 1080, PixelFormat::BGRA8_sRGB);
         int fastCost = -1;
         REQUIRE(desc->bridge(rgba8, bgra8, nullptr, &fastCost));
         // Fast-path bonus shaves 25 off the base 50 → 25 (or lower).
@@ -160,9 +160,9 @@ TEST_CASE("MediaIO_Bridge_CSC_Cost_PenalizesBitDepthLoss") {
         REQUIRE(static_cast<bool>(desc->bridge));
 
         const MediaDesc src10 = makeUncompressedDesc(
-                1920, 1080, PixelDesc::YUV10_422_Planar_LE_Rec709);
+                1920, 1080, PixelFormat::YUV10_422_Planar_LE_Rec709);
         const MediaDesc dst8 = makeUncompressedDesc(
-                1920, 1080, PixelDesc::YUV8_420_SemiPlanar_Rec709);
+                1920, 1080, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         int lossyCost = -1;
         REQUIRE(desc->bridge(src10, dst8, nullptr, &lossyCost));
         // Base 50 + 2 bits * 100 = 250 minimum.  Plus a chroma
@@ -179,11 +179,11 @@ TEST_CASE("MediaIO_Bridge_CSC_Cost_SameDepthBeatsBitDepthLoss") {
         REQUIRE(static_cast<bool>(desc->bridge));
 
         const MediaDesc src10 = makeUncompressedDesc(
-                1920, 1080, PixelDesc::RGBA10_LE_sRGB);
+                1920, 1080, PixelFormat::RGBA10_LE_sRGB);
         const MediaDesc same10Target = makeUncompressedDesc(
-                1920, 1080, PixelDesc::YUV10_422_Planar_LE_Rec709);
+                1920, 1080, PixelFormat::YUV10_422_Planar_LE_Rec709);
         const MediaDesc downto8Target = makeUncompressedDesc(
-                1920, 1080, PixelDesc::YUV8_420_SemiPlanar_Rec709);
+                1920, 1080, PixelFormat::YUV8_420_SemiPlanar_Rec709);
 
         int sameDepth = -1;
         int downConv  = -1;
@@ -201,9 +201,9 @@ TEST_CASE("MediaIO_Bridge_FrameSync_AcceptsRateGap") {
         const MediaIO::FormatDesc *desc = findFormat("FrameSync");
         REQUIRE(static_cast<bool>(desc->bridge));
 
-        const MediaDesc from = makeUncompressedDesc(1920, 1080, PixelDesc::RGBA8_sRGB,
+        const MediaDesc from = makeUncompressedDesc(1920, 1080, PixelFormat::RGBA8_sRGB,
                                                     FrameRate::FPS_30);
-        const MediaDesc to   = makeUncompressedDesc(1920, 1080, PixelDesc::RGBA8_sRGB,
+        const MediaDesc to   = makeUncompressedDesc(1920, 1080, PixelFormat::RGBA8_sRGB,
                                                     FrameRate::FPS_24);
 
         MediaIO::Config cfg;
@@ -221,9 +221,9 @@ TEST_CASE("MediaIO_Bridge_FrameSync_RejectsPixelMismatch") {
         const MediaIO::FormatDesc *desc = findFormat("FrameSync");
         REQUIRE(static_cast<bool>(desc->bridge));
 
-        const MediaDesc from = makeUncompressedDesc(1920, 1080, PixelDesc::RGBA8_sRGB);
+        const MediaDesc from = makeUncompressedDesc(1920, 1080, PixelFormat::RGBA8_sRGB);
         const MediaDesc to   = makeUncompressedDesc(1920, 1080,
-                                                    PixelDesc::YUV8_420_SemiPlanar_Rec709);
+                                                    PixelFormat::YUV8_420_SemiPlanar_Rec709);
         CHECK_FALSE(desc->bridge(from, to, nullptr, nullptr));
 }
 
@@ -231,7 +231,7 @@ TEST_CASE("MediaIO_Bridge_FrameSync_RejectsIdentity") {
         const MediaIO::FormatDesc *desc = findFormat("FrameSync");
         REQUIRE(static_cast<bool>(desc->bridge));
 
-        const MediaDesc same = makeUncompressedDesc(1920, 1080, PixelDesc::RGBA8_sRGB);
+        const MediaDesc same = makeUncompressedDesc(1920, 1080, PixelFormat::RGBA8_sRGB);
         CHECK_FALSE(desc->bridge(same, same, nullptr, nullptr));
 }
 
@@ -243,12 +243,12 @@ TEST_CASE("MediaIO_Bridge_FrameSync_AcceptsAudioRateOnly") {
         const MediaIO::FormatDesc *desc = findFormat("FrameSync");
         REQUIRE(static_cast<bool>(desc->bridge));
 
-        MediaDesc from = makeUncompressedDesc(1920, 1080, PixelDesc::RGBA8_sRGB);
-        MediaDesc to   = makeUncompressedDesc(1920, 1080, PixelDesc::RGBA8_sRGB);
+        MediaDesc from = makeUncompressedDesc(1920, 1080, PixelFormat::RGBA8_sRGB);
+        MediaDesc to   = makeUncompressedDesc(1920, 1080, PixelFormat::RGBA8_sRGB);
         AudioDesc fromAud;
         fromAud.setSampleRate(48000.0f);
         fromAud.setChannels(2);
-        fromAud.setDataType(AudioDesc::PCMI_S16LE);
+        fromAud.setFormat(AudioFormat::PCMI_S16LE);
         from.audioList().pushToBack(fromAud);
         AudioDesc toAud = fromAud;
         toAud.setSampleRate(96000.0f);
@@ -271,12 +271,12 @@ TEST_CASE("MediaIO_Bridge_FrameSync_AcceptsAudioChannelsOnly") {
         const MediaIO::FormatDesc *desc = findFormat("FrameSync");
         REQUIRE(static_cast<bool>(desc->bridge));
 
-        MediaDesc from = makeUncompressedDesc(1920, 1080, PixelDesc::RGBA8_sRGB);
-        MediaDesc to   = makeUncompressedDesc(1920, 1080, PixelDesc::RGBA8_sRGB);
+        MediaDesc from = makeUncompressedDesc(1920, 1080, PixelFormat::RGBA8_sRGB);
+        MediaDesc to   = makeUncompressedDesc(1920, 1080, PixelFormat::RGBA8_sRGB);
         AudioDesc fromAud;
         fromAud.setSampleRate(48000.0f);
         fromAud.setChannels(2);
-        fromAud.setDataType(AudioDesc::PCMI_S16LE);
+        fromAud.setFormat(AudioFormat::PCMI_S16LE);
         from.audioList().pushToBack(fromAud);
         AudioDesc toAud = fromAud;
         toAud.setChannels(6);   // downmix / upmix to 5.1
@@ -298,8 +298,8 @@ TEST_CASE("MediaIO_Bridge_SRC_AcceptsAudioDataTypeGap") {
         const MediaIO::FormatDesc *desc = findFormat("SRC");
         REQUIRE(static_cast<bool>(desc->bridge));
 
-        const MediaDesc from = makeAudioDesc(48000.0f, 2, AudioDesc::PCMI_S16LE);
-        const MediaDesc to   = makeAudioDesc(48000.0f, 2, AudioDesc::PCMI_S24LE);
+        const MediaDesc from = makeAudioDesc(48000.0f, 2, AudioFormat::PCMI_S16LE);
+        const MediaDesc to   = makeAudioDesc(48000.0f, 2, AudioFormat::PCMI_S24LE);
 
         MediaIO::Config cfg;
         int cost = -1;
@@ -310,7 +310,7 @@ TEST_CASE("MediaIO_Bridge_SRC_AcceptsAudioDataTypeGap") {
         Enum dtEnum = cfg.get(MediaConfig::OutputAudioDataType)
                         .asEnum(AudioDataType::Type, &err);
         CHECK(err.isOk());
-        CHECK(static_cast<AudioDesc::DataType>(dtEnum.value()) == AudioDesc::PCMI_S24LE);
+        CHECK(static_cast<AudioFormat::ID>(dtEnum.value()) == AudioFormat::PCMI_S24LE);
         CHECK(cost > 0);
 }
 
@@ -319,8 +319,8 @@ TEST_CASE("MediaIO_Bridge_SRC_RejectsRateGap") {
         const MediaIO::FormatDesc *desc = findFormat("SRC");
         REQUIRE(static_cast<bool>(desc->bridge));
 
-        const MediaDesc from = makeAudioDesc(48000.0f, 2, AudioDesc::PCMI_S16LE);
-        const MediaDesc to   = makeAudioDesc(96000.0f, 2, AudioDesc::PCMI_S16LE);
+        const MediaDesc from = makeAudioDesc(48000.0f, 2, AudioFormat::PCMI_S16LE);
+        const MediaDesc to   = makeAudioDesc(96000.0f, 2, AudioFormat::PCMI_S16LE);
         CHECK_FALSE(desc->bridge(from, to, nullptr, nullptr));
 }
 
@@ -335,15 +335,15 @@ TEST_CASE("MediaIO_Bridge_VideoDecoder_AcceptsCompressedToUncompressed") {
         // The bridge declines unless the codec has a registered
         // decoder factory.  Use H264 if it's registered, otherwise
         // skip.
-        const VideoCodec h264 = VideoCodec::lookup("H264");
+        const VideoCodec h264 = value(VideoCodec::lookup("H264"));
         if(!h264.canDecode()) {
                 INFO("H264 decoder factory not registered in this build; skipping.");
                 return;
         }
 
-        const MediaDesc from = makeCompressedDesc(1920, 1080, PixelDesc::H264);
+        const MediaDesc from = makeCompressedDesc(1920, 1080, PixelFormat::H264);
         const MediaDesc to   = makeUncompressedDesc(1920, 1080,
-                                                    PixelDesc::YUV8_420_SemiPlanar_Rec709);
+                                                    PixelFormat::YUV8_420_SemiPlanar_Rec709);
 
         MediaIO::Config cfg;
         int cost = -1;
@@ -351,8 +351,8 @@ TEST_CASE("MediaIO_Bridge_VideoDecoder_AcceptsCompressedToUncompressed") {
         CHECK(applies);
         CHECK(cfg.getAs<String>(MediaConfig::Type) == "VideoDecoder");
         CHECK(cfg.getAs<VideoCodec>(MediaConfig::VideoCodec) == h264);
-        CHECK(cfg.getAs<PixelDesc>(MediaConfig::OutputPixelDesc).id() ==
-              PixelDesc::YUV8_420_SemiPlanar_Rec709);
+        CHECK(cfg.getAs<PixelFormat>(MediaConfig::OutputPixelFormat).id() ==
+              PixelFormat::YUV8_420_SemiPlanar_Rec709);
         // Decoding is a precision-preserving hop in our cost model.
         CHECK(cost < 100);
 }
@@ -361,9 +361,9 @@ TEST_CASE("MediaIO_Bridge_VideoDecoder_RejectsUncompressedSource") {
         const MediaIO::FormatDesc *desc = findFormat("VideoDecoder");
         REQUIRE(static_cast<bool>(desc->bridge));
 
-        const MediaDesc from = makeUncompressedDesc(1920, 1080, PixelDesc::RGBA8_sRGB);
+        const MediaDesc from = makeUncompressedDesc(1920, 1080, PixelFormat::RGBA8_sRGB);
         const MediaDesc to   = makeUncompressedDesc(1920, 1080,
-                                                    PixelDesc::YUV8_420_SemiPlanar_Rec709);
+                                                    PixelFormat::YUV8_420_SemiPlanar_Rec709);
         CHECK_FALSE(desc->bridge(from, to, nullptr, nullptr));
 }
 
@@ -375,15 +375,15 @@ TEST_CASE("MediaIO_Bridge_VideoEncoder_AcceptsUncompressedToCompressed") {
         const MediaIO::FormatDesc *desc = findFormat("VideoEncoder");
         REQUIRE(static_cast<bool>(desc->bridge));
 
-        const VideoCodec h264 = VideoCodec::lookup("H264");
+        const VideoCodec h264 = value(VideoCodec::lookup("H264"));
         if(!h264.canEncode()) {
                 INFO("H264 encoder factory not registered in this build; skipping.");
                 return;
         }
 
         const MediaDesc from = makeUncompressedDesc(1920, 1080,
-                                                    PixelDesc::YUV8_420_SemiPlanar_Rec709);
-        const MediaDesc to   = makeCompressedDesc(1920, 1080, PixelDesc::H264);
+                                                    PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        const MediaDesc to   = makeCompressedDesc(1920, 1080, PixelFormat::H264);
 
         MediaIO::Config cfg;
         int cost = -1;
@@ -399,8 +399,8 @@ TEST_CASE("MediaIO_Bridge_VideoEncoder_RejectsCompressedSource") {
         const MediaIO::FormatDesc *desc = findFormat("VideoEncoder");
         REQUIRE(static_cast<bool>(desc->bridge));
 
-        const MediaDesc from = makeCompressedDesc(1920, 1080, PixelDesc::H264);
-        const MediaDesc to   = makeCompressedDesc(1920, 1080, PixelDesc::HEVC);
+        const MediaDesc from = makeCompressedDesc(1920, 1080, PixelFormat::H264);
+        const MediaDesc to   = makeCompressedDesc(1920, 1080, PixelFormat::HEVC);
         CHECK_FALSE(desc->bridge(from, to, nullptr, nullptr));
 }
 
@@ -414,32 +414,32 @@ TEST_CASE("MediaIO_proposeInput_CSC_RejectsCompressed") {
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
 
-        const MediaDesc compressed = makeCompressedDesc(1920, 1080, PixelDesc::H264);
+        const MediaDesc compressed = makeCompressedDesc(1920, 1080, PixelFormat::H264);
         MediaDesc preferred;
         CHECK(io->proposeInput(compressed, &preferred) == Error::NotSupported);
 
-        const MediaDesc rgb = makeUncompressedDesc(1920, 1080, PixelDesc::RGBA8_sRGB);
+        const MediaDesc rgb = makeUncompressedDesc(1920, 1080, PixelFormat::RGBA8_sRGB);
         CHECK(io->proposeInput(rgb, &preferred) == Error::Ok);
         CHECK(preferred == rgb);
 
         delete io;
 }
 
-TEST_CASE("MediaIO_proposeOutput_CSC_AppliesOutputPixelDesc") {
+TEST_CASE("MediaIO_proposeOutput_CSC_AppliesOutputPixelFormat") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "CSC");
-        cfg.set(MediaConfig::OutputPixelDesc,
-                PixelDesc(PixelDesc::YUV8_420_SemiPlanar_Rec709));
+        cfg.set(MediaConfig::OutputPixelFormat,
+                PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
 
         const MediaDesc requested = makeUncompressedDesc(1920, 1080,
-                                                         PixelDesc::RGBA8_sRGB);
+                                                         PixelFormat::RGBA8_sRGB);
         MediaDesc achievable;
         CHECK(io->proposeOutput(requested, &achievable) == Error::Ok);
         REQUIRE(!achievable.imageList().isEmpty());
-        CHECK(achievable.imageList()[0].pixelDesc().id() ==
-              PixelDesc::YUV8_420_SemiPlanar_Rec709);
+        CHECK(achievable.imageList()[0].pixelFormat().id() ==
+              PixelFormat::YUV8_420_SemiPlanar_Rec709);
         // Raster and frame rate flow through unchanged.
         CHECK(achievable.imageList()[0].size() == Size2Du32(1920, 1080));
         CHECK(achievable.frameRate() == FrameRate(FrameRate::FPS_30));
@@ -453,7 +453,7 @@ TEST_CASE("MediaIO_proposeInput_VideoEncoder_RejectsCompressed") {
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
 
-        const MediaDesc compressed = makeCompressedDesc(1920, 1080, PixelDesc::H264);
+        const MediaDesc compressed = makeCompressedDesc(1920, 1080, PixelFormat::H264);
         MediaDesc preferred;
         CHECK(io->proposeInput(compressed, &preferred) == Error::NotSupported);
 
@@ -467,7 +467,7 @@ TEST_CASE("MediaIO_proposeInput_VideoDecoder_RejectsUncompressed") {
         REQUIRE(io != nullptr);
 
         const MediaDesc uncompressed = makeUncompressedDesc(1920, 1080,
-                                                            PixelDesc::RGBA8_sRGB);
+                                                            PixelFormat::RGBA8_sRGB);
         MediaDesc preferred;
         CHECK(io->proposeInput(uncompressed, &preferred) == Error::NotSupported);
 
@@ -481,15 +481,15 @@ TEST_CASE("MediaIO_proposeInput_VideoDecoder_RejectsUncompressed") {
 TEST_CASE("MediaIO_describe_CSC_PopulatesPreferredFromConfig") {
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "CSC");
-        cfg.set(MediaConfig::OutputPixelDesc,
-                PixelDesc(PixelDesc::YUV8_420_SemiPlanar_Rec709));
+        cfg.set(MediaConfig::OutputPixelFormat,
+                PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
 
         MediaIODescription d;
         REQUIRE(io->describe(&d) == Error::Ok);
         CHECK(d.canBeTransform());
-        // Pre-open: the cached output PixelDesc lives only after the
+        // Pre-open: the cached output PixelFormat lives only after the
         // backend's executeCmd(Open).  describe() therefore reports
         // an empty preferred — that's expected and explicitly part
         // of the "no probe before open" contract.

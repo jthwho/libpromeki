@@ -89,7 +89,7 @@ A pipeline that pulls the TPG, runs it through a colorspace converter, and fans 
         "ConfigVideoEnable": true,
         "ConfigVideoPattern": "ColorBars",
         "ConfigVideoSize": "1920x1080",
-        "ConfigVideoPixelDesc": "YUV422_10_BT709_Limited",
+        "ConfigVideoPixelFormat": "YUV422_10_BT709_Limited",
         "ConfigAudioEnable": true,
         "ConfigAudioMode": "Tone"
       }
@@ -99,7 +99,7 @@ A pipeline that pulls the TPG, runs it through a colorspace converter, and fans 
       "type": "Converter",
       "mode": "ReadWrite",
       "config": {
-        "ConfigOutputPixelDesc": "RGBA8_sRGB"
+        "ConfigOutputPixelFormat": "RGBA8_sRGB"
       }
     },
     {
@@ -183,7 +183,7 @@ The unified `MediaIOTask_Rtp` supports both Writer and Reader modes (see `proav_
 
 ### MediaConfig Variant type coverage
 
-For JSON `fromJson` to work on every stage's config, every Variant type used in a `MediaConfig` must have `toJson()`/`fromJson()` wiring. Most existing primitives and `VariantDatabase` fields already do. New types (PixelDesc, MediaDesc, FrameRate, Color, etc.) may need Variant JSON conversion added — this work is tracked in `core_utilities.md` (Variant Enhancements) and should be completed alongside the pipeline.
+For JSON `fromJson` to work on every stage's config, every Variant type used in a `MediaConfig` must have `toJson()`/`fromJson()` wiring. Most existing primitives and `VariantDatabase` fields already do. New types (PixelFormat, MediaDesc, FrameRate, Color, etc.) may need Variant JSON conversion added — this work is tracked in `core_utilities.md` (Variant Enhancements) and should be completed alongside the pipeline.
 
 ### Per-stage MediaConfig forwarding — FOLLOW-ON
 

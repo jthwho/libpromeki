@@ -15,7 +15,7 @@
 #include <promeki/mediaconfig.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaiodescription.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -97,32 +97,32 @@ Clock *MediaIOTask::createClock() {
         return nullptr;
 }
 
-PixelDesc MediaIOTask::defaultUncompressedPixelDesc(const PixelDesc &source) {
-        // Both fallbacks are registered in the PixelDesc well-known
+PixelFormat MediaIOTask::defaultUncompressedPixelFormat(const PixelFormat &source) {
+        // Both fallbacks are registered in the PixelFormat well-known
         // table and carry paint engines, so the planner can splice a
         // cheap one-hop CSC between the source and us.  A YCbCr source
         // stays in the YUV family to minimise that CSC cost.
         const bool isYuv = source.isValid()
                 && source.colorModel().type() == ColorModel::TypeYCbCr;
         return isYuv
-                ? PixelDesc(PixelDesc::YUV8_422_Rec709)
-                : PixelDesc(PixelDesc::RGBA8_sRGB);
+                ? PixelFormat(PixelFormat::YUV8_422_Rec709)
+                : PixelFormat(PixelFormat::RGBA8_sRGB);
 }
 
 MediaDesc MediaIOTask::applyOutputOverrides(const MediaDesc &input,
                                             const MediaConfig &config) {
         MediaDesc out = input;
 
-        // ---- Video: OutputPixelDesc ----
-        // A valid PixelDesc replaces the pixel format on every image
-        // layer.  An invalid (default-constructed) PixelDesc means
-        // "inherit from input" — leave the per-image pixelDesc alone.
-        if(config.contains(MediaConfig::OutputPixelDesc)) {
-                const PixelDesc target = config.getAs<PixelDesc>(MediaConfig::OutputPixelDesc);
+        // ---- Video: OutputPixelFormat ----
+        // A valid PixelFormat replaces the pixel format on every image
+        // layer.  An invalid (default-constructed) PixelFormat means
+        // "inherit from input" — leave the per-image pixelFormat alone.
+        if(config.contains(MediaConfig::OutputPixelFormat)) {
+                const PixelFormat target = config.getAs<PixelFormat>(MediaConfig::OutputPixelFormat);
                 if(target.isValid()) {
                         ImageDesc::List &imgs = out.imageList();
                         for(size_t i = 0; i < imgs.size(); ++i) {
-                                imgs[i].setPixelDesc(target);
+                                imgs[i].setPixelFormat(target);
                         }
                 }
         }
@@ -162,17 +162,17 @@ MediaDesc MediaIOTask::applyOutputOverrides(const MediaDesc &input,
         // typed as a TypeEnum bound to AudioDataType::Type so the
         // value lives as an Enum and we project it back through the
         // AudioDataType wrapper to get the corresponding
-        // AudioDesc::DataType.
+        // AudioFormat::ID.
         if(config.contains(MediaConfig::OutputAudioDataType)) {
                 Error enumErr;
                 Enum adtEnum = config.get(MediaConfig::OutputAudioDataType)
                         .asEnum(AudioDataType::Type, &enumErr);
                 if(enumErr.isOk()) {
-                        const auto dt = static_cast<AudioDesc::DataType>(adtEnum.value());
-                        if(dt != AudioDesc::Invalid) {
+                        const auto dt = static_cast<AudioFormat::ID>(adtEnum.value());
+                        if(dt != AudioFormat::Invalid) {
                                 AudioDesc::List &auds = out.audioList();
                                 for(size_t i = 0; i < auds.size(); ++i) {
-                                        auds[i].setDataType(dt);
+                                        auds[i].setFormat(dt);
                                 }
                         }
                 }

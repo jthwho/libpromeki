@@ -279,11 +279,11 @@ Error FrameSync::pushFrame(const Frame::Ptr &frame) {
                                 updateSourceAudioRate(*aud, qf.audioTsNs);
                                 Audio::Ptr toQueue = aud;
                                 if(!aud->isNative()) {
-                                        Audio conv = aud->convertTo(AudioDesc::NativeType);
+                                        Audio conv = aud->convert(AudioFormat::NativeFloat);
                                         if(conv.isValid()) {
                                                 toQueue = Audio::Ptr::create(std::move(conv));
                                         } else {
-                                                promekiWarn("FrameSync[%s]: convertTo native float failed; "
+                                                promekiWarn("FrameSync[%s]: convert to native float failed; "
                                                             "dropping audio buffer",
                                                             _name.cstr());
                                                 toQueue = Audio::Ptr();
@@ -539,8 +539,8 @@ Audio::Ptr FrameSync::produceAudio(int64_t targetSamples) {
         // pull side casts via @c data<float>() — so the output buffer
         // is allocated as native float regardless of @c _targetAudioDesc 's
         // declared sample format.  Downstream consumers that need a
-        // different sample format must convert via @c Audio::convertTo.
-        AudioDesc outDesc(AudioDesc::NativeType, targetRate, channels);
+        // different sample format must convert via @c Audio::convert.
+        AudioDesc outDesc(AudioFormat::NativeFloat, targetRate, channels);
         Audio out(outDesc, targetSamples);
         out.resize(targetSamples);
         out.zero();

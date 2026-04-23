@@ -23,7 +23,7 @@
  * | Key                  | Type        | Default      | Description                                  |
  * |----------------------|-------------|--------------|----------------------------------------------|
  * | `inspector.size+=`   | StringList  | "1920x1080"  | Frame dimensions, repeatable                 |
- * | `inspector.format+=` | StringList  | "RGBA8_sRGB" | PixelDesc names to bench                     |
+ * | `inspector.format+=` | StringList  | "RGBA8_sRGB" | PixelFormat names to bench                     |
  *
  * The default keeps the case set small (1 case per (format, size)
  * pair) because each iteration drives a TPG read + an Inspector
@@ -46,7 +46,7 @@
 #include <promeki/framerate.h>
 #include <promeki/size2d.h>
 #include <promeki/videoformat.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
 #include <promeki/list.h>
@@ -59,18 +59,18 @@ namespace benchutil {
 namespace {
 
 struct PipelineSpec {
-        PixelDesc::ID pd;
+        PixelFormat::ID pd;
         uint32_t      width;
         uint32_t      height;
 };
 
-PixelDesc::ID resolveInspectorFormat(const String &name) {
-        PixelDesc pd = PixelDesc::lookup(name);
+PixelFormat::ID resolveInspectorFormat(const String &name) {
+        PixelFormat pd = PixelFormat::lookup(name);
         if(pd.isValid()) return pd.id();
         std::fprintf(stderr,
-                     "promeki-bench: inspector: unknown PixelDesc '%s'\n",
+                     "promeki-bench: inspector: unknown PixelFormat '%s'\n",
                      name.cstr());
-        return PixelDesc::Invalid;
+        return PixelFormat::Invalid;
 }
 
 bool parseInspectorSize(const String &s, uint32_t &w, uint32_t &h) {
@@ -95,8 +95,8 @@ List<PipelineSpec> resolveSpecs() {
         if(fmtNames.isEmpty()) fmtNames.pushToBack(String("RGBA8_sRGB"));
 
         for(const auto &fn : fmtNames) {
-                PixelDesc::ID id = resolveInspectorFormat(fn);
-                if(id == PixelDesc::Invalid) continue;
+                PixelFormat::ID id = resolveInspectorFormat(fn);
+                if(id == PixelFormat::Invalid) continue;
                 for(const auto &sn : sizeNames) {
                         uint32_t w = 0, h = 0;
                         if(!parseInspectorSize(sn, w, h)) {
@@ -132,7 +132,7 @@ BenchmarkCase::Function buildPipelineCase(PipelineSpec spec) {
                 // predictable across runs.
                 MediaIO::Config tpgCfg = MediaIO::defaultConfig("TPG");
                 tpgCfg.set(MediaConfig::VideoFormat, VideoFormat(Size2Du32(spec.width, spec.height), FrameRate(FrameRate::FPS_30)));
-                tpgCfg.set(MediaConfig::VideoPixelFormat, PixelDesc(spec.pd));
+                tpgCfg.set(MediaConfig::VideoPixelFormat, PixelFormat(spec.pd));
                 MediaIO *tpg = MediaIO::create(tpgCfg);
                 if(tpg == nullptr || tpg->open(MediaIO::Source).isError()) {
                         if(tpg != nullptr) delete tpg;
@@ -186,7 +186,7 @@ BenchmarkCase::Function buildPipelineCase(PipelineSpec spec) {
                         static_cast<size_t>(spec.height) * 4;  // assume 4 bytes/pixel for the upper bound
                 state.setBytesProcessed(state.iterations() * bytesPerIter);
                 state.setLabel(pipelineSizeLabel(spec) + " " +
-                               PixelDesc(spec.pd).name() +
+                               PixelFormat(spec.pd).name() +
                                " TPG → Inspector pipeline");
 
                 tpg->close();
@@ -202,10 +202,10 @@ void registerInspectorCases() {
         const String suite("inspector");
         for(const auto &spec : resolveSpecs()) {
                 String name = String("pipeline_") + pipelineSizeLabel(spec) + "_" +
-                              PixelDesc(spec.pd).name();
+                              PixelFormat(spec.pd).name();
                 String desc = String("TPG → Inspector full-pipeline frame loop "
                                      "(decode image data + LTC + A/V sync + continuity) — ") +
-                              pipelineSizeLabel(spec) + " " + PixelDesc(spec.pd).name();
+                              pipelineSizeLabel(spec) + " " + PixelFormat(spec.pd).name();
                 BenchmarkRunner::registerCase(BenchmarkCase(
                         suite, name, desc, buildPipelineCase(spec)));
         }
@@ -215,7 +215,7 @@ String inspectorParamHelp() {
         return String(
                 "inspector suite parameters:\n"
                 "  inspector.size+=WxH      Add a frame size (default: 1920x1080)\n"
-                "  inspector.format+=<name> Add a PixelDesc (default: RGBA8_sRGB)\n"
+                "  inspector.format+=<name> Add a PixelFormat (default: RGBA8_sRGB)\n"
                 "\n"
                 "  Each (format, size) pair registers a single case that drives a\n"
                 "  default-config TPG → default-config Inspector pipeline at 30 fps.\n"

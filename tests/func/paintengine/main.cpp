@@ -7,7 +7,7 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/imagedesc.h>
 #include <promeki/image.h>
 #include <promeki/imagefile.h>
@@ -26,7 +26,7 @@ static void usage(const char *argv0) {
                 "Generates a colorbars test image for every uncompressed pixel\n"
                 "format that has a registered PaintEngine, burns the format name\n"
                 "into the center, converts to RGBA8 for PNG output, and writes\n"
-                "each result to <output-folder>/<PixelDescName>.png.\n"
+                "each result to <output-folder>/<PixelFormatName>.png.\n"
                 "\n"
                 "  width   Image width  (default: 1920)\n"
                 "  height  Image height (default: 1080)\n",
@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
                 return 1;
         }
 
-        PixelDesc::IDList ids = PixelDesc::registeredIDs();
+        PixelFormat::IDList ids = PixelFormat::registeredIDs();
 
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::ColorBars);
@@ -63,8 +63,8 @@ int main(int argc, char **argv) {
         int skipped   = 0;
         int failed    = 0;
 
-        for(PixelDesc::ID id : ids) {
-                PixelDesc pd(id);
+        for(PixelFormat::ID id : ids) {
+                PixelFormat pd(id);
                 if(!pd.isValid()) continue;
                 if(pd.isCompressed()) continue;
                 if(!pd.hasPaintEngine()) {
@@ -91,8 +91,8 @@ int main(int argc, char **argv) {
                 }
 
                 Image pngImg = img;
-                if(pd.id() != PixelDesc::RGBA8_sRGB) {
-                        pngImg = img.convert(PixelDesc(PixelDesc::RGBA8_sRGB), Metadata());
+                if(pd.id() != PixelFormat::RGBA8_sRGB) {
+                        pngImg = img.convert(PixelFormat(PixelFormat::RGBA8_sRGB), Metadata());
                         if(!pngImg.isValid()) {
                                 std::fprintf(stderr, "FAIL  %-40s  convert to RGBA8 failed\n",
                                              name.cstr());

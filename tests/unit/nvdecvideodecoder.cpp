@@ -17,12 +17,14 @@
 
 #if PROMEKI_ENABLE_NVDEC && PROMEKI_ENABLE_NVENC
 
-#include <promeki/codec.h>
+#include <promeki/videoencoder.h>
+#include <promeki/videodecoder.h>
+#include <promeki/videocodec.h>
 #include <promeki/mediapacket.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/image.h>
 #include <promeki/imagedesc.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/cuda.h>
 #include <promeki/enums.h>
 #include <cstdint>
@@ -33,7 +35,7 @@ using namespace promeki;
 namespace {
 
 Image makeNv12Frame(int width, int height, uint8_t yValue, uint8_t uvValue) {
-        PixelDesc pd(PixelDesc::YUV8_420_SemiPlanar_Rec709);
+        PixelFormat pd(PixelFormat::YUV8_420_SemiPlanar_Rec709);
         Image img(Size2Du32(width, height), pd);
         REQUIRE(img.planes().size() == 2);
         const size_t yBytes  = static_cast<size_t>(width) * height;
@@ -44,24 +46,25 @@ Image makeNv12Frame(int width, int height, uint8_t yValue, uint8_t uvValue) {
 }
 
 // Encode @p numFrames synthetic NV12 frames, return the emitted
-// MediaPackets (including a trailing EOS).  Returns an empty list
+// VideoPackets (including a trailing EOS).  Returns an empty list
 // when the NVENC runtime is unavailable so the caller can skip.
-List<MediaPacket::Ptr> encodeBurst(const char *codecName,
+List<VideoPacket::Ptr> encodeBurst(VideoCodec::ID codecId,
                                    int width, int height, int numFrames) {
-        List<MediaPacket::Ptr> out;
-        VideoEncoder *enc = VideoEncoder::createEncoder(codecName);
-        if(!enc) return out;
+        List<VideoPacket::Ptr> out;
+        auto r = VideoCodec(codecId).createEncoder();
+        if(error(r).isError()) return out;
+        VideoEncoder *enc = value(r);
         MediaConfig cfg;
         cfg.set(MediaConfig::BitrateKbps, int32_t(4000));
         cfg.set(MediaConfig::GopLength,   int32_t(15));
         cfg.set(MediaConfig::VideoPreset, VideoEncoderPreset::LowLatency);
         enc->configure(cfg);
         for(int i = 0; i < numFrames; ++i) {
-                Image f = makeNv12Frame(width, height,
-                                        static_cast<uint8_t>(64 + i * 4), 128);
+                Image::Ptr f = Image::Ptr::create(makeNv12Frame(width, height,
+                                        static_cast<uint8_t>(64 + i * 4), 128));
                 if(enc->submitFrame(f) != Error::Ok) {
                         delete enc;
-                        return List<MediaPacket::Ptr>();
+                        return List<VideoPacket::Ptr>();
                 }
                 while(auto pkt = enc->receivePacket()) {
                         if(!pkt->isEndOfStream()) out.pushToBack(pkt);
@@ -77,10 +80,19 @@ List<MediaPacket::Ptr> encodeBurst(const char *codecName,
 
 } // namespace
 
-TEST_CASE("NvdecVideoDecoder: registered under h264 and hevc codec names") {
-        auto names = VideoDecoder::registeredDecoders();
-        CHECK(names.contains("H264"));
-        CHECK(names.contains("HEVC"));
+TEST_CASE("NvdecVideoDecoder: registered as Nvidia backend for H264/HEVC") {
+        auto nvidia = VideoCodec::lookupBackend("Nvidia");
+        REQUIRE(isOk(nvidia));
+        const auto backend = value(nvidia);
+
+        auto h264 = VideoCodec(VideoCodec::H264).availableDecoderBackends();
+        auto hevc = VideoCodec(VideoCodec::HEVC).availableDecoderBackends();
+        bool h264HasNvidia = false;
+        bool hevcHasNvidia = false;
+        for(auto b : h264) if(b == backend) { h264HasNvidia = true; break; }
+        for(auto b : hevc) if(b == backend) { hevcHasNvidia = true; break; }
+        CHECK(h264HasNvidia);
+        CHECK(hevcHasNvidia);
 }
 
 TEST_CASE("NvdecVideoDecoder: H.264 encode/decode round trip") {
@@ -90,33 +102,34 @@ TEST_CASE("NvdecVideoDecoder: H.264 encode/decode round trip") {
         constexpr int kHeight = 128;
         constexpr int kFrames = 8;
 
-        auto packets = encodeBurst("H264", kWidth, kHeight, kFrames);
+        auto packets = encodeBurst(VideoCodec::H264, kWidth, kHeight, kFrames);
         if(packets.isEmpty()) return;  // NVENC runtime missing
 
-        VideoDecoder *dec = VideoDecoder::createDecoder("H264");
-        REQUIRE(dec != nullptr);
+        auto r = VideoCodec(VideoCodec::H264).createDecoder();
+        REQUIRE(isOk(r));
+        VideoDecoder *dec = value(r);
         dec->configure(MediaConfig());
 
         int decoded = 0;
         for(const auto &pkt : packets) {
-                Error err = dec->submitPacket(*pkt);
+                Error err = dec->submitPacket(pkt);
                 if(err.isError()) {
                         // Decoder runtime missing — skip cleanly.
                         delete dec;
                         return;
                 }
                 while(true) {
-                        Image img = dec->receiveFrame();
+                        Image::Ptr img = dec->receiveFrame();
                         if(!img.isValid()) break;
-                        CHECK(img.width() == kWidth);
-                        CHECK(img.height() == kHeight);
-                        CHECK(img.pixelDesc().id() == PixelDesc::YUV8_420_SemiPlanar_Rec709);
+                        CHECK(img->width() == kWidth);
+                        CHECK(img->height() == kHeight);
+                        CHECK(img->pixelFormat().id() == PixelFormat::YUV8_420_SemiPlanar_Rec709);
                         ++decoded;
                 }
         }
         dec->flush();
         while(true) {
-                Image img = dec->receiveFrame();
+                Image::Ptr img = dec->receiveFrame();
                 if(!img.isValid()) break;
                 ++decoded;
         }
@@ -135,28 +148,29 @@ TEST_CASE("NvdecVideoDecoder: HEVC encode/decode round trip") {
         constexpr int kHeight = 256;
         constexpr int kFrames = 8;
 
-        auto packets = encodeBurst("HEVC", kWidth, kHeight, kFrames);
+        auto packets = encodeBurst(VideoCodec::HEVC, kWidth, kHeight, kFrames);
         if(packets.isEmpty()) return;
 
-        VideoDecoder *dec = VideoDecoder::createDecoder("HEVC");
-        REQUIRE(dec != nullptr);
+        auto r = VideoCodec(VideoCodec::HEVC).createDecoder();
+        REQUIRE(isOk(r));
+        VideoDecoder *dec = value(r);
         dec->configure(MediaConfig());
 
         int decoded = 0;
         for(const auto &pkt : packets) {
-                Error err = dec->submitPacket(*pkt);
+                Error err = dec->submitPacket(pkt);
                 if(err.isError()) { delete dec; return; }
                 while(true) {
-                        Image img = dec->receiveFrame();
+                        Image::Ptr img = dec->receiveFrame();
                         if(!img.isValid()) break;
-                        CHECK(img.width() == kWidth);
-                        CHECK(img.height() == kHeight);
+                        CHECK(img->width() == kWidth);
+                        CHECK(img->height() == kHeight);
                         ++decoded;
                 }
         }
         dec->flush();
         while(true) {
-                Image img = dec->receiveFrame();
+                Image::Ptr img = dec->receiveFrame();
                 if(!img.isValid()) break;
                 ++decoded;
         }

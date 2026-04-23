@@ -17,12 +17,13 @@
 
 #if PROMEKI_ENABLE_NVENC
 
-#include <promeki/codec.h>
+#include <promeki/videoencoder.h>
+#include <promeki/videocodec.h>
 #include <promeki/mediapacket.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/image.h>
 #include <promeki/imagedesc.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/buffer.h>
 #include <promeki/cuda.h>
 #include <promeki/enums.h>
@@ -40,7 +41,7 @@ namespace {
 // which returns a writable void pointer into each plane's buffer.
 Image makeNv12Frame(int width, int height, uint8_t yValue = 128,
                     uint8_t uvValue = 128) {
-        PixelDesc pd(PixelDesc::YUV8_420_SemiPlanar_Rec709);
+        PixelFormat pd(PixelFormat::YUV8_420_SemiPlanar_Rec709);
         Image img(Size2Du32(width, height), pd);
         REQUIRE(img.planes().size() == 2);
         const size_t yBytes  = static_cast<size_t>(width) * height;
@@ -65,16 +66,17 @@ bool looksLikeAnnexB(const Buffer::Ptr &b) {
 // Returns -1 and populates a doctest FAIL when the codec isn't
 // available at runtime (no device, no driver library) so the caller
 // can early-return.
-int runSmallEncode(const char *codecName,
-                   MediaPacket::Ptr &firstPacket,
-                   MediaPacket::Ptr &lastPacket) {
-        VideoEncoder *enc = VideoEncoder::createEncoder(codecName);
-        if(!enc) return -1;
+int runSmallEncode(VideoCodec::ID codecId,
+                   VideoPacket::Ptr &firstPacket,
+                   VideoPacket::Ptr &lastPacket) {
+        auto r = VideoCodec(codecId).createEncoder();
+        if(error(r).isError()) return -1;
+        VideoEncoder *enc = value(r);
 
         MediaConfig cfg;
         cfg.set(MediaConfig::BitrateKbps, int32_t(4000));
         cfg.set(MediaConfig::GopLength,   int32_t(30));
-        cfg.set(MediaConfig::VideoRcMode, VideoRateControl::CBR);
+        cfg.set(MediaConfig::VideoRcMode, RateControlMode::CBR);
         cfg.set(MediaConfig::VideoPreset, VideoEncoderPreset::LowLatency);
         enc->configure(cfg);
 
@@ -89,9 +91,9 @@ int runSmallEncode(const char *codecName,
         for(int i = 0; i < kFrames; ++i) {
                 // Slight luma variation frame-to-frame so the encoder
                 // sees some movement (helps exercise RC).
-                Image f = makeNv12Frame(kWidth, kHeight,
+                Image::Ptr f = Image::Ptr::create(makeNv12Frame(kWidth, kHeight,
                                         static_cast<uint8_t>(96 + i * 4),
-                                        128);
+                                        128));
                 if(enc->submitFrame(f) != Error::Ok) {
                         // First real call lazily loads libnvidia-encode.
                         // If that fails, we fail gracefully by cleaning
@@ -125,22 +127,31 @@ int runSmallEncode(const char *codecName,
 
 } // namespace
 
-TEST_CASE("NvencVideoEncoder: registered under h264 and hevc codec names") {
-        auto names = VideoEncoder::registeredEncoders();
-        CHECK(names.contains("H264"));
-        CHECK(names.contains("HEVC"));
+TEST_CASE("NvencVideoEncoder: registered as Nvidia backend for H264/HEVC/AV1") {
+        auto nvidia = VideoCodec::lookupBackend("Nvidia");
+        REQUIRE(isOk(nvidia));
+        const auto backend = value(nvidia);
+
+        auto h264 = VideoCodec(VideoCodec::H264).availableEncoderBackends();
+        auto hevc = VideoCodec(VideoCodec::HEVC).availableEncoderBackends();
+        bool h264HasNvidia = false;
+        bool hevcHasNvidia = false;
+        for(auto b : h264) if(b == backend) { h264HasNvidia = true; break; }
+        for(auto b : hevc) if(b == backend) { hevcHasNvidia = true; break; }
+        CHECK(h264HasNvidia);
+        CHECK(hevcHasNvidia);
 }
 
 TEST_CASE("NvencVideoEncoder: H.264 encode produces keyframe and EOS") {
         if(!CudaDevice::isAvailable()) return;
 
-        MediaPacket::Ptr first, last;
-        int n = runSmallEncode("H264", first, last);
+        VideoPacket::Ptr first, last;
+        int n = runSmallEncode(VideoCodec::H264, first, last);
         if(n < 0) return;   // NVENC runtime unavailable — skip
 
         CHECK(n >= 1);
         REQUIRE(first);
-        CHECK(first->pixelDesc().id() == PixelDesc::H264);
+        CHECK(first->pixelFormat().id() == PixelFormat::H264);
         CHECK(first->isKeyframe());
         CHECK(first->size() > 0);
         CHECK(looksLikeAnnexB(first->buffer()));
@@ -152,13 +163,13 @@ TEST_CASE("NvencVideoEncoder: H.264 encode produces keyframe and EOS") {
 TEST_CASE("NvencVideoEncoder: HEVC encode produces keyframe and EOS") {
         if(!CudaDevice::isAvailable()) return;
 
-        MediaPacket::Ptr first, last;
-        int n = runSmallEncode("HEVC", first, last);
+        VideoPacket::Ptr first, last;
+        int n = runSmallEncode(VideoCodec::HEVC, first, last);
         if(n < 0) return;
 
         CHECK(n >= 1);
         REQUIRE(first);
-        CHECK(first->pixelDesc().id() == PixelDesc::HEVC);
+        CHECK(first->pixelFormat().id() == PixelFormat::HEVC);
         CHECK(first->isKeyframe());
         CHECK(first->size() > 0);
         CHECK(looksLikeAnnexB(first->buffer()));
@@ -170,8 +181,9 @@ TEST_CASE("NvencVideoEncoder: HEVC encode produces keyframe and EOS") {
 TEST_CASE("NvencVideoEncoder: requestKeyframe forces IDR on next submit") {
         if(!CudaDevice::isAvailable()) return;
 
-        VideoEncoder *enc = VideoEncoder::createEncoder("H264");
-        REQUIRE(enc != nullptr);
+        auto r = VideoCodec(VideoCodec::H264).createEncoder();
+        REQUIRE(isOk(r));
+        VideoEncoder *enc = value(r);
 
         MediaConfig cfg;
         cfg.set(MediaConfig::BitrateKbps, int32_t(4000));
@@ -188,10 +200,10 @@ TEST_CASE("NvencVideoEncoder: requestKeyframe forces IDR on next submit") {
         // Submit 3 frames: frame 0 is the implicit IDR, frames 1 and
         // 2 are non-keyframes.  Request a keyframe and submit frame
         // 3; it should come back as an IDR.
-        auto submit = [&](int idx) -> MediaPacket::Ptr {
-                Image f = makeNv12Frame(kWidth, kHeight,
-                                        static_cast<uint8_t>(64 + idx * 8), 128);
-                if(enc->submitFrame(f) != Error::Ok) return MediaPacket::Ptr();
+        auto submit = [&](int idx) -> VideoPacket::Ptr {
+                Image::Ptr f = Image::Ptr::create(makeNv12Frame(kWidth, kHeight,
+                                        static_cast<uint8_t>(64 + idx * 8), 128));
+                if(enc->submitFrame(f) != Error::Ok) return VideoPacket::Ptr();
                 return enc->receivePacket();
         };
 
@@ -218,20 +230,21 @@ TEST_CASE("NvencVideoEncoder: requestKeyframe forces IDR on next submit") {
 TEST_CASE("NvencVideoEncoder: rejects non-NV12 input") {
         if(!CudaDevice::isAvailable()) return;
 
-        VideoEncoder *enc = VideoEncoder::createEncoder("H264");
-        REQUIRE(enc != nullptr);
+        auto r = VideoCodec(VideoCodec::H264).createEncoder();
+        REQUIRE(isOk(r));
+        VideoEncoder *enc = value(r);
 
         MediaConfig cfg;
         cfg.set(MediaConfig::BitrateKbps, int32_t(2000));
         enc->configure(cfg);
 
         // Build an RGB8 frame — deliberately the wrong format.
-        PixelDesc pd(PixelDesc::RGB8_sRGB);
-        const size_t bytes = pd.pixelFormat().planeSize(0, 64, 64);
+        PixelFormat pd(PixelFormat::RGB8_sRGB);
+        const size_t bytes = pd.memLayout().planeSize(0, 64, 64);
         auto buf = Buffer::Ptr::create(bytes);
         buf.modify()->fill(0x80);
         buf.modify()->setSize(bytes);
-        Image rgb = Image::fromBuffer(buf, 64, 64, pd);
+        Image::Ptr rgb = Image::Ptr::create(Image::fromBuffer(buf, 64, 64, pd));
 
         Error err = enc->submitFrame(rgb);
         CHECK(err == Error::PixelFormatNotSupported);

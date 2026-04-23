@@ -19,7 +19,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @c MediaIOTask_RawBitstream is the minimum possible backend for
  * capturing the output of a @ref MediaIOTask_VideoEncoder — every
- * @ref MediaPacket on an incoming Frame is appended to the target
+ * @ref VideoPacket on an incoming Frame is appended to the target
  * file exactly as it arrived, with no container framing, no
  * timestamps, no muxing, and no modification of the payload.  The
  * resulting file is a raw elementary stream — for H.264 / HEVC
@@ -33,7 +33,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * Only sink mode (@c MediaIO::Sink) is supported in this first
  * iteration — reading an elementary-stream file back into
- * @ref MediaPacket "MediaPackets" requires a codec-specific NAL-unit
+ * @ref VideoPacket "VideoPackets" requires a codec-specific NAL-unit
  * parser that belongs with the decoder work.
  *
  * @par Config keys

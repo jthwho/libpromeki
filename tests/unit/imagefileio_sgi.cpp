@@ -22,11 +22,11 @@ TEST_CASE("ImageFileIO SGI: handler is registered") {
         CHECK(io->name() == "SGI");
 }
 
-static void sgiRoundTrip(const char *fn, size_t w, size_t h, PixelDesc::ID pdId) {
-        Image src(w, h, PixelDesc(pdId));
+static void sgiRoundTrip(const char *fn, size_t w, size_t h, PixelFormat::ID pdId) {
+        Image src(w, h, PixelFormat(pdId));
         REQUIRE(src.isValid());
         uint8_t *data = static_cast<uint8_t *>(src.data());
-        size_t bytes = src.pixelDesc().pixelFormat().planeSize(0, w, h);
+        size_t bytes = src.pixelFormat().memLayout().planeSize(0, w, h);
         for(size_t i = 0; i < bytes; ++i) data[i] = static_cast<uint8_t>((i * 7 + 31) & 0xFF);
 
         ImageFile sf(ImageFile::SGI);
@@ -41,34 +41,34 @@ static void sgiRoundTrip(const char *fn, size_t w, size_t h, PixelDesc::ID pdId)
         REQUIRE(dst.isValid());
         CHECK(dst.width() == w);
         CHECK(dst.height() == h);
-        CHECK(dst.pixelDesc().id() == pdId);
+        CHECK(dst.pixelFormat().id() == pdId);
         CHECK(std::memcmp(src.data(), dst.data(), bytes) == 0);
 
         std::remove(fn);
 }
 
 TEST_CASE("ImageFileIO SGI: Mono8 round-trip") {
-        sgiRoundTrip("/tmp/promeki_sgi_mono8.sgi", 64, 48, PixelDesc::Mono8_sRGB);
+        sgiRoundTrip("/tmp/promeki_sgi_mono8.sgi", 64, 48, PixelFormat::Mono8_sRGB);
 }
 
 TEST_CASE("ImageFileIO SGI: RGB8 round-trip") {
-        sgiRoundTrip("/tmp/promeki_sgi_rgb8.sgi", 64, 48, PixelDesc::RGB8_sRGB);
+        sgiRoundTrip("/tmp/promeki_sgi_rgb8.sgi", 64, 48, PixelFormat::RGB8_sRGB);
 }
 
 TEST_CASE("ImageFileIO SGI: RGBA8 round-trip") {
-        sgiRoundTrip("/tmp/promeki_sgi_rgba8.sgi", 64, 48, PixelDesc::RGBA8_sRGB);
+        sgiRoundTrip("/tmp/promeki_sgi_rgba8.sgi", 64, 48, PixelFormat::RGBA8_sRGB);
 }
 
 TEST_CASE("ImageFileIO SGI: Mono16 BE round-trip") {
-        sgiRoundTrip("/tmp/promeki_sgi_mono16.sgi", 32, 24, PixelDesc::Mono16_BE_sRGB);
+        sgiRoundTrip("/tmp/promeki_sgi_mono16.sgi", 32, 24, PixelFormat::Mono16_BE_sRGB);
 }
 
 TEST_CASE("ImageFileIO SGI: RGB16 BE round-trip") {
-        sgiRoundTrip("/tmp/promeki_sgi_rgb16.sgi", 32, 24, PixelDesc::RGB16_BE_sRGB);
+        sgiRoundTrip("/tmp/promeki_sgi_rgb16.sgi", 32, 24, PixelFormat::RGB16_BE_sRGB);
 }
 
 TEST_CASE("ImageFileIO SGI: RGBA16 BE round-trip") {
-        sgiRoundTrip("/tmp/promeki_sgi_rgba16.sgi", 32, 24, PixelDesc::RGBA16_BE_sRGB);
+        sgiRoundTrip("/tmp/promeki_sgi_rgba16.sgi", 32, 24, PixelFormat::RGBA16_BE_sRGB);
 }
 
 TEST_CASE("ImageFileIO SGI: load nonexistent file returns error") {

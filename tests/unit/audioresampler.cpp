@@ -17,7 +17,7 @@ using namespace promeki;
 namespace {
 
 AudioDesc nativeDesc(float rate, unsigned int ch) {
-        return AudioDesc(AudioDesc::NativeType, rate, ch);
+        return AudioDesc(AudioFormat::NativeFloat, rate, ch);
 }
 
 void fillSine(Audio &audio, float freq, float rate) {
@@ -303,7 +303,7 @@ TEST_CASE("AudioResampler: non-native format returns FormatMismatch") {
         CHECK(r.setup(1, SrcQuality::SincFastest).isOk());
         CHECK(r.setRatio(1.0).isOk());
 
-        Audio in(AudioDesc(AudioDesc::PCMI_S16LE, 48000.0f, 1), 256);
+        Audio in(AudioDesc(AudioFormat::PCMI_S16LE, 48000.0f, 1), 256);
         Audio out(nativeDesc(48000.0f, 1), 256);
         auto [gen, err] = r.process(in, out);
         CHECK(err == Error::FormatMismatch);
@@ -431,10 +431,10 @@ TEST_CASE("AudioResampler: end-of-input flushes remaining samples") {
 // ============================================================================
 
 TEST_CASE("AudioBuffer: push with resampling (rate mismatch)") {
-        AudioDesc outFormat(AudioDesc::NativeType, 48000.0f, 1);
+        AudioDesc outFormat(AudioFormat::NativeFloat, 48000.0f, 1);
         AudioBuffer fifo(outFormat, 96000);
 
-        AudioDesc inFormat(AudioDesc::NativeType, 44100.0f, 1);
+        AudioDesc inFormat(AudioFormat::NativeFloat, 44100.0f, 1);
         fifo.setInputFormat(inFormat);
 
         // Push 44100 samples of a 1kHz sine at 44100 Hz.
@@ -462,10 +462,10 @@ TEST_CASE("AudioBuffer: push with resampling (rate mismatch)") {
 }
 
 TEST_CASE("AudioBuffer: push with resampling and format conversion") {
-        AudioDesc outFormat(AudioDesc::PCMI_S16LE, 48000.0f, 1);
+        AudioDesc outFormat(AudioFormat::PCMI_S16LE, 48000.0f, 1);
         AudioBuffer fifo(outFormat, 96000);
 
-        AudioDesc inFormat(AudioDesc::NativeType, 44100.0f, 1);
+        AudioDesc inFormat(AudioFormat::NativeFloat, 44100.0f, 1);
         fifo.setInputFormat(inFormat);
 
         const size_t inCount = 4410;
@@ -485,7 +485,7 @@ TEST_CASE("AudioBuffer: push with resampling and format conversion") {
 // ============================================================================
 
 TEST_CASE("AudioBuffer: drift correction enable/disable/query") {
-        AudioDesc fmt(AudioDesc::NativeType, 48000.0f, 1);
+        AudioDesc fmt(AudioFormat::NativeFloat, 48000.0f, 1);
         AudioBuffer fifo(fmt, 48000);
 
         CHECK_FALSE(fifo.driftCorrectionEnabled());
@@ -502,7 +502,7 @@ TEST_CASE("AudioBuffer: drift correction enable/disable/query") {
 TEST_CASE("AudioBuffer: drift correction same-rate drives fill toward target") {
         // Same input and output rate (48000 Hz).  Drift correction is
         // used to keep the fill level near targetSamples.
-        AudioDesc fmt(AudioDesc::NativeType, 48000.0f, 1);
+        AudioDesc fmt(AudioFormat::NativeFloat, 48000.0f, 1);
         const size_t capacity = 48000;
         AudioBuffer fifo(fmt, capacity);
         fifo.setInputFormat(fmt);
@@ -534,7 +534,7 @@ TEST_CASE("AudioBuffer: drift correction same-rate drives fill toward target") {
 }
 
 TEST_CASE("AudioBuffer: drift correction adjusts ratio based on fill level") {
-        AudioDesc fmt(AudioDesc::NativeType, 48000.0f, 1);
+        AudioDesc fmt(AudioFormat::NativeFloat, 48000.0f, 1);
         const size_t capacity = 96000;
         AudioBuffer fifo(fmt, capacity);
         fifo.setInputFormat(fmt);
@@ -566,8 +566,8 @@ TEST_CASE("AudioBuffer: drift correction adjusts ratio based on fill level") {
 
 TEST_CASE("AudioBuffer: drift correction with rate mismatch") {
         // Different input and output rates with drift correction on top.
-        AudioDesc outFmt(AudioDesc::NativeType, 48000.0f, 1);
-        AudioDesc inFmt(AudioDesc::NativeType, 44100.0f, 1);
+        AudioDesc outFmt(AudioFormat::NativeFloat, 48000.0f, 1);
+        AudioDesc inFmt(AudioFormat::NativeFloat, 44100.0f, 1);
         const size_t capacity = 96000;
         AudioBuffer fifo(outFmt, capacity);
         fifo.setInputFormat(inFmt);
@@ -593,7 +593,7 @@ TEST_CASE("AudioBuffer: drift correction with rate mismatch") {
 }
 
 TEST_CASE("AudioBuffer: drift correction ratio decreases when overfull") {
-        AudioDesc fmt(AudioDesc::NativeType, 48000.0f, 1);
+        AudioDesc fmt(AudioFormat::NativeFloat, 48000.0f, 1);
         const size_t capacity = 96000;
         AudioBuffer fifo(fmt, capacity);
         fifo.setInputFormat(fmt);
@@ -624,7 +624,7 @@ TEST_CASE("AudioBuffer: drift correction ratio decreases when overfull") {
 TEST_CASE("AudioBuffer: no SRC overhead when drift correction is off and rates match") {
         // Verify that same-rate pushes without drift correction use the
         // fast path (no resampler) by confirming exact sample counts.
-        AudioDesc fmt(AudioDesc::NativeType, 48000.0f, 1);
+        AudioDesc fmt(AudioFormat::NativeFloat, 48000.0f, 1);
         AudioBuffer fifo(fmt, 48000);
         fifo.setInputFormat(fmt);
 

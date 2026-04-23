@@ -20,7 +20,7 @@
 #include <promeki/image.h>
 #include <promeki/audio.h>
 #include <promeki/metadata.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 
 #include <atomic>
 #include <chrono>
@@ -219,7 +219,7 @@ struct FrameBridge::Impl {
                 int nPlanes = id.planeCount();
                 if(nPlanes <= 0) return Error::Invalid;
                 for(int p = 0; p < nPlanes; ++p) {
-                        size_t sz = id.pixelDesc().planeSize(
+                        size_t sz = id.pixelFormat().planeSize(
                                 static_cast<size_t>(p), id);
                         planeSizes.push_back(sz);
                         imageBytesTotal += sz;

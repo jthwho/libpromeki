@@ -10,12 +10,12 @@
 #include <promeki/enums.h>
 #include <promeki/image.h>
 #include <promeki/imagedesc.h>
-#include <promeki/pixeldesc.h>
+#include <promeki/pixelformat.h>
 #include <promeki/color.h>
 
 using namespace promeki;
 
-static ImageDesc testDesc(int w = 320, int h = 240, PixelDesc::ID fmt = PixelDesc::RGB8_sRGB) {
+static ImageDesc testDesc(int w = 320, int h = 240, PixelFormat::ID fmt = PixelFormat::RGB8_sRGB) {
         return ImageDesc(w, h, fmt);
 }
 
@@ -144,10 +144,10 @@ TEST_CASE("VideoTestPattern_RGBA8") {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::White);
 
-        ImageDesc desc = testDesc(16, 16, PixelDesc::RGBA8_sRGB);
+        ImageDesc desc = testDesc(16, 16, PixelFormat::RGBA8_sRGB);
         Image img = gen.create(desc);
         CHECK(img.isValid());
-        CHECK(img.pixelDesc().id() == PixelDesc::RGBA8_sRGB);
+        CHECK(img.pixelFormat().id() == PixelFormat::RGBA8_sRGB);
 }
 
 // ============================================================================
@@ -241,7 +241,7 @@ static bool imagePixelMatches(const Image &img, uint8_t r, uint8_t g, uint8_t b)
 TEST_CASE("VideoTestPattern_AvSyncCachedWhiteAndBlack") {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::AvSync);
-        ImageDesc desc(64, 32, PixelDesc::RGB8_sRGB);
+        ImageDesc desc(64, 32, PixelFormat::RGB8_sRGB);
 
         // tc.frame() == 0 -> white marker frame
         Timecode marker(Timecode::Mode(FrameRate::FPS_30, false), 1, 0, 0, 0);
@@ -284,7 +284,7 @@ TEST_CASE("VideoTestPattern_AvSyncCachedWhiteAndBlack") {
 TEST_CASE("VideoTestPattern_SDIPathEQ_UYVY8") {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::SDIPathEQ);
-        ImageDesc desc(64, 4, PixelDesc::YUV8_422_UYVY_Rec709);
+        ImageDesc desc(64, 4, PixelFormat::YUV8_422_UYVY_Rec709);
         Image img = gen.create(desc);
         REQUIRE(img.isValid());
 
@@ -311,7 +311,7 @@ TEST_CASE("VideoTestPattern_SDIPathEQ_UYVY8") {
 TEST_CASE("VideoTestPattern_SDIPathPLL_UYVY8") {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::SDIPathPLL);
-        ImageDesc desc(64, 4, PixelDesc::YUV8_422_UYVY_Rec709);
+        ImageDesc desc(64, 4, PixelFormat::YUV8_422_UYVY_Rec709);
         Image img = gen.create(desc);
         REQUIRE(img.isValid());
 
@@ -333,7 +333,7 @@ TEST_CASE("VideoTestPattern_SDIPathPLL_UYVY8") {
 TEST_CASE("VideoTestPattern_SDIPathEQ_UYVY10LE") {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::SDIPathEQ);
-        ImageDesc desc(64, 4, PixelDesc::YUV10_422_UYVY_LE_Rec709);
+        ImageDesc desc(64, 4, PixelFormat::YUV10_422_UYVY_LE_Rec709);
         Image img = gen.create(desc);
         REQUIRE(img.isValid());
 
@@ -358,7 +358,7 @@ TEST_CASE("VideoTestPattern_SDIPathEQ_UYVY10LE") {
 TEST_CASE("VideoTestPattern_SDIPathEQ_YUYV8") {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::SDIPathEQ);
-        ImageDesc desc(64, 4, PixelDesc::YUV8_422_Rec709);
+        ImageDesc desc(64, 4, PixelFormat::YUV8_422_Rec709);
         Image img = gen.create(desc);
         REQUIRE(img.isValid());
 
@@ -381,7 +381,7 @@ TEST_CASE("VideoTestPattern_SDIPathEQ_YUYV8") {
 TEST_CASE("VideoTestPattern_SDIPathEQ_v210") {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::SDIPathEQ);
-        ImageDesc desc(64, 4, PixelDesc::YUV10_422_v210_Rec709);
+        ImageDesc desc(64, 4, PixelFormat::YUV10_422_v210_Rec709);
         Image img = gen.create(desc);
         REQUIRE(img.isValid());
 
@@ -407,7 +407,7 @@ TEST_CASE("VideoTestPattern_SDIPathEQ_v210") {
 TEST_CASE("VideoTestPattern_SDIPathEQ_Planar8") {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::SDIPathEQ);
-        ImageDesc desc(64, 4, PixelDesc::YUV8_422_Planar_Rec709);
+        ImageDesc desc(64, 4, PixelFormat::YUV8_422_Planar_Rec709);
         Image img = gen.create(desc);
         REQUIRE(img.isValid());
 
@@ -434,7 +434,7 @@ TEST_CASE("VideoTestPattern_SDIPathEQ_Planar8") {
 TEST_CASE("VideoTestPattern_SDIPathEQ_SemiPlanar8") {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::SDIPathEQ);
-        ImageDesc desc(64, 4, PixelDesc::YUV8_422_SemiPlanar_Rec709);
+        ImageDesc desc(64, 4, PixelFormat::YUV8_422_SemiPlanar_Rec709);
         Image img = gen.create(desc);
         REQUIRE(img.isValid());
 
@@ -456,7 +456,7 @@ TEST_CASE("VideoTestPattern_SDIPathEQ_SemiPlanar8") {
 TEST_CASE("VideoTestPattern_SDIPath_CacheBehavior") {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::SDIPathEQ);
-        ImageDesc desc(64, 4, PixelDesc::YUV8_422_UYVY_Rec709);
+        ImageDesc desc(64, 4, PixelFormat::YUV8_422_UYVY_Rec709);
 
         Image a = gen.create(desc);
         Image b = gen.create(desc);
@@ -477,7 +477,7 @@ TEST_CASE("VideoTestPattern_SDIPath_CacheBehavior") {
 TEST_CASE("VideoTestPattern_SDIPath_RGBFallback") {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::SDIPathEQ);
-        ImageDesc desc(64, 4, PixelDesc::RGB8_sRGB);
+        ImageDesc desc(64, 4, PixelFormat::RGB8_sRGB);
 
         Image img = gen.create(desc);
         REQUIRE(img.isValid());
@@ -497,13 +497,13 @@ TEST_CASE("VideoTestPattern_AvSyncCacheRebuildsOnDescChange") {
         gen.setPattern(VideoPattern::AvSync);
         Timecode marker(Timecode::Mode(FrameRate::FPS_30, false), 1, 0, 0, 0);
 
-        Image a = gen.create(ImageDesc(32, 16, PixelDesc::RGB8_sRGB), 0.0, marker);
+        Image a = gen.create(ImageDesc(32, 16, PixelFormat::RGB8_sRGB), 0.0, marker);
         REQUIRE(a.isValid());
         CHECK(a.width() == 32);
         CHECK(a.height() == 16);
         CHECK(imagePixelMatches(a, 255, 255, 255));
 
-        Image b = gen.create(ImageDesc(64, 32, PixelDesc::RGB8_sRGB), 0.0, marker);
+        Image b = gen.create(ImageDesc(64, 32, PixelFormat::RGB8_sRGB), 0.0, marker);
         REQUIRE(b.isValid());
         CHECK(b.width() == 64);
         CHECK(b.height() == 32);
