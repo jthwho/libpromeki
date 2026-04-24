@@ -175,7 +175,7 @@ var classPixelFormat =
     [ "colorModel", "classPixelFormat.html#ae097d6e667cc397c1bb4cc0508c4cd6e", null ],
     [ "compCount", "classPixelFormat.html#ade5e854aa4940a8a81bca90aa87fb0a0", null ],
     [ "compSemantic", "classPixelFormat.html#a4e38b88e44730d84640fcd160ffc06a8", null ],
-    [ "createPaintEngine", "classPixelFormat.html#ae89224d8b7ca78c890c3c8fb3ca7a78d", null ],
+    [ "createPaintEngine", "classPixelFormat.html#a22ea8cc6843fa09d67c4b489ead71466", null ],
     [ "data", "classPixelFormat.html#a5281f27f217d799c1c946c3ae7ff38bb", null ],
     [ "decodeTargets", "classPixelFormat.html#a137afbd3032c3c878aa880cea8eec42e", null ],
     [ "desc", "classPixelFormat.html#a17b718d4fb9cdac8ad7f233f4d30b52f", null ],

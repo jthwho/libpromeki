@@ -173,7 +173,7 @@ Public Attributes</h2></td></tr>
 <tr class="separator:ab2eb35f75bd549bd1f2d2dae1180b6e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0e617d2a7b17d574f7794bc1ad0bd895" id="r_a0e617d2a7b17d574f7794bc1ad0bd895"><td class="memItemLeft" align="right" valign="top"><a id="a0e617d2a7b17d574f7794bc1ad0bd895" name="a0e617d2a7b17d574f7794bc1ad0bd895"></a>
 <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>audioTimestampNs</b> = 0</td></tr>
-<tr class="memdesc:a0e617d2a7b17d574f7794bc1ad0bd895"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> converted to nanoseconds. <br /></td></tr>
+<tr class="memdesc:a0e617d2a7b17d574f7794bc1ad0bd895"><td class="mdescLeft">&#160;</td><td class="mdescRight">Audio <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> converted to nanoseconds. <br /></td></tr>
 <tr class="separator:a0e617d2a7b17d574f7794bc1ad0bd895"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8b82229d361948994bd96d2fcab44d6b" id="r_a8b82229d361948994bd96d2fcab44d6b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structInspectorEvent.html#a8b82229d361948994bd96d2fcab44d6b">videoTimestampDeltaValid</a> = <a class="el" href="classList.html">false</a></td></tr>
 <tr class="separator:a8b82229d361948994bd96d2fcab44d6b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -320,7 +320,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> sample offset <em>within</em> this frame's audio chunk where the LTC sync word arrived. Zero means the sync word landed exactly at the start of the chunk; positive means later in the chunk; negative is rare but possible when the sync word was buffered from a previous chunk. This is the canonical "LTC time anchor" used by the TC sync drift check. </p>
+<p>Audio sample offset <em>within</em> this frame's audio chunk where the LTC sync word arrived. Zero means the sync word landed exactly at the start of the chunk; positive means later in the chunk; negative is rare but possible when the sync word was buffered from a previous chunk. This is the canonical "LTC time anchor" used by the TC sync drift check. </p>
 
 </div>
 </div>
@@ -350,7 +350,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> number recovered from the first 64-bit data band (low 32 bits of the <code></code>(streamID &lt;&lt; 32) | frameNumber word). </p>
+<p><a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a> number recovered from the first 64-bit data band (low 32 bits of the <code></code>(streamID &lt;&lt; 32) | frameNumber word). </p>
 
 </div>
 </div>
@@ -439,7 +439,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structInspectorEvent.html">InspectorEvent</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

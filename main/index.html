@@ -158,15 +158,15 @@ Professional Audio / Video</h2>
 <li><code><a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a></code> — combined frame rate, image layers, audio groups, and metadata for a complete media stream</li>
 <li><code><a class="el" href="classPixelMemLayout.html" title="Describes the memory layout of pixel data without color semantics.">PixelMemLayout</a></code> / <code><a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a></code> — extensive pixel format registry with 78 pixel formats and 132 pixel descriptors covering interleaved, planar, and semi-planar layouts (RGB, YCbCr, Bayer, DPX-packed, and more)</li>
 </ul>
-<p><b><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> processing:</b></p><ul>
-<li><code><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a></code> — raster image container with multi-plane support</li>
-<li><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> file I/O for PNG, JPEG, Cineon (CIN), DPX, PNM, SGI, TGA, and raw YUV</li>
+<p><b>Image processing:</b></p><ul>
+<li><code>Image</code> — raster image container with multi-plane support</li>
+<li>Image file I/O for PNG, JPEG, Cineon (CIN), DPX, PNM, SGI, TGA, and raw YUV</li>
 <li>JPEG XS encode/decode (via SVT-JPEG-XS, x86-64)</li>
 <li><code><a class="el" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images.">PaintEngine</a></code> — software rasterization for interleaved and planar pixel formats</li>
 <li><code><a class="el" href="classFont.html" title="Abstract base class for font rendering.">Font</a></code> / <code><a class="el" href="classFastFont.html" title="High-performance cached font renderer.">FastFont</a></code> — FreeType-based font rendering with glyph caching and alpha compositing</li>
 </ul>
-<p><b><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> processing:</b></p><ul>
-<li><code><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a></code> / <code><a class="el" href="classAudioBuffer.html" title="Thread-safe ring-buffered audio sample FIFO with format conversion on push.">AudioBuffer</a></code> — audio sample containers</li>
+<p><b>Audio processing:</b></p><ul>
+<li><code>Audio</code> / <code><a class="el" href="classAudioBuffer.html" title="Thread-safe ring-buffered audio sample FIFO with format conversion on push.">AudioBuffer</a></code> — audio sample containers</li>
 <li><code><a class="el" href="classAudioFile.html" title="Audio file reader and writer.">AudioFile</a></code> — audio file I/O (WAV, AIFF, OGG via libsndfile)</li>
 <li><code><a class="el" href="classAudioGen.html" title="Audio signal generator for producing test tones and silence.">AudioGen</a></code> — signal generators (sine, square, sawtooth, noise, etc.)</li>
 <li><code><a class="el" href="classAudioLevel.html" title="Audio level in dBFS (decibels relative to full scale).">AudioLevel</a></code> — level measurement</li>
@@ -184,7 +184,7 @@ Professional Audio / Video</h2>
 <li><code><a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a></code> — frame rate descriptors with drop-frame support</li>
 </ul>
 <p><b>Video &amp; frames:</b></p><ul>
-<li><code><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a></code> — unified image + audio + metadata at a single timestamp</li>
+<li><code><a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a></code> — unified image + audio + metadata at a single timestamp</li>
 <li><code><a class="el" href="classVideoTestPattern.html" title="Standalone video test pattern generator.">VideoTestPattern</a></code> — color bars, grids, ramps, and other standard test patterns</li>
 <li><code><a class="el" href="classImgSeq.html" title="Describes a numbered image sequence on disk.">ImgSeq</a></code> — image sequence handling with frame range and naming patterns</li>
 <li><code><a class="el" href="classMetadata.html" title="Key-value metadata container using typed Variant values.">Metadata</a></code> — typed key-value metadata container</li>
@@ -229,14 +229,14 @@ Terminal UI (promeki-tui)</h2>
 <p>An optional shared library providing a terminal widget toolkit.</p>
 <ul>
 <li><b><a class="el" href="classApplication.html" title="Application-wide state for the promeki library.">Application</a> &amp; rendering</b> — <code><a class="el" href="classTuiSubsystem.html" title="TUI subsystem installed alongside an Application.">TuiSubsystem</a></code>, <code><a class="el" href="classTuiScreen.html" title="Double-buffered character cell grid for TUI rendering.">TuiScreen</a></code>, <code><a class="el" href="classTuiPainter.html" title="Painting context for TUI widgets.">TuiPainter</a></code>, <code><a class="el" href="classTuiPalette.html" title="Style palette for TUI widgets.">TuiPalette</a></code></li>
-<li><b>Widgets</b> — <code>Label</code>, <code>LineEdit</code>, <code>TextArea</code>, <code>Button</code>, <code>CheckBox</code>, <code>ProgressBar</code>, <code>ListView</code>, <code><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a></code>, <code>ScrollArea</code>, <code>Splitter</code>, <code>TabWidget</code>, <code>StatusBar</code>, <code>Menu</code></li>
+<li><b>Widgets</b> — <code>Label</code>, <code>LineEdit</code>, <code>TextArea</code>, <code>Button</code>, <code>CheckBox</code>, <code>ProgressBar</code>, <code>ListView</code>, <code><a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a></code>, <code>ScrollArea</code>, <code>Splitter</code>, <code>TabWidget</code>, <code>StatusBar</code>, <code>Menu</code></li>
 <li><b>Input</b> — keyboard and mouse event parsing</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md26"></a>
 SDL Graphics (promeki-sdl)</h2>
 <p>An optional shared library for SDL3-based applications (off by default).</p>
 <ul>
-<li><code><a class="el" href="classSdlSubsystem.html" title="SDL subsystem installed alongside an Application.">SdlSubsystem</a></code>, <code><a class="el" href="classSDLWindow.html" title="Top-level SDL window that serves as a root Widget.">SDLWindow</a></code>, <code><a class="el" href="classSDLVideoWidget.html" title="Widget that displays a promeki Image via SDL texture rendering.">SDLVideoWidget</a></code>, <code><a class="el" href="classSDLAudioOutput.html" title="Manages an SDL3 audio output device for playback.">SDLAudioOutput</a></code></li>
+<li><code><a class="el" href="classSdlSubsystem.html" title="SDL subsystem installed alongside an Application.">SdlSubsystem</a></code>, <code><a class="el" href="classSDLWindow.html" title="Top-level SDL window that serves as a root Widget.">SDLWindow</a></code>, <code><a class="el" href="classSDLVideoWidget.html" title="Widget that displays an UncompressedVideoPayload via SDL texture rendering.">SDLVideoWidget</a></code>, <code><a class="el" href="classSDLAudioOutput.html" title="Manages an SDL3 audio output device for playback.">SDLAudioOutput</a></code></li>
 <li><code>SDLPlayer</code> — MediaIO-backed player with video display and audio output</li>
 </ul>
 <h1><a class="anchor" id="autotoc_md27"></a>
@@ -262,7 +262,7 @@ Included Utilities</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>promeki-bench</code>   </td><td class="markdownTableBodyNone">Unified benchmark driver (CSC pair matrix now, other suites land here over time); writes JSON for baseline tracking and prints a delta table against a previous run    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>imgtest</code>   </td><td class="markdownTableBodyNone"><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> file I/O test utility   </td></tr>
+<td class="markdownTableBodyNone"><code>imgtest</code>   </td><td class="markdownTableBodyNone">Image file I/O test utility   </td></tr>
 </table>
 <h1><a class="anchor" id="autotoc_md30"></a>
 Building</h1>
@@ -302,7 +302,7 @@ License</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -128,8 +128,8 @@ $(document).ready(function(){initNavTree('nvdecvideodecoder_8h_source.html','');
 <div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>                <span class="keyword">static</span> <a class="code hl_class" href="classList.html">List&lt;int&gt;</a> supportedOutputList();</div>
 <div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span> </div>
 <div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>                <span class="keywordtype">void</span> configure(<span class="keyword">const</span> <a class="code hl_class" href="classMediaConfig.html">MediaConfig</a> &amp;config) <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>                <a class="code hl_class" href="classError.html">Error</a> submitPacket(<span class="keyword">const</span> <a class="code hl_class" href="classSharedPtr.html">VideoPacket::Ptr</a> &amp;packet) <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>                <a class="code hl_class" href="classSharedPtr.html">Image::Ptr</a> receiveFrame() <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>                <a class="code hl_class" href="classError.html">Error</a> submitPayload(<span class="keyword">const</span> <a class="code hl_class" href="classSharedPtr.html">CompressedVideoPayload::Ptr</a> &amp;payload) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>                <a class="code hl_class" href="classSharedPtr.html">UncompressedVideoPayload::Ptr</a> receiveVideoPayload() <span class="keyword">override</span>;</div>
 <div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>                <a class="code hl_class" href="classError.html">Error</a> <a class="code hl_function" href="textstream_8h.html#af9d7c2c4afcd27e0017d5654336b4edd">flush</a>() <span class="keyword">override</span>;</div>
 <div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>                <a class="code hl_class" href="classError.html">Error</a> reset() <span class="keyword">override</span>;</div>
 <div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span> </div>
@@ -147,7 +147,7 @@ $(document).ready(function(){initNavTree('nvdecvideodecoder_8h_source.html','');
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassList_html_a708769d50011e6bdadc6bed2a6468aec"><div class="ttname"><a href="classList.html#a708769d50011e6bdadc6bed2a6468aec">List::List</a></div><div class="ttdeci">List()=default</div><div class="ttdoc">Default constructor. Creates an empty list.</div></div>
 <div class="ttc" id="aclassMediaConfig_html"><div class="ttname"><a href="classMediaConfig.html">MediaConfig</a></div><div class="ttdoc">Generic name/value configuration container for the media subsystem.</div><div class="ttdef"><b>Definition</b> mediaconfig.h:57</div></div>
-<div class="ttc" id="aclassSharedPtr_html"><div class="ttname"><a href="classSharedPtr.html">SharedPtr&lt; VideoPacket, true, VideoPacket &gt;</a></div></div>
+<div class="ttc" id="aclassSharedPtr_html"><div class="ttname"><a href="classSharedPtr.html">SharedPtr</a></div><div class="ttdoc">A smart pointer class with reference counting and optional copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> sharedptr.h:278</div></div>
 <div class="ttc" id="aclassVideoDecoder_html"><div class="ttname"><a href="classVideoDecoder.html">VideoDecoder</a></div><div class="ttdoc">Abstract base class for stateful video decoders.</div><div class="ttdef"><b>Definition</b> videodecoder.h:60</div></div>
 <div class="ttc" id="anamespace_8h_html"><div class="ttname"><a href="namespace_8h.html">namespace.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html_a0444a93cedfdf35aa76c315990dc6e10"><div class="ttname"><a href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_BEGIN</div><div class="ttdoc">Starts a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:14</div></div>
@@ -162,7 +162,7 @@ $(document).ready(function(){initNavTree('nvdecvideodecoder_8h_source.html','');
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="nvdecvideodecoder_8h.html">nvdecvideodecoder.h</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

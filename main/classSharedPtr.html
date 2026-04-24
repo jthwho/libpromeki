@@ -235,7 +235,7 @@ class SharedPtr&lt; T, CopyOnWrite, ST &gt;</div><p>A smart pointer class with r
 <div class="line"><span class="comment">// stored as the version of the object pointed to by this SharedPtr).</span></div>
 <div class="line">ptr.modify()-&gt;nonConstFunc();</div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassSharedPtr_html"><div class="ttname"><a href="classSharedPtr.html">SharedPtr</a></div><div class="ttdoc">A smart pointer class with reference counting and optional copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> sharedptr.h:252</div></div>
+<div class="ttc" id="aclassSharedPtr_html"><div class="ttname"><a href="classSharedPtr.html">SharedPtr</a></div><div class="ttdoc">A smart pointer class with reference counting and optional copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> sharedptr.h:278</div></div>
 </div><!-- fragment --><p><a class="el" href="classThread.html" title="Wrapper around std::thread with a built-in EventLoop.">Thread</a> Safety:</p><ul>
 <li>The reference counting operations are thread-safe.</li>
 <li>It is assumed that multiple threads may hold <a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a> instances to the same object.</li>
@@ -289,7 +289,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 </div><div class="memdoc">
 
 <p>Implicit upcast from <a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a> of a derived native type. </p>
-<p>Only participates in overload resolution when <code>U</code> publicly derives from <code>T</code>, <code>U</code> != <code>T</code>, both types are native shared objects, and both use the default storage type (storage = the object itself). This lets a <code>SharedPtr&lt;VideoPacket&gt;</code> convert to a <code>SharedPtr&lt;MediaPacket&gt;</code> without cloning, with the refcount sitting on the shared base's <code>_promeki_refct</code>. </p>
+<p>Only participates in overload resolution when <code>U</code> publicly derives from <code>T</code>, <code>U</code> != <code>T</code>, both types are native shared objects, and both use the default storage type (storage = the object itself). This lets a <code>SharedPtr&lt;CompressedVideoPayload&gt;</code> convert to a <code>SharedPtr&lt;MediaPayload&gt;</code> without cloning, with the refcount sitting on the shared base's <code>_promeki_refct</code>. </p>
 
 </div>
 </div>
@@ -303,7 +303,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classSharedPtr.html">SharedPtr</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

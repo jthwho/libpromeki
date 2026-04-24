@@ -117,9 +117,9 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><b>~Impl</b> ()</td></tr>
 <tr class="memdesc:ab06c8a09dcd1356ed1603322ba6a2aa0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual destructor. <br /></td></tr>
 <tr class="separator:ab06c8a09dcd1356ed1603322ba6a2aa0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a80e8266f5907fdb3a31b31d40f7e556b" id="r_a80e8266f5907fdb3a31b31d40f7e556b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#a80e8266f5907fdb3a31b31d40f7e556b">blit</a> (<a class="el" href="classList.html">const</a> <a class="el" href="point_8h.html#a559444f073d8a5f68fdebd61c5663f56">Point2Di32</a> &amp;<a class="el" href="classList.html">destTopLeft</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classImage.html">Image</a> &amp;<a class="el" href="classList.html">src</a>, <a class="el" href="classList.html">const</a> <a class="el" href="point_8h.html#a559444f073d8a5f68fdebd61c5663f56">Point2Di32</a> &amp;<a class="el" href="classList.html">srcTopLeft</a>, <a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;<a class="el" href="classList.html">srcSize</a>) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a80e8266f5907fdb3a31b31d40f7e556b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Blits a rectangular region from a source image onto the surface.  <br /></td></tr>
-<tr class="separator:a80e8266f5907fdb3a31b31d40f7e556b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a14fb75f652ffd60461f5b9b5a3f2f31e" id="r_a14fb75f652ffd60461f5b9b5a3f2f31e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#a14fb75f652ffd60461f5b9b5a3f2f31e">blit</a> (<a class="el" href="classList.html">const</a> <a class="el" href="point_8h.html#a559444f073d8a5f68fdebd61c5663f56">Point2Di32</a> &amp;<a class="el" href="classList.html">destTopLeft</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classUncompressedVideoPayload.html">UncompressedVideoPayload</a> &amp;<a class="el" href="classList.html">src</a>, <a class="el" href="classList.html">const</a> <a class="el" href="point_8h.html#a559444f073d8a5f68fdebd61c5663f56">Point2Di32</a> &amp;<a class="el" href="classList.html">srcTopLeft</a>, <a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;<a class="el" href="classList.html">srcSize</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a14fb75f652ffd60461f5b9b5a3f2f31e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Blits a rectangular region from a source payload onto the surface.  <br /></td></tr>
+<tr class="separator:a14fb75f652ffd60461f5b9b5a3f2f31e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a89ba9a79a5b727b39ae74aed6f5f9aea" id="r_a89ba9a79a5b727b39ae74aed6f5f9aea"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#a89ba9a79a5b727b39ae74aed6f5f9aea">createPixel</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">uint16_t</a> *comps, <a class="el" href="classList.html">size_t</a> compCount) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a89ba9a79a5b727b39ae74aed6f5f9aea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a <a class="el" href="structPaintEngine_1_1Pixel.html" title="Opaque pixel value with inline fixed-size storage.">Pixel</a> value from component values.  <br /></td></tr>
 <tr class="separator:a89ba9a79a5b727b39ae74aed6f5f9aea"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -161,8 +161,8 @@ Public Member Functions</h2></td></tr>
 <div class="textblock"><p>Abstract implementation backend for <a class="el" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images.">PaintEngine</a>. </p>
 <p>Subclass this to provide pixel-description-specific drawing operations. The <a class="el" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images.">PaintEngine</a> facade delegates every call to the active <a class="el" href="classPaintEngine_1_1Impl.html" title="Abstract implementation backend for PaintEngine.">Impl</a> instance. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="a80e8266f5907fdb3a31b31d40f7e556b" name="a80e8266f5907fdb3a31b31d40f7e556b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a80e8266f5907fdb3a31b31d40f7e556b">&#9670;&#160;</a></span>blit()</h2>
+<a id="a14fb75f652ffd60461f5b9b5a3f2f31e" name="a14fb75f652ffd60461f5b9b5a3f2f31e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a14fb75f652ffd60461f5b9b5a3f2f31e">&#9670;&#160;</a></span>blit()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -179,7 +179,7 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classImage.html">Image</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classUncompressedVideoPayload.html">UncompressedVideoPayload</a> &amp;&#160;</td>
           <td class="paramname"><em>src</em>, </td>
         </tr>
         <tr>
@@ -207,11 +207,11 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Blits a rectangular region from a source image onto the surface. </p>
+<p>Blits a rectangular region from a source payload onto the surface. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">destTopLeft</td><td>Top-left corner on the destination surface. </td></tr>
-    <tr><td class="paramname">src</td><td>Source image to copy from. </td></tr>
+    <tr><td class="paramname">src</td><td>Source payload to copy from. </td></tr>
     <tr><td class="paramname">srcTopLeft</td><td>Top-left corner of the source region. </td></tr>
     <tr><td class="paramname">srcSize</td><td>Size of the source region to copy. </td></tr>
   </table>
@@ -810,7 +810,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classPaintEngine.html">PaintEngine</a></li><li class="navelem"><a class="el" href="classPaintEngine_1_1Impl.html">Impl</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

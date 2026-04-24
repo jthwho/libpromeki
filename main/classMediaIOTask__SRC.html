@@ -217,7 +217,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p><a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a> backend that performs audio sample format conversion. </p>
-<p>ReadWrite <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> that accepts a frame on <code>writeFrame()</code>, converts each audio track to the configured output <a class="el" href="classAudioFormat.html">AudioFormat</a> via <a class="el" href="classAudio.html#a24815117e64346a57ba1686e3ae2837e">Audio::convert</a>, and emits the result on <code>readFrame()</code>. Video images and metadata are forwarded unchanged.</p>
+<p>ReadWrite <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> that accepts a frame on <code>writeFrame()</code>, converts each audio track to the configured output <a class="el" href="classAudioFormat.html">AudioFormat</a> via <a class="el" href="classUncompressedAudioPayload.html#a4c8807bc6353b87efa187e2b515eb6d6">UncompressedAudioPayload::convert</a>, and emits the result on <code>readFrame()</code>. Video payloads and metadata are forwarded unchanged.</p>
 <p>If no MediaConfig::OutputAudioDataType is set (or it is <code>Invalid</code>), audio tracks pass through unchanged.</p>
 <dl class="section user"><dt>Mode support</dt><dd></dd></dl>
 <p>Only <code><a class="el" href="classMediaIO.html#aab0ab31ae4c7dabc1e3f3339ef80001d" title="Backend does both (consumer + emitter).">MediaIO::Transform</a></code> is supported.</p>
@@ -305,7 +305,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIOTask__SRC.html">MediaIOTask_SRC</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

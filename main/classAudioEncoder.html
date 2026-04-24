@@ -153,13 +153,13 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aed7626fd759323dc1320a5bb0d47324f" id="r_aed7626fd759323dc1320a5bb0d47324f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioEncoder.html#aed7626fd759323dc1320a5bb0d47324f">configure</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaConfig.html">MediaConfig</a> &amp;config)</td></tr>
 <tr class="memdesc:aed7626fd759323dc1320a5bb0d47324f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Applies encoder parameters from a <a class="el" href="classMediaConfig.html">MediaConfig</a>.  <br /></td></tr>
 <tr class="separator:aed7626fd759323dc1320a5bb0d47324f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adf431cb0aebeb27c3b850053bf616fc5" id="r_adf431cb0aebeb27c3b850053bf616fc5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioEncoder.html#adf431cb0aebeb27c3b850053bf616fc5">submitFrame</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classAudio.html#a5a5464f78ba10693bf958d4b2b9c7351">Audio::Ptr</a> &amp;frame, <a class="el" href="classList.html">const</a> <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> &amp;pts=<a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a>())=0</td></tr>
-<tr class="memdesc:adf431cb0aebeb27c3b850053bf616fc5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Submits one PCM frame for encoding.  <br /></td></tr>
-<tr class="separator:adf431cb0aebeb27c3b850053bf616fc5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1d0a7f6e6b7b3ef5c8c5be19e3f6e871" id="r_a1d0a7f6e6b7b3ef5c8c5be19e3f6e871"><td class="memItemLeft" align="right" valign="top"><a id="a1d0a7f6e6b7b3ef5c8c5be19e3f6e871" name="a1d0a7f6e6b7b3ef5c8c5be19e3f6e871"></a>
-<a class="el" href="classList.html">virtual</a> <a class="el" href="classAudioPacket.html#a3dcc8525a6f1d71b65dfa25a17981301">AudioPacket::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><b>receivePacket</b> ()=0</td></tr>
-<tr class="memdesc:a1d0a7f6e6b7b3ef5c8c5be19e3f6e871"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dequeues one encoded packet, or a null Ptr when none is ready. <br /></td></tr>
-<tr class="separator:a1d0a7f6e6b7b3ef5c8c5be19e3f6e871"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac0b764fe724162c2786b127db5dec4b7" id="r_ac0b764fe724162c2786b127db5dec4b7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioEncoder.html#ac0b764fe724162c2786b127db5dec4b7">submitPayload</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classUncompressedAudioPayload.html#ae135fc40e7a0bf16e4b6cd957c2a1869">UncompressedAudioPayload::Ptr</a> &amp;payload)=0</td></tr>
+<tr class="memdesc:ac0b764fe724162c2786b127db5dec4b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Submits one uncompressed audio payload for encoding.  <br /></td></tr>
+<tr class="separator:ac0b764fe724162c2786b127db5dec4b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19ef23c15df0d81d83c847761e7b7548" id="r_a19ef23c15df0d81d83c847761e7b7548"><td class="memItemLeft" align="right" valign="top"><a id="a19ef23c15df0d81d83c847761e7b7548" name="a19ef23c15df0d81d83c847761e7b7548"></a>
+<a class="el" href="classList.html">virtual</a> <a class="el" href="classCompressedAudioPayload.html#a644546dff5c33d3ff70025d4709aff1e">CompressedAudioPayload::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><b>receiveCompressedPayload</b> ()=0</td></tr>
+<tr class="memdesc:a19ef23c15df0d81d83c847761e7b7548"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dequeues one encoded payload, or a null Ptr when none is ready. <br /></td></tr>
+<tr class="separator:a19ef23c15df0d81d83c847761e7b7548"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af048b59c55d7c150692e3d0159cbf36a" id="r_af048b59c55d7c150692e3d0159cbf36a"><td class="memItemLeft" align="right" valign="top"><a id="af048b59c55d7c150692e3d0159cbf36a" name="af048b59c55d7c150692e3d0159cbf36a"></a>
 <a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><b>flush</b> ()=0</td></tr>
 <tr class="memdesc:af048b59c55d7c150692e3d0159cbf36a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signals end-of-stream and asks the encoder to drain remaining packets. <br /></td></tr>
@@ -221,7 +221,7 @@ Protected Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Abstract base class for stateful audio encoders. </p>
-<p><a class="el" href="classAudioEncoder.html" title="Abstract base class for stateful audio encoders.">AudioEncoder</a> is a single push-frame / pull-packet codec session: PCM <a class="el" href="classAudio.html">Audio</a> frames pushed via <a class="el" href="classAudioEncoder.html#adf431cb0aebeb27c3b850053bf616fc5">submitFrame</a> feed an internal pipeline, and encoded <a class="el" href="classAudioPacket.html">AudioPacket</a> access units come back out of <a class="el" href="classAudioEncoder.html#a1d0a7f6e6b7b3ef5c8c5be19e3f6e871">receivePacket</a> zero, one, or many submits later depending on the codec's frame size and look-ahead.</p>
+<p><a class="el" href="classAudioEncoder.html" title="Abstract base class for stateful audio encoders.">AudioEncoder</a> is a single push-frame / pull-packet codec session: <a class="el" href="classUncompressedAudioPayload.html">UncompressedAudioPayload</a> frames pushed via submitFrame feed an internal pipeline, and encoded <a class="el" href="classCompressedAudioPayload.html">CompressedAudioPayload</a> access units come back out of receivePacket zero, one, or many submits later depending on the codec's frame size and look-ahead.</p>
 <p>Encoders expose no codec-family metadata directly — the caller asks the <a class="el" href="classAudioEncoder.html#a7a10b4f0649a08e658c69c7d4733885a">codec</a> wrapper returned by <a class="el" href="classAudioEncoder.html#a7a10b4f0649a08e658c69c7d4733885a">codec()</a> instead. The codec wrapper knows its own name, description, <a class="el" href="classFourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a> list, compression type, bitrate mode, and all other spec-level facts; per-backend facts (specific uncompressed input formats, bitrate ceilings, …) live on the registered <a class="el" href="structAudioEncoder_1_1BackendRecord.html">BackendRecord</a> and are reachable via <a class="el" href="classAudioCodec.html#a84259dc823e9354da2e828ce69789290">AudioCodec::encoderSupportedInputs</a>.</p>
 <p>The session contract is intentionally identical to <a class="el" href="classVideoEncoder.html">VideoEncoder</a> (configure, submit/receive, flush, reset) so pipeline glue (<a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a>, <a class="el" href="classQuickTime.html" title="QuickTime / ISO-BMFF container reader and writer.">QuickTime</a> muxer, RTP packetiser, …) can treat audio and video encoders symmetrically.</p>
 <dl class="section user"><dt>Backend registration</dt><dd></dd></dl>
@@ -249,9 +249,9 @@ Protected Attributes</h2></td></tr>
 <ol type="1">
 <li>Resolve a session via <a class="el" href="classAudioCodec.html#a3262c0d3ffb194c2090641879bd4d9dc">AudioCodec::createEncoder</a>.</li>
 <li>Call <a class="el" href="classAudioEncoder.html#aed7626fd759323dc1320a5bb0d47324f">configure</a> with a <a class="el" href="classMediaConfig.html">MediaConfig</a>. (Skip when a config was already supplied to <code>createEncoder</code>.)</li>
-<li>For each PCM <a class="el" href="classAudio.html">Audio</a> frame, call <a class="el" href="classAudioEncoder.html#adf431cb0aebeb27c3b850053bf616fc5">submitFrame</a>.</li>
-<li>After each submit, drain with <a class="el" href="classAudioEncoder.html#a1d0a7f6e6b7b3ef5c8c5be19e3f6e871">receivePacket</a> until it returns a null Ptr. Each emitted packet carries this codec's <a class="el" href="classAudioEncoder.html#a7a10b4f0649a08e658c69c7d4733885a">codec()</a> value so downstream code can route it without consulting the encoder again.</li>
-<li>When the input stream is exhausted, call <a class="el" href="classAudioEncoder.html#af048b59c55d7c150692e3d0159cbf36a">flush</a> and keep draining until <a class="el" href="classAudioEncoder.html#a1d0a7f6e6b7b3ef5c8c5be19e3f6e871">receivePacket</a> returns a packet whose <code>Metadata::EndOfStream</code> is set (test with <a class="el" href="classMediaPacket.html#a237687349b662d0117b4d87056d2ce35">MediaPacket::isEndOfStream</a>).</li>
+<li>For each <a class="el" href="classUncompressedAudioPayload.html">UncompressedAudioPayload</a> frame, call submitFrame.</li>
+<li>After each submit, drain with receivePacket until it returns a null Ptr. Each emitted packet carries this codec's <a class="el" href="classAudioEncoder.html#a7a10b4f0649a08e658c69c7d4733885a">codec()</a> value so downstream code can route it without consulting the encoder again.</li>
+<li>When the input stream is exhausted, call <a class="el" href="classAudioEncoder.html#af048b59c55d7c150692e3d0159cbf36a">flush</a> and keep draining until receivePacket returns a packet whose <code>MediaPayload::Flags::EndOfStream</code> flag is set.</li>
 <li>Destroy the encoder.</li>
 </ol>
 <p>Implementations are not required to be thread-safe. </p>
@@ -280,7 +280,7 @@ Protected Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Returns the codec this session encodes, with backend pinned. </p>
-<p>Stamped onto every outgoing <a class="el" href="classAudioPacket.html">AudioPacket</a> so downstream code can dispatch on codec identity without consulting the encoder. </p>
+<p>Stamped onto every outgoing <a class="el" href="classCompressedAudioPayload.html">CompressedAudioPayload</a> so downstream code can dispatch on codec identity without consulting the encoder. </p>
 
 </div>
 </div>
@@ -370,8 +370,8 @@ Protected Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="adf431cb0aebeb27c3b850053bf616fc5" name="adf431cb0aebeb27c3b850053bf616fc5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#adf431cb0aebeb27c3b850053bf616fc5">&#9670;&#160;</a></span>submitFrame()</h2>
+<a id="ac0b764fe724162c2786b127db5dec4b7" name="ac0b764fe724162c2786b127db5dec4b7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac0b764fe724162c2786b127db5dec4b7">&#9670;&#160;</a></span>submitPayload()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -380,21 +380,11 @@ Protected Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a> AudioEncoder::submitFrame </td>
+          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a> AudioEncoder::submitPayload </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classAudio.html#a5a5464f78ba10693bf958d4b2b9c7351">Audio::Ptr</a> &amp;&#160;</td>
-          <td class="paramname"><em>frame</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classUncompressedAudioPayload.html#ae135fc40e7a0bf16e4b6cd957c2a1869">UncompressedAudioPayload::Ptr</a> &amp;&#160;</td>
+          <td class="paramname"><em>payload</em></td><td>)</td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> &amp;&#160;</td>
-          <td class="paramname"><em>pts</em> = <code><a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a>()</code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -404,8 +394,8 @@ Protected Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Submits one PCM frame for encoding. </p>
-<p>The frame is passed by shared <a class="el" href="classAudio.html#a5a5464f78ba10693bf958d4b2b9c7351">Audio::Ptr</a> so the encoder can retain a reference without copying the underlying buffer. A null Ptr is treated as <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85">Error::Invalid</a>. </p>
+<p>Submits one uncompressed audio payload for encoding. </p>
+<p>The payload carries its own PTS — callers stamp it before submitting. A null Ptr is treated as <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85">Error::Invalid</a>. </p>
 
 </div>
 </div>
@@ -419,7 +409,7 @@ Protected Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudioEncoder.html">AudioEncoder</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

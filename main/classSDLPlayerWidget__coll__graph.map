@@ -1,6 +1,6 @@
 <map id="SDLPlayerWidget" name="SDLPlayerWidget">
 <area shape="rect" id="Node000001" title="Widget that plays frames through an SDLPlayerTask." alt="" coords="132,317,267,343"/>
-<area shape="rect" id="Node000002" href="$classSDLVideoWidget.html" title="Widget that displays a promeki Image via SDL texture rendering." alt="" coords="135,243,264,268"/>
+<area shape="rect" id="Node000002" href="$classSDLVideoWidget.html" title="Widget that displays an UncompressedVideoPayload via SDL texture rendering." alt="" coords="135,243,264,268"/>
 <area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="202,282,202,317,197,317,197,282"/>
 <area shape="rect" id="Node000003" href="$classWidget.html" title="Base class for all widgets across UI backends." alt="" coords="165,168,233,193"/>
 <area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="202,208,202,242,197,242,197,208"/>

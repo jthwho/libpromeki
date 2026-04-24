@@ -1,0 +1,7 @@
+<map id="include/promeki/compressedaudiopayload.h" name="include/promeki/compressedaudiopayload.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="92,5,403,31"/>
+<area shape="rect" id="Node000002" href="$audiodecoder_8h.html" title=" " alt="" coords="5,79,236,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="216,40,143,81,140,76,214,35"/>
+<area shape="rect" id="Node000003" href="$audioencoder_8h.html" title=" " alt="" coords="260,79,491,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="281,35,356,76,353,81,279,40"/>
+</map>

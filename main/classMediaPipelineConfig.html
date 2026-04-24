@@ -337,7 +337,7 @@ Static Public Member Functions</h2></td></tr>
 
 <p>Returns the pipeline-wide target frame count. </p>
 <p>A finite, non-empty <a class="el" href="classFrameCount.html">FrameCount</a> tells <a class="el" href="classMediaPipeline.html">MediaPipeline</a> to close each sink once it has received the requested number of frames; subsequent source reads are dropped on the floor. Any non-finite value (the default <a class="el" href="classFrameCount.html#aa89aceb280b41d625d529a1d4b509f5d">FrameCount::unknown</a>, <a class="el" href="classFrameCount.html#a53ca1175e69673d952510fe5d2acc46c">FrameCount::empty</a>, or <a class="el" href="classFrameCount.html#af1c3629a53cc839882105e2000e72e7a">FrameCount::infinity</a>) means "unlimited" — the pipeline runs until the sources naturally hit EOS.</p>
-<p>For interframe-coded streams (<a class="el" href="classVideoCodec.html#ae7b43fab2a9f161059e260f40df1979fa04ba43a934fdc8c3dd7e969147329265">VideoCodec::CodingTemporal</a>) the cutoff respects GOP boundaries: once the target has been reached, the pipeline keeps writing until the next frame carries a MediaPacket::Keyframe flag, then stops before writing that keyframe. The sink therefore always receives a complete sequence of GOPs, even if that means overshooting the target by up to one GOP. </p>
+<p>For interframe-coded streams (<a class="el" href="classVideoCodec.html#ae7b43fab2a9f161059e260f40df1979fa04ba43a934fdc8c3dd7e969147329265">VideoCodec::CodingTemporal</a>) the cutoff respects GOP boundaries: once the target has been reached, the pipeline keeps writing until the next frame carries a <a class="el" href="classMediaPayload.html#a807316b4e6c6bc46e1363540d7feef7aa0343d2e57ba7c8fe2a520532d0553145">MediaPayload::Keyframe</a> flag, then stops before writing that keyframe. The sink therefore always receives a complete sequence of GOPs, even if that means overshooting the target by up to one GOP. </p>
 
 </div>
 </div>
@@ -673,7 +673,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaPipelineConfig.html">MediaPipelineConfig</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

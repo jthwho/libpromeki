@@ -48,7 +48,7 @@ var group__paint =
     [ "PaintEngine", "classPaintEngine.html", [
       [ "Impl", "classPaintEngine_1_1Impl.html", [
         [ "~Impl", "classPaintEngine_1_1Impl.html#ab06c8a09dcd1356ed1603322ba6a2aa0", null ],
-        [ "blit", "classPaintEngine_1_1Impl.html#a80e8266f5907fdb3a31b31d40f7e556b", null ],
+        [ "blit", "classPaintEngine_1_1Impl.html#a14fb75f652ffd60461f5b9b5a3f2f31e", null ],
         [ "compositePoints", "classPaintEngine_1_1Impl.html#aab615fd9f0387e563e88fb355639ad8c", null ],
         [ "createPixel", "classPaintEngine_1_1Impl.html#a89ba9a79a5b727b39ae74aed6f5f9aea", null ],
         [ "drawCircle", "classPaintEngine_1_1Impl.html#ae654bda5da90ec0d104f88f74f174ffc", null ],
@@ -75,7 +75,7 @@ var group__paint =
       [ "Ptr", "classPaintEngine.html#a1eb384e7a73bcfe666294d023be9627f", null ],
       [ "PaintEngine", "classPaintEngine.html#ae28d83d1366150a6a7b6df117b509950", null ],
       [ "PaintEngine", "classPaintEngine.html#a302c06e18928db5f61cf9c2b0191e5ff", null ],
-      [ "blit", "classPaintEngine.html#aef16c07f6556afced00c80a5cdddc8f0", null ],
+      [ "blit", "classPaintEngine.html#aef6106259ecc5d1e13485e8427dfb5c9", null ],
       [ "compositePoints", "classPaintEngine.html#a7b08542594f5163edc45534a82ce0065", null ],
       [ "compositePoints", "classPaintEngine.html#a2f0e3d94b411bfcc69b958b5008ba925", null ],
       [ "createPixel", "classPaintEngine.html#a2ee7b4265d5bd882301e790b8ce150c6", null ],

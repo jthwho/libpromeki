@@ -10,9 +10,9 @@ var classVideoDecoder =
     [ "flush", "classVideoDecoder.html#a82c34ac191eaa96b73b095580f98dd12", null ],
     [ "lastError", "classVideoDecoder.html#a8afebb1dcc4aa7059c612c2da5223609", null ],
     [ "lastErrorMessage", "classVideoDecoder.html#a671f0cdf5ca6563964d0284ad3b146a3", null ],
-    [ "receiveFrame", "classVideoDecoder.html#a7a70c55e9ac80b2f1b02eea76427be70", null ],
+    [ "receiveVideoPayload", "classVideoDecoder.html#ad8015dab3e60efa8e11f1c0c999272f9", null ],
     [ "reset", "classVideoDecoder.html#aada047e2a17a4ce70577915019e7a6c4", null ],
     [ "setCodec", "classVideoDecoder.html#a0c31215472c1d153813bf4f2cdde49f1", null ],
     [ "setError", "classVideoDecoder.html#a87125a1d9e2e69e7c44a0e968b4f2ae5", null ],
-    [ "submitPacket", "classVideoDecoder.html#a373c89520c6cce9d18d53e4bcd867733", null ]
+    [ "submitPayload", "classVideoDecoder.html#a49fb1b4887098aef848db359dc0b4eb3", null ]
 ];

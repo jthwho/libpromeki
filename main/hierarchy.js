@@ -20,7 +20,6 @@ var hierarchy =
     [ "Atomic< int64_t >", "classAtomic.html", null ],
     [ "Atomic< std::thread::id >", "classAtomic.html", null ],
     [ "Atomic< uint64_t >", "classAtomic.html", null ],
-    [ "Audio", "classAudio.html", null ],
     [ "AudioBuffer", "classAudioBuffer.html", null ],
     [ "AudioCodec", "classAudioCodec.html", null ],
     [ "AudioDecoder", "classAudioDecoder.html", null ],
@@ -101,13 +100,14 @@ var hierarchy =
     [ "LtcDecoder::DecodedTimecode", "structLtcDecoder_1_1DecodedTimecode.html", null ],
     [ "Enum::Definition", "structEnum_1_1Definition.html", null ],
     [ "Deque< T >", "classDeque.html", null ],
-    [ "Deque< SharedPtr< Image > >", "classDeque.html", null ],
-    [ "Deque< SharedPtr< VideoPacket, true, VideoPacket > >", "classDeque.html", null ],
+    [ "Deque< SharedPtr >", "classDeque.html", null ],
+    [ "Deque< SharedPtr< UncompressedVideoPayload, true, UncompressedVideoPayload > >", "classDeque.html", null ],
     [ "Dir", "classDir.html", null ],
     [ "Duration", "classDuration.html", null ],
     [ "ElapsedTimer", "classElapsedTimer.html", null ],
     [ "EncodedDesc", "classEncodedDesc.html", null ],
     [ "Benchmark::Entry", "structBenchmark_1_1Entry.html", null ],
+    [ "BufferView::Entry", "classBufferView_1_1Entry.html", null ],
     [ "Enum::Entry", "structEnum_1_1Entry.html", null ],
     [ "Enum", "classEnum.html", [
       [ "TypedEnum< AudioDataType >", "classTypedEnum.html", [
@@ -140,6 +140,9 @@ var hierarchy =
       [ "TypedEnum< EUI64Format >", "classTypedEnum.html", [
         [ "EUI64Format", "classEUI64Format.html", null ]
       ] ],
+      [ "TypedEnum< FrameType >", "classTypedEnum.html", [
+        [ "FrameType", "classFrameType.html", null ]
+      ] ],
       [ "TypedEnum< ImgSeqPathMode >", "classTypedEnum.html", [
         [ "ImgSeqPathMode", "classImgSeqPathMode.html", null ]
       ] ],
@@ -151,6 +154,9 @@ var hierarchy =
       ] ],
       [ "TypedEnum< MediaIODirection >", "classTypedEnum.html", [
         [ "MediaIODirection", "classMediaIODirection.html", null ]
+      ] ],
+      [ "TypedEnum< MediaPayloadKind >", "classTypedEnum.html", [
+        [ "MediaPayloadKind", "classMediaPayloadKind.html", null ]
       ] ],
       [ "TypedEnum< MetadataRtpFormat >", "classTypedEnum.html", [
         [ "MetadataRtpFormat", "classMetadataRtpFormat.html", null ]
@@ -252,7 +258,6 @@ var hierarchy =
     [ "HashSet< T >", "classHashSet.html", null ],
     [ "HevcDecoderConfig", "structHevcDecoderConfig.html", null ],
     [ "Histogram", "classHistogram.html", null ],
-    [ "Image", "classImage.html", null ],
     [ "ImageDataDecoder", "classImageDataDecoder.html", null ],
     [ "ImageDataEncoder", "classImageDataEncoder.html", null ],
     [ "ImageDesc", "classImageDesc.html", null ],
@@ -271,6 +276,7 @@ var hierarchy =
     [ "ImageDataEncoder::Item", "structImageDataEncoder_1_1Item.html", null ],
     [ "StringRegistry< Name >::Item", "classStringRegistry_1_1Item.html", null ],
     [ "BenchmarkState::Iterator", "classBenchmarkState_1_1Iterator.html", null ],
+    [ "BufferView::Iterator", "classBufferView_1_1Iterator.html", null ],
     [ "MediaDuration::FrameRange::Iterator", "classMediaDuration_1_1FrameRange_1_1Iterator.html", null ],
     [ "JsonArray", "classJsonArray.html", null ],
     [ "JsonObject", "classJsonObject.html", null ],
@@ -311,7 +317,6 @@ var hierarchy =
     [ "List< QueueEntry >", "classList.html", null ],
     [ "List< RateControlMode >", "classList.html", null ],
     [ "List< SharedPtr >", "classList.html", null ],
-    [ "List< SharedPtr< Buffer > >", "classList.html", null ],
     [ "List< SharedPtr< Frame > >", "classList.html", null ],
     [ "List< SignalMeta * >", "classList.html", null ],
     [ "List< SlotItem >", "classList.html", null ],
@@ -333,6 +338,7 @@ var hierarchy =
     [ "List< Variant >", "classList.html", [
       [ "VariantList", "classVariantList.html", null ]
     ] ],
+    [ "List< View >", "classList.html", null ],
     [ "List< Widget * >", "classList.html", null ],
     [ "Mutex::Locker", "classMutex_1_1Locker.html", null ],
     [ "Logger::LogEntry", "structLogger_1_1LogEntry.html", null ],
@@ -344,7 +350,7 @@ var hierarchy =
     [ "Map< K, V >", "classMap.html", null ],
     [ "Map< int, int >", "classMap.html", null ],
     [ "Map< Pair, Accumulator >", "classMap.html", null ],
-    [ "Map< size_t, Audio >", "classMap.html", null ],
+    [ "Map< size_t, List< float > >", "classMap.html", null ],
     [ "Map< std::atomic< ObjectBase * > *, std::atomic< ObjectBase * > * >", "classMap.html", null ],
     [ "Map< String, CmdLineParser::Option >", "classMap.html", null ],
     [ "Map< String, double >", "classMap.html", null ],
@@ -393,9 +399,15 @@ var hierarchy =
       [ "MediaIOTask_VideoEncoder", "classMediaIOTask__VideoEncoder.html", null ],
       [ "SDLPlayerTask", "classSDLPlayerTask.html", null ]
     ] ],
-    [ "MediaPacket", "classMediaPacket.html", [
-      [ "AudioPacket", "classAudioPacket.html", null ],
-      [ "VideoPacket", "classVideoPacket.html", null ]
+    [ "MediaPayload", "classMediaPayload.html", [
+      [ "AudioPayload", "classAudioPayload.html", [
+        [ "CompressedAudioPayload", "classCompressedAudioPayload.html", null ],
+        [ "UncompressedAudioPayload", "classUncompressedAudioPayload.html", null ]
+      ] ],
+      [ "VideoPayload", "classVideoPayload.html", [
+        [ "CompressedVideoPayload", "classCompressedVideoPayload.html", null ],
+        [ "UncompressedVideoPayload", "classUncompressedVideoPayload.html", null ]
+      ] ]
     ] ],
     [ "MediaPipelineConfig", "classMediaPipelineConfig.html", null ],
     [ "MediaPipelinePlanner", "classMediaPipelinePlanner.html", null ],
@@ -554,16 +566,15 @@ var hierarchy =
     [ "SharedMemory", "classSharedMemory.html", null ],
     [ "SharedPtr< T, CopyOnWrite, ST >", "classSharedPtr.html", null ],
     [ "SharedPtr< AudioFile::Impl >", "classSharedPtr.html", null ],
-    [ "SharedPtr< AudioPacket, true, AudioPacket >", "classSharedPtr.html", null ],
     [ "SharedPtr< Benchmark >", "classSharedPtr.html", null ],
     [ "SharedPtr< Buffer >", "classSharedPtr.html", null ],
     [ "SharedPtr< Clock, false, Clock >", "classSharedPtr.html", null ],
     [ "SharedPtr< Frame >", "classSharedPtr.html", null ],
-    [ "SharedPtr< Image >", "classSharedPtr.html", null ],
     [ "SharedPtr< PaintEngine::Impl, false >", "classSharedPtr.html", null ],
     [ "SharedPtr< QuickTime::Impl >", "classSharedPtr.html", null ],
     [ "SharedPtr< StringData >", "classSharedPtr.html", null ],
-    [ "SharedPtr< VideoPacket, true, VideoPacket >", "classSharedPtr.html", null ],
+    [ "SharedPtr< UncompressedVideoPayload, true, UncompressedVideoPayload >", "classSharedPtr.html", null ],
+    [ "SharedPtr< VideoPayload, true, VideoPayload >", "classSharedPtr.html", null ],
     [ "SharedPtrProxy< T >", "classSharedPtrProxy.html", null ],
     [ "Signal< Args >", "classSignal.html", null ],
     [ "Signal< ObjectBase * >", "classSignal.html", null ],

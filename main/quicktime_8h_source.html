@@ -142,7 +142,7 @@ $(document).ready(function(){initNavTree('quicktime_8h_source.html',''); initRes
 <div class="line"><a id="l00077" name="l00077"></a><span class="lineno"><a class="line" href="classQuickTime.html#aa9b093af60dec88b7d0a88da118d12cc">   77</a></span>                <span class="keyword">enum</span> <a class="code hl_enumeration" href="classQuickTime.html#aa9b093af60dec88b7d0a88da118d12cc">TrackType</a> {</div>
 <div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>                        InvalidTrack = 0,</div>
 <div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>                        Video,</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>                        <a class="code hl_class" href="classAudio.html">Audio</a>,</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>                        Audio,</div>
 <div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>                        TimecodeTrack,</div>
 <div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>                        Subtitle,</div>
 <div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>                        Data</div>
@@ -416,7 +416,6 @@ $(document).ready(function(){initNavTree('quicktime_8h_source.html',''); initRes
 <div class="ttc" id="aaudiodesc_8h_html"><div class="ttname"><a href="audiodesc_8h.html">audiodesc.h</a></div></div>
 <div class="ttc" id="abuffer_8h_html"><div class="ttname"><a href="buffer_8h.html">buffer.h</a></div></div>
 <div class="ttc" id="aclassAudioDesc_html"><div class="ttname"><a href="classAudioDesc.html">AudioDesc</a></div><div class="ttdoc">Describes a concrete audio stream — format plus sample rate and channel count.</div><div class="ttdef"><b>Definition</b> audiodesc.h:39</div></div>
-<div class="ttc" id="aclassAudio_html"><div class="ttname"><a href="classAudio.html">Audio</a></div><div class="ttdoc">Object to hold some number of audio samples.</div><div class="ttdef"><b>Definition</b> audio.h:50</div></div>
 <div class="ttc" id="aclassError_html"><div class="ttname"><a href="classError.html">Error</a></div><div class="ttdoc">Lightweight error code wrapper for the promeki library.</div><div class="ttdef"><b>Definition</b> error.h:39</div></div>
 <div class="ttc" id="aclassFourCC_html"><div class="ttname"><a href="classFourCC.html">FourCC</a></div><div class="ttdoc">A four-character code (FourCC) identifier.</div><div class="ttdef"><b>Definition</b> fourcc.h:25</div></div>
 <div class="ttc" id="aclassFrameRate_html"><div class="ttname"><a href="classFrameRate.html">FrameRate</a></div><div class="ttdoc">Represents a video frame rate as a rational number.</div><div class="ttdef"><b>Definition</b> framerate.h:101</div></div>
@@ -425,7 +424,7 @@ $(document).ready(function(){initNavTree('quicktime_8h_source.html',''); initRes
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassMediaDesc_html"><div class="ttname"><a href="classMediaDesc.html">MediaDesc</a></div><div class="ttdoc">Describes a media format including frame rate, image layers, audio channels, and metadata.</div><div class="ttdef"><b>Definition</b> mediadesc.h:33</div></div>
 <div class="ttc" id="aclassMetadata_html"><div class="ttname"><a href="classMetadata.html">Metadata</a></div><div class="ttdoc">Key-value metadata container using typed Variant values.</div><div class="ttdef"><b>Definition</b> metadata.h:46</div></div>
-<div class="ttc" id="aclassPixelFormat_html"><div class="ttname"><a href="classPixelFormat.html">PixelFormat</a></div><div class="ttdoc">Complete pixel description combining format, color model, and semantics.</div><div class="ttdef"><b>Definition</b> pixelformat.h:128</div></div>
+<div class="ttc" id="aclassPixelFormat_html"><div class="ttname"><a href="classPixelFormat.html">PixelFormat</a></div><div class="ttdoc">Complete pixel description combining format, color model, and semantics.</div><div class="ttdef"><b>Definition</b> pixelformat.h:129</div></div>
 <div class="ttc" id="aclassQuickTime_1_1Impl_html"><div class="ttname"><a href="classQuickTime_1_1Impl.html">QuickTime::Impl</a></div><div class="ttdoc">Abstract backend for a QuickTime instance.</div><div class="ttdef"><b>Definition</b> quicktime.h:243</div></div>
 <div class="ttc" id="aclassQuickTime_1_1Impl_html_a0cb0d9c47b6dc83e389a0935e0bee7b5"><div class="ttname"><a href="classQuickTime_1_1Impl.html#a0cb0d9c47b6dc83e389a0935e0bee7b5">QuickTime::Impl::setDevice</a></div><div class="ttdeci">void setDevice(IODevice *dev, bool takeOwnership=false)</div><div class="ttdoc">Sets the IODevice. The caller retains ownership unless takeOwnership is true.</div><div class="ttdef"><b>Definition</b> quicktime.h:268</div></div>
 <div class="ttc" id="aclassQuickTime_1_1Impl_html_a10c89660be030ef065c0d867b69f831a"><div class="ttname"><a href="classQuickTime_1_1Impl.html#a10c89660be030ef065c0d867b69f831a">QuickTime::Impl::addAudioTrack</a></div><div class="ttdeci">virtual Error addAudioTrack(const AudioDesc &amp;desc, uint32_t *outTrackId)</div><div class="ttdoc">Adds a PCM audio track to a writer.</div></div>
@@ -561,7 +560,7 @@ $(document).ready(function(){initNavTree('quicktime_8h_source.html',''); initRes
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="quicktime_8h.html">quicktime.h</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

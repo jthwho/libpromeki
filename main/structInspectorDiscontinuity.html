@@ -178,7 +178,7 @@ Public Attributes</h2></td></tr>
 
 <p>Categorical type of the discontinuity. </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a547c7128a8fb0e78643127d6d07d801da76f5a1985d93b6ebcd1b8de165efe65a" name="a547c7128a8fb0e78643127d6d07d801da76f5a1985d93b6ebcd1b8de165efe65a"></a>FrameNumberJump&#160;</td><td class="fielddoc"><p><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> number from the picture data band did not advance by 1. </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a547c7128a8fb0e78643127d6d07d801da76f5a1985d93b6ebcd1b8de165efe65a" name="a547c7128a8fb0e78643127d6d07d801da76f5a1985d93b6ebcd1b8de165efe65a"></a>FrameNumberJump&#160;</td><td class="fielddoc"><p><a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a> number from the picture data band did not advance by 1. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a547c7128a8fb0e78643127d6d07d801da536ddcee17d16b4926db7438fb180c41" name="a547c7128a8fb0e78643127d6d07d801da536ddcee17d16b4926db7438fb180c41"></a>StreamIdChange&#160;</td><td class="fielddoc"><p>Stream ID from the picture data band changed between frames. </p>
 </td></tr>
@@ -190,11 +190,11 @@ Public Attributes</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="a547c7128a8fb0e78643127d6d07d801daaace8db4dbdeeafea92b6047beaaf7f6" name="a547c7128a8fb0e78643127d6d07d801daaace8db4dbdeeafea92b6047beaaf7f6"></a>LtcDecodeFailure&#160;</td><td class="fielddoc"><p>LTC failed to decode in this frame's audio after a previously-successful decode. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a547c7128a8fb0e78643127d6d07d801daf6c8f3df72441220403d04f3f581b260" name="a547c7128a8fb0e78643127d6d07d801daf6c8f3df72441220403d04f3f581b260"></a>SyncOffsetChange&#160;</td><td class="fielddoc"><p>The picture-vs-LTC sync offset moved by more than the configured tolerance from the previous frame. <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> and video are locked in pro workflows, so any change from a previously-stable offset is a real fault rather than a measurement artifact. </p>
+<tr><td class="fieldname"><a id="a547c7128a8fb0e78643127d6d07d801daf6c8f3df72441220403d04f3f581b260" name="a547c7128a8fb0e78643127d6d07d801daf6c8f3df72441220403d04f3f581b260"></a>SyncOffsetChange&#160;</td><td class="fielddoc"><p>The picture-vs-LTC sync offset moved by more than the configured tolerance from the previous frame. Audio and video are locked in pro workflows, so any change from a previously-stable offset is a real fault rather than a measurement artifact. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a547c7128a8fb0e78643127d6d07d801da6d434743fc94ff3a3f884740ac83f03f" name="a547c7128a8fb0e78643127d6d07d801da6d434743fc94ff3a3f884740ac83f03f"></a>MissingVideoTimestamp&#160;</td><td class="fielddoc"><p>Video essence arrived without a valid <a class="el" href="classMediaTimeStamp.html" title="Self-describing timestamp that pairs a time value with its clock domain and offset.">MediaTimeStamp</a> even though the Timestamp test is enabled (<a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> guarantees one on every essence). </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a547c7128a8fb0e78643127d6d07d801da2230a10ca528a1515c912f5a3d499627" name="a547c7128a8fb0e78643127d6d07d801da2230a10ca528a1515c912f5a3d499627"></a>MissingAudioTimestamp&#160;</td><td class="fielddoc"><p><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> essence arrived without a valid <a class="el" href="classMediaTimeStamp.html" title="Self-describing timestamp that pairs a time value with its clock domain and offset.">MediaTimeStamp</a> even though the Timestamp test is enabled. </p>
+<tr><td class="fieldname"><a id="a547c7128a8fb0e78643127d6d07d801da2230a10ca528a1515c912f5a3d499627" name="a547c7128a8fb0e78643127d6d07d801da2230a10ca528a1515c912f5a3d499627"></a>MissingAudioTimestamp&#160;</td><td class="fielddoc"><p>Audio essence arrived without a valid <a class="el" href="classMediaTimeStamp.html" title="Self-describing timestamp that pairs a time value with its clock domain and offset.">MediaTimeStamp</a> even though the Timestamp test is enabled. </p>
 </td></tr>
 </table>
 
@@ -210,7 +210,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structInspectorDiscontinuity.html">InspectorDiscontinuity</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

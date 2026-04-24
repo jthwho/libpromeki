@@ -1,3 +1,5 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classBufferPool.html" title="Simple fixed&#45;geometry buffer pool for hot&#45;path allocations." alt="" coords="5,5,95,31"/>
+<area shape="rect" id="Node000000" href="$classBufferView.html" title="Ordered list of (offset, size) views over a deduplicated set of backing Buffer objects." alt="" coords="5,5,99,31"/>
+<area shape="rect" id="Node000001" href="$classRtpPacket.html" title="A BufferView that interprets its data as an RTP packet." alt="" coords="147,5,233,31"/>
+<area shape="poly" id="edge1_Node000000_Node000001" title=" " alt="" coords="112,15,146,15,146,21,112,21"/>
 </map>

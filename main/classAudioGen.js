@@ -7,6 +7,6 @@ var classAudioGen =
     ] ],
     [ "AudioGen", "classAudioGen.html#abb159984d30249584eede9ef9ccb6a5f", null ],
     [ "config", "classAudioGen.html#a0a3203efb1db9da7c749593f88da1a09", null ],
-    [ "generate", "classAudioGen.html#a94ffb805f9f499b22144bdec3e566820", null ],
+    [ "generate", "classAudioGen.html#a76b5f9469e311bf13cb65c60bcbd36f2", null ],
     [ "setConfig", "classAudioGen.html#a6d4a4f382c4aeca00f5e5d123da5333b", null ]
 ];

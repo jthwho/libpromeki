@@ -112,9 +112,6 @@ $(document).ready(function(){initNavTree('group__proav.html',''); initResizable(
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html">Audio</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Object to hold some number of audio samples.  <a href="classAudio.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioBlock.html">AudioBlock</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for an audio processing block This object defines an interface for composing an audio processing chain.  <a href="classAudioBlock.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -134,22 +131,28 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract base class for stateful audio encoders.  <a href="classAudioEncoder.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioFile.html">AudioFile</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> file reader and writer.  <a href="classAudioFile.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Audio file reader and writer.  <a href="classAudioFile.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioFormat.html">AudioFormat</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">First-class audio sample-format descriptor.  <a href="classAudioFormat.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioGen.html">AudioGen</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> signal generator for producing test tones and silence.  <a href="classAudioGen.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Audio signal generator for producing test tones and silence.  <a href="classAudioGen.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioPacket.html">AudioPacket</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Encoded audio access unit produced by an <a class="el" href="classAudioEncoder.html">AudioEncoder</a> or consumed by an <a class="el" href="classAudioDecoder.html">AudioDecoder</a>.  <a href="classAudioPacket.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioPayload.html">AudioPayload</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract base for any audio payload — compressed or uncompressed.  <a href="classAudioPayload.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioResampler.html">AudioResampler</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Variable-ratio audio sample rate converter backed by libsamplerate.  <a href="classAudioResampler.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioTestPattern.html">AudioTestPattern</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Multi-channel audio test pattern generator.  <a href="classAudioTestPattern.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCompressedAudioPayload.html">CompressedAudioPayload</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compressed audio payload — one encoded access unit whose codec identity lives in the base <a class="el" href="classAudioDesc.html">AudioDesc</a>'s compressed <a class="el" href="classAudioFormat.html">AudioFormat</a>.  <a href="classCompressedAudioPayload.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCompressedVideoPayload.html">CompressedVideoPayload</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compressed video payload — one encoded access unit whose codec identity lives in the base <a class="el" href="classImageDesc.html">ImageDesc</a>'s compressed <a class="el" href="classPixelFormat.html">PixelFormat</a>.  <a href="classCompressedVideoPayload.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCSCContext.html">CSCContext</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Per-invocation scratch space for CSC pipeline execution.  <a href="classCSCContext.html#details">More...</a><br /></td></tr>
@@ -167,13 +170,10 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes a compressed or encoded media format.  <a href="classEncodedDesc.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html">Frame</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A media frame containing images, audio, and metadata.  <a href="classFrame.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A media frame containing payloads and metadata.  <a href="classFrame.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameBridge.html">FrameBridge</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cross-process frame transport over shared memory + local sockets.  <a href="classFrameBridge.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImage.html">Image</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Raster image with pixel description, planes, and metadata.  <a href="classImage.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDataDecoder.html">ImageDataDecoder</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Companion decoder for <a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a>.  <a href="classImageDataDecoder.html#details">More...</a><br /></td></tr>
@@ -304,8 +304,8 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask__VideoEncoder.html">MediaIOTask_VideoEncoder</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a> backend that encodes uncompressed Frames into compressed packets.  <a href="classMediaIOTask__VideoEncoder.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPacket.html">MediaPacket</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract polymorphic base for any encoded bitstream packet.  <a href="classMediaPacket.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPayload.html">MediaPayload</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract polymorphic base for any media payload flowing through a pipeline.  <a href="classMediaPayload.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPixelFormat.html">PixelFormat</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Complete pixel description combining format, color model, and semantics.  <a href="classPixelFormat.html#details">More...</a><br /></td></tr>
@@ -319,6 +319,12 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRateTracker.html">RateTracker</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sliding-window rate counter for live telemetry.  <a href="classRateTracker.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUncompressedAudioPayload.html">UncompressedAudioPayload</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uncompressed audio payload — PCM samples in the format described by the base <a class="el" href="classAudioPayload.html">AudioPayload</a>'s <a class="el" href="classAudioDesc.html">AudioDesc</a>.  <a href="classUncompressedAudioPayload.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUncompressedVideoPayload.html">UncompressedVideoPayload</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uncompressed video payload — raster pixels in the format described by the base <a class="el" href="classVideoPayload.html">VideoPayload</a>'s <a class="el" href="classImageDesc.html">ImageDesc</a>.  <a href="classUncompressedVideoPayload.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoCodec.html">VideoCodec</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">First-class identifier for a video codec family.  <a href="classVideoCodec.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -328,8 +334,8 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoEncoder.html">VideoEncoder</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract base class for stateful video encoders.  <a href="classVideoEncoder.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoPacket.html">VideoPacket</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Encoded video access unit produced by a <a class="el" href="classVideoEncoder.html">VideoEncoder</a> or consumed by a <a class="el" href="classVideoDecoder.html">VideoDecoder</a>.  <a href="classVideoPacket.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoPayload.html">VideoPayload</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract base for any video payload — compressed or uncompressed.  <a href="classVideoPayload.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoTestPattern.html">VideoTestPattern</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Standalone video test pattern generator.  <a href="classVideoTestPattern.html#details">More...</a><br /></td></tr>
@@ -364,7 +370,7 @@ Typedefs</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Professional audio/video media objects and codecs. </p>
-<p><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> and image containers with format descriptors, file I/O factories, pixel format definitions, codec abstractions, and frame-level media handling for broadcast and post-production workflows. </p>
+<p>Audio and image containers with format descriptors, file I/O factories, pixel format definitions, codec abstractions, and frame-level media handling for broadcast and post-production workflows. </p>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="gad90fff14e48cb9847b2be7d40be4a1a5" name="gad90fff14e48cb9847b2be7d40be4a1a5"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#gad90fff14e48cb9847b2be7d40be4a1a5">&#9670;&#160;</a></span>PROMEKI_MEDIAIO_COMMAND</h2>
@@ -552,7 +558,7 @@ Typedefs</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

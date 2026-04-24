@@ -202,6 +202,7 @@ Public Types</h2></td></tr>
 &#160;&#160;<a class="el" href="classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369aca0791fdcc7c71b9b73618aff187db2d">TypeMediaDuration</a> = 0x45
 , <a class="el" href="classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a84d083db0a027d82414a280cf3fac3e9">TypeUrl</a> = 0x46
 , <a class="el" href="classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a3e5aaa8d8d8062e231065899a5d08cd2">TypeAudioFormat</a> = 0x47
+, <a class="el" href="classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a9098a91b1790217a2816cce3d1458d14">TypeMediaPayload</a> = 0x48
 <br />
  }</td></tr>
 <tr class="memdesc:a781a61c06aaf1ba83ae8f3ab5aadd369"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type identifiers written before each value.  <a href="classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369">More...</a><br /></td></tr>
@@ -652,7 +653,7 @@ Static Public Attributes</h2></td></tr>
 <div class="ttc" id="aclassDataStream_html_a7cd591107dc7c74d3bb2cfd08e9ab566a89870ada920b5aa16ccab3f94d22c59b"><div class="ttname"><a href="classDataStream.html#a7cd591107dc7c74d3bb2cfd08e9ab566a89870ada920b5aa16ccab3f94d22c59b">DataStream::ReadCorruptData</a></div><div class="ttdeci">@ ReadCorruptData</div><div class="ttdoc">Data format is invalid.</div><div class="ttdef"><b>Definition</b> datastream.h:194</div></div>
 <div class="ttc" id="aclassDataStream_html_a7cd591107dc7c74d3bb2cfd08e9ab566ac9af5710b2a7175d657465fc810d27fc"><div class="ttname"><a href="classDataStream.html#a7cd591107dc7c74d3bb2cfd08e9ab566ac9af5710b2a7175d657465fc810d27fc">DataStream::Ok</a></div><div class="ttdeci">@ Ok</div><div class="ttdoc">No error.</div><div class="ttdef"><b>Definition</b> datastream.h:192</div></div>
 <div class="ttc" id="aclassDataStream_html_a99bb593e3268f92b804ede61a4df4506"><div class="ttname"><a href="classDataStream.html#a99bb593e3268f92b804ede61a4df4506">DataStream::operator&lt;&lt;</a></div><div class="ttdeci">DataStream &amp; operator&lt;&lt;(int8_t val)</div><div class="ttdoc">Writes an int8_t.</div></div>
-<div class="ttc" id="aclassDataStream_html_a9b919505d38e854c0298b578713123e9"><div class="ttname"><a href="classDataStream.html#a9b919505d38e854c0298b578713123e9">DataStream::status</a></div><div class="ttdeci">Status status() const</div><div class="ttdoc">Returns the current stream status.</div><div class="ttdef"><b>Definition</b> datastream.h:379</div></div>
+<div class="ttc" id="aclassDataStream_html_a9b919505d38e854c0298b578713123e9"><div class="ttname"><a href="classDataStream.html#a9b919505d38e854c0298b578713123e9">DataStream::status</a></div><div class="ttdeci">Status status() const</div><div class="ttdoc">Returns the current stream status.</div><div class="ttdef"><b>Definition</b> datastream.h:380</div></div>
 <div class="ttc" id="aclassDataStream_html_adff852980686f41c6d484f4a5bf815be"><div class="ttname"><a href="classDataStream.html#adff852980686f41c6d484f4a5bf815be">DataStream::operator&gt;&gt;</a></div><div class="ttdeci">DataStream &amp; operator&gt;&gt;(int8_t &amp;val)</div><div class="ttdoc">Reads an int8_t.</div></div>
 <div class="ttc" id="aclassDataStream_html_afa4820a0bdf01d134e1cdee830ab403c"><div class="ttname"><a href="classDataStream.html#afa4820a0bdf01d134e1cdee830ab403c">DataStream::setError</a></div><div class="ttdeci">void setError(Status s, String ctx)</div><div class="ttdoc">Sets the status and a context message in one call.</div></div>
 <div class="ttc" id="aclassDataStream_html_afb6e90a850cc07ad5a5e7087af7c29ee"><div class="ttname"><a href="classDataStream.html#afb6e90a850cc07ad5a5e7087af7c29ee">DataStream::writeTag</a></div><div class="ttdeci">void writeTag(TypeId id)</div><div class="ttdoc">Writes a type tag byte to the stream.</div></div>
@@ -681,7 +682,7 @@ Static Public Attributes</h2></td></tr>
 <div class="ttc" id="aclassBufferIODevice_html"><div class="ttname"><a href="classBufferIODevice.html">BufferIODevice</a></div><div class="ttdoc">IODevice backed by an in-memory Buffer.</div><div class="ttdef"><b>Definition</b> bufferiodevice.h:37</div></div>
 <div class="ttc" id="aclassDataStream_html_a2282333de868dc074e126b68f0593916"><div class="ttname"><a href="classDataStream.html#a2282333de868dc074e126b68f0593916">DataStream::createReader</a></div><div class="ttdeci">static DataStream createReader(IODevice *device)</div><div class="ttdoc">Constructs a DataStream for reading from an IODevice.</div></div>
 <div class="ttc" id="aclassDataStream_html_a4021e55a000c919024f07f05222cc7fc"><div class="ttname"><a href="classDataStream.html#a4021e55a000c919024f07f05222cc7fc">DataStream::createWriter</a></div><div class="ttdeci">static DataStream createWriter(IODevice *device, ByteOrder order=BigEndian)</div><div class="ttdoc">Constructs a DataStream for writing on an IODevice.</div></div>
-<div class="ttc" id="aclassDataStream_html_af9d8d520ff1b70eaf3ca80a2b5a9be73"><div class="ttname"><a href="classDataStream.html#af9d8d520ff1b70eaf3ca80a2b5a9be73">DataStream::device</a></div><div class="ttdeci">IODevice * device() const</div><div class="ttdoc">Returns the underlying IODevice.</div><div class="ttdef"><b>Definition</b> datastream.h:419</div></div>
+<div class="ttc" id="aclassDataStream_html_af9d8d520ff1b70eaf3ca80a2b5a9be73"><div class="ttname"><a href="classDataStream.html#af9d8d520ff1b70eaf3ca80a2b5a9be73">DataStream::device</a></div><div class="ttdeci">IODevice * device() const</div><div class="ttdoc">Returns the underlying IODevice.</div><div class="ttdef"><b>Definition</b> datastream.h:420</div></div>
 <div class="ttc" id="aclassIODevice_html_a0c0fa852f94c8815d55c481c68f7abcb"><div class="ttname"><a href="classIODevice.html#a0c0fa852f94c8815d55c481c68f7abcb">IODevice::seek</a></div><div class="ttdeci">virtual Error seek(int64_t pos)</div><div class="ttdoc">Seeks to the given byte offset from the beginning.</div></div>
 <div class="ttc" id="aclassIODevice_html_a7767856d8e9bbd32d105063abf3d4546"><div class="ttname"><a href="classIODevice.html#a7767856d8e9bbd32d105063abf3d4546">IODevice::open</a></div><div class="ttdeci">virtual Error open(OpenMode mode)=0</div><div class="ttdoc">Opens the device with the specified mode.</div></div>
 <div class="ttc" id="aclassIODevice_html_ac12c287cd37708c10d6618d667a3147aa5e2c1690c5235439fb591119ec7f8dbe"><div class="ttname"><a href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa5e2c1690c5235439fb591119ec7f8dbe">IODevice::WriteOnly</a></div><div class="ttdeci">@ WriteOnly</div><div class="ttdoc">Open for writing only.</div><div class="ttdef"><b>Definition</b> iodevice.h:40</div></div>
@@ -869,6 +870,8 @@ Static Public Attributes</h2></td></tr>
 <tr><td class="fieldname"><a id="a781a61c06aaf1ba83ae8f3ab5aadd369a84d083db0a027d82414a280cf3fac3e9" name="a781a61c06aaf1ba83ae8f3ab5aadd369a84d083db0a027d82414a280cf3fac3e9"></a>TypeUrl&#160;</td><td class="fielddoc"><p><a class="el" href="classUrl.html" title="Uniform Resource Locator / Identifier.">Url</a> (length-prefixed string round-trip) </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a781a61c06aaf1ba83ae8f3ab5aadd369a3e5aaa8d8d8062e231065899a5d08cd2" name="a781a61c06aaf1ba83ae8f3ab5aadd369a3e5aaa8d8d8062e231065899a5d08cd2"></a>TypeAudioFormat&#160;</td><td class="fielddoc"><p><a class="el" href="classAudioFormat.html" title="First-class audio sample-format descriptor.">AudioFormat</a> (length-prefixed name) </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a781a61c06aaf1ba83ae8f3ab5aadd369a9098a91b1790217a2816cce3d1458d14" name="a781a61c06aaf1ba83ae8f3ab5aadd369a9098a91b1790217a2816cce3d1458d14"></a>TypeMediaPayload&#160;</td><td class="fielddoc"><p><a class="el" href="classMediaPayload.html" title="Abstract polymorphic base for any media payload flowing through a pipeline.">MediaPayload</a> (<a class="el" href="classFourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a> + common state + subclass-serialised tail) </p>
 </td></tr>
 </table>
 
@@ -1451,7 +1454,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classDataStream.html">DataStream</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -524,7 +524,7 @@ Static Public Attributes</h2></td></tr>
 <tr class="separator:a9418299ad654628ecd45c43a71f21a44"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4488b402a1b19ae9c891564081264f09" id="r_a4488b402a1b19ae9c891564081264f09"><td class="memItemLeft" align="right" valign="top"><a id="a4488b402a1b19ae9c891564081264f09" name="a4488b402a1b19ae9c891564081264f09"></a>
 <a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classFrameCount.html">FrameCount</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FrameCountUnknown</b> = <a class="el" href="classFrameCount.html#aa89aceb280b41d625d529a1d4b509f5d">FrameCount::unknown</a>()</td></tr>
-<tr class="memdesc:a4488b402a1b19ae9c891564081264f09"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> count is not yet known. <br /></td></tr>
+<tr class="memdesc:a4488b402a1b19ae9c891564081264f09"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a> count is not yet known. <br /></td></tr>
 <tr class="separator:a4488b402a1b19ae9c891564081264f09"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af7d7c813ff545403b40b7f3d06495362" id="r_af7d7c813ff545403b40b7f3d06495362"><td class="memItemLeft" align="right" valign="top"><a id="af7d7c813ff545403b40b7f3d06495362" name="af7d7c813ff545403b40b7f3d06495362"></a>
 <a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classFrameCount.html">FrameCount</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FrameCountInfinite</b> = <a class="el" href="classFrameCount.html#af1c3629a53cc839882105e2000e72e7a">FrameCount::infinity</a>()</td></tr>
@@ -654,7 +654,7 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Injects an externally constructed backend task. </p>
-<p>Normally <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> obtains its task from the registered factory via <code><a class="el" href="classMediaIO.html#a594b8b55ae788efe104c871248d73808" title="Creates a MediaIO instance from a configuration.">create()</a></code>. Some backends, however, need constructor arguments that can't be expressed in a Config — for example, the SDL player task needs raw pointers to an <a class="el" href="classSDLVideoWidget.html" title="Widget that displays a promeki Image via SDL texture rendering.">SDLVideoWidget</a> and an <a class="el" href="classSDLAudioOutput.html" title="Manages an SDL3 audio output device for playback.">SDLAudioOutput</a> supplied by the application. For those cases the caller constructs the task directly (via a free factory function in the backend's library) and hands it to <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> via this method.</p>
+<p>Normally <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> obtains its task from the registered factory via <code><a class="el" href="classMediaIO.html#a594b8b55ae788efe104c871248d73808" title="Creates a MediaIO instance from a configuration.">create()</a></code>. Some backends, however, need constructor arguments that can't be expressed in a Config — for example, the SDL player task needs raw pointers to an <a class="el" href="classSDLVideoWidget.html" title="Widget that displays an UncompressedVideoPayload via SDL texture rendering.">SDLVideoWidget</a> and an <a class="el" href="classSDLAudioOutput.html" title="Manages an SDL3 audio output device for playback.">SDLAudioOutput</a> supplied by the application. For those cases the caller constructs the task directly (via a free factory function in the backend's library) and hands it to <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> via this method.</p>
 <p>The <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> must not be open when this is called, and must not already own a task. Ownership of <code>task</code> transfers to the <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a>, which will delete it in the destructor. Passing <code>nullptr</code> is an error.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -2890,7 +2890,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 </ul>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">frame</td><td>The <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> to write. </td></tr>
+    <tr><td class="paramname">frame</td><td>The <a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a> to write. </td></tr>
     <tr><td class="paramname">block</td><td>If true (default), blocks until the write completes. </td></tr>
   </table>
   </dd>
@@ -2981,7 +2981,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIO.html">MediaIO</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

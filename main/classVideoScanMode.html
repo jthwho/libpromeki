@@ -282,7 +282,7 @@ Additional Inherited Members</h2></td></tr>
 <li><code>Interlaced</code> — interlaced content with an unspecified field order. Used when the source flagged the stream as interlaced but didn't carry a reliable dominance indicator — common with legacy DV, some MXF variants, and raw SDI captures that lost the container-level flag.</li>
 <li><code>InterlacedEvenFirst</code> — interlaced with the even (top) field first in time (NTSC / 480i, 1080i50, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1080i59.94</a> per SMPTE 274M).</li>
 <li><code>InterlacedOddFirst</code> — interlaced with the odd (bottom) field first in time (PAL / 576i legacy, some consumer DV variants).</li>
-<li><code>PsF</code> — Progressive segmented <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a>: a progressive image carried as two fields over an interlaced transport (common for 24p / 25p / 30p material on HD-SDI at <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1080psf23.98</a>, 1080psf24, 1080psf25, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1080psf29.97</a>). For display purposes it behaves as progressive, but the wire format is two-field. </li>
+<li><code>PsF</code> — Progressive segmented <a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a>: a progressive image carried as two fields over an interlaced transport (common for 24p / 25p / 30p material on HD-SDI at <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1080psf23.98</a>, 1080psf24, 1080psf25, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1080psf29.97</a>). For display purposes it behaves as progressive, but the wire format is two-field. </li>
 </ul>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="enums_8h_source.html">enums.h</a></li>
@@ -294,7 +294,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classVideoScanMode.html">VideoScanMode</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

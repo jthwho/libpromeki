@@ -21,5 +21,6 @@ var searchData=
   ['kpcmmarkerpayloadbits_18',['kPcmMarkerPayloadBits',['../classAudioTestPattern.html#ab867ba1721d171d1ffdbb93a62f8f523',1,'AudioTestPattern']]],
   ['kpcmmarkerpreamblesamples_19',['kPcmMarkerPreambleSamples',['../classAudioTestPattern.html#a361a11c2f8ed7d60fd3b07010aca8f61',1,'AudioTestPattern']]],
   ['kpcmmarkerstartsamples_20',['kPcmMarkerStartSamples',['../classAudioTestPattern.html#ad915545729338f9c1e28b0f3d7142f88',1,'AudioTestPattern']]],
-  ['ksrcprobefrequencyhz_21',['kSrcProbeFrequencyHz',['../classAudioTestPattern.html#a852e1beb7487d36c42c3eef52c4bc97d',1,'AudioTestPattern']]]
+  ['ksrcprobefrequencyhz_21',['kSrcProbeFrequencyHz',['../classAudioTestPattern.html#a852e1beb7487d36c42c3eef52c4bc97d',1,'AudioTestPattern']]],
+  ['ksubclassfourcc_22',['ksubclassfourcc',['../classCompressedAudioPayload.html#aef12e6fedfdd5074c96fce3280c5a8db',1,'CompressedAudioPayload::kSubclassFourCC'],['../classCompressedVideoPayload.html#a6c0e0da5bd877d116793ff12b9384b89',1,'CompressedVideoPayload::kSubclassFourCC'],['../classUncompressedAudioPayload.html#af22a8b3746e717a191879fffa66c7213',1,'UncompressedAudioPayload::kSubclassFourCC'],['../classUncompressedVideoPayload.html#a9e0e656c2581f1100793fe5f8460ea20',1,'UncompressedVideoPayload::kSubclassFourCC']]]
 ];

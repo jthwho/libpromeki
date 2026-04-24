@@ -109,7 +109,7 @@ $(document).ready(function(){initNavTree('classSDLVideoWidget.html',''); initRes
 </div><!--header-->
 <div class="contents">
 
-<p><a class="el" href="classWidget.html" title="Base class for all widgets across UI backends.">Widget</a> that displays a promeki <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> via SDL texture rendering.  
+<p><a class="el" href="classWidget.html" title="Base class for all widgets across UI backends.">Widget</a> that displays an <a class="el" href="classUncompressedVideoPayload.html">UncompressedVideoPayload</a> via SDL texture rendering.  
  <a href="classSDLVideoWidget.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="sdlvideowidget_8h_source.html">sdlvideowidget.h</a>&gt;</code></p>
@@ -118,7 +118,7 @@ Inheritance diagram for SDLVideoWidget:</div>
 <div class="dyncontent">
 <div class="center"><img src="classSDLVideoWidget__inherit__graph.png" border="0" usemap="#aSDLVideoWidget_inherit__map" alt="Inheritance graph"/></div>
 <map name="aSDLVideoWidget_inherit__map" id="aSDLVideoWidget_inherit__map">
-<area shape="rect" title="Widget that displays a promeki Image via SDL texture rendering." alt="" coords="8,152,137,177"/>
+<area shape="rect" title="Widget that displays an UncompressedVideoPayload via SDL texture rendering." alt="" coords="8,152,137,177"/>
 <area shape="rect" href="classSDLPlayerWidget.html" title="Widget that plays frames through an SDLPlayerTask." alt="" coords="5,225,140,251"/>
 <area shape="poly" title=" " alt="" coords="75,191,75,225,70,225,70,191"/>
 <area shape="rect" href="classWidget.html" title="Base class for all widgets across UI backends." alt="" coords="39,79,107,104"/>
@@ -132,7 +132,7 @@ Collaboration diagram for SDLVideoWidget:</div>
 <div class="dyncontent">
 <div class="center"><img src="classSDLVideoWidget__coll__graph.png" border="0" usemap="#aSDLVideoWidget_coll__map" alt="Collaboration graph"/></div>
 <map name="aSDLVideoWidget_coll__map" id="aSDLVideoWidget_coll__map">
-<area shape="rect" title="Widget that displays a promeki Image via SDL texture rendering." alt="" coords="135,243,264,268"/>
+<area shape="rect" title="Widget that displays an UncompressedVideoPayload via SDL texture rendering." alt="" coords="135,243,264,268"/>
 <area shape="rect" href="classWidget.html" title="Base class for all widgets across UI backends." alt="" coords="165,168,233,193"/>
 <area shape="poly" title=" " alt="" coords="202,208,202,242,197,242,197,208"/>
 <area shape="rect" href="classObjectBase.html" title="Base object for promeki." alt="" coords="151,93,247,119"/>
@@ -156,7 +156,7 @@ Public Types</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:aef1c70d6e6d79046adc49334fed4c0ff" id="r_aef1c70d6e6d79046adc49334fed4c0ff"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLVideoWidget.html#aef1c70d6e6d79046adc49334fed4c0ff">SDLVideoWidget</a> (<a class="el" href="classObjectBase.html">ObjectBase</a> *<a class="el" href="classObjectBase.html#ad8a11dd19f4510f3ce38c779fc7911a8">parent</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
-<tr class="memdesc:aef1c70d6e6d79046adc49334fed4c0ff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an <a class="el" href="classSDLVideoWidget.html" title="Widget that displays a promeki Image via SDL texture rendering.">SDLVideoWidget</a>.  <br /></td></tr>
+<tr class="memdesc:aef1c70d6e6d79046adc49334fed4c0ff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an <a class="el" href="classSDLVideoWidget.html" title="Widget that displays an UncompressedVideoPayload via SDL texture rendering.">SDLVideoWidget</a>.  <br /></td></tr>
 <tr class="separator:aef1c70d6e6d79046adc49334fed4c0ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3043a0d5f90bd920e23a189f80c64339" id="r_a3043a0d5f90bd920e23a189f80c64339"><td class="memItemLeft" align="right" valign="top"><a id="a3043a0d5f90bd920e23a189f80c64339" name="a3043a0d5f90bd920e23a189f80c64339"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>~SDLVideoWidget</b> ()</td></tr>
@@ -168,9 +168,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a32f1f7b0c2b8340d27e33dcc8c963c8c" id="r_a32f1f7b0c2b8340d27e33dcc8c963c8c"><td class="memItemLeft" align="right" valign="top"><a id="a32f1f7b0c2b8340d27e33dcc8c963c8c" name="a32f1f7b0c2b8340d27e33dcc8c963c8c"></a>
 <a class="el" href="classSDLVideoWidget.html">SDLVideoWidget</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classSDLVideoWidget.html">SDLVideoWidget</a> &amp;)=<a class="el" href="classList.html">delete</a></td></tr>
 <tr class="separator:a32f1f7b0c2b8340d27e33dcc8c963c8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a10588717b76acc6131e10c91fdf7d386" id="r_a10588717b76acc6131e10c91fdf7d386"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLVideoWidget.html#a10588717b76acc6131e10c91fdf7d386">setImage</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classImage.html">Image</a> &amp;image)</td></tr>
-<tr class="memdesc:a10588717b76acc6131e10c91fdf7d386"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the image to display.  <br /></td></tr>
-<tr class="separator:a10588717b76acc6131e10c91fdf7d386"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3967b23cf79081605fcbe18aa04f6696" id="r_a3967b23cf79081605fcbe18aa04f6696"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLVideoWidget.html#a3967b23cf79081605fcbe18aa04f6696">setPayload</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classUncompressedVideoPayload.html#a16ebc139168cc8b85426955948b4708e">UncompressedVideoPayload::Ptr</a> &amp;payload)</td></tr>
+<tr class="memdesc:a3967b23cf79081605fcbe18aa04f6696"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the payload to display.  <br /></td></tr>
+<tr class="separator:a3967b23cf79081605fcbe18aa04f6696"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0e268c697b69d2129f673923d3a1b1b0" id="r_a0e268c697b69d2129f673923d3a1b1b0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLVideoWidget.html#a0e268c697b69d2129f673923d3a1b1b0">setScaleMode</a> (<a class="el" href="classSDLVideoWidget.html#a6287e1c80380985efae54ae20afd2930">ScaleMode</a> mode)</td></tr>
 <tr class="memdesc:a0e268c697b69d2129f673923d3a1b1b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the scaling mode.  <br /></td></tr>
 <tr class="separator:a0e268c697b69d2129f673923d3a1b1b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -436,19 +436,19 @@ Additional Inherited Members</h2></td></tr>
 <tr class="separator:ae2f4061ea36551655f6fd02fec4b2abd inherit pub_static_attribs_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p><a class="el" href="classWidget.html" title="Base class for all widgets across UI backends.">Widget</a> that displays a promeki <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> via SDL texture rendering. </p>
-<p><a class="el" href="classSDLVideoWidget.html" title="Widget that displays a promeki Image via SDL texture rendering.">SDLVideoWidget</a> manages an SDL_Texture and renders a promeki <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> within its widget geometry. It handles aspect-ratio-preserving scaling with letterbox/pillarbox bars.</p>
+<div class="textblock"><p><a class="el" href="classWidget.html" title="Base class for all widgets across UI backends.">Widget</a> that displays an <a class="el" href="classUncompressedVideoPayload.html">UncompressedVideoPayload</a> via SDL texture rendering. </p>
+<p><a class="el" href="classSDLVideoWidget.html" title="Widget that displays an UncompressedVideoPayload via SDL texture rendering.">SDLVideoWidget</a> manages an SDL_Texture and renders an <a class="el" href="classUncompressedVideoPayload.html">UncompressedVideoPayload</a> within its widget geometry. It handles aspect-ratio-preserving scaling with letterbox/pillarbox bars.</p>
 <p>The widget obtains the SDL_Renderer from its ancestor <a class="el" href="classSDLWindow.html" title="Top-level SDL window that serves as a root Widget.">SDLWindow</a>. It must be a child (direct or indirect) of an <a class="el" href="classSDLWindow.html" title="Top-level SDL window that serves as a root Widget.">SDLWindow</a> to render.</p>
 <dl class="section user"><dt>Supported pixel formats</dt><dd></dd></dl>
-<p>Every uncompressed <code><a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a></code> the library supports can be displayed. Formats with a direct SDL equivalent (8-bit RGB/BGR/ RGBA/BGRA/ARGB/ABGR and the host-endian 16-bit variants of those) are uploaded to an SDL texture as-is. Everything else — DPX packings, v210, 10/12-bit words, YUV, float, linear, non-host endian — is routed through <code><a class="el" href="classImage.html#a0bc6f8765b33ff98c09c72e731aaf075" title="Converts this image to a different pixel description.">Image::convert()</a></code> and displayed as RGBA8_sRGB via the CSC pipeline. <code><a class="el" href="classSDLVideoWidget.html#a731bc6c863fcf23ee2a70ad1d28171f9" title="Returns whether a format can skip CSC conversion on upload.">isDirectlyMappable()</a></code> reports only the fast path: non-directly-mappable formats still render correctly, just via an extra conversion step.</p>
+<p>Every uncompressed <code><a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a></code> the library supports can be displayed. Formats with a direct SDL equivalent (8-bit RGB/BGR/ RGBA/BGRA/ARGB/ABGR and the host-endian 16-bit variants of those) are uploaded to an SDL texture as-is. Everything else — DPX packings, v210, 10/12-bit words, YUV, float, linear, non-host endian — must be converted upstream (e.g. by a planner-inserted CSC stage) to an SDL-native <a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a> before it reaches the widget; the widget itself does not perform CSC. <code><a class="el" href="classSDLVideoWidget.html#a731bc6c863fcf23ee2a70ad1d28171f9" title="Returns whether a format can skip CSC conversion on upload.">isDirectlyMappable()</a></code> reports which formats skip the planner's CSC stage.</p>
 <p>Compressed pixel descriptions (e.g. <code>JPEG_RGB8_sRGB</code>) are not supported — the caller must decode them first.</p>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classSDLWindow.html">SDLWindow</a> <a class="code hl_class" href="classList.html">window</a>(<span class="stringliteral">&quot;Player&quot;</span>, 1280, 720);</div>
 <div class="line"><a class="code hl_class" href="classSDLVideoWidget.html">SDLVideoWidget</a> *<a class="code hl_class" href="classList.html">video</a> = <span class="keyword">new</span> <a class="code hl_class" href="classSDLVideoWidget.html">SDLVideoWidget</a>(&amp;<a class="code hl_class" href="classList.html">window</a>);</div>
 <div class="line"><a class="code hl_class" href="classList.html">video</a>-&gt;setGeometry(<a class="code hl_class" href="classList.html">window</a>.geometry());</div>
-<div class="line"><a class="code hl_class" href="classList.html">video</a>-&gt;setImage(<a class="code hl_class" href="classList.html">myImage</a>);</div>
+<div class="line"><a class="code hl_class" href="classList.html">video</a>-&gt;setPayload(<a class="code hl_class" href="classList.html">myPayload</a>);</div>
 <div class="line"><a class="code hl_class" href="classList.html">window</a>.show();</div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassSDLVideoWidget_html"><div class="ttname"><a href="classSDLVideoWidget.html">SDLVideoWidget</a></div><div class="ttdoc">Widget that displays a promeki Image via SDL texture rendering.</div><div class="ttdef"><b>Definition</b> sdlvideowidget.h:54</div></div>
+<div class="ttc" id="aclassSDLVideoWidget_html"><div class="ttname"><a href="classSDLVideoWidget.html">SDLVideoWidget</a></div><div class="ttdoc">Widget that displays an UncompressedVideoPayload via SDL texture rendering.</div><div class="ttdef"><b>Definition</b> sdlvideowidget.h:57</div></div>
 <div class="ttc" id="aclassSDLWindow_html"><div class="ttname"><a href="classSDLWindow.html">SDLWindow</a></div><div class="ttdoc">Top-level SDL window that serves as a root Widget.</div><div class="ttdef"><b>Definition</b> sdlwindow.h:42</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
@@ -493,7 +493,7 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Constructs an <a class="el" href="classSDLVideoWidget.html" title="Widget that displays a promeki Image via SDL texture rendering.">SDLVideoWidget</a>. </p>
+<p>Constructs an <a class="el" href="classSDLVideoWidget.html" title="Widget that displays an UncompressedVideoPayload via SDL texture rendering.">SDLVideoWidget</a>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">parent</td><td>Parent widget (typically an <a class="el" href="classSDLWindow.html" title="Top-level SDL window that serves as a root Widget.">SDLWindow</a>). </td></tr>
@@ -653,27 +653,27 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a10588717b76acc6131e10c91fdf7d386" name="a10588717b76acc6131e10c91fdf7d386"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a10588717b76acc6131e10c91fdf7d386">&#9670;&#160;</a></span>setImage()</h2>
+<a id="a3967b23cf79081605fcbe18aa04f6696" name="a3967b23cf79081605fcbe18aa04f6696"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3967b23cf79081605fcbe18aa04f6696">&#9670;&#160;</a></span>setPayload()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> SDLVideoWidget::setImage </td>
+          <td class="memname"><a class="el" href="classList.html">void</a> SDLVideoWidget::setPayload </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classImage.html">Image</a> &amp;&#160;</td>
-          <td class="paramname"><em>image</em></td><td>)</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classUncompressedVideoPayload.html#a16ebc139168cc8b85426955948b4708e">UncompressedVideoPayload::Ptr</a> &amp;&#160;</td>
+          <td class="paramname"><em>payload</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Sets the image to display. </p>
-<p>The image is uploaded to an SDL texture on the next paint. If the pixel format is not directly supported by SDL, it is converted to RGBA8.</p>
+<p>Sets the payload to display. </p>
+<p>The payload is uploaded to an SDL texture on the next paint. If the pixel format is not directly supported by SDL, the upload fails and the frame is dropped — callers must deliver an SDL-native <a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a> (see <a class="el" href="classSDLVideoWidget.html#a731bc6c863fcf23ee2a70ad1d28171f9">isDirectlyMappable</a>).</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">image</td><td>The image to display. </td></tr>
+    <tr><td class="paramname">payload</td><td>The payload to display. </td></tr>
   </table>
   </dd>
 </dl>
@@ -724,7 +724,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classSDLVideoWidget.html">SDLVideoWidget</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

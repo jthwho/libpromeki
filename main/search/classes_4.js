@@ -2,7 +2,7 @@ var searchData=
 [
   ['elapsedtimer_0',['ElapsedTimer',['../classElapsedTimer.html',1,'']]],
   ['encodeddesc_1',['EncodedDesc',['../classEncodedDesc.html',1,'']]],
-  ['entry_2',['entry',['../structBenchmark_1_1Entry.html',1,'Benchmark::Entry'],['../structEnum_1_1Entry.html',1,'Enum::Entry']]],
+  ['entry_2',['entry',['../structBenchmark_1_1Entry.html',1,'Benchmark::Entry'],['../classBufferView_1_1Entry.html',1,'BufferView::Entry'],['../structEnum_1_1Entry.html',1,'Enum::Entry']]],
   ['enum_3',['Enum',['../classEnum.html',1,'']]],
   ['enumlist_4',['EnumList',['../classEnumList.html',1,'']]],
   ['env_5',['Env',['../classEnv.html',1,'']]],

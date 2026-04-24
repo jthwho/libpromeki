@@ -60,7 +60,7 @@ var searchData=
   ['invaliddimension_57',['InvalidDimension',['../classError.html#ab5980e13b879db253df802b0950d1708a93545eff2d16415430592788aae53c1c',1,'Error']]],
   ['invalidoperation_58',['invalidoperation',['../classAudioFile.html#a4e2d052253dd3ed09a44127ee8ce9153abd15022b388033c23afa0f690b6f4232',1,'AudioFile::InvalidOperation'],['../classQuickTime.html#af51858ef496e929e598566e0af48e38ea09031aafcba31476cbabe1665b9f2465',1,'QuickTime::InvalidOperation']]],
   ['inverted_59',['Inverted',['../classAnsiStream.html#a7e20231eb70e71674e8522796a2b784ba099b6ae682152f33d6a5953c9e735b0a',1,'AnsiStream']]],
-  ['ioerror_60',['ioerror',['../classError.html#ab5980e13b879db253df802b0950d1708a5f2d9734718df7d0a1128baa3efba43d',1,'Error::IOError'],['../classEventLoop.html#ada6ce89952ce9dbacc31badd7d33b6bfa5f94684312d9e717c3b73666043889cb',1,'EventLoop::IoError']]],
+  ['ioerror_60',['ioerror',['../classEventLoop.html#ada6ce89952ce9dbacc31badd7d33b6bfa5f94684312d9e717c3b73666043889cb',1,'EventLoop::IoError'],['../classError.html#ab5980e13b879db253df802b0950d1708a5f2d9734718df7d0a1128baa3efba43d',1,'Error::IOError']]],
   ['ioread_61',['IoRead',['../classEventLoop.html#ada6ce89952ce9dbacc31badd7d33b6bfa8a657ae0547e1426d7e8c033726e6e24',1,'EventLoop']]],
   ['iowrite_62',['IoWrite',['../classEventLoop.html#ada6ce89952ce9dbacc31badd7d33b6bfa2c044c5599ef030869f0ab0966d282b1',1,'EventLoop']]],
   ['ipv4_63',['IPv4',['../classNetworkAddress.html#af8e7aa72337940d76d1095abe7a19982a9be86b508c4d7d551f36183b0d532f74',1,'NetworkAddress']]],

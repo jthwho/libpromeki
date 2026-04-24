@@ -217,7 +217,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p><a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a> backend that performs color space conversion. </p>
-<p>ReadWrite <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> that accepts a frame on <code>writeFrame()</code>, converts each uncompressed video image to the configured output <a class="el" href="classPixelFormat.html">PixelFormat</a> via <a class="el" href="classImage.html#a0bc6f8765b33ff98c09c72e731aaf075">Image::convert</a>, and emits the result on <code>readFrame()</code>. <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> and metadata are forwarded unchanged.</p>
+<p>ReadWrite <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> that accepts a frame on <code>writeFrame()</code>, converts each uncompressed video payload to the configured output <a class="el" href="classPixelFormat.html">PixelFormat</a> via <a class="el" href="classUncompressedVideoPayload.html#afc51291860117ec49983985e5abe5f37">UncompressedVideoPayload::convert</a>, and emits the result on <code>readFrame()</code>. Audio and metadata are forwarded unchanged.</p>
 <p>If no MediaConfig::OutputPixelFormat is set (or it is invalid), video images pass through unchanged. Compressed pixel formats are rejected — use <a class="el" href="classMediaIOTask__VideoEncoder.html">MediaIOTask_VideoEncoder</a> / <a class="el" href="classMediaIOTask__VideoDecoder.html">MediaIOTask_VideoDecoder</a> for codec transitions.</p>
 <dl class="section user"><dt>Mode support</dt><dd></dd></dl>
 <p>Only <code><a class="el" href="classMediaIO.html#aab0ab31ae4c7dabc1e3f3339ef80001d" title="Backend does both (consumer + emitter).">MediaIO::Transform</a></code> is supported.</p>
@@ -264,8 +264,8 @@ Additional Inherited Members</h2></td></tr>
 <div class="ttc" id="aclassMediaIO_html_aab0ab31ae4c7dabc1e3f3339ef80001d"><div class="ttname"><a href="classMediaIO.html#aab0ab31ae4c7dabc1e3f3339ef80001d">MediaIO::Transform</a></div><div class="ttdeci">static constexpr Mode Transform</div><div class="ttdoc">Backend does both (consumer + emitter).</div><div class="ttdef"><b>Definition</b> mediaio.h:502</div></div>
 <div class="ttc" id="aclassMediaIO_html_ad3fa425ad0f171274e3c9013d14dd813"><div class="ttname"><a href="classMediaIO.html#ad3fa425ad0f171274e3c9013d14dd813">MediaIO::readFrame</a></div><div class="ttdeci">Error readFrame(Frame::Ptr &amp;frame, bool block=true)</div><div class="ttdoc">Reads the next synchronized frame.</div></div>
 <div class="ttc" id="aclassMediaIO_html_af37ceef12934d2397a18c58d518c3489"><div class="ttname"><a href="classMediaIO.html#af37ceef12934d2397a18c58d518c3489">MediaIO::close</a></div><div class="ttdeci">Error close(bool block=true)</div><div class="ttdoc">Closes the media resource.</div></div>
-<div class="ttc" id="aclassPixelFormat_html"><div class="ttname"><a href="classPixelFormat.html">PixelFormat</a></div><div class="ttdoc">Complete pixel description combining format, color model, and semantics.</div><div class="ttdef"><b>Definition</b> pixelformat.h:128</div></div>
-<div class="ttc" id="aclassPixelFormat_html_a7ae7d8a6cf46a5c9947b72d5ec9d4dedac09d859f4e4dc0d747afe58c98dae903"><div class="ttname"><a href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4dedac09d859f4e4dc0d747afe58c98dae903">PixelFormat::RGBA8_sRGB</a></div><div class="ttdeci">@ RGBA8_sRGB</div><div class="ttdoc">8-bit RGBA, sRGB, full range.</div><div class="ttdef"><b>Definition</b> pixelformat.h:142</div></div>
+<div class="ttc" id="aclassPixelFormat_html"><div class="ttname"><a href="classPixelFormat.html">PixelFormat</a></div><div class="ttdoc">Complete pixel description combining format, color model, and semantics.</div><div class="ttdef"><b>Definition</b> pixelformat.h:129</div></div>
+<div class="ttc" id="aclassPixelFormat_html_a7ae7d8a6cf46a5c9947b72d5ec9d4dedac09d859f4e4dc0d747afe58c98dae903"><div class="ttname"><a href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4dedac09d859f4e4dc0d747afe58c98dae903">PixelFormat::RGBA8_sRGB</a></div><div class="ttdeci">@ RGBA8_sRGB</div><div class="ttdoc">8-bit RGBA, sRGB, full range.</div><div class="ttdef"><b>Definition</b> pixelformat.h:143</div></div>
 <div class="ttc" id="aclassSharedPtr_html"><div class="ttname"><a href="classSharedPtr.html">SharedPtr&lt; Frame &gt;</a></div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
@@ -307,7 +307,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIOTask__CSC.html">MediaIOTask_CSC</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

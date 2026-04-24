@@ -16,12 +16,13 @@ var classImageFile =
     [ "filename", "classImageFile.html#ac5e46d8a3293c3665a94f09587de5c59", null ],
     [ "frame", "classImageFile.html#a28970599a579f04de39f9f2a75826a7a", null ],
     [ "frame", "classImageFile.html#aec6bebd589075891271044ecee25209a", null ],
-    [ "image", "classImageFile.html#a12c22464caa2b5b71ac9b5d9e41bedf1", null ],
     [ "load", "classImageFile.html#a8cad40062d4cda14d846ce1f11d842cb", null ],
     [ "metadata", "classImageFile.html#ab1b1d6eece79dc4f6484f90381d3aac2", null ],
     [ "metadata", "classImageFile.html#ae362a7d95937a7c0edc685a7a0a526ed", null ],
     [ "save", "classImageFile.html#a28f7687eb84236b64bf93de181de83c4", null ],
     [ "setFilename", "classImageFile.html#a041e91f1ad4d9c82f0e8fc7119249d30", null ],
     [ "setFrame", "classImageFile.html#acaf3cf90bf1fef215fa44c176519fa83", null ],
-    [ "setImage", "classImageFile.html#abc0b9e24941f9b6611f52c25c2089914", null ]
+    [ "setVideoPayload", "classImageFile.html#a02581ff258bdd2f6cd837c1f9942824e", null ],
+    [ "uncompressedVideoPayload", "classImageFile.html#acad0f5ad33f08df471470d78e84e2ea3", null ],
+    [ "videoPayload", "classImageFile.html#ae8a5459e286cba82971ecf0f6158e922", null ]
 ];

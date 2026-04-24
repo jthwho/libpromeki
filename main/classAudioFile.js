@@ -16,10 +16,10 @@ var classAudioFile =
     [ "isValid", "classAudioFile.html#acd71f0604715738bdcdd0035151d0d06", null ],
     [ "open", "classAudioFile.html#a1c684bfb2373b6f84cb0aab81c416c5c", null ],
     [ "operation", "classAudioFile.html#a284a401272bc06e34950003d37c6b977", null ],
-    [ "read", "classAudioFile.html#aab5d5d26bb40dd328cdfdb91ea1ca7a9", null ],
+    [ "read", "classAudioFile.html#a3f7689240f74f76ce984ae158a8f7677", null ],
     [ "sampleCount", "classAudioFile.html#a2510ec8355a28f359cb15c89bb461b73", null ],
     [ "seekToSample", "classAudioFile.html#a85c7f7b397c8400af42eba4098de1e5c", null ],
     [ "setDesc", "classAudioFile.html#ad333d98015f0e17fc8b4ef4ad8c7583d", null ],
     [ "setFilename", "classAudioFile.html#a8c0cf0450ad87e4c57bcdb0d89e29ee6", null ],
-    [ "write", "classAudioFile.html#a37243d14e586092718e2c03cd75da35e", null ]
+    [ "write", "classAudioFile.html#a0b86616d2a5d67fe055f3bb0e995deec", null ]
 ];

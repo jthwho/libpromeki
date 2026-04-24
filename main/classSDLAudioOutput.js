@@ -9,7 +9,7 @@ var classSDLAudioOutput =
     [ "isOpen", "classSDLAudioOutput.html#a4c85d733c679f3d902faaef1ef70c23b", null ],
     [ "isPaused", "classSDLAudioOutput.html#a375dcbaece7700db7dd978b929c345c0", null ],
     [ "open", "classSDLAudioOutput.html#adc6f8e4266a30db64edfafc2320ef0d6", null ],
-    [ "pushAudio", "classSDLAudioOutput.html#a0de080d16d2796df4913c5cb291b8a57", null ],
+    [ "pushAudio", "classSDLAudioOutput.html#af96f54d37a613cd46bda907d1799e2f0", null ],
     [ "queuedBytes", "classSDLAudioOutput.html#a6f1235b456eb389a7eeb85abf495d9ff", null ],
     [ "setPaused", "classSDLAudioOutput.html#adfc7d81a478fcb227925c97636eab584", null ],
     [ "totalBytesPushed", "classSDLAudioOutput.html#a760908b8b24201b0eb7125f76be0c9a9", null ]

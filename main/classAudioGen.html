@@ -108,7 +108,7 @@ $(document).ready(function(){initNavTree('classAudioGen.html',''); initResizable
 </div><!--header-->
 <div class="contents">
 
-<p><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> signal generator for producing test tones and silence.  
+<p>Audio signal generator for producing test tones and silence.  
  <a href="classAudioGen.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="audiogen_8h_source.html">audiogen.h</a>&gt;</code></p>
@@ -132,9 +132,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:abb159984d30249584eede9ef9ccb6a5f" id="r_abb159984d30249584eede9ef9ccb6a5f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioGen.html#abb159984d30249584eede9ef9ccb6a5f">AudioGen</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;desc)</td></tr>
 <tr class="memdesc:abb159984d30249584eede9ef9ccb6a5f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an audio generator with the given audio description.  <br /></td></tr>
 <tr class="separator:abb159984d30249584eede9ef9ccb6a5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a94ffb805f9f499b22144bdec3e566820" id="r_a94ffb805f9f499b22144bdec3e566820"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html">Audio</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioGen.html#a94ffb805f9f499b22144bdec3e566820">generate</a> (<a class="el" href="classList.html">size_t</a> samples)</td></tr>
-<tr class="memdesc:a94ffb805f9f499b22144bdec3e566820"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generates the specified number of audio samples.  <br /></td></tr>
-<tr class="separator:a94ffb805f9f499b22144bdec3e566820"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a76b5f9469e311bf13cb65c60bcbd36f2" id="r_a76b5f9469e311bf13cb65c60bcbd36f2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioGen.html#a76b5f9469e311bf13cb65c60bcbd36f2">generate</a> (<a class="el" href="classList.html">float</a> *<a class="el" href="classList.html">out</a>, <a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">samples</a>)</td></tr>
+<tr class="memdesc:a76b5f9469e311bf13cb65c60bcbd36f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generates the specified number of interleaved float samples into <code>out</code>.  <br /></td></tr>
+<tr class="separator:a76b5f9469e311bf13cb65c60bcbd36f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0a3203efb1db9da7c749593f88da1a09" id="r_a0a3203efb1db9da7c749593f88da1a09"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="structAudioGen_1_1Config.html">Config</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioGen.html#a0a3203efb1db9da7c749593f88da1a09">config</a> (<a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">chan</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a0a3203efb1db9da7c749593f88da1a09"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the configuration for the given channel.  <br /></td></tr>
 <tr class="separator:a0a3203efb1db9da7c749593f88da1a09"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -143,17 +143,17 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a6d4a4f382c4aeca00f5e5d123da5333b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> signal generator for producing test tones and silence. </p>
-<p>Generates multi-channel audio data based on per-channel configuration. Each channel can independently produce silence or a sine tone at a configurable frequency and level.</p>
+<div class="textblock"><p>Audio signal generator for producing test tones and silence. </p>
+<p>Generates multi-channel audio data based on per-channel configuration. Each channel can independently produce silence or a sine tone at a configurable frequency and level. Output is written directly into a caller-supplied interleaved <code>float</code> buffer.</p>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classAudioDesc.html">AudioDesc</a> desc(48000, 2);</div>
 <div class="line"><a class="code hl_class" href="classAudioGen.html">AudioGen</a> <a class="code hl_class" href="classList.html">gen</a>(desc);</div>
 <div class="line"><a class="code hl_class" href="classList.html">gen</a>.setConfig(0, { <a class="code hl_enumvalue" href="classAudioGen.html#a27dfd03217284508c21dc418d1b93dc7ad9b0fd1832605fd86a5a0e7581f8019a">AudioGen::Sine</a>, 1000.0f, <a class="code hl_function" href="classAudioLevel.html#abeffc78ff3a6f77c3dc4f5d521feea07">AudioLevel::fromDbfs</a>(-10.0), 0.0f, 0.0f });</div>
-<div class="line"><a class="code hl_class" href="classAudio.html">Audio</a> audio = <a class="code hl_class" href="classList.html">gen</a>.generate(4800);</div>
+<div class="line"><span class="keywordtype">float</span> <a class="code hl_class" href="classList.html">samples</a>[4800 * 2];</div>
+<div class="line"><a class="code hl_class" href="classList.html">gen</a>.generate(<a class="code hl_class" href="classList.html">samples</a>, 4800);</div>
 <div class="ttc" id="aclassAudioDesc_html"><div class="ttname"><a href="classAudioDesc.html">AudioDesc</a></div><div class="ttdoc">Describes a concrete audio stream — format plus sample rate and channel count.</div><div class="ttdef"><b>Definition</b> audiodesc.h:39</div></div>
 <div class="ttc" id="aclassAudioGen_html"><div class="ttname"><a href="classAudioGen.html">AudioGen</a></div><div class="ttdoc">Audio signal generator for producing test tones and silence.</div><div class="ttdef"><b>Definition</b> audiogen.h:35</div></div>
 <div class="ttc" id="aclassAudioGen_html_a27dfd03217284508c21dc418d1b93dc7ad9b0fd1832605fd86a5a0e7581f8019a"><div class="ttname"><a href="classAudioGen.html#a27dfd03217284508c21dc418d1b93dc7ad9b0fd1832605fd86a5a0e7581f8019a">AudioGen::Sine</a></div><div class="ttdeci">@ Sine</div><div class="ttdoc">Generate a sine wave.</div><div class="ttdef"><b>Definition</b> audiogen.h:40</div></div>
 <div class="ttc" id="aclassAudioLevel_html_abeffc78ff3a6f77c3dc4f5d521feea07"><div class="ttname"><a href="classAudioLevel.html#abeffc78ff3a6f77c3dc4f5d521feea07">AudioLevel::fromDbfs</a></div><div class="ttdeci">static AudioLevel fromDbfs(double dbfs)</div><div class="ttdoc">Creates an AudioLevel from a dBFS value.</div><div class="ttdef"><b>Definition</b> audiolevel.h:43</div></div>
-<div class="ttc" id="aclassAudio_html"><div class="ttname"><a href="classAudio.html">Audio</a></div><div class="ttdoc">Object to hold some number of audio samples.</div><div class="ttdef"><b>Definition</b> audio.h:50</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
@@ -242,30 +242,42 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a94ffb805f9f499b22144bdec3e566820" name="a94ffb805f9f499b22144bdec3e566820"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a94ffb805f9f499b22144bdec3e566820">&#9670;&#160;</a></span>generate()</h2>
+<a id="a76b5f9469e311bf13cb65c60bcbd36f2" name="a76b5f9469e311bf13cb65c60bcbd36f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a76b5f9469e311bf13cb65c60bcbd36f2">&#9670;&#160;</a></span>generate()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classAudio.html">Audio</a> AudioGen::generate </td>
+          <td class="memname"><a class="el" href="classList.html">bool</a> AudioGen::generate </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">size_t</a>&#160;</td>
-          <td class="paramname"><em>samples</em></td><td>)</td>
+          <td class="paramtype"><a class="el" href="classList.html">float</a> *&#160;</td>
+          <td class="paramname"><em>out</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">size_t</a>&#160;</td>
+          <td class="paramname"><em>samples</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Generates the specified number of audio samples. </p>
+<p>Generates the specified number of interleaved float samples into <code>out</code>. </p>
+<p>The caller must provide a buffer sized at least <code>samples</code> * channels floats; the function writes exactly that many samples per channel and advances the internal sample cursor.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">samples</td><td>Number of samples to generate. </td></tr>
+    <tr><td class="paramname">out</td><td>Interleaved float output buffer. </td></tr>
+    <tr><td class="paramname">samples</td><td>Number of samples per channel. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>An <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> object containing the generated samples. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><code>true</code> on success, <code>false</code> if <code>out</code> is null. </dd></dl>
 
 </div>
 </div>
@@ -316,7 +328,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudioGen.html">AudioGen</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

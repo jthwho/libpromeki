@@ -169,12 +169,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a783883c096c4fe7ff5a3742f8bb270d9" id="r_a783883c096c4fe7ff5a3742f8bb270d9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoEncoder.html#a783883c096c4fe7ff5a3742f8bb270d9">configure</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaConfig.html">MediaConfig</a> &amp;config)</td></tr>
 <tr class="memdesc:a783883c096c4fe7ff5a3742f8bb270d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Applies encoder parameters from a <a class="el" href="classMediaConfig.html">MediaConfig</a>.  <br /></td></tr>
 <tr class="separator:a783883c096c4fe7ff5a3742f8bb270d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aae6cadfe04338225ecc30341ad27bbc2" id="r_aae6cadfe04338225ecc30341ad27bbc2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoEncoder.html#aae6cadfe04338225ecc30341ad27bbc2">submitFrame</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classImage.html#a38745cfc2762b9f0aeaaba861098b852">Image::Ptr</a> &amp;frame, <a class="el" href="classList.html">const</a> <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> &amp;pts=<a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a>())=0</td></tr>
-<tr class="memdesc:aae6cadfe04338225ecc30341ad27bbc2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Submits one uncompressed frame for encoding.  <br /></td></tr>
-<tr class="separator:aae6cadfe04338225ecc30341ad27bbc2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7898cfa9ca92982c89ee105cab8f57e0" id="r_a7898cfa9ca92982c89ee105cab8f57e0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classVideoPacket.html#acd061b0a22f40e1b25f19743f9d5025f">VideoPacket::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoEncoder.html#a7898cfa9ca92982c89ee105cab8f57e0">receivePacket</a> ()=0</td></tr>
-<tr class="memdesc:a7898cfa9ca92982c89ee105cab8f57e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dequeues one encoded packet, or a null Ptr when none is ready.  <br /></td></tr>
-<tr class="separator:a7898cfa9ca92982c89ee105cab8f57e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae910fcdd763771121377b5b2de33bcfe" id="r_ae910fcdd763771121377b5b2de33bcfe"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoEncoder.html#ae910fcdd763771121377b5b2de33bcfe">submitPayload</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classUncompressedVideoPayload.html#a16ebc139168cc8b85426955948b4708e">UncompressedVideoPayload::Ptr</a> &amp;payload)=0</td></tr>
+<tr class="memdesc:ae910fcdd763771121377b5b2de33bcfe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Submits one uncompressed payload for encoding.  <br /></td></tr>
+<tr class="separator:ae910fcdd763771121377b5b2de33bcfe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a10c0b420bf6aa1bffb81e1d18d25bd72" id="r_a10c0b420bf6aa1bffb81e1d18d25bd72"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classCompressedVideoPayload.html#a327ac4855c8a95846ad8c75ed3b4d021">CompressedVideoPayload::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoEncoder.html#a10c0b420bf6aa1bffb81e1d18d25bd72">receiveCompressedPayload</a> ()=0</td></tr>
+<tr class="memdesc:a10c0b420bf6aa1bffb81e1d18d25bd72"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dequeues one encoded payload, or a null Ptr when none is ready.  <br /></td></tr>
+<tr class="separator:a10c0b420bf6aa1bffb81e1d18d25bd72"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a85fd078c046e20b5ebdb5c480818d4b2" id="r_a85fd078c046e20b5ebdb5c480818d4b2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVideoEncoder.html#a85fd078c046e20b5ebdb5c480818d4b2">flush</a> ()=0</td></tr>
 <tr class="memdesc:a85fd078c046e20b5ebdb5c480818d4b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signals end-of-stream and asks the encoder to drain remaining packets.  <br /></td></tr>
 <tr class="separator:a85fd078c046e20b5ebdb5c480818d4b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -234,7 +234,7 @@ Protected Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Abstract base class for stateful video encoders. </p>
-<p>A <a class="el" href="classVideoEncoder.html" title="Abstract base class for stateful video encoders.">VideoEncoder</a> is a single push-frame / pull-packet codec session. Concrete session classes hold codec state (reference frames, rate-control context, internal allocators, …) across successive <a class="el" href="classVideoEncoder.html#aae6cadfe04338225ecc30341ad27bbc2">submitFrame</a> calls and emit <a class="el" href="classVideoPacket.html">VideoPacket</a> access units via <a class="el" href="classVideoEncoder.html#a7898cfa9ca92982c89ee105cab8f57e0">receivePacket</a> as the codec decides they're ready.</p>
+<p>A <a class="el" href="classVideoEncoder.html" title="Abstract base class for stateful video encoders.">VideoEncoder</a> is a single push-frame / pull-packet codec session. Concrete session classes hold codec state (reference frames, rate-control context, internal allocators, …) across successive submitFrame calls and emit <a class="el" href="classCompressedVideoPayload.html">CompressedVideoPayload</a> access units via receivePacket as the codec decides they're ready.</p>
 <p>Encoders expose no codec-family metadata directly — the caller asks the <a class="el" href="classVideoEncoder.html#aa71dff6ef0672eb00b8c6a2c4884fda2">codec</a> wrapper returned by <a class="el" href="classVideoEncoder.html#aa71dff6ef0672eb00b8c6a2c4884fda2">codec()</a> instead. The codec wrapper knows its own name, description, <a class="el" href="classFourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a> list, compressed <a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a> range, inter-/intra-frame coding, bit-depth coverage, and all other spec-level facts; per-backend facts (the specific uncompressed PixelFormats this particular backend accepts, a bitrate ceiling, …) live on the registered <a class="el" href="structVideoEncoder_1_1BackendRecord.html">BackendRecord</a> and are reachable via <a class="el" href="classVideoCodec.html#a23972db97d81f0ee81ee35e1b5d7fd10">VideoCodec::encoderSupportedInputs</a>.</p>
 <dl class="section user"><dt>Backend registration</dt><dd></dd></dl>
 <p>Concrete backend source files register themselves against the process-wide encoder registry at static-init time:</p>
@@ -257,7 +257,7 @@ Protected Attributes</h2></td></tr>
 <div class="ttc" id="aclassList_html_a708769d50011e6bdadc6bed2a6468aec"><div class="ttname"><a href="classList.html#a708769d50011e6bdadc6bed2a6468aec">List::List</a></div><div class="ttdeci">List()=default</div><div class="ttdoc">Default constructor. Creates an empty list.</div></div>
 <div class="ttc" id="aclassVideoCodec_html_a28d13fdb0f61e851c9a0f5f83855a720"><div class="ttname"><a href="classVideoCodec.html#a28d13fdb0f61e851c9a0f5f83855a720">VideoCodec::registerBackend</a></div><div class="ttdeci">static Result&lt; Backend &gt; registerBackend(const String &amp;name)</div><div class="ttdoc">Registers a backend name and returns its typed handle.</div></div>
 <div class="ttc" id="aclassVideoCodec_html_af5d21a83ef1d943e8ad2d3e9b041b5dca48919d6ed222bf6aed61e664ac1e3350"><div class="ttname"><a href="classVideoCodec.html#af5d21a83ef1d943e8ad2d3e9b041b5dca48919d6ed222bf6aed61e664ac1e3350">VideoCodec::H264</a></div><div class="ttdeci">@ H264</div><div class="ttdoc">H.264 / MPEG-4 AVC.</div><div class="ttdef"><b>Definition</b> videocodec.h:119</div></div>
-<div class="ttc" id="aclassVideoEncoder_html"><div class="ttname"><a href="classVideoEncoder.html">VideoEncoder</a></div><div class="ttdoc">Abstract base class for stateful video encoders.</div><div class="ttdef"><b>Definition</b> videoencoder.h:96</div></div>
+<div class="ttc" id="aclassVideoEncoder_html"><div class="ttname"><a href="classVideoEncoder.html">VideoEncoder</a></div><div class="ttdoc">Abstract base class for stateful video encoders.</div><div class="ttdef"><b>Definition</b> videoencoder.h:95</div></div>
 <div class="ttc" id="aclassVideoEncoder_html_a9c0a2730ff8dbfbb453122a8d4f8dcdf"><div class="ttname"><a href="classVideoEncoder.html#a9c0a2730ff8dbfbb453122a8d4f8dcdf">VideoEncoder::registerBackend</a></div><div class="ttdeci">static Error registerBackend(BackendRecord record)</div><div class="ttdoc">Registers a concrete encoder backend for a (codec, backend) pair.</div></div>
 <div class="ttc" id="anamespaceBackendWeight_html_a706a55db9ff0e191e865e4263ece9b85"><div class="ttname"><a href="namespaceBackendWeight.html#a706a55db9ff0e191e865e4263ece9b85">BackendWeight::Vendored</a></div><div class="ttdeci">constexpr int Vendored</div><div class="ttdoc">Vendored / built-in backend (lowest of the standard bands).</div><div class="ttdef"><b>Definition</b> backendweight.h:29</div></div>
 <div class="ttc" id="aresult_8h_html_a231c9201a93dca6f23b67d1d32643de1"><div class="ttname"><a href="result_8h.html#a231c9201a93dca6f23b67d1d32643de1">isError</a></div><div class="ttdeci">bool isError(const Result&lt; T &gt; &amp;r)</div><div class="ttdoc">Returns true if the Result has an error.</div><div class="ttdef"><b>Definition</b> result.h:83</div></div>
@@ -268,9 +268,9 @@ Protected Attributes</h2></td></tr>
 <ol type="1">
 <li>Resolve a session via <a class="el" href="classVideoCodec.html#abf05fe27153e1a251178fa2be6632894">VideoCodec::createEncoder</a>.</li>
 <li>Call <a class="el" href="classVideoEncoder.html#a783883c096c4fe7ff5a3742f8bb270d9">configure</a> with a <a class="el" href="classMediaConfig.html">MediaConfig</a> holding bitrate, GOP length, preset, and any other well-known knobs. (Skip when a config was already supplied to <code>createEncoder</code>.)</li>
-<li>For each source frame, call <a class="el" href="classVideoEncoder.html#aae6cadfe04338225ecc30341ad27bbc2">submitFrame</a>.</li>
-<li>After each submit (and any time after), drain with <a class="el" href="classVideoEncoder.html#a7898cfa9ca92982c89ee105cab8f57e0">receivePacket</a> until it returns a null Ptr. Packets may arrive with PTS out of order (B-frames); the DTS on each packet reflects decode order.</li>
-<li>When the input stream is exhausted, call <a class="el" href="classVideoEncoder.html#a85fd078c046e20b5ebdb5c480818d4b2">flush</a> and keep draining until <a class="el" href="classVideoEncoder.html#a7898cfa9ca92982c89ee105cab8f57e0">receivePacket</a> returns a packet whose <code>Metadata::EndOfStream</code> is set (test with <a class="el" href="classMediaPacket.html#a237687349b662d0117b4d87056d2ce35">MediaPacket::isEndOfStream</a>).</li>
+<li>For each source frame, call submitFrame.</li>
+<li>After each submit (and any time after), drain with receivePacket until it returns a null Ptr. Packets may arrive with PTS out of order (B-frames); the DTS on each packet reflects decode order.</li>
+<li>When the input stream is exhausted, call <a class="el" href="classVideoEncoder.html#a85fd078c046e20b5ebdb5c480818d4b2">flush</a> and keep draining until receivePacket returns a packet whose <code>MediaPayload::Flags::EndOfStream</code> flag is set.</li>
 <li>Destroy the encoder.</li>
 </ol>
 <p>Implementations are not required to be thread-safe. Each pipeline thread should own its own encoder instance; typical use is one encoder per stream. </p>
@@ -299,7 +299,7 @@ Protected Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Returns the codec this session encodes. </p>
-<p>The returned wrapper is pinned with the backend handle the factory was registered under, so downstream code can round-trip through <code><a class="el" href="classVideoEncoder.html#aa71dff6ef0672eb00b8c6a2c4884fda2" title="Returns the codec this session encodes.">codec()</a></code>.toString() to obtain the canonical <code>"Name:Backend"</code> form. Stamped onto every outgoing <a class="el" href="classVideoPacket.html">VideoPacket</a> by the common session plumbing. </p>
+<p>The returned wrapper is pinned with the backend handle the factory was registered under, so downstream code can round-trip through <code><a class="el" href="classVideoEncoder.html#aa71dff6ef0672eb00b8c6a2c4884fda2" title="Returns the codec this session encodes.">codec()</a></code>.toString() to obtain the canonical <code>"Name:Backend"</code> form. Stamped onto every outgoing <a class="el" href="classCompressedVideoPayload.html">CompressedVideoPayload</a> by the common session plumbing. </p>
 
 </div>
 </div>
@@ -414,8 +414,8 @@ Protected Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a7898cfa9ca92982c89ee105cab8f57e0" name="a7898cfa9ca92982c89ee105cab8f57e0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7898cfa9ca92982c89ee105cab8f57e0">&#9670;&#160;</a></span>receivePacket()</h2>
+<a id="a10c0b420bf6aa1bffb81e1d18d25bd72" name="a10c0b420bf6aa1bffb81e1d18d25bd72"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a10c0b420bf6aa1bffb81e1d18d25bd72">&#9670;&#160;</a></span>receiveCompressedPayload()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -424,7 +424,7 @@ Protected Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classVideoPacket.html#acd061b0a22f40e1b25f19743f9d5025f">VideoPacket::Ptr</a> VideoEncoder::receivePacket </td>
+          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classCompressedVideoPayload.html#a327ac4855c8a95846ad8c75ed3b4d021">CompressedVideoPayload::Ptr</a> VideoEncoder::receiveCompressedPayload </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -437,9 +437,10 @@ Protected Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Dequeues one encoded packet, or a null Ptr when none is ready. </p>
+<p>Dequeues one encoded payload, or a null Ptr when none is ready. </p>
+<p>The returned <a class="el" href="classCompressedVideoPayload.html">CompressedVideoPayload</a> carries the access-unit bytes, PTS / DTS / duration, and keyframe / parameter-set / end-of-stream flags. Packets may arrive with PTS out of order (B-frames); the DTS reflects decode order. </p>
 
-<p>Implemented in <a class="el" href="classJpegVideoEncoder.html#aeaf9daa46e46fe753fc41ee26e5ca32b">JpegVideoEncoder</a>, and <a class="el" href="classJpegXsVideoEncoder.html#a3d73b2f36945cf83f05cfd1a4c9b9864">JpegXsVideoEncoder</a>.</p>
+<p>Implemented in <a class="el" href="classJpegVideoEncoder.html#a93fe2a0cf1d2074b713ecb55dd9da286">JpegVideoEncoder</a>, and <a class="el" href="classJpegXsVideoEncoder.html#af20b538a3ab2cbbca1ad1e1747162b4b">JpegXsVideoEncoder</a>.</p>
 
 </div>
 </div>
@@ -565,8 +566,8 @@ Protected Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="aae6cadfe04338225ecc30341ad27bbc2" name="aae6cadfe04338225ecc30341ad27bbc2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aae6cadfe04338225ecc30341ad27bbc2">&#9670;&#160;</a></span>submitFrame()</h2>
+<a id="ae910fcdd763771121377b5b2de33bcfe" name="ae910fcdd763771121377b5b2de33bcfe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae910fcdd763771121377b5b2de33bcfe">&#9670;&#160;</a></span>submitPayload()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -575,21 +576,11 @@ Protected Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a> VideoEncoder::submitFrame </td>
+          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a> VideoEncoder::submitPayload </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classImage.html#a38745cfc2762b9f0aeaaba861098b852">Image::Ptr</a> &amp;&#160;</td>
-          <td class="paramname"><em>frame</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classUncompressedVideoPayload.html#a16ebc139168cc8b85426955948b4708e">UncompressedVideoPayload::Ptr</a> &amp;&#160;</td>
+          <td class="paramname"><em>payload</em></td><td>)</td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a> &amp;&#160;</td>
-          <td class="paramname"><em>pts</em> = <code><a class="el" href="classMediaTimeStamp.html">MediaTimeStamp</a>()</code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -599,17 +590,17 @@ Protected Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Submits one uncompressed frame for encoding. </p>
+<p>Submits one uncompressed payload for encoding. </p>
+<p>The payload already carries its own PTS as first-class state — callers stamp the payload's PTS before submitting. A null Ptr is treated as <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85">Error::Invalid</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">frame</td><td>The source image in one of the supported uncompressed pixel formats, passed as a shared <a class="el" href="classImage.html#a38745cfc2762b9f0aeaaba861098b852">Image::Ptr</a> so the encoder can retain a reference without copying the plane buffers. A null Ptr is treated as <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85">Error::Invalid</a>. </td></tr>
-    <tr><td class="paramname">pts</td><td>Presentation timestamp for this frame. </td></tr>
+    <tr><td class="paramname">payload</td><td>The source payload in one of the backend's supported uncompressed pixel formats (see <a class="el" href="classVideoCodec.html#a23972db97d81f0ee81ee35e1b5d7fd10">VideoCodec::encoderSupportedInputs</a>). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a></code> on success, or an error code describing why the frame was rejected. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a></code> on success, or an error code describing why the payload was rejected. </dd></dl>
 
-<p>Implemented in <a class="el" href="classJpegVideoEncoder.html#a3a22d88551e54252ebf88d2373cada79">JpegVideoEncoder</a>, and <a class="el" href="classJpegXsVideoEncoder.html#af72e72b140bd1a75d9690d74b2d9d25a">JpegXsVideoEncoder</a>.</p>
+<p>Implemented in <a class="el" href="classJpegVideoEncoder.html#a0c38320e99d028dc2b8953b08b61aa6d">JpegVideoEncoder</a>, and <a class="el" href="classJpegXsVideoEncoder.html#ab9120cf01b0e58096451bc42bfd37595">JpegXsVideoEncoder</a>.</p>
 
 </div>
 </div>
@@ -662,7 +653,7 @@ Protected Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classVideoEncoder.html">VideoEncoder</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

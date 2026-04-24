@@ -209,7 +209,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p><a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a> backend that generates test patterns. </p>
-<p>Read-only <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> source that produces synchronized <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> objects containing optional video, audio, and timecode. Each component is independently enabled so the generator can serve as a video-only, audio-only, or combined source.</p>
+<p>Read-only <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> source that produces synchronized <a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a> objects containing optional video, audio, and timecode. Each component is independently enabled so the generator can serve as a video-only, audio-only, or combined source.</p>
 <p>Video generation is delegated to <a class="el" href="classVideoTestPattern.html" title="Standalone video test pattern generator.">VideoTestPattern</a>, audio to <a class="el" href="classAudioTestPattern.html" title="Multi-channel audio test pattern generator.">AudioTestPattern</a>, and timecode to <a class="el" href="classTimecodeGenerator.html" title="General-purpose timecode generator.">TimecodeGenerator</a>.</p>
 <p>This is an infinite source: frameCount returns FrameCountInfinite and canSeek returns false.</p>
 <dl class="section user"><dt>Config keys — General</dt><dd><table class="markdownTable">
@@ -262,7 +262,7 @@ Additional Inherited Members</h2></td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">MediaConfig::AudioEnabled   </td><td class="markdownTableBodyNone">bool   </td><td class="markdownTableBodyNone">true   </td><td class="markdownTableBodyNone">Enable audio generation.    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">MediaConfig::AudioMode   </td><td class="markdownTableBodyNone"><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> <a class="el" href="classAudioPattern.html">AudioPattern</a>   </td><td class="markdownTableBodyNone">AvSync   </td><td class="markdownTableBodyNone"><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> pattern selector.    </td></tr>
+<td class="markdownTableBodyNone">MediaConfig::AudioMode   </td><td class="markdownTableBodyNone"><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> <a class="el" href="classAudioPattern.html">AudioPattern</a>   </td><td class="markdownTableBodyNone">AvSync   </td><td class="markdownTableBodyNone">Audio pattern selector.    </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">MediaConfig::AudioRate   </td><td class="markdownTableBodyNone">float   </td><td class="markdownTableBodyNone">48000   </td><td class="markdownTableBodyNone">Sample rate in Hz.    </td></tr>
 <tr class="markdownTableRowEven">
@@ -349,7 +349,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIOTask__TPG.html">MediaIOTask_TPG</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

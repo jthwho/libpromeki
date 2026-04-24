@@ -120,7 +120,7 @@ Public Types</h2></td></tr>
 <tr class="separator:a6ac5c71ea65300246169b6c07b54345c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0b7dac95f925a2ebad7b8c3d7d1c84f8" id="r_a0b7dac95f925a2ebad7b8c3d7d1c84f8"><td class="memItemLeft" align="right" valign="top"><a id="a0b7dac95f925a2ebad7b8c3d7d1c84f8" name="a0b7dac95f925a2ebad7b8c3d7d1c84f8"></a>
 <a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ProcessResult</b> = <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">size_t</a> &gt;</td></tr>
-<tr class="memdesc:a0b7dac95f925a2ebad7b8c3d7d1c84f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Result type for <a class="el" href="classAudioResampler.html#ab9ab28e9add43e23bebbfbef8ac580ce" title="Processes audio samples through the resampler.">process()</a>: {output samples generated, <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a>}. <br /></td></tr>
+<tr class="memdesc:a0b7dac95f925a2ebad7b8c3d7d1c84f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Result type for <a class="el" href="classAudioResampler.html#a2956a02b7db4711617a7d3a7c199d368" title="Processes raw float buffers through the resampler.">process()</a>: {output samples generated, <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a>}. <br /></td></tr>
 <tr class="separator:a0b7dac95f925a2ebad7b8c3d7d1c84f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
@@ -165,14 +165,11 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:ab96807f073505b21a9933b898f8795d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current conversion ratio (output_rate / input_rate). <br /></td></tr>
 <tr class="separator:ab96807f073505b21a9933b898f8795d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea36a9456ad7ba2c96db1b532e2df215" id="r_aea36a9456ad7ba2c96db1b532e2df215"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioResampler.html#aea36a9456ad7ba2c96db1b532e2df215">setRatio</a> (<a class="el" href="classList.html">double</a> <a class="el" href="classAudioResampler.html#ab96807f073505b21a9933b898f8795d5">ratio</a>)</td></tr>
-<tr class="memdesc:aea36a9456ad7ba2c96db1b532e2df215"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the conversion ratio for subsequent <a class="el" href="classAudioResampler.html#ab9ab28e9add43e23bebbfbef8ac580ce" title="Processes audio samples through the resampler.">process()</a> calls.  <br /></td></tr>
+<tr class="memdesc:aea36a9456ad7ba2c96db1b532e2df215"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the conversion ratio for subsequent <a class="el" href="classAudioResampler.html#a2956a02b7db4711617a7d3a7c199d368" title="Processes raw float buffers through the resampler.">process()</a> calls.  <br /></td></tr>
 <tr class="separator:aea36a9456ad7ba2c96db1b532e2df215"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2a858e69db15bc20b5c2d825ece2113c" id="r_a2a858e69db15bc20b5c2d825ece2113c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioResampler.html#a2a858e69db15bc20b5c2d825ece2113c">setRatio</a> (<a class="el" href="classList.html">float</a> <a class="el" href="classList.html">inputRate</a>, <a class="el" href="classList.html">float</a> <a class="el" href="classList.html">outputRate</a>)</td></tr>
 <tr class="memdesc:a2a858e69db15bc20b5c2d825ece2113c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the conversion ratio from input and output sample rates.  <br /></td></tr>
 <tr class="separator:a2a858e69db15bc20b5c2d825ece2113c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab9ab28e9add43e23bebbfbef8ac580ce" id="r_ab9ab28e9add43e23bebbfbef8ac580ce"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioResampler.html#a0b7dac95f925a2ebad7b8c3d7d1c84f8">ProcessResult</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioResampler.html#ab9ab28e9add43e23bebbfbef8ac580ce">process</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classAudio.html">Audio</a> &amp;<a class="el" href="classList.html">input</a>, <a class="el" href="classAudio.html">Audio</a> &amp;<a class="el" href="classList.html">output</a>, <a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">endOfInput</a>=<a class="el" href="classList.html">false</a>)</td></tr>
-<tr class="memdesc:ab9ab28e9add43e23bebbfbef8ac580ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Processes audio samples through the resampler.  <br /></td></tr>
-<tr class="separator:ab9ab28e9add43e23bebbfbef8ac580ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2956a02b7db4711617a7d3a7c199d368" id="r_a2956a02b7db4711617a7d3a7c199d368"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioResampler.html#a2956a02b7db4711617a7d3a7c199d368">process</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">float</a> *<a class="el" href="classList.html">dataIn</a>, <a class="el" href="classList.html">long</a> <a class="el" href="classList.html">inputFrames</a>, <a class="el" href="classList.html">float</a> *<a class="el" href="classList.html">dataOut</a>, <a class="el" href="classList.html">long</a> <a class="el" href="classList.html">outputFrames</a>, <a class="el" href="classList.html">long</a> &amp;<a class="el" href="classList.html">inputUsed</a>, <a class="el" href="classList.html">long</a> &amp;<a class="el" href="classList.html">outputGen</a>, <a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">endOfInput</a>=<a class="el" href="classList.html">false</a>)</td></tr>
 <tr class="memdesc:a2956a02b7db4711617a7d3a7c199d368"><td class="mdescLeft">&#160;</td><td class="mdescRight">Processes raw float buffers through the resampler.  <br /></td></tr>
 <tr class="separator:a2956a02b7db4711617a7d3a7c199d368"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -182,76 +179,28 @@ Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Variable-ratio audio sample rate converter backed by libsamplerate. </p>
-<p>Wraps a libsamplerate SRC_STATE to resample interleaved float32 audio with smooth ratio transitions. Designed for real-time drift correction: the ratio can be changed between <a class="el" href="classAudioResampler.html#ab9ab28e9add43e23bebbfbef8ac580ce" title="Processes audio samples through the resampler.">process()</a> calls and libsamplerate smoothly interpolates between the old and new ratios.</p>
-<p>All input must be in the native interleaved float32 format (<a class="el" href="classAudioFormat.html#ab56bc36b04ec0dd1d81c0f07cf511a19" title="The platform&#39;s native float32 PCM format.">AudioFormat::NativeFloat</a>). Use <a class="el" href="classAudio.html#a24815117e64346a57ba1686e3ae2837e" title="Converts this Audio to a different sample format.">Audio::convert()</a> or <a class="el" href="classAudioDesc.html" title="Describes a concrete audio stream — format plus sample rate and channel count.">AudioDesc</a>'s samplesToFloat() helper to convert before feeding data in.</p>
-<p>The resampler is not internally thread-safe; the caller must synchronize if <a class="el" href="classAudioResampler.html#ab9ab28e9add43e23bebbfbef8ac580ce" title="Processes audio samples through the resampler.">process()</a> is called from multiple threads.</p>
+<p>Wraps a libsamplerate SRC_STATE to resample interleaved float32 audio with smooth ratio transitions. Designed for real-time drift correction: the ratio can be changed between <a class="el" href="classAudioResampler.html#a2956a02b7db4711617a7d3a7c199d368" title="Processes raw float buffers through the resampler.">process()</a> calls and libsamplerate smoothly interpolates between the old and new ratios.</p>
+<p>All input must be in the native interleaved float32 format (<a class="el" href="classAudioFormat.html#ab56bc36b04ec0dd1d81c0f07cf511a19" title="The platform&#39;s native float32 PCM format.">AudioFormat::NativeFloat</a>). Use <a class="el" href="classUncompressedAudioPayload.html#a4c8807bc6353b87efa187e2b515eb6d6">UncompressedAudioPayload::convert</a> or <a class="el" href="classAudioDesc.html#a05766200e90d56c804aa82756da80198">AudioDesc::samplesToFloat</a> to convert before feeding data in.</p>
+<p>The resampler is not internally thread-safe; the caller must synchronize if <a class="el" href="classAudioResampler.html#a2956a02b7db4711617a7d3a7c199d368" title="Processes raw float buffers through the resampler.">process()</a> is called from multiple threads.</p>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classAudioResampler.html">AudioResampler</a> r;</div>
 <div class="line"><a class="code hl_class" href="classError.html">Error</a> <a class="code hl_class" href="classList.html">err</a> = r.<a class="code hl_function" href="classAudioResampler.html#a493da667f9a4b24f2e1b5379ec1bf6b9">setup</a>(2, SrcQuality::SincMedium);</div>
 <div class="line">r.<a class="code hl_function" href="classAudioResampler.html#aea36a9456ad7ba2c96db1b532e2df215">setRatio</a>(48000.0 / 44100.0);</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classAudio.html">Audio</a> <a class="code hl_class" href="classList.html">in</a>(<a class="code hl_class" href="classAudioDesc.html">AudioDesc</a>(44100.0f, 2), 1024);</div>
-<div class="line"><span class="comment">// ... fill in ...</span></div>
-<div class="line"><a class="code hl_class" href="classAudio.html">Audio</a> <a class="code hl_class" href="classList.html">out</a>(<a class="code hl_class" href="classAudioDesc.html">AudioDesc</a>(48000.0f, 2), 2048);</div>
-<div class="line"><span class="keyword">auto</span> [<a class="code hl_class" href="classList.html">generated</a>, <a class="code hl_class" href="classList.html">processErr</a>] = r.<a class="code hl_function" href="classAudioResampler.html#ab9ab28e9add43e23bebbfbef8ac580ce">process</a>(<a class="code hl_class" href="classList.html">in</a>, <a class="code hl_class" href="classList.html">out</a>);</div>
-<div class="ttc" id="aclassAudioDesc_html"><div class="ttname"><a href="classAudioDesc.html">AudioDesc</a></div><div class="ttdoc">Describes a concrete audio stream — format plus sample rate and channel count.</div><div class="ttdef"><b>Definition</b> audiodesc.h:39</div></div>
+<div class="line">std::vector&lt;float&gt; <a class="code hl_class" href="classList.html">in</a>(1024 * 2);</div>
+<div class="line">std::vector&lt;float&gt; <a class="code hl_class" href="classList.html">out</a>(2048 * 2);</div>
+<div class="line"><span class="keywordtype">long</span> <a class="code hl_class" href="classList.html">used</a> = 0, <a class="code hl_class" href="classList.html">gen</a> = 0;</div>
+<div class="line">r.<a class="code hl_function" href="classAudioResampler.html#a2956a02b7db4711617a7d3a7c199d368">process</a>(<a class="code hl_class" href="classList.html">in</a>.<a class="code hl_function" href="classList.html#a81b322fbd948794fae1a38d0f9db48ab">data</a>(), 1024, <a class="code hl_class" href="classList.html">out</a>.<a class="code hl_function" href="classList.html#a81b322fbd948794fae1a38d0f9db48ab">data</a>(), 2048, <a class="code hl_class" href="classList.html">used</a>, <a class="code hl_class" href="classList.html">gen</a>);</div>
 <div class="ttc" id="aclassAudioResampler_html"><div class="ttname"><a href="classAudioResampler.html">AudioResampler</a></div><div class="ttdoc">Variable-ratio audio sample rate converter backed by libsamplerate.</div><div class="ttdef"><b>Definition</b> audioresampler.h:48</div></div>
+<div class="ttc" id="aclassAudioResampler_html_a2956a02b7db4711617a7d3a7c199d368"><div class="ttname"><a href="classAudioResampler.html#a2956a02b7db4711617a7d3a7c199d368">AudioResampler::process</a></div><div class="ttdeci">Error process(const float *dataIn, long inputFrames, float *dataOut, long outputFrames, long &amp;inputUsed, long &amp;outputGen, bool endOfInput=false)</div><div class="ttdoc">Processes raw float buffers through the resampler.</div></div>
 <div class="ttc" id="aclassAudioResampler_html_a493da667f9a4b24f2e1b5379ec1bf6b9"><div class="ttname"><a href="classAudioResampler.html#a493da667f9a4b24f2e1b5379ec1bf6b9">AudioResampler::setup</a></div><div class="ttdeci">Error setup(unsigned int channels, const SrcQuality &amp;quality=SrcQuality::SincMedium)</div><div class="ttdoc">Initializes (or reinitializes) the resampler.</div></div>
-<div class="ttc" id="aclassAudioResampler_html_ab9ab28e9add43e23bebbfbef8ac580ce"><div class="ttname"><a href="classAudioResampler.html#ab9ab28e9add43e23bebbfbef8ac580ce">AudioResampler::process</a></div><div class="ttdeci">ProcessResult process(const Audio &amp;input, Audio &amp;output, bool endOfInput=false)</div><div class="ttdoc">Processes audio samples through the resampler.</div></div>
 <div class="ttc" id="aclassAudioResampler_html_aea36a9456ad7ba2c96db1b532e2df215"><div class="ttname"><a href="classAudioResampler.html#aea36a9456ad7ba2c96db1b532e2df215">AudioResampler::setRatio</a></div><div class="ttdeci">Error setRatio(double ratio)</div><div class="ttdoc">Sets the conversion ratio for subsequent process() calls.</div></div>
-<div class="ttc" id="aclassAudio_html"><div class="ttname"><a href="classAudio.html">Audio</a></div><div class="ttdoc">Object to hold some number of audio samples.</div><div class="ttdef"><b>Definition</b> audio.h:50</div></div>
 <div class="ttc" id="aclassError_html"><div class="ttname"><a href="classError.html">Error</a></div><div class="ttdoc">Lightweight error code wrapper for the promeki library.</div><div class="ttdef"><b>Definition</b> error.h:39</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="ttc" id="aclassList_html_a81b322fbd948794fae1a38d0f9db48ab"><div class="ttname"><a href="classList.html#a81b322fbd948794fae1a38d0f9db48ab">List::data</a></div><div class="ttdeci">T * data() noexcept</div><div class="ttdoc">Returns a pointer to the underlying contiguous storage.</div><div class="ttdef"><b>Definition</b> list.h:286</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="ab9ab28e9add43e23bebbfbef8ac580ce" name="ab9ab28e9add43e23bebbfbef8ac580ce"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab9ab28e9add43e23bebbfbef8ac580ce">&#9670;&#160;</a></span>process() <span class="overload">[1/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classAudioResampler.html#a0b7dac95f925a2ebad7b8c3d7d1c84f8">ProcessResult</a> AudioResampler::process </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classAudio.html">Audio</a> &amp;&#160;</td>
-          <td class="paramname"><em>input</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classAudio.html">Audio</a> &amp;&#160;</td>
-          <td class="paramname"><em>output</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">bool</a>&#160;</td>
-          <td class="paramname"><em>endOfInput</em> = <code><a class="el" href="classList.html">false</a></code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Processes audio samples through the resampler. </p>
-<p>Reads from <code>input</code> and writes resampled data to <code>output</code>. Both must be in native float32 interleaved format and have the same channel count as the resampler.</p>
-<p>On success, <code>output's</code> sample count is set to the number of samples actually generated. The number of input samples consumed may be less than input.samples() if the output buffer fills; the caller should advance and re-call.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">input</td><td>Source audio (not modified, but sample count is read). </td></tr>
-    <tr><td class="paramname">output</td><td>Destination audio; maxSamples() determines the upper bound on output. Resized to actual output on return. </td></tr>
-    <tr><td class="paramname">endOfInput</td><td><a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> to true when this is the final chunk (flushes the resampler's internal state). </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>{outputSamplesGenerated, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a>} on success. </dd></dl>
-
-</div>
-</div>
 <a id="a2956a02b7db4711617a7d3a7c199d368" name="a2956a02b7db4711617a7d3a7c199d368"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2956a02b7db4711617a7d3a7c199d368">&#9670;&#160;</a></span>process() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a2956a02b7db4711617a7d3a7c199d368">&#9670;&#160;</a></span>process()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -361,7 +310,7 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Sets the conversion ratio for subsequent <a class="el" href="classAudioResampler.html#ab9ab28e9add43e23bebbfbef8ac580ce" title="Processes audio samples through the resampler.">process()</a> calls. </p>
+<p>Sets the conversion ratio for subsequent <a class="el" href="classAudioResampler.html#a2956a02b7db4711617a7d3a7c199d368" title="Processes raw float buffers through the resampler.">process()</a> calls. </p>
 <p>The ratio is output_rate / input_rate. For example, converting 44100 Hz input to 48000 Hz output uses ratio <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">48000.0</a> / <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">44100.0</a>.</p>
 <p>libsamplerate smoothly transitions to the new ratio, which is the mechanism for variable-ratio drift correction.</p>
 <dl class="params"><dt>Parameters</dt><dd>
@@ -462,7 +411,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudioResampler.html">AudioResampler</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

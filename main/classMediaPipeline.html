@@ -512,7 +512,7 @@ template&lt;typename... Args&gt; </td></tr>
 </div><div class="memdoc">
 
 <p>Registers an externally-constructed <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> for a stage that <a class="el" href="classMediaPipeline.html#aaaebd4b1af73e2f0378ac89c09e095dd">build</a> would otherwise create. </p>
-<p>Some backends cannot be instantiated through <a class="el" href="classMediaIO.html#a594b8b55ae788efe104c871248d73808">MediaIO::create</a> because they need resources the library does not manage — the SDL player, for example, needs live <code><a class="el" href="classSDLVideoWidget.html" title="Widget that displays a promeki Image via SDL texture rendering.">SDLVideoWidget</a></code> / <code><a class="el" href="classSDLAudioOutput.html" title="Manages an SDL3 audio output device for playback.">SDLAudioOutput</a></code> pointers. Callers pre-build those instances on the main thread and register them via <code>injectStage</code> before calling <a class="el" href="classMediaPipeline.html#aaaebd4b1af73e2f0378ac89c09e095dd">build</a>. Injected stages are <em>not</em> deleted by the pipeline in <a class="el" href="classMediaPipeline.html#a43817d314f804c00eb6102b4ec138ed0">close</a> — ownership stays with the caller.</p>
+<p>Some backends cannot be instantiated through <a class="el" href="classMediaIO.html#a594b8b55ae788efe104c871248d73808">MediaIO::create</a> because they need resources the library does not manage — the SDL player, for example, needs live <code><a class="el" href="classSDLVideoWidget.html" title="Widget that displays an UncompressedVideoPayload via SDL texture rendering.">SDLVideoWidget</a></code> / <code><a class="el" href="classSDLAudioOutput.html" title="Manages an SDL3 audio output device for playback.">SDLAudioOutput</a></code> pointers. Callers pre-build those instances on the main thread and register them via <code>injectStage</code> before calling <a class="el" href="classMediaPipeline.html#aaaebd4b1af73e2f0378ac89c09e095dd">build</a>. Injected stages are <em>not</em> deleted by the pipeline in <a class="el" href="classMediaPipeline.html#a43817d314f804c00eb6102b4ec138ed0">close</a> — ownership stays with the caller.</p>
 <p>Must be called while the pipeline is <a class="el" href="classMediaPipeline.html#a5b443714546d0d15aa4670acf2413199ace2c8aed9c2fa0cfbed56cbda4d8bf07">State::Empty</a> or <a class="el" href="classMediaPipeline.html#a5b443714546d0d15aa4670acf2413199a03f4a47830f97377a35321051685071e">State::Closed</a>. When <a class="el" href="classMediaPipeline.html#aaaebd4b1af73e2f0378ac89c09e095dd">build</a> sees the stage's name in the injection map it skips construction and uses the registered pointer instead.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -949,7 +949,7 @@ template&lt;typename... Args&gt; </td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaPipeline.html">MediaPipeline</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -202,7 +202,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>inputQueueCapacity</b>
 <tr class="memdesc:a174877c719ed1250800a2c18ee0f2cf8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resets with an explicit origin.  <br /></td></tr>
 <tr class="separator:a174877c719ed1250800a2c18ee0f2cf8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad6cc3588bf2a967c1706564a05c4a58e" id="r_ad6cc3588bf2a967c1706564a05c4a58e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameSync.html#ad6cc3588bf2a967c1706564a05c4a58e">pushFrame</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a">Frame::Ptr</a> &amp;frame)</td></tr>
-<tr class="memdesc:ad6cc3588bf2a967c1706564a05c4a58e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pushes a source <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> into the input queue.  <br /></td></tr>
+<tr class="memdesc:ad6cc3588bf2a967c1706564a05c4a58e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pushes a source <a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a> into the input queue.  <br /></td></tr>
 <tr class="separator:ad6cc3588bf2a967c1706564a05c4a58e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a34a3a58187272443c6bd5c8037499b51" id="r_a34a3a58187272443c6bd5c8037499b51"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameSync.html#a34a3a58187272443c6bd5c8037499b51">pushEndOfStream</a> ()</td></tr>
 <tr class="memdesc:a34a3a58187272443c6bd5c8037499b51"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signals end-of-stream to the consumer.  <br /></td></tr>
@@ -268,7 +268,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>inputQueueCapacity</b>
 <li><a class="el" href="classSyntheticClock.html">SyntheticClock</a> — "source-only" pristine output. Each output frame advances the clock by exactly one frame period; <a class="el" href="classFrameSync.html#a3736b6c8661b596de0662892d881d7f3">pullFrame</a> never blocks. Suitable for file writers and offline conversion.</li>
 </ul>
 <dl class="section user"><dt>Protocol</dt><dd></dd></dl>
-<p>Producer and consumer run in their own threads. The producer calls <a class="el" href="classFrameSync.html#ad6cc3588bf2a967c1706564a05c4a58e">pushFrame</a> to queue a source frame. The consumer calls <a class="el" href="classFrameSync.html#a3736b6c8661b596de0662892d881d7f3">pullFrame</a>, which blocks on the clock until the next deadline and returns a synthesised output <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a>. <a class="el" href="classFrameSync.html#a3736b6c8661b596de0662892d881d7f3">pullFrame</a> always returns — with a repeat of the last-held frame if no input is available, or an empty frame if nothing has been pushed yet.</p>
+<p>Producer and consumer run in their own threads. The producer calls <a class="el" href="classFrameSync.html#ad6cc3588bf2a967c1706564a05c4a58e">pushFrame</a> to queue a source frame. The consumer calls <a class="el" href="classFrameSync.html#a3736b6c8661b596de0662892d881d7f3">pullFrame</a>, which blocks on the clock until the next deadline and returns a synthesised output <a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a>. <a class="el" href="classFrameSync.html#a3736b6c8661b596de0662892d881d7f3">pullFrame</a> always returns — with a repeat of the last-held frame if no input is available, or an empty frame if nothing has been pushed yet.</p>
 <dl class="section user"><dt>Drift correction</dt><dd></dd></dl>
 <p>All input frames are required to carry real <code><a class="el" href="classMediaTimeStamp.html" title="Self-describing timestamp that pairs a time value with its clock domain and offset.">MediaTimeStamp</a></code> metadata (<a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a>'s invariant). <a class="el" href="classFrameSync.html" title="Resyncs a source media stream to a destination clock&#39;s cadence.">FrameSync</a> derives the source's actual sample rate from audio timestamp deltas, low-pass filtered using a window sized against the sum of the clock's <a class="el" href="classClock.html#a78d42644cd73b0beba037134f7f36a5d">Clock::jitter</a> and source jitter. The resampler ratio is <code>sourceActualRate / (targetRate × clock-&gt;rateRatio())</code>.</p>
 <dl class="section user"><dt>Ownership</dt><dd></dd></dl>
@@ -377,7 +377,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>inputQueueCapacity</b>
 </div><div class="memdoc">
 
 <p>Pulls one output frame. </p>
-<p>Blocks on the clock until the next deadline, then synthesises one output <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> from the buffered input. With a <a class="el" href="classSyntheticClock.html">SyntheticClock</a> the wait is a no-op — the clock is advanced by one frame per call.</p>
+<p>Blocks on the clock until the next deadline, then synthesises one output <a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a> from the buffered input. With a <a class="el" href="classSyntheticClock.html">SyntheticClock</a> the wait is a no-op — the clock is advanced by one frame per call.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">blockOnEmpty</td><td>If true (default), the first pull on an empty input queue waits on the producer's <a class="el" href="classFrameSync.html#ad6cc3588bf2a967c1706564a05c4a58e">pushFrame</a>. If false, it returns <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708aa5758bc6cc59cd5dcedfb62d4cbbc76b" title="Resource temporarily unavailable (EAGAIN).">Error::TryAgain</a></code> instead. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> this to false when the caller cannot afford to block (e.g. the <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> strand, which serves both push and pull — a blocking pull would hold the strand against the very push that would wake it).</td></tr>
@@ -424,7 +424,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>inputQueueCapacity</b>
       </table>
 </div><div class="memdoc">
 
-<p>Pushes a source <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> into the input queue. </p>
+<p>Pushes a source <a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a> into the input queue. </p>
 <p>Thread-safe. Blocks briefly on the internal mutex but does not block for queue space — on overflow the oldest queued frame is discarded.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -473,7 +473,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>inputQueueCapacity</b>
 </div><div class="memdoc">
 
 <p>Resets with an explicit origin. </p>
-<p>Sets the timeline origin to <code>originNs</code> in the clock's time domain. <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> N's deadline is <code>originNs + N × framePeriodNs</code>.</p>
+<p>Sets the timeline origin to <code>originNs</code> in the clock's time domain. <a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a> N's deadline is <code>originNs + N × framePeriodNs</code>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">originNs</td><td>Origin in nanoseconds from the clock's epoch. </td></tr>
@@ -624,7 +624,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>inputQueueCapacity</b>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classFrameSync.html">FrameSync</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

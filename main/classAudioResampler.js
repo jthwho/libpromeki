@@ -6,7 +6,6 @@ var classAudioResampler =
     [ "~AudioResampler", "classAudioResampler.html#ac726f5559e90fbd753b959a0030eacd2", null ],
     [ "channels", "classAudioResampler.html#a455cb14c0f45fdf1b4f790f6bd539e0f", null ],
     [ "isValid", "classAudioResampler.html#a37aca71f36b137d7f2e304c4e2aaaf43", null ],
-    [ "process", "classAudioResampler.html#ab9ab28e9add43e23bebbfbef8ac580ce", null ],
     [ "process", "classAudioResampler.html#a2956a02b7db4711617a7d3a7c199d368", null ],
     [ "quality", "classAudioResampler.html#a92dfb6fb845d2f34d182ff37fe3e39b9", null ],
     [ "ratio", "classAudioResampler.html#ab96807f073505b21a9933b898f8795d5", null ],

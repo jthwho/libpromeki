@@ -175,14 +175,13 @@ class VariantQuery&lt; T &gt;</div><p>Compiled predicate that matches any Varian
 </div><!-- fragment --></dd></dl>
 <dl class="section user"><dt>Key references</dt><dd>All the forms accepted by <code><a class="el" href="classVariantLookup.html#aef2f814a629982675a1da7653cc21817" title="Resolves key against instance.">VariantLookup&lt;T&gt;::resolve</a></code> are valid keys. For Frame:<ul>
 <li><a class="el" href="classMetadata.html" title="Key-value metadata container using typed Variant values.">Metadata</a> key (behind <code>"Meta."</code> prefix): <code>"Meta.Title"</code> </li>
-<li><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> scalar: <code>"ImageCount"</code> </li>
-<li>Subscripted image/audio: <code>"Image[0].Width"</code>, <code>"Audio[0].Meta.Album"</code> </li>
+<li><a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a> scalar: <code>"ImageCount"</code> </li>
+<li>Subscripted image/audio: <code>"VideoPayload[0].Width"</code>, <code>"AudioPayload[0].Meta.Album"</code> </li>
 <li>Subscripted scalar: <code>"VideoFormat[1]"</code> </li>
 </ul>
 </dd></dl>
-<p>For <a class="el" href="classImage.html">Image</a> and <a class="el" href="classAudio.html">Audio</a> the vocabulary is whatever keys their own <code><a class="el" href="classVariantLookup.html" title="Type-parameterised registry of named accessors on T.">VariantLookup</a></code> registration exposes.</p>
 <dl class="section user"><dt>Operators</dt><dd><ul>
-<li><code>==</code> / <code>!=</code> — equality via <a class="el" href="classVariantImpl.html#a43409c9668791efb1404d487e1286b93">Variant::operator==</a>. When one side is a bare <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> literal and the other is a key, the literal is coerced to the key's declared type by consulting <code><a class="el" href="classVariantLookup.html#a53c79454da63f0e817cb2f75e2334958" title="Returns the declared VariantSpec for key, or nullptr.">VariantLookup&lt;T&gt;::specFor</a></code> so queries like <code>Meta.Timecode</code> == "01:00:00:00" and <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Meta.OutputPixelFormat</a></code> == "RGBA8_sRGB" work out of the box. When no spec is declared, <a class="el" href="classVariant.html">Variant's</a> own cross-type conversion still handles common cases (e.g. <code><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a></code>[0].<a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a> == "RGBA8_sRGB").</li>
+<li><code>==</code> / <code>!=</code> — equality via <a class="el" href="classVariantImpl.html#a43409c9668791efb1404d487e1286b93">Variant::operator==</a>. When one side is a bare <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> literal and the other is a key, the literal is coerced to the key's declared type by consulting <code><a class="el" href="classVariantLookup.html#a53c79454da63f0e817cb2f75e2334958" title="Returns the declared VariantSpec for key, or nullptr.">VariantLookup&lt;T&gt;::specFor</a></code> so queries like <code>Meta.Timecode</code> == "01:00:00:00" and <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Meta.OutputPixelFormat</a></code> == "RGBA8_sRGB" work out of the box. When no spec is declared, <a class="el" href="classVariant.html">Variant's</a> own cross-type conversion still handles common cases (e.g. <code>Image</code>[0].<a class="el" href="classPixelFormat.html" title="Complete pixel description combining format, color model, and semantics.">PixelFormat</a> == "RGBA8_sRGB").</li>
 <li><code>&lt;</code> / <code>&lt;=</code> / <code>&gt;</code> / <code>&gt;=</code> — ordering. Tries numeric (both sides convertible to <code>double</code>), else <a class="el" href="classTimecode.html">Timecode</a> (when one side is a <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a>), else <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> lexicographic. Returns false when neither side is ordered comparable.</li>
 <li><code>~</code> — regex match. RHS must be a regex literal <code>/</code>.../.</li>
 <li><code>~~</code> — substring match. RHS must be a string literal or a key whose value renders to a string.</li>
@@ -192,18 +191,18 @@ class VariantQuery&lt; T &gt;</div><p>Compiled predicate that matches any Varian
 </dd></dl>
 <dl class="section user"><dt>Examples</dt><dd><div class="fragment"><div class="line"><span class="keyword">auto</span> [<a class="code hl_class" href="classList.html">q</a>, <a class="code hl_class" href="classList.html">err</a>] = <a class="code hl_function" href="classVariantQuery.html#a33928c72285f445276be460d47d1c29e">VariantQuery&lt;Frame&gt;::parse</a>(<span class="stringliteral">&quot;Meta.Timecode &gt;= \&quot;01:00:00:00\&quot;&quot;</span>);</div>
 <div class="line"><span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">err</a>.isError()) <span class="keywordflow">throw</span> ...;</div>
-<div class="line"><span class="keywordflow">for</span>(<span class="keyword">const</span> <a class="code hl_class" href="classSharedPtr.html">Frame::Ptr</a> &amp;<a class="code hl_class" href="classList.html">f</a> : frames) {</div>
+<div class="line"><span class="keywordflow">for</span>(<span class="keyword">const</span> <a class="code hl_class" href="classSharedPtr.html">Frame::Ptr</a> &amp;<a class="code hl_class" href="classList.html">f</a> : <a class="code hl_class" href="classList.html">frames</a>) {</div>
 <div class="line">    <span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">q</a>.match(*<a class="code hl_class" href="classList.html">f</a>)) std::cout &lt;&lt; <span class="stringliteral">&quot;match\n&quot;</span>;</div>
 <div class="line">}</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_function" href="classVariantQuery.html#a33928c72285f445276be460d47d1c29e">VariantQuery&lt;Image&gt;::parse</a>(<span class="stringliteral">&quot;Width &gt; 1920 &amp;&amp; PixelFormat == \&quot;RGBA8_sRGB\&quot;&quot;</span>);</div>
-<div class="line"><a class="code hl_function" href="classVariantQuery.html#a33928c72285f445276be460d47d1c29e">VariantQuery&lt;Audio&gt;::parse</a>(<span class="stringliteral">&quot;Channels == 2 &amp;&amp; SampleRate &gt;= 48000&quot;</span>);</div>
+<div class="line"><a class="code hl_function" href="classVariantQuery.html#a33928c72285f445276be460d47d1c29e">VariantQuery&lt;VideoPayload&gt;::parse</a>(<span class="stringliteral">&quot;Width &gt; 1920 &amp;&amp; PixelFormat == \&quot;RGBA8_sRGB\&quot;&quot;</span>);</div>
+<div class="line"><a class="code hl_function" href="classVariantQuery.html#a33928c72285f445276be460d47d1c29e">VariantQuery&lt;AudioPayload&gt;::parse</a>(<span class="stringliteral">&quot;Channels == 2 &amp;&amp; SampleRate &gt;= 48000&quot;</span>);</div>
 <div class="ttc" id="aclassSharedPtr_html"><div class="ttname"><a href="classSharedPtr.html">SharedPtr&lt; Frame &gt;</a></div></div>
 <div class="ttc" id="aclassVariantQuery_html_a33928c72285f445276be460d47d1c29e"><div class="ttname"><a href="classVariantQuery.html#a33928c72285f445276be460d47d1c29e">VariantQuery::parse</a></div><div class="ttdeci">static Result&lt; VariantQuery&lt; T &gt; &gt; parse(const String &amp;expr)</div><div class="ttdoc">Parses an expression into a compiled query.</div></div>
 </div><!-- fragment --></dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">T</td><td>The target type. Must have <code>VariantLookup&lt;T&gt;</code> registrations for the keys the query references. Explicit template instantiations are provided for <a class="el" href="classFrame.html">Frame</a>, <a class="el" href="classImage.html">Image</a> and <a class="el" href="classAudio.html">Audio</a>; other types can be instantiated by adding a <code>template</code> class VariantQuery&lt;MyType&gt;; line in the translation unit that owns <code>MyType</code> 's registrations. </td></tr>
+    <tr><td class="paramname">T</td><td>The target type. Must have <code>VariantLookup&lt;T&gt;</code> registrations for the keys the query references. Explicit template instantiations are provided for <a class="el" href="classFrame.html">Frame</a>, Image and Audio; other types can be instantiated by adding a <code>template</code> class VariantQuery&lt;MyType&gt;; line in the translation unit that owns <code>MyType</code> 's registrations. </td></tr>
   </table>
   </dd>
 </dl>
@@ -294,7 +293,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classVariantQuery.html">VariantQuery</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -10,12 +10,12 @@ var classAudioFile_1_1Impl =
     [ "isValid", "classAudioFile_1_1Impl.html#afb469e88ea005cce7f301c72eac6d673", null ],
     [ "open", "classAudioFile_1_1Impl.html#abbe81845a0d20b354420e6c170f1d992", null ],
     [ "operation", "classAudioFile_1_1Impl.html#abf8837570fd97ba61d0724f16a086294", null ],
-    [ "read", "classAudioFile_1_1Impl.html#af8392a33932a1e8883792cd5523e76fd", null ],
+    [ "read", "classAudioFile_1_1Impl.html#a9f0aa34899132033f472289903b60825", null ],
     [ "sampleCount", "classAudioFile_1_1Impl.html#a7d7c02e628ec592bc8b11b291da642eb", null ],
     [ "seekToSample", "classAudioFile_1_1Impl.html#a799660f8588294dccef2479af6ec9739", null ],
     [ "setDesc", "classAudioFile_1_1Impl.html#a0af6eb989edea992cd721d6320ffd0d0", null ],
     [ "setDevice", "classAudioFile_1_1Impl.html#aed1b56b58812ea0b6815d42566d00ae3", null ],
     [ "setFilename", "classAudioFile_1_1Impl.html#adba24c2883ece259bf8efbde1e44926d", null ],
     [ "setFormatHint", "classAudioFile_1_1Impl.html#a5296c50c848428ccbbda69407811f885", null ],
-    [ "write", "classAudioFile_1_1Impl.html#ab06cfa1abf244663e3561a0da8f5fe7d", null ]
+    [ "write", "classAudioFile_1_1Impl.html#aa520957ddf907941fee917069576c0fb", null ]
 ];

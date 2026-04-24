@@ -16,6 +16,8 @@ var group__wellknownenums =
       [ "isInterlaced", "classVideoScanMode.html#ab093e16450b90f00b0a98660e02664c8", null ]
     ] ],
     [ "MediaIODirection", "classMediaIODirection.html", null ],
+    [ "MediaPayloadKind", "classMediaPayloadKind.html", null ],
+    [ "FrameType", "classFrameType.html", null ],
     [ "AudioSourceHint", "classAudioSourceHint.html", null ],
     [ "V4l2PowerLineMode", "classV4l2PowerLineMode.html", null ],
     [ "V4l2ExposureMode", "classV4l2ExposureMode.html", null ],

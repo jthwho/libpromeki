@@ -66,7 +66,7 @@
 <area shape="poly" id="edge20_Node000019_Node000021" title=" " alt="" coords="479,418,568,429,568,434,478,423"/>
 <area shape="rect" id="Node000032" href="$classMulticastReceiver.html" title="Standalone multicast datagram receiver with an owned worker thread." alt="" coords="350,745,489,771"/>
 <area shape="poly" id="edge31_Node000031_Node000032" title=" " alt="" coords="266,755,350,755,350,761,266,761"/>
-<area shape="rect" id="Node000035" href="$classSDLVideoWidget.html" title="Widget that displays a promeki Image via SDL texture rendering." alt="" coords="355,795,484,820"/>
+<area shape="rect" id="Node000035" href="$classSDLVideoWidget.html" title="Widget that displays an UncompressedVideoPayload via SDL texture rendering." alt="" coords="355,795,484,820"/>
 <area shape="poly" id="edge34_Node000034_Node000035" title=" " alt="" coords="265,843,366,817,368,823,267,848"/>
 <area shape="rect" id="Node000037" href="$classSDLWindow.html" title="Top&#45;level SDL window that serves as a root Widget." alt="" coords="370,844,469,869"/>
 <area shape="poly" id="edge36_Node000034_Node000037" title=" " alt="" coords="266,854,370,854,370,859,266,859"/>

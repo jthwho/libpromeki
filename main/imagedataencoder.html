@@ -103,7 +103,7 @@ $(document).ready(function(){initNavTree('imagedataencoder.html',''); initResiza
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p>VITC-style binary data encoder for libpromeki Images — wire format specification, byte order, <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a> parameters, and a worked example for third-party decoders.</p>
-<p>The <code><a class="el" href="classImageDataEncoder.html" title="Fast VITC-style binary data encoder for raster images.">ImageDataEncoder</a></code> class stamps 64-bit opaque payloads into specific scan-line bands of a libpromeki <code><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a></code> as a sequence of wide black/white "bit cells", in a layout that resembles SMPTE Vertical Interval Time Code (VITC) but is <em>not</em> SMPTE-compliant: it carries different fields, uses a different sync pattern, and a different <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a>. This page is the normative wire format reference — anything not described here is implementation-defined and subject to change.</p>
+<p>The <code><a class="el" href="classImageDataEncoder.html" title="Fast VITC-style binary data encoder for raster images.">ImageDataEncoder</a></code> class stamps 64-bit opaque payloads into specific scan-line bands of a libpromeki <code>Image</code> as a sequence of wide black/white "bit cells", in a layout that resembles SMPTE Vertical Interval Time Code (VITC) but is <em>not</em> SMPTE-compliant: it carries different fields, uses a different sync pattern, and a different <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a>. This page is the normative wire format reference — anything not described here is implementation-defined and subject to change.</p>
 <h1><a class="anchor" id="img_data_overview"></a>
 Overview</h1>
 <p>The encoder writes one or more "bands" of scan lines into an image, where each band carries the same opaque 64-bit payload across every scan line in the band. Within each scan line, the payload is laid out as a sequence of equally-wide pixel "cells", each of which represents one bit of a fixed wire frame:</p>
@@ -264,7 +264,7 @@ find them again" use case.</p>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

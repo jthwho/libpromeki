@@ -59,7 +59,7 @@ var searchData=
   ['_7emediaiotask_5frtp_56',['~MediaIOTask_Rtp',['../classMediaIOTask__Rtp.html#a4c448ec8d31bf6119faec5c3573f4599',1,'MediaIOTask_Rtp']]],
   ['_7emediaiotask_5fsrc_57',['~MediaIOTask_SRC',['../classMediaIOTask__SRC.html#a340029f1ce1fa943062859f0958c8683',1,'MediaIOTask_SRC']]],
   ['_7emediaiotask_5ftpg_58',['~MediaIOTask_TPG',['../classMediaIOTask__TPG.html#a04b4ec2b556f537a0d2bc2bc9e65bcf0',1,'MediaIOTask_TPG']]],
-  ['_7emediapacket_59',['~MediaPacket',['../classMediaPacket.html#a441421461d4ba988aef3016b057d9697',1,'MediaPacket']]],
+  ['_7emediapayload_59',['~MediaPayload',['../classMediaPayload.html#a51fd00650100bb83c6c8d6f291d5677f',1,'MediaPayload']]],
   ['_7emediapipeline_60',['~MediaPipeline',['../classMediaPipeline.html#aa642097855029a2c4214129f0d5d8278',1,'MediaPipeline']]],
   ['_7emulticastmanager_61',['~MulticastManager',['../classMulticastManager.html#a61db5622a52d2c07a6b9e028fe09ca87',1,'MulticastManager']]],
   ['_7emulticastreceiver_62',['~MulticastReceiver',['../classMulticastReceiver.html#adff6fa78d9198bed7cd2a738b332914d',1,'MulticastReceiver']]],

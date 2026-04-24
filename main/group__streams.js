@@ -70,7 +70,8 @@ var group__streams =
         [ "TypeFrameCount", "classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369ae700bc76747f4466531341bf29fdd468", null ],
         [ "TypeMediaDuration", "classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369aca0791fdcc7c71b9b73618aff187db2d", null ],
         [ "TypeUrl", "classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a84d083db0a027d82414a280cf3fac3e9", null ],
-        [ "TypeAudioFormat", "classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a3e5aaa8d8d8062e231065899a5d08cd2", null ]
+        [ "TypeAudioFormat", "classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a3e5aaa8d8d8062e231065899a5d08cd2", null ],
+        [ "TypeMediaPayload", "classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a9098a91b1790217a2816cce3d1458d14", null ]
       ] ],
       [ "DataStream", "classDataStream.html#a031c1cb50817d1530452c4feae207fcb", null ],
       [ "~DataStream", "classDataStream.html#acb58db98cafee8eca367437c9bd9a46e", null ],

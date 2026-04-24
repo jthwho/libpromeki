@@ -10,10 +10,10 @@ var classVideoEncoder =
     [ "flush", "classVideoEncoder.html#a85fd078c046e20b5ebdb5c480818d4b2", null ],
     [ "lastError", "classVideoEncoder.html#a60b05cab20c035dcb633d27520e2c5f3", null ],
     [ "lastErrorMessage", "classVideoEncoder.html#a1aeb8603ca5b5787f90ffd32e7c22481", null ],
-    [ "receivePacket", "classVideoEncoder.html#a7898cfa9ca92982c89ee105cab8f57e0", null ],
+    [ "receiveCompressedPayload", "classVideoEncoder.html#a10c0b420bf6aa1bffb81e1d18d25bd72", null ],
     [ "requestKeyframe", "classVideoEncoder.html#a68382ed9c6f57080f72f04961525997b", null ],
     [ "reset", "classVideoEncoder.html#ac0463f9aae758d542ad3fb6ac0b7f3c4", null ],
     [ "setCodec", "classVideoEncoder.html#a227997ca73d32702a3ac52d96cf14d5f", null ],
     [ "setError", "classVideoEncoder.html#a911b6f13999a5ef3ca614cce6677cb74", null ],
-    [ "submitFrame", "classVideoEncoder.html#aae6cadfe04338225ecc30341ad27bbc2", null ]
+    [ "submitPayload", "classVideoEncoder.html#ae910fcdd763771121377b5b2de33bcfe", null ]
 ];

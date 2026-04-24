@@ -117,9 +117,9 @@ Collaboration diagram for AvcDecoderConfig:</div>
 <div class="dyncontent">
 <div class="center"><img src="structAvcDecoderConfig__coll__graph.png" border="0" usemap="#aAvcDecoderConfig_coll__map" alt="Collaboration graph"/></div>
 <map name="aAvcDecoderConfig_coll__map" id="aAvcDecoderConfig_coll__map">
-<area shape="rect" title="AVCDecoderConfigurationRecord — the payload of an avcC box inside an H.264 MP4 / QuickTime sample des..." alt="" coords="39,108,179,133"/>
-<area shape="rect" href="classList.html" title=" " alt="" coords="5,5,212,31"/>
-<area shape="poly" title=" " alt="" coords="111,45,111,108,106,108,106,45"/>
+<area shape="rect" title="AVCDecoderConfigurationRecord — the payload of an avcC box inside an H.264 MP4 / QuickTime sample des..." alt="" coords="5,108,145,133"/>
+<area shape="rect" href="classList.html" title=" " alt="" coords="6,5,145,31"/>
+<area shape="poly" title=" " alt="" coords="78,45,78,108,73,108,73,45"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -193,11 +193,11 @@ Public Attributes</h2></td></tr>
 <div class="line"><a class="code hl_function" href="structAvcDecoderConfig.html#af306263811517a175f99b03f3573eb03">AvcDecoderConfig::parse</a>(<a class="code hl_class" href="classList.html">avccPayload</a>, <a class="code hl_class" href="classList.html">cfg</a>);</div>
 <div class="line"><a class="code hl_class" href="classSharedPtr.html">Buffer::Ptr</a> <a class="code hl_class" href="classList.html">psAnnexB</a>;</div>
 <div class="line"><a class="code hl_class" href="classList.html">cfg</a>.toAnnexB(<a class="code hl_class" href="classList.html">psAnnexB</a>);</div>
-<div class="line"><a class="code hl_class" href="classList.html">decoder</a>.submitPacket(<a class="code hl_class" href="classVideoPacket.html">VideoPacket</a>(<a class="code hl_class" href="classList.html">psAnnexB</a>, <a class="code hl_enumvalue" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda5dc43323749c2d0cbfabdd52c436e7e5">PixelFormat::H264</a>,</div>
-<div class="line">                                 <a class="code hl_enumvalue" href="classVideoPacket.html#afa35941ff0c3d4d9ac39da46ac3608aea9668631499be39971c7ada4ce27e73f1">VideoPacket::ParameterSet</a>));</div>
-<div class="ttc" id="aclassPixelFormat_html_a7ae7d8a6cf46a5c9947b72d5ec9d4deda5dc43323749c2d0cbfabdd52c436e7e5"><div class="ttname"><a href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda5dc43323749c2d0cbfabdd52c436e7e5">PixelFormat::H264</a></div><div class="ttdeci">@ H264</div><div class="ttdoc">H.264 / AVC compressed video (avc1/avc3).</div><div class="ttdef"><b>Definition</b> pixelformat.h:326</div></div>
-<div class="ttc" id="aclassVideoPacket_html"><div class="ttname"><a href="classVideoPacket.html">VideoPacket</a></div><div class="ttdoc">Encoded video access unit produced by a VideoEncoder or consumed by a VideoDecoder.</div><div class="ttdef"><b>Definition</b> videopacket.h:67</div></div>
-<div class="ttc" id="aclassVideoPacket_html_afa35941ff0c3d4d9ac39da46ac3608aea9668631499be39971c7ada4ce27e73f1"><div class="ttname"><a href="classVideoPacket.html#afa35941ff0c3d4d9ac39da46ac3608aea9668631499be39971c7ada4ce27e73f1">VideoPacket::ParameterSet</a></div><div class="ttdeci">@ ParameterSet</div><div class="ttdoc">Carries only parameter sets (SPS / PPS / VPS).</div><div class="ttdef"><b>Definition</b> videopacket.h:93</div></div>
+<div class="line"><a class="code hl_class" href="classList.html">decoder</a>.submitPayload(<a class="code hl_class" href="classCompressedVideoPayload.html">CompressedVideoPayload</a>(<a class="code hl_class" href="classList.html">psAnnexB</a>, <a class="code hl_enumvalue" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda5dc43323749c2d0cbfabdd52c436e7e5">PixelFormat::H264</a>,</div>
+<div class="line">                                              <a class="code hl_enumvalue" href="classCompressedVideoPayload.html#af24e7966ad8bbceefa6e9715dc68c498ac3ecca78d1cc1ae3590200602022e5fb">CompressedVideoPayload::ParameterSet</a>));</div>
+<div class="ttc" id="aclassCompressedVideoPayload_html"><div class="ttname"><a href="classCompressedVideoPayload.html">CompressedVideoPayload</a></div><div class="ttdoc">Compressed video payload — one encoded access unit whose codec identity lives in the base ImageDesc's...</div><div class="ttdef"><b>Definition</b> compressedvideopayload.h:64</div></div>
+<div class="ttc" id="aclassCompressedVideoPayload_html_af24e7966ad8bbceefa6e9715dc68c498ac3ecca78d1cc1ae3590200602022e5fb"><div class="ttname"><a href="classCompressedVideoPayload.html#af24e7966ad8bbceefa6e9715dc68c498ac3ecca78d1cc1ae3590200602022e5fb">CompressedVideoPayload::ParameterSet</a></div><div class="ttdeci">@ ParameterSet</div><div class="ttdoc">Carries only parameter sets (SPS / PPS / VPS); no slice data.</div><div class="ttdef"><b>Definition</b> compressedvideopayload.h:90</div></div>
+<div class="ttc" id="aclassPixelFormat_html_a7ae7d8a6cf46a5c9947b72d5ec9d4deda5dc43323749c2d0cbfabdd52c436e7e5"><div class="ttname"><a href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda5dc43323749c2d0cbfabdd52c436e7e5">PixelFormat::H264</a></div><div class="ttdeci">@ H264</div><div class="ttdoc">H.264 / AVC compressed video (avc1/avc3).</div><div class="ttdef"><b>Definition</b> pixelformat.h:327</div></div>
 <div class="ttc" id="astructAvcDecoderConfig_html_af306263811517a175f99b03f3573eb03"><div class="ttname"><a href="structAvcDecoderConfig.html#af306263811517a175f99b03f3573eb03">AvcDecoderConfig::parse</a></div><div class="ttdeci">static Error parse(const BufferView &amp;payload, AvcDecoderConfig &amp;out)</div><div class="ttdoc">Parse a serialized avcC payload (the bytes inside an avcC box, excluding the box header).</div></div>
 </div><!-- fragment --></dd></dl>
 <dl class="section user"><dt>Extended-profile fields not modeled</dt><dd>The record has additional fields (<code>chroma_format</code>, <code>bit_depth_luma_minus8</code>, <code>bit_depth_chroma_minus8</code>, SPS-Ext NALs) that appear only for <code>profile_idc</code> values 100, 110, 122, or 144. This implementation does not read or write them; they default to the standard 8-bit 4:2:0 interpretation when absent. A follow-up can add parsing for high-profile workflows when the codecs need them. </dd></dl>
@@ -353,7 +353,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structAvcDecoderConfig.html">AvcDecoderConfig</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

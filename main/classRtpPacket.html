@@ -109,7 +109,7 @@ $(document).ready(function(){initNavTree('classRtpPacket.html',''); initResizabl
 </div><!--header-->
 <div class="contents">
 
-<p>A <a class="el" href="classBufferView.html" title="Lightweight view into a region of a shared Buffer.">BufferView</a> that interprets its data as an RTP packet.  
+<p>A <a class="el" href="classBufferView.html" title="Ordered list of (offset, size) views over a deduplicated set of backing Buffer objects.">BufferView</a> that interprets its data as an RTP packet.  
  <a href="classRtpPacket.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="rtppacket_8h_source.html">rtppacket.h</a>&gt;</code></p>
@@ -119,7 +119,7 @@ Inheritance diagram for RtpPacket:</div>
 <div class="center"><img src="classRtpPacket__inherit__graph.png" border="0" usemap="#aRtpPacket_inherit__map" alt="Inheritance graph"/></div>
 <map name="aRtpPacket_inherit__map" id="aRtpPacket_inherit__map">
 <area shape="rect" title="A BufferView that interprets its data as an RTP packet." alt="" coords="9,79,95,104"/>
-<area shape="rect" href="classBufferView.html" title="Lightweight view into a region of a shared Buffer." alt="" coords="5,5,99,31"/>
+<area shape="rect" href="classBufferView.html" title="Ordered list of (offset, size) views over a deduplicated set of backing Buffer objects." alt="" coords="5,5,99,31"/>
 <area shape="poly" title=" " alt="" coords="55,44,55,79,49,79,49,44"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
@@ -129,7 +129,7 @@ Collaboration diagram for RtpPacket:</div>
 <div class="center"><img src="classRtpPacket__coll__graph.png" border="0" usemap="#aRtpPacket_coll__map" alt="Collaboration graph"/></div>
 <map name="aRtpPacket_coll__map" id="aRtpPacket_coll__map">
 <area shape="rect" title="A BufferView that interprets its data as an RTP packet." alt="" coords="9,79,95,104"/>
-<area shape="rect" href="classBufferView.html" title="Lightweight view into a region of a shared Buffer." alt="" coords="5,5,99,31"/>
+<area shape="rect" href="classBufferView.html" title="Ordered list of (offset, size) views over a deduplicated set of backing Buffer objects." alt="" coords="5,5,99,31"/>
 <area shape="poly" title=" " alt="" coords="55,44,55,79,49,79,49,44"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
@@ -144,11 +144,6 @@ Public Types</h2></td></tr>
 <a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>SizeList</b> = promeki::List&lt; <a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">size_t</a> &gt;</td></tr>
 <tr class="memdesc:a7309614010f7c3315032b63ea15b1d2f"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of sizes. <br /></td></tr>
 <tr class="separator:a7309614010f7c3315032b63ea15b1d2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_types_classBufferView"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classBufferView')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classBufferView.html">BufferView</a></td></tr>
-<tr class="memitem:adf705177a1664cad6f757313e1c08edf inherit pub_types_classBufferView" id="r_adf705177a1664cad6f757313e1c08edf"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classBufferView.html#adf705177a1664cad6f757313e1c08edf">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>List</b> = promeki::List&lt; <a class="el" href="classBufferView.html">BufferView</a> &gt;</td></tr>
-<tr class="memdesc:adf705177a1664cad6f757313e1c08edf inherit pub_types_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of <a class="el" href="classBufferView.html" title="Lightweight view into a region of a shared Buffer.">BufferView</a> values. <br /></td></tr>
-<tr class="separator:adf705177a1664cad6f757313e1c08edf inherit pub_types_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -259,42 +254,81 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ad7f0521bc2db5175776984860d5ce707"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classBufferView"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classBufferView')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classBufferView.html">BufferView</a></td></tr>
 <tr class="memitem:a2cd707713ff8b66de38cc5ac08a97564 inherit pub_methods_classBufferView" id="r_a2cd707713ff8b66de38cc5ac08a97564"><td class="memItemLeft" align="right" valign="top">
-&#160;</td><td class="memItemRight" valign="bottom"><b>BufferView</b> ()=<a class="el" href="classBufferView.html#adf705177a1664cad6f757313e1c08edf">default</a></td></tr>
-<tr class="memdesc:a2cd707713ff8b66de38cc5ac08a97564 inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default constructor. Creates an empty view with no buffer. <br /></td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>BufferView</b> ()=<a class="el" href="classList.html">default</a></td></tr>
+<tr class="memdesc:a2cd707713ff8b66de38cc5ac08a97564 inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an empty list. <br /></td></tr>
 <tr class="separator:a2cd707713ff8b66de38cc5ac08a97564 inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af4bcbaee04047252b6ba0bb1048fcf4c inherit pub_methods_classBufferView" id="r_af4bcbaee04047252b6ba0bb1048fcf4c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferView.html#af4bcbaee04047252b6ba0bb1048fcf4c">BufferView</a> (<a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3">Buffer::Ptr</a> <a class="el" href="classBufferView.html#adf705177a1664cad6f757313e1c08edf">buf</a>, <a class="el" href="classBufferView.html#adf705177a1664cad6f757313e1c08edf">size_t</a> <a class="el" href="classBufferView.html#a485a977ea91d0ea0ad662ac0641b9854">offset</a>, <a class="el" href="classBufferView.html#adf705177a1664cad6f757313e1c08edf">size_t</a> <a class="el" href="classBufferView.html#ade6d05e0dbe62e7c524a129545ccc902">size</a>)</td></tr>
-<tr class="memdesc:af4bcbaee04047252b6ba0bb1048fcf4c inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classBufferView.html" title="Lightweight view into a region of a shared Buffer.">BufferView</a> referencing a region of a shared buffer.  <br /></td></tr>
+<tr class="memitem:af4bcbaee04047252b6ba0bb1048fcf4c inherit pub_methods_classBufferView" id="r_af4bcbaee04047252b6ba0bb1048fcf4c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferView.html#af4bcbaee04047252b6ba0bb1048fcf4c">BufferView</a> (<a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3">Buffer::Ptr</a> <a class="el" href="classList.html">buf</a>, <a class="el" href="classList.html">size_t</a> <a class="el" href="classBufferView.html#a485a977ea91d0ea0ad662ac0641b9854">offset</a>, <a class="el" href="classList.html">size_t</a> <a class="el" href="classBufferView.html#ade6d05e0dbe62e7c524a129545ccc902">size</a>)</td></tr>
+<tr class="memdesc:af4bcbaee04047252b6ba0bb1048fcf4c inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a single-slice list over <code>buf</code>.  <br /></td></tr>
 <tr class="separator:af4bcbaee04047252b6ba0bb1048fcf4c inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa7395c7f7a18f4e911ecb891ebd8f98f inherit pub_methods_classBufferView" id="r_aa7395c7f7a18f4e911ecb891ebd8f98f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferView.html#aa7395c7f7a18f4e911ecb891ebd8f98f">BufferView</a> (std::initializer_list&lt; <a class="el" href="classBufferView.html">BufferView</a> &gt; init)</td></tr>
+<tr class="memdesc:aa7395c7f7a18f4e911ecb891ebd8f98f inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a list by concatenating every sub-list in <code>init</code>.  <br /></td></tr>
+<tr class="separator:aa7395c7f7a18f4e911ecb891ebd8f98f inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ada8c23944f1b4e97fe45af2b23a9cf6b inherit pub_methods_classBufferView" id="r_ada8c23944f1b4e97fe45af2b23a9cf6b"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>count</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ada8c23944f1b4e97fe45af2b23a9cf6b inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of slices in the list. <br /></td></tr>
+<tr class="separator:ada8c23944f1b4e97fe45af2b23a9cf6b inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa8534cd9ddfc195d6545175b68013cde inherit pub_methods_classBufferView" id="r_aa8534cd9ddfc195d6545175b68013cde"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isEmpty</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aa8534cd9ddfc195d6545175b68013cde inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns <code>true</code> when the list holds no slices. <br /></td></tr>
+<tr class="separator:aa8534cd9ddfc195d6545175b68013cde inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac580bc54bfaaa77d8e6101bf79012a90 inherit pub_methods_classBufferView" id="r_ac580bc54bfaaa77d8e6101bf79012a90"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classBufferView_1_1Entry.html">Entry</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator[]</b> (<a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">i</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ac580bc54bfaaa77d8e6101bf79012a90 inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a proxy for the slice at <code>i</code>. <br /></td></tr>
+<tr class="separator:ac580bc54bfaaa77d8e6101bf79012a90 inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a91339124c201515bd4925abccebc7e7c inherit pub_methods_classBufferView" id="r_a91339124c201515bd4925abccebc7e7c"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classBufferView_1_1Iterator.html">Iterator</a>&#160;</td><td class="memItemRight" valign="bottom"><b>begin</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="separator:a91339124c201515bd4925abccebc7e7c inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac47e5471a675bd9ddce770d503e7dff9 inherit pub_methods_classBufferView" id="r_ac47e5471a675bd9ddce770d503e7dff9"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classBufferView_1_1Iterator.html">Iterator</a>&#160;</td><td class="memItemRight" valign="bottom"><b>end</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="separator:ac47e5471a675bd9ddce770d503e7dff9 inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4754d55420d937e96d5e85084071e98c inherit pub_methods_classBufferView" id="r_a4754d55420d937e96d5e85084071e98c"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classBufferView.html#adf705177a1664cad6f757313e1c08edf">const</a> <a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3">Buffer::Ptr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>buffer</b> () <a class="el" href="classBufferView.html#adf705177a1664cad6f757313e1c08edf">const</a></td></tr>
-<tr class="memdesc:a4754d55420d937e96d5e85084071e98c inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the shared backing buffer. <br /></td></tr>
+<a class="el" href="classList.html">const</a> <a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3">Buffer::Ptr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>buffer</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a4754d55420d937e96d5e85084071e98c inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the backing buffer of the first slice. <br /></td></tr>
 <tr class="separator:a4754d55420d937e96d5e85084071e98c inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a485a977ea91d0ea0ad662ac0641b9854 inherit pub_methods_classBufferView" id="r_a485a977ea91d0ea0ad662ac0641b9854"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classBufferView.html#adf705177a1664cad6f757313e1c08edf">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>offset</b> () <a class="el" href="classBufferView.html#adf705177a1664cad6f757313e1c08edf">const</a></td></tr>
-<tr class="memdesc:a485a977ea91d0ea0ad662ac0641b9854 inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the byte offset into the buffer. <br /></td></tr>
+<a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>offset</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a485a977ea91d0ea0ad662ac0641b9854 inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the byte offset of the first slice. <br /></td></tr>
 <tr class="separator:a485a977ea91d0ea0ad662ac0641b9854 inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ade6d05e0dbe62e7c524a129545ccc902 inherit pub_methods_classBufferView" id="r_ade6d05e0dbe62e7c524a129545ccc902"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classBufferView.html#adf705177a1664cad6f757313e1c08edf">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>size</b> () <a class="el" href="classBufferView.html#adf705177a1664cad6f757313e1c08edf">const</a></td></tr>
-<tr class="memdesc:ade6d05e0dbe62e7c524a129545ccc902 inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the byte size of this view. <br /></td></tr>
-<tr class="separator:ade6d05e0dbe62e7c524a129545ccc902 inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af43dd085c9f3f136eba9029471adca76 inherit pub_methods_classBufferView" id="r_af43dd085c9f3f136eba9029471adca76"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classBufferView.html#adf705177a1664cad6f757313e1c08edf">const</a> <a class="el" href="classBufferView.html#adf705177a1664cad6f757313e1c08edf">uint8_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferView.html#af43dd085c9f3f136eba9029471adca76">data</a> () <a class="el" href="classBufferView.html#adf705177a1664cad6f757313e1c08edf">const</a></td></tr>
-<tr class="memdesc:af43dd085c9f3f136eba9029471adca76 inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const pointer to this view's data.  <br /></td></tr>
-<tr class="separator:af43dd085c9f3f136eba9029471adca76 inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7a947542091ca84376df6e6aa42b35c1 inherit pub_methods_classBufferView" id="r_a7a947542091ca84376df6e6aa42b35c1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classBufferView.html#adf705177a1664cad6f757313e1c08edf">uint8_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferView.html#a7a947542091ca84376df6e6aa42b35c1">data</a> ()</td></tr>
-<tr class="memdesc:a7a947542091ca84376df6e6aa42b35c1 inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable pointer to this view's data.  <br /></td></tr>
-<tr class="separator:a7a947542091ca84376df6e6aa42b35c1 inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2f891fe7f2a301074ebbd3d9f9faba27 inherit pub_methods_classBufferView" id="r_a2f891fe7f2a301074ebbd3d9f9faba27"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classBufferView.html#adf705177a1664cad6f757313e1c08edf">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isNull</b> () <a class="el" href="classBufferView.html#adf705177a1664cad6f757313e1c08edf">const</a></td></tr>
-<tr class="memdesc:a2f891fe7f2a301074ebbd3d9f9faba27 inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if no buffer is set. <br /></td></tr>
-<tr class="separator:a2f891fe7f2a301074ebbd3d9f9faba27 inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a30557253c4292eb5572194a60ac412c1 inherit pub_methods_classBufferView" id="r_a30557253c4292eb5572194a60ac412c1"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">uint8_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>data</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a30557253c4292eb5572194a60ac412c1 inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a pointer to the first slice's data. <br /></td></tr>
+<tr class="separator:a30557253c4292eb5572194a60ac412c1 inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5c19f615f543ce7c7299801cf8dd4b34 inherit pub_methods_classBufferView" id="r_a5c19f615f543ce7c7299801cf8dd4b34"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classBufferView.html#adf705177a1664cad6f757313e1c08edf">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isValid</b> () <a class="el" href="classBufferView.html#adf705177a1664cad6f757313e1c08edf">const</a></td></tr>
-<tr class="memdesc:a5c19f615f543ce7c7299801cf8dd4b34 inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if a buffer is set. <br /></td></tr>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isValid</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a5c19f615f543ce7c7299801cf8dd4b34 inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns <code>true</code> when the list holds at least one valid slice. <br /></td></tr>
 <tr class="separator:a5c19f615f543ce7c7299801cf8dd4b34 inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2f891fe7f2a301074ebbd3d9f9faba27 inherit pub_methods_classBufferView" id="r_a2f891fe7f2a301074ebbd3d9f9faba27"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isNull</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a2f891fe7f2a301074ebbd3d9f9faba27 inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns <code>true</code> when no valid slice is present. <br /></td></tr>
+<tr class="separator:a2f891fe7f2a301074ebbd3d9f9faba27 inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac214e1e4064877693927812488753dde inherit pub_methods_classBufferView" id="r_ac214e1e4064877693927812488753dde"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferView.html#ac214e1e4064877693927812488753dde">pushToBack</a> (<a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3">Buffer::Ptr</a> <a class="el" href="classList.html">buf</a>, <a class="el" href="classList.html">size_t</a> <a class="el" href="classBufferView.html#a485a977ea91d0ea0ad662ac0641b9854">offset</a>, <a class="el" href="classList.html">size_t</a> <a class="el" href="classBufferView.html#ade6d05e0dbe62e7c524a129545ccc902">size</a>)</td></tr>
+<tr class="memdesc:ac214e1e4064877693927812488753dde inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Appends a slice to the back of the list.  <br /></td></tr>
+<tr class="separator:ac214e1e4064877693927812488753dde inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9525867ea74f41a462d2f4854d177840 inherit pub_methods_classBufferView" id="r_a9525867ea74f41a462d2f4854d177840"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>append</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classBufferView.html">BufferView</a> &amp;<a class="el" href="classList.html">other</a>)</td></tr>
+<tr class="memdesc:a9525867ea74f41a462d2f4854d177840 inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Appends every slice from <code>other</code> to the end of this list. <br /></td></tr>
+<tr class="separator:a9525867ea74f41a462d2f4854d177840 inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3709f66f81fde92a790534be7a8ed3a inherit pub_methods_classBufferView" id="r_ac3709f66f81fde92a790534be7a8ed3a"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>clear</b> ()</td></tr>
+<tr class="memdesc:ac3709f66f81fde92a790534be7a8ed3a inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes every slice from the list. <br /></td></tr>
+<tr class="separator:ac3709f66f81fde92a790534be7a8ed3a inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade6d05e0dbe62e7c524a129545ccc902 inherit pub_methods_classBufferView" id="r_ade6d05e0dbe62e7c524a129545ccc902"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferView.html#ade6d05e0dbe62e7c524a129545ccc902">size</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ade6d05e0dbe62e7c524a129545ccc902 inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the total byte size summed across every slice in the list.  <br /></td></tr>
+<tr class="separator:ade6d05e0dbe62e7c524a129545ccc902 inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3edd0a5807c713d9c44ac057716e0e2a inherit pub_methods_classBufferView" id="r_a3edd0a5807c713d9c44ac057716e0e2a"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>totalSize</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a3edd0a5807c713d9c44ac057716e0e2a inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Alias for <a class="el" href="classBufferView.html#ade6d05e0dbe62e7c524a129545ccc902">size</a> — total bytes across all slices. <br /></td></tr>
+<tr class="separator:a3edd0a5807c713d9c44ac057716e0e2a inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a46e50a72251f8907586f652ad830a31d inherit pub_methods_classBufferView" id="r_a46e50a72251f8907586f652ad830a31d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferView.html#a46e50a72251f8907586f652ad830a31d">isExclusive</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a46e50a72251f8907586f652ad830a31d inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns <code>true</code> when every unique backing <a class="el" href="classBuffer.html">Buffer</a> is held only by this list — no external holder.  <br /></td></tr>
+<tr class="separator:a46e50a72251f8907586f652ad830a31d inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adef4fa7acd1dcaa48889d58d4c86df43 inherit pub_methods_classBufferView" id="r_adef4fa7acd1dcaa48889d58d4c86df43"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferView.html#adef4fa7acd1dcaa48889d58d4c86df43">ensureExclusive</a> ()</td></tr>
+<tr class="memdesc:adef4fa7acd1dcaa48889d58d4c86df43 inherit pub_methods_classBufferView"><td class="mdescLeft">&#160;</td><td class="mdescRight">Detaches every unique backing <a class="el" href="classBuffer.html">Buffer</a> that has external holders.  <br /></td></tr>
+<tr class="separator:adef4fa7acd1dcaa48889d58d4c86df43 inherit pub_methods_classBufferView"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a39ecc5abfd4d038c5e954d472ee9ffd5" id="r_a39ecc5abfd4d038c5e954d472ee9ffd5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">static</a> <a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">List</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpPacket.html#a39ecc5abfd4d038c5e954d472ee9ffd5">createList</a> (<a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">size_t</a> count, <a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">size_t</a> <a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">packetSize</a>)</td></tr>
+<tr class="memitem:a39ecc5abfd4d038c5e954d472ee9ffd5" id="r_a39ecc5abfd4d038c5e954d472ee9ffd5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">static</a> <a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">List</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpPacket.html#a39ecc5abfd4d038c5e954d472ee9ffd5">createList</a> (<a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">size_t</a> <a class="el" href="classBufferView.html#ada8c23944f1b4e97fe45af2b23a9cf6b">count</a>, <a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">size_t</a> <a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">packetSize</a>)</td></tr>
 <tr class="memdesc:a39ecc5abfd4d038c5e954d472ee9ffd5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a list of N RtpPackets packed into a single shared buffer.  <br /></td></tr>
 <tr class="separator:a39ecc5abfd4d038c5e954d472ee9ffd5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa9476b20ff8858f211a8879e838b2b75" id="r_aa9476b20ff8858f211a8879e838b2b75"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">static</a> <a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">List</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpPacket.html#aa9476b20ff8858f211a8879e838b2b75">createList</a> (<a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">const</a> <a class="el" href="classRtpPacket.html#a7309614010f7c3315032b63ea15b1d2f">SizeList</a> &amp;<a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">sizes</a>)</td></tr>
@@ -309,9 +343,9 @@ Static Public Attributes</h2></td></tr>
 <tr class="separator:ac5902357da35da471b70365e21b150f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>A <a class="el" href="classBufferView.html" title="Lightweight view into a region of a shared Buffer.">BufferView</a> that interprets its data as an RTP packet. </p>
-<p><a class="el" href="classRtpPacket.html" title="A BufferView that interprets its data as an RTP packet.">RtpPacket</a> extends <a class="el" href="classBufferView.html" title="Lightweight view into a region of a shared Buffer.">BufferView</a> with accessors that read and write the standard 12-byte RTP header directly in the buffer data. No fields are stored separately — the buffer is the source of truth.</p>
-<dl class="section user"><dt>RTP Header Layout (RFC 3550)</dt><dd><div class="fragment"><div class="line"><a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">Byte</a> 0:    <a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">V</a>(2) | <a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">P</a>(1) | X(1) | <a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">CC</a>(4)</div>
+<div class="textblock"><p>A <a class="el" href="classBufferView.html" title="Ordered list of (offset, size) views over a deduplicated set of backing Buffer objects.">BufferView</a> that interprets its data as an RTP packet. </p>
+<p><a class="el" href="classRtpPacket.html" title="A BufferView that interprets its data as an RTP packet.">RtpPacket</a> extends <a class="el" href="classBufferView.html" title="Ordered list of (offset, size) views over a deduplicated set of backing Buffer objects.">BufferView</a> with accessors that read and write the standard 12-byte RTP header directly in the buffer data. No fields are stored separately — the buffer is the source of truth.</p>
+<dl class="section user"><dt>RTP Header Layout (RFC 3550)</dt><dd><div class="fragment"><div class="line"><a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">Byte</a> 0:    <a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">V</a>(2) | P(1) | X(1) | <a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">CC</a>(4)</div>
 <div class="line"><a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">Byte</a> 1:    <a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">M</a>(1) | <a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">PT</a>(7)</div>
 <div class="line"><a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">Bytes</a> 2-3: <a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">Sequence</a> number (<a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">big</a>-<a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">endian</a>)</div>
 <div class="line"><a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">Bytes</a> 4-7: Timestamp (<a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">big</a>-<a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">endian</a>)</div>
@@ -320,8 +354,8 @@ Static Public Attributes</h2></td></tr>
 <div class="line">[<a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">Extension</a> <a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">header</a>, <a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">if</a> X=1:</div>
 <div class="line">  2 bytes <a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">profile</a>-<a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">specific</a> ID</div>
 <div class="line">  2 bytes <a class="code hl_function" href="classRtpPacket.html#a111905d271a1b2f84732fdcbeacfaeaa">extension</a> length (<a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">in</a> 32-<a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">bit</a> <a class="code hl_typedef" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">words</a>)</div>
-<div class="line">  length*4 bytes <a class="code hl_function" href="classRtpPacket.html#a111905d271a1b2f84732fdcbeacfaeaa">extension</a> <a class="code hl_function" href="classBufferView.html#af43dd085c9f3f136eba9029471adca76">data</a>]</div>
-<div class="ttc" id="aclassBufferView_html_af43dd085c9f3f136eba9029471adca76"><div class="ttname"><a href="classBufferView.html#af43dd085c9f3f136eba9029471adca76">BufferView::data</a></div><div class="ttdeci">const uint8_t * data() const</div><div class="ttdoc">Returns a const pointer to this view's data.</div><div class="ttdef"><b>Definition</b> bufferview.h:74</div></div>
+<div class="line">  length*4 bytes <a class="code hl_function" href="classRtpPacket.html#a111905d271a1b2f84732fdcbeacfaeaa">extension</a> <a class="code hl_function" href="classBufferView.html#a30557253c4292eb5572194a60ac412c1">data</a>]</div>
+<div class="ttc" id="aclassBufferView_html_a30557253c4292eb5572194a60ac412c1"><div class="ttname"><a href="classBufferView.html#a30557253c4292eb5572194a60ac412c1">BufferView::data</a></div><div class="ttdeci">uint8_t * data() const</div><div class="ttdoc">Returns a pointer to the first slice's data.</div></div>
 <div class="ttc" id="aclassRtpPacket_html_a111905d271a1b2f84732fdcbeacfaeaa"><div class="ttname"><a href="classRtpPacket.html#a111905d271a1b2f84732fdcbeacfaeaa">RtpPacket::extension</a></div><div class="ttdeci">bool extension() const</div><div class="ttdoc">Returns the extension flag.</div><div class="ttdef"><b>Definition</b> rtppacket.h:187</div></div>
 <div class="ttc" id="aclassRtpPacket_html_ac88d10b933d477637a4c1f61151accc1"><div class="ttname"><a href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">RtpPacket::List</a></div><div class="ttdeci">promeki::List&lt; RtpPacket &gt; List</div><div class="ttdoc">List of RtpPacket values.</div><div class="ttdef"><b>Definition</b> rtppacket.h:62</div></div>
 </div><!-- fragment --></dd></dl>
@@ -620,7 +654,7 @@ Static Public Attributes</h2></td></tr>
 
 <p>Returns the full header size including CSRC list and extension. </p>
 <dl class="section return"><dt>Returns</dt><dd>The header size in bytes, or 0 if the packet is too small to contain the header fields it declares.</dd></dl>
-<p>Computes: 12 + CC*4 + (if X=1: 4 + extensionLength*4). Returns 0 if the packet's <a class="el" href="classBufferView.html#ade6d05e0dbe62e7c524a129545ccc902" title="Returns the byte size of this view.">size()</a> is too small to hold the declared CSRC entries or extension data. </p>
+<p>Computes: 12 + CC*4 + (if X=1: 4 + extensionLength*4). Returns 0 if the packet's <a class="el" href="classBufferView.html#ade6d05e0dbe62e7c524a129545ccc902" title="Returns the total byte size summed across every slice in the list.">size()</a> is too small to hold the declared CSRC entries or extension data. </p>
 
 </div>
 </div>
@@ -777,7 +811,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classRtpPacket.html">RtpPacket</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

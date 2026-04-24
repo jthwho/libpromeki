@@ -1,5 +1,5 @@
 <map id="SDLVideoWidget" name="SDLVideoWidget">
-<area shape="rect" id="Node000001" title="Widget that displays a promeki Image via SDL texture rendering." alt="" coords="135,243,264,268"/>
+<area shape="rect" id="Node000001" title="Widget that displays an UncompressedVideoPayload via SDL texture rendering." alt="" coords="135,243,264,268"/>
 <area shape="rect" id="Node000002" href="$classWidget.html" title="Base class for all widgets across UI backends." alt="" coords="165,168,233,193"/>
 <area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="202,208,202,242,197,242,197,208"/>
 <area shape="rect" id="Node000003" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="151,93,247,119"/>

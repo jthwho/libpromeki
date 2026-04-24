@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['keyframe_0',['Keyframe',['../classVideoPacket.html#afa35941ff0c3d4d9ac39da46ac3608aea8363671bc975fb9ae67ac14ff742d2f3',1,'VideoPacket']]]
+  ['keyframe_0',['Keyframe',['../classMediaPayload.html#a807316b4e6c6bc46e1363540d7feef7aa0343d2e57ba7c8fe2a520532d0553145',1,'MediaPayload']]]
 ];

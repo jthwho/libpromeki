@@ -223,7 +223,7 @@ Continuity tracking</h2>
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Property   </th><th class="markdownTableHeadNone">Discontinuity kind   </th><th class="markdownTableHeadNone">What "unexpected" means    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> number   </td><td class="markdownTableBodyNone"><code><a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da76f5a1985d93b6ebcd1b8de165efe65a" title="Frame number from the picture data band did not advance by 1.">InspectorDiscontinuity::FrameNumberJump</a></code>   </td><td class="markdownTableBodyNone">Did not advance by exactly 1    </td></tr>
+<td class="markdownTableBodyNone"><a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a> number   </td><td class="markdownTableBodyNone"><code><a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da76f5a1985d93b6ebcd1b8de165efe65a" title="Frame number from the picture data band did not advance by 1.">InspectorDiscontinuity::FrameNumberJump</a></code>   </td><td class="markdownTableBodyNone">Did not advance by exactly 1    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">Stream ID   </td><td class="markdownTableBodyNone"><code><a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da536ddcee17d16b4926db7438fb180c41" title="Stream ID from the picture data band changed between frames.">InspectorDiscontinuity::StreamIdChange</a></code>   </td><td class="markdownTableBodyNone">Changed at all    </td></tr>
 <tr class="markdownTableRowOdd">
@@ -316,7 +316,7 @@ What to look for in CI / QA</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>audio and video are no longer locked</code>   </td><td class="markdownTableBodyNone">The A/V sync offset moved. Specific <code>SyncOffsetChange</code> wording.    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> number jumped</code>   </td><td class="markdownTableBodyNone">The producer dropped or repeated a frame.    </td></tr>
+<td class="markdownTableBodyNone"><code><a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a> number jumped</code>   </td><td class="markdownTableBodyNone">The producer dropped or repeated a frame.    </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>Stream ID changed</code>   </td><td class="markdownTableBodyNone">The producer was swapped mid-stream.   </td></tr>
 </table>
@@ -381,7 +381,7 @@ See also</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

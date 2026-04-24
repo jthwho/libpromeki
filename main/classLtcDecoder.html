@@ -160,12 +160,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aca4fdbef2984979c3116e723b41d5d9e" id="r_aca4fdbef2984979c3116e723b41d5d9e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLtcDecoder.html#aca4fdbef2984979c3116e723b41d5d9e">setFuzz</a> (int <a class="el" href="classList.html">fuzz</a>)</td></tr>
 <tr class="memdesc:aca4fdbef2984979c3116e723b41d5d9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the timing tolerance in samples.  <br /></td></tr>
 <tr class="separator:aca4fdbef2984979c3116e723b41d5d9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8c46f0f9d98831569592cc578d4318d1" id="r_a8c46f0f9d98831569592cc578d4318d1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classLtcDecoder.html#a801ff1d622064a6b3634eb20ed92aeb9">DecodedList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLtcDecoder.html#a8c46f0f9d98831569592cc578d4318d1">decode</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">int8_t</a> *samples, <a class="el" href="classList.html">size_t</a> count)</td></tr>
+<tr class="memitem:a8c46f0f9d98831569592cc578d4318d1" id="r_a8c46f0f9d98831569592cc578d4318d1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classLtcDecoder.html#a801ff1d622064a6b3634eb20ed92aeb9">DecodedList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLtcDecoder.html#a8c46f0f9d98831569592cc578d4318d1">decode</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">int8_t</a> *<a class="el" href="classList.html">samples</a>, <a class="el" href="classList.html">size_t</a> count)</td></tr>
 <tr class="memdesc:a8c46f0f9d98831569592cc578d4318d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feeds raw int8_t audio samples to the decoder.  <br /></td></tr>
 <tr class="separator:a8c46f0f9d98831569592cc578d4318d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa9f298171e75d4429d40498729b7419c" id="r_aa9f298171e75d4429d40498729b7419c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classLtcDecoder.html#a801ff1d622064a6b3634eb20ed92aeb9">DecodedList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLtcDecoder.html#aa9f298171e75d4429d40498729b7419c">decode</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classAudio.html">Audio</a> &amp;audio, int <a class="el" href="classList.html">channelIndex</a>=0)</td></tr>
-<tr class="memdesc:aa9f298171e75d4429d40498729b7419c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feeds an <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> object's selected channel to the decoder.  <br /></td></tr>
-<tr class="separator:aa9f298171e75d4429d40498729b7419c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab8cc27bfc4a9f0a509f7765ce87ccf75" id="r_ab8cc27bfc4a9f0a509f7765ce87ccf75"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classLtcDecoder.html#a801ff1d622064a6b3634eb20ed92aeb9">DecodedList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLtcDecoder.html#ab8cc27bfc4a9f0a509f7765ce87ccf75">decode</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classUncompressedAudioPayload.html">UncompressedAudioPayload</a> &amp;audio, int <a class="el" href="classList.html">channelIndex</a>=0)</td></tr>
+<tr class="memdesc:ab8cc27bfc4a9f0a509f7765ce87ccf75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feeds an uncompressed audio payload's selected channel to the decoder.  <br /></td></tr>
+<tr class="separator:ab8cc27bfc4a9f0a509f7765ce87ccf75"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaf43eaef9b869ca6879240a5cad0a1d4" id="r_aaf43eaef9b869ca6879240a5cad0a1d4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLtcDecoder.html#aaf43eaef9b869ca6879240a5cad0a1d4">reset</a> ()</td></tr>
 <tr class="memdesc:aaf43eaef9b869ca6879240a5cad0a1d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the decoder state.  <br /></td></tr>
 <tr class="separator:aaf43eaef9b869ca6879240a5cad0a1d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -209,7 +209,7 @@ Public Member Functions</h2></td></tr>
 <p>Constructs an LTC decoder. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">sampleRate</td><td><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> sample rate (e.g. 48000). </td></tr>
+    <tr><td class="paramname">sampleRate</td><td>Audio sample rate (e.g. 48000). </td></tr>
   </table>
   </dd>
 </dl>
@@ -217,48 +217,8 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="aa9f298171e75d4429d40498729b7419c" name="aa9f298171e75d4429d40498729b7419c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa9f298171e75d4429d40498729b7419c">&#9670;&#160;</a></span>decode() <span class="overload">[1/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classLtcDecoder.html#a801ff1d622064a6b3634eb20ed92aeb9">DecodedList</a> LtcDecoder::decode </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classAudio.html">Audio</a> &amp;&#160;</td>
-          <td class="paramname"><em>audio</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>channelIndex</em> = <code>0</code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Feeds an <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> object's selected channel to the decoder. </p>
-<p>Format-agnostic — any sample format <a class="el" href="classAudioFormat.html">AudioFormat</a> supports is accepted. The named channel is converted to int8 mono via <a class="el" href="classAudioFormat.html#a7f6f6c0013f9a8b1686bd320cebe397e">AudioFormat::samplesToFloat</a> (the same per-format helper <a class="el" href="classAudioBuffer.html">AudioBuffer</a> uses) followed by a normalised float-to-int8 quantisation. The audio's sample rate must match the decoder's configured rate, otherwise an empty list is returned.</p>
-<p>The fast path for <code>PCMI_S8</code> mono audio (when <code>channelIndex</code> is 0) skips the conversion entirely and feeds the raw bytes straight to libvtc.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">audio</td><td>The audio chunk. </td></tr>
-    <tr><td class="paramname">channelIndex</td><td>Zero-based channel index carrying LTC. Defaults to channel 0. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of decoded timecodes found in this chunk. </dd></dl>
-
-</div>
-</div>
 <a id="a8c46f0f9d98831569592cc578d4318d1" name="a8c46f0f9d98831569592cc578d4318d1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8c46f0f9d98831569592cc578d4318d1">&#9670;&#160;</a></span>decode() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a8c46f0f9d98831569592cc578d4318d1">&#9670;&#160;</a></span>decode() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -288,6 +248,46 @@ Public Member Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">samples</td><td>Pointer to int8_t audio data. </td></tr>
     <tr><td class="paramname">count</td><td>Number of samples. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of decoded timecodes found in this chunk. </dd></dl>
+
+</div>
+</div>
+<a id="ab8cc27bfc4a9f0a509f7765ce87ccf75" name="ab8cc27bfc4a9f0a509f7765ce87ccf75"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab8cc27bfc4a9f0a509f7765ce87ccf75">&#9670;&#160;</a></span>decode() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classLtcDecoder.html#a801ff1d622064a6b3634eb20ed92aeb9">DecodedList</a> LtcDecoder::decode </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classUncompressedAudioPayload.html">UncompressedAudioPayload</a> &amp;&#160;</td>
+          <td class="paramname"><em>audio</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>channelIndex</em> = <code>0</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Feeds an uncompressed audio payload's selected channel to the decoder. </p>
+<p>Format-agnostic — any sample format <a class="el" href="classAudioFormat.html">AudioFormat</a> supports is accepted. The named channel is converted to int8 mono via <a class="el" href="classAudioFormat.html#a7f6f6c0013f9a8b1686bd320cebe397e">AudioFormat::samplesToFloat</a> (the same per-format helper <a class="el" href="classAudioBuffer.html">AudioBuffer</a> uses) followed by a normalised float-to-int8 quantisation. The payload's sample rate must match the decoder's configured rate, otherwise an empty list is returned.</p>
+<p>The fast path for <code>PCMI_S8</code> mono audio (when <code>channelIndex</code> is 0) skips the conversion entirely and feeds the raw bytes straight to libvtc.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">audio</td><td>The uncompressed audio payload. Planar payloads are not supported and return an empty list. </td></tr>
+    <tr><td class="paramname">channelIndex</td><td>Zero-based channel index carrying LTC. Defaults to channel 0. </td></tr>
   </table>
   </dd>
 </dl>
@@ -416,7 +416,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classLtcDecoder.html">LtcDecoder</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

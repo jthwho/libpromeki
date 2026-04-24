@@ -166,7 +166,7 @@ Public Member Functions</h2></td></tr>
 <p>Tracks count, sum, sum-of-squares, minimum, and maximum so that mean and sample standard deviation can be computed without retaining the original samples. Mean and sample stddev use the classic <code>sumSq - sum*sum/n</code> formulation; this is numerically fine for benchmark timings (positive samples within a few orders of magnitude), and trades a tiny amount of precision for trivial add/merge.</p>
 <p><a class="el" href="classStatsAccumulator.html" title="Online running-statistics accumulator for a stream of double samples.">StatsAccumulator</a> is a plain value with no internal allocation. It supports merging (<code><a class="el" href="classStatsAccumulator.html#adbdce3bcbdcabde5201f3384edc43098" title="Merges another accumulator into this one.">merge()</a></code>) so that per-thread accumulators can be combined at shutdown without locking.</p>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classStatsAccumulator.html">StatsAccumulator</a> <a class="code hl_class" href="classList.html">acc</a>;</div>
-<div class="line"><span class="keywordflow">for</span>(<span class="keywordtype">double</span> x : samples) <a class="code hl_class" href="classList.html">acc</a>.<a class="code hl_function" href="classStatsAccumulator.html#a703bd495be5bdcd67f0ec8d80a8a4f25">add</a>(x);</div>
+<div class="line"><span class="keywordflow">for</span>(<span class="keywordtype">double</span> x : <a class="code hl_class" href="classList.html">samples</a>) <a class="code hl_class" href="classList.html">acc</a>.<a class="code hl_function" href="classStatsAccumulator.html#a703bd495be5bdcd67f0ec8d80a8a4f25">add</a>(x);</div>
 <div class="line"><a class="code hl_class" href="classList.html">printf</a>(<span class="stringliteral">&quot;mean=%g stddev=%g min=%g max=%g\n&quot;</span>,</div>
 <div class="line">       <a class="code hl_class" href="classList.html">acc</a>.mean(), <a class="code hl_class" href="classList.html">acc</a>.stddev(), <a class="code hl_class" href="classList.html">acc</a>.min(), <a class="code hl_class" href="classList.html">acc</a>.max());</div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
@@ -336,7 +336,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classStatsAccumulator.html">StatsAccumulator</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

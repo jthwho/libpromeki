@@ -7,7 +7,7 @@ var classPaintEngine =
     [ "Ptr", "classPaintEngine.html#a1eb384e7a73bcfe666294d023be9627f", null ],
     [ "PaintEngine", "classPaintEngine.html#ae28d83d1366150a6a7b6df117b509950", null ],
     [ "PaintEngine", "classPaintEngine.html#a302c06e18928db5f61cf9c2b0191e5ff", null ],
-    [ "blit", "classPaintEngine.html#aef16c07f6556afced00c80a5cdddc8f0", null ],
+    [ "blit", "classPaintEngine.html#aef6106259ecc5d1e13485e8427dfb5c9", null ],
     [ "compositePoints", "classPaintEngine.html#a7b08542594f5163edc45534a82ce0065", null ],
     [ "compositePoints", "classPaintEngine.html#a2f0e3d94b411bfcc69b958b5008ba925", null ],
     [ "createPixel", "classPaintEngine.html#a2ee7b4265d5bd882301e790b8ce150c6", null ],

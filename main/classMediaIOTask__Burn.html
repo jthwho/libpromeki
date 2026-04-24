@@ -217,9 +217,9 @@ Additional Inherited Members</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p><a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a> backend that burns text overlays onto video frames. </p>
-<p>ReadWrite <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> that accepts a frame on <code>writeFrame()</code>, renders a text overlay onto each video image, and emits the result on <code>readFrame()</code>. <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> and non-video metadata are forwarded unchanged.</p>
+<p>ReadWrite <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> that accepts a frame on <code>writeFrame()</code>, renders a text overlay onto each video image, and emits the result on <code>readFrame()</code>. Audio and non-video metadata are forwarded unchanged.</p>
 <p>The burn text is specified as a <a class="el" href="classVariantLookup.html#af781df200e0fd8aa7110703129ea43e5">VariantLookup&lt;Frame&gt;::format</a> template (via MediaConfig::VideoBurnText), resolved per-frame against the frame's metadata. This allows dynamic content such as <code>"{Meta.Timecode:smpte}"</code> or <code>"{VideoFormat}"</code> to update on every frame.</p>
-<p><a class="el" href="classFont.html" title="Abstract base class for font rendering.">Font</a> rendering is delegated to <a class="el" href="classVideoTestPattern.html#ac246e3ec850fe0f8880552fec18016ae">VideoTestPattern::applyBurn</a>, which uses the <a class="el" href="classFastFont.html">FastFont</a> glyph cache for efficient repeated draws. The image must be in a paintable pixel format (<code><a class="el" href="classPixelFormat.html#a85e5f2d50344d546d937068a4afb79a8" title="Returns whether this pixel format has a registered paint engine.">PixelFormat::hasPaintEngine()</a></code> == true); non-paintable formats pass through with a one-shot warning.</p>
+<p><a class="el" href="classFont.html" title="Abstract base class for font rendering.">Font</a> rendering is delegated to <a class="el" href="classVideoTestPattern.html#afbe5579bffe061613eee545235c4edd0">VideoTestPattern::applyBurn</a>, which uses the <a class="el" href="classFastFont.html">FastFont</a> glyph cache for efficient repeated draws. The image must be in a paintable pixel format (<code><a class="el" href="classPixelFormat.html#a85e5f2d50344d546d937068a4afb79a8" title="Returns whether this pixel format has a registered paint engine.">PixelFormat::hasPaintEngine()</a></code> == true); non-paintable formats pass through with a one-shot warning.</p>
 <dl class="section user"><dt>Mode support</dt><dd></dd></dl>
 <p>Only <code><a class="el" href="classMediaIO.html#aab0ab31ae4c7dabc1e3f3339ef80001d" title="Backend does both (consumer + emitter).">MediaIO::Transform</a></code> is supported.</p>
 <dl class="section user"><dt>Back-pressure</dt><dd></dd></dl>
@@ -319,7 +319,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIOTask__Burn.html">MediaIOTask_Burn</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

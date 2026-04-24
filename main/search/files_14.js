@@ -10,6 +10,6 @@ var searchData=
   ['videodecoder_2eh_7',['videodecoder.h',['../videodecoder_8h.html',1,'']]],
   ['videoencoder_2eh_8',['videoencoder.h',['../videoencoder_8h.html',1,'']]],
   ['videoformat_2eh_9',['videoformat.h',['../videoformat_8h.html',1,'']]],
-  ['videopacket_2eh_10',['videopacket.h',['../videopacket_8h.html',1,'']]],
+  ['videopayload_2eh_10',['videopayload.h',['../videopayload_8h.html',1,'']]],
   ['videotestpattern_2eh_11',['videotestpattern.h',['../videotestpattern_8h.html',1,'']]]
 ];

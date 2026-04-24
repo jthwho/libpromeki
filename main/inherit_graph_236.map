@@ -1,7 +1,15 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classMediaPacket.html" title="Abstract polymorphic base for any encoded bitstream packet." alt="" coords="5,31,109,56"/>
-<area shape="rect" id="Node000001" href="$classAudioPacket.html" title="Encoded audio access unit produced by an AudioEncoder or consumed by an AudioDecoder." alt="" coords="157,5,259,31"/>
-<area shape="poly" id="edge95_Node000000_Node000001" title=" " alt="" coords="122,30,157,24,158,29,123,35"/>
-<area shape="rect" id="Node000002" href="$classVideoPacket.html" title="Encoded video access unit produced by a VideoEncoder or consumed by a VideoDecoder." alt="" coords="157,55,259,80"/>
-<area shape="poly" id="edge96_Node000000_Node000002" title=" " alt="" coords="123,51,158,57,157,62,122,56"/>
+<area shape="rect" id="Node000000" href="$classMediaPayload.html" title="Abstract polymorphic base for any media payload flowing through a pipeline." alt="" coords="5,80,119,105"/>
+<area shape="rect" id="Node000001" href="$classAudioPayload.html" title="Abstract base for any audio payload — compressed or uncompressed." alt="" coords="167,55,277,80"/>
+<area shape="poly" id="edge99_Node000000_Node000001" title=" " alt="" coords="132,79,166,73,167,79,132,84"/>
+<area shape="rect" id="Node000004" href="$classVideoPayload.html" title="Abstract base for any video payload — compressed or uncompressed." alt="" coords="167,104,277,129"/>
+<area shape="poly" id="edge102_Node000000_Node000004" title=" " alt="" coords="132,101,167,106,166,111,132,106"/>
+<area shape="rect" id="Node000002" href="$classCompressedAudioPayload.html" title="Compressed audio payload — one encoded access unit whose codec identity lives in the base AudioDesc&#39;s..." alt="" coords="333,5,524,31"/>
+<area shape="poly" id="edge100_Node000001_Node000002" title=" " alt="" coords="286,49,325,39,372,28,373,33,326,45,288,54"/>
+<area shape="rect" id="Node000003" href="$classUncompressedAudioPayload.html" title="Uncompressed audio payload — PCM samples in the format described by the base AudioPayload&#39;s AudioDesc..." alt="" coords="325,55,532,80"/>
+<area shape="poly" id="edge101_Node000001_Node000003" title=" " alt="" coords="291,65,325,65,325,70,291,70"/>
+<area shape="rect" id="Node000005" href="$classCompressedVideoPayload.html" title="Compressed video payload — one encoded access unit whose codec identity lives in the base ImageDesc&#39;s..." alt="" coords="333,104,524,129"/>
+<area shape="poly" id="edge103_Node000004_Node000005" title=" " alt="" coords="291,114,333,114,333,119,291,119"/>
+<area shape="rect" id="Node000006" href="$classUncompressedVideoPayload.html" title="Uncompressed video payload — raster pixels in the format described by the base VideoPayload&#39;s ImageDe..." alt="" coords="325,153,532,179"/>
+<area shape="poly" id="edge104_Node000004_Node000006" title=" " alt="" coords="290,130,375,151,374,156,288,135"/>
 </map>

@@ -107,7 +107,7 @@ $(document).ready(function(){initNavTree('classFrame.html',''); initResizable();
 </div><!--header-->
 <div class="contents">
 
-<p>A media frame containing images, audio, and metadata.  
+<p>A media frame containing payloads and metadata.  
  <a href="classFrame.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="frame_8h_source.html">frame.h</a>&gt;</code></p>
@@ -122,15 +122,15 @@ Public Types</h2></td></tr>
 <tr class="separator:ad34e48250ed5a1901bacf84d71831217"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1fee9d81d4ead77656cb6f87e531a74a" id="r_a1fee9d81d4ead77656cb6f87e531a74a"><td class="memItemLeft" align="right" valign="top"><a id="a1fee9d81d4ead77656cb6f87e531a74a" name="a1fee9d81d4ead77656cb6f87e531a74a"></a>
 <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Ptr</b> = <a class="el" href="classSharedPtr.html">SharedPtr</a>&lt; <a class="el" href="classFrame.html">Frame</a> &gt;</td></tr>
-<tr class="memdesc:a1fee9d81d4ead77656cb6f87e531a74a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shared pointer type for <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a>. <br /></td></tr>
+<tr class="memdesc:a1fee9d81d4ead77656cb6f87e531a74a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shared pointer type for <a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a>. <br /></td></tr>
 <tr class="separator:a1fee9d81d4ead77656cb6f87e531a74a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3e035fa4cfd9d5b51231280d05ad4808" id="r_a3e035fa4cfd9d5b51231280d05ad4808"><td class="memItemLeft" align="right" valign="top"><a id="a3e035fa4cfd9d5b51231280d05ad4808" name="a3e035fa4cfd9d5b51231280d05ad4808"></a>
 <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>List</b> = promeki::List&lt; <a class="el" href="classFrame.html">Frame</a> &gt;</td></tr>
-<tr class="memdesc:a3e035fa4cfd9d5b51231280d05ad4808"><td class="mdescLeft">&#160;</td><td class="mdescRight">Plain value list of <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> objects. <br /></td></tr>
+<tr class="memdesc:a3e035fa4cfd9d5b51231280d05ad4808"><td class="mdescLeft">&#160;</td><td class="mdescRight">Plain value list of <a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a> objects. <br /></td></tr>
 <tr class="separator:a3e035fa4cfd9d5b51231280d05ad4808"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a59b79f2fc64b0774ac7ee5094c98a199" id="r_a59b79f2fc64b0774ac7ee5094c98a199"><td class="memItemLeft" align="right" valign="top"><a id="a59b79f2fc64b0774ac7ee5094c98a199" name="a59b79f2fc64b0774ac7ee5094c98a199"></a>
 <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>PtrList</b> = promeki::List&lt; <a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a">Ptr</a> &gt;</td></tr>
-<tr class="memdesc:a59b79f2fc64b0774ac7ee5094c98a199"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of shared pointers to <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> objects. <br /></td></tr>
+<tr class="memdesc:a59b79f2fc64b0774ac7ee5094c98a199"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of shared pointers to <a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a> objects. <br /></td></tr>
 <tr class="separator:a59b79f2fc64b0774ac7ee5094c98a199"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
@@ -139,18 +139,22 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Frame</b> ()=<a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">default</a></td></tr>
 <tr class="memdesc:af859480e7bdedf343c1ad7d941106f26"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an empty frame with no images, audio, or metadata. <br /></td></tr>
 <tr class="separator:af859480e7bdedf343c1ad7d941106f26"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8360d8a81a700a1b90cf6da71cd524e4" id="r_a8360d8a81a700a1b90cf6da71cd524e4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a> <a class="el" href="classImage.html#a198b089768debdf038e39b6be082184f">Image::PtrList</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html#a8360d8a81a700a1b90cf6da71cd524e4">imageList</a> () <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a></td></tr>
-<tr class="memdesc:a8360d8a81a700a1b90cf6da71cd524e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const reference to the list of image planes.  <br /></td></tr>
-<tr class="separator:a8360d8a81a700a1b90cf6da71cd524e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8d258b0e55414fc85257cb1784559db5" id="r_a8d258b0e55414fc85257cb1784559db5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImage.html#a198b089768debdf038e39b6be082184f">Image::PtrList</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html#a8d258b0e55414fc85257cb1784559db5">imageList</a> ()</td></tr>
-<tr class="memdesc:a8d258b0e55414fc85257cb1784559db5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reference to the list of image planes.  <br /></td></tr>
-<tr class="separator:a8d258b0e55414fc85257cb1784559db5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acd463c7e5ee785d13334c3e079cb23a3" id="r_acd463c7e5ee785d13334c3e079cb23a3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a> <a class="el" href="classAudio.html#a362f7b18724ad4b8b50f6afdef1cd5e2">Audio::PtrList</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html#acd463c7e5ee785d13334c3e079cb23a3">audioList</a> () <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a></td></tr>
-<tr class="memdesc:acd463c7e5ee785d13334c3e079cb23a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const reference to the list of audio tracks.  <br /></td></tr>
-<tr class="separator:acd463c7e5ee785d13334c3e079cb23a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a467f242201a17814c868b403ae7c421f" id="r_a467f242201a17814c868b403ae7c421f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html#a362f7b18724ad4b8b50f6afdef1cd5e2">Audio::PtrList</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html#a467f242201a17814c868b403ae7c421f">audioList</a> ()</td></tr>
-<tr class="memdesc:a467f242201a17814c868b403ae7c421f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reference to the list of audio tracks.  <br /></td></tr>
-<tr class="separator:a467f242201a17814c868b403ae7c421f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aab2355926bc650a45e642a3cb8a2772a" id="r_aab2355926bc650a45e642a3cb8a2772a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a> <a class="el" href="classMediaPayload.html#ae467a41fe02b1998db938991da3d2b83">MediaPayload::PtrList</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html#aab2355926bc650a45e642a3cb8a2772a">payloadList</a> () <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a></td></tr>
+<tr class="memdesc:aab2355926bc650a45e642a3cb8a2772a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const reference to the list of media payloads.  <br /></td></tr>
+<tr class="separator:aab2355926bc650a45e642a3cb8a2772a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a02f1251f797e50a06d34c2e7b95e3a7a" id="r_a02f1251f797e50a06d34c2e7b95e3a7a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaPayload.html#ae467a41fe02b1998db938991da3d2b83">MediaPayload::PtrList</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html#a02f1251f797e50a06d34c2e7b95e3a7a">payloadList</a> ()</td></tr>
+<tr class="memdesc:a02f1251f797e50a06d34c2e7b95e3a7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reference to the list of media payloads.  <br /></td></tr>
+<tr class="separator:a02f1251f797e50a06d34c2e7b95e3a7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c854f7919b4bab195deed2d5fec922e" id="r_a0c854f7919b4bab195deed2d5fec922e"><td class="memItemLeft" align="right" valign="top"><a id="a0c854f7919b4bab195deed2d5fec922e" name="a0c854f7919b4bab195deed2d5fec922e"></a>
+<a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>addPayload</b> (<a class="el" href="classMediaPayload.html#a937e49e758342ea69a39d84a14f7e5d1">MediaPayload::Ptr</a> p)</td></tr>
+<tr class="memdesc:a0c854f7919b4bab195deed2d5fec922e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Appends a payload to <a class="el" href="classFrame.html#aab2355926bc650a45e642a3cb8a2772a">payloadList</a>. <br /></td></tr>
+<tr class="separator:a0c854f7919b4bab195deed2d5fec922e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a005196f5162c87768d6f8dd60b0b671f" id="r_a005196f5162c87768d6f8dd60b0b671f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classVideoPayload.html#a8e64fab9d3c5e4b8b8be24cb52bb952d">VideoPayload::PtrList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html#a005196f5162c87768d6f8dd60b0b671f">videoPayloads</a> () <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a></td></tr>
+<tr class="memdesc:a005196f5162c87768d6f8dd60b0b671f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">Video-kind</a> entries from <a class="el" href="classFrame.html#aab2355926bc650a45e642a3cb8a2772a">payloadList</a> as typed pointers.  <br /></td></tr>
+<tr class="separator:a005196f5162c87768d6f8dd60b0b671f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9de8d92940a561992082a24d4ceb4ae9" id="r_a9de8d92940a561992082a24d4ceb4ae9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioPayload.html#a1b202da36c79fbce835975b23faaec5a">AudioPayload::PtrList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html#a9de8d92940a561992082a24d4ceb4ae9">audioPayloads</a> () <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a></td></tr>
+<tr class="memdesc:a9de8d92940a561992082a24d4ceb4ae9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">Audio-kind</a> entries from <a class="el" href="classFrame.html#aab2355926bc650a45e642a3cb8a2772a">payloadList</a> as typed pointers.  <br /></td></tr>
+<tr class="separator:a9de8d92940a561992082a24d4ceb4ae9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3029bf6f68d261411f9510536c1994d2" id="r_a3029bf6f68d261411f9510536c1994d2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a> <a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html#a3029bf6f68d261411f9510536c1994d2">metadata</a> () <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a></td></tr>
 <tr class="memdesc:a3029bf6f68d261411f9510536c1994d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const reference to the frame metadata.  <br /></td></tr>
 <tr class="separator:a3029bf6f68d261411f9510536c1994d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -161,7 +165,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a5cd4e91eefa51727a9e709143888fe31"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classVideoFormat.html" title="Combined video raster, frame rate, and scan mode.">VideoFormat</a> for the image at <code>index</code>.  <br /></td></tr>
 <tr class="separator:a5cd4e91eefa51727a9e709143888fe31"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afb948d42ec82b719221b60a1ce25926f" id="r_afb948d42ec82b719221b60a1ce25926f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaDesc.html">MediaDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html#afb948d42ec82b719221b60a1ce25926f">mediaDesc</a> () <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a></td></tr>
-<tr class="memdesc:afb948d42ec82b719221b60a1ce25926f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assembles a <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> describing this <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a>.  <br /></td></tr>
+<tr class="memdesc:afb948d42ec82b719221b60a1ce25926f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assembles a <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> describing this <a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a>.  <br /></td></tr>
 <tr class="separator:afb948d42ec82b719221b60a1ce25926f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6a74d626f104011cc6315eb56f75411e" id="r_a6a74d626f104011cc6315eb56f75411e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a> <a class="el" href="classBenchmark.html#a966e10511c08b157ba12506b43d203fe">Benchmark::Ptr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html#a6a74d626f104011cc6315eb56f75411e">benchmark</a> () <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a></td></tr>
 <tr class="memdesc:a6a74d626f104011cc6315eb56f75411e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const reference to the frame benchmark.  <br /></td></tr>
@@ -191,9 +195,9 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a892dbdc2c358b5d85f4a2f58f5b841ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>A media frame containing images, audio, and metadata. </p>
-<p>Aggregates one or more <a class="el" href="classImage.html">Image</a> entries (uncompressed or compressed), one or more <a class="el" href="classAudio.html">Audio</a> tracks, and a metadata container into a single unit that represents a frame of media content.</p>
-<p>Compressed bitstream access units are not stored as a separate list on the <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> — they travel with their owning essence via <a class="el" href="classImage.html#ab23346b65acffc8fe93286ff4793302b">Image::packet</a> and <a class="el" href="classAudio.html#a661ef3e8723ffda850d2d9c99437a4f7">Audio::packet</a>. A compressed <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> carries its encoded <a class="el" href="classVideoPacket.html">VideoPacket</a> directly; that's the canonical location a downstream <a class="el" href="classVideoDecoder.html">VideoDecoder</a> reads from, and the canonical location a <a class="el" href="classVideoEncoder.html">VideoEncoder</a> writes to. </p>
+<div class="textblock"><p>A media frame containing payloads and metadata. </p>
+<p>Aggregates one or more <a class="el" href="classMediaPayload.html">MediaPayload</a> entries — uncompressed or compressed video (<a class="el" href="classVideoPayload.html">VideoPayload</a>) and audio (<a class="el" href="classAudioPayload.html">AudioPayload</a>) — together with a <a class="el" href="classMetadata.html">Metadata</a> container, into a single unit that represents one frame of media content.</p>
+<p>All essence lives in the <a class="el" href="classFrame.html#aab2355926bc650a45e642a3cb8a2772a">payloadList</a>. Use <a class="el" href="classFrame.html#a005196f5162c87768d6f8dd60b0b671f">videoPayloads</a> / <a class="el" href="classFrame.html#a9de8d92940a561992082a24d4ceb4ae9">audioPayloads</a> to filter by kind. Compressed bitstream access units travel as <a class="el" href="classCompressedVideoPayload.html">CompressedVideoPayload</a> or <a class="el" href="classCompressedAudioPayload.html">CompressedAudioPayload</a> entries in the same list. </p>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
 <a id="ad34e48250ed5a1901bacf84d71831217" name="ad34e48250ed5a1901bacf84d71831217"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad34e48250ed5a1901bacf84d71831217">&#9670;&#160;</a></span>CutPointScope</h2>
@@ -210,9 +214,9 @@ Public Member Functions</h2></td></tr>
 <p>Essence scope for <a class="el" href="classFrame.html#a28b9871bbbc8d0e4419e4ccf213116c3">isSafeCutPoint</a>. </p>
 <p>Selects which essence streams contribute to the cut- point decision. Callers that know the downstream sink only consumes one kind of essence can restrict the check — an audio-only sink shouldn't block a cut on a mid-GOP video frame that will never be written. </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ad34e48250ed5a1901bacf84d71831217a9ad35c2576696a5fd3324fbec3078384" name="ad34e48250ed5a1901bacf84d71831217a9ad35c2576696a5fd3324fbec3078384"></a>CutPointVideoOnly&#160;</td><td class="fielddoc"><p>Consider only <a class="el" href="classFrame.html#a8360d8a81a700a1b90cf6da71cd524e4">imageList</a>. </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ad34e48250ed5a1901bacf84d71831217a9ad35c2576696a5fd3324fbec3078384" name="ad34e48250ed5a1901bacf84d71831217a9ad35c2576696a5fd3324fbec3078384"></a>CutPointVideoOnly&#160;</td><td class="fielddoc"><p>Consider only video payloads. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ad34e48250ed5a1901bacf84d71831217abba814cbbc0a0e599bccbab105439c67" name="ad34e48250ed5a1901bacf84d71831217abba814cbbc0a0e599bccbab105439c67"></a>CutPointAudioOnly&#160;</td><td class="fielddoc"><p>Consider only <a class="el" href="classFrame.html#acd463c7e5ee785d13334c3e079cb23a3">audioList</a>. </p>
+<tr><td class="fieldname"><a id="ad34e48250ed5a1901bacf84d71831217abba814cbbc0a0e599bccbab105439c67" name="ad34e48250ed5a1901bacf84d71831217abba814cbbc0a0e599bccbab105439c67"></a>CutPointAudioOnly&#160;</td><td class="fielddoc"><p>Consider only audio payloads. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ad34e48250ed5a1901bacf84d71831217a37124117acbbf3a8836a1a3e962a5e34" name="ad34e48250ed5a1901bacf84d71831217a37124117acbbf3a8836a1a3e962a5e34"></a>CutPointAudioVideo&#160;</td><td class="fielddoc"><p>Consider every essence stream in the frame (default). </p>
 </td></tr>
@@ -221,59 +225,24 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a467f242201a17814c868b403ae7c421f" name="a467f242201a17814c868b403ae7c421f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a467f242201a17814c868b403ae7c421f">&#9670;&#160;</a></span>audioList() <span class="overload">[1/2]</span></h2>
+<a id="a9de8d92940a561992082a24d4ceb4ae9" name="a9de8d92940a561992082a24d4ceb4ae9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9de8d92940a561992082a24d4ceb4ae9">&#9670;&#160;</a></span>audioPayloads()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classAudio.html#a362f7b18724ad4b8b50f6afdef1cd5e2">Audio::PtrList</a> &amp; Frame::audioList </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns a mutable reference to the list of audio tracks. </p>
-<dl class="section return"><dt>Returns</dt><dd>The audio pointer list. </dd></dl>
-
-</div>
-</div>
-<a id="acd463c7e5ee785d13334c3e079cb23a3" name="acd463c7e5ee785d13334c3e079cb23a3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acd463c7e5ee785d13334c3e079cb23a3">&#9670;&#160;</a></span>audioList() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a> <a class="el" href="classAudio.html#a362f7b18724ad4b8b50f6afdef1cd5e2">Audio::PtrList</a> &amp; Frame::audioList </td>
+          <td class="memname"><a class="el" href="classAudioPayload.html#a1b202da36c79fbce835975b23faaec5a">AudioPayload::PtrList</a> Frame::audioPayloads </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
-<p>Returns a const reference to the list of audio tracks. </p>
-<dl class="section return"><dt>Returns</dt><dd>The audio pointer list. </dd></dl>
+<p>Returns the <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">Audio-kind</a> entries from <a class="el" href="classFrame.html#aab2355926bc650a45e642a3cb8a2772a">payloadList</a> as typed pointers. </p>
+<dl class="section return"><dt>Returns</dt><dd>A fresh <a class="el" href="classAudioPayload.html#a1b202da36c79fbce835975b23faaec5a">AudioPayload::PtrList</a> of all audio-kind payloads in payload-list order. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classFrame.html#a005196f5162c87768d6f8dd60b0b671f" title="Returns the Video-kind entries from payloadList as typed pointers.">videoPayloads</a> </dd></dl>
 
 </div>
 </div>
@@ -378,7 +347,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Returns a human-readable multi-line dump of this frame's full contents. </p>
-<p>Emits the scalar-key block registered with <code>VariantLookup&lt;Frame&gt;</code> (<code>ImageCount</code>, <code>AudioCount</code>, <code>HasBenchmark</code>), the frame's metadata via <a class="el" href="classMetadata.html#a0439b960456c3aeb5e295e0be54eebc9">Metadata::dump</a>, the <a class="el" href="classFrame.html#acb804a3581dc400469e62ca1f75e12bc">configUpdate</a> delta when non-empty, and then <a class="el" href="classImage.html#a8eb5dd2eec5499384b64d85326f5e52e">Image::dump</a> / <a class="el" href="classAudio.html#a49cb4271bad33588205418a857cec0a4">Audio::dump</a> for every entry indented by two spaces.</p>
+<p>Emits the scalar-key block registered with <code>VariantLookup&lt;Frame&gt;</code> (<code>VideoPayloadCount</code>, <code>AudioPayloadCount</code>, <code>HasBenchmark</code>), the frame's metadata via <a class="el" href="classMetadata.html#a0439b960456c3aeb5e295e0be54eebc9">Metadata::dump</a>, the <a class="el" href="classFrame.html#acb804a3581dc400469e62ca1f75e12bc">configUpdate</a> delta when non-empty, and then a subdump of each payload in <a class="el" href="classFrame.html#aab2355926bc650a45e642a3cb8a2772a">payloadList</a> indented by two spaces.</p>
 <p>No leading <code>"Frame:"</code> header is emitted — callers that need one (e.g. <code>pmdf-inspect</code> printing a frame index) prepend their own title and an additional indent so the output is uniform regardless of whether one frame or many are being printed.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -387,62 +356,6 @@ Public Member Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classStringList.html">StringList</a> (one entry per line). </dd></dl>
-
-</div>
-</div>
-<a id="a8d258b0e55414fc85257cb1784559db5" name="a8d258b0e55414fc85257cb1784559db5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8d258b0e55414fc85257cb1784559db5">&#9670;&#160;</a></span>imageList() <span class="overload">[1/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classImage.html#a198b089768debdf038e39b6be082184f">Image::PtrList</a> &amp; Frame::imageList </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns a mutable reference to the list of image planes. </p>
-<dl class="section return"><dt>Returns</dt><dd>The image pointer list. </dd></dl>
-
-</div>
-</div>
-<a id="a8360d8a81a700a1b90cf6da71cd524e4" name="a8360d8a81a700a1b90cf6da71cd524e4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8360d8a81a700a1b90cf6da71cd524e4">&#9670;&#160;</a></span>imageList() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a> <a class="el" href="classImage.html#a198b089768debdf038e39b6be082184f">Image::PtrList</a> &amp; Frame::imageList </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Returns a const reference to the list of image planes. </p>
-<dl class="section return"><dt>Returns</dt><dd>The image pointer list. </dd></dl>
 
 </div>
 </div>
@@ -463,7 +376,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Returns true when stopping the stream before this frame leaves the chosen essence streams intact. </p>
-<p>Defers to <a class="el" href="classImage.html#a7f9b90fafc920a6c9f356431f58cbf2d">Image::isSafeCutPoint</a> for every image in <a class="el" href="classFrame.html#a8360d8a81a700a1b90cf6da71cd524e4">imageList</a> and <a class="el" href="classAudio.html#acaf304a39691dec6d3d656e35d053aef">Audio::isSafeCutPoint</a> for every audio unit in <a class="el" href="classFrame.html#acd463c7e5ee785d13334c3e079cb23a3">audioList</a>. A scope that excludes a side of the essence skips that side entirely — useful for sinks that only accept one kind of essence and should not be held hostage to a mid-GOP frame that will never be written to them.</p>
+<p>Defers to <a class="el" href="classMediaPayload.html#a1c44c589ad6db038a0759049f96f82c6">MediaPayload::isSafeCutPoint</a> for every video payload in <a class="el" href="classFrame.html#aab2355926bc650a45e642a3cb8a2772a">payloadList</a> and every audio payload. A scope that excludes a side of the essence skips that side entirely — useful for sinks that only accept one kind of essence and should not be held hostage to a mid-GOP frame that will never be written to them.</p>
 <p>An empty essence list for the selected scope is treated as trivially safe (nothing to truncate). Null entries are skipped rather than rejected — the pipeline builds lists that always carry valid pointers.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -471,7 +384,7 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><code>true</code> when the cut is safe for every image / audio unit in scope. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><code>true</code> when the cut is safe for every payload in scope. </dd></dl>
 
 </div>
 </div>
@@ -490,9 +403,9 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Assembles a <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> describing this <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a>. </p>
-<p>Returns a <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> populated from the frame's own state: the frame rate is taken from <code>Metadata::FrameRate</code> (if set), the image list is built from the <a class="el" href="classImage.html#ac89cd3932f4a60d133232ef5fcb24bdb">Image::desc</a> of each <a class="el" href="classImage.html">Image</a> in <a class="el" href="classFrame.html#a8360d8a81a700a1b90cf6da71cd524e4">imageList</a>, the audio list is built from the <a class="el" href="classAudio.html#af4c906c113ec44e511a595637482367c">Audio::desc</a> of each <a class="el" href="classAudio.html">Audio</a> in <a class="el" href="classFrame.html#acd463c7e5ee785d13334c3e079cb23a3">audioList</a>, and the frame's metadata is copied across.</p>
-<p>The returned <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> is only <a class="el" href="classMediaDesc.html#af8301531765c6da2170962437b61b1fb">valid</a> if both a frame rate is present in metadata and the frame carries at least one image or audio entry. </p>
+<p>Assembles a <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> describing this <a class="el" href="classFrame.html" title="A media frame containing payloads and metadata.">Frame</a>. </p>
+<p>Returns a <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> populated from the frame's own state: the frame rate is taken from <code>Metadata::FrameRate</code> (if set), the video descriptors are built from each <a class="el" href="classVideoPayload.html">VideoPayload</a> in <a class="el" href="classFrame.html#aab2355926bc650a45e642a3cb8a2772a">payloadList</a>, the audio descriptors from each <a class="el" href="classAudioPayload.html">AudioPayload</a>, and the frame's metadata is copied across.</p>
+<p>The returned <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> is only <a class="el" href="classMediaDesc.html#af8301531765c6da2170962437b61b1fb">valid</a> if both a frame rate is present in metadata and the frame carries at least one video or audio payload. </p>
 
 </div>
 </div>
@@ -552,6 +465,62 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a02f1251f797e50a06d34c2e7b95e3a7a" name="a02f1251f797e50a06d34c2e7b95e3a7a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a02f1251f797e50a06d34c2e7b95e3a7a">&#9670;&#160;</a></span>payloadList() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classMediaPayload.html#ae467a41fe02b1998db938991da3d2b83">MediaPayload::PtrList</a> &amp; Frame::payloadList </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns a mutable reference to the list of media payloads. </p>
+<dl class="section return"><dt>Returns</dt><dd>The payload pointer list. </dd></dl>
+
+</div>
+</div>
+<a id="aab2355926bc650a45e642a3cb8a2772a" name="aab2355926bc650a45e642a3cb8a2772a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aab2355926bc650a45e642a3cb8a2772a">&#9670;&#160;</a></span>payloadList() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a> <a class="el" href="classMediaPayload.html#ae467a41fe02b1998db938991da3d2b83">MediaPayload::PtrList</a> &amp; Frame::payloadList </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns a const reference to the list of media payloads. </p>
+<dl class="section return"><dt>Returns</dt><dd>The payload pointer list. </dd></dl>
+
+</div>
+</div>
 <a id="a6e5e34cd3fc8dca4b282c125b7bb1035" name="a6e5e34cd3fc8dca4b282c125b7bb1035"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6e5e34cd3fc8dca4b282c125b7bb1035">&#9670;&#160;</a></span>setBenchmark()</h2>
 
@@ -591,9 +560,6 @@ Public Member Functions</h2></td></tr>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="classVideoFormat.html">VideoFormat</a> Frame::videoFormat </td>
@@ -603,11 +569,6 @@ Public Member Functions</h2></td></tr>
           <td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Returns the <a class="el" href="classVideoFormat.html" title="Combined video raster, frame rate, and scan mode.">VideoFormat</a> for the image at <code>index</code>. </p>
@@ -622,6 +583,28 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a005196f5162c87768d6f8dd60b0b671f" name="a005196f5162c87768d6f8dd60b0b671f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a005196f5162c87768d6f8dd60b0b671f">&#9670;&#160;</a></span>videoPayloads()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classVideoPayload.html#a8e64fab9d3c5e4b8b8be24cb52bb952d">VideoPayload::PtrList</a> Frame::videoPayloads </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">Video-kind</a> entries from <a class="el" href="classFrame.html#aab2355926bc650a45e642a3cb8a2772a">payloadList</a> as typed pointers. </p>
+<p>Walks <a class="el" href="classFrame.html#aab2355926bc650a45e642a3cb8a2772a">payloadList</a> once and collects every <a class="el" href="classMediaPayload.html">MediaPayload</a> whose <code>kind</code> is MediaPayloadKind::Video, returning them as a fresh <a class="el" href="classVideoPayload.html#a8e64fab9d3c5e4b8b8be24cb52bb952d">VideoPayload::PtrList</a> with shared ownership (no clone). Null payload entries are skipped.</p>
+<p>The convenience consumers want during migration: read once, get only the video side, still see <a class="el" href="classUncompressedVideoPayload.html">UncompressedVideoPayload</a> and <a class="el" href="classCompressedVideoPayload.html">CompressedVideoPayload</a> polymorphically via <a class="el" href="classMediaPayload.html#a00ea38e4667639f87927ead52f590b46">MediaPayload::as</a>.</p>
+<dl class="section return"><dt>Returns</dt><dd>A fresh <a class="el" href="classVideoPayload.html#a8e64fab9d3c5e4b8b8be24cb52bb952d">VideoPayload::PtrList</a> of all video-kind payloads in payload-list order. </dd></dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="frame_8h_source.html">frame.h</a></li>
 </ul>
@@ -632,7 +615,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classFrame.html">Frame</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -154,15 +154,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a7a091662d2e42971c93a5377cc4a7040" id="r_a7a091662d2e42971c93a5377cc4a7040"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDecoder.html#a7a091662d2e42971c93a5377cc4a7040">configure</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaConfig.html">MediaConfig</a> &amp;config)</td></tr>
 <tr class="memdesc:a7a091662d2e42971c93a5377cc4a7040"><td class="mdescLeft">&#160;</td><td class="mdescRight">Applies decoder parameters from a <a class="el" href="classMediaConfig.html">MediaConfig</a>.  <br /></td></tr>
 <tr class="separator:a7a091662d2e42971c93a5377cc4a7040"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6f5c7837b51c2a1a7d7a07c6250009b9" id="r_a6f5c7837b51c2a1a7d7a07c6250009b9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDecoder.html#a6f5c7837b51c2a1a7d7a07c6250009b9">submitPacket</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classAudioPacket.html#a3dcc8525a6f1d71b65dfa25a17981301">AudioPacket::Ptr</a> &amp;packet)=0</td></tr>
-<tr class="memdesc:a6f5c7837b51c2a1a7d7a07c6250009b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Submits one encoded packet for decoding.  <br /></td></tr>
-<tr class="separator:a6f5c7837b51c2a1a7d7a07c6250009b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa812021573d0da55ea559a0f8cb0e711" id="r_aa812021573d0da55ea559a0f8cb0e711"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classAudio.html#a5a5464f78ba10693bf958d4b2b9c7351">Audio::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDecoder.html#aa812021573d0da55ea559a0f8cb0e711">receiveFrame</a> ()=0</td></tr>
-<tr class="memdesc:aa812021573d0da55ea559a0f8cb0e711"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dequeues one decoded PCM frame.  <br /></td></tr>
-<tr class="separator:aa812021573d0da55ea559a0f8cb0e711"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a17dfdd720f25197e39be82ccdd872831" id="r_a17dfdd720f25197e39be82ccdd872831"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDecoder.html#a17dfdd720f25197e39be82ccdd872831">submitPayload</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classCompressedAudioPayload.html#a644546dff5c33d3ff70025d4709aff1e">CompressedAudioPayload::Ptr</a> &amp;payload)=0</td></tr>
+<tr class="memdesc:a17dfdd720f25197e39be82ccdd872831"><td class="mdescLeft">&#160;</td><td class="mdescRight">Submits one encoded audio payload for decoding.  <br /></td></tr>
+<tr class="separator:a17dfdd720f25197e39be82ccdd872831"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abcd403babc6e521d41b500703adeaf88" id="r_abcd403babc6e521d41b500703adeaf88"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classUncompressedAudioPayload.html#ae135fc40e7a0bf16e4b6cd957c2a1869">UncompressedAudioPayload::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDecoder.html#abcd403babc6e521d41b500703adeaf88">receiveAudioPayload</a> ()=0</td></tr>
+<tr class="memdesc:abcd403babc6e521d41b500703adeaf88"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dequeues one decoded PCM payload.  <br /></td></tr>
+<tr class="separator:abcd403babc6e521d41b500703adeaf88"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad88e89dab451e9c2800f15423f7b6fc0" id="r_ad88e89dab451e9c2800f15423f7b6fc0"><td class="memItemLeft" align="right" valign="top"><a id="ad88e89dab451e9c2800f15423f7b6fc0" name="ad88e89dab451e9c2800f15423f7b6fc0"></a>
 <a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><b>flush</b> ()=0</td></tr>
-<tr class="memdesc:ad88e89dab451e9c2800f15423f7b6fc0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signals end-of-stream; remaining frames can be drained with <a class="el" href="classAudioDecoder.html#aa812021573d0da55ea559a0f8cb0e711">receiveFrame</a>. <br /></td></tr>
+<tr class="memdesc:ad88e89dab451e9c2800f15423f7b6fc0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signals end-of-stream; remaining frames can be drained with <a class="el" href="classAudioDecoder.html#abcd403babc6e521d41b500703adeaf88">receiveAudioPayload</a>. <br /></td></tr>
 <tr class="separator:ad88e89dab451e9c2800f15423f7b6fc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a60830fa58d2905754342dd659d3da7e1" id="r_a60830fa58d2905754342dd659d3da7e1"><td class="memItemLeft" align="right" valign="top"><a id="a60830fa58d2905754342dd659d3da7e1" name="a60830fa58d2905754342dd659d3da7e1"></a>
 <a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><b>reset</b> ()=0</td></tr>
@@ -219,7 +219,7 @@ Protected Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Abstract base class for stateful audio decoders. </p>
-<p>Inverse of AudioEncoder: encoded <a class="el" href="classAudioPacket.html">AudioPacket</a> access units pushed via <a class="el" href="classAudioDecoder.html#a6f5c7837b51c2a1a7d7a07c6250009b9">submitPacket</a> feed an internal pipeline and PCM <a class="el" href="classAudio.html">Audio</a> frames come back out of <a class="el" href="classAudioDecoder.html#aa812021573d0da55ea559a0f8cb0e711">receiveFrame</a>. The decoder may buffer several packets before producing its first frame (codec start-up state, silence priming, reordering where present).</p>
+<p>Inverse of AudioEncoder: encoded <a class="el" href="classCompressedAudioPayload.html">CompressedAudioPayload</a> access units pushed via submitPacket feed an internal pipeline and <a class="el" href="classUncompressedAudioPayload.html">UncompressedAudioPayload</a> frames come back out of receiveFrame. The decoder may buffer several packets before producing its first frame (codec start-up state, silence priming, reordering where present).</p>
 <p>Codec-family metadata lives on the <a class="el" href="classAudioCodec.html">AudioCodec</a> wrapper returned by <a class="el" href="classAudioDecoder.html#a3048d97a77b33075d73273d669b65489">codec()</a>; per-backend facts (supported output formats, …) live on the registered <a class="el" href="structAudioDecoder_1_1BackendRecord.html">BackendRecord</a> and are reachable via <a class="el" href="classAudioCodec.html#a10ce52b719011cab523a1c8af751aa29">AudioCodec::decoderSupportedOutputs</a>.</p>
 <dl class="section user"><dt>Backend registration</dt><dd></dd></dl>
 <p>Same idiom as <a class="el" href="classAudioEncoder.html#a1d64ea04d8ac306e72cbf9b2a1fc9b71">AudioEncoder::registerBackend</a>.</p>
@@ -227,8 +227,8 @@ Protected Attributes</h2></td></tr>
 <ol type="1">
 <li>Resolve a session via <a class="el" href="classAudioCodec.html#a906d9687248c1231e26614ecc5aa18e5">AudioCodec::createDecoder</a>.</li>
 <li>Optionally call <a class="el" href="classAudioDecoder.html#a7a091662d2e42971c93a5377cc4a7040">configure</a>.</li>
-<li>For each encoded packet, call <a class="el" href="classAudioDecoder.html#a6f5c7837b51c2a1a7d7a07c6250009b9">submitPacket</a>.</li>
-<li>After each submit, drain with <a class="el" href="classAudioDecoder.html#aa812021573d0da55ea559a0f8cb0e711">receiveFrame</a> until it returns an invalid <a class="el" href="classAudio.html">Audio</a>.</li>
+<li>For each encoded packet, call submitPacket.</li>
+<li>After each submit, drain with receiveFrame until it returns an invalid Audio.</li>
 <li>Call <a class="el" href="classAudioDecoder.html#ad88e89dab451e9c2800f15423f7b6fc0">flush</a> when the input stream ends, then drain again.</li>
 <li>Destroy the decoder.</li>
 </ol>
@@ -263,8 +263,8 @@ Protected Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="aa812021573d0da55ea559a0f8cb0e711" name="aa812021573d0da55ea559a0f8cb0e711"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa812021573d0da55ea559a0f8cb0e711">&#9670;&#160;</a></span>receiveFrame()</h2>
+<a id="abcd403babc6e521d41b500703adeaf88" name="abcd403babc6e521d41b500703adeaf88"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abcd403babc6e521d41b500703adeaf88">&#9670;&#160;</a></span>receiveAudioPayload()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -273,7 +273,7 @@ Protected Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classAudio.html#a5a5464f78ba10693bf958d4b2b9c7351">Audio::Ptr</a> AudioDecoder::receiveFrame </td>
+          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classUncompressedAudioPayload.html#ae135fc40e7a0bf16e4b6cd957c2a1869">UncompressedAudioPayload::Ptr</a> AudioDecoder::receiveAudioPayload </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -286,13 +286,13 @@ Protected Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Dequeues one decoded PCM frame. </p>
-<dl class="section return"><dt>Returns</dt><dd>A valid <a class="el" href="classAudio.html#a5a5464f78ba10693bf958d4b2b9c7351">Audio::Ptr</a>, or a null Ptr when no frame is ready. </dd></dl>
+<p>Dequeues one decoded PCM payload. </p>
+<dl class="section return"><dt>Returns</dt><dd>A valid <a class="el" href="classUncompressedAudioPayload.html#ae135fc40e7a0bf16e4b6cd957c2a1869">UncompressedAudioPayload::Ptr</a>, or a null Ptr when no frame is ready. </dd></dl>
 
 </div>
 </div>
-<a id="a6f5c7837b51c2a1a7d7a07c6250009b9" name="a6f5c7837b51c2a1a7d7a07c6250009b9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6f5c7837b51c2a1a7d7a07c6250009b9">&#9670;&#160;</a></span>submitPacket()</h2>
+<a id="a17dfdd720f25197e39be82ccdd872831" name="a17dfdd720f25197e39be82ccdd872831"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a17dfdd720f25197e39be82ccdd872831">&#9670;&#160;</a></span>submitPayload()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -301,10 +301,10 @@ Protected Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a> AudioDecoder::submitPacket </td>
+          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a> AudioDecoder::submitPayload </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classAudioPacket.html#a3dcc8525a6f1d71b65dfa25a17981301">AudioPacket::Ptr</a> &amp;&#160;</td>
-          <td class="paramname"><em>packet</em></td><td>)</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classCompressedAudioPayload.html#a644546dff5c33d3ff70025d4709aff1e">CompressedAudioPayload::Ptr</a> &amp;&#160;</td>
+          <td class="paramname"><em>payload</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -315,8 +315,8 @@ Protected Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Submits one encoded packet for decoding. </p>
-<p>Passed by shared <a class="el" href="classAudioPacket.html#a3dcc8525a6f1d71b65dfa25a17981301">AudioPacket::Ptr</a> so the decoder can retain the packet without copying its payload. A null Ptr is treated as <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85">Error::Invalid</a>. </p>
+<p>Submits one encoded audio payload for decoding. </p>
+<p>A null Ptr is treated as <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85">Error::Invalid</a>. </p>
 
 </div>
 </div>
@@ -330,7 +330,7 @@ Protected Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudioDecoder.html">AudioDecoder</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

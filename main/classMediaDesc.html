@@ -322,7 +322,7 @@ Static Public Member Functions</h2></td></tr>
 
 <p>Builds an <a class="el" href="classSdpSession.html" title="SDP session description (RFC 4566).">SdpSession</a> from this <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a>. </p>
 <p>The inverse of <a class="el" href="classMediaDesc.html#a75565941a0e7a37552c14fac0088fc14">fromSdp</a>. Walks the image and audio lists and calls <a class="el" href="classImageDesc.html#a7aa8196008eb99acec3eeea25ddeac99">ImageDesc::toSdp</a> / <a class="el" href="classAudioDesc.html#ab18d9b72c5be9490dd33d25403d55f50">AudioDesc::toSdp</a> on each entry, appending the resulting media descriptions to a new <a class="el" href="classSdpSession.html" title="SDP session description (RFC 4566).">SdpSession</a>.</p>
-<p>Video payload types start at <code>videoPayloadType</code> (default 96) and increment for each image entry. <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> payload types start at <code>audioPayloadType</code> (default one past the last video PT).</p>
+<p>Video payload types start at <code>videoPayloadType</code> (default 96) and increment for each image entry. Audio payload types start at <code>audioPayloadType</code> (default one past the last video PT).</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">videoPayloadType</td><td>Starting PT for video streams. </td></tr>
@@ -379,7 +379,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaDesc.html">MediaDesc</a></li>
-    <li class="footer">Generated on 2026-04-23 10:30:39 from commit f897b02 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-24 08:58:33 from commit 69cd74a (1.0.0).</li>
   </ul>
 </div>
 </body>

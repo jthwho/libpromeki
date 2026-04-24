@@ -21,7 +21,7 @@ var searchData=
   ['packetindependenceinter_18',['PacketIndependenceInter',['../classAudioCodec.html#afded4f901c3fa3722a6c7a8090dd8f32ac990e7028977d77e1a14ac0a55c1a613',1,'AudioCodec']]],
   ['packetindependenceinvalid_19',['PacketIndependenceInvalid',['../classAudioCodec.html#afded4f901c3fa3722a6c7a8090dd8f32a65658b2b0a70101cc5f1ad51c813231f',1,'AudioCodec']]],
   ['packetindependencekeyframe_20',['PacketIndependenceKeyframe',['../classAudioCodec.html#afded4f901c3fa3722a6c7a8090dd8f32a31a9132d2992ba65b605d0ba17d6f6ce',1,'AudioCodec']]],
-  ['parameterset_21',['ParameterSet',['../classVideoPacket.html#afa35941ff0c3d4d9ac39da46ac3608aea9668631499be39971c7ada4ce27e73f1',1,'VideoPacket']]],
+  ['parameterset_21',['ParameterSet',['../classCompressedVideoPayload.html#af24e7966ad8bbceefa6e9715dc68c498ac3ecca78d1cc1ae3590200602022e5fb',1,'CompressedVideoPayload']]],
   ['params_22',['Params',['../classMediaIOCommand.html#a16255ac120516e70d467f2c2878071b9a00a9d2595d33f40e26f4ce5fbfc7add5',1,'MediaIOCommand']]],
   ['parsefailed_23',['ParseFailed',['../classError.html#ab5980e13b879db253df802b0950d1708ac5ee0586eea50614d95aea00d1eff4a9',1,'Error']]],
   ['pausesrawkeepsrunning_24',['PausesRawKeepsRunning',['../group__time.html#gga339eee54b6b4d766b3a39c08606fa1b6a4abdb460e40fee7cc1355428989eedcf',1,'clock.h']]],
