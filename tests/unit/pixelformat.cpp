@@ -93,7 +93,7 @@ TEST_CASE("PixelFormat: JPEG_RGB8 encodeSources is strictly RGB8") {
         // Only the natural RGB family is listed — see
         // JpegVideoEncoder which tags the output based on the
         // input component order.  Mixed-family inputs CSC through
-        // Image::convert() before hitting the codec.
+        // UncompressedVideoPayload::convert() before hitting the codec.
         PixelFormat pd(PixelFormat::JPEG_RGB8_sRGB);
         REQUIRE(pd.encodeSources().size() == 1);
         CHECK(pd.encodeSources()[0] == PixelFormat::RGB8_sRGB);
@@ -102,7 +102,7 @@ TEST_CASE("PixelFormat: JPEG_RGB8 encodeSources is strictly RGB8") {
 TEST_CASE("PixelFormat: JPEG_YUV8_422 encodeSources and decodeTargets") {
         PixelFormat pd(PixelFormat::JPEG_YUV8_422_Rec709);
         // Only the natural YUV 4:2:2 family — RGB inputs CSC through
-        // Image::convert() before hitting the codec.
+        // UncompressedVideoPayload::convert() before hitting the codec.
         REQUIRE(pd.encodeSources().size() == 3);
         CHECK(pd.encodeSources().contains(PixelFormat::YUV8_422_Rec709));
         CHECK(pd.encodeSources().contains(PixelFormat::YUV8_422_UYVY_Rec709));
@@ -203,9 +203,9 @@ TEST_CASE("PixelFormat: videoRange auto-derives from compSemantics") {
 
 TEST_CASE("PixelFormat: full-range uncompressed YCbCr intermediates") {
         // The encode-source intermediates for the full-range JPEG
-        // variants live as first-class PixelFormats so Image::convert
-        // can CSC into them before the codec copies bytes verbatim
-        // into the JFIF bitstream.
+        // variants live as first-class PixelFormats so
+        // UncompressedVideoPayload::convert can CSC into them before
+        // the codec copies bytes verbatim into the JFIF bitstream.
         const PixelFormat::ID ids[] = {
                 PixelFormat::YUV8_422_Rec709_Full,
                 PixelFormat::YUV8_422_Rec601_Full,

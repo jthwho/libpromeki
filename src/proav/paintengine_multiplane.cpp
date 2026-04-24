@@ -11,7 +11,9 @@
 #include <promeki/pixelformat.h>
 #include <promeki/pixelmemlayout.h>
 #include <promeki/paintengine.h>
-#include <promeki/image.h>
+#include <promeki/uncompressedvideopayload.h>
+#include <promeki/imagedesc.h>
+#include <promeki/buffer.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -37,7 +39,10 @@ class PaintEngine_MultiPlane : public PaintEngine::Impl {
                         float   scale;
                 };
 
-                Image           _image;
+                // Hold the per-plane Buffer::Ptrs so the payload's
+                // backing memory survives for the lifetime of the
+                // engine, independent of the payload shared pointer.
+                Buffer::Ptr     _planeBufs[PixelMemLayout::MaxPlanes];
                 Size2Du32       _size;
                 PixelFormat       _pixDesc;
                 size_t          _compCount = 0;
@@ -45,15 +50,18 @@ class PaintEngine_MultiPlane : public PaintEngine::Impl {
                 PlaneInfo       _planes[PixelMemLayout::MaxPlanes] = {};
                 CompInfo        _comps[PixelMemLayout::MaxComps] = {};
 
-                PaintEngine_MultiPlane(const Image &img)
-                        : _image(img), _size(img.size()), _pixDesc(img.pixelFormat()) {
+                PaintEngine_MultiPlane(const UncompressedVideoPayload &payload)
+                        : _size(payload.desc().size()),
+                          _pixDesc(payload.desc().pixelFormat()) {
                         const PixelMemLayout &pf = _pixDesc.memLayout();
                         _compCount = pf.compCount();
                         _planeCount = pf.planeCount();
                         for(size_t i = 0; i < _planeCount; i++) {
                                 const auto &pd = pf.data()->planes[i];
-                                _planes[i].data   = static_cast<uint8_t *>(img.plane(i)->data());
-                                _planes[i].stride = img.lineStride(i);
+                                auto view = payload.plane(i);
+                                _planeBufs[i]     = view.buffer();
+                                _planes[i].data   = const_cast<uint8_t *>(view.data());
+                                _planes[i].stride = _pixDesc.lineStride(i, payload.desc());
                                 _planes[i].hSub   = pd.hSubsampling > 0 ? pd.hSubsampling : 1;
                                 _planes[i].vSub   = pd.vSubsampling > 0 ? pd.vSubsampling : 1;
                                 _planes[i].sampleStride = pd.bytesPerSample > 0
@@ -112,7 +120,7 @@ class PaintEngine_MultiPlane : public PaintEngine::Impl {
                         }
                 }
 
-                PaintEngine::Pixel readPixelAt(const Image &srcImg, int x, int y) const {
+                PaintEngine::Pixel readPixelAt(const UncompressedVideoPayload &src, int x, int y) const {
                         PaintEngine::Pixel ret;
                         CompType *p = reinterpret_cast<CompType *>(ret.data());
                         const PixelMemLayout &pf = _pixDesc.memLayout();
@@ -125,8 +133,8 @@ class PaintEngine_MultiPlane : public PaintEngine::Impl {
                                 int cx = x / static_cast<int>(hSub);
                                 int cy = y / static_cast<int>(vSub);
                                 const uint8_t *base = static_cast<const uint8_t *>(
-                                        srcImg.plane(cd.plane)->data());
-                                size_t stride = srcImg.lineStride(cd.plane);
+                                        src.plane(cd.plane).data());
+                                size_t stride = _pixDesc.lineStride(cd.plane, src.desc());
                                 p[i] = *reinterpret_cast<const CompType *>(
                                         base + cy * stride + cx * ss + cd.byteOffset);
                         }
@@ -134,13 +142,15 @@ class PaintEngine_MultiPlane : public PaintEngine::Impl {
                         return ret;
                 }
 
-                bool blit(const Point2Di32 &dpt, const Image &src,
+                bool blit(const Point2Di32 &dpt, const UncompressedVideoPayload &src,
                           const Point2Di32 &spt, const Size2Du32 &ssz) const override {
-                        if(src.pixelFormat() != _pixDesc) return false;
+                        if(src.desc().pixelFormat() != _pixDesc) return false;
+                        const unsigned int sWpx = src.desc().size().width();
+                        const unsigned int sHpx = src.desc().size().height();
                         int sx = spt.x(), sy = spt.y();
                         int dx = dpt.x(), dy = dpt.y();
-                        int sw = ssz.isValid() ? ssz.width()  : src.width() - sx;
-                        int sh = ssz.isValid() ? ssz.height() : src.height() - sy;
+                        int sw = ssz.isValid() ? ssz.width()  : sWpx - sx;
+                        int sh = ssz.isValid() ? ssz.height() : sHpx - sy;
                         int dw = static_cast<int>(_size.width());
                         int dh = static_cast<int>(_size.height());
                         if(sx < 0) { sw += sx; dx -= sx; sx = 0; }
@@ -351,17 +361,17 @@ template class PaintEngine_MultiPlane<uint16_t, 16>;
 
 // --- Factory functions ---
 
-PaintEngine createPaintEngine_MultiPlane8(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_MultiPlane<uint8_t, 8>(img);
+PaintEngine createPaintEngine_MultiPlane8(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_MultiPlane<uint8_t, 8>(payload);
 }
-PaintEngine createPaintEngine_MultiPlane10_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_MultiPlane<uint16_t, 10>(img);
+PaintEngine createPaintEngine_MultiPlane10_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_MultiPlane<uint16_t, 10>(payload);
 }
-PaintEngine createPaintEngine_MultiPlane12_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_MultiPlane<uint16_t, 12>(img);
+PaintEngine createPaintEngine_MultiPlane12_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_MultiPlane<uint16_t, 12>(payload);
 }
-PaintEngine createPaintEngine_MultiPlane16_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_MultiPlane<uint16_t, 16>(img);
+PaintEngine createPaintEngine_MultiPlane16_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_MultiPlane<uint16_t, 16>(payload);
 }
 
 PROMEKI_NAMESPACE_END

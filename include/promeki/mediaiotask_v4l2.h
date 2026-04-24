@@ -20,7 +20,7 @@
 #include <promeki/audiobuffer.h>
 #include <promeki/pixelformat.h>
 #include <promeki/framerate.h>
-#include <promeki/image.h>
+#include <promeki/videopayload.h>
 #include <promeki/queue.h>
 #include <promeki/mutex.h>
 #include <promeki/list.h>
@@ -45,9 +45,9 @@ PROMEKI_NAMESPACE_BEGIN
  * The backend launches its own capture threads on open:
  *
  * - A **video thread** ("v4l2-video") continuously dequeues V4L2
- *   buffers, copies them into Image::Ptr objects, and pushes them
- *   onto an internal Queue.  If the queue exceeds 2 entries, the
- *   oldest is dropped and counted via noteFrameDropped().
+ *   buffers, copies them into UncompressedVideoPayload::Ptr objects,
+ *   and pushes them onto an internal Queue.  If the queue exceeds 2
+ *   entries, the oldest is dropped and counted via noteFrameDropped().
  * - An **audio thread** ("v4l2-audio", when enabled) continuously
  *   reads ALSA PCM samples into a mutex-protected AudioBuffer ring.
  *
@@ -202,7 +202,7 @@ class MediaIOTask_V4L2 : public MediaIOTask {
 
                 // -- Video frame queue (video thread → read command) --
                 static constexpr int    VideoQueueDepth = 2;
-                Queue<Image::Ptr>       _videoQueue;
+                Queue<VideoPayload::Ptr> _videoQueue;
 
                 // -- Audio ring buffer (audio thread → read command) --
                 AudioBuffer             _audioRing;

@@ -11,8 +11,9 @@
 #include <numeric>
 #include <vector>
 #include <promeki/imagedatadecoder.h>
-#include <promeki/image.h>
+#include <promeki/uncompressedvideopayload.h>
 #include <promeki/pixelmemlayout.h>
+#include <promeki/mediaconfig.h>
 #include <promeki/crc.h>
 #include <promeki/logger.h>
 
@@ -164,21 +165,25 @@ SyncMeasurement findSync(const uint8_t *binary, size_t width) {
 // Slice extraction
 // ---------------------------------------------------------------------------
 //
-// Pulls out the scan-line range we want to read from the source image
-// into a small same-format Image, then runs that small image through
-// the CSC pipeline.  The result is an RGBA8 strip we can read luma
-// from at any column without per-format byte unpacking.
+// Pulls out the scan-line range we want to read from the source
+// payload into a small same-format scratch payload, then runs that
+// small payload through the CSC pipeline.  The result is an RGBA8
+// strip we can read luma from at any column without per-format byte
+// unpacking.
 //
 // For sub-sampled formats, the slice height is rounded up to the
 // maximum vSubsampling so the chroma plane has properly-aligned rows
 // (otherwise CSC would be feeding off-by-one chroma into the matrix).
-Image extractSliceRgba(const Image &src,
-                       uint32_t firstLine, uint32_t lineCount,
-                       size_t maxVSub,
-                       uint32_t &sliceFirstOut) {
-        const PixelFormat &pd = src.pixelFormat();
+UncompressedVideoPayload::Ptr extractSliceRgba(
+        const UncompressedVideoPayload &src,
+        uint32_t firstLine, uint32_t lineCount,
+        size_t maxVSub,
+        uint32_t &sliceFirstOut) {
+        const ImageDesc &srcDesc = src.desc();
+        const PixelFormat &pd = srcDesc.pixelFormat();
         const PixelMemLayout &pf = pd.memLayout();
-        const size_t srcWidth = src.width();
+        const size_t srcWidth = srcDesc.width();
+        const size_t srcHeight = srcDesc.height();
 
         // Snap the band to a vSub-aligned region so the chroma rows
         // line up cleanly when we copy them out.
@@ -187,21 +192,28 @@ Image extractSliceRgba(const Image &src,
         const uint32_t sliceHeight  = alignedEnd - alignedFirst;
         sliceFirstOut = firstLine - alignedFirst;
 
-        // Bounds check — the band must fit inside the source image.
-        if(alignedEnd > src.height()) return Image();
+        // Bounds check — the band must fit inside the source payload.
+        if(alignedEnd > srcHeight) return UncompressedVideoPayload::Ptr();
 
-        Image slice(srcWidth, sliceHeight, pd);
-        if(!slice.isValid()) return Image();
+        ImageDesc sliceDesc(srcWidth, sliceHeight, pd);
+        auto slice = UncompressedVideoPayload::allocate(sliceDesc);
+        if(!slice.isValid()) return UncompressedVideoPayload::Ptr();
 
-        // Copy each plane's relevant rows from source to slice.
+        // Copy each plane's relevant rows from source to slice.  Line
+        // stride is reconstructed from the per-plane BufferView size
+        // divided by the source plane's vertical extent.
         for(size_t p = 0; p < pf.planeCount(); p++) {
                 const auto &plane = pf.planeDesc(p);
                 const size_t vSub = plane.vSubsampling > 0 ? plane.vSubsampling : 1;
+                const size_t srcRows = srcHeight / vSub;
+                if(srcRows == 0) continue;
+                auto srcView = src.plane(p);
+                const size_t lineStride = srcView.size() / srcRows;
                 const size_t srcRowStart = alignedFirst / vSub;
                 const size_t numRows = sliceHeight / vSub;
-                const size_t lineStride = src.lineStride(static_cast<int>(p));
-                const uint8_t *srcPlane = static_cast<const uint8_t *>(src.data(static_cast<int>(p)));
-                uint8_t *dstPlane = static_cast<uint8_t *>(slice.data(static_cast<int>(p)));
+                const uint8_t *srcPlane = srcView.data();
+                auto dstView = slice.modify()->data()[p];
+                uint8_t *dstPlane = dstView.data();
                 std::memcpy(dstPlane,
                             srcPlane + srcRowStart * lineStride,
                             numRows * lineStride);
@@ -209,18 +221,21 @@ Image extractSliceRgba(const Image &src,
 
         // Convert the slice to RGBA8 once; the decoder reads luma
         // out of the R channel from the converted strip.
-        return slice.convert(PixelFormat(PixelFormat::RGBA8_sRGB), Metadata());
+        return slice->convert(PixelFormat(PixelFormat::RGBA8_sRGB),
+                              Metadata(), MediaConfig());
 }
 
 // Builds the @c imageWidth-long luma array from the converted RGBA8
 // strip according to the supplied sample mode.
-void extractLumaRow(const Image &rgba,
+void extractLumaRow(const UncompressedVideoPayload &rgba,
                     uint32_t sliceFirst, uint32_t lineCount,
                     ImageDataDecoder::SampleMode mode,
                     std::vector<uint8_t> &out) {
-        const size_t width  = rgba.width();
-        const size_t stride = rgba.lineStride(0);
-        const uint8_t *base = static_cast<const uint8_t *>(rgba.data(0));
+        const size_t width  = rgba.desc().width();
+        const size_t height = rgba.desc().height();
+        auto view = rgba.plane(0);
+        const size_t stride = (height > 0) ? view.size() / height : 0;
+        const uint8_t *base = view.data();
         out.assign(width, 0);
 
         if(mode == ImageDataDecoder::SampleMode::MiddleLine || lineCount == 1) {
@@ -289,7 +304,8 @@ ImageDataDecoder::ImageDataDecoder(const ImageDesc &desc) : _desc(desc) {
 }
 
 ImageDataDecoder::DecodedItem
-ImageDataDecoder::decodeOne(const Image &img, const Band &band) const {
+ImageDataDecoder::decodeOne(const UncompressedVideoPayload &src,
+                            const Band &band) const {
         DecodedItem item;
 
         if(band.lineCount == 0) {
@@ -300,15 +316,16 @@ ImageDataDecoder::decodeOne(const Image &img, const Band &band) const {
         // Extract the band's scan lines, push them through CSC into
         // an RGBA8 strip, and pull a 1D row of luma samples out.
         uint32_t sliceFirst = 0;
-        Image rgba = extractSliceRgba(img, band.firstLine, band.lineCount,
-                                      _maxVSubsampling, sliceFirst);
+        UncompressedVideoPayload::Ptr rgba = extractSliceRgba(
+                src, band.firstLine, band.lineCount,
+                _maxVSubsampling, sliceFirst);
         if(!rgba.isValid()) {
                 item.error = Error::ConversionFailed;
                 return item;
         }
 
         std::vector<uint8_t> row;
-        extractLumaRow(rgba, sliceFirst, band.lineCount, _sampleMode, row);
+        extractLumaRow(*rgba, sliceFirst, band.lineCount, _sampleMode, row);
 
         // Otsu threshold + binarise.
         const uint8_t threshold = otsuThreshold(row.data(), row.size());
@@ -390,37 +407,39 @@ ImageDataDecoder::decodeOne(const Image &img, const Band &band) const {
         return item;
 }
 
-Error ImageDataDecoder::decode(const Image &img, const List<Band> &bands,
+Error ImageDataDecoder::decode(const UncompressedVideoPayload &payload,
+                               const List<Band> &bands,
                                DecodedList &out) const {
         out.clear();
         if(!_valid) return Error::Invalid;
-        if(!img.isValid()) return Error::Invalid;
-        if(img.desc().size() != _desc.size() ||
-           img.desc().pixelFormat() != _desc.pixelFormat()) {
+        if(!payload.isValid()) return Error::Invalid;
+        if(payload.desc().size() != _desc.size() ||
+           payload.desc().pixelFormat() != _desc.pixelFormat()) {
                 return Error::InvalidArgument;
         }
 
         for(const Band &b : bands) {
-                out.pushToBack(decodeOne(img, b));
+                out.pushToBack(decodeOne(payload, b));
         }
         return Error::Ok;
 }
 
 ImageDataDecoder::DecodedItem
-ImageDataDecoder::decode(const Image &img, const Band &band) const {
+ImageDataDecoder::decode(const UncompressedVideoPayload &payload,
+                         const Band &band) const {
         if(!_valid) {
                 DecodedItem item;
                 item.error = Error::Invalid;
                 return item;
         }
-        if(!img.isValid() ||
-           img.desc().size() != _desc.size() ||
-           img.desc().pixelFormat() != _desc.pixelFormat()) {
+        if(!payload.isValid() ||
+           payload.desc().size() != _desc.size() ||
+           payload.desc().pixelFormat() != _desc.pixelFormat()) {
                 DecodedItem item;
                 item.error = Error::InvalidArgument;
                 return item;
         }
-        return decodeOne(img, band);
+        return decodeOne(payload, band);
 }
 
 PROMEKI_NAMESPACE_END

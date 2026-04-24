@@ -21,6 +21,7 @@
 PROMEKI_NAMESPACE_BEGIN
 
 class Image;
+class UncompressedVideoPayload;
 
 /**
  * @brief Fast VITC-style binary data encoder for raster images.
@@ -191,25 +192,23 @@ class ImageDataEncoder {
                  * The image must have the same descriptor as the one
                  * supplied to the constructor (@c img.desc() must compare
                  * equal — pixel description, dimensions, and metadata
-                 * irrelevant).  The image's plane buffers are modified
-                 * in place; callers that need to preserve the original
-                 * should call @c Image::ensureExclusive first if the
-                 * image is shared.
+                 * irrelevant).  The payload's plane buffers are modified
+                 * in place.
                  *
-                 * @param img   Image to write into.  Must already be
+                 * @param inout Payload to write into.  Must already be
                  *              allocated.
                  * @param items Bands of scan lines to stamp.
                  * @return @c Error::Ok on success, or an error code if
-                 *         the encoder is invalid, the image descriptor
-                 *         does not match, or an item references scan
-                 *         lines outside the image.
+                 *         the encoder is invalid, the payload
+                 *         descriptor does not match, or an item
+                 *         references scan lines outside the payload.
                  */
-                Error encode(Image &img, const List<Item> &items) const;
+                Error encode(UncompressedVideoPayload &inout,
+                             const List<Item> &items) const;
 
-                /**
-                 * @brief Convenience overload taking a single Item.
-                 */
-                Error encode(Image &img, const Item &item) const;
+                /** @brief Convenience overload taking a single Item. */
+                Error encode(UncompressedVideoPayload &inout,
+                             const Item &item) const;
 
         private:
                 struct PlaneInfo {
@@ -231,11 +230,20 @@ class ImageDataEncoder {
                 bool                            _valid      = false;
 
                 bool buildPrimers();
-                void writeOneScanline(Image &img, size_t planeIndex,
+                void writeOneScanline(uint8_t *planeBase, size_t planeIndex,
                                       size_t lineInPlane,
                                       uint8_t syncBits,
                                       uint64_t payload,
                                       uint8_t crcBits) const;
+
+        public:
+                /** @internal Stamps one item across one plane; used by encode(). */
+                void writeScanlineBase(uint8_t *planeBase,
+                                       size_t planeIndex,
+                                       const Item &item,
+                                       uint64_t lastEx,
+                                       uint8_t syncBits,
+                                       uint8_t crcVal) const;
 };
 
 PROMEKI_NAMESPACE_END

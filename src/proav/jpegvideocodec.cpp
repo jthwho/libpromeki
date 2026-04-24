@@ -13,16 +13,16 @@
 #include <algorithm>
 
 #include <promeki/jpegvideocodec.h>
-#include <promeki/mediapacket.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/buffer.h>
-#include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/pixelformat.h>
 #include <promeki/videocodec.h>
 #include <promeki/logger.h>
 #include <promeki/enum.h>
 #include <promeki/enums.h>
+#include <promeki/compressedvideopayload.h>
+#include <promeki/uncompressedvideopayload.h>
 
 #include <jpeglib.h>
 
@@ -216,12 +216,14 @@ static void interleaveNV12(uint8_t *dst, const uint8_t *cb, const uint8_t *cr, s
 // branch calls jpeg_abort_compress to return cinfo to the
 // "ready for next image" state without destroying it.
 
-static Image encodeRGB(jpeg_compress_struct &cinfo, JpegErrorMgr &jerr,
-                       const Image &input, int quality,
-                       JpegVideoEncoder::Subsampling subsampling) {
-        int width = (int)input.width();
-        int height = (int)input.height();
-        const PixelFormat &pd = input.pixelFormat();
+static CompressedVideoPayload::Ptr encodeRGB(jpeg_compress_struct &cinfo, JpegErrorMgr &jerr,
+                                             const UncompressedVideoPayload &input, int quality,
+                                             JpegVideoEncoder::Subsampling subsampling) {
+        const ImageDesc &idesc = input.desc();
+        int width = (int)idesc.size().width();
+        int height = (int)idesc.size().height();
+        const PixelFormat &pd = idesc.pixelFormat();
+        const PixelMemLayout &ml = pd.memLayout();
 
         J_COLOR_SPACE colorSpace = JCS_RGB;
         int numComponents = 3;
@@ -230,7 +232,7 @@ static Image encodeRGB(jpeg_compress_struct &cinfo, JpegErrorMgr &jerr,
                 numComponents = 4;
         }
 
-        if(setjmp(jerr.jmpBuf)) { jpeg_abort_compress(&cinfo); return Image(); }
+        if(setjmp(jerr.jmpBuf)) { jpeg_abort_compress(&cinfo); return CompressedVideoPayload::Ptr(); }
 
         unsigned char *outBuffer = nullptr;
         unsigned long outSize = 0;
@@ -263,8 +265,8 @@ static Image encodeRGB(jpeg_compress_struct &cinfo, JpegErrorMgr &jerr,
         cinfo.comp_info[2].v_samp_factor = 1;
 
         jpeg_start_compress(&cinfo, TRUE);
-        size_t stride = input.lineStride();
-        const uint8_t *pixels = static_cast<const uint8_t *>(input.data());
+        size_t stride = ml.lineStride(0, width);
+        const uint8_t *pixels = input.plane(0).data();
         while(cinfo.next_scanline < cinfo.image_height) {
                 const uint8_t *row = pixels + cinfo.next_scanline * stride;
                 JSAMPROW rowPtr = const_cast<JSAMPROW>(row);
@@ -272,24 +274,34 @@ static Image encodeRGB(jpeg_compress_struct &cinfo, JpegErrorMgr &jerr,
         }
         jpeg_finish_compress(&cinfo);
 
+        // Build the CompressedVideoPayload directly — copy the JPEG
+        // bitstream into an owned Buffer (libjpeg malloc'd outBuffer).
         PixelFormat::ID jpegPd = jpegPixelFormatFor(pd.id());
-        Image result = Image::fromCompressedData(outBuffer, outSize, width, height,
-                                                  jpegPd, input.metadata());
+        ImageDesc cdesc(Size2Du32(width, height), PixelFormat(jpegPd));
+        cdesc.metadata() = idesc.metadata();
+        Buffer::Ptr buf = Buffer::Ptr::create(outSize);
+        std::memcpy(buf.modify()->data(), outBuffer, outSize);
+        buf.modify()->setSize(outSize);
         free(outBuffer);
-        return result;
+        BufferView view(buf, 0, outSize);
+        auto cvp = CompressedVideoPayload::Ptr::create(cdesc, view);
+        cvp.modify()->metadata() = idesc.metadata();
+        return cvp;
 }
 
 // ---------------------------------------------------------------------------
 // Encode — YCbCr raw data path (all layouts)
 // ---------------------------------------------------------------------------
 
-static Image encodeYCbCr(jpeg_compress_struct &cinfo, JpegErrorMgr &jerr,
-                         const Image &input, int quality, YCbCrInfo info) {
-        int width = (int)input.width();
-        int height = (int)input.height();
+static CompressedVideoPayload::Ptr encodeYCbCr(jpeg_compress_struct &cinfo, JpegErrorMgr &jerr,
+                                               const UncompressedVideoPayload &input, int quality, YCbCrInfo info) {
+        const ImageDesc &idesc = input.desc();
+        const PixelMemLayout &ml = idesc.pixelFormat().memLayout();
+        int width = (int)idesc.size().width();
+        int height = (int)idesc.size().height();
         int chromaWidth = width / 2;
 
-        if(setjmp(jerr.jmpBuf)) { jpeg_abort_compress(&cinfo); return Image(); }
+        if(setjmp(jerr.jmpBuf)) { jpeg_abort_compress(&cinfo); return CompressedVideoPayload::Ptr(); }
 
         unsigned char *outBuffer = nullptr;
         unsigned long outSize = 0;
@@ -341,23 +353,23 @@ static Image encodeYCbCr(jpeg_compress_struct &cinfo, JpegErrorMgr &jerr,
         switch(info.layout) {
                 case LayoutPlanar422:
                 case LayoutPlanar420:
-                        srcY  = static_cast<const uint8_t *>(input.data(0));
-                        srcCb = static_cast<const uint8_t *>(input.data(1));
-                        srcCr = static_cast<const uint8_t *>(input.data(2));
-                        strideY  = input.lineStride(0);
-                        strideCb = input.lineStride(1);
-                        strideCr = input.lineStride(2);
+                        srcY  = input.plane(0).data();
+                        srcCb = input.plane(1).data();
+                        srcCr = input.plane(2).data();
+                        strideY  = ml.lineStride(0, width);
+                        strideCb = ml.lineStride(1, width);
+                        strideCr = ml.lineStride(2, width);
                         break;
                 case LayoutSemiPlanar420:
-                        srcY    = static_cast<const uint8_t *>(input.data(0));
-                        srcCbCr = static_cast<const uint8_t *>(input.data(1));
-                        strideY    = input.lineStride(0);
-                        strideCbCr = input.lineStride(1);
+                        srcY    = input.plane(0).data();
+                        srcCbCr = input.plane(1).data();
+                        strideY    = ml.lineStride(0, width);
+                        strideCbCr = ml.lineStride(1, width);
                         break;
                 case LayoutInterleavedUYVY:
                 case LayoutInterleavedYUYV:
-                        srcY = static_cast<const uint8_t *>(input.data(0));
-                        strideInterleaved = input.lineStride(0);
+                        srcY = input.plane(0).data();
+                        strideInterleaved = ml.lineStride(0, width);
                         break;
                 default:
                         break;
@@ -424,33 +436,42 @@ static Image encodeYCbCr(jpeg_compress_struct &cinfo, JpegErrorMgr &jerr,
 
         jpeg_finish_compress(&cinfo);
 
-        PixelFormat::ID jpegPd = jpegPixelFormatFor(input.pixelFormat().id());
-        Image result = Image::fromCompressedData(outBuffer, outSize, width, height,
-                                                  jpegPd, input.metadata());
+        PixelFormat::ID jpegPd = jpegPixelFormatFor(idesc.pixelFormat().id());
+        ImageDesc cdesc(Size2Du32(width, height), PixelFormat(jpegPd));
+        cdesc.metadata() = idesc.metadata();
+        Buffer::Ptr buf = Buffer::Ptr::create(outSize);
+        std::memcpy(buf.modify()->data(), outBuffer, outSize);
+        buf.modify()->setSize(outSize);
         free(outBuffer);
-        return result;
+        BufferView view(buf, 0, outSize);
+        auto cvp = CompressedVideoPayload::Ptr::create(cdesc, view);
+        cvp.modify()->metadata() = idesc.metadata();
+        return cvp;
 }
 
 // ---------------------------------------------------------------------------
 // Decode — RGB output path
 // ---------------------------------------------------------------------------
 
-static Image decodeToRGB(jpeg_decompress_struct &dinfo, JpegErrorMgr &jerr,
-                         const Image &input, PixelFormat::ID outputPd) {
-        if(setjmp(jerr.jmpBuf)) { jpeg_abort_decompress(&dinfo); return Image(); }
+static UncompressedVideoPayload::Ptr decodeToRGB(jpeg_decompress_struct &dinfo, JpegErrorMgr &jerr,
+                                                 const CompressedVideoPayload &input, PixelFormat::ID outputPd) {
+        if(setjmp(jerr.jmpBuf)) { jpeg_abort_decompress(&dinfo); return UncompressedVideoPayload::Ptr(); }
 
-        const uint8_t *jpegData = static_cast<const uint8_t *>(input.data());
-        jpeg_mem_src(&dinfo, jpegData, input.compressedSize());
+        auto jpegView = input.plane(0);
+        const uint8_t *jpegData = jpegView.data();
+        jpeg_mem_src(&dinfo, jpegData, jpegView.size());
         jpeg_read_header(&dinfo, TRUE);
 
         dinfo.out_color_space = (outputPd == PixelFormat::RGBA8_sRGB) ? JCS_EXT_RGBA : JCS_RGB;
         jpeg_start_decompress(&dinfo);
 
-        Image output(dinfo.output_width, dinfo.output_height, outputPd);
-        if(!output.isValid()) { jpeg_abort_decompress(&dinfo); return Image(); }
+        ImageDesc outDesc(dinfo.output_width, dinfo.output_height, PixelFormat(outputPd));
+        auto output = UncompressedVideoPayload::allocate(outDesc);
+        if(!output.isValid()) { jpeg_abort_decompress(&dinfo); return UncompressedVideoPayload::Ptr(); }
 
-        size_t stride = output.lineStride();
-        uint8_t *pixels = static_cast<uint8_t *>(output.data());
+        const PixelMemLayout &outMl = outDesc.pixelFormat().memLayout();
+        size_t stride = outMl.lineStride(0, dinfo.output_width);
+        uint8_t *pixels = output.modify()->data()[0].data();
         while(dinfo.output_scanline < dinfo.output_height) {
                 uint8_t *row = pixels + dinfo.output_scanline * stride;
                 JSAMPROW rowPtr = row;
@@ -458,7 +479,7 @@ static Image decodeToRGB(jpeg_decompress_struct &dinfo, JpegErrorMgr &jerr,
         }
         jpeg_finish_decompress(&dinfo);
 
-        output.metadata() = input.metadata();
+        output.modify()->desc().metadata() = input.metadata();
         return output;
 }
 
@@ -466,12 +487,13 @@ static Image decodeToRGB(jpeg_decompress_struct &dinfo, JpegErrorMgr &jerr,
 // Decode — YCbCr raw data output path (all layouts)
 // ---------------------------------------------------------------------------
 
-static Image decodeToYCbCr(jpeg_decompress_struct &dinfo, JpegErrorMgr &jerr,
-                           const Image &input, PixelFormat::ID outputPd, YCbCrInfo info) {
-        if(setjmp(jerr.jmpBuf)) { jpeg_abort_decompress(&dinfo); return Image(); }
+static UncompressedVideoPayload::Ptr decodeToYCbCr(jpeg_decompress_struct &dinfo, JpegErrorMgr &jerr,
+                                                   const CompressedVideoPayload &input, PixelFormat::ID outputPd, YCbCrInfo info) {
+        if(setjmp(jerr.jmpBuf)) { jpeg_abort_decompress(&dinfo); return UncompressedVideoPayload::Ptr(); }
 
-        const uint8_t *jpegData = static_cast<const uint8_t *>(input.data());
-        jpeg_mem_src(&dinfo, jpegData, input.compressedSize());
+        auto jpegView = input.plane(0);
+        const uint8_t *jpegData = jpegView.data();
+        jpeg_mem_src(&dinfo, jpegData, jpegView.size());
         jpeg_read_header(&dinfo, TRUE);
 
         dinfo.raw_data_out = TRUE;
@@ -482,8 +504,10 @@ static Image decodeToYCbCr(jpeg_decompress_struct &dinfo, JpegErrorMgr &jerr,
         int height = dinfo.output_height;
         int chromaWidth = width / 2;
 
-        Image output(width, height, outputPd);
-        if(!output.isValid()) { jpeg_abort_decompress(&dinfo); return Image(); }
+        ImageDesc outDesc(width, height, PixelFormat(outputPd));
+        auto output = UncompressedVideoPayload::allocate(outDesc);
+        if(!output.isValid()) { jpeg_abort_decompress(&dinfo); return UncompressedVideoPayload::Ptr(); }
+        const PixelMemLayout &outMl = outDesc.pixelFormat().memLayout();
 
         int mcuRows = DCTSIZE * dinfo.max_v_samp_factor;
         int chromaMcuRows = DCTSIZE;
@@ -504,26 +528,27 @@ static Image decodeToYCbCr(jpeg_decompress_struct &dinfo, JpegErrorMgr &jerr,
         uint8_t *dstY = nullptr, *dstCb = nullptr, *dstCr = nullptr, *dstCbCr = nullptr;
         size_t strideY = 0, strideCb = 0, strideCr = 0, strideCbCr = 0, strideOut = 0;
 
+        UncompressedVideoPayload *outRaw = output.modify();
         switch(info.layout) {
                 case LayoutPlanar422:
                 case LayoutPlanar420:
-                        dstY  = static_cast<uint8_t *>(output.data(0));
-                        dstCb = static_cast<uint8_t *>(output.data(1));
-                        dstCr = static_cast<uint8_t *>(output.data(2));
-                        strideY  = output.lineStride(0);
-                        strideCb = output.lineStride(1);
-                        strideCr = output.lineStride(2);
+                        dstY  = outRaw->data()[0].data();
+                        dstCb = outRaw->data()[1].data();
+                        dstCr = outRaw->data()[2].data();
+                        strideY  = outMl.lineStride(0, width);
+                        strideCb = outMl.lineStride(1, width);
+                        strideCr = outMl.lineStride(2, width);
                         break;
                 case LayoutSemiPlanar420:
-                        dstY    = static_cast<uint8_t *>(output.data(0));
-                        dstCbCr = static_cast<uint8_t *>(output.data(1));
-                        strideY    = output.lineStride(0);
-                        strideCbCr = output.lineStride(1);
+                        dstY    = outRaw->data()[0].data();
+                        dstCbCr = outRaw->data()[1].data();
+                        strideY    = outMl.lineStride(0, width);
+                        strideCbCr = outMl.lineStride(1, width);
                         break;
                 case LayoutInterleavedUYVY:
                 case LayoutInterleavedYUYV:
-                        dstY = static_cast<uint8_t *>(output.data(0));
-                        strideOut = output.lineStride(0);
+                        dstY = outRaw->data()[0].data();
+                        strideOut = outMl.lineStride(0, width);
                         break;
                 default: break;
         }
@@ -607,27 +632,27 @@ static Image decodeToYCbCr(jpeg_decompress_struct &dinfo, JpegErrorMgr &jerr,
 
         jpeg_finish_decompress(&dinfo);
 
-        output.metadata() = input.metadata();
+        output.modify()->desc().metadata() = input.metadata();
         return output;
 }
 
-// Encodes one uncompressed Image to JPEG using libjpeg-turbo.  Returns
-// an invalid Image on error; the caller sets the session's error state.
-static Image encodeOneJpegFrame(jpeg_compress_struct &cinfo, JpegErrorMgr &jerr,
-                                const Image &input, int quality,
-                                JpegVideoEncoder::Subsampling subsampling) {
-        YCbCrInfo info = classifyYCbCr(input.pixelFormat().id());
+// Encodes one uncompressed payload to JPEG using libjpeg-turbo.
+// Returns a null Ptr on error; the caller sets the session's error state.
+static CompressedVideoPayload::Ptr encodeOneJpegFrame(jpeg_compress_struct &cinfo, JpegErrorMgr &jerr,
+                                                     const UncompressedVideoPayload &input, int quality,
+                                                     JpegVideoEncoder::Subsampling subsampling) {
+        YCbCrInfo info = classifyYCbCr(input.desc().pixelFormat().id());
         if(info.layout != LayoutNone) return encodeYCbCr(cinfo, jerr, input, quality, info);
         return encodeRGB(cinfo, jerr, input, quality, subsampling);
 }
 
-// Decodes one compressed JPEG Image into uncompressed form with the
-// requested target PixelFormat.  Returns invalid on error.
-static Image decodeOneJpegFrame(jpeg_decompress_struct &dinfo, JpegErrorMgr &jerr,
-                                const Image &input, PixelFormat::ID outPd) {
+// Decodes one compressed JPEG payload into uncompressed form with the
+// requested target PixelFormat.  Returns a null Ptr on error.
+static UncompressedVideoPayload::Ptr decodeOneJpegFrame(jpeg_decompress_struct &dinfo, JpegErrorMgr &jerr,
+                                                       const CompressedVideoPayload &input, PixelFormat::ID outPd) {
         if(outPd == PixelFormat::Invalid) {
-                const auto &targets = input.pixelFormat().decodeTargets();
-                if(targets.isEmpty()) return Image();
+                const auto &targets = input.desc().pixelFormat().decodeTargets();
+                if(targets.isEmpty()) return UncompressedVideoPayload::Ptr();
                 outPd = targets[0];
         }
 
@@ -639,7 +664,7 @@ static Image decodeOneJpegFrame(jpeg_decompress_struct &dinfo, JpegErrorMgr &jer
         if(info.layout != LayoutNone) {
                 return decodeToYCbCr(dinfo, jerr, input, outPd, info);
         }
-        return Image();
+        return UncompressedVideoPayload::Ptr();
 }
 
 } // namespace
@@ -723,10 +748,10 @@ void JpegVideoEncoder::configure(const MediaConfig &config) {
         if(_capacity < 1) _capacity = 1;
 }
 
-Error JpegVideoEncoder::submitFrame(const Image::Ptr &frame, const MediaTimeStamp &pts) {
+Error JpegVideoEncoder::submitPayload(const UncompressedVideoPayload::Ptr &payload) {
         clearError();
-        if(!frame.isValid() || !frame->isValid()) {
-                setError(Error::Invalid, "JpegVideoEncoder: invalid frame");
+        if(!payload.isValid() || !payload->isValid()) {
+                setError(Error::Invalid, "JpegVideoEncoder: invalid payload");
                 return _lastError;
         }
         if(static_cast<int>(_queue.size()) >= _capacity && !_capacityWarned) {
@@ -740,31 +765,28 @@ Error JpegVideoEncoder::submitFrame(const Image::Ptr &frame, const MediaTimeStam
                          "JpegVideoEncoder: libjpeg-turbo state not initialized");
                 return _lastError;
         }
-        Image encoded = encodeOneJpegFrame(_impl->cinfo, _impl->jerr,
-                                           *frame, _quality, _subsampling);
-        if(!encoded.isValid()) {
+        auto cvp = encodeOneJpegFrame(_impl->cinfo, _impl->jerr,
+                                      *payload, _quality, _subsampling);
+        if(!cvp.isValid()) {
                 setError(Error::ConversionFailed,
                          "JpegVideoEncoder: libjpeg-turbo encode failed");
                 return _lastError;
         }
 
-        // Wrap the encoded plane buffer as a VideoPacket — same
-        // BufferView semantics we use elsewhere.  Every JPEG bitstream
-        // is independently decodable so the packet is always a
-        // keyframe.  The encoded Image carries the source frame's
-        // metadata (timecode, etc.); propagate it onto the packet so
-        // downstream stages can keep tracking each unit.
-        auto pkt = VideoPacket::Ptr::create(encoded.plane(0), encoded.pixelFormat());
-        pkt.modify()->setPts(pts);
-        pkt.modify()->setDts(pts);
-        pkt.modify()->addFlag(VideoPacket::Keyframe);
-        pkt.modify()->metadata() = encoded.metadata();
-        _queue.pushToBack(std::move(pkt));
+        // Every JPEG bitstream is independently decodable so the
+        // payload is always a keyframe.  PTS / DTS come from the
+        // input payload; metadata has already been mirrored inside
+        // @ref encodeOneJpegFrame.
+        auto *raw = cvp.modify();
+        raw->setPts(payload->pts());
+        raw->setDts(payload->pts());
+        raw->addFlag(MediaPayload::Keyframe);
+        _queue.pushToBack(std::move(cvp));
         return Error::Ok;
 }
 
-VideoPacket::Ptr JpegVideoEncoder::receivePacket() {
-        if(_queue.isEmpty()) return VideoPacket::Ptr();
+CompressedVideoPayload::Ptr JpegVideoEncoder::receiveCompressedPayload() {
+        if(_queue.isEmpty()) return CompressedVideoPayload::Ptr();
         return _queue.popFromFront();
 }
 
@@ -824,35 +846,16 @@ void JpegVideoDecoder::configure(const MediaConfig &config) {
         if(_capacity < 1) _capacity = 1;
 }
 
-Error JpegVideoDecoder::submitPacket(const VideoPacket::Ptr &packet) {
+Error JpegVideoDecoder::submitPayload(const CompressedVideoPayload::Ptr &payload) {
         clearError();
-        if(!packet.isValid() || !packet->isValid() || packet->size() == 0) {
-                setError(Error::Invalid, "JpegVideoDecoder: empty packet");
+        if(!payload.isValid() || !payload->isValid() || payload->size() == 0) {
+                setError(Error::Invalid, "JpegVideoDecoder: empty payload");
                 return _lastError;
         }
         if(static_cast<int>(_queue.size()) >= _capacity && !_capacityWarned) {
                 promekiWarn("JpegVideoDecoder: output queue exceeded capacity (%d)",
                             _capacity);
                 _capacityWarned = true;
-        }
-
-        // Wrap the packet bytes as a compressed Image.  Width / height
-        // here are placeholders — the libjpeg-turbo decode path parses
-        // the real dimensions out of the JPEG header itself; we only
-        // need a non-zero size so Image::fromCompressedData allocates
-        // the backing buffer correctly.  The PixelFormat on the
-        // synthetic input mostly matters for its decodeTargets list,
-        // which we override with _outputPd.id() below anyway.
-        const PixelFormat inputPd = packet->pixelFormat().isValid()
-                ? packet->pixelFormat()
-                : PixelFormat(PixelFormat::JPEG_RGB8_sRGB);
-        Image jpegImage = Image::fromCompressedData(packet->view().data(),
-                                                    packet->size(),
-                                                    1, 1, inputPd,
-                                                    packet->metadata());
-        if(!jpegImage.isValid()) {
-                setError(Error::IOError, "JpegVideoDecoder: fromCompressedData failed");
-                return _lastError;
         }
 
         // _outputPd.id() of Invalid (== 0) tells the decode helper to
@@ -865,18 +868,19 @@ Error JpegVideoDecoder::submitPacket(const VideoPacket::Ptr &packet) {
                          "JpegVideoDecoder: libjpeg-turbo state not initialized");
                 return _lastError;
         }
-        Image decoded = decodeOneJpegFrame(_impl->dinfo, _impl->jerr, jpegImage, outPd);
-        if(!decoded.isValid()) {
+        auto uvp = decodeOneJpegFrame(_impl->dinfo, _impl->jerr, *payload, outPd);
+        if(!uvp.isValid()) {
                 setError(Error::ConversionFailed,
                          "JpegVideoDecoder: libjpeg-turbo decode failed");
                 return _lastError;
         }
-        _queue.pushToBack(Image::Ptr::create(std::move(decoded)));
+        uvp.modify()->setPts(payload->pts());
+        _queue.pushToBack(std::move(uvp));
         return Error::Ok;
 }
 
-Image::Ptr JpegVideoDecoder::receiveFrame() {
-        if(_queue.isEmpty()) return Image::Ptr();
+UncompressedVideoPayload::Ptr JpegVideoDecoder::receiveVideoPayload() {
+        if(_queue.isEmpty()) return UncompressedVideoPayload::Ptr();
         return _queue.popFromFront();
 }
 

@@ -9,6 +9,7 @@
 #include <promeki/paintengine.h>
 #include <promeki/pixelformat.h>
 #include <promeki/logger.h>
+#include <promeki/uncompressedvideopayload.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -58,7 +59,7 @@ const PixelFormat &PaintEngine::Impl::pixelFormat() const {
         return invalid;
 }
 
-bool PaintEngine::Impl::blit(const Point2Di32 &destTopLeft, const Image &src, const Point2Di32 &srcTopLeft, const Size2Du32 &srcSize) const {
+bool PaintEngine::Impl::blit(const Point2Di32 &destTopLeft, const UncompressedVideoPayload &src, const Point2Di32 &srcTopLeft, const Size2Du32 &srcSize) const {
         return false;
 }
 

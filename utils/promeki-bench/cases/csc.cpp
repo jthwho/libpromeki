@@ -39,7 +39,7 @@
 #include <promeki/cscpipeline.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/enums.h>
-#include <promeki/image.h>
+#include <promeki/uncompressedvideopayload.h>
 #include <promeki/pixelformat.h>
 #include <promeki/list.h>
 #include <promeki/string.h>
@@ -248,8 +248,8 @@ BenchmarkCase::Function buildCase(ConvPair pair) {
                         return;
                 }
 
-                Image src(width, height, pair.src);
-                Image dst(width, height, pair.dst);
+                auto src = UncompressedVideoPayload::allocate(ImageDesc(width, height, pair.src));
+                auto dst = UncompressedVideoPayload::allocate(ImageDesc(width, height, pair.dst));
                 if(!src.isValid() || !dst.isValid()) {
                         state.setCounter(String("invalid"), 1.0);
                         for(auto _ : state) (void)_;
@@ -258,8 +258,8 @@ BenchmarkCase::Function buildCase(ConvPair pair) {
 
                 // Fill source with a non-trivial pattern so codec-like
                 // paths can't take shortcuts on zeroed input.
-                uint8_t *data = static_cast<uint8_t *>(src.data(0));
-                size_t planeSize = src.plane(0)->size();
+                uint8_t *data = src.modify()->data()[0].data();
+                size_t planeSize = src->plane(0).size();
                 for(size_t i = 0; i < planeSize; i++) {
                         data[i] = static_cast<uint8_t>((i * 137 + 43) & 0xFF);
                 }
@@ -267,7 +267,7 @@ BenchmarkCase::Function buildCase(ConvPair pair) {
                 // Discard the first conversion — the warmup covers
                 // one-time allocations and CPU caches inside the
                 // pipeline.
-                pipeline.execute(src, dst);
+                pipeline.execute(*src, *dst.modify());
 
                 double mpix = static_cast<double>(width)
                             * static_cast<double>(height);
@@ -275,7 +275,7 @@ BenchmarkCase::Function buildCase(ConvPair pair) {
 
                 for(auto _ : state) {
                         (void)_;
-                        pipeline.execute(src, dst);
+                        pipeline.execute(*src, *dst.modify());
                 }
 
                 state.setItemsProcessed(state.iterations());

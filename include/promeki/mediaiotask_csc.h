@@ -10,7 +10,7 @@
 #include <promeki/namespace.h>
 #include <promeki/mediaiotask.h>
 #include <promeki/pixelformat.h>
-#include <promeki/image.h>
+#include <promeki/uncompressedvideopayload.h>
 #include <promeki/list.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -20,9 +20,10 @@ PROMEKI_NAMESPACE_BEGIN
  * @ingroup proav
  *
  * ReadWrite MediaIO that accepts a frame on @c writeFrame(), converts
- * each uncompressed video image to the configured output @ref PixelFormat
- * via @ref Image::convert, and emits the result on @c readFrame().
- * Audio and metadata are forwarded unchanged.
+ * each uncompressed video payload to the configured output
+ * @ref PixelFormat via @ref UncompressedVideoPayload::convert, and
+ * emits the result on @c readFrame().  Audio and metadata are forwarded
+ * unchanged.
  *
  * If no @ref MediaConfig::OutputPixelFormat is set (or it is invalid),
  * video images pass through unchanged.  Compressed pixel formats are
@@ -102,7 +103,8 @@ class MediaIOTask_CSC : public MediaIOTask {
                 Error proposeOutput(const MediaDesc &requested,
                                     MediaDesc *achievable) const override;
 
-                Error convertImage(const Image &input, Image &output);
+                Error convertPayload(const UncompressedVideoPayload &input,
+                                     UncompressedVideoPayload::Ptr &output) const;
                 Error convertFrame(const Frame::Ptr &input, Frame::Ptr &output);
 
                 PixelFormat                       _outputPixelFormat;

@@ -15,8 +15,6 @@
 #include <promeki/uniqueptr.h>
 #include <promeki/variantquery.h>
 #include <promeki/frame.h>
-#include <promeki/image.h>
-#include <promeki/audio.h>
 #include <promeki/timecode.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -840,7 +838,5 @@ const String &VariantQuery<T>::errorDetail() const { return _errorDetail; }
 // ============================================================
 
 template class VariantQuery<Frame>;
-template class VariantQuery<Image>;
-template class VariantQuery<Audio>;
 
 PROMEKI_NAMESPACE_END

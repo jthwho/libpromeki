@@ -8,7 +8,6 @@
 #pragma once
 
 #include <promeki/namespace.h>
-#include <promeki/audio.h>
 #include <promeki/audiodesc.h>
 #include <promeki/error.h>
 #include <promeki/result.h>
@@ -27,8 +26,9 @@ PROMEKI_NAMESPACE_BEGIN
  * smoothly interpolates between the old and new ratios.
  *
  * All input must be in the native interleaved float32 format
- * (AudioFormat::NativeFloat).  Use Audio::convert() or AudioDesc's
- * samplesToFloat() helper to convert before feeding data in.
+ * (AudioFormat::NativeFloat).  Use
+ * @ref UncompressedAudioPayload::convert or @ref AudioDesc::samplesToFloat
+ * to convert before feeding data in.
  *
  * The resampler is not internally thread-safe; the caller must
  * synchronize if process() is called from multiple threads.
@@ -39,10 +39,10 @@ PROMEKI_NAMESPACE_BEGIN
  * Error err = r.setup(2, SrcQuality::SincMedium);
  * r.setRatio(48000.0 / 44100.0);
  *
- * Audio in(AudioDesc(44100.0f, 2), 1024);
- * // ... fill in ...
- * Audio out(AudioDesc(48000.0f, 2), 2048);
- * auto [generated, processErr] = r.process(in, out);
+ * std::vector<float> in(1024 * 2);
+ * std::vector<float> out(2048 * 2);
+ * long used = 0, gen = 0;
+ * r.process(in.data(), 1024, out.data(), 2048, used, gen);
  * @endcode
  */
 class AudioResampler {
@@ -126,29 +126,6 @@ class AudioResampler {
                  * @return Same as setRatio().
                  */
                 Error setRatio(float inputRate, float outputRate);
-
-                /**
-                 * @brief Processes audio samples through the resampler.
-                 *
-                 * Reads from @p input and writes resampled data to @p output.
-                 * Both must be in native float32 interleaved format and have
-                 * the same channel count as the resampler.
-                 *
-                 * On success, @p output's sample count is set to the number
-                 * of samples actually generated.  The number of input samples
-                 * consumed may be less than input.samples() if the output
-                 * buffer fills; the caller should advance and re-call.
-                 *
-                 * @param input  Source audio (not modified, but sample count
-                 *               is read).
-                 * @param output Destination audio; maxSamples() determines the
-                 *               upper bound on output.  Resized to actual
-                 *               output on return.
-                 * @param endOfInput Set to true when this is the final chunk
-                 *                   (flushes the resampler's internal state).
-                 * @return {outputSamplesGenerated, Error::Ok} on success.
-                 */
-                ProcessResult process(const Audio &input, Audio &output, bool endOfInput = false);
 
                 /**
                  * @brief Processes raw float buffers through the resampler.

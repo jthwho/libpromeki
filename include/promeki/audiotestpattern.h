@@ -14,7 +14,7 @@
 #include <promeki/error.h>
 #include <promeki/audiolevel.h>
 #include <promeki/audiodesc.h>
-#include <promeki/audio.h>
+#include <promeki/uncompressedaudiopayload.h>
 #include <promeki/enumlist.h>
 #include <promeki/enums.h>
 #include <promeki/list.h>
@@ -297,30 +297,21 @@ class AudioTestPattern {
                  * @param tc      Current frame timecode.  Used by @c LTC
                  *                and @c AvSync channels; invalid values
                  *                degrade to silence on those channels.
-                 * @return A new Audio buffer, or an invalid Audio on failure.
+                 * @return A new payload, or a null Ptr on failure.
                  */
-                Audio create(size_t samples, const Timecode &tc) const;
+                SharedPtr<UncompressedAudioPayload, true, UncompressedAudioPayload>
+                createPayload(size_t samples, const Timecode &tc) const;
 
                 /**
-                 * @brief Creates a new Audio buffer with no timecode context.
+                 * @brief Payload-native counterpart to @ref createPayload(samples, tc).
                  *
-                 * Equivalent to @c create(samples, Timecode()).
-                 * @c LTC and @c AvSync channels degrade to silence.
-                 *
-                 * @param samples Number of samples to generate.
-                 * @return A new Audio buffer.
+                 * Equivalent to @c createPayload(samples, Timecode()) —
+                 * LTC and AvSync channels degrade to silence.
                  */
-                Audio create(size_t samples) const;
-
-                /**
-                 * @brief Renders the test pattern into an existing Audio buffer.
-                 * @param audio The target audio buffer.
-                 * @param tc    Current frame timecode.
-                 */
-                void render(Audio &audio, const Timecode &tc) const;
-
-                /** @brief Renders with no timecode context. */
-                void render(Audio &audio) const;
+                SharedPtr<UncompressedAudioPayload, true, UncompressedAudioPayload>
+                createPayload(size_t samples) const {
+                        return createPayload(samples, Timecode());
+                }
 
                 /**
                  * @brief Returns the ChannelId tone frequency for a given channel.
@@ -435,9 +426,10 @@ class AudioTestPattern {
                 // AvSync tone burst cache: built lazily per requested
                 // sample count so the cadenced rates (29.97, 59.94)
                 // which alternate between two sizes don't thrash the
-                // cache.  Each entry is a one-shot tone burst (phase
-                // reset to zero so every marker frame is byte-identical).
-                mutable Map<size_t, Audio> _avSyncToneCache;
+                // cache.  Each entry is a one-shot mono tone burst
+                // (phase reset to zero so every marker frame is
+                // byte-identical).
+                mutable Map<size_t, List<float>> _avSyncToneCache;
 
                 // Cached noise buffers.  One-dimensional arrays of
                 // samples that the per-channel noise dispatch indexes
@@ -504,7 +496,15 @@ class AudioTestPattern {
 
                 void clearGenerators();
                 AudioPattern modeForChannel(size_t channelIndex) const;
-                const Audio &avSyncBurst(size_t samples) const;
+                const List<float> &avSyncBurst(size_t samples) const;
+
+                // Shared inner loop: writes @p samples samples per
+                // channel of the configured pattern into @p out,
+                // advancing all phase and cursor state.  Used by both
+                // @ref create (Audio allocation) and @ref createPayload
+                // (UncompressedAudioPayload allocation).
+                void writePattern(float *out, size_t samples,
+                                  const Timecode &tc) const;
                 void buildWhiteNoiseBuffer();
                 void buildPinkNoiseBuffer();
 

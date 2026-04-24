@@ -211,7 +211,7 @@ class Metadata : public VariantDatabase<"Metadata"> {
                                 .setDescription("VBR quality setting (codec-specific)."));
 
                 /// @brief Internal: allocation hint for compressed pixel formats.
-                /// Use Image::compressedSize() instead.
+                /// Use CompressedVideoPayload::size() instead.
                 PROMEKI_DECLARE_ID(CompressedSize,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))

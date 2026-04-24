@@ -10,6 +10,7 @@
 #include <doctest/doctest.h>
 #include <promeki/imagefileio.h>
 #include <promeki/imagefile.h>
+#include <promeki/uncompressedvideopayload.h>
 #include <promeki/file.h>
 #include <promeki/buffer.h>
 
@@ -185,12 +186,12 @@ TEST_CASE("ImageFileIO Cineon: load synthetic file") {
         lf.setFilename(fn);
         CHECK(lf.load() == Error::Ok);
 
-        Image img = lf.image();
+        auto img = lf.uncompressedVideoPayload();
         REQUIRE(img.isValid());
-        CHECK(img.width() == w);
-        CHECK(img.height() == h);
-        CHECK(img.pixelFormat().id() == PixelFormat::RGB10_DPX_sRGB);
-        CHECK(std::memcmp(img.data(), imgData, imageBytes) == 0);
+        CHECK(img->desc().width() == w);
+        CHECK(img->desc().height() == h);
+        CHECK(img->desc().pixelFormat().id() == PixelFormat::RGB10_DPX_sRGB);
+        CHECK(std::memcmp(img->plane(0).data(), imgData, imageBytes) == 0);
 
         std::remove(fn);
 }

@@ -21,26 +21,26 @@
 #include <promeki/videoencoder.h>
 #include <promeki/videodecoder.h>
 #include <promeki/mediaconfig.h>
-#include <promeki/videopacket.h>
 #include <promeki/enums.h>
-#include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/pixelformat.h>
 #include <promeki/metadata.h>
 #include <promeki/timecode.h>
+#include <promeki/compressedvideopayload.h>
+#include <promeki/uncompressedvideopayload.h>
 
 using namespace promeki;
 
 // ---------------------------------------------------------------------------
-// Test image helpers (mirror the pre-Phase-4 JpegImageCodec test fixtures)
+// Test payload helpers (mirror the pre-Phase-4 JpegImageCodec test fixtures)
 // ---------------------------------------------------------------------------
 
-static Image createTestImage(int width, int height, PixelFormat::ID pixfmt = PixelFormat::RGB8_sRGB) {
-        ImageDesc idesc(width, height, pixfmt);
-        Image img(idesc);
+static UncompressedVideoPayload::Ptr createTestImage(int width, int height,
+                                                     PixelFormat::ID pixfmt = PixelFormat::RGB8_sRGB) {
+        auto img = UncompressedVideoPayload::allocate(ImageDesc(width, height, pixfmt));
         int comps = (pixfmt == PixelFormat::RGBA8_sRGB) ? 4 : 3;
-        uint8_t *data = static_cast<uint8_t *>(img.data());
-        size_t stride = img.lineStride();
+        uint8_t *data = img.modify()->data()[0].data();
+        size_t stride = img->desc().pixelFormat().memLayout().lineStride(0, width);
         for(int y = 0; y < height; y++) {
                 uint8_t *row = data + y * stride;
                 for(int x = 0; x < width; x++) {
@@ -53,10 +53,10 @@ static Image createTestImage(int width, int height, PixelFormat::ID pixfmt = Pix
         return img;
 }
 
-static Image createTestYCbCrImage(int width, int height, PixelFormat::ID pd) {
-        Image img(width, height, pd);
-        uint8_t *data = static_cast<uint8_t *>(img.data());
-        size_t stride = img.lineStride();
+static UncompressedVideoPayload::Ptr createTestYCbCrImage(int width, int height, PixelFormat::ID pd) {
+        auto img = UncompressedVideoPayload::allocate(ImageDesc(width, height, pd));
+        uint8_t *data = img.modify()->data()[0].data();
+        size_t stride = img->desc().pixelFormat().memLayout().lineStride(0, width);
         bool isUYVY = (pd == PixelFormat::YUV8_422_UYVY_Rec709);
         for(int y = 0; y < height; y++) {
                 uint8_t *row = data + y * stride;
@@ -74,15 +74,16 @@ static Image createTestYCbCrImage(int width, int height, PixelFormat::ID pd) {
         return img;
 }
 
-static Image createPlanarImage(int width, int height, PixelFormat::ID pd) {
-        Image img(width, height, pd);
+static UncompressedVideoPayload::Ptr createPlanarImage(int width, int height, PixelFormat::ID pd) {
+        auto img = UncompressedVideoPayload::allocate(ImageDesc(width, height, pd));
         if(!img.isValid()) return img;
-        uint8_t *y = static_cast<uint8_t *>(img.data(0));
-        size_t ySize = img.pixelFormat().memLayout().planeSize(0, width, height);
+        const auto &ml = img->desc().pixelFormat().memLayout();
+        uint8_t *y = img.modify()->data()[0].data();
+        size_t ySize = ml.planeSize(0, width, height);
         for(size_t i = 0; i < ySize; i++) y[i] = (uint8_t)(16 + i * 219 / ySize);
-        for(size_t p = 1; p < img.pixelFormat().planeCount(); p++) {
-                size_t pSize = img.pixelFormat().memLayout().planeSize(p, width, height);
-                std::memset(img.data(p), 128, pSize);
+        for(size_t p = 1; p < img->desc().pixelFormat().planeCount(); p++) {
+                size_t pSize = ml.planeSize(p, width, height);
+                std::memset(img.modify()->data()[p].data(), 128, pSize);
         }
         return img;
 }
@@ -94,38 +95,37 @@ static Image createPlanarImage(int width, int height, PixelFormat::ID pd) {
 // pin a specific Subsampling/Quality on the encoder before submit.
 // ---------------------------------------------------------------------------
 
-static VideoPacket::Ptr encodeOneFrame(const Image &src, const MediaConfig &cfg) {
+static CompressedVideoPayload::Ptr encodeOneFrame(const UncompressedVideoPayload::Ptr &src,
+                                                  const MediaConfig &cfg) {
         MediaConfig sessionCfg = cfg;
-        // Pick a sensible default OutputPixelFormat when the caller
-        // didn't supply one — every JPEG sub-format works, the encoder
-        // just needs a non-empty value to stamp on the packet.
         if(!sessionCfg.contains(MediaConfig::OutputPixelFormat)) {
                 sessionCfg.set(MediaConfig::OutputPixelFormat,
                                PixelFormat(PixelFormat::JPEG_RGB8_sRGB));
         }
         auto encResult = VideoCodec(VideoCodec::JPEG).createEncoder(&sessionCfg);
-        if(error(encResult).isError()) return VideoPacket::Ptr();
+        if(error(encResult).isError()) return CompressedVideoPayload::Ptr();
         VideoEncoder *enc = value(encResult);
-        Error err = enc->submitFrame(Image::Ptr::create(src));
-        if(err.isError()) { delete enc; return VideoPacket::Ptr(); }
-        VideoPacket::Ptr pkt = enc->receivePacket();
+        Error err = enc->submitPayload(src);
+        if(err.isError()) { delete enc; return CompressedVideoPayload::Ptr(); }
+        CompressedVideoPayload::Ptr pkt = enc->receiveCompressedPayload();
         delete enc;
         return pkt;
 }
 
-static Image decodeOneFrame(const VideoPacket::Ptr &pkt, PixelFormat target,
-                            int width, int height) {
+static UncompressedVideoPayload::Ptr decodeOneFrame(const CompressedVideoPayload::Ptr &pkt,
+                                                    PixelFormat target,
+                                                    int width, int height) {
         MediaConfig cfg;
         cfg.set(MediaConfig::OutputPixelFormat, target);
         cfg.set(MediaConfig::VideoSize, Size2Du32(width, height));
         auto decResult = VideoCodec(VideoCodec::JPEG).createDecoder(&cfg);
-        if(error(decResult).isError()) return Image();
+        if(error(decResult).isError()) return UncompressedVideoPayload::Ptr();
         VideoDecoder *dec = value(decResult);
-        Error err = dec->submitPacket(pkt);
-        if(err.isError()) { delete dec; return Image(); }
-        Image::Ptr out = dec->receiveFrame();
+        Error err = dec->submitPayload(pkt);
+        if(err.isError()) { delete dec; return UncompressedVideoPayload::Ptr(); }
+        UncompressedVideoPayload::Ptr out = dec->receiveVideoPayload();
         delete dec;
-        return out.isValid() ? *out : Image();
+        return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -171,21 +171,21 @@ TEST_CASE("JpegVideoCodec_RegisteredAndCanCreate") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("JpegVideoEncoder_EncodeRGB8") {
-        Image src = createTestImage(320, 240);
-        VideoPacket::Ptr pkt = encodeOneFrame(src, MediaConfig());
+        auto src = createTestImage(320, 240);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, MediaConfig());
         REQUIRE(pkt);
-        CHECK(pkt->size() > 0);
-        CHECK(pkt->pixelFormat().id() == PixelFormat::JPEG_RGB8_sRGB);
-        const uint8_t *d = static_cast<const uint8_t *>(pkt->view().data());
+        CHECK(pkt->plane(0).size() > 0);
+        CHECK(pkt->desc().pixelFormat().id() == PixelFormat::JPEG_RGB8_sRGB);
+        const uint8_t *d = static_cast<const uint8_t *>(pkt->plane(0).data());
         CHECK(d[0] == 0xFF); CHECK(d[1] == 0xD8);
-        CHECK(pkt->hasFlag(VideoPacket::Keyframe));
+        CHECK(pkt->isKeyframe());
 }
 
 TEST_CASE("JpegVideoEncoder_EncodeRGBA8") {
-        Image src = createTestImage(160, 120, PixelFormat::RGBA8_sRGB);
-        VideoPacket::Ptr pkt = encodeOneFrame(src, MediaConfig());
+        auto src = createTestImage(160, 120, PixelFormat::RGBA8_sRGB);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, MediaConfig());
         REQUIRE(pkt);
-        CHECK(pkt->pixelFormat().id() == PixelFormat::JPEG_RGBA8_sRGB);
+        CHECK(pkt->desc().pixelFormat().id() == PixelFormat::JPEG_RGBA8_sRGB);
 }
 
 // ---------------------------------------------------------------------------
@@ -193,9 +193,9 @@ TEST_CASE("JpegVideoEncoder_EncodeRGBA8") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("JpegVideoEncoder_MetadataPreserved") {
-        Image img = createTestImage(64, 64);
-        img.metadata().set(Metadata::Timecode, Timecode(Timecode::NDF24, 1, 30, 15, 10));
-        VideoPacket::Ptr pkt = encodeOneFrame(img, MediaConfig());
+        auto img = createTestImage(64, 64);
+        img.modify()->desc().metadata().set(Metadata::Timecode, Timecode(Timecode::NDF24, 1, 30, 15, 10));
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(img, MediaConfig());
         REQUIRE(pkt);
         Timecode tc = pkt->metadata().get(Metadata::Timecode).get<Timecode>();
         CHECK(tc.hour() == 1);
@@ -207,14 +207,14 @@ TEST_CASE("JpegVideoEncoder_MetadataPreserved") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("JpegVideoEncoder_QualityAffectsSize") {
-        Image img = createTestImage(320, 240);
+        auto img = createTestImage(320, 240);
         MediaConfig lo;  lo.set(MediaConfig::JpegQuality, 10);
         MediaConfig hi;  hi.set(MediaConfig::JpegQuality, 95);
-        VideoPacket::Ptr loPkt = encodeOneFrame(img, lo);
-        VideoPacket::Ptr hiPkt = encodeOneFrame(img, hi);
+        CompressedVideoPayload::Ptr loPkt = encodeOneFrame(img, lo);
+        CompressedVideoPayload::Ptr hiPkt = encodeOneFrame(img, hi);
         REQUIRE(loPkt);
         REQUIRE(hiPkt);
-        CHECK(hiPkt->size() > loPkt->size());
+        CHECK(hiPkt->plane(0).size() > loPkt->plane(0).size());
 }
 
 // ---------------------------------------------------------------------------
@@ -222,14 +222,14 @@ TEST_CASE("JpegVideoEncoder_QualityAffectsSize") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("JpegVideoEncoder_SubsamplingModes") {
-        Image img = createTestImage(320, 240);
+        auto img = createTestImage(320, 240);
         MediaConfig c444; c444.set(MediaConfig::JpegSubsampling, ChromaSubsampling::YUV444);
         MediaConfig c420; c420.set(MediaConfig::JpegSubsampling, ChromaSubsampling::YUV420);
-        VideoPacket::Ptr p444 = encodeOneFrame(img, c444);
-        VideoPacket::Ptr p420 = encodeOneFrame(img, c420);
+        CompressedVideoPayload::Ptr p444 = encodeOneFrame(img, c444);
+        CompressedVideoPayload::Ptr p420 = encodeOneFrame(img, c420);
         REQUIRE(p444);
         REQUIRE(p420);
-        CHECK(p444->size() > p420->size());
+        CHECK(p444->plane(0).size() > p420->plane(0).size());
 }
 
 // ---------------------------------------------------------------------------
@@ -240,13 +240,13 @@ TEST_CASE("JpegVideoEncoder_InvalidInput") {
         auto encResult = VideoCodec(VideoCodec::JPEG).createEncoder(nullptr);
         REQUIRE_FALSE(error(encResult).isError());
         VideoEncoder *enc = value(encResult);
-        CHECK(enc->submitFrame(Image::Ptr()).isError());
+        CHECK(enc->submitPayload(UncompressedVideoPayload::Ptr()).isError());
         delete enc;
 
         auto decResult = VideoCodec(VideoCodec::JPEG).createDecoder(nullptr);
         REQUIRE_FALSE(error(decResult).isError());
         VideoDecoder *dec = value(decResult);
-        CHECK(dec->submitPacket(VideoPacket::Ptr()).isError());
+        CHECK(dec->submitPayload(CompressedVideoPayload::Ptr()).isError());
         delete dec;
 }
 
@@ -255,23 +255,23 @@ TEST_CASE("JpegVideoEncoder_InvalidInput") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("JpegVideoCodec_RoundTripRGB8") {
-        Image src = createTestImage(320, 240);
+        auto src = createTestImage(320, 240);
         MediaConfig cfg; cfg.set(MediaConfig::JpegQuality, 100);
-        VideoPacket::Ptr pkt = encodeOneFrame(src, cfg);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, cfg);
         REQUIRE(pkt);
-        Image decoded = decodeOneFrame(pkt, PixelFormat(PixelFormat::RGB8_sRGB), 320, 240);
+        auto decoded = decodeOneFrame(pkt, PixelFormat(PixelFormat::RGB8_sRGB), 320, 240);
         REQUIRE(decoded.isValid());
-        CHECK(decoded.width() == 320);
-        CHECK(decoded.pixelFormat().id() == PixelFormat::RGB8_sRGB);
+        CHECK(decoded->desc().width() == 320);
+        CHECK(decoded->desc().pixelFormat().id() == PixelFormat::RGB8_sRGB);
 }
 
 TEST_CASE("JpegVideoCodec_DecodeToRGBA8") {
-        Image src = createTestImage(160, 120);
-        VideoPacket::Ptr pkt = encodeOneFrame(src, MediaConfig());
+        auto src = createTestImage(160, 120);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, MediaConfig());
         REQUIRE(pkt);
-        Image decoded = decodeOneFrame(pkt, PixelFormat(PixelFormat::RGBA8_sRGB), 160, 120);
+        auto decoded = decodeOneFrame(pkt, PixelFormat(PixelFormat::RGBA8_sRGB), 160, 120);
         REQUIRE(decoded.isValid());
-        CHECK(decoded.pixelFormat().id() == PixelFormat::RGBA8_sRGB);
+        CHECK(decoded->desc().pixelFormat().id() == PixelFormat::RGBA8_sRGB);
 }
 
 // ---------------------------------------------------------------------------
@@ -311,13 +311,13 @@ static size_t scanMarker(const uint8_t *data, size_t size, uint8_t marker, size_
 }
 
 TEST_CASE("JpegVideoEncoder_422Structure") {
-        Image src = createTestImage(640, 480);
+        auto src = createTestImage(640, 480);
         MediaConfig cfg; cfg.set(MediaConfig::JpegSubsampling, ChromaSubsampling::YUV422);
-        VideoPacket::Ptr pkt = encodeOneFrame(src, cfg);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, cfg);
         REQUIRE(pkt);
-        const uint8_t *d = static_cast<const uint8_t *>(pkt->view().data());
-        size_t sof0 = scanMarker(d, pkt->size(), 0xC0, 2);
-        REQUIRE(sof0 < pkt->size());
+        const uint8_t *d = static_cast<const uint8_t *>(pkt->plane(0).data());
+        size_t sof0 = scanMarker(d, pkt->plane(0).size(), 0xC0, 2);
+        REQUIRE(sof0 < pkt->plane(0).size());
         CHECK(d[sof0+11] == 0x21); // Y: H=2 V=1
         CHECK(d[sof0+14] == 0x11); // Cb
         CHECK(d[sof0+17] == 0x11); // Cr
@@ -328,38 +328,38 @@ TEST_CASE("JpegVideoEncoder_422Structure") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("JpegVideoCodec_EncodeUYVY") {
-        Image src = createTestYCbCrImage(320, 240, PixelFormat::YUV8_422_UYVY_Rec709);
-        VideoPacket::Ptr pkt = encodeOneFrame(src, MediaConfig());
+        auto src = createTestYCbCrImage(320, 240, PixelFormat::YUV8_422_UYVY_Rec709);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, MediaConfig());
         REQUIRE(pkt);
-        CHECK(pkt->pixelFormat().id() == PixelFormat::JPEG_YUV8_422_Rec709);
+        CHECK(pkt->desc().pixelFormat().id() == PixelFormat::JPEG_YUV8_422_Rec709);
 }
 
 TEST_CASE("JpegVideoCodec_EncodeYUYV") {
-        Image src = createTestYCbCrImage(320, 240, PixelFormat::YUV8_422_Rec709);
-        VideoPacket::Ptr pkt = encodeOneFrame(src, MediaConfig());
+        auto src = createTestYCbCrImage(320, 240, PixelFormat::YUV8_422_Rec709);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, MediaConfig());
         REQUIRE(pkt);
-        CHECK(pkt->pixelFormat().id() == PixelFormat::JPEG_YUV8_422_Rec709);
+        CHECK(pkt->desc().pixelFormat().id() == PixelFormat::JPEG_YUV8_422_Rec709);
 }
 
 TEST_CASE("JpegVideoCodec_RoundTripUYVY") {
-        Image src = createTestYCbCrImage(320, 240, PixelFormat::YUV8_422_UYVY_Rec709);
+        auto src = createTestYCbCrImage(320, 240, PixelFormat::YUV8_422_UYVY_Rec709);
         MediaConfig cfg; cfg.set(MediaConfig::JpegQuality, 100);
-        VideoPacket::Ptr pkt = encodeOneFrame(src, cfg);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, cfg);
         REQUIRE(pkt);
-        Image decoded = decodeOneFrame(pkt,
+        auto decoded = decodeOneFrame(pkt,
                 PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709), 320, 240);
         REQUIRE(decoded.isValid());
-        CHECK(decoded.pixelFormat().id() == PixelFormat::YUV8_422_UYVY_Rec709);
-        const uint8_t *s = static_cast<const uint8_t *>(src.data());
-        const uint8_t *d = static_cast<const uint8_t *>(decoded.data());
+        CHECK(decoded->desc().pixelFormat().id() == PixelFormat::YUV8_422_UYVY_Rec709);
+        const uint8_t *s = static_cast<const uint8_t *>(src->plane(0).data());
+        const uint8_t *d = static_cast<const uint8_t *>(decoded->plane(0).data());
         CHECK(std::abs((int)s[1] - (int)d[1]) < 4);
 }
 
 TEST_CASE("JpegVideoCodec_RoundTripYUYV") {
-        Image src = createTestYCbCrImage(320, 240, PixelFormat::YUV8_422_Rec709);
-        VideoPacket::Ptr pkt = encodeOneFrame(src, MediaConfig());
+        auto src = createTestYCbCrImage(320, 240, PixelFormat::YUV8_422_Rec709);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, MediaConfig());
         REQUIRE(pkt);
-        Image decoded = decodeOneFrame(pkt,
+        auto decoded = decodeOneFrame(pkt,
                 PixelFormat(PixelFormat::YUV8_422_Rec709), 320, 240);
         CHECK(decoded.isValid());
 }
@@ -369,19 +369,19 @@ TEST_CASE("JpegVideoCodec_RoundTripYUYV") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("JpegVideoCodec_EncodeUYVYDecodeRGB") {
-        Image src = createTestYCbCrImage(320, 240, PixelFormat::YUV8_422_UYVY_Rec709);
-        VideoPacket::Ptr pkt = encodeOneFrame(src, MediaConfig());
+        auto src = createTestYCbCrImage(320, 240, PixelFormat::YUV8_422_UYVY_Rec709);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, MediaConfig());
         REQUIRE(pkt);
-        Image decoded = decodeOneFrame(pkt, PixelFormat(PixelFormat::RGB8_sRGB), 320, 240);
+        auto decoded = decodeOneFrame(pkt, PixelFormat(PixelFormat::RGB8_sRGB), 320, 240);
         REQUIRE(decoded.isValid());
-        CHECK(decoded.pixelFormat().id() == PixelFormat::RGB8_sRGB);
+        CHECK(decoded->desc().pixelFormat().id() == PixelFormat::RGB8_sRGB);
 }
 
 TEST_CASE("JpegVideoCodec_EncodeRGBDecodeUYVY") {
-        Image src = createTestImage(320, 240);
-        VideoPacket::Ptr pkt = encodeOneFrame(src, MediaConfig());
+        auto src = createTestImage(320, 240);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, MediaConfig());
         REQUIRE(pkt);
-        Image decoded = decodeOneFrame(pkt,
+        auto decoded = decodeOneFrame(pkt,
                 PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709), 320, 240);
         CHECK(decoded.isValid());
 }
@@ -391,13 +391,13 @@ TEST_CASE("JpegVideoCodec_EncodeRGBDecodeUYVY") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("JpegVideoCodec_EncodeUYVYNonAlignedHeight") {
-        Image src = createTestYCbCrImage(320, 244, PixelFormat::YUV8_422_UYVY_Rec709);
-        VideoPacket::Ptr pkt = encodeOneFrame(src, MediaConfig());
+        auto src = createTestYCbCrImage(320, 244, PixelFormat::YUV8_422_UYVY_Rec709);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, MediaConfig());
         REQUIRE(pkt);
-        Image decoded = decodeOneFrame(pkt,
+        auto decoded = decodeOneFrame(pkt,
                 PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709), 320, 244);
         REQUIRE(decoded.isValid());
-        CHECK(decoded.height() == 244);
+        CHECK(decoded->desc().height() == 244);
 }
 
 // ---------------------------------------------------------------------------
@@ -405,8 +405,8 @@ TEST_CASE("JpegVideoCodec_EncodeUYVYNonAlignedHeight") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("JpegVideoCodec_DecodeDefaultFormat") {
-        Image src = createTestImage(160, 120);
-        VideoPacket::Ptr pkt = encodeOneFrame(src, MediaConfig());
+        auto src = createTestImage(160, 120);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, MediaConfig());
         REQUIRE(pkt);
 
         // Decode without OutputPixelFormat — the decoder picks the
@@ -416,8 +416,8 @@ TEST_CASE("JpegVideoCodec_DecodeDefaultFormat") {
         auto decResult = VideoCodec(VideoCodec::JPEG).createDecoder(&decCfg);
         REQUIRE_FALSE(error(decResult).isError());
         VideoDecoder *dec = value(decResult);
-        CHECK(dec->submitPacket(pkt) == Error::Ok);
-        Image::Ptr decoded = dec->receiveFrame();
+        CHECK(dec->submitPayload(pkt) == Error::Ok);
+        UncompressedVideoPayload::Ptr decoded = dec->receiveVideoPayload();
         delete dec;
         CHECK(decoded.isValid());
         CHECK(decoded->isValid());
@@ -428,23 +428,23 @@ TEST_CASE("JpegVideoCodec_DecodeDefaultFormat") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("JpegVideoCodec_EncodePlanar422") {
-        Image src = createPlanarImage(320, 240, PixelFormat::YUV8_422_Planar_Rec709);
-        VideoPacket::Ptr pkt = encodeOneFrame(src, MediaConfig());
+        auto src = createPlanarImage(320, 240, PixelFormat::YUV8_422_Planar_Rec709);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, MediaConfig());
         REQUIRE(pkt);
-        CHECK(pkt->pixelFormat().id() == PixelFormat::JPEG_YUV8_422_Rec709);
+        CHECK(pkt->desc().pixelFormat().id() == PixelFormat::JPEG_YUV8_422_Rec709);
 }
 
 TEST_CASE("JpegVideoCodec_RoundTripPlanar422") {
-        Image src = createPlanarImage(320, 240, PixelFormat::YUV8_422_Planar_Rec709);
+        auto src = createPlanarImage(320, 240, PixelFormat::YUV8_422_Planar_Rec709);
         MediaConfig cfg; cfg.set(MediaConfig::JpegQuality, 100);
-        VideoPacket::Ptr pkt = encodeOneFrame(src, cfg);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, cfg);
         REQUIRE(pkt);
-        Image decoded = decodeOneFrame(pkt,
+        auto decoded = decodeOneFrame(pkt,
                 PixelFormat(PixelFormat::YUV8_422_Planar_Rec709), 320, 240);
         REQUIRE(decoded.isValid());
-        CHECK(decoded.pixelFormat().id() == PixelFormat::YUV8_422_Planar_Rec709);
-        CHECK(decoded.width() == 320);
-        CHECK(decoded.height() == 240);
+        CHECK(decoded->desc().pixelFormat().id() == PixelFormat::YUV8_422_Planar_Rec709);
+        CHECK(decoded->desc().width() == 320);
+        CHECK(decoded->desc().height() == 240);
 }
 
 // ---------------------------------------------------------------------------
@@ -452,21 +452,21 @@ TEST_CASE("JpegVideoCodec_RoundTripPlanar422") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("JpegVideoCodec_EncodePlanar420") {
-        Image src = createPlanarImage(320, 240, PixelFormat::YUV8_420_Planar_Rec709);
-        VideoPacket::Ptr pkt = encodeOneFrame(src, MediaConfig());
+        auto src = createPlanarImage(320, 240, PixelFormat::YUV8_420_Planar_Rec709);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, MediaConfig());
         REQUIRE(pkt);
-        CHECK(pkt->pixelFormat().id() == PixelFormat::JPEG_YUV8_420_Rec709);
+        CHECK(pkt->desc().pixelFormat().id() == PixelFormat::JPEG_YUV8_420_Rec709);
 }
 
 TEST_CASE("JpegVideoCodec_RoundTripPlanar420") {
-        Image src = createPlanarImage(320, 240, PixelFormat::YUV8_420_Planar_Rec709);
+        auto src = createPlanarImage(320, 240, PixelFormat::YUV8_420_Planar_Rec709);
         MediaConfig cfg; cfg.set(MediaConfig::JpegQuality, 100);
-        VideoPacket::Ptr pkt = encodeOneFrame(src, cfg);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, cfg);
         REQUIRE(pkt);
-        Image decoded = decodeOneFrame(pkt,
+        auto decoded = decodeOneFrame(pkt,
                 PixelFormat(PixelFormat::YUV8_420_Planar_Rec709), 320, 240);
         REQUIRE(decoded.isValid());
-        CHECK(decoded.pixelFormat().id() == PixelFormat::YUV8_420_Planar_Rec709);
+        CHECK(decoded->desc().pixelFormat().id() == PixelFormat::YUV8_420_Planar_Rec709);
 }
 
 // ---------------------------------------------------------------------------
@@ -474,21 +474,21 @@ TEST_CASE("JpegVideoCodec_RoundTripPlanar420") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("JpegVideoCodec_EncodeNV12") {
-        Image src = createPlanarImage(320, 240, PixelFormat::YUV8_420_SemiPlanar_Rec709);
-        VideoPacket::Ptr pkt = encodeOneFrame(src, MediaConfig());
+        auto src = createPlanarImage(320, 240, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, MediaConfig());
         REQUIRE(pkt);
-        CHECK(pkt->pixelFormat().id() == PixelFormat::JPEG_YUV8_420_Rec709);
+        CHECK(pkt->desc().pixelFormat().id() == PixelFormat::JPEG_YUV8_420_Rec709);
 }
 
 TEST_CASE("JpegVideoCodec_RoundTripNV12") {
-        Image src = createPlanarImage(320, 240, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        auto src = createPlanarImage(320, 240, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         MediaConfig cfg; cfg.set(MediaConfig::JpegQuality, 100);
-        VideoPacket::Ptr pkt = encodeOneFrame(src, cfg);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, cfg);
         REQUIRE(pkt);
-        Image decoded = decodeOneFrame(pkt,
+        auto decoded = decodeOneFrame(pkt,
                 PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709), 320, 240);
         REQUIRE(decoded.isValid());
-        CHECK(decoded.pixelFormat().id() == PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        CHECK(decoded->desc().pixelFormat().id() == PixelFormat::YUV8_420_SemiPlanar_Rec709);
 }
 
 // ---------------------------------------------------------------------------
@@ -496,21 +496,21 @@ TEST_CASE("JpegVideoCodec_RoundTripNV12") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("JpegVideoCodec_EncodePlanar420DecodeRGB") {
-        Image src = createPlanarImage(320, 240, PixelFormat::YUV8_420_Planar_Rec709);
-        VideoPacket::Ptr pkt = encodeOneFrame(src, MediaConfig());
+        auto src = createPlanarImage(320, 240, PixelFormat::YUV8_420_Planar_Rec709);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, MediaConfig());
         REQUIRE(pkt);
-        Image decoded = decodeOneFrame(pkt, PixelFormat(PixelFormat::RGB8_sRGB), 320, 240);
+        auto decoded = decodeOneFrame(pkt, PixelFormat(PixelFormat::RGB8_sRGB), 320, 240);
         REQUIRE(decoded.isValid());
-        CHECK(decoded.pixelFormat().id() == PixelFormat::RGB8_sRGB);
+        CHECK(decoded->desc().pixelFormat().id() == PixelFormat::RGB8_sRGB);
 }
 
 TEST_CASE("JpegVideoCodec_EncodeRGBDecodePlanar420") {
-        Image src = createTestImage(320, 240);
+        auto src = createTestImage(320, 240);
         MediaConfig cfg; cfg.set(MediaConfig::JpegSubsampling, ChromaSubsampling::YUV420);
-        VideoPacket::Ptr pkt = encodeOneFrame(src, cfg);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, cfg);
         REQUIRE(pkt);
-        Image decoded = decodeOneFrame(pkt,
+        auto decoded = decodeOneFrame(pkt,
                 PixelFormat(PixelFormat::YUV8_420_Planar_Rec709), 320, 240);
         REQUIRE(decoded.isValid());
-        CHECK(decoded.pixelFormat().id() == PixelFormat::YUV8_420_Planar_Rec709);
+        CHECK(decoded->desc().pixelFormat().id() == PixelFormat::YUV8_420_Planar_Rec709);
 }

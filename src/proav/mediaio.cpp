@@ -13,8 +13,8 @@
 #include <promeki/file.h>
 #include <promeki/logger.h>
 #include <promeki/benchmarkreporter.h>
-#include <promeki/image.h>
-#include <promeki/audio.h>
+#include <promeki/videopayload.h>
+#include <promeki/audiopayload.h>
 #include <promeki/buffer.h>
 #include <promeki/stringlist.h>
 #include <promeki/units.h>
@@ -640,27 +640,18 @@ void MediaIO::resolveIdentifiersAndBenchmark() {
 }
 
 int64_t MediaIO::frameByteSize(const Frame::Ptr &frame) {
-        // Walks the frame once and sums every plane and audio buffer's
-        // logical size.  "Logical" is important: we use Buffer::size()
-        // (content) rather than allocSize() (allocation) so that
-        // partially-filled scratch buffers do not inflate the reported
-        // rate.  The loop skips invalid pointers defensively because
-        // some backends build frames lazily.
+        // Walks the frame once and sums every payload's plane bytes.
+        // "Logical" is important: we use BufferView::size() (content)
+        // rather than allocSize() (allocation) so that partially-
+        // filled scratch buffers do not inflate the reported rate.
+        // The loop skips invalid pointers defensively because some
+        // backends build frames lazily.
         if(!frame.isValid()) return 0;
         int64_t total = 0;
-        for(const auto &imgPtr : frame->imageList()) {
-                if(!imgPtr.isValid()) continue;
-                for(const auto &planePtr : imgPtr->planes()) {
-                        if(planePtr.isValid()) {
-                                total += static_cast<int64_t>(planePtr->size());
-                        }
-                }
-        }
-        for(const auto &audPtr : frame->audioList()) {
-                if(!audPtr.isValid()) continue;
-                const Buffer::Ptr &buf = audPtr->buffer();
-                if(buf.isValid()) {
-                        total += static_cast<int64_t>(buf->size());
+        for(const MediaPayload::Ptr &p : frame->payloadList()) {
+                if(!p.isValid()) continue;
+                for(size_t i = 0; i < p->planeCount(); ++i) {
+                        total += static_cast<int64_t>(p->plane(i).size());
                 }
         }
         return total;
@@ -1435,34 +1426,41 @@ Error MediaIO::readFrame(Frame::Ptr &frame, bool block) {
                                         Duration::fromNanoseconds(ns);
                                 MediaTimeStamp synMts(synTs,
                                         ClockDomain::Synthetic);
+                                // Apply the Synthetic fallback
+                                // directly to payloadList — the
+                                // canonical representation every
+                                // downstream reader consumes.
                                 for(size_t i = 0;
-                                    i < frame->imageList().size(); ++i) {
-                                        const Image::Ptr &img =
-                                                frame->imageList()[i];
-                                        if(img.isValid() &&
-                                           !img->metadata()
-                                                .get(Metadata::MediaTimeStamp)
-                                                .get<MediaTimeStamp>()
-                                                .isValid()) {
-                                                frame.modify()->imageList()[i]
-                                                        .modify()->metadata()
-                                                        .set(Metadata::MediaTimeStamp,
-                                                             synMts);
-                                        }
-                                }
-                                for(size_t i = 0;
-                                    i < frame->audioList().size(); ++i) {
-                                        const Audio::Ptr &aud =
-                                                frame->audioList()[i];
-                                        if(aud.isValid() &&
-                                           !aud->metadata()
-                                                .get(Metadata::MediaTimeStamp)
-                                                .get<MediaTimeStamp>()
-                                                .isValid()) {
-                                                frame.modify()->audioList()[i]
-                                                        .modify()->metadata()
-                                                        .set(Metadata::MediaTimeStamp,
-                                                             synMts);
+                                    i < frame->payloadList().size(); ++i) {
+                                        const MediaPayload::Ptr &p =
+                                                frame->payloadList()[i];
+                                        if(!p.isValid()) continue;
+                                        if(p->kind() == MediaPayloadKind::Video) {
+                                                auto *vp = frame.modify()
+                                                        ->payloadList()[i]
+                                                        .modify()
+                                                        ->as<VideoPayload>();
+                                                if(vp && !vp->desc().metadata()
+                                                        .get(Metadata::MediaTimeStamp)
+                                                        .get<MediaTimeStamp>()
+                                                        .isValid()) {
+                                                        vp->desc().metadata().set(
+                                                                Metadata::MediaTimeStamp,
+                                                                synMts);
+                                                }
+                                        } else if(p->kind() == MediaPayloadKind::Audio) {
+                                                auto *ap = frame.modify()
+                                                        ->payloadList()[i]
+                                                        .modify()
+                                                        ->as<AudioPayload>();
+                                                if(ap && !ap->desc().metadata()
+                                                        .get(Metadata::MediaTimeStamp)
+                                                        .get<MediaTimeStamp>()
+                                                        .isValid()) {
+                                                        ap->desc().metadata().set(
+                                                                Metadata::MediaTimeStamp,
+                                                                synMts);
+                                                }
                                         }
                                 }
                         }
@@ -1529,34 +1527,40 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
                 TimeStamp synTs = _originTime +
                         Duration::fromNanoseconds(ns);
                 MediaTimeStamp synMts(synTs, ClockDomain::Synthetic);
+                // Apply the Synthetic fallback directly to
+                // payloadList — the canonical representation every
+                // downstream stage reads.
                 for(size_t i = 0;
-                    i < cmdWrite->frame->imageList().size(); ++i) {
-                        const Image::Ptr &img =
-                                cmdWrite->frame->imageList()[i];
-                        if(img.isValid() &&
-                           !img->metadata()
-                                .get(Metadata::MediaTimeStamp)
-                                .get<MediaTimeStamp>()
-                                .isValid()) {
-                                cmdWrite->frame.modify()->imageList()[i]
-                                        .modify()->metadata()
-                                        .set(Metadata::MediaTimeStamp,
-                                             synMts);
-                        }
-                }
-                for(size_t i = 0;
-                    i < cmdWrite->frame->audioList().size(); ++i) {
-                        const Audio::Ptr &aud =
-                                cmdWrite->frame->audioList()[i];
-                        if(aud.isValid() &&
-                           !aud->metadata()
-                                .get(Metadata::MediaTimeStamp)
-                                .get<MediaTimeStamp>()
-                                .isValid()) {
-                                cmdWrite->frame.modify()->audioList()[i]
-                                        .modify()->metadata()
-                                        .set(Metadata::MediaTimeStamp,
-                                             synMts);
+                    i < cmdWrite->frame->payloadList().size(); ++i) {
+                        const MediaPayload::Ptr &p =
+                                cmdWrite->frame->payloadList()[i];
+                        if(!p.isValid()) continue;
+                        if(p->kind() == MediaPayloadKind::Video) {
+                                auto *vp = cmdWrite->frame.modify()
+                                        ->payloadList()[i]
+                                        .modify()
+                                        ->as<VideoPayload>();
+                                if(vp && !vp->desc().metadata()
+                                        .get(Metadata::MediaTimeStamp)
+                                        .get<MediaTimeStamp>()
+                                        .isValid()) {
+                                        vp->desc().metadata().set(
+                                                Metadata::MediaTimeStamp,
+                                                synMts);
+                                }
+                        } else if(p->kind() == MediaPayloadKind::Audio) {
+                                auto *ap = cmdWrite->frame.modify()
+                                        ->payloadList()[i]
+                                        .modify()
+                                        ->as<AudioPayload>();
+                                if(ap && !ap->desc().metadata()
+                                        .get(Metadata::MediaTimeStamp)
+                                        .get<MediaTimeStamp>()
+                                        .isValid()) {
+                                        ap->desc().metadata().set(
+                                                Metadata::MediaTimeStamp,
+                                                synMts);
+                                }
                         }
                 }
                 _writeFrameCount++;

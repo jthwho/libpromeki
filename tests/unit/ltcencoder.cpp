@@ -28,22 +28,21 @@ TEST_CASE("LtcEncoder_Construct") {
 TEST_CASE("LtcEncoder_EncodeSampleCount") {
     LtcEncoder enc(48000, 0.5f);
     Timecode tc(Timecode::NDF24, 1, 0, 0, 0);
-    Audio audio = enc.encode(tc);
-    CHECK(audio.isValid());
-    CHECK(audio.samples() > 0);
+    List<int8_t> samples = enc.encode(tc);
+    CHECK(!samples.isEmpty());
     // At 48kHz / 24fps, expect ~2000 samples per frame
-    CHECK(audio.samples() > 1500);
-    CHECK(audio.samples() < 2500);
+    CHECK(samples.size() > 1500);
+    CHECK(samples.size() < 2500);
 }
 
 TEST_CASE("LtcEncoder_Encode30fps") {
     LtcEncoder enc(48000, 0.5f);
     Timecode tc(Timecode::NDF30, 1, 0, 0, 0);
-    Audio audio = enc.encode(tc);
-    CHECK(audio.isValid());
+    List<int8_t> samples = enc.encode(tc);
+    CHECK(!samples.isEmpty());
     // At 48kHz / 30fps, expect ~1600 samples per frame
-    CHECK(audio.samples() > 1200);
-    CHECK(audio.samples() < 2000);
+    CHECK(samples.size() > 1200);
+    CHECK(samples.size() < 2000);
 }
 
 // ============================================================================
@@ -54,13 +53,13 @@ TEST_CASE("LtcEncoder_SampleRateProportional") {
     Timecode tc(Timecode::NDF24, 1, 0, 0, 0);
 
     LtcEncoder enc48(48000, 0.5f);
-    Audio a48 = enc48.encode(tc);
+    List<int8_t> a48 = enc48.encode(tc);
 
     LtcEncoder enc96(96000, 0.5f);
-    Audio a96 = enc96.encode(tc);
+    List<int8_t> a96 = enc96.encode(tc);
 
     // 96kHz should produce roughly 2x the samples of 48kHz
-    double ratio = (double)a96.samples() / (double)a48.samples();
+    double ratio = (double)a96.size() / (double)a48.size();
     CHECK(ratio > 1.8);
     CHECK(ratio < 2.2);
 }
@@ -73,20 +72,20 @@ TEST_CASE("LtcEncoder_LevelAffectsAmplitude") {
     Timecode tc(Timecode::NDF24, 1, 0, 0, 0);
 
     LtcEncoder encLow(48000, 0.25f);
-    Audio aLow = encLow.encode(tc);
+    List<int8_t> aLow = encLow.encode(tc);
 
     LtcEncoder encHigh(48000, 0.75f);
-    Audio aHigh = encHigh.encode(tc);
+    List<int8_t> aHigh = encHigh.encode(tc);
 
     // Find peak values
     int8_t peakLow = 0;
     int8_t peakHigh = 0;
-    for(size_t i = 0; i < aLow.samples(); i++) {
-        int8_t v = aLow.data<int8_t>()[i];
+    for(size_t i = 0; i < aLow.size(); i++) {
+        int8_t v = aLow[i];
         if(v > peakLow) peakLow = v;
     }
-    for(size_t i = 0; i < aHigh.samples(); i++) {
-        int8_t v = aHigh.data<int8_t>()[i];
+    for(size_t i = 0; i < aHigh.size(); i++) {
+        int8_t v = aHigh[i];
         if(v > peakHigh) peakHigh = v;
     }
     CHECK(peakHigh > peakLow);
@@ -123,9 +122,8 @@ TEST_CASE("LtcEncoder_Sequential") {
     Timecode tc(Timecode::NDF24, 1, 0, 0, 0);
 
     for(int i = 0; i < 10; i++) {
-        Audio audio = enc.encode(tc);
-        CHECK(audio.isValid());
-        CHECK(audio.samples() > 0);
+        List<int8_t> samples = enc.encode(tc);
+        CHECK(!samples.isEmpty());
         ++tc;
     }
 }
@@ -137,6 +135,6 @@ TEST_CASE("LtcEncoder_Sequential") {
 TEST_CASE("LtcEncoder_InvalidTimecode") {
     LtcEncoder enc(48000, 0.5f);
     Timecode tc; // default/invalid
-    Audio audio = enc.encode(tc);
-    CHECK(!audio.isValid());
+    List<int8_t> samples = enc.encode(tc);
+    CHECK(samples.isEmpty());
 }

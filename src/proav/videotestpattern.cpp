@@ -8,8 +8,9 @@
 #include <cmath>
 #include <cstring>
 #include <promeki/videotestpattern.h>
-#include <promeki/image.h>
 #include <promeki/paintengine.h>
+#include <promeki/mediaconfig.h>
+#include <promeki/uncompressedvideopayload.h>
 #include <promeki/pixelformat.h>
 #include <promeki/random.h>
 #include <promeki/fastfont.h>
@@ -50,13 +51,13 @@ VideoTestPattern::~VideoTestPattern() = default;
 void VideoTestPattern::setPattern(Pattern pattern) {
         if(_pattern == pattern) return;
         _pattern = pattern;
-        invalidateImageCache();
+        invalidatePayloadCache();
 }
 
 void VideoTestPattern::setSolidColor(const Color &color) {
         if(_solidColor == color) return;
         _solidColor = color;
-        invalidateImageCache();
+        invalidatePayloadCache();
 }
 
 void VideoTestPattern::setBurnFontFilename(const String &path) {
@@ -87,9 +88,9 @@ bool VideoTestPattern::isStaticPattern() const {
         return _pattern != VideoPattern::Noise;
 }
 
-void VideoTestPattern::invalidateImageCache() const {
+void VideoTestPattern::invalidatePayloadCache() const {
         for(int i = 0; i < CacheSlotCount; i++) {
-                _cachedImages[i] = Image();
+                _cachedPayloads[i] = UncompressedVideoPayload::Ptr();
         }
         _cacheW = 0;
         _cacheH = 0;
@@ -114,8 +115,9 @@ ImageDesc VideoTestPattern::rgbScratchDesc(const ImageDesc &target) const {
         return rd;
 }
 
-Image VideoTestPattern::create(const ImageDesc &desc, double motionOffset,
-                               const Timecode &currentTimecode) const {
+UncompressedVideoPayload::Ptr VideoTestPattern::createPayload(
+        const ImageDesc &desc, double motionOffset,
+        const Timecode &currentTimecode) const {
         const bool directPaint = desc.pixelFormat().hasPaintEngine()
                                  && _pattern != VideoPattern::ZonePlate
                                  && _pattern != VideoPattern::CircularZone
@@ -128,12 +130,13 @@ Image VideoTestPattern::create(const ImageDesc &desc, double motionOffset,
         // (ZonePlate, Noise) always go through an RGBA8 scratch and
         // CSC-convert into the target.  The background is cached in
         // the caller's target pixel format either way.  Burn-in is a
-        // separate pass (@ref applyBurn) so create() never has to pick
-        // a paintable intermediate just because text might be drawn
-        // later.
-        auto renderInto = [this, directPaint, &desc](Image &dst, double mo,
-                                                     const Color *solidColor) {
-                auto runPattern = [this, mo, solidColor](Image &t) {
+        // separate pass (@ref applyBurn) so createPayload never has
+        // to pick a paintable intermediate just because text might be
+        // drawn later.
+        auto renderInto = [this, directPaint, &desc](
+                UncompressedVideoPayload::Ptr &dst, double mo,
+                const Color *solidColor) {
+                auto runPattern = [this, mo, solidColor](UncompressedVideoPayload &t) {
                         if(solidColor != nullptr) {
                                 renderSolid(t, *solidColor);
                         } else {
@@ -141,20 +144,20 @@ Image VideoTestPattern::create(const ImageDesc &desc, double motionOffset,
                         }
                 };
                 if(directPaint) {
-                        runPattern(dst);
+                        runPattern(*dst.modify());
                         return;
                 }
                 // Scratch path: render into RGBA8 and CSC-convert.
                 ImageDesc rgbDesc = rgbScratchDesc(desc);
-                Image scratch(rgbDesc);
+                auto scratch = UncompressedVideoPayload::allocate(rgbDesc);
                 if(!scratch.isValid()) return;
-                runPattern(scratch);
-                Image conv = scratch.convert(desc.pixelFormat(),
-                                             desc.metadata());
+                runPattern(*scratch.modify());
+                auto conv = scratch->convert(desc.pixelFormat(),
+                                             desc.metadata(), MediaConfig());
                 if(conv.isValid()) dst = conv;
         };
 
-        Image out;
+        UncompressedVideoPayload::Ptr out;
 
         if(_pattern == VideoPattern::AvSync) {
                 // AvSync: slot 0 = marker (white), slot 1 = non-marker
@@ -163,12 +166,12 @@ Image VideoTestPattern::create(const ImageDesc &desc, double motionOffset,
                 const bool marker = currentTimecode.isValid()
                                     && currentTimecode.frame() == 0;
                 if(marker) {
-                        out = cachedImage(0, desc, [&](Image &img) {
-                                renderInto(img, 0.0, &Color::White);
+                        out = cachedPayload(0, desc, [&](UncompressedVideoPayload::Ptr &p) {
+                                renderInto(p, 0.0, &Color::White);
                         });
                 } else {
-                        out = cachedImage(1, desc, [&](Image &img) {
-                                renderInto(img, 0.0, &Color::Black);
+                        out = cachedPayload(1, desc, [&](UncompressedVideoPayload::Ptr &p) {
+                                renderInto(p, 0.0, &Color::Black);
                         });
                 }
         } else if(_pattern == VideoPattern::SDIPathEQ || _pattern == VideoPattern::SDIPathPLL) {
@@ -177,12 +180,12 @@ Image VideoTestPattern::create(const ImageDesc &desc, double motionOffset,
                 // Non-422 targets fall through to the scratch + CSC path
                 // which produces an approximate visual.
                 if(desc.pixelFormat().memLayout().sampling() == PixelMemLayout::Sampling422) {
-                        out = cachedImage(0, desc, [&](Image &img) {
-                                render(img, 0.0);
+                        out = cachedPayload(0, desc, [&](UncompressedVideoPayload::Ptr &p) {
+                                render(*p.modify(), 0.0);
                         });
                 } else {
-                        out = cachedImage(0, desc, [&](Image &img) {
-                                renderInto(img, 0.0, nullptr);
+                        out = cachedPayload(0, desc, [&](UncompressedVideoPayload::Ptr &p) {
+                                renderInto(p, 0.0, nullptr);
                         });
                 }
         } else if(isStaticPattern() && motionOffset == 0.0) {
@@ -190,13 +193,13 @@ Image VideoTestPattern::create(const ImageDesc &desc, double motionOffset,
                 // and reuse on subsequent calls.  setPattern() and
                 // setSolidColor() dump the cache, so the slot is
                 // always consistent with _pattern / _solidColor.
-                out = cachedImage(0, desc, [&](Image &img) {
-                        renderInto(img, 0.0, nullptr);
+                out = cachedPayload(0, desc, [&](UncompressedVideoPayload::Ptr &p) {
+                        renderInto(p, 0.0, nullptr);
                 });
         } else {
                 // Dynamic pattern (Noise, or any non-zero motion offset)
                 // — render fresh every call, no caching.
-                out = Image(desc);
+                out = UncompressedVideoPayload::allocate(desc);
                 if(out.isValid()) {
                         renderInto(out, motionOffset, nullptr);
                 }
@@ -214,13 +217,15 @@ void VideoTestPattern::applyBurnFontConfig() const {
         _burnFontConfigDirty = false;
 }
 
-Error VideoTestPattern::applyBurn(Image &img, const String &burnText) const {
+Error VideoTestPattern::applyBurn(UncompressedVideoPayload &inout,
+                                  const String &burnText) const {
         if(!_burnEnabled || burnText.isEmpty()) return Error::Ok;
-        if(!img.isValid()) return Error::InvalidArgument;
-        if(!img.pixelFormat().hasPaintEngine()) {
-                promekiWarn("VideoTestPattern::applyBurn: image pixel "
+        if(!inout.isValid()) return Error::InvalidArgument;
+        const PixelFormat &pf = inout.desc().pixelFormat();
+        if(!pf.hasPaintEngine()) {
+                promekiWarn("VideoTestPattern::applyBurn: payload pixel "
                             "format '%s' has no paint engine — burn skipped",
-                            img.pixelFormat().name().cstr());
+                            pf.name().cstr());
                 return Error::NotSupported;
         }
 
@@ -233,6 +238,9 @@ Error VideoTestPattern::applyBurn(Image &img, const String &burnText) const {
         StringList lines = text.split("\n");
         if(lines.isEmpty()) return Error::Ok;
 
+        const int imgWidth  = static_cast<int>(inout.desc().size().width());
+        const int imgHeight = static_cast<int>(inout.desc().size().height());
+
         // Resolve the effective font size.  A configured size of 0
         // (auto) scales from the rendered image height using 36 px at
         // 1080 lines as the reference; explicit non-zero values pass
@@ -242,8 +250,7 @@ Error VideoTestPattern::applyBurn(Image &img, const String &burnText) const {
         // config gets marked dirty so FastFont is reconfigured below.
         int effectiveSize = _burnFontSize;
         if(effectiveSize <= 0) {
-                const int h = static_cast<int>(img.height());
-                effectiveSize = (h * 36 + 540) / 1080;
+                effectiveSize = (imgHeight * 36 + 540) / 1080;
                 if(effectiveSize < 1) effectiveSize = 1;
         }
         if(effectiveSize != _burnEffectiveFontSize) {
@@ -251,8 +258,8 @@ Error VideoTestPattern::applyBurn(Image &img, const String &burnText) const {
                 _burnFontConfigDirty = true;
         }
 
-        // Lazy-create the FastFont bound to this image's paint engine.
-        PaintEngine pe = img.createPaintEngine();
+        // Lazy-create the FastFont bound to this payload's paint engine.
+        PaintEngine pe = inout.createPaintEngine();
         if(_burnFont.isNull()) {
                 _burnFont = FastFont::UPtr::create(pe);
                 _burnFontConfigDirty = true;
@@ -284,7 +291,7 @@ Error VideoTestPattern::applyBurn(Image &img, const String &burnText) const {
                               + (n > 1 ? (n - 1) * lineSpacing : 0);
 
         int x = 0, y = 0;
-        computeBurnPosition((int)img.width(), (int)img.height(),
+        computeBurnPosition(imgWidth, imgHeight,
                             maxTextWidth, totalHeight, ascender, x, y);
 
         if(_burnDrawBackground) {
@@ -334,7 +341,7 @@ void VideoTestPattern::computeBurnPosition(int frameW, int frameH,
         }
 }
 
-void VideoTestPattern::render(Image &img, double motionOffset) const {
+void VideoTestPattern::render(UncompressedVideoPayload &img, double motionOffset) const {
         if(_pattern == VideoPattern::ColorBars)         renderColorBars(img, motionOffset, true);
         else if(_pattern == VideoPattern::ColorBars75)  renderColorBars(img, motionOffset, false);
         else if(_pattern == VideoPattern::Ramp)         renderRamp(img, motionOffset);
@@ -357,14 +364,14 @@ void VideoTestPattern::render(Image &img, double motionOffset) const {
         // AvSync renders the "non-marker" frame (black) when called via
         // the bare render() path, since render() doesn't carry a
         // per-frame timecode.  The marker logic only kicks in via
-        // create(desc, motion, tc).
+        // createPayload(desc, motion, tc).
         else if(_pattern == VideoPattern::AvSync)       renderSolid(img, Color::Black);
 }
 
-void VideoTestPattern::renderColorBars(Image &img, double offset, bool full) const {
+void VideoTestPattern::renderColorBars(UncompressedVideoPayload &img, double offset, bool full) const {
         PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.width();
-        int h = (int)img.height();
+        int w = (int)img.desc().size().width();
+        int h = (int)img.desc().size().height();
         int barWidth = w / 8;
         if(barWidth < 1) barWidth = 1;
 
@@ -401,10 +408,10 @@ void VideoTestPattern::renderColorBars(Image &img, double offset, bool full) con
         }
 }
 
-void VideoTestPattern::renderRamp(Image &img, double offset) const {
+void VideoTestPattern::renderRamp(UncompressedVideoPayload &img, double offset) const {
         PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.width();
-        int h = (int)img.height();
+        int w = (int)img.desc().size().width();
+        int h = (int)img.desc().size().height();
         int intOffset = (int)std::fmod(offset, (double)w);
         if(intOffset < 0) intOffset += w;
 
@@ -416,10 +423,10 @@ void VideoTestPattern::renderRamp(Image &img, double offset) const {
         }
 }
 
-void VideoTestPattern::renderGrid(Image &img, double offset) const {
+void VideoTestPattern::renderGrid(UncompressedVideoPayload &img, double offset) const {
         PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.width();
-        int h = (int)img.height();
+        int w = (int)img.desc().size().width();
+        int h = (int)img.desc().size().height();
 
         auto black = pe.createPixel(Color::Black);
         pe.fill(black);
@@ -437,10 +444,10 @@ void VideoTestPattern::renderGrid(Image &img, double offset) const {
         }
 }
 
-void VideoTestPattern::renderCrosshatch(Image &img, double offset) const {
+void VideoTestPattern::renderCrosshatch(UncompressedVideoPayload &img, double offset) const {
         PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.width();
-        int h = (int)img.height();
+        int w = (int)img.desc().size().width();
+        int h = (int)img.desc().size().height();
 
         auto black = pe.createPixel(Color::Black);
         pe.fill(black);
@@ -458,10 +465,10 @@ void VideoTestPattern::renderCrosshatch(Image &img, double offset) const {
         }
 }
 
-void VideoTestPattern::renderCheckerboard(Image &img, double offset) const {
+void VideoTestPattern::renderCheckerboard(UncompressedVideoPayload &img, double offset) const {
         PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.width();
-        int h = (int)img.height();
+        int w = (int)img.desc().size().width();
+        int h = (int)img.desc().size().height();
 
         auto black = pe.createPixel(Color::Black);
         auto white = pe.createPixel(Color::White);
@@ -485,14 +492,15 @@ void VideoTestPattern::renderCheckerboard(Image &img, double offset) const {
         }
 }
 
-void VideoTestPattern::renderZonePlate(Image &img, double phase) const {
-        int w = (int)img.width();
-        int h = (int)img.height();
+void VideoTestPattern::renderZonePlate(UncompressedVideoPayload &img, double phase) const {
+        int w = (int)img.desc().size().width();
+        int h = (int)img.desc().size().height();
 
-        uint8_t *data = static_cast<uint8_t *>(img.data());
-        size_t stride = img.lineStride();
-        int bpp = img.pixelFormat().memLayout().bytesPerBlock();
-        int components = img.pixelFormat().memLayout().compCount();
+        const PixelMemLayout &ml = img.desc().pixelFormat().memLayout();
+        uint8_t *data = img.data()[0].data();
+        size_t stride = ml.lineStride(0, w);
+        int bpp = ml.bytesPerBlock();
+        int components = ml.compCount();
         double cx = w / 2.0;
         double cy = h / 2.0;
         double scale = 0.001;
@@ -514,14 +522,15 @@ void VideoTestPattern::renderZonePlate(Image &img, double phase) const {
         }
 }
 
-void VideoTestPattern::renderNoise(Image &img) const {
-        int w = (int)img.width();
-        int h = (int)img.height();
+void VideoTestPattern::renderNoise(UncompressedVideoPayload &img) const {
+        int w = (int)img.desc().size().width();
+        int h = (int)img.desc().size().height();
 
-        uint8_t *data = static_cast<uint8_t *>(img.data());
-        size_t stride = img.lineStride();
-        int bpp = img.pixelFormat().memLayout().bytesPerBlock();
-        int components = img.pixelFormat().memLayout().compCount();
+        const PixelMemLayout &ml = img.desc().pixelFormat().memLayout();
+        uint8_t *data = img.data()[0].data();
+        size_t stride = ml.lineStride(0, w);
+        int bpp = ml.bytesPerBlock();
+        int components = ml.compCount();
 
         Random rng;
         for(int y = 0; y < h; y++) {
@@ -536,16 +545,16 @@ void VideoTestPattern::renderNoise(Image &img) const {
         }
 }
 
-void VideoTestPattern::renderSolid(Image &img, const Color &color) const {
+void VideoTestPattern::renderSolid(UncompressedVideoPayload &img, const Color &color) const {
         PaintEngine pe = img.createPaintEngine();
         auto pixel = pe.createPixel(color);
         pe.fill(pixel);
 }
 
-void VideoTestPattern::renderColorChecker(Image &img) const {
+void VideoTestPattern::renderColorChecker(UncompressedVideoPayload &img) const {
         PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.width();
-        int h = (int)img.height();
+        int w = (int)img.desc().size().width();
+        int h = (int)img.desc().size().height();
 
         // X-Rite ColorChecker Classic: 6 columns x 4 rows = 24 patches.
         // sRGB values from the BabelColor "Average" reference data set.
@@ -598,10 +607,10 @@ void VideoTestPattern::renderColorChecker(Image &img) const {
         }
 }
 
-void VideoTestPattern::renderSMPTE219(Image &img) const {
+void VideoTestPattern::renderSMPTE219(UncompressedVideoPayload &img) const {
         PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.width();
-        int h = (int)img.height();
+        int w = (int)img.desc().size().width();
+        int h = (int)img.desc().size().height();
 
         const int topH = h * 2 / 3;
         const int midH = h / 12;
@@ -666,10 +675,10 @@ void VideoTestPattern::renderSMPTE219(Image &img) const {
                                                plugeW, botH));
 }
 
-void VideoTestPattern::renderMultiBurst(Image &img) const {
+void VideoTestPattern::renderMultiBurst(UncompressedVideoPayload &img) const {
         PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.width();
-        int h = (int)img.height();
+        int w = (int)img.desc().size().width();
+        int h = (int)img.desc().size().height();
 
         auto gray = pe.createPixel(Color::srgb(0.5f, 0.5f, 0.5f));
         pe.fill(gray);
@@ -709,10 +718,10 @@ void VideoTestPattern::renderMultiBurst(Image &img) const {
         }
 }
 
-void VideoTestPattern::renderLimitRange(Image &img) const {
+void VideoTestPattern::renderLimitRange(UncompressedVideoPayload &img) const {
         PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.width();
-        int h = (int)img.height();
+        int w = (int)img.desc().size().width();
+        int h = (int)img.desc().size().height();
 
         struct Level {
                 float   lum;
@@ -744,14 +753,15 @@ void VideoTestPattern::renderLimitRange(Image &img) const {
         }
 }
 
-void VideoTestPattern::renderCircularZone(Image &img, double phase) const {
-        int w = (int)img.width();
-        int h = (int)img.height();
+void VideoTestPattern::renderCircularZone(UncompressedVideoPayload &img, double phase) const {
+        int w = (int)img.desc().size().width();
+        int h = (int)img.desc().size().height();
 
-        uint8_t *data = static_cast<uint8_t *>(img.data());
-        size_t stride = img.lineStride();
-        int bpp = img.pixelFormat().memLayout().bytesPerBlock();
-        int components = img.pixelFormat().memLayout().compCount();
+        const PixelMemLayout &ml = img.desc().pixelFormat().memLayout();
+        uint8_t *data = img.data()[0].data();
+        size_t stride = ml.lineStride(0, w);
+        int bpp = ml.bytesPerBlock();
+        int components = ml.compCount();
         double cx = w / 2.0;
         double cy = h / 2.0;
         double freq = 2.0 * M_PI / 8.0;
@@ -773,10 +783,10 @@ void VideoTestPattern::renderCircularZone(Image &img, double phase) const {
         }
 }
 
-void VideoTestPattern::renderAlignment(Image &img) const {
+void VideoTestPattern::renderAlignment(UncompressedVideoPayload &img) const {
         PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.width();
-        int h = (int)img.height();
+        int w = (int)img.desc().size().width();
+        int h = (int)img.desc().size().height();
         int cx = w / 2;
         int cy = h / 2;
 
@@ -837,7 +847,7 @@ void VideoTestPattern::renderAlignment(Image &img) const {
         }
 }
 
-void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
+void VideoTestPattern::renderSDIPathological(UncompressedVideoPayload &img, bool isEQ) const {
         // SMPTE RP 198 reference values (10-bit).
         //   Check Field (EQ stress): W0 = 0x300, W1 = 0x198
         //   Matrix      (PLL stress): W0 = 0x200, W1 = 0x110
@@ -848,9 +858,10 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
         const uint16_t w0 = isEQ ? uint16_t(0x300) : uint16_t(0x200);
         const uint16_t w1 = isEQ ? uint16_t(0x198) : uint16_t(0x110);
 
-        const int iw = static_cast<int>(img.width());
-        const int ih = static_cast<int>(img.height());
-        const auto pfId = img.pixelFormat().memLayout().id();
+        const int iw = static_cast<int>(img.desc().size().width());
+        const int ih = static_cast<int>(img.desc().size().height());
+        const PixelMemLayout &ml = img.desc().pixelFormat().memLayout();
+        const auto pfId = ml.id();
 
         // ---- Interleaved UYVY 8-bit ----
         if(pfId == PixelMemLayout::I_422_UYVY_3x8) {
@@ -858,8 +869,8 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
                 uint8_t v1 = static_cast<uint8_t>(w1 >> 2);
                 uint8_t blockE[4] = { v0, v1, v0, v1 };
                 uint8_t blockO[4] = { v1, v0, v1, v0 };
-                uint8_t *buf = static_cast<uint8_t *>(img.data(0));
-                size_t stride = img.lineStride(0);
+                uint8_t *buf = img.data()[0].data();
+                size_t stride = ml.lineStride(0, iw);
                 size_t lineBytes = static_cast<size_t>(iw / 2) * 4;
                 for(int y = 0; y < ih; y++)
                         sdiPathRepeatBlock(buf + y * stride, lineBytes,
@@ -885,8 +896,8 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
                 sdiPathStore16(blockE + 4, v0, be); sdiPathStore16(blockE + 6, v1, be);
                 sdiPathStore16(blockO + 0, v1, be); sdiPathStore16(blockO + 2, v0, be);
                 sdiPathStore16(blockO + 4, v1, be); sdiPathStore16(blockO + 6, v0, be);
-                uint8_t *buf = static_cast<uint8_t *>(img.data(0));
-                size_t stride = img.lineStride(0);
+                uint8_t *buf = img.data()[0].data();
+                size_t stride = ml.lineStride(0, iw);
                 size_t lineBytes = static_cast<size_t>(iw / 2) * 8;
                 for(int y = 0; y < ih; y++)
                         sdiPathRepeatBlock(buf + y * stride, lineBytes,
@@ -900,8 +911,8 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
                 uint8_t v1 = static_cast<uint8_t>(w1 >> 2);
                 uint8_t blockE[4] = { v1, v0, v1, v0 };
                 uint8_t blockO[4] = { v0, v1, v0, v1 };
-                uint8_t *buf = static_cast<uint8_t *>(img.data(0));
-                size_t stride = img.lineStride(0);
+                uint8_t *buf = img.data()[0].data();
+                size_t stride = ml.lineStride(0, iw);
                 size_t lineBytes = static_cast<size_t>(iw / 2) * 4;
                 for(int y = 0; y < ih; y++)
                         sdiPathRepeatBlock(buf + y * stride, lineBytes,
@@ -916,8 +927,8 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
                 sdiPathStore16(blockE + 4, w1, false); sdiPathStore16(blockE + 6, w0, false);
                 sdiPathStore16(blockO + 0, w0, false); sdiPathStore16(blockO + 2, w1, false);
                 sdiPathStore16(blockO + 4, w0, false); sdiPathStore16(blockO + 6, w1, false);
-                uint8_t *buf = static_cast<uint8_t *>(img.data(0));
-                size_t stride = img.lineStride(0);
+                uint8_t *buf = img.data()[0].data();
+                size_t stride = ml.lineStride(0, iw);
                 size_t lineBytes = static_cast<size_t>(iw / 2) * 8;
                 for(int y = 0; y < ih; y++)
                         sdiPathRepeatBlock(buf + y * stride, lineBytes,
@@ -940,8 +951,8 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
                                | ((w1 & 0x3FFu) << 20);
                 uint32_t blockE[2] = { wordA, wordB };
                 uint32_t blockO[2] = { wordB, wordA };
-                uint8_t *buf = static_cast<uint8_t *>(img.data(0));
-                size_t stride = img.lineStride(0);
+                uint8_t *buf = img.data()[0].data();
+                size_t stride = ml.lineStride(0, iw);
                 for(int y = 0; y < ih; y++)
                         sdiPathRepeatBlock(buf + y * stride, stride,
                                            (y & 1) ? blockO : blockE, 8);
@@ -954,8 +965,8 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
                 uint8_t v1 = static_cast<uint8_t>(w1 >> 2);
                 int chromaW = iw / 2;
                 for(int p = 0; p < 3; p++) {
-                        uint8_t *buf = static_cast<uint8_t *>(img.data(p));
-                        size_t stride = img.lineStride(p);
+                        uint8_t *buf = img.data()[p].data();
+                        size_t stride = ml.lineStride(p, iw);
                         int pw = (p == 0) ? iw : chromaW;
                         uint8_t evenVal = (p == 0) ? v1 : v0;
                         uint8_t oddVal  = (p == 0) ? v0 : v1;
@@ -984,8 +995,8 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
                 sdiPathStore16(pat1, v1, be);
                 int chromaW = iw / 2;
                 for(int p = 0; p < 3; p++) {
-                        uint8_t *buf = static_cast<uint8_t *>(img.data(p));
-                        size_t stride = img.lineStride(p);
+                        uint8_t *buf = img.data()[p].data();
+                        size_t stride = ml.lineStride(p, iw);
                         int pw = (p == 0) ? iw : chromaW;
                         const uint8_t *evenPat = (p == 0) ? pat1 : pat0;
                         const uint8_t *oddPat  = (p == 0) ? pat0 : pat1;
@@ -1003,15 +1014,15 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
                 uint8_t v1 = static_cast<uint8_t>(w1 >> 2);
                 int chromaW = iw / 2;
                 {
-                        uint8_t *buf = static_cast<uint8_t *>(img.data(0));
-                        size_t stride = img.lineStride(0);
+                        uint8_t *buf = img.data()[0].data();
+                        size_t stride = ml.lineStride(0, iw);
                         for(int y = 0; y < ih; y++)
                                 std::memset(buf + y * stride,
                                             (y & 1) ? v0 : v1, iw);
                 }
                 {
-                        uint8_t *buf = static_cast<uint8_t *>(img.data(1));
-                        size_t stride = img.lineStride(1);
+                        uint8_t *buf = img.data()[1].data();
+                        size_t stride = ml.lineStride(1, iw);
                         uint8_t blockE[2] = { v0, v0 };
                         uint8_t blockO[2] = { v1, v1 };
                         for(int y = 0; y < ih; y++)
@@ -1034,8 +1045,8 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
                 uint16_t v1 = static_cast<uint16_t>(w1 << shift);
                 int chromaW = iw / 2;
                 {
-                        uint8_t *buf = static_cast<uint8_t *>(img.data(0));
-                        size_t stride = img.lineStride(0);
+                        uint8_t *buf = img.data()[0].data();
+                        size_t stride = ml.lineStride(0, iw);
                         uint8_t pat0[2], pat1[2];
                         sdiPathStore16(pat0, v0, be);
                         sdiPathStore16(pat1, v1, be);
@@ -1045,8 +1056,8 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
                                                    (y & 1) ? pat0 : pat1, 2);
                 }
                 {
-                        uint8_t *buf = static_cast<uint8_t *>(img.data(1));
-                        size_t stride = img.lineStride(1);
+                        uint8_t *buf = img.data()[1].data();
+                        size_t stride = ml.lineStride(1, iw);
                         uint8_t blockE[4], blockO[4];
                         sdiPathStore16(blockE + 0, v0, be);
                         sdiPathStore16(blockE + 2, v0, be);
@@ -1061,7 +1072,7 @@ void VideoTestPattern::renderSDIPathological(Image &img, bool isEQ) const {
         }
 
         // ---- Fallback: approximate visual via PaintEngine ----
-        if(!img.pixelFormat().hasPaintEngine()) return;
+        if(!img.desc().pixelFormat().hasPaintEngine()) return;
         PaintEngine pe = img.createPaintEngine();
         Color evenColor, oddColor;
         if(isEQ) {

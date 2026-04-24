@@ -10,6 +10,7 @@
 #include <doctest/doctest.h>
 #include <promeki/imagefileio.h>
 #include <promeki/imagefile.h>
+#include <promeki/uncompressedvideopayload.h>
 
 using namespace promeki;
 
@@ -24,26 +25,27 @@ TEST_CASE("ImageFileIO TGA: handler is registered") {
 
 TEST_CASE("ImageFileIO TGA: RGBA8 round-trip") {
         const char *fn = "/tmp/promeki_tga_rgba8.tga";
-        Image src(64, 48, PixelFormat(PixelFormat::RGBA8_sRGB));
+        auto src = UncompressedVideoPayload::allocate(
+                ImageDesc(64, 48, PixelFormat(PixelFormat::RGBA8_sRGB)));
         REQUIRE(src.isValid());
-        uint8_t *data = static_cast<uint8_t *>(src.data());
-        size_t bytes = src.pixelFormat().memLayout().planeSize(0, 64, 48);
+        uint8_t *data = src.modify()->data()[0].data();
+        size_t bytes = src->plane(0).size();
         for(size_t i = 0; i < bytes; ++i) data[i] = static_cast<uint8_t>((i * 11) & 0xFF);
 
         ImageFile sf(ImageFile::TGA);
         sf.setFilename(fn);
-        sf.setImage(src);
+        sf.setVideoPayload(src);
         CHECK(sf.save() == Error::Ok);
 
         ImageFile lf(ImageFile::TGA);
         lf.setFilename(fn);
         CHECK(lf.load() == Error::Ok);
-        Image dst = lf.image();
+        auto dst = lf.uncompressedVideoPayload();
         REQUIRE(dst.isValid());
-        CHECK(dst.width() == 64);
-        CHECK(dst.height() == 48);
-        CHECK(dst.pixelFormat().id() == PixelFormat::RGBA8_sRGB);
-        CHECK(std::memcmp(src.data(), dst.data(), bytes) == 0);
+        CHECK(dst->desc().width() == 64);
+        CHECK(dst->desc().height() == 48);
+        CHECK(dst->desc().pixelFormat().id() == PixelFormat::RGBA8_sRGB);
+        CHECK(std::memcmp(src->plane(0).data(), dst->plane(0).data(), bytes) == 0);
 
         std::remove(fn);
 }

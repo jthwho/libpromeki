@@ -73,10 +73,15 @@ uint64_t readBE(const uint8_t *src, uint8_t lenSize) {
 // ---------------------------------------------------------------------------
 
 Error H264Bitstream::forEachAnnexBNal(const BufferView &in, const Visitor &visit) {
-        if(!in.isValid() || in.size() == 0) return Error::Ok;
+        // H.264 bitstreams are a single contiguous byte run — we operate
+        // on the first slice of @p in.  Callers typically pass a
+        // single-slice BufferView built from their compressed payload.
+        if(in.isEmpty()) return Error::Ok;
+        auto slice = in[0];
+        if(!slice.isValid() || slice.size() == 0) return Error::Ok;
 
-        const uint8_t *data = in.data();
-        size_t         len  = in.size();
+        const uint8_t *data = slice.data();
+        size_t         len  = slice.size();
 
         size_t codeStart = 0;
         size_t codeLen   = 0;
@@ -101,9 +106,9 @@ Error H264Bitstream::forEachAnnexBNal(const BufferView &in, const Visitor &visit
                 size_t nalEnd = haveNext ? nextCodeStart : len;
                 if(nalEnd > nalStart) {
                         NalUnit nal;
-                        size_t offsetIntoBuffer = in.offset() + nalStart;
+                        size_t offsetIntoBuffer = slice.offset() + nalStart;
                         size_t nalLen           = nalEnd - nalStart;
-                        nal.view    = BufferView(in.buffer(), offsetIntoBuffer, nalLen);
+                        nal.view    = BufferView(slice.buffer(), offsetIntoBuffer, nalLen);
                         nal.header0 = data[nalStart];
                         nal.header1 = (nalLen > 1) ? data[nalStart + 1] : 0;
                         Error e = visit(nal);
@@ -119,10 +124,12 @@ Error H264Bitstream::forEachAnnexBNal(const BufferView &in, const Visitor &visit
 Error H264Bitstream::forEachAvccNal(const BufferView &in, uint8_t lenSize,
                                     const Visitor &visit) {
         if(!isValidLenSize(lenSize)) return Error::InvalidArgument;
-        if(!in.isValid() || in.size() == 0) return Error::Ok;
+        if(in.isEmpty()) return Error::Ok;
+        auto slice = in[0];
+        if(!slice.isValid() || slice.size() == 0) return Error::Ok;
 
-        const uint8_t *data = in.data();
-        size_t         len  = in.size();
+        const uint8_t *data = slice.data();
+        size_t         len  = slice.size();
         size_t         pos  = 0;
 
         while(pos < len) {
@@ -132,7 +139,7 @@ Error H264Bitstream::forEachAvccNal(const BufferView &in, uint8_t lenSize,
                 if(nalLen > len - pos) return Error::CorruptData;
                 if(nalLen > 0) {
                         NalUnit nal;
-                        nal.view = BufferView(in.buffer(), in.offset() + pos,
+                        nal.view = BufferView(slice.buffer(), slice.offset() + pos,
                                               static_cast<size_t>(nalLen));
                         nal.header0 = data[pos];
                         nal.header1 = (nalLen > 1) ? data[pos + 1] : 0;
@@ -281,12 +288,13 @@ uint8_t h264NalType(uint8_t header0) {
         return header0 & 0x1f;
 }
 
-/** @brief Deep-copies a BufferView's bytes into a freshly allocated Buffer. */
+/** @brief Deep-copies a BufferView's single-slice bytes into a freshly allocated Buffer. */
 Buffer::Ptr copyView(const BufferView &v) {
-        Buffer::Ptr buf = Buffer::Ptr::create(v.size());
+        auto slice = v[0];
+        Buffer::Ptr buf = Buffer::Ptr::create(slice.size());
         if(!buf) return buf;
-        if(v.size() > 0) std::memcpy(buf->data(), v.data(), v.size());
-        buf->setSize(v.size());
+        if(slice.size() > 0) std::memcpy(buf->data(), slice.data(), slice.size());
+        buf->setSize(slice.size());
         return buf;
 }
 
@@ -305,13 +313,14 @@ Error AvcDecoderConfig::fromAnnexB(const BufferView &au, AvcDecoderConfig &out) 
         Error iterErr = H264Bitstream::forEachAnnexBNal(au,
                 [&](const H264Bitstream::NalUnit &nal) {
                         uint8_t t = h264NalType(nal.header0);
+                        auto nalSlice = nal.view[0];
                         if(t == H264NalTypeSps) {
                                 // Profile / compat / level are at SPS payload
                                 // bytes 1-3 (byte 0 is the NAL header).
-                                if(!haveProfile && nal.view.size() >= 4) {
-                                        out.avcProfileIndication = nal.view.data()[1];
-                                        out.profileCompatibility = nal.view.data()[2];
-                                        out.avcLevelIndication   = nal.view.data()[3];
+                                if(!haveProfile && nalSlice.size() >= 4) {
+                                        out.avcProfileIndication = nalSlice.data()[1];
+                                        out.profileCompatibility = nalSlice.data()[2];
+                                        out.avcLevelIndication   = nalSlice.data()[3];
                                         haveProfile = true;
                                 }
                                 Buffer::Ptr copy = copyView(nal.view);
@@ -333,8 +342,9 @@ Error AvcDecoderConfig::parse(const BufferView &payload, AvcDecoderConfig &out) 
         out.sps.clear();
         out.pps.clear();
 
-        const uint8_t *data = payload.data();
-        size_t         len  = payload.size();
+        auto slice = payload[0];
+        const uint8_t *data = slice.data();
+        size_t         len  = slice.size();
         size_t         pos  = 0;
         auto need = [&](size_t n) -> bool { return pos + n <= len; };
 
@@ -352,8 +362,8 @@ Error AvcDecoderConfig::parse(const BufferView &payload, AvcDecoderConfig &out) 
                 uint16_t spsLen = static_cast<uint16_t>((data[pos] << 8) | data[pos + 1]);
                 pos += 2;
                 if(!need(spsLen)) return Error::CorruptData;
-                Buffer::Ptr buf = copyView(BufferView(payload.buffer(),
-                                                      payload.offset() + pos, spsLen));
+                Buffer::Ptr buf = copyView(BufferView(slice.buffer(),
+                                                      slice.offset() + pos, spsLen));
                 if(!buf) return Error::NoMem;
                 out.sps.pushToBack(buf);
                 pos += spsLen;
@@ -366,8 +376,8 @@ Error AvcDecoderConfig::parse(const BufferView &payload, AvcDecoderConfig &out) 
                 uint16_t ppsLen = static_cast<uint16_t>((data[pos] << 8) | data[pos + 1]);
                 pos += 2;
                 if(!need(ppsLen)) return Error::CorruptData;
-                Buffer::Ptr buf = copyView(BufferView(payload.buffer(),
-                                                      payload.offset() + pos, ppsLen));
+                Buffer::Ptr buf = copyView(BufferView(slice.buffer(),
+                                                      slice.offset() + pos, ppsLen));
                 if(!buf) return Error::NoMem;
                 out.pps.pushToBack(buf);
                 pos += ppsLen;

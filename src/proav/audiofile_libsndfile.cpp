@@ -377,7 +377,7 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                         return Error::Ok;
                 }
 
-                Error write(const Audio &audio) override {
+                Error write(const UncompressedAudioPayload &payload) override {
                         if(_operation != AudioFile::Writer) {
                                 promekiWarn("write: Attempt to write but in operation %d", _operation);
                                 return Error::Invalid;
@@ -386,36 +386,41 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                                 promekiWarn("write: Attempt to write but not open");
                                 return Error::NotOpen;
                         }
-                        if(!audio.desc().formatEquals(_desc)) {
+                        if(!payload.desc().formatEquals(_desc)) {
                                 promekiWarn("write: Attempt to write with '%s', but set to '%s'",
-                                        audio.desc().toString().cstr(),
+                                        payload.desc().toString().cstr(),
                                         _desc.toString().cstr());
                                 return Error::Invalid;
                         }
+                        if(payload.planeCount() == 0) return Error::Invalid;
+                        auto view = payload.plane(0);
+                        const void *data = view.data();
+                        const sf_count_t samples = static_cast<sf_count_t>(payload.sampleCount());
                         sf_count_t ct = 0;
                         switch(_desc.format().id()) {
                                 case AudioFormat::PCMI_Float32LE:
                                 case AudioFormat::PCMI_Float32BE:
-                                        ct = sf_writef_float(_file, audio.data<float>(), audio.samples());
+                                        ct = sf_writef_float(_file, static_cast<const float *>(data), samples);
                                         break;
 
                                 case AudioFormat::PCMI_S16LE:
                                 case AudioFormat::PCMI_S16BE:
-                                        ct = sf_writef_short(_file, audio.data<int16_t>(), audio.samples());
+                                        ct = sf_writef_short(_file, static_cast<const int16_t *>(data), samples);
                                         break;
 
                                 case AudioFormat::PCMI_S32LE:
                                 case AudioFormat::PCMI_S32BE:
-                                        ct = sf_writef_int(_file, audio.data<int32_t>(), audio.samples());
+                                        ct = sf_writef_int(_file, static_cast<const int32_t *>(data), samples);
                                         break;
 
                                 default:
                                         return Error::NotSupported;
                         }
+                        (void)ct;
                         return Error::Ok;
                 }
 
-                Error read(Audio &out, size_t samples) override {
+                Error read(UncompressedAudioPayload::Ptr &out, size_t samples) override {
                         if(_operation != AudioFile::Reader) {
                                 promekiWarn("read: Attempt to read but in operation %d", _operation);
                                 return Error::Invalid;
@@ -424,31 +429,41 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                                 promekiWarn("read: Attempt to read but not open");
                                 return Error::NotOpen;
                         }
-                        Audio audio(_desc, samples);
+                        const size_t bytes = _desc.bufferSize(samples);
+                        auto buf = Buffer::Ptr::create(bytes);
+                        buf.modify()->setSize(bytes);
+                        void *raw = buf.modify()->data();
 
                         sf_count_t ct = 0;
                         switch(_desc.format().id()) {
                                 case AudioFormat::PCMI_Float32LE:
                                 case AudioFormat::PCMI_Float32BE:
-                                        ct = sf_readf_float(_file, audio.data<float>(), audio.samples());
+                                        ct = sf_readf_float(_file, static_cast<float *>(raw),
+                                                            static_cast<sf_count_t>(samples));
                                         break;
 
                                 case AudioFormat::PCMI_S16LE:
                                 case AudioFormat::PCMI_S16BE:
-                                        ct = sf_readf_short(_file, audio.data<int16_t>(), audio.samples());
+                                        ct = sf_readf_short(_file, static_cast<int16_t *>(raw),
+                                                            static_cast<sf_count_t>(samples));
                                         break;
 
                                 case AudioFormat::PCMI_S32LE:
                                 case AudioFormat::PCMI_S32BE:
-                                        ct = sf_readf_int(_file, audio.data<int32_t>(), audio.samples());
+                                        ct = sf_readf_int(_file, static_cast<int32_t *>(raw),
+                                                          static_cast<sf_count_t>(samples));
                                         break;
 
                                 default:
                                         return Error::NotSupported;
                         }
                         if(ct == 0) return Error::EndOfFile;
-                        audio.resize(ct);
-                        out = audio;
+                        const size_t actualBytes = _desc.bufferSize(static_cast<size_t>(ct));
+                        buf.modify()->setSize(actualBytes);
+                        BufferView planes;
+                        planes.pushToBack(buf, 0, actualBytes);
+                        out = UncompressedAudioPayload::Ptr::create(_desc,
+                                static_cast<size_t>(ct), planes);
                         return Error::Ok;
                 }
 

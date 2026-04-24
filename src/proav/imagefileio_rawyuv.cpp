@@ -10,6 +10,8 @@
 #include <promeki/imagefile.h>
 #include <promeki/fileinfo.h>
 #include <promeki/file.h>
+#include <promeki/uncompressedvideopayload.h>
+#include <promeki/videopayload.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -131,14 +133,16 @@ Error ImageFileIO_RawYUV::load(ImageFile &imageFile, const MediaConfig &config) 
                 return Error::PixelFormatNotSupported;
         }
 
-        // Determine dimensions: use caller-provided image if valid, else guess
+        // Determine dimensions: use caller-provided payload if valid, else guess
         size_t width = 0;
         size_t height = 0;
-        const Image hint = imageFile.image();
-        if(hint.isValid()) {
-                width  = hint.width();
-                height = hint.height();
-                if(pdId == PixelFormat::Invalid) pdId = hint.pixelFormat().id();
+        VideoPayload::PtrList hintVps = imageFile.frame().videoPayloads();
+        const VideoPayload *hint = (!hintVps.isEmpty() && hintVps[0].isValid()) ?
+                hintVps[0].ptr() : nullptr;
+        if(hint != nullptr && hint->desc().isValid()) {
+                width  = hint->desc().size().width();
+                height = hint->desc().size().height();
+                if(pdId == PixelFormat::Invalid) pdId = hint->desc().pixelFormat().id();
         } else {
                 FileInfo fi(filename);
                 size_t fileSize = fi.size();
@@ -173,11 +177,12 @@ Error ImageFileIO_RawYUV::load(ImageFile &imageFile, const MediaConfig &config) 
                              PixelFormat(pdId).name().cstr(), fileSize);
         }
 
-        // Allocate the image
+        // Allocate the payload
         PixelFormat pd(pdId);
-        Image image(width, height, pdId);
-        if(!image.isValid()) {
-                promekiErr("RawYUV load '%s': failed to allocate %zux%zu image",
+        ImageDesc idesc(width, height, pd);
+        auto payload = UncompressedVideoPayload::allocate(idesc);
+        if(!payload.isValid()) {
+                promekiErr("RawYUV load '%s': failed to allocate %zux%zu payload",
                            filename.cstr(), width, height);
                 return Error::NoMem;
         }
@@ -190,9 +195,11 @@ Error ImageFileIO_RawYUV::load(ImageFile &imageFile, const MediaConfig &config) 
                 return err;
         }
 
+        UncompressedVideoPayload *raw = payload.modify();
         for(size_t p = 0; p < pd.planeCount(); ++p) {
-                size_t planeBytes = pd.memLayout().planeSize(p, width, height);
-                int64_t bytesRead = file.read(image.data(p), planeBytes);
+                auto view = raw->data()[p];
+                size_t planeBytes = view.size();
+                int64_t bytesRead = file.read(view.data(), planeBytes);
                 if(bytesRead < 0 || static_cast<size_t>(bytesRead) != planeBytes) {
                         promekiErr("RawYUV load '%s': short read on plane %zu (expected %zu, got %lld)",
                                    filename.cstr(), p, planeBytes, (long long)bytesRead);
@@ -202,17 +209,21 @@ Error ImageFileIO_RawYUV::load(ImageFile &imageFile, const MediaConfig &config) 
         }
 
         file.close();
-        imageFile.setImage(image);
+        Frame frame;
+        frame.addPayload(payload);
+        imageFile.setFrame(frame);
         return Error::Ok;
 }
 
 Error ImageFileIO_RawYUV::save(ImageFile &imageFile, const MediaConfig &config) const {
         (void)config;
-        const Image image = imageFile.image();
         const String &filename = imageFile.filename();
 
-        if(!image.isValid()) {
-                promekiErr("RawYUV save '%s': image is not valid", filename.cstr());
+        VideoPayload::PtrList vps = imageFile.frame().videoPayloads();
+        const UncompressedVideoPayload *uvp = nullptr;
+        if(!vps.isEmpty() && vps[0].isValid()) uvp = vps[0]->as<UncompressedVideoPayload>();
+        if(uvp == nullptr || !uvp->desc().isValid() || uvp->planeCount() == 0) {
+                promekiErr("RawYUV save '%s': no uncompressed video payload", filename.cstr());
                 return Error::Invalid;
         }
 
@@ -223,10 +234,10 @@ Error ImageFileIO_RawYUV::save(ImageFile &imageFile, const MediaConfig &config) 
                 return err;
         }
 
-        const PixelFormat &pd = image.pixelFormat();
-        for(size_t p = 0; p < pd.planeCount(); ++p) {
-                size_t planeBytes = pd.memLayout().planeSize(p, image.width(), image.height());
-                int64_t written = file.write(image.data(p), planeBytes);
+        for(size_t p = 0; p < uvp->planeCount(); ++p) {
+                auto view = uvp->plane(p);
+                size_t planeBytes = view.size();
+                int64_t written = file.write(view.data(), planeBytes);
                 if(written < 0 || static_cast<size_t>(written) != planeBytes) {
                         promekiErr("RawYUV save '%s': short write on plane %zu (expected %zu, wrote %lld)",
                                    filename.cstr(), p, planeBytes, (long long)written);

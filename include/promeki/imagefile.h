@@ -11,6 +11,8 @@
 #include <promeki/string.h>
 #include <promeki/error.h>
 #include <promeki/frame.h>
+#include <promeki/uncompressedvideopayload.h>
+#include <promeki/compressedvideopayload.h>
 #include <promeki/mediaconfig.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -91,26 +93,32 @@ class ImageFile {
                 }
 
                 /**
-                 * @brief Returns the first image from the frame, or an invalid Image if empty.
-                 *
-                 * Convenience accessor for formats that carry a single image.
-                 * @return The first image by value.
+                 * @brief Returns the first video payload from the frame.
+                 * @return The first video payload, or a null Ptr if empty.
                  */
-                Image image() const {
-                        if(_frame.imageList().isEmpty()) return Image();
-                        return *_frame.imageList()[0];
+                VideoPayload::Ptr videoPayload() const {
+                        auto vps = _frame.videoPayloads();
+                        if(vps.isEmpty()) return VideoPayload::Ptr();
+                        return vps[0];
                 }
 
                 /**
-                 * @brief Sets the frame to contain a single image.
-                 *
-                 * Convenience setter for formats that carry a single image.
-                 * Clears any existing images and audio in the frame.
-                 * @param val The Image to set.
+                 * @brief Returns the first video payload as an uncompressed
+                 *        payload, or null if the stored payload is compressed.
                  */
-                void setImage(const Image &val) {
-                        _frame.imageList().clear();
-                        _frame.imageList().pushToBack(Image::Ptr::create(val));
+                UncompressedVideoPayload::Ptr uncompressedVideoPayload() const {
+                        VideoPayload::Ptr vp = videoPayload();
+                        if(!vp.isValid()) return UncompressedVideoPayload::Ptr();
+                        return sharedPointerCast<UncompressedVideoPayload>(vp);
+                }
+
+                /**
+                 * @brief Replaces the frame's payload list with a single
+                 *        video payload.
+                 */
+                void setVideoPayload(const VideoPayload::Ptr &val) {
+                        _frame.payloadList().clear();
+                        if(val.isValid()) _frame.addPayload(val);
                         return;
                 }
 

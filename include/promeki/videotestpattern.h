@@ -13,12 +13,14 @@
 #include <promeki/result.h>
 #include <promeki/color.h>
 #include <promeki/imagedesc.h>
-#include <promeki/image.h>
+#include <promeki/uncompressedvideopayload.h>
 #include <promeki/timecode.h>
 #include <promeki/enums.h>
 #include <promeki/fastfont.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class UncompressedVideoPayload;
 
 /**
  * @brief Standalone video test pattern generator.
@@ -211,51 +213,32 @@ class VideoTestPattern {
                  * @param desc             Image descriptor specifying size and pixel format.
                  * @param motionOffset     Horizontal motion offset in pixels.
                  * @param currentTimecode  Per-frame timecode (used by @c AvSync only).
-                 * @return A new Image containing the rendered pattern.
+                 * @return A new payload containing the rendered pattern.
                  */
-                Image create(const ImageDesc &desc,
-                             double motionOffset = 0.0,
-                             const Timecode &currentTimecode = Timecode()) const;
+                SharedPtr<UncompressedVideoPayload, true, UncompressedVideoPayload>
+                createPayload(const ImageDesc &desc,
+                              double motionOffset = 0.0,
+                              const Timecode &currentTimecode = Timecode()) const;
 
                 /**
-                 * @brief Draws a text overlay onto an existing image.
+                 * @brief Draws a text overlay onto an existing payload.
                  *
                  * Splits @p burnText on @c '\n' and renders each line
                  * stacked under the burn font, centered horizontally
                  * within the bounding box and positioned according to
                  * @ref burnPosition.  When @ref burnEnabled is @c false
                  * or @p burnText is empty this is a no-op and returns
-                 * @c Error::Ok.  The image must already be detached
-                 * (call @c Image::ensureExclusive before invoking).
-                 *
-                 * @param img      Target image.  Must be valid and in a
-                 *                 paintable pixel format
-                 *                 (@c PixelFormat::hasPaintEngine() ==
-                 *                 true).  Mutated in place.
-                 * @param burnText Text to draw.  May contain @c '\n'
-                 *                 for multi-line.
-                 * @retval Error::Ok               On success or no-op.
-                 * @retval Error::InvalidArgument  @p img is invalid.
-                 * @retval Error::NotSupported     The image's pixel format
-                 *                                 has no paint engine.
-                 * @retval Error::FontUnavailable  The burn font could
-                 *                                 not be loaded.
+                 * @c Error::Ok.
                  */
-                Error applyBurn(Image &img, const String &burnText) const;
+                Error applyBurn(UncompressedVideoPayload &inout,
+                                const String &burnText) const;
 
                 /**
-                 * @brief Renders the pattern into an existing Image.
-                 * @param img The target image (must be valid and allocated).
+                 * @brief Renders the pattern into an existing payload.
+                 * @param img          The target payload (must be valid and allocated).
                  * @param motionOffset Horizontal motion offset in pixels.
-                 *
-                 * @par Example
-                 * @code
-                 * // Re-render into a pre-allocated image each frame
-                 * gen.render(frame, motionOffset);
-                 * motionOffset += 2.0;
-                 * @endcode
                  */
-                void render(Image &img, double motionOffset = 0.0) const;
+                void render(UncompressedVideoPayload &img, double motionOffset = 0.0) const;
 
         private:
                 // Background pattern state
@@ -295,7 +278,8 @@ class VideoTestPattern {
                 // free, so a simpler dump-on-change policy is the right
                 // tradeoff over per-key invalidation.
                 static constexpr int CacheSlotCount = 2;
-                mutable Image   _cachedImages[CacheSlotCount];
+                mutable SharedPtr<UncompressedVideoPayload, true, UncompressedVideoPayload>
+                                _cachedPayloads[CacheSlotCount];
                 mutable size_t  _cacheW = 0;
                 mutable size_t  _cacheH = 0;
                 mutable int     _cachePixelFormatId = 0;
@@ -309,47 +293,45 @@ class VideoTestPattern {
                 bool isStaticPattern() const;
 
                 /**
-                 * @brief Looks up (or lazily builds) a cached image slot.
+                 * @brief Looks up (or lazily builds) a cached payload slot.
                  *
                  * If the requested @p desc differs from the desc the
                  * cache was last populated against, every slot is
                  * dropped first.  The slot at @p slotIndex is then
-                 * returned, allocating and handing a fresh @c Image to
-                 * @p build for population if it isn't already valid.
+                 * returned, allocating and handing a fresh
+                 * @ref UncompressedVideoPayload::Ptr to @p build for
+                 * population if it isn't already valid.  The builder
+                 * may reassign the Ptr (e.g. replace the payload with
+                 * the result of a CSC).
                  *
-                 * @tparam Builder A callable @c void(Image &).
+                 * @tparam Builder A callable @c void(UncompressedVideoPayload::Ptr &).
                  * @param slotIndex Slot index, @c 0 .. @c CacheSlotCount-1.
-                 *                  Slot meanings are local to each
-                 *                  caller — patterns are mutually
-                 *                  exclusive so reusing slot 0 across
-                 *                  pattern branches is fine.
-                 * @return A reference into the cache.  Valid until the
-                 *         next cache mutation; callers should
-                 *         shallow-copy the result before returning it.
+                 * @return The cached payload.
                  */
                 template <typename Builder>
-                const Image &cachedImage(int slotIndex,
-                                         const ImageDesc &desc,
-                                         Builder &&build) const {
+                SharedPtr<UncompressedVideoPayload, true, UncompressedVideoPayload>
+                cachedPayload(int slotIndex,
+                              const ImageDesc &desc,
+                              Builder &&build) const {
                         if(_cacheW != desc.width()
                            || _cacheH != desc.height()
                            || _cachePixelFormatId != static_cast<int>(desc.pixelFormat().id())) {
-                                invalidateImageCache();
+                                invalidatePayloadCache();
                                 _cacheW = desc.width();
                                 _cacheH = desc.height();
                                 _cachePixelFormatId =
                                         static_cast<int>(desc.pixelFormat().id());
                         }
-                        Image &slot = _cachedImages[slotIndex];
+                        auto &slot = _cachedPayloads[slotIndex];
                         if(!slot.isValid()) {
-                                slot = Image(desc);
+                                slot = UncompressedVideoPayload::allocate(desc);
                                 if(slot.isValid()) build(slot);
                         }
                         return slot;
                 }
 
-                /** @brief Drops every slot from the image cache. */
-                void invalidateImageCache() const;
+                /** @brief Drops every slot from the payload cache. */
+                void invalidatePayloadCache() const;
 
                 void applyBurnFontConfig() const;
                 void computeBurnPosition(int frameW, int frameH,
@@ -365,26 +347,26 @@ class VideoTestPattern {
                  * which is only registered for RGB-style formats.  When the
                  * caller asks for a non-paintable target (e.g. any YUV/YCbCr
                  * layout), we render into RGB16 at the same size and convert
-                 * to the target format via @c Image::convert() (which pulls
-                 * a cached @c CSCPipeline from the global registry).
+                 * to the target format via @c UncompressedVideoPayload::convert()
+                 * (which pulls a cached @c CSCPipeline from the global registry).
                  */
                 ImageDesc rgbScratchDesc(const ImageDesc &target) const;
 
-                void renderColorBars(Image &img, double offset, bool full) const;
-                void renderRamp(Image &img, double offset) const;
-                void renderGrid(Image &img, double offset) const;
-                void renderCrosshatch(Image &img, double offset) const;
-                void renderCheckerboard(Image &img, double offset) const;
-                void renderZonePlate(Image &img, double phase) const;
-                void renderNoise(Image &img) const;
-                void renderSolid(Image &img, const Color &color) const;
-                void renderColorChecker(Image &img) const;
-                void renderSMPTE219(Image &img) const;
-                void renderMultiBurst(Image &img) const;
-                void renderLimitRange(Image &img) const;
-                void renderCircularZone(Image &img, double phase) const;
-                void renderAlignment(Image &img) const;
-                void renderSDIPathological(Image &img, bool isEQ) const;
+                void renderColorBars(UncompressedVideoPayload &img, double offset, bool full) const;
+                void renderRamp(UncompressedVideoPayload &img, double offset) const;
+                void renderGrid(UncompressedVideoPayload &img, double offset) const;
+                void renderCrosshatch(UncompressedVideoPayload &img, double offset) const;
+                void renderCheckerboard(UncompressedVideoPayload &img, double offset) const;
+                void renderZonePlate(UncompressedVideoPayload &img, double phase) const;
+                void renderNoise(UncompressedVideoPayload &img) const;
+                void renderSolid(UncompressedVideoPayload &img, const Color &color) const;
+                void renderColorChecker(UncompressedVideoPayload &img) const;
+                void renderSMPTE219(UncompressedVideoPayload &img) const;
+                void renderMultiBurst(UncompressedVideoPayload &img) const;
+                void renderLimitRange(UncompressedVideoPayload &img) const;
+                void renderCircularZone(UncompressedVideoPayload &img, double phase) const;
+                void renderAlignment(UncompressedVideoPayload &img) const;
+                void renderSDIPathological(UncompressedVideoPayload &img, bool isEQ) const;
 };
 
 PROMEKI_NAMESPACE_END

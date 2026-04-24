@@ -10,7 +10,6 @@
 #include <promeki/namespace.h>
 #include <promeki/config.h>
 #include <promeki/audiodesc.h>
-#include <promeki/audio.h>
 #include <promeki/buffer.h>
 #include <promeki/error.h>
 #include <promeki/result.h>
@@ -294,15 +293,6 @@ class AudioBuffer {
                 void clear();
 
                 /**
-                 * @brief Pushes @p audio's samples into the buffer.
-                 * @return Error::Ok on success, NoSpace if the buffer would
-                 *         overflow, NotSupported if @p audio has a
-                 *         mismatched sample rate or channel count, or
-                 *         InvalidArgument if the format is invalid.
-                 */
-                Error push(const Audio &audio);
-
-                /**
                  * @brief Pushes interleaved raw samples into the buffer.
                  *
                  * @param data       Pointer to @p samples x bytes-per-sample bytes.
@@ -311,21 +301,6 @@ class AudioBuffer {
                  * @return Error::Ok, NoSpace, NotSupported, or InvalidArgument.
                  */
                 Error push(const void *data, size_t samples, const AudioDesc &srcFormat);
-
-                /**
-                 * @brief Pops up to @p samples samples into @p audio.
-                 *
-                 * Non-blocking: returns immediately with whatever is
-                 * available (which may be 0).  The destination @p audio
-                 * must have a descriptor matching @c format() and
-                 * @c maxSamples() >= @p samples.  On return, @p audio's
-                 * sample count is set to the actual number popped.
-                 *
-                 * @return {count, Error::Ok} on success, or
-                 *         {0, Error::FormatMismatch} if @p audio's
-                 *         descriptor does not match the storage format.
-                 */
-                PopResult pop(Audio &audio, size_t samples);
 
                 /**
                  * @brief Pops up to @p samples samples into a raw buffer.
@@ -339,22 +314,6 @@ class AudioBuffer {
                  * @return {count, Error::Ok}.
                  */
                 PopResult pop(void *dst, size_t samples);
-
-                /**
-                 * @brief Blocks until @p samples samples are available, then pops into @p audio.
-                 *
-                 * Waits for the ring to accumulate at least @p samples
-                 * before popping.
-                 *
-                 * @param audio     Destination Audio (must match format()).
-                 * @param samples   Number of samples to wait for and pop.
-                 * @param timeoutMs Maximum wait in milliseconds (0 = indefinite).
-                 * @return {samples, Error::Ok} on success,
-                 *         {0, Error::Timeout} if the wait expired, or
-                 *         {0, Error::FormatMismatch} if @p audio's
-                 *         descriptor does not match the storage format.
-                 */
-                PopResult popWait(Audio &audio, size_t samples, unsigned int timeoutMs = 0);
 
                 /**
                  * @brief Blocks until @p samples samples are available, then pops into a raw buffer.

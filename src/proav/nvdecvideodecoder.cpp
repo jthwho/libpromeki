@@ -31,12 +31,12 @@
  */
 
 #include <promeki/nvdecvideodecoder.h>
+#include <promeki/compressedvideopayload.h>
+#include <promeki/uncompressedvideopayload.h>
 
 #if PROMEKI_ENABLE_NVDEC
 
-#include <promeki/mediapacket.h>
 #include <promeki/mediaconfig.h>
-#include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/pixelformat.h>
 #include <promeki/buffer.h>
@@ -414,19 +414,21 @@ class NvdecVideoDecoder::Impl {
                                 MediaConfig::VideoRange).value());
                 }
 
-                Error submitPacket(const VideoPacket &pkt, Codec codec) {
+                Error submitPacket(const CompressedVideoPayload &payload, Codec codec) {
                         if(Error err = ensureSession(codec); err.isError()) return err;
-                        if(pkt.size() == 0 || !pkt.buffer()) return Error::Ok;
+                        if(payload.planeCount() == 0) return Error::Ok;
+                        auto view = payload.plane(0);
+                        if(view.size() == 0) return Error::Ok;
 
-                        // Stash the packet's per-image metadata (things
+                        // Stash the payload's per-image metadata (things
                         // like Timecode / MediaTimeStamp / user keys
                         // that the encoder copied onto the packet) so
                         // handleDisplay can re-attach them to the
-                        // emitted Image.  The queue is strict FIFO —
+                        // emitted payload.  The queue is strict FIFO —
                         // safe because display-order equals decode-order
                         // for pure I/P streams and we don't enable
                         // B-frames in the encoder.
-                        _packetMetaQueue.push_back(pkt.metadata());
+                        _packetMetaQueue.push_back(payload.metadata());
 
                         // Push the encoded bytes into the parser.  The
                         // parser synchronously invokes our Sequence /
@@ -439,22 +441,22 @@ class NvdecVideoDecoder::Impl {
                         // command.
                         CudaCtxGuard guard(_cudaCtx);
                         CUVIDSOURCEDATAPACKET srcPkt{};
-                        srcPkt.payload     = static_cast<const unsigned char *>(pkt.view().data());
-                        srcPkt.payload_size = static_cast<unsigned long>(pkt.size());
-                        if(pkt.pts().isValid()) {
+                        srcPkt.payload     = static_cast<const unsigned char *>(view.data());
+                        srcPkt.payload_size = static_cast<unsigned long>(view.size());
+                        if(payload.pts().isValid()) {
                                 srcPkt.timestamp = static_cast<CUvideotimestamp>(
-                                        pkt.pts().timeStamp().value().time_since_epoch().count());
+                                        payload.pts().timeStamp().value().time_since_epoch().count());
                                 srcPkt.flags    |= CUVID_PKT_TIMESTAMP;
                         }
                         CUresult r = gCuvid.ParseVideoData(_parser, &srcPkt);
                         return mapCu(r, "cuvidParseVideoData");
                 }
 
-                Image::Ptr receiveFrame() {
-                        if(_outQueue.empty()) return Image::Ptr();
-                        Image::Ptr img = std::move(_outQueue.front());
+                UncompressedVideoPayload::Ptr receiveFrame() {
+                        if(_outQueue.empty()) return UncompressedVideoPayload::Ptr();
+                        UncompressedVideoPayload::Ptr p = std::move(_outQueue.front());
                         _outQueue.pop_front();
-                        return img;
+                        return p;
                 }
 
                 Error flush() {
@@ -490,13 +492,13 @@ class NvdecVideoDecoder::Impl {
                 unsigned int     _displayW    = 0;
                 unsigned int     _displayH    = 0;
 
-                std::deque<Image::Ptr> _outQueue;
+                std::deque<UncompressedVideoPayload::Ptr> _outQueue;
 
-                // Per-packet metadata FIFO.  submitPacket pushes one
-                // entry per incoming VideoPacket; handleDisplay pops
-                // one entry per emitted Image.  Together they carry
-                // encoder-side per-image state (Timecode, MediaTimeStamp)
-                // across the codec boundary.
+                // Per-packet metadata FIFO.  submitPayload pushes one
+                // entry per incoming CompressedVideoPayload; handleDisplay
+                // pops one entry per emitted UncompressedVideoPayload.
+                // Together they carry encoder-side per-image state
+                // (Timecode, MediaTimeStamp) across the codec boundary.
                 std::deque<Metadata> _packetMetaQueue;
 
                 // Bitstream-parsed sequence metadata.  Filled in by
@@ -782,18 +784,20 @@ class NvdecVideoDecoder::Impl {
                                 return 0;
                         }
 
-                        // Build a system-memory NV12 Image sized to
+                        // Build a system-memory NV12 payload sized to
                         // the display rectangle, then cudaMemcpy2D
                         // luma + chroma planes down from device.
                         ImageDesc desc(Size2Du32(_displayW, _displayH),
                                        outputPixelFormat());
-                        Image img(desc);
-                        bool copyOk = true;
-                        if(img.planes().size() >= 2) {
-                                void *yDst  = img.data(0);
-                                void *uvDst = img.data(1);
-                                const size_t yStride  = img.lineStride(0);
-                                const size_t uvStride = img.lineStride(1);
+                        auto img = UncompressedVideoPayload::allocate(desc);
+                        const PixelMemLayout &outMl = desc.pixelFormat().memLayout();
+                        bool copyOk = img.isValid() && img->planeCount() >= 2;
+                        if(copyOk) {
+                                UncompressedVideoPayload *imgRaw = img.modify();
+                                void *yDst  = imgRaw->data()[0].data();
+                                void *uvDst = imgRaw->data()[1].data();
+                                const size_t yStride  = outMl.lineStride(0, _displayW);
+                                const size_t uvStride = outMl.lineStride(1, _displayW);
                                 // cuvidMapVideoFrame64 returns a
                                 // device pointer whose Y plane
                                 // occupies `pitch * ulTargetHeight`
@@ -847,7 +851,7 @@ class NvdecVideoDecoder::Impl {
                         // otherwise so the Image still looks reasonable
                         // downstream.
                         if(!_packetMetaQueue.empty()) {
-                                img.metadata() = std::move(_packetMetaQueue.front());
+                                img.modify()->desc().metadata() = std::move(_packetMetaQueue.front());
                                 _packetMetaQueue.pop_front();
                         }
 
@@ -861,7 +865,7 @@ class NvdecVideoDecoder::Impl {
                         if(!_pendingSeiMeta.empty()) {
                                 Metadata sei = std::move(_pendingSeiMeta.front());
                                 _pendingSeiMeta.pop_front();
-                                img.metadata().merge(sei);
+                                img.modify()->desc().metadata().merge(sei);
                         }
 
                         // Stamp the bitstream-parsed color description
@@ -893,23 +897,23 @@ class NvdecVideoDecoder::Impl {
                                 // to-base slicing through template
                                 // arguments has produced default-valued
                                 // Enum entries in practice.
-                                img.metadata().set(Metadata::VideoColorPrimaries,
+                                img.modify()->desc().metadata().set(Metadata::VideoColorPrimaries,
                                                    Enum(ColorPrimaries::Type, v));
                         }
                         v = resolve(_overrideTransfer.value(), _bitstreamTransfer.value());
                         if(!isSentinel(v)) {
-                                img.metadata().set(Metadata::VideoTransferCharacteristics,
+                                img.modify()->desc().metadata().set(Metadata::VideoTransferCharacteristics,
                                                    Enum(TransferCharacteristics::Type, v));
                         }
                         v = resolve(_overrideMatrix.value(), _bitstreamMatrix.value());
                         if(!isSentinel(v)) {
-                                img.metadata().set(Metadata::VideoMatrixCoefficients,
+                                img.modify()->desc().metadata().set(Metadata::VideoMatrixCoefficients,
                                                    Enum(MatrixCoefficients::Type, v));
                         }
                         // VideoRange uses 0=Unknown (not 255), so pass-through.
                         v = resolve(_overrideRange.value(), _bitstreamRange.value());
                         if(!isSentinel(v)) {
-                                img.metadata().set(Metadata::VideoRange,
+                                img.modify()->desc().metadata().set(Metadata::VideoRange,
                                                    Enum(VideoRange::Type, v));
                         }
 
@@ -934,10 +938,10 @@ class NvdecVideoDecoder::Impl {
                                         ? VideoScanMode::InterlacedEvenFirst
                                         : VideoScanMode::InterlacedOddFirst;
                         }
-                        img.metadata().set(Metadata::VideoScanMode,
+                        img.modify()->desc().metadata().set(Metadata::VideoScanMode,
                                            Enum(VideoScanMode::Type, scan.value()));
 
-                        _outQueue.push_back(Image::Ptr::create(std::move(img)));
+                        _outQueue.push_back(std::move(img));
                         return 1;
                 }
 };
@@ -959,14 +963,14 @@ void NvdecVideoDecoder::configure(const MediaConfig &config) {
         _impl->configure(config);
 }
 
-Error NvdecVideoDecoder::submitPacket(const VideoPacket::Ptr &packet) {
+Error NvdecVideoDecoder::submitPayload(const CompressedVideoPayload::Ptr &payload) {
         clearError();
-        if(!packet.isValid()) {
+        if(!payload.isValid()) {
                 _lastError        = Error::Invalid;
-                _lastErrorMessage = "NVDEC: null packet Ptr";
+                _lastErrorMessage = "NVDEC: null payload Ptr";
                 return _lastError;
         }
-        Error err = _impl->submitPacket(*packet, _codec);
+        Error err = _impl->submitPacket(*payload, _codec);
         if(err.isError()) {
                 _lastError        = err;
                 _lastErrorMessage = String("NVDEC submitPacket failed");
@@ -974,7 +978,7 @@ Error NvdecVideoDecoder::submitPacket(const VideoPacket::Ptr &packet) {
         return err;
 }
 
-Image::Ptr NvdecVideoDecoder::receiveFrame() {
+UncompressedVideoPayload::Ptr NvdecVideoDecoder::receiveVideoPayload() {
         return _impl->receiveFrame();
 }
 

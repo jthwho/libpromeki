@@ -10,9 +10,10 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/frame.h>
-#include <promeki/audio.h>
 #include <promeki/audiodesc.h>
 #include <promeki/audioresampler.h>
+#include <promeki/videopayload.h>
+#include <promeki/uncompressedaudiopayload.h>
 #include <promeki/framecount.h>
 #include <promeki/framenumber.h>
 #include <promeki/framerate.h>
@@ -363,11 +364,11 @@ class FrameSync {
                 // Pull-path helpers (all assume _mutex is NOT held).
                 void selectVideo(int64_t sourceTimeNs,
                                  int64_t nextSourceTimeNs,
-                                 Image::Ptr &outImage,
+                                 VideoPayload::Ptr &outVideo,
                                  int64_t &outRepeated,
                                  int64_t &outDropped);
-                Audio::Ptr produceAudio(int64_t targetSamples);
-                void       updateSourceAudioRate(const Audio &audio,
+                UncompressedAudioPayload::Ptr produceAudio(int64_t targetSamples);
+                void       updateSourceAudioRate(const UncompressedAudioPayload &audio,
                                                  int64_t audioTsNs);
                 void       updateSourceVideoRate(int64_t videoTsNs);
 
@@ -404,10 +405,10 @@ class FrameSync {
                 int64_t            _sourceVideoOriginNs = 0;
                 int64_t            _sourceAudioOriginNs = 0;
 
-                // Held "current" video frame (used for repeats when no
-                // new input qualifies for this pull).  Carries the
-                // source image with its original metadata.
-                Image::Ptr         _heldVideo;
+                // Held "current" video payload (used for repeats when
+                // no new input qualifies for this pull).  Carries the
+                // source payload with its original metadata.
+                VideoPayload::Ptr  _heldVideo;
                 int64_t            _heldVideoSourceTsNs = 0;
                 bool               _hasHeldVideo = false;
 
@@ -425,7 +426,7 @@ class FrameSync {
 
                 // Audio resampler pipeline.
                 AudioResampler::UPtr _resampler;
-                List<Audio::Ptr>   _audioInput;        // pending input audio, FIFO
+                List<UncompressedAudioPayload::Ptr> _audioInput; // pending input audio, FIFO
                 int64_t            _audioSamplesConsumed = 0;   // of current front audio
 
                 // Rate tracking.

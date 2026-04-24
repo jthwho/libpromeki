@@ -21,7 +21,9 @@
 #include <cstring>
 #include <promeki/pixelformat.h>
 #include <promeki/paintengine.h>
-#include <promeki/image.h>
+#include <promeki/uncompressedvideopayload.h>
+#include <promeki/imagedesc.h>
+#include <promeki/buffer.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -72,7 +74,10 @@ class PaintEngine_Interleaved : public PaintEngine::Impl {
                 static constexpr int B = Map[2];
                 static constexpr int A = Map[3];
 
-                Image           _image;
+                // Hold a Buffer::Ptr to the single interleaved plane
+                // so the payload's backing memory survives the life of
+                // the engine, even if the original payload is dropped.
+                Buffer::Ptr     _plane0;
                 Size2Du32       _size;
                 uint8_t         *_buf;
                 size_t          _stride;
@@ -81,11 +86,12 @@ class PaintEngine_Interleaved : public PaintEngine::Impl {
                 float           _compOffset[CompCount] = {};
                 float           _compScale[CompCount] = {};
 
-                PaintEngine_Interleaved(const Image &img)
-                        : _image(img), _size(img.size()),
-                          _buf(static_cast<uint8_t *>(img.plane(0)->data())),
-                          _stride(img.lineStride(0)),
-                          _pixDesc(img.pixelFormat()) {
+                PaintEngine_Interleaved(const UncompressedVideoPayload &payload)
+                        : _plane0(payload.plane(0).buffer()),
+                          _size(payload.desc().size()),
+                          _buf(const_cast<uint8_t *>(payload.plane(0).data())),
+                          _stride(payload.desc().pixelFormat().lineStride(0, payload.desc())),
+                          _pixDesc(payload.desc().pixelFormat()) {
                         for(int i = 0; i < CompCount; i++) {
                                 const auto &cs = _pixDesc.compSemantic(i);
                                 if(cs.rangeMin != 0.0f || (cs.rangeMax != 0.0f && cs.rangeMax != MaxCompValue)) {
@@ -432,11 +438,14 @@ class PaintEngine_Interleaved : public PaintEngine::Impl {
                         return count;
                 }
 
-                bool blit(const Point2Di32 &dpt, const Image &src,
+                bool blit(const Point2Di32 &dpt, const UncompressedVideoPayload &src,
                           const Point2Di32 &spt, const Size2Du32 &ssz) const override {
-                        if(src.pixelFormat() != _pixDesc) return false;
-                        const uint8_t *inbuf = static_cast<const uint8_t *>(src.plane(0)->data());
-                        size_t srcStride = src.lineStride(0);
+                        if(src.desc().pixelFormat() != _pixDesc) return false;
+                        if(src.planeCount() == 0) return false;
+                        const uint8_t *inbuf = static_cast<const uint8_t *>(src.plane(0).data());
+                        size_t srcStride = src.desc().pixelFormat().lineStride(0, src.desc());
+                        const unsigned int srcWpx = src.desc().size().width();
+                        const unsigned int srcHpx = src.desc().size().height();
 
                         int destX = dpt.x();
                         int destY = dpt.y();
@@ -448,14 +457,14 @@ class PaintEngine_Interleaved : public PaintEngine::Impl {
                                 srcWidth = ssz.width();
                                 srcHeight = ssz.height();
                         } else {
-                                srcWidth = src.width() - srcX;
-                                srcHeight = src.height() - srcY;
+                                srcWidth = srcWpx - srcX;
+                                srcHeight = srcHpx - srcY;
                         }
 
                         if(srcX < 0) { srcWidth += srcX; destX -= srcX; srcX = 0; }
                         if(srcY < 0) { srcHeight += srcY; destY -= srcY; srcY = 0; }
-                        if(srcX + srcWidth > (int)src.width()) srcWidth = src.width() - srcX;
-                        if(srcY + srcHeight > (int)src.height()) srcHeight = src.height() - srcY;
+                        if(srcX + srcWidth > (int)srcWpx) srcWidth = srcWpx - srcX;
+                        if(srcY + srcHeight > (int)srcHpx) srcHeight = srcHpx - srcY;
 
                         if(destX < 0) { srcWidth += destX; srcX -= destX; destX = 0; }
                         if(destY < 0) { srcHeight += destY; srcY -= destY; destY = 0; }
@@ -519,117 +528,117 @@ template class PaintEngine_Interleaved<uint16_t, 1, 16, MONO>;
 // --- Factory functions ---
 
 // RGBA/RGB 8-bit
-PaintEngine createPaintEngine_RGBA8(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint8_t, 4, 8, RGBA>(img);
+PaintEngine createPaintEngine_RGBA8(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint8_t, 4, 8, RGBA>(payload);
 }
-PaintEngine createPaintEngine_RGB8(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint8_t, 3, 8, RGB>(img);
+PaintEngine createPaintEngine_RGB8(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint8_t, 3, 8, RGB>(payload);
 }
 
 // BGRA/BGR 8-bit
-PaintEngine createPaintEngine_BGRA8(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint8_t, 4, 8, BGRA>(img);
+PaintEngine createPaintEngine_BGRA8(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint8_t, 4, 8, BGRA>(payload);
 }
-PaintEngine createPaintEngine_BGR8(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint8_t, 3, 8, BGR>(img);
+PaintEngine createPaintEngine_BGR8(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint8_t, 3, 8, BGR>(payload);
 }
 
 // ARGB/ABGR 8-bit
-PaintEngine createPaintEngine_ARGB8(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint8_t, 4, 8, ARGB>(img);
+PaintEngine createPaintEngine_ARGB8(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint8_t, 4, 8, ARGB>(payload);
 }
-PaintEngine createPaintEngine_ABGR8(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint8_t, 4, 8, ABGR>(img);
+PaintEngine createPaintEngine_ABGR8(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint8_t, 4, 8, ABGR>(payload);
 }
 
 // RGBA/RGB 10/12/16-bit LE
-PaintEngine createPaintEngine_RGBA10_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 4, 10, RGBA>(img);
+PaintEngine createPaintEngine_RGBA10_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 4, 10, RGBA>(payload);
 }
-PaintEngine createPaintEngine_RGB10_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 3, 10, RGB>(img);
+PaintEngine createPaintEngine_RGB10_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 3, 10, RGB>(payload);
 }
-PaintEngine createPaintEngine_RGBA12_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 4, 12, RGBA>(img);
+PaintEngine createPaintEngine_RGBA12_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 4, 12, RGBA>(payload);
 }
-PaintEngine createPaintEngine_RGB12_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 3, 12, RGB>(img);
+PaintEngine createPaintEngine_RGB12_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 3, 12, RGB>(payload);
 }
-PaintEngine createPaintEngine_RGBA16_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 4, 16, RGBA>(img);
+PaintEngine createPaintEngine_RGBA16_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 4, 16, RGBA>(payload);
 }
-PaintEngine createPaintEngine_RGB16_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 3, 16, RGB>(img);
+PaintEngine createPaintEngine_RGB16_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 3, 16, RGB>(payload);
 }
 
 // BGRA/BGR 10/12/16-bit LE
-PaintEngine createPaintEngine_BGRA10_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 4, 10, BGRA>(img);
+PaintEngine createPaintEngine_BGRA10_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 4, 10, BGRA>(payload);
 }
-PaintEngine createPaintEngine_BGR10_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 3, 10, BGR>(img);
+PaintEngine createPaintEngine_BGR10_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 3, 10, BGR>(payload);
 }
-PaintEngine createPaintEngine_BGRA12_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 4, 12, BGRA>(img);
+PaintEngine createPaintEngine_BGRA12_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 4, 12, BGRA>(payload);
 }
-PaintEngine createPaintEngine_BGR12_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 3, 12, BGR>(img);
+PaintEngine createPaintEngine_BGR12_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 3, 12, BGR>(payload);
 }
-PaintEngine createPaintEngine_BGRA16_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 4, 16, BGRA>(img);
+PaintEngine createPaintEngine_BGRA16_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 4, 16, BGRA>(payload);
 }
-PaintEngine createPaintEngine_BGR16_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 3, 16, BGR>(img);
+PaintEngine createPaintEngine_BGR16_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 3, 16, BGR>(payload);
 }
 
 // ARGB 10/12/16-bit LE
-PaintEngine createPaintEngine_ARGB10_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 4, 10, ARGB>(img);
+PaintEngine createPaintEngine_ARGB10_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 4, 10, ARGB>(payload);
 }
-PaintEngine createPaintEngine_ARGB12_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 4, 12, ARGB>(img);
+PaintEngine createPaintEngine_ARGB12_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 4, 12, ARGB>(payload);
 }
-PaintEngine createPaintEngine_ARGB16_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 4, 16, ARGB>(img);
+PaintEngine createPaintEngine_ARGB16_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 4, 16, ARGB>(payload);
 }
 
 // ABGR 10/12/16-bit LE
-PaintEngine createPaintEngine_ABGR10_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 4, 10, ABGR>(img);
+PaintEngine createPaintEngine_ABGR10_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 4, 10, ABGR>(payload);
 }
-PaintEngine createPaintEngine_ABGR12_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 4, 12, ABGR>(img);
+PaintEngine createPaintEngine_ABGR12_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 4, 12, ABGR>(payload);
 }
-PaintEngine createPaintEngine_ABGR16_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 4, 16, ABGR>(img);
+PaintEngine createPaintEngine_ABGR16_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 4, 16, ABGR>(payload);
 }
 
 // YCbCr 4:4:4 LE (same memory layout as RGB, range mapping via CompSemantic)
-PaintEngine createPaintEngine_YUV8_444(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint8_t, 3, 8, RGB>(img);
+PaintEngine createPaintEngine_YUV8_444(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint8_t, 3, 8, RGB>(payload);
 }
-PaintEngine createPaintEngine_YUV10_444_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 3, 10, RGB>(img);
+PaintEngine createPaintEngine_YUV10_444_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 3, 10, RGB>(payload);
 }
-PaintEngine createPaintEngine_YUV12_444_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 3, 12, RGB>(img);
+PaintEngine createPaintEngine_YUV12_444_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 3, 12, RGB>(payload);
 }
-PaintEngine createPaintEngine_YUV16_444_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 3, 16, RGB>(img);
+PaintEngine createPaintEngine_YUV16_444_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 3, 16, RGB>(payload);
 }
 
 // Monochrome LE
-PaintEngine createPaintEngine_Mono8(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint8_t, 1, 8, MONO>(img);
+PaintEngine createPaintEngine_Mono8(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint8_t, 1, 8, MONO>(payload);
 }
-PaintEngine createPaintEngine_Mono10_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 1, 10, MONO>(img);
+PaintEngine createPaintEngine_Mono10_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 1, 10, MONO>(payload);
 }
-PaintEngine createPaintEngine_Mono12_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 1, 12, MONO>(img);
+PaintEngine createPaintEngine_Mono12_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 1, 12, MONO>(payload);
 }
-PaintEngine createPaintEngine_Mono16_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_Interleaved<uint16_t, 1, 16, MONO>(img);
+PaintEngine createPaintEngine_Mono16_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_Interleaved<uint16_t, 1, 16, MONO>(payload);
 }
 
 PROMEKI_NAMESPACE_END

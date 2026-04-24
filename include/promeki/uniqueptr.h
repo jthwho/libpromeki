@@ -250,11 +250,11 @@ void swap(UniquePtr<T> &a, UniquePtr<T> &b) noexcept {
  *
  * @par Example
  * @code
- * UniquePtr<MediaPacket> mp = ...;
- * if(auto vp = uniquePointerCast<VideoPacket>(std::move(mp))) {
- *         // vp owns the packet; mp is now null
+ * UniquePtr<MediaPayload> mp = ...;
+ * if(auto vp = uniquePointerCast<CompressedVideoPayload>(std::move(mp))) {
+ *         // vp owns the payload; mp is now null
  * } else {
- *         // cast failed; mp still owns the original packet
+ *         // cast failed; mp still owns the original payload
  * }
  * @endcode
  */

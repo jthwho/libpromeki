@@ -6,12 +6,12 @@
  */
 
 #include <promeki/nvencvideoencoder.h>
+#include <promeki/compressedvideopayload.h>
+#include <promeki/uncompressedvideopayload.h>
 
 #if PROMEKI_ENABLE_NVENC
 
-#include <promeki/mediapacket.h>
 #include <promeki/mediaconfig.h>
-#include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/pixelformat.h>
 #include <promeki/buffer.h>
@@ -442,19 +442,20 @@ class NvencVideoEncoder::Impl {
                         _needReconfigure = _sessionOpen;
                 }
 
-                Error submitFrame(const Image &frame, const MediaTimeStamp &pts,
+                Error submitFrame(const UncompressedVideoPayload &frame, const MediaTimeStamp &pts,
                                   bool forceKey) {
-                        if(!frame.isValid() || frame.planes().isEmpty()) {
+                        if(!frame.isValid() || frame.planeCount() == 0) {
                                 return setError(Error::Invalid, "invalid frame");
                         }
-                        const FormatEntry *fmt = lookupFormat(frame.pixelFormat().id());
+                        const ImageDesc &idesc = frame.desc();
+                        const FormatEntry *fmt = lookupFormat(idesc.pixelFormat().id());
                         if(!fmt) {
                                 return setError(Error::PixelFormatNotSupported,
                                         String::sprintf("NvencVideoEncoder: unsupported input format %s",
-                                                frame.pixelFormat().name().cstr()));
+                                                idesc.pixelFormat().name().cstr()));
                         }
-                        if(Error err = ensureSession(frame.width(), frame.height(), fmt,
-                                                     frame.desc().videoScanMode());
+                        if(Error err = ensureSession(idesc.size().width(), idesc.size().height(), fmt,
+                                                     idesc.videoScanMode());
                            err.isError()) {
                                 return err;
                         }
@@ -466,7 +467,7 @@ class NvencVideoEncoder::Impl {
                                 _freeSlots.push_back(slot);
                                 return err;
                         }
-                        slot->imageMeta = frame.metadata();
+                        slot->imageMeta = idesc.metadata();
 
                         NV_ENC_PIC_PARAMS pic{};
                         pic.version        = NV_ENC_PIC_PARAMS_VER;
@@ -487,9 +488,9 @@ class NvencVideoEncoder::Impl {
 
                         slot->hasMd  = false;
                         slot->hasCll = false;
-                        MasteringDisplay md = frame.metadata().getAs<MasteringDisplay>(
+                        MasteringDisplay md = idesc.metadata().getAs<MasteringDisplay>(
                                 Metadata::MasteringDisplay, _masteringDisplay);
-                        ContentLightLevel cll = frame.metadata().getAs<ContentLightLevel>(
+                        ContentLightLevel cll = idesc.metadata().getAs<ContentLightLevel>(
                                 Metadata::ContentLightLevel, _contentLightLevel);
 
                         // Per-frame Picture Timing SEI plumbing.  Unlike
@@ -519,8 +520,8 @@ class NvencVideoEncoder::Impl {
                                  (_timecodeSEI || _effectiveScanMode.isInterlaced()));
                         if(frameNeedsTiming) {
                                 VideoScanMode frameScan = _effectiveScanMode;
-                                if(frame.metadata().contains(Metadata::VideoScanMode)) {
-                                        VideoScanMode m(frame.metadata().getAs<Enum>(
+                                if(idesc.metadata().contains(Metadata::VideoScanMode)) {
+                                        VideoScanMode m(idesc.metadata().getAs<Enum>(
                                                 Metadata::VideoScanMode).value());
                                         if(m.value() != VideoScanMode::Unknown.value()) {
                                                 frameScan = m;
@@ -528,7 +529,7 @@ class NvencVideoEncoder::Impl {
                                 }
                                 Timecode tc;
                                 if(_timecodeSEI) {
-                                        tc = frame.metadata().getAs<Timecode>(Metadata::Timecode);
+                                        tc = idesc.metadata().getAs<Timecode>(Metadata::Timecode);
                                 }
                                 NV_ENC_TIME_CODE nvTc{};
                                 if(tc.isValid()) {
@@ -588,7 +589,7 @@ class NvencVideoEncoder::Impl {
                         return Error::Ok;
                 }
 
-                VideoPacket::Ptr receivePacket() {
+                CompressedVideoPayload::Ptr receivePacket() {
                         if(!_pendingPackets.empty()) {
                                 auto pkt = _pendingPackets.front();
                                 _pendingPackets.pop_front();
@@ -605,13 +606,13 @@ class NvencVideoEncoder::Impl {
 
                         if(_eosPending && _inFlight.empty()) {
                                 _eosPending = false;
-                                auto pkt = VideoPacket::Ptr::create();
-                                pkt.modify()->setPixelFormat(outputPixelFormat());
+                                ImageDesc cdesc(Size2Du32(0, 0), outputPixelFormat());
+                                auto pkt = CompressedVideoPayload::Ptr::create(cdesc);
                                 pkt.modify()->markEndOfStream();
                                 return pkt;
                         }
 
-                        return VideoPacket::Ptr();
+                        return CompressedVideoPayload::Ptr();
                 }
 
                 Error flush() {
@@ -1295,7 +1296,7 @@ class NvencVideoEncoder::Impl {
                         return s;
                 }
 
-                Error uploadFrame(const Image &frame, Slot *slot) {
+                Error uploadFrame(const UncompressedVideoPayload &frame, Slot *slot) {
                         NV_ENC_LOCK_INPUT_BUFFER lk{};
                         lk.version = NV_ENC_LOCK_INPUT_BUFFER_VER;
                         lk.inputBuffer = slot->in;
@@ -1310,6 +1311,8 @@ class NvencVideoEncoder::Impl {
                         slot->pitch    = pitch;
 
                         const uint32_t rowBytes = _fmt->bytesPerPixelY * _width;
+                        const PixelMemLayout &ml = frame.desc().pixelFormat().memLayout();
+                        const size_t imgWidth = frame.desc().size().width();
 
                         if(_fmt->planeCount == 3) {
                                 // Accumulate the destination offset from the
@@ -1323,9 +1326,8 @@ class NvencVideoEncoder::Impl {
                                         const uint32_t planeRows = (p == 0)
                                                 ? _height
                                                 : _height / _fmt->uvHeightDivisor;
-                                        const uint8_t *src = static_cast<const uint8_t *>(
-                                                frame.plane(p)->data());
-                                        const size_t srcStride = frame.lineStride(p);
+                                        const uint8_t *src = frame.plane(p).data();
+                                        const size_t srcStride = ml.lineStride(p, imgWidth);
                                         uint8_t *planeDst = dst + planeOffset;
                                         for(uint32_t row = 0; row < planeRows; ++row) {
                                                 std::memcpy(planeDst + row * pitch,
@@ -1335,9 +1337,8 @@ class NvencVideoEncoder::Impl {
                                         planeOffset += size_t(planeRows) * pitch;
                                 }
                         } else {
-                                const uint8_t *yPlane = static_cast<const uint8_t *>(
-                                        frame.plane(0)->data());
-                                const size_t srcYStride = frame.lineStride(0);
+                                const uint8_t *yPlane = frame.plane(0).data();
+                                const size_t srcYStride = ml.lineStride(0, imgWidth);
                                 for(uint32_t row = 0; row < _height; ++row) {
                                         std::memcpy(dst + row * pitch,
                                                     yPlane + row * srcYStride,
@@ -1345,11 +1346,11 @@ class NvencVideoEncoder::Impl {
                                 }
 
                                 const uint32_t uvRows = _height / _fmt->uvHeightDivisor;
-                                const uint8_t *uvPlane = frame.planes().size() > 1
-                                        ? static_cast<const uint8_t *>(frame.plane(1)->data())
+                                const uint8_t *uvPlane = frame.planeCount() > 1
+                                        ? frame.plane(1).data()
                                         : yPlane + srcYStride * _height;
-                                const size_t srcUVStride = frame.planes().size() > 1
-                                        ? frame.lineStride(1)
+                                const size_t srcUVStride = frame.planeCount() > 1
+                                        ? ml.lineStride(1, imgWidth)
                                         : rowBytes;
 
                                 uint8_t *uvDst = dst + _height * pitch;
@@ -1368,7 +1369,7 @@ class NvencVideoEncoder::Impl {
                         return Error::Ok;
                 }
 
-                VideoPacket::Ptr lockAndBuildPacket(Slot *slot) {
+                CompressedVideoPayload::Ptr lockAndBuildPacket(Slot *slot) {
                         NV_ENC_LOCK_BITSTREAM lb{};
                         lb.version = NV_ENC_LOCK_BITSTREAM_VER;
                         lb.outputBitstream = slot->out;
@@ -1376,7 +1377,7 @@ class NvencVideoEncoder::Impl {
                         if(st != NV_ENC_SUCCESS) {
                                 setError(Error::LibraryFailure,
                                         String::sprintf("nvEncLockBitstream failed (%d)", (int)st));
-                                return VideoPacket::Ptr();
+                                return CompressedVideoPayload::Ptr();
                         }
 
                         auto buf = Buffer::Ptr::create(lb.bitstreamSizeInBytes);
@@ -1388,16 +1389,17 @@ class NvencVideoEncoder::Impl {
 
                         gNvenc.nvEncUnlockBitstream(_encoder, slot->out);
 
-                        auto pkt = VideoPacket::Ptr::create(buf, outputPixelFormat());
+                        BufferView view(buf, 0, lb.bitstreamSizeInBytes);
+                        ImageDesc cdesc(Size2Du32(_width, _height), outputPixelFormat());
+                        auto pkt = CompressedVideoPayload::Ptr::create(cdesc, view);
                         pkt.modify()->setPts(slot->pts);
                         pkt.modify()->setDts(slot->pts);
-                        if(isKey) pkt.modify()->addFlag(VideoPacket::Keyframe);
+                        if(isKey) pkt.modify()->addFlag(MediaPayload::Keyframe);
                         // Carry per-image metadata across the codec
                         // boundary: things like Timecode and user keys
                         // that don't live in the H.264 / HEVC bitstream
-                        // ride along on the VideoPacket and get
-                        // re-applied to the decoded Image by the
-                        // matching VideoDecoder.
+                        // ride along on the payload and get re-applied
+                        // by the matching VideoDecoder.
                         if(!slot->imageMeta.isEmpty()) {
                                 pkt.modify()->metadata() = slot->imageMeta;
                                 slot->imageMeta = Metadata();
@@ -1435,7 +1437,7 @@ class NvencVideoEncoder::Impl {
                         _eosPending = false;
                 }
 
-                std::deque<VideoPacket::Ptr> _pendingPackets;
+                std::deque<CompressedVideoPayload::Ptr> _pendingPackets;
 };
 
 // ---------------------------------------------------------------------------
@@ -1459,24 +1461,21 @@ void NvencVideoEncoder::configure(const MediaConfig &config) {
         _impl->configure(config);
 }
 
-Error NvencVideoEncoder::submitFrame(const Image::Ptr &frame, const MediaTimeStamp &pts) {
+Error NvencVideoEncoder::submitPayload(const UncompressedVideoPayload::Ptr &payload) {
         _impl->clearError();
-        if(!frame.isValid()) {
+        if(!payload.isValid()) {
                 _lastError        = Error::Invalid;
-                _lastErrorMessage = "NvencVideoEncoder: null frame Ptr";
+                _lastErrorMessage = "NvencVideoEncoder: null payload Ptr";
                 return _lastError;
         }
-        Error err = _impl->submitFrame(*frame, pts, _requestKey);
+        Error err = _impl->submitFrame(*payload, payload->pts(), _requestKey);
         _requestKey = false;
-        // Propagate the last error onto the public-facing storage so
-        // callers reading lastError() / lastErrorMessage() see the same
-        // code the Impl recorded internally.
         _lastError        = _impl->lastError();
         _lastErrorMessage = _impl->lastErrorMessage();
         return err;
 }
 
-VideoPacket::Ptr NvencVideoEncoder::receivePacket() {
+CompressedVideoPayload::Ptr NvencVideoEncoder::receiveCompressedPayload() {
         return _impl->receivePacket();
 }
 

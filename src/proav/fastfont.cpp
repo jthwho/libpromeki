@@ -133,13 +133,20 @@ const FastFont::CachedGlyph *FastFont::getGlyph(uint32_t codepoint) {
         int bitmapTop = face->glyph->bitmap_top;
         int advanceX = face->glyph->advance.x >> 6;
 
-        // Create a temporary Image for this glyph cell and render into it
-        // using the PaintEngine, which handles all pixel format specifics.
+        // Create a temporary UncompressedVideoPayload for this glyph
+        // cell and render into it using the PaintEngine, which handles
+        // all pixel format specifics.  Use allocate() so multi-plane
+        // formats get one Buffer per plane instead of a single plane-0
+        // allocation that the paint engine would dereference out of
+        // bounds.
         int cellWidth = advanceX;
         if(cellWidth <= 0) cellWidth = 1;
-        Image glyphImg(cellWidth, _lineHeight, _paintEngine.pixelFormat().id());
+        PixelFormat pd = _paintEngine.pixelFormat();
+        ImageDesc cellDesc(Size2Du32(cellWidth, _lineHeight), pd);
+        auto glyphPayload = UncompressedVideoPayload::allocate(cellDesc);
+        if(!glyphPayload.isValid()) return nullptr;
 
-        PaintEngine pe = glyphImg.createPaintEngine();
+        PaintEngine pe = glyphPayload->createPaintEngine();
 
         // Fill entire cell with background color
         pe.fill(_bgPixel);
@@ -169,9 +176,9 @@ const FastFont::CachedGlyph *FastFont::getGlyph(uint32_t codepoint) {
 
         pe.compositePoints(_fgPixel, points, alphas);
 
-        // Cache the rendered glyph image
+        // Cache the rendered glyph payload.
         CachedGlyph glyph;
-        glyph.image = glyphImg;
+        glyph.payload  = glyphPayload;
         glyph.advanceX = advanceX;
 
         _glyphCache.insert(codepoint, glyph);
@@ -204,7 +211,10 @@ bool FastFont::drawText(const String &text, int x, int y) {
                 const CachedGlyph *glyph = getGlyph(c.codepoint());
                 if(glyph == nullptr) continue;
 
-                _paintEngine.blit(Point2Di32(penX, cellTop), glyph->image);
+                if(glyph->payload.isValid()) {
+                        _paintEngine.blit(Point2Di32(penX, cellTop),
+                                          *glyph->payload);
+                }
                 penX += glyph->advanceX;
 
                 if(hasKerning) prevIndex = glyphIndex;

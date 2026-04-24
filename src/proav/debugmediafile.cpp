@@ -13,8 +13,7 @@
 #include <promeki/datastream.h>
 #include <promeki/imagedesc.h>
 #include <promeki/audiodesc.h>
-#include <promeki/videopacket.h>
-#include <promeki/audiopacket.h>
+#include <promeki/mediapayload.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/logger.h>
 #include <promeki/buildinfo.h>
@@ -42,8 +41,6 @@ constexpr size_t kChunkHeaderSize  = 16;
 
 constexpr uint32_t kFourCC_SESN = 0x4E534553u;  ///< 'SESN' little-endian.
 constexpr uint32_t kFourCC_FRAM = 0x4D415246u;  ///< 'FRAM'.
-constexpr uint32_t kFourCC_IMAG = 0x47414D49u;  ///< 'IMAG'.
-constexpr uint32_t kFourCC_AUDO = 0x4F445541u;  ///< 'AUDO'.
 constexpr uint32_t kFourCC_TOC  = 0x20434F54u;  ///< 'TOC '.
 constexpr uint32_t kFourCC_ENDF = 0x46444E45u;  ///< 'ENDF'.
 
@@ -123,293 +120,10 @@ static Buffer makeStagingBuffer(size_t initialCapacity = 4096) {
         return b;
 }
 
-// Serialise the MediaPacket-base fields (timing + duration) into a
+// Serialise the MediaPayload-base fields (timing + duration) into a
 // DataStream block.  The buffer payload travels with the enclosing
-// plane / audio buffer so packet references can share the same
+// plane / audio buffer so payload references can share the same
 // backing Buffer::Ptr on round-trip.
-//
-// MediaTimeStamp is only emitted when valid: its toString/fromString
-// round-trip does not cover the default-constructed invalid sentinel,
-// so we wrap with a presence bit.  Duration is serialised as a raw
-// int64 nanosecond count (no DataStream overload for Duration).
-static void writePacketCommon(DataStream &s, const MediaPacket &pkt) {
-        bool hasPts = pkt.pts().isValid();
-        s << hasPts;
-        if(hasPts) s << pkt.pts();
-        bool hasDts = pkt.dts().isValid();
-        s << hasDts;
-        if(hasDts) s << pkt.dts();
-        s << static_cast<int64_t>(pkt.duration().nanoseconds());
-}
-
-static Error readPacketCommon(DataStream &s, MediaPacket &out) {
-        bool hasPts = false, hasDts = false;
-        MediaTimeStamp pts, dts;
-        int64_t durNs = 0;
-        s >> hasPts;
-        if(hasPts) s >> pts;
-        s >> hasDts;
-        if(hasDts) s >> dts;
-        s >> durNs;
-        if(s.status() != DataStream::Ok) return Error::CorruptData;
-        out.setPts(pts);
-        out.setDts(dts);
-        out.setDuration(Duration::fromNanoseconds(durNs));
-        return Error::Ok;
-}
-
-static void writeVideoPacketMeta(DataStream &s, const VideoPacket &pkt) {
-        s << pkt.pixelFormat();
-        writePacketCommon(s, pkt);
-        s << pkt.flags();
-}
-
-static Error readVideoPacketMeta(DataStream &s, VideoPacket &out) {
-        PixelFormat pd;
-        s >> pd;
-        if(Error e = readPacketCommon(s, out); e.isError()) return e;
-        uint32_t flags = 0;
-        s >> flags;
-        if(s.status() != DataStream::Ok) return Error::CorruptData;
-        out.setPixelFormat(pd);
-        out.setFlags(flags);
-        return Error::Ok;
-}
-
-static void writeAudioPacketMeta(DataStream &s, const AudioPacket &pkt) {
-        // AudioCodec has no DataStream overload; serialise the integer
-        // ID which is stable across runs for well-known codecs.
-        s << static_cast<int32_t>(pkt.audioCodec().id());
-        writePacketCommon(s, pkt);
-}
-
-static Error readAudioPacketMeta(DataStream &s, AudioPacket &out) {
-        int32_t acId = 0;
-        s >> acId;
-        if(Error e = readPacketCommon(s, out); e.isError()) return e;
-        out.setAudioCodec(AudioCodec(static_cast<AudioCodec::ID>(acId)));
-        return Error::Ok;
-}
-
-// ---- IMAG sub-chunk -----------------------------------------
-
-static Error serialiseImage(const Image &img, Buffer &outPayload) {
-        BufferIODevice dev(&outPayload);
-        dev.setAutoGrow(true);
-        if(Error e = dev.open(IODevice::WriteOnly); e.isError()) return e;
-
-        DataStream s = DataStream::createWriter(&dev);
-        s << img.desc();
-
-        bool hasPacket = img.packet().isValid();
-        s << hasPacket;
-        if(hasPacket) writeVideoPacketMeta(s, *img.packet());
-
-        // Plane count + each plane (size, flags, reserved, alignment, raw bytes)
-        const Buffer::PtrList &planes = img.planes();
-        s << static_cast<uint32_t>(planes.size());
-
-        for(const Buffer::Ptr &p : planes) {
-                // Plane size is serialised as uint32 on the wire.  A >=4 GiB
-                // plane would silently truncate the header size field while
-                // still writing the full payload, producing an unrecoverable
-                // file.  Assert rather than silently corrupt.
-                PROMEKI_ASSERT(!p.isValid() || p->size() <= UINT32_MAX);
-                uint32_t planeSize = p.isValid() ? static_cast<uint32_t>(p->size()) : 0u;
-                uint32_t planeFlags = 0;
-                uint32_t reserved   = 0;
-                uint32_t alignment  = 0; // no alignment hint in v1
-                s << planeSize << planeFlags << reserved << alignment;
-                if(planeSize > 0) {
-                        int64_t n = dev.write(p->data(), planeSize);
-                        if(n != static_cast<int64_t>(planeSize)) {
-                                dev.close();
-                                return Error::IOError;
-                        }
-                }
-        }
-        if(s.status() != DataStream::Ok) {
-                dev.close();
-                return Error::IOError;
-        }
-        dev.close();
-        return Error::Ok;
-}
-
-static Error deserialiseImage(DataStream &s, BufferIODevice &dev, Image::Ptr &out) {
-        ImageDesc desc;
-        s >> desc;
-        if(s.status() != DataStream::Ok) return Error::CorruptData;
-        if(!desc.isValid()) return Error::CorruptData;
-
-        bool hasPacket = false;
-        s >> hasPacket;
-        if(s.status() != DataStream::Ok) return Error::CorruptData;
-
-        VideoPacket::Ptr packet;
-        if(hasPacket) {
-                packet = VideoPacket::Ptr::create();
-                Error e = readVideoPacketMeta(s, *packet.modify());
-                if(e.isError()) return e;
-        }
-
-        uint32_t planeCount = 0;
-        s >> planeCount;
-        if(s.status() != DataStream::Ok) return Error::CorruptData;
-
-        // Allocate plane buffers sized to match the serialized sizes —
-        // this handles both uncompressed (planes sized to the ImageDesc)
-        // and compressed formats (single plane sized to the encoded
-        // payload) uniformly.
-        Buffer::PtrList planes;
-        for(uint32_t i = 0; i < planeCount; ++i) {
-                uint32_t planeSize = 0, planeFlags = 0, reserved = 0, alignment = 0;
-                s >> planeSize >> planeFlags >> reserved >> alignment;
-                if(s.status() != DataStream::Ok) return Error::CorruptData;
-                if(planeFlags != 0) {
-                        promekiErr("DebugMediaFile: plane %u has unsupported flags 0x%08x",
-                                   i, planeFlags);
-                        return Error::NotSupported;
-                }
-
-                Buffer::Ptr buf = Buffer::Ptr::create(
-                        planeSize > 0 ? planeSize : size_t(1));
-                if(planeSize > 0) {
-                        int64_t n = dev.read(buf->data(), planeSize);
-                        if(n != static_cast<int64_t>(planeSize)) return Error::CorruptData;
-                        buf->setSize(planeSize);
-                } else {
-                        buf->setSize(0);
-                }
-                planes.pushToBack(buf);
-        }
-
-        // Build the Image: for a single-plane case use fromBuffer (zero-
-        // copy adoption of the plane buffer), for multi-plane allocate
-        // from the desc and copy each plane in.  Multi-plane
-        // uncompressed is the only multi-plane case we hit today and
-        // fromBuffer does not support it.
-        Image::Ptr imgPtr;
-        if(planes.size() == 1) {
-                Image tmp = Image::fromBuffer(planes[0],
-                                              desc.size().width(),
-                                              desc.size().height(),
-                                              desc.pixelFormat(),
-                                              desc.metadata());
-                if(!tmp.isValid()) return Error::CorruptData;
-                imgPtr = Image::Ptr::create(std::move(tmp));
-        } else {
-                Image tmp(desc);
-                if(!tmp.isValid()) return Error::CorruptData;
-                for(size_t i = 0; i < planes.size() && i < tmp.planes().size(); ++i) {
-                        size_t n = std::min(planes[i]->size(), tmp.plane(i)->availSize());
-                        std::memcpy(tmp.plane(i)->data(), planes[i]->data(), n);
-                        tmp.plane(i)->setSize(n);
-                }
-                imgPtr = Image::Ptr::create(std::move(tmp));
-        }
-
-        if(packet.isValid()) {
-                if(imgPtr->planes().size() > 0 && imgPtr->plane(0).isValid()) {
-                        packet.modify()->setBuffer(imgPtr->plane(0));
-                }
-                imgPtr.modify()->setPacket(packet);
-        }
-        out = std::move(imgPtr);
-        return Error::Ok;
-}
-
-// ---- AUDO sub-chunk -----------------------------------------
-
-static Error serialiseAudio(const Audio &aud, Buffer &outPayload) {
-        BufferIODevice dev(&outPayload);
-        dev.setAutoGrow(true);
-        if(Error e = dev.open(IODevice::WriteOnly); e.isError()) return e;
-
-        DataStream s = DataStream::createWriter(&dev);
-        s << aud.desc();
-        s << static_cast<uint64_t>(aud.samples());
-        s << static_cast<uint64_t>(aud.maxSamples());
-
-        bool hasPacket = aud.packet().isValid();
-        s << hasPacket;
-        if(hasPacket) writeAudioPacketMeta(s, *aud.packet());
-
-        const Buffer::Ptr &buf = aud.buffer();
-        PROMEKI_ASSERT(!buf.isValid() || buf->size() <= UINT32_MAX);
-        uint32_t bufSize    = buf.isValid() ? static_cast<uint32_t>(buf->size()) : 0u;
-        uint32_t bufFlags   = 0;
-        uint32_t reserved   = 0;
-        uint32_t alignment  = 0;
-        s << bufSize << bufFlags << reserved << alignment;
-        if(bufSize > 0) {
-                int64_t n = dev.write(buf->data(), bufSize);
-                if(n != static_cast<int64_t>(bufSize)) {
-                        dev.close();
-                        return Error::IOError;
-                }
-        }
-        if(s.status() != DataStream::Ok) {
-                dev.close();
-                return Error::IOError;
-        }
-        dev.close();
-        return Error::Ok;
-}
-
-static Error deserialiseAudio(DataStream &s, BufferIODevice &dev, Audio::Ptr &out) {
-        AudioDesc desc;
-        s >> desc;
-        if(s.status() != DataStream::Ok) return Error::CorruptData;
-        if(!desc.isValid()) return Error::CorruptData;
-
-        uint64_t samples = 0, maxSamples = 0;
-        s >> samples >> maxSamples;
-        if(s.status() != DataStream::Ok) return Error::CorruptData;
-
-        bool hasPacket = false;
-        s >> hasPacket;
-        if(s.status() != DataStream::Ok) return Error::CorruptData;
-
-        AudioPacket::Ptr packet;
-        if(hasPacket) {
-                packet = AudioPacket::Ptr::create();
-                Error e = readAudioPacketMeta(s, *packet.modify());
-                if(e.isError()) return e;
-        }
-
-        uint32_t bufSize = 0, bufFlags = 0, reserved = 0, alignment = 0;
-        s >> bufSize >> bufFlags >> reserved >> alignment;
-        if(s.status() != DataStream::Ok) return Error::CorruptData;
-        if(bufFlags != 0) {
-                promekiErr("DebugMediaFile: audio buffer has unsupported flags 0x%08x", bufFlags);
-                return Error::NotSupported;
-        }
-
-        Buffer::Ptr audioBuf;
-        if(bufSize > 0) {
-                audioBuf = Buffer::Ptr::create(bufSize);
-                int64_t n = dev.read(audioBuf->data(), bufSize);
-                if(n != static_cast<int64_t>(bufSize)) return Error::CorruptData;
-                audioBuf->setSize(bufSize);
-        } else {
-                audioBuf = Buffer::Ptr::create(static_cast<size_t>(maxSamples * desc.bytesPerSampleStride()));
-                audioBuf->setSize(0);
-        }
-
-        Audio aud = Audio::fromBuffer(audioBuf, desc);
-        if(!aud.isValid()) return Error::CorruptData;
-        aud.resize(static_cast<size_t>(samples));
-
-        Audio::Ptr audPtr = Audio::Ptr::create(std::move(aud));
-        if(packet.isValid()) {
-                packet.modify()->setBuffer(audioBuf);
-                audPtr.modify()->setPacket(packet);
-        }
-        out = std::move(audPtr);
-        return Error::Ok;
-}
-
 } // namespace
 
 // ============================================================
@@ -611,77 +325,16 @@ Error DebugMediaFile::writeFrame(const Frame::Ptr &frame) {
         s << static_cast<uint64_t>(_framesWritten.value());
         s << frame->metadata();
         s << frame->configUpdate();
-        s << static_cast<uint32_t>(frame->imageList().size());
-        s << static_cast<uint32_t>(frame->audioList().size());
+
+        // Payload list — each entry round-trips via the MediaPayload
+        // DataStream operators, which dispatch to the concrete leaf
+        // by its subclass FourCC.  Null payloads survive as the
+        // fourcc == 0 sentinel inside the operator.
+        const MediaPayload::PtrList &payloads = frame->payloadList();
+        s << static_cast<uint32_t>(payloads.size());
+        for(const MediaPayload::Ptr &p : payloads) s << p;
 
         if(s.status() != DataStream::Ok) { dev.close(); return Error::IOError; }
-
-        // Helper: write exactly n bytes to the staging device.  A short
-        // write on the in-memory BufferIODevice means the resize /
-        // auto-grow failed, which would silently corrupt the frame
-        // payload if left unchecked.
-        auto writeAll = [&dev](const void *data, size_t n) -> Error {
-                int64_t w = dev.write(data, n);
-                return w == static_cast<int64_t>(n) ? Error::Ok : Error::IOError;
-        };
-
-        // Images — each one a nested IMAG sub-chunk with its own
-        // 16-byte header so a future tool can skip per-image.
-        for(const Image::Ptr &imgPtr : frame->imageList()) {
-                if(!imgPtr.isValid()) {
-                        // Emit an empty IMAG so counts match.
-                        uint8_t hdr[kChunkHeaderSize] = {0};
-                        writeU32LE(hdr + 0, kFourCC_IMAG);
-                        writeU32LE(hdr + 4, 0);
-                        writeU64LE(hdr + 8, 0);
-                        if(Error we = writeAll(hdr, sizeof(hdr)); we.isError()) {
-                                dev.close(); return we;
-                        }
-                        continue;
-                }
-                Buffer imgPayload = makeStagingBuffer(8192);
-                Error e = serialiseImage(*imgPtr, imgPayload);
-                if(e.isError()) { dev.close(); return e; }
-
-                uint8_t hdr[kChunkHeaderSize] = {0};
-                writeU32LE(hdr + 0, kFourCC_IMAG);
-                writeU32LE(hdr + 4, 0);
-                writeU64LE(hdr + 8, imgPayload.size());
-                if(Error we = writeAll(hdr, sizeof(hdr)); we.isError()) {
-                        dev.close(); return we;
-                }
-                if(Error we = writeAll(imgPayload.data(), imgPayload.size()); we.isError()) {
-                        dev.close(); return we;
-                }
-        }
-
-        // Audio tracks.
-        for(const Audio::Ptr &audPtr : frame->audioList()) {
-                if(!audPtr.isValid()) {
-                        uint8_t hdr[kChunkHeaderSize] = {0};
-                        writeU32LE(hdr + 0, kFourCC_AUDO);
-                        writeU32LE(hdr + 4, 0);
-                        writeU64LE(hdr + 8, 0);
-                        if(Error we = writeAll(hdr, sizeof(hdr)); we.isError()) {
-                                dev.close(); return we;
-                        }
-                        continue;
-                }
-                Buffer audPayload = makeStagingBuffer(4096);
-                Error e = serialiseAudio(*audPtr, audPayload);
-                if(e.isError()) { dev.close(); return e; }
-
-                uint8_t hdr[kChunkHeaderSize] = {0};
-                writeU32LE(hdr + 0, kFourCC_AUDO);
-                writeU32LE(hdr + 4, 0);
-                writeU64LE(hdr + 8, audPayload.size());
-                if(Error we = writeAll(hdr, sizeof(hdr)); we.isError()) {
-                        dev.close(); return we;
-                }
-                if(Error we = writeAll(audPayload.data(), audPayload.size()); we.isError()) {
-                        dev.close(); return we;
-                }
-        }
 
         // Trailing magic for cheap resync on corruption.
         uint32_t trailer = kFramTrailerMagic;
@@ -795,8 +448,8 @@ Error DebugMediaFile::readFrame(Frame::Ptr &out) {
         uint64_t frameIdx = 0;
         Metadata md;
         MediaConfig cfg;
-        uint32_t imageCount = 0, audioCount = 0;
-        s >> frameIdx >> md >> cfg >> imageCount >> audioCount;
+        uint32_t payloadCount = 0;
+        s >> frameIdx >> md >> cfg >> payloadCount;
         if(s.status() != DataStream::Ok) return Error::CorruptData;
 
         Frame::Ptr frame = Frame::Ptr::create();
@@ -804,62 +457,11 @@ Error DebugMediaFile::readFrame(Frame::Ptr &out) {
         raw->metadata()     = std::move(md);
         raw->configUpdate() = std::move(cfg);
 
-        for(uint32_t i = 0; i < imageCount; ++i) {
-                // IMAG sub-chunk header.
-                uint8_t hdr[kChunkHeaderSize];
-                int64_t hn = dev.read(hdr, sizeof(hdr));
-                if(hn != static_cast<int64_t>(sizeof(hdr))) return Error::CorruptData;
-                uint32_t fc    = readU32LE(hdr + 0);
-                uint64_t isize = readU64LE(hdr + 8);
-                if(fc != kFourCC_IMAG) return Error::CorruptData;
-
-                if(isize == 0) {
-                        raw->imageList().pushToBack(Image::Ptr());
-                        continue;
-                }
-                // Use a nested BufferIODevice over the same backing buffer —
-                // we just need a start/length window.  Simpler: read the
-                // sub-chunk bytes into their own buffer.
-                Buffer sub(static_cast<size_t>(isize));
-                int64_t sn = dev.read(sub.data(), static_cast<int64_t>(isize));
-                if(sn != static_cast<int64_t>(isize)) return Error::CorruptData;
-                sub.setSize(static_cast<size_t>(isize));
-
-                BufferIODevice subDev(&sub);
-                if(Error oe = subDev.open(IODevice::ReadOnly); oe.isError()) return oe;
-                DataStream ss = DataStream::createReader(&subDev);
-                Image::Ptr imgPtr;
-                Error ie = deserialiseImage(ss, subDev, imgPtr);
-                subDev.close();
-                if(ie.isError()) return ie;
-                raw->imageList().pushToBack(imgPtr);
-        }
-
-        for(uint32_t i = 0; i < audioCount; ++i) {
-                uint8_t hdr[kChunkHeaderSize];
-                int64_t hn = dev.read(hdr, sizeof(hdr));
-                if(hn != static_cast<int64_t>(sizeof(hdr))) return Error::CorruptData;
-                uint32_t fc    = readU32LE(hdr + 0);
-                uint64_t asize = readU64LE(hdr + 8);
-                if(fc != kFourCC_AUDO) return Error::CorruptData;
-
-                if(asize == 0) {
-                        raw->audioList().pushToBack(Audio::Ptr());
-                        continue;
-                }
-                Buffer sub(static_cast<size_t>(asize));
-                int64_t sn = dev.read(sub.data(), static_cast<int64_t>(asize));
-                if(sn != static_cast<int64_t>(asize)) return Error::CorruptData;
-                sub.setSize(static_cast<size_t>(asize));
-
-                BufferIODevice subDev(&sub);
-                if(Error oe = subDev.open(IODevice::ReadOnly); oe.isError()) return oe;
-                DataStream ss = DataStream::createReader(&subDev);
-                Audio::Ptr audPtr;
-                Error ae = deserialiseAudio(ss, subDev, audPtr);
-                subDev.close();
-                if(ae.isError()) return ae;
-                raw->audioList().pushToBack(audPtr);
+        for(uint32_t i = 0; i < payloadCount; ++i) {
+                MediaPayload::Ptr payload;
+                s >> payload;
+                if(s.status() != DataStream::Ok) return Error::CorruptData;
+                raw->addPayload(std::move(payload));
         }
 
         // Trailer magic.

@@ -9,8 +9,9 @@
 #include <cstdint>
 #include <promeki/mediaiotask_audiofile.h>
 #include <promeki/iodevice.h>
-#include <promeki/audio.h>
 #include <promeki/frame.h>
+#include <promeki/audiopayload.h>
+#include <promeki/uncompressedaudiopayload.h>
 #include <promeki/mediadesc.h>
 #include <promeki/metadata.h>
 #include <promeki/timecode.h>
@@ -251,12 +252,12 @@ Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandClose &cmd) {
 
 Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandRead &cmd) {
         stampWorkBegin();
-        Audio audio;
-        Error err = _audioFile.read(audio, _samplesPerFrame);
+        UncompressedAudioPayload::Ptr payload;
+        Error err = _audioFile.read(payload, _samplesPerFrame);
         if(err.isError()) { stampWorkEnd(); return err; }
 
         cmd.frame = Frame::Ptr::create();
-        cmd.frame.modify()->audioList().pushToBack(Audio::Ptr::create(audio));
+        if(payload.isValid()) cmd.frame.modify()->addPayload(payload);
         ++_currentFrame;
 
         // Advance by step.  The read already moved forward by 1 frame,
@@ -274,13 +275,18 @@ Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandRead &cmd) {
 }
 
 Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandWrite &cmd) {
-        if(cmd.frame->audioList().isEmpty()) {
+        auto auds = cmd.frame->audioPayloads();
+        if(auds.isEmpty()) {
                 promekiWarn("MediaIOTask_AudioFile: write with no audio");
                 return Error::InvalidArgument;
         }
         stampWorkBegin();
-        const Audio &audio = *cmd.frame->audioList()[0];
-        Error err = _audioFile.write(audio);
+        const auto *uap = auds[0]->as<UncompressedAudioPayload>();
+        if(uap == nullptr) {
+                stampWorkEnd();
+                return Error::InvalidArgument;
+        }
+        Error err = _audioFile.write(*uap);
         if(err.isError()) { stampWorkEnd(); return err; }
         ++_currentFrame;
         cmd.currentFrame = _currentFrame;

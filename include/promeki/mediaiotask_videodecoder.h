@@ -23,12 +23,12 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @c MediaIOTask_VideoDecoder is the symmetric counterpart of
  * @ref MediaIOTask_VideoEncoder.  It accepts a Frame whose
- * compressed Images in @ref Frame::imageList carry the encoded
- * bitstream via @ref Image::packet, hands each packet to a
- * concrete @ref VideoDecoder via @c submitPacket, and drains
- * @c receiveFrame producing one output Frame per decoded image
- * in @ref Frame::imageList.  Audio on the input Frame is
- * forwarded unchanged so it stays synchronised on the same PTS.
+ * @ref CompressedVideoPayload entries carry the encoded bitstream,
+ * hands each payload to a concrete @ref VideoDecoder via
+ * @c submitPayload, and drains @c receiveVideoPayload producing one
+ * output Frame per decoded @ref UncompressedVideoPayload.  Audio on
+ * the input Frame is forwarded unchanged so it stays synchronised on
+ * the same PTS.
  *
  * The registered backend name is @c "VideoDecoder"; callers select a
  * concrete codec in one of two ways:
@@ -38,8 +38,8 @@ PROMEKI_NAMESPACE_BEGIN
  *     @c open().
  *  -# **Auto-detect** — omit @ref MediaConfig::VideoCodec.  The task
  *     defers decoder creation until the first @c writeFrame() call,
- *     where it inspects the incoming @ref MediaPacket::pixelFormat and
- *     resolves the codec via @ref VideoCodec::fromPixelFormat.
+ *     where it inspects the incoming @ref CompressedVideoPayload pixelFormat
+ *     and resolves the codec via @ref VideoCodec::fromPixelFormat.
  *
  * @par Mode support
  *
@@ -49,7 +49,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
- * | @ref MediaConfig::VideoCodec       | VideoCodec | (auto)  | Codec to use.  When omitted the codec is detected from the first packet's @ref MediaPacket::pixelFormat. |
+ * | @ref MediaConfig::VideoCodec       | VideoCodec | (auto)  | Codec to use.  When omitted the codec is detected from the first payload's @ref CompressedVideoPayload pixelFormat. |
  * | @ref MediaConfig::OutputPixelFormat  | PixelFormat  | Invalid | Desired uncompressed output format. Empty / Invalid means "use decoder's native". |
  * | @ref MediaConfig::Capacity         | int        | 8       | Output FIFO depth. |
  *

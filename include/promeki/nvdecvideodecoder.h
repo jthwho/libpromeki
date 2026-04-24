@@ -87,8 +87,8 @@ class NvdecVideoDecoder : public VideoDecoder {
                 static List<int> supportedOutputList();
 
                 void configure(const MediaConfig &config) override;
-                Error submitPacket(const VideoPacket::Ptr &packet) override;
-                Image::Ptr receiveFrame() override;
+                Error submitPayload(const CompressedVideoPayload::Ptr &payload) override;
+                UncompressedVideoPayload::Ptr receiveVideoPayload() override;
                 Error flush() override;
                 Error reset() override;
 

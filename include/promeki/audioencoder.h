@@ -13,10 +13,10 @@
 #include <promeki/error.h>
 #include <promeki/list.h>
 #include <promeki/result.h>
-#include <promeki/audio.h>
 #include <promeki/audiocodec.h>
 #include <promeki/backendweight.h>
-#include <promeki/audiopacket.h>
+#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/compressedaudiopayload.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -27,8 +27,9 @@ class MediaConfig;
  * @ingroup proav
  *
  * AudioEncoder is a single push-frame / pull-packet codec session:
- * PCM @ref Audio frames pushed via @ref submitFrame feed an internal
- * pipeline, and encoded @ref AudioPacket access units come back out of
+ * @ref UncompressedAudioPayload frames pushed via @ref submitFrame
+ * feed an internal pipeline, and encoded
+ * @ref CompressedAudioPayload access units come back out of
  * @ref receivePacket zero, one, or many submits later depending on the
  * codec's frame size and look-ahead.
  *
@@ -64,15 +65,14 @@ class MediaConfig;
  *   1. Resolve a session via @ref AudioCodec::createEncoder.
  *   2. Call @ref configure with a @ref MediaConfig.  (Skip when a
  *      config was already supplied to @c createEncoder.)
- *   3. For each PCM @ref Audio frame, call @ref submitFrame.
+ *   3. For each @ref UncompressedAudioPayload frame, call @ref submitFrame.
  *   4. After each submit, drain with @ref receivePacket until it
  *      returns a null Ptr.  Each emitted packet carries this codec's
  *      @ref codec() value so downstream code can route it without
  *      consulting the encoder again.
  *   5. When the input stream is exhausted, call @ref flush and keep
  *      draining until @ref receivePacket returns a packet whose
- *      @c Metadata::EndOfStream is set (test with
- *      @ref MediaPacket::isEndOfStream).
+ *      @c MediaPayload::Flags::EndOfStream flag is set.
  *   6. Destroy the encoder.
  *
  * Implementations are not required to be thread-safe.
@@ -105,7 +105,7 @@ class AudioEncoder {
                 /**
                  * @brief Returns the codec this session encodes, with backend pinned.
                  *
-                 * Stamped onto every outgoing @ref AudioPacket so
+                 * Stamped onto every outgoing @ref CompressedAudioPayload so
                  * downstream code can dispatch on codec identity
                  * without consulting the encoder.
                  */
@@ -120,18 +120,16 @@ class AudioEncoder {
                 virtual void configure(const MediaConfig &config);
 
                 /**
-                 * @brief Submits one PCM frame for encoding.
+                 * @brief Submits one uncompressed audio payload for encoding.
                  *
-                 * The frame is passed by shared @ref Audio::Ptr so the
-                 * encoder can retain a reference without copying the
-                 * underlying buffer.  A null Ptr is treated as
+                 * The payload carries its own PTS — callers stamp it
+                 * before submitting.  A null Ptr is treated as
                  * @ref Error::Invalid.
                  */
-                virtual Error submitFrame(const Audio::Ptr &frame,
-                                          const MediaTimeStamp &pts = MediaTimeStamp()) = 0;
+                virtual Error submitPayload(const UncompressedAudioPayload::Ptr &payload) = 0;
 
-                /** @brief Dequeues one encoded packet, or a null Ptr when none is ready. */
-                virtual AudioPacket::Ptr receivePacket() = 0;
+                /** @brief Dequeues one encoded payload, or a null Ptr when none is ready. */
+                virtual CompressedAudioPayload::Ptr receiveCompressedPayload() = 0;
 
                 /** @brief Signals end-of-stream and asks the encoder to drain remaining packets. */
                 virtual Error flush() = 0;

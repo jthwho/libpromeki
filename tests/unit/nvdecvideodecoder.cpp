@@ -20,13 +20,13 @@
 #include <promeki/videoencoder.h>
 #include <promeki/videodecoder.h>
 #include <promeki/videocodec.h>
-#include <promeki/mediapacket.h>
 #include <promeki/mediaconfig.h>
-#include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/pixelformat.h>
 #include <promeki/cuda.h>
 #include <promeki/enums.h>
+#include <promeki/compressedvideopayload.h>
+#include <promeki/uncompressedvideopayload.h>
 #include <cstdint>
 #include <cstring>
 
@@ -34,23 +34,25 @@ using namespace promeki;
 
 namespace {
 
-Image makeNv12Frame(int width, int height, uint8_t yValue, uint8_t uvValue) {
+UncompressedVideoPayload::Ptr makeNv12Frame(int width, int height,
+                                            uint8_t yValue, uint8_t uvValue) {
         PixelFormat pd(PixelFormat::YUV8_420_SemiPlanar_Rec709);
-        Image img(Size2Du32(width, height), pd);
-        REQUIRE(img.planes().size() == 2);
+        auto img = UncompressedVideoPayload::allocate(
+                ImageDesc(Size2Du32(width, height), pd));
+        REQUIRE(img->planeCount() == 2);
         const size_t yBytes  = static_cast<size_t>(width) * height;
         const size_t uvBytes = static_cast<size_t>(width) * (height / 2);
-        std::memset(img.data(0), yValue,  yBytes);
-        std::memset(img.data(1), uvValue, uvBytes);
+        std::memset(img.modify()->data()[0].data(), yValue,  yBytes);
+        std::memset(img.modify()->data()[1].data(), uvValue, uvBytes);
         return img;
 }
 
 // Encode @p numFrames synthetic NV12 frames, return the emitted
-// VideoPackets (including a trailing EOS).  Returns an empty list
-// when the NVENC runtime is unavailable so the caller can skip.
-List<VideoPacket::Ptr> encodeBurst(VideoCodec::ID codecId,
-                                   int width, int height, int numFrames) {
-        List<VideoPacket::Ptr> out;
+// compressed payloads (excluding the trailing EOS).  Returns an empty
+// list when the NVENC runtime is unavailable so the caller can skip.
+List<CompressedVideoPayload::Ptr> encodeBurst(VideoCodec::ID codecId,
+                                              int width, int height, int numFrames) {
+        List<CompressedVideoPayload::Ptr> out;
         auto r = VideoCodec(codecId).createEncoder();
         if(error(r).isError()) return out;
         VideoEncoder *enc = value(r);
@@ -60,18 +62,18 @@ List<VideoPacket::Ptr> encodeBurst(VideoCodec::ID codecId,
         cfg.set(MediaConfig::VideoPreset, VideoEncoderPreset::LowLatency);
         enc->configure(cfg);
         for(int i = 0; i < numFrames; ++i) {
-                Image::Ptr f = Image::Ptr::create(makeNv12Frame(width, height,
-                                        static_cast<uint8_t>(64 + i * 4), 128));
-                if(enc->submitFrame(f) != Error::Ok) {
+                auto uvp = makeNv12Frame(width, height,
+                                         static_cast<uint8_t>(64 + i * 4), 128);
+                if(enc->submitPayload(uvp) != Error::Ok) {
                         delete enc;
-                        return List<VideoPacket::Ptr>();
+                        return List<CompressedVideoPayload::Ptr>();
                 }
-                while(auto pkt = enc->receivePacket()) {
+                while(auto pkt = enc->receiveCompressedPayload()) {
                         if(!pkt->isEndOfStream()) out.pushToBack(pkt);
                 }
         }
         enc->flush();
-        while(auto pkt = enc->receivePacket()) {
+        while(auto pkt = enc->receiveCompressedPayload()) {
                 if(!pkt->isEndOfStream()) out.pushToBack(pkt);
         }
         delete enc;
@@ -112,24 +114,24 @@ TEST_CASE("NvdecVideoDecoder: H.264 encode/decode round trip") {
 
         int decoded = 0;
         for(const auto &pkt : packets) {
-                Error err = dec->submitPacket(pkt);
+                Error err = dec->submitPayload(pkt);
                 if(err.isError()) {
                         // Decoder runtime missing — skip cleanly.
                         delete dec;
                         return;
                 }
                 while(true) {
-                        Image::Ptr img = dec->receiveFrame();
+                        UncompressedVideoPayload::Ptr img = dec->receiveVideoPayload();
                         if(!img.isValid()) break;
-                        CHECK(img->width() == kWidth);
-                        CHECK(img->height() == kHeight);
-                        CHECK(img->pixelFormat().id() == PixelFormat::YUV8_420_SemiPlanar_Rec709);
+                        CHECK(img->desc().width() == kWidth);
+                        CHECK(img->desc().height() == kHeight);
+                        CHECK(img->desc().pixelFormat().id() == PixelFormat::YUV8_420_SemiPlanar_Rec709);
                         ++decoded;
                 }
         }
         dec->flush();
         while(true) {
-                Image::Ptr img = dec->receiveFrame();
+                UncompressedVideoPayload::Ptr img = dec->receiveVideoPayload();
                 if(!img.isValid()) break;
                 ++decoded;
         }
@@ -158,19 +160,19 @@ TEST_CASE("NvdecVideoDecoder: HEVC encode/decode round trip") {
 
         int decoded = 0;
         for(const auto &pkt : packets) {
-                Error err = dec->submitPacket(pkt);
+                Error err = dec->submitPayload(pkt);
                 if(err.isError()) { delete dec; return; }
                 while(true) {
-                        Image::Ptr img = dec->receiveFrame();
+                        UncompressedVideoPayload::Ptr img = dec->receiveVideoPayload();
                         if(!img.isValid()) break;
-                        CHECK(img->width() == kWidth);
-                        CHECK(img->height() == kHeight);
+                        CHECK(img->desc().width() == kWidth);
+                        CHECK(img->desc().height() == kHeight);
                         ++decoded;
                 }
         }
         dec->flush();
         while(true) {
-                Image::Ptr img = dec->receiveFrame();
+                UncompressedVideoPayload::Ptr img = dec->receiveVideoPayload();
                 if(!img.isValid()) break;
                 ++decoded;
         }

@@ -11,10 +11,11 @@
 #include <promeki/mediaiotask_rtp.h>
 #include <promeki/enums.h>
 #include <promeki/frame.h>
-#include <promeki/image.h>
-#include <promeki/audio.h>
 #include <promeki/buffer.h>
-#include <promeki/videopacket.h>
+#include <promeki/uncompressedvideopayload.h>
+#include <promeki/compressedvideopayload.h>
+#include <promeki/audiopayload.h>
+#include <promeki/uncompressedaudiopayload.h>
 #include <promeki/imagedesc.h>
 #include <promeki/audiodesc.h>
 #include <promeki/mediadesc.h>
@@ -606,7 +607,7 @@ Error MediaIOTask_Rtp::configureVideoStream(const MediaIO::Config &cfg,
                 // for YCbCr 4:2:2 on the wire.  When the input uses
                 // a different component order (e.g. YUYV), store the
                 // corresponding UYVY PixelFormat so sendVideo() can call
-                // Image::convert() before packing.
+                // UncompressedVideoPayload::convert() before packing.
                 if(pf.id() == PixelMemLayout::I_422_3x8) {
                         if(pd.id() == PixelFormat::YUV8_422_Rec709)
                                 _videoWirePixelFormat = PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709);
@@ -1258,37 +1259,14 @@ void MediaIOTask_Rtp::emitVideoFrame() {
                             w, h, PixelFormat(pdId).name().cstr());
         }
 
-        // Build an Image from the reassembled buffer.  Both compressed
-        // and uncompressed paths copy into a fresh Buffer::Ptr that
-        // the Image adopts via fromBuffer — this lets the compressed
-        // path share the same allocation with the MediaPacket we push
-        // into the Frame below, so downstream decoders get zero-copy
-        // access to the bitstream.
-        Image img;
+        // Build a payload from the reassembled buffer.  Both the
+        // compressed and uncompressed paths copy the reassembled
+        // bytes into a fresh Buffer::Ptr that the payload adopts as
+        // plane 0.
         Buffer::Ptr plane = Buffer::Ptr::create(reassembled.size());
         std::memcpy(plane->data(), reassembled.data(), reassembled.size());
         plane->setSize(reassembled.size());
         const PixelFormat &pd = _video.readerImageDesc.pixelFormat();
-        img = Image::fromBuffer(plane,
-                _video.readerImageDesc.width(),
-                _video.readerImageDesc.height(),
-                pd);
-        if(!img.isValid()) {
-                // This is expected for the first frame when the
-                // receiver joins a stream already in progress — the
-                // reassembled buffer is a truncated tail of a frame
-                // that the codec can't parse.  Log at debug level
-                // rather than warning so it doesn't alarm operators.
-                if(_video.framesReceived == 0) {
-                        promekiDebug("MediaIOTask_Rtp: discarding "
-                                     "first partial video frame "
-                                     "(joined stream mid-flight)");
-                } else {
-                        promekiWarn("MediaIOTask_Rtp: reassembled "
-                                    "video frame is invalid");
-                }
-                return;
-        }
 
         _video.framesReceived++;
 
@@ -1307,40 +1285,56 @@ void MediaIOTask_Rtp::emitVideoFrame() {
         _video.rxLastFrameTime = emitTime;
         _video.rxHasLastFrame = true;
 
-        Frame::Ptr frame = Frame::Ptr::create();
-        Frame *f = frame.modify();
-        f->imageList().pushToBack(Image::Ptr::create(std::move(img)));
-
-        // Stamp the Image with RTP and capture metadata.
-        // CaptureTime is when the library saw the first packet of
-        // this frame (rxFrameStartTime); MediaTimeStamp uses the
-        // same value.  The raw RTP timestamp and packet count are
-        // recorded for protocol-level diagnostics.
+        // Stamp the payload with RTP and capture metadata before
+        // handing it to the Frame.  CaptureTime is when the library
+        // saw the first packet of this frame (rxFrameStartTime);
+        // MediaTimeStamp uses the same value.
         MediaTimeStamp capMts(_video.rxFrameStartTime, _video.clockDomain);
+        ImageDesc idesc = _video.readerImageDesc;
         {
-                Image::Ptr &imgPtr = f->imageList().back();
-                Metadata &imgMeta = imgPtr.modify()->metadata();
-                imgMeta.set(Metadata::CaptureTime, capMts);
-                imgMeta.set(Metadata::MediaTimeStamp, capMts);
-                imgMeta.set(Metadata::RtpTimestamp, frameRtpTimestamp);
-                imgMeta.set(Metadata::RtpPacketCount, framePacketCount);
+                Metadata &m = idesc.metadata();
+                m.set(Metadata::CaptureTime, capMts);
+                m.set(Metadata::MediaTimeStamp, capMts);
+                m.set(Metadata::RtpTimestamp, frameRtpTimestamp);
+                m.set(Metadata::RtpPacketCount, framePacketCount);
                 if(!_video.ptpGrandmaster.isNull()) {
-                        imgMeta.set(Metadata::PtpGrandmasterId,
-                                _video.ptpGrandmaster);
+                        m.set(Metadata::PtpGrandmasterId,
+                              _video.ptpGrandmaster);
                 }
         }
 
-        // Compressed streams also attach a VideoPacket to the Image
-        // sharing the same backing buffer, so a downstream VideoDecoder
-        // stage sees the bitstream via the canonical Image::packet
-        // accessor (every intraframe packet is a keyframe).
+        VideoPayload::Ptr videoPayload;
         if(pd.isCompressed()) {
-                auto pkt = VideoPacket::Ptr::create(plane, pd);
-                pkt.modify()->setPts(capMts);
-                pkt.modify()->setDts(capMts);
-                pkt.modify()->addFlag(VideoPacket::Keyframe);
-                f->imageList().back().modify()->setPacket(std::move(pkt));
+                // Compressed streams: every intraframe RTP payload is
+                // a keyframe (no inter-frame prediction at this layer).
+                auto cvp = CompressedVideoPayload::Ptr::create(idesc, plane);
+                cvp.modify()->setPts(capMts);
+                cvp.modify()->setDts(capMts);
+                cvp.modify()->addFlag(MediaPayload::Keyframe);
+                videoPayload = cvp;
+        } else {
+                BufferView planes;
+                planes.pushToBack(plane, 0, plane->size());
+                auto uvp = UncompressedVideoPayload::Ptr::create(idesc, planes);
+                uvp.modify()->setPts(capMts);
+                videoPayload = uvp;
         }
+
+        if(!videoPayload.isValid()) {
+                if(_video.framesReceived <= 1) {
+                        promekiDebug("MediaIOTask_Rtp: discarding "
+                                     "first partial video frame "
+                                     "(joined stream mid-flight)");
+                } else {
+                        promekiWarn("MediaIOTask_Rtp: reassembled "
+                                    "video frame is invalid");
+                }
+                return;
+        }
+
+        Frame::Ptr frame = Frame::Ptr::create();
+        Frame *f = frame.modify();
+        f->addPayload(std::move(videoPayload));
 
         // Aggregate audio: drain one frame's worth of samples from
         // the FIFO that the audio RX thread is filling.  If the
@@ -1354,22 +1348,30 @@ void MediaIOTask_Rtp::emitVideoFrame() {
                         static_cast<int64_t>(_audio.readerAudioDesc.sampleRate()),
                         _readerAgg.videoFrameIndex.value());
                 if(needed > 0) {
-                        Audio audio(_audio.readerAudioDesc, needed);
+                        size_t bufBytes = _audio.readerAudioDesc.bufferSize(needed);
+                        Buffer::Ptr pcm = Buffer::Ptr::create(bufBytes);
                         auto [got, err] = _readerAgg.audioFifo.popWait(
-                                audio, needed,
+                                pcm.modify()->data(), needed,
                                 static_cast<unsigned int>(_readerAgg.audioTimeoutMs));
                         if(got > 0) {
+                                size_t usedBytes = _audio.readerAudioDesc.bufferSize(got);
+                                pcm.modify()->setSize(usedBytes);
+                                BufferView view(pcm, 0, usedBytes);
+                                auto audioPayload = UncompressedAudioPayload::Ptr::create(
+                                        _audio.readerAudioDesc, got,
+                                        view);
                                 ClockDomain audioCd = _audio.clockDomain.isValid()
                                         ? _audio.clockDomain
                                         : _video.clockDomain;
-                                audio.metadata().set(Metadata::CaptureTime,
+                                audioPayload.modify()->desc().metadata().set(
+                                        Metadata::CaptureTime,
                                         MediaTimeStamp(_video.rxFrameStartTime,
                                                 audioCd));
-                                audio.metadata().set(Metadata::MediaTimeStamp,
+                                audioPayload.modify()->desc().metadata().set(
+                                        Metadata::MediaTimeStamp,
                                         MediaTimeStamp(_video.rxFrameStartTime,
                                                 audioCd));
-                                f->audioList().pushToBack(
-                                        Audio::Ptr::create(std::move(audio)));
+                                f->addPayload(audioPayload);
                         }
                 }
         }
@@ -1445,17 +1447,25 @@ void MediaIOTask_Rtp::onAudioPacket(const RtpPacket &pkt) {
                         _audio.readerAudioDesc.sampleRate() / fps);
                 if(spf == 0) return;
                 while(_audioState.fifo.available() >= spf) {
-                        Audio audio(_audio.readerAudioDesc, spf);
-                        auto [got, popErr] = _audioState.fifo.pop(audio, spf);
+                        size_t bufBytes = _audio.readerAudioDesc.bufferSize(spf);
+                        Buffer::Ptr pcm = Buffer::Ptr::create(bufBytes);
+                        auto [got, popErr] = _audioState.fifo.pop(pcm.modify()->data(), spf);
                         if(popErr.isError() || got == 0) break;
+                        size_t usedBytes = _audio.readerAudioDesc.bufferSize(got);
+                        pcm.modify()->setSize(usedBytes);
+                        BufferView view(pcm, 0, usedBytes);
+                        auto audioPayload = UncompressedAudioPayload::Ptr::create(
+                                _audio.readerAudioDesc, got,
+                                view);
                         MediaTimeStamp capMts(TimeStamp::now(),
                                 _audio.clockDomain);
-                        audio.metadata().set(Metadata::CaptureTime, capMts);
-                        audio.metadata().set(Metadata::MediaTimeStamp, capMts);
+                        audioPayload.modify()->desc().metadata().set(
+                                Metadata::CaptureTime, capMts);
+                        audioPayload.modify()->desc().metadata().set(
+                                Metadata::MediaTimeStamp, capMts);
                         _audio.framesReceived++;
                         Frame::Ptr frame = Frame::Ptr::create();
-                        frame.modify()->audioList().pushToBack(
-                                Audio::Ptr::create(std::move(audio)));
+                        frame.modify()->addPayload(audioPayload);
                         pushReaderFrame(std::move(frame));
                 }
         }
@@ -1910,8 +1920,8 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandRead &cmd) {
 
 // ----- Per-stream send helpers -----
 
-Error MediaIOTask_Rtp::sendVideo(const Image &image, const FrameNumber &frameIndex) {
-        if(!_video.active || !image.isValid()) return Error::Ok;
+Error MediaIOTask_Rtp::sendVideo(const VideoPayload &payload, const FrameNumber &frameIndex) {
+        if(!_video.active || !payload.isValid()) return Error::Ok;
         if(_video.session == nullptr || _video.payload == nullptr) return Error::Invalid;
 
         // Diagnostic timing capture.  Updated only on this stream's
@@ -1945,24 +1955,29 @@ Error MediaIOTask_Rtp::sendVideo(const Image &image, const FrameNumber &frameInd
         uint32_t ts = static_cast<uint32_t>(
                 _frameRate.cumulativeTicks(_video.clockRate, frameIndex.value()));
 
-        // Grab plane 0 bytes — for MJPEG this is the compressed
-        // bitstream; for RFC 4175 raw video it is the interleaved
-        // pixel data.  When the input pixel format doesn't match the
-        // RFC 4175 wire format (e.g. YUYV instead of UYVY), convert
-        // first via Image::convert().
-        const Image *src = &image;
-        Image wireImage;
+        // Grab plane 0 bytes — for compressed payloads this is the
+        // bitstream; for RFC 4175 raw video it's the interleaved
+        // pixel data.  When the input pixel format doesn't match
+        // the RFC 4175 wire format (e.g. YUYV instead of UYVY),
+        // convert first.  CSC only applies to uncompressed payloads
+        // — compressed bitstreams are always transmitted verbatim.
+        const VideoPayload *src = &payload;
+        UncompressedVideoPayload::Ptr converted;
         if(_videoWirePixelFormat.isValid() &&
-           image.pixelFormat().id() != _videoWirePixelFormat.id()) {
-                wireImage = image.convert(_videoWirePixelFormat, Metadata());
-                if(!wireImage.isValid()) return Error::Invalid;
-                src = &wireImage;
+           !payload.isCompressed() &&
+           payload.desc().pixelFormat().id() != _videoWirePixelFormat.id()) {
+                const auto *uvp = payload.as<UncompressedVideoPayload>();
+                if(uvp == nullptr) return Error::Invalid;
+                converted = uvp->convert(_videoWirePixelFormat, Metadata());
+                if(!converted.isValid()) return Error::Invalid;
+                src = converted.ptr();
         }
 
-        const Buffer::Ptr &plane = src->plane(0);
-        if(!plane || plane->size() == 0) return Error::Invalid;
+        if(src->planeCount() == 0) return Error::Invalid;
+        auto plane0 = src->plane(0);
+        if(!plane0.isValid() || plane0.size() == 0) return Error::Invalid;
 
-        auto packets = _video.payload->pack(plane->data(), plane->size());
+        auto packets = _video.payload->pack(plane0.data(), plane0.size());
         if(packets.isEmpty()) return Error::Invalid;
 
         // VBR compressed video: per-frame kernel pacing rate update.
@@ -1992,7 +2007,7 @@ Error MediaIOTask_Rtp::sendVideo(const Image &image, const FrameNumber &frameInd
         // means the caller has explicitly chosen the rate, and
         // open-time @c applyRate already programmed it.
         if(_pacingMode.value() == RtpPacingMode::KernelFq.value() &&
-           _frameRate.isValid() && image.pixelFormat().isCompressed()) {
+           _frameRate.isValid() && payload.isCompressed()) {
                 size_t frameBytes = 0;
                 for(size_t i = 0; i < packets.size(); i++) {
                         frameBytes += packets[i].size();
@@ -2052,20 +2067,27 @@ Error MediaIOTask_Rtp::sendVideo(const Image &image, const FrameNumber &frameInd
         return Error::Ok;
 }
 
-Error MediaIOTask_Rtp::sendAudio(const Audio &audio) {
+Error MediaIOTask_Rtp::sendAudio(const UncompressedAudioPayload &payload) {
         if(!_audio.active) return Error::Ok;
         if(_audio.session == nullptr || _audio.payload == nullptr) return Error::Invalid;
-        if(audio.samples() == 0) return Error::Ok;
+        if(payload.sampleCount() == 0) return Error::Ok;
+        if(payload.planeCount() == 0) return Error::Invalid;
         if(_audioState.packetBytes == 0 || _audioState.packetSamples == 0) {
                 return Error::Invalid;
         }
 
         // Push the incoming samples into the FIFO.  AudioBuffer
         // auto-converts bit depth / endian / float↔int from the
-        // Audio's own descriptor into the stored L16 big-endian
+        // payload's own descriptor into the stored L16 big-endian
         // wire format.  Sample rate and channel count must match
-        // what we configured at open time.
-        Error pushErr = _audioState.fifo.push(audio);
+        // what we configured at open time.  Interleaved PCM lives
+        // in plane(0); planar PCM isn't supported on the TX path
+        // yet.
+        auto planeView = payload.plane(0);
+        if(planeView.size() == 0) return Error::Invalid;
+        Error pushErr = _audioState.fifo.push(planeView.data(),
+                                              payload.sampleCount(),
+                                              payload.desc());
         if(pushErr.isError()) {
                 promekiErr("MediaIOTask_Rtp: audio FIFO push failed: %s",
                            pushErr.desc().cstr());
@@ -2180,27 +2202,33 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandWrite &cmd) {
         bool audioDispatched = false;
         bool dataDispatched  = false;
 
+        auto vids = frame.videoPayloads();
         if(_video.active && _video.txThread != nullptr &&
-           !frame.imageList().isEmpty()) {
-                const Image::Ptr imgPtr = frame.imageList()[0];
-                if(imgPtr) {
-                        _video.txThread->_workQueue.push(TxWorkItem{
-                                [this, imgPtr, frameIndex]() {
-                                        return sendVideo(*imgPtr, frameIndex);
-                                },
-                                &videoResult
-                        });
-                        videoDispatched = true;
-                }
+           !vids.isEmpty() && vids[0].isValid()) {
+                // Hand the payload directly to the TX worker — the
+                // @ref VideoPayload::Ptr keeps the payload (and its
+                // plane buffers) alive for the duration of the
+                // packetisation inside @ref sendVideo.  Supports
+                // both uncompressed raster and compressed access
+                // units in the same lambda.
+                VideoPayload::Ptr vp = vids[0];
+                _video.txThread->_workQueue.push(TxWorkItem{
+                        [this, vp, frameIndex]() {
+                                return sendVideo(*vp, frameIndex);
+                        },
+                        &videoResult
+                });
+                videoDispatched = true;
         }
 
+        auto auds = frame.audioPayloads();
         if(_audio.active && _audio.txThread != nullptr &&
-           !frame.audioList().isEmpty()) {
-                const Audio::Ptr audPtr = frame.audioList()[0];
-                if(audPtr) {
+           !auds.isEmpty() && auds[0].isValid()) {
+                auto uap = sharedPointerCast<UncompressedAudioPayload>(auds[0]);
+                if(uap.isValid()) {
                         _audio.txThread->_workQueue.push(TxWorkItem{
-                                [this, audPtr]() {
-                                        return sendAudio(*audPtr);
+                                [this, uap]() {
+                                        return sendAudio(*uap);
                                 },
                                 &audioResult
                         });

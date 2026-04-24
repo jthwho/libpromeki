@@ -12,7 +12,7 @@
 #include <promeki/audiotestpattern.h>
 #include <promeki/audiogen.h>
 #include <promeki/ltcencoder.h>
-#include <promeki/audio.h>
+#include <promeki/uncompressedaudiopayload.h>
 #include <promeki/timecode.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -400,7 +400,7 @@ void AudioTestPattern::buildPinkNoiseBuffer() {
         for(size_t i = 0; i < length; ++i) _pinkNoiseBuffer[i] -= outDc;
 }
 
-const Audio &AudioTestPattern::avSyncBurst(size_t samples) const {
+const List<float> &AudioTestPattern::avSyncBurst(size_t samples) const {
         auto it = _avSyncToneCache.find(samples);
         if(it != _avSyncToneCache.end()) return it->second;
 
@@ -417,30 +417,55 @@ const Audio &AudioTestPattern::avSyncBurst(size_t samples) const {
         cfg.phase = 0.0f;
         cfg.dutyCycle = 0.0f;
         burst.setConfig(0, cfg);
-        _avSyncToneCache.insert(samples, burst.generate(samples));
+        List<float> out;
+        out.resize(samples);
+        burst.generate(out.data(), samples);
+        _avSyncToneCache.insert(samples, std::move(out));
         return _avSyncToneCache.find(samples)->second;
 }
 
-Audio AudioTestPattern::create(size_t samples, const Timecode &tc) const {
-        Audio audio(_desc, samples);
-        if(!audio.isValid()) return Audio();
-        audio.zero();
+UncompressedAudioPayload::Ptr AudioTestPattern::createPayload(
+        size_t samples, const Timecode &tc) const {
+        // Allocate a fresh Buffer, fill it with the pattern, then
+        // hand it off to the payload.  Writing *before* wrapping
+        // keeps us off the CoW detach path — once the Buffer::Ptr
+        // is also held by the BufferView inside the payload, any
+        // later @c modify() on the local Buffer::Ptr would detach
+        // and the payload would see the untouched zero buffer.
+        AudioDesc workingDesc = _desc.workingDesc();
+        size_t bufBytes = workingDesc.bufferSize(samples);
+        Buffer::Ptr buf = Buffer::Ptr::create(bufBytes);
+        buf.modify()->setSize(bufBytes);
+        std::memset(buf.modify()->data(), 0, bufBytes);
 
-        const size_t channels = _desc.channels();
-        if(channels == 0) return audio;
-        float *out = audio.data<float>();
-
-        // LTC is synthesized once per create() call and then scattered
-        // into every LTC channel.  Invalid timecode gracefully degrades
-        // to silence on those channels (the encoder returns an invalid
-        // Audio in that case).
-        Audio ltcAudio;
-        if(_ltcEncoder.isValid() && tc.isValid()) {
-                ltcAudio = _ltcEncoder->encode(tc);
+        if(_desc.channels() > 0) {
+                float *out = reinterpret_cast<float *>(buf.modify()->data());
+                writePattern(out, samples, tc);
         }
-        const bool haveLtc = ltcAudio.isValid();
-        const int8_t *ltcData = haveLtc ? ltcAudio.data<int8_t>() : nullptr;
-        const size_t ltcSamples = haveLtc ? ltcAudio.samples() : 0;
+
+        BufferView view(buf, 0, bufBytes);
+        auto payload = UncompressedAudioPayload::Ptr::create(
+                workingDesc, samples, view);
+        if(!payload.isValid()) return UncompressedAudioPayload::Ptr();
+        return payload;
+}
+
+void AudioTestPattern::writePattern(float *out, size_t samples,
+                                    const Timecode &tc) const {
+        const size_t channels = _desc.channels();
+        if(channels == 0) return;
+
+        // LTC is synthesized once per call and then scattered into
+        // every LTC channel.  Invalid timecode gracefully degrades
+        // to silence on those channels (the encoder returns an empty
+        // list in that case).
+        List<int8_t> ltcBytes;
+        if(_ltcEncoder.isValid() && tc.isValid()) {
+                ltcBytes = _ltcEncoder->encode(tc);
+        }
+        const bool haveLtc = !ltcBytes.isEmpty();
+        const int8_t *ltcData = haveLtc ? ltcBytes.data() : nullptr;
+        const size_t ltcSamples = haveLtc ? ltcBytes.size() : 0;
         const size_t ltcCopyN = (ltcSamples < samples) ? ltcSamples : samples;
 
         // AvSync tone burst fires only on the first frame of each
@@ -450,8 +475,8 @@ Audio AudioTestPattern::create(size_t samples, const Timecode &tc) const {
         const bool avSyncActive = tc.isValid() && tc.frame() == 0;
         const float *avSyncData = nullptr;
         if(avSyncActive) {
-                const Audio &burst = avSyncBurst(samples);
-                if(burst.isValid()) avSyncData = burst.data<float>();
+                const List<float> &burst = avSyncBurst(samples);
+                if(!burst.isEmpty()) avSyncData = burst.data();
         }
 
         // PcmMarker payload: prefer the frame's BCD64 timecode when we
@@ -542,9 +567,9 @@ Audio AudioTestPattern::create(size_t samples, const Timecode &tc) const {
                 // generate Silence) and leave the buffer zeroed.
                 AudioGen *gen = (ch < _chanGens.size()) ? _chanGens[ch] : nullptr;
                 if(gen == nullptr) continue;
-                Audio chAudio = gen->generate(samples);
-                if(!chAudio.isValid()) continue;
-                const float *chData = chAudio.data<float>();
+                List<float> chData;
+                chData.resize(samples);
+                if(!gen->generate(chData.data(), samples)) continue;
                 for(size_t s = 0; s < samples; ++s) {
                         out[s * channels + ch] = chData[s];
                 }
@@ -587,8 +612,6 @@ Audio AudioTestPattern::create(size_t samples, const Timecode &tc) const {
                         _iec60958SampleCursor = (_iec60958SampleCursor + samples) % iecFrame;
                 }
         }
-
-        return audio;
 }
 
 void AudioTestPattern::writeNoiseChannel(float *out, size_t channel,
@@ -1029,26 +1052,6 @@ void AudioTestPattern::writeIec60958Channel(float *out, size_t channel,
                 ++cursor;
                 if(cursor >= frameLen) cursor -= frameLen;
         }
-}
-
-Audio AudioTestPattern::create(size_t samples) const {
-        return create(samples, Timecode());
-}
-
-void AudioTestPattern::render(Audio &audio, const Timecode &tc) const {
-        Audio generated = create(audio.samples(), tc);
-        if(!generated.isValid()) return;
-
-        size_t bytes = audio.samples() * audio.desc().channels()
-                                       * audio.desc().bytesPerSample();
-        size_t genBytes = generated.samples() * generated.desc().channels()
-                                              * generated.desc().bytesPerSample();
-        size_t copyBytes = (bytes < genBytes) ? bytes : genBytes;
-        std::memcpy(audio.data<uint8_t>(), generated.data<uint8_t>(), copyBytes);
-}
-
-void AudioTestPattern::render(Audio &audio) const {
-        render(audio, Timecode());
 }
 
 PROMEKI_NAMESPACE_END

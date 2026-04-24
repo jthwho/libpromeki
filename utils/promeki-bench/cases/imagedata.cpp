@@ -39,7 +39,7 @@
 #include <promeki/benchmarkrunner.h>
 #include <promeki/imagedataencoder.h>
 #include <promeki/imagedatadecoder.h>
-#include <promeki/image.h>
+#include <promeki/uncompressedvideopayload.h>
 #include <promeki/imagedesc.h>
 #include <promeki/pixelformat.h>
 #include <promeki/list.h>
@@ -47,6 +47,7 @@
 #include <promeki/stringlist.h>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 
 PROMEKI_NAMESPACE_BEGIN
 namespace benchutil {
@@ -193,25 +194,27 @@ BenchmarkCase::Function buildEncoderCase(CaseSpec spec) {
                         return;
                 }
 
-                Image img(spec.size.width, spec.size.height,
-                          PixelFormat(spec.pd));
-                if(!img.isValid()) {
+                auto payload = UncompressedVideoPayload::allocate(desc);
+                if(!payload.isValid()) {
                         state.setCounter(String("invalid"), 1.0);
                         for(auto _ : state) (void)_;
                         return;
                 }
-                img.fill(0);
+                for(size_t pi = 0; pi < payload->planeCount(); ++pi) {
+                        auto view = payload.modify()->data()[pi];
+                        std::memset(view.data(), 0, view.size());
+                }
 
                 List<ImageDataEncoder::Item> items = buildDefaultItems();
 
                 // One untimed warmup pass to fault in any per-call
                 // allocations the encoder may make on the first
                 // invocation.
-                encoder.encode(img, items);
+                encoder.encode(*payload.modify(), items);
 
                 for(auto _ : state) {
                         (void)_;
-                        encoder.encode(img, items);
+                        encoder.encode(*payload.modify(), items);
                 }
 
                 // Throughput is per *band region* — only the rows the
@@ -220,7 +223,7 @@ BenchmarkCase::Function buildEncoderCase(CaseSpec spec) {
                 // for the luma plane plus chroma overhead, so we use
                 // the band's plane-0 line stride × line count as a
                 // representative byte figure.
-                const size_t lumaStride = img.lineStride(0);
+                const size_t lumaStride = payload->plane(0).size() / spec.size.height;
                 const size_t bandRows   = 32;
                 const size_t bytesPerIter = lumaStride * bandRows;
 
@@ -252,20 +255,22 @@ BenchmarkCase::Function buildDecoderCase(CaseSpec spec) {
                         return;
                 }
 
-                Image img(spec.size.width, spec.size.height,
-                          PixelFormat(spec.pd));
-                if(!img.isValid()) {
+                auto payload = UncompressedVideoPayload::allocate(desc);
+                if(!payload.isValid()) {
                         state.setCounter(String("invalid"), 1.0);
                         for(auto _ : state) (void)_;
                         return;
                 }
-                img.fill(0);
+                for(size_t pi = 0; pi < payload->planeCount(); ++pi) {
+                        auto view = payload.modify()->data()[pi];
+                        std::memset(view.data(), 0, view.size());
+                }
 
-                // Pre-encode once.  The image is reused on every
+                // Pre-encode once.  The payload is reused on every
                 // iteration of the timed loop, so the decoder always
                 // sees the same valid input.
                 List<ImageDataEncoder::Item> items = buildDefaultItems();
-                if(encoder.encode(img, items).isError()) {
+                if(encoder.encode(*payload.modify(), items).isError()) {
                         state.setCounter(String("invalid"), 1.0);
                         for(auto _ : state) (void)_;
                         return;
@@ -286,14 +291,14 @@ BenchmarkCase::Function buildDecoderCase(CaseSpec spec) {
                 // Untimed warmup so the CSC pipeline's per-format
                 // pair cache is populated before the timed loop
                 // starts.
-                decoder.decode(img, bands, out);
+                decoder.decode(*payload, bands, out);
 
                 for(auto _ : state) {
                         (void)_;
-                        decoder.decode(img, bands, out);
+                        decoder.decode(*payload, bands, out);
                 }
 
-                const size_t lumaStride = img.lineStride(0);
+                const size_t lumaStride = payload->plane(0).size() / spec.size.height;
                 const size_t bandRows   = 32;
                 const size_t bytesPerIter = lumaStride * bandRows;
 

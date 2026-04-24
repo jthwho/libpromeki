@@ -10,14 +10,14 @@
 #include <vector>
 
 #include <promeki/jpegxsvideocodec.h>
-#include <promeki/mediapacket.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/buffer.h>
-#include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/pixelformat.h>
 #include <promeki/videocodec.h>
 #include <promeki/logger.h>
+#include <promeki/compressedvideopayload.h>
+#include <promeki/uncompressedvideopayload.h>
 
 #include <SvtJpegxs.h>
 #include <SvtJpegxsEnc.h>
@@ -155,7 +155,9 @@ struct JpegXsVideoEncoder::Impl {
 
         // Encodes a single frame through the persistent encoder context.
         // Lazily re-initializes the encoder when input parameters change.
-        Image encodeFrame(const Image &input, int bpp, int decomposition,
+        CompressedVideoPayload::Ptr encodeFrame(
+                          const UncompressedVideoPayload &input,
+                          int bpp, int decomposition,
                           Error &errOut, String &errMsg);
 
         // Lazily (re)initializes the encoder when @p p differs from the
@@ -205,20 +207,22 @@ struct JpegXsVideoEncoder::Impl {
 // Encode — one frame through the persistent encoder context.
 // ---------------------------------------------------------------------------
 
-Image JpegXsVideoEncoder::Impl::encodeFrame(
-                const Image &input, int bpp, int decomposition,
+CompressedVideoPayload::Ptr JpegXsVideoEncoder::Impl::encodeFrame(
+                const UncompressedVideoPayload &input, int bpp, int decomposition,
                 Error &errOut, String &errMsg) {
         errOut = Error::Ok;
         errMsg.clear();
-        JpegXsLayout layout = classifyInput(input.pixelFormat().id());
+        const ImageDesc &idesc = input.desc();
+        const PixelMemLayout &ml = idesc.pixelFormat().memLayout();
+        JpegXsLayout layout = classifyInput(idesc.pixelFormat().id());
         if(!layout.valid) {
                 errOut = Error::PixelFormatNotSupported;
                 errMsg = "JPEG XS encoder accepts planar YUV 4:2:2/4:2:0 and packed RGB inputs";
-                return Image();
+                return CompressedVideoPayload::Ptr();
         }
 
-        const uint32_t width  = (uint32_t)input.width();
-        const uint32_t height = (uint32_t)input.height();
+        const uint32_t width  = (uint32_t)idesc.size().width();
+        const uint32_t height = (uint32_t)idesc.size().height();
         const uint32_t pixelBytes = (layout.bitDepth > 8) ? 2u : 1u;
 
         EncoderParams p;
@@ -230,20 +234,20 @@ Image JpegXsVideoEncoder::Impl::encodeFrame(
         p.decomposition = decomposition;
         if(Error e = ensure(p, errMsg); e.isError()) {
                 errOut = e;
-                return Image();
+                return CompressedVideoPayload::Ptr();
         }
 
         svt_jpeg_xs_image_buffer_t inBuf = {};
         for(int c = 0; c < 3; c++) {
-                const uint32_t planeBytes = (uint32_t)input.lineStride(c);
+                const uint32_t planeBytes = (uint32_t)ml.lineStride(c, width);
                 if(planeBytes % pixelBytes != 0) {
                         errOut = Error::IOError;
                         errMsg = "plane stride is not a multiple of pixel size";
-                        return Image();
+                        return CompressedVideoPayload::Ptr();
                 }
                 inBuf.stride[c]     = planeBytes / pixelBytes;
                 inBuf.alloc_size[c] = planeBytes * (uint32_t)imgCfg.components[c].height;
-                inBuf.data_yuv[c]   = const_cast<void *>(input.data(c));
+                inBuf.data_yuv[c]   = const_cast<uint8_t *>(input.plane(c).data());
         }
 
         std::vector<uint8_t> bitstreamStorage(bytesPerFrame);
@@ -260,7 +264,7 @@ Image JpegXsVideoEncoder::Impl::encodeFrame(
         if(err != SvtJxsErrorNone) {
                 errOut = Error::IOError;
                 errMsg = "svt_jpeg_xs_encoder_send_picture failed";
-                return Image();
+                return CompressedVideoPayload::Ptr();
         }
 
         svt_jpeg_xs_frame_t outFrame = {};
@@ -268,16 +272,21 @@ Image JpegXsVideoEncoder::Impl::encodeFrame(
         if(err != SvtJxsErrorNone || outFrame.bitstream.used_size == 0) {
                 errOut = Error::IOError;
                 errMsg = "svt_jpeg_xs_encoder_get_packet failed";
-                return Image();
+                return CompressedVideoPayload::Ptr();
         }
 
-        Image result = Image::fromCompressedData(
-                outFrame.bitstream.buffer,
-                outFrame.bitstream.used_size,
-                (int)width, (int)height,
-                layout.compressed, input.metadata());
-
-        return result;
+        // Copy the encoded bitstream into an owned Buffer and wrap it
+        // as a CompressedVideoPayload.
+        ImageDesc cdesc(Size2Du32(width, height), PixelFormat(layout.compressed));
+        cdesc.metadata() = idesc.metadata();
+        Buffer::Ptr buf = Buffer::Ptr::create(outFrame.bitstream.used_size);
+        std::memcpy(buf.modify()->data(), outFrame.bitstream.buffer,
+                    outFrame.bitstream.used_size);
+        buf.modify()->setSize(outFrame.bitstream.used_size);
+        BufferView view(buf, 0, outFrame.bitstream.used_size);
+        auto cvp = CompressedVideoPayload::Ptr::create(cdesc, view);
+        cvp.modify()->metadata() = idesc.metadata();
+        return cvp;
 }
 
 // ---------------------------------------------------------------------------
@@ -304,7 +313,9 @@ struct JpegXsVideoDecoder::Impl {
 
         // Decodes a single frame through the persistent decoder context.
         // Lazily initializes from the first incoming bitstream.
-        Image decodeFrame(const Image &input, PixelFormat::ID outputFormat,
+        UncompressedVideoPayload::Ptr decodeFrame(
+                          const CompressedVideoPayload &input,
+                          PixelFormat::ID outputFormat,
                           Error &errOut, String &errMsg);
 
         Error ensure(const uint8_t *bitstream, size_t bitstreamSize, String &errMsg) {
@@ -333,28 +344,29 @@ struct JpegXsVideoDecoder::Impl {
 // Decode — one frame through the persistent decoder context.
 // ---------------------------------------------------------------------------
 
-Image JpegXsVideoDecoder::Impl::decodeFrame(
-                const Image &input, PixelFormat::ID outputFormat,
+UncompressedVideoPayload::Ptr JpegXsVideoDecoder::Impl::decodeFrame(
+                const CompressedVideoPayload &input, PixelFormat::ID outputFormat,
                 Error &errOut, String &errMsg) {
         errOut = Error::Ok;
         errMsg.clear();
 
-        const uint8_t *bsData = static_cast<const uint8_t *>(input.data());
-        const size_t   bsSize = input.compressedSize();
+        auto bsView = input.plane(0);
+        const uint8_t *bsData = bsView.data();
+        const size_t   bsSize = bsView.size();
 
         if(Error e = ensure(bsData, bsSize, errMsg); e.isError()) {
                 errOut = e;
-                return Image();
+                return UncompressedVideoPayload::Ptr();
         }
         const svt_jpeg_xs_image_config_t &cfg = this->cfg;
 
         PixelFormat::ID outPd = (outputFormat != PixelFormat::Invalid)
                 ? outputFormat
-                : defaultDecodeTarget(input.pixelFormat().id());
+                : defaultDecodeTarget(input.desc().pixelFormat().id());
         if(outPd == PixelFormat::Invalid) {
                 errOut = Error::PixelFormatNotSupported;
                 errMsg = "No decode target for this JPEG XS bitstream";
-                return Image();
+                return UncompressedVideoPayload::Ptr();
         }
 
         JpegXsLayout outLayout = classifyInput(outPd);
@@ -363,15 +375,17 @@ Image JpegXsVideoDecoder::Impl::decodeFrame(
            outLayout.colourFormat != cfg.format) {
                 errOut = Error::PixelFormatNotSupported;
                 errMsg = "Requested decode target does not match JPEG XS bitstream layout";
-                return Image();
+                return UncompressedVideoPayload::Ptr();
         }
 
-        Image output((int)cfg.width, (int)cfg.height, outPd);
+        ImageDesc outDesc((int)cfg.width, (int)cfg.height, PixelFormat(outPd));
+        auto output = UncompressedVideoPayload::allocate(outDesc);
         if(!output.isValid()) {
                 errOut = Error::IOError;
-                errMsg = "Failed to allocate decode output Image";
-                return Image();
+                errMsg = "Failed to allocate decode output payload";
+                return UncompressedVideoPayload::Ptr();
         }
+        const PixelMemLayout &outMl = outDesc.pixelFormat().memLayout();
 
         // Allocate tightly packed temp buffers the decoder can fill
         // directly.  stride is width*pixel_size bytes per the API's
@@ -399,7 +413,7 @@ Image JpegXsVideoDecoder::Impl::decodeFrame(
         if(err != SvtJxsErrorNone) {
                 errOut = Error::IOError;
                 errMsg = "svt_jpeg_xs_decoder_send_frame failed";
-                return Image();
+                return UncompressedVideoPayload::Ptr();
         }
 
         svt_jpeg_xs_frame_t outFrame = {};
@@ -407,25 +421,26 @@ Image JpegXsVideoDecoder::Impl::decodeFrame(
         if(err != SvtJxsErrorNone) {
                 errOut = Error::IOError;
                 errMsg = "svt_jpeg_xs_decoder_get_frame failed";
-                return Image();
+                return UncompressedVideoPayload::Ptr();
         }
 
         // Copy each tightly packed plane into the corresponding output
-        // Image plane.  The output Image's row stride may be larger
-        // than the plane width (alignment padding), so we can't do a
+        // payload plane.  The output's row stride may be larger than
+        // the plane width (alignment padding), so we can't do a
         // single memcpy per plane.
+        UncompressedVideoPayload *outRaw = output.modify();
         for(int c = 0; c < cfg.components_num; c++) {
                 const uint32_t planeWidthBytes = cfg.components[c].width * pixelBytes;
                 const uint32_t planeHeight     = cfg.components[c].height;
                 const uint8_t *src = tmpPlanes[c].data();
-                uint8_t *dst = static_cast<uint8_t *>(output.data(c));
-                const size_t dstStride = output.lineStride(c);
+                uint8_t *dst = outRaw->data()[c].data();
+                const size_t dstStride = outMl.lineStride(c, outDesc.size().width());
                 for(uint32_t y = 0; y < planeHeight; y++) {
                         std::memcpy(dst + y * dstStride, src + y * planeWidthBytes, planeWidthBytes);
                 }
         }
 
-        output.metadata() = input.metadata();
+        outRaw->desc().metadata() = input.metadata();
         return output;
 }
 
@@ -473,10 +488,10 @@ void JpegXsVideoEncoder::configure(const MediaConfig &config) {
         if(_capacity < 1) _capacity = 1;
 }
 
-Error JpegXsVideoEncoder::submitFrame(const Image::Ptr &frame, const MediaTimeStamp &pts) {
+Error JpegXsVideoEncoder::submitPayload(const UncompressedVideoPayload::Ptr &payload) {
         clearError();
-        if(!frame.isValid() || !frame->isValid()) {
-                setError(Error::Invalid, "JpegXsVideoEncoder: invalid frame");
+        if(!payload.isValid() || !payload->isValid()) {
+                setError(Error::Invalid, "JpegXsVideoEncoder: invalid payload");
                 return _lastError;
         }
         if(static_cast<int>(_queue.size()) >= _capacity && !_capacityWarned) {
@@ -487,9 +502,9 @@ Error JpegXsVideoEncoder::submitFrame(const Image::Ptr &frame, const MediaTimeSt
 
         Error codecErr;
         String codecMsg;
-        Image encoded = _impl->encodeFrame(*frame, _bpp, _decomposition,
-                                           codecErr, codecMsg);
-        if(!encoded.isValid()) {
+        auto cvp = _impl->encodeFrame(*payload, _bpp, _decomposition,
+                                      codecErr, codecMsg);
+        if(!cvp.isValid()) {
                 setError(codecErr.isError() ? codecErr : Error::ConversionFailed,
                          codecMsg.isEmpty()
                                  ? String("JpegXsVideoEncoder: encode failed")
@@ -497,17 +512,16 @@ Error JpegXsVideoEncoder::submitFrame(const Image::Ptr &frame, const MediaTimeSt
                 return _lastError;
         }
 
-        auto pkt = VideoPacket::Ptr::create(encoded.plane(0), encoded.pixelFormat());
-        pkt.modify()->setPts(pts);
-        pkt.modify()->setDts(pts);
-        pkt.modify()->addFlag(VideoPacket::Keyframe);
-        pkt.modify()->metadata() = encoded.metadata();
-        _queue.pushToBack(std::move(pkt));
+        auto *raw = cvp.modify();
+        raw->setPts(payload->pts());
+        raw->setDts(payload->pts());
+        raw->addFlag(MediaPayload::Keyframe);
+        _queue.pushToBack(std::move(cvp));
         return Error::Ok;
 }
 
-VideoPacket::Ptr JpegXsVideoEncoder::receivePacket() {
-        if(_queue.isEmpty()) return VideoPacket::Ptr();
+CompressedVideoPayload::Ptr JpegXsVideoEncoder::receiveCompressedPayload() {
+        if(_queue.isEmpty()) return CompressedVideoPayload::Ptr();
         return _queue.popFromFront();
 }
 
@@ -552,10 +566,10 @@ void JpegXsVideoDecoder::configure(const MediaConfig &config) {
         if(_capacity < 1) _capacity = 1;
 }
 
-Error JpegXsVideoDecoder::submitPacket(const VideoPacket::Ptr &packet) {
+Error JpegXsVideoDecoder::submitPayload(const CompressedVideoPayload::Ptr &payload) {
         clearError();
-        if(!packet.isValid() || !packet->isValid() || packet->size() == 0) {
-                setError(Error::Invalid, "JpegXsVideoDecoder: empty packet");
+        if(!payload.isValid() || !payload->isValid() || payload->size() == 0) {
+                setError(Error::Invalid, "JpegXsVideoDecoder: empty payload");
                 return _lastError;
         }
         if(static_cast<int>(_queue.size()) >= _capacity && !_capacityWarned) {
@@ -564,39 +578,25 @@ Error JpegXsVideoDecoder::submitPacket(const VideoPacket::Ptr &packet) {
                 _capacityWarned = true;
         }
 
-        // Same wedge as JpegVideoDecoder: wrap the packet bytes as a
-        // compressed Image with placeholder dims (SVT-JPEG-XS reads
-        // the real dimensions from the bitstream itself on first call).
-        const PixelFormat inputPd = packet->pixelFormat().isValid()
-                ? packet->pixelFormat()
-                : PixelFormat(PixelFormat::JPEG_XS_YUV10_422_Rec709);
-        Image jxsImage = Image::fromCompressedData(packet->view().data(),
-                                                   packet->size(),
-                                                   1, 1, inputPd,
-                                                   packet->metadata());
-        if(!jxsImage.isValid()) {
-                setError(Error::IOError, "JpegXsVideoDecoder: fromCompressedData failed");
-                return _lastError;
-        }
-
         Error codecErr;
         String codecMsg;
-        Image decoded = _impl->decodeFrame(jxsImage,
-                                           _outputPd.isValid() ? _outputPd.id() : PixelFormat::Invalid,
-                                           codecErr, codecMsg);
-        if(!decoded.isValid()) {
+        auto uvp = _impl->decodeFrame(*payload,
+                                      _outputPd.isValid() ? _outputPd.id() : PixelFormat::Invalid,
+                                      codecErr, codecMsg);
+        if(!uvp.isValid()) {
                 setError(codecErr.isError() ? codecErr : Error::ConversionFailed,
                          codecMsg.isEmpty()
                                  ? String("JpegXsVideoDecoder: decode failed")
                                  : codecMsg);
                 return _lastError;
         }
-        _queue.pushToBack(Image::Ptr::create(std::move(decoded)));
+        uvp.modify()->setPts(payload->pts());
+        _queue.pushToBack(std::move(uvp));
         return Error::Ok;
 }
 
-Image::Ptr JpegXsVideoDecoder::receiveFrame() {
-        if(_queue.isEmpty()) return Image::Ptr();
+UncompressedVideoPayload::Ptr JpegXsVideoDecoder::receiveVideoPayload() {
+        if(_queue.isEmpty()) return UncompressedVideoPayload::Ptr();
         return _queue.popFromFront();
 }
 

@@ -7,7 +7,6 @@
 
 #include <promeki/audioblock.h>
 #include <promeki/audiodesc.h>
-#include <promeki/audio.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

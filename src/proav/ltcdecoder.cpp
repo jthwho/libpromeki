@@ -31,14 +31,14 @@ LtcDecoder::DecodedList LtcDecoder::decode(const int8_t *samples, size_t count) 
         return _results;
 }
 
-LtcDecoder::DecodedList LtcDecoder::decode(const Audio &audio, int channelIndex) {
-        if(!audio.isValid()) return DecodedList();
-        const AudioDesc &desc = audio.desc();
+LtcDecoder::DecodedList LtcDecoder::decodeInterleaved(
+        const AudioDesc &desc, const uint8_t *data, size_t samples,
+        int channelIndex)
+{
         const int channels = static_cast<int>(desc.channels());
         if(channels <= 0 || channelIndex < 0 || channelIndex >= channels) return DecodedList();
         if(static_cast<int>(desc.sampleRate()) != _decoder.sample_rate) return DecodedList();
 
-        const size_t samples = audio.samples();
         if(samples == 0) {
                 _results.clear();
                 return _results;
@@ -48,7 +48,7 @@ LtcDecoder::DecodedList LtcDecoder::decode(const Audio &audio, int channelIndex)
         // through to libvtc with no conversion.
         if(channels == 1 && channelIndex == 0 &&
            desc.format().id() == AudioFormat::PCMI_S8) {
-                return decode(audio.data<int8_t>(), samples);
+                return decode(reinterpret_cast<const int8_t *>(data), samples);
         }
 
         // Format-agnostic path: convert every interleaved sample frame
@@ -62,9 +62,7 @@ LtcDecoder::DecodedList LtcDecoder::decode(const Audio &audio, int channelIndex)
         if(_floatScratch.size() < totalScalars) _floatScratch.resize(totalScalars);
         if(_int8Scratch.size() < samples)       _int8Scratch.resize(samples);
 
-        desc.samplesToFloat(_floatScratch.data(),
-                            static_cast<const uint8_t *>(audio.data<void>()),
-                            samples);
+        desc.samplesToFloat(_floatScratch.data(), data, samples);
 
         for(size_t s = 0; s < samples; s++) {
                 float v = _floatScratch[s * static_cast<size_t>(channels) +
@@ -75,6 +73,21 @@ LtcDecoder::DecodedList LtcDecoder::decode(const Audio &audio, int channelIndex)
         }
 
         return decode(_int8Scratch.data(), samples);
+}
+
+LtcDecoder::DecodedList LtcDecoder::decode(
+        const UncompressedAudioPayload &audio, int channelIndex)
+{
+        if(!audio.isValid()) return DecodedList();
+        if(audio.planeCount() == 0) return DecodedList();
+        // Only interleaved layouts are supported — the first (and only)
+        // plane must cover every channel.  Planar payloads fall out
+        // here rather than silently decoding channel 0 only.
+        if(audio.desc().format().isPlanar()) return DecodedList();
+        auto view = audio.plane(0);
+        if(!view.isValid()) return DecodedList();
+        return decodeInterleaved(audio.desc(), view.data(),
+                                 audio.sampleCount(), channelIndex);
 }
 
 void LtcDecoder::reset() {

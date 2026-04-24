@@ -73,11 +73,13 @@ void AudioFile::Impl::close() {
         return;
 }
 
-Error AudioFile::Impl::read(Audio &audio, size_t maxSamples) {
+Error AudioFile::Impl::read(UncompressedAudioPayload::Ptr &out, size_t maxSamples) {
+        (void)out; (void)maxSamples;
         return Error::Invalid;
 }
 
-Error AudioFile::Impl::write(const Audio &audio) {
+Error AudioFile::Impl::write(const UncompressedAudioPayload &payload) {
+        (void)payload;
         return Error::Invalid;
 }
 

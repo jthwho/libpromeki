@@ -12,7 +12,7 @@
 #include <promeki/clock.h>
 #include <promeki/clockdomain.h>
 #include <promeki/audiodesc.h>
-#include <promeki/audio.h>
+#include <promeki/uncompressedaudiopayload.h>
 
 struct SDL_AudioStream;
 
@@ -99,15 +99,15 @@ class SDLAudioOutput : public ObjectBase {
                 bool isOpen() const { return _open; }
 
                 /**
-                 * @brief Pushes audio samples to the output stream.
+                 * @brief Pushes uncompressed audio samples to the output stream.
                  *
                  * Thread-safe.  The audio data is converted to float32
                  * if necessary before being pushed to the SDL stream.
                  *
-                 * @param audio The audio data to play.
+                 * @param payload The payload's PCM bytes to play.
                  * @return true on success.
                  */
-                bool pushAudio(const Audio &audio);
+                bool pushAudio(const UncompressedAudioPayload &payload);
 
                 /**
                  * @brief Returns the number of bytes currently queued.

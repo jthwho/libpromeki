@@ -51,7 +51,7 @@ TEST_SUITE("SDLVideoWidget") {
 
                 SUBCASE("10/12-bit YUV and 422 planar/NV16 fall through") {
                         // No SDL equivalents for these — they take the
-                        // CSC fallback path through Image::convert().
+                        // CSC fallback path through UncompressedVideoPayload::convert().
                         CHECK_FALSE(SDLVideoWidget::isDirectlyMappable(PixelFormat::YUV10_422_Rec709));
                         CHECK_FALSE(SDLVideoWidget::isDirectlyMappable(PixelFormat::YUV8_422_Planar_Rec709));
                         CHECK_FALSE(SDLVideoWidget::isDirectlyMappable(PixelFormat::YUV8_422_SemiPlanar_Rec709));

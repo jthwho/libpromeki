@@ -40,7 +40,7 @@ PROMEKI_NAMESPACE_BEGIN
  * for 8-bit 4:2:2).
  *
  * Registered against @ref VideoCodec::JPEG_XS.  Every emitted
- * packet is flagged @ref MediaPacket::Keyframe because every JPEG XS
+ * payload is flagged @ref MediaPayload::Keyframe because every JPEG XS
  * access unit is independently decodable.
  *
  * @par Config keys
@@ -77,9 +77,8 @@ class JpegXsVideoEncoder : public VideoEncoder {
                 static List<int> supportedInputList();
 
                 void configure(const MediaConfig &config) override;
-                Error submitFrame(const Image::Ptr &frame,
-                                  const MediaTimeStamp &pts = MediaTimeStamp()) override;
-                VideoPacket::Ptr receivePacket() override;
+                Error submitPayload(const UncompressedVideoPayload::Ptr &payload) override;
+                CompressedVideoPayload::Ptr receiveCompressedPayload() override;
                 Error flush() override;
                 Error reset() override;
 
@@ -104,7 +103,7 @@ class JpegXsVideoEncoder : public VideoEncoder {
                 int                          _decomposition = DefaultDecomposition;
                 PixelFormat                  _outputPd;
                 int                          _capacity      = 8;
-                Deque<VideoPacket::Ptr>      _queue;
+                Deque<CompressedVideoPayload::Ptr> _queue;
                 bool                         _capacityWarned = false;
 };
 
@@ -131,8 +130,8 @@ class JpegXsVideoDecoder : public VideoDecoder {
                 static List<int> supportedOutputList();
 
                 void configure(const MediaConfig &config) override;
-                Error submitPacket(const VideoPacket::Ptr &packet) override;
-                Image::Ptr receiveFrame() override;
+                Error submitPayload(const CompressedVideoPayload::Ptr &payload) override;
+                UncompressedVideoPayload::Ptr receiveVideoPayload() override;
                 Error flush() override;
                 Error reset() override;
 
@@ -146,7 +145,7 @@ class JpegXsVideoDecoder : public VideoDecoder {
 
                 PixelFormat            _outputPd;
                 int                    _capacity = 8;
-                Deque<Image::Ptr>      _queue;
+                Deque<UncompressedVideoPayload::Ptr> _queue;
                 bool                   _capacityWarned = false;
 };
 

@@ -931,6 +931,7 @@ set(PROMEKI_SOURCES
     src/core/benchmark.cpp
     src/core/benchmarkrunner.cpp
     src/core/buffer.cpp
+    src/core/bufferview.cpp
     src/core/bufferediodevice.cpp
     src/core/bufferiodevice.cpp
     src/core/bufferpool.cpp
@@ -1096,7 +1097,6 @@ endif()
 # ProAV sources
 if(PROMEKI_ENABLE_PROAV)
     list(APPEND PROMEKI_HEADERS
-        include/promeki/audio.h
         include/promeki/audioblock.h
         include/promeki/audiobuffer.h
         include/promeki/audiodecoder.h
@@ -1116,7 +1116,6 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/frame.h
         include/promeki/framebridge.h
         include/promeki/mediaiotask_framebridge.h
-        include/promeki/image.h
         include/promeki/imagedesc.h
         include/promeki/imagefile.h
         include/promeki/imagefileio.h
@@ -1130,7 +1129,13 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/mediapipelineplanner.h
         include/promeki/mediapipelinestats.h
         include/promeki/pipelinestats.h
-        include/promeki/mediapacket.h
+        include/promeki/mediapayload.h
+        include/promeki/videopayload.h
+        include/promeki/uncompressedvideopayload.h
+        include/promeki/compressedvideopayload.h
+        include/promeki/audiopayload.h
+        include/promeki/uncompressedaudiopayload.h
+        include/promeki/compressedaudiopayload.h
         include/promeki/mediaiotask.h
         include/promeki/nvencvideoencoder.h
         include/promeki/nvdecvideodecoder.h
@@ -1152,7 +1157,6 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/videotestpattern.h
     )
     list(APPEND PROMEKI_SOURCES
-        src/proav/audio.cpp
         src/proav/audioblock.cpp
         src/proav/audiobuffer.cpp
         src/proav/audiodecoder.cpp
@@ -1171,7 +1175,6 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/framesync.cpp
         src/proav/debugmediafile.cpp
         src/proav/mediaiotask_debugmedia.cpp
-        src/proav/image.cpp
         src/proav/imagedataencoder.cpp
         src/proav/imagedatadecoder.cpp
         src/proav/imagedesc.cpp
@@ -1195,9 +1198,9 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/mediapipelineplanner.cpp
         src/proav/mediapipelinestats.cpp
         src/proav/pipelinestats.cpp
-        src/proav/mediapacket.cpp
-        src/proav/videopacket.cpp
-        src/proav/audiopacket.cpp
+        src/proav/mediapayload.cpp
+        src/proav/uncompressedvideopayload.cpp
+        src/proav/uncompressedaudiopayload.cpp
         src/proav/mediaiotask.cpp
         src/proav/mediaiotask_csc.cpp
         src/proav/mediaiotask_src.cpp
@@ -1949,12 +1952,10 @@ if(PROMEKI_BUILD_TESTS)
 
     if(PROMEKI_ENABLE_PROAV)
         list(APPEND UNITTEST_SOURCES
-            tests/unit/audio.cpp
             tests/unit/audioblock.cpp
             tests/unit/audiobuffer.cpp
             tests/unit/audiodesc.cpp
             tests/unit/audioencoder.cpp
-            tests/unit/audiopacket.cpp
             tests/unit/audiofilefactory.cpp
             tests/unit/audiotestpattern.cpp
             $<$<BOOL:${PROMEKI_ENABLE_OPUS}>:tests/unit/opusaudiocodec.cpp>
@@ -1964,7 +1965,6 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/debugmediafile.cpp
             tests/unit/frame.cpp
             tests/unit/framebridge.cpp
-            tests/unit/image.cpp
             tests/unit/imagedataencoder.cpp
             tests/unit/imagedatadecoder.cpp
             tests/unit/imagedesc.cpp
@@ -1987,7 +1987,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/mediaio_identifiers.cpp
             tests/unit/mediaio_negotiation.cpp
             tests/unit/mediaiotask_overrides.cpp
-            tests/unit/mediapacket.cpp
+            tests/unit/mediapayload.cpp
             tests/unit/mediaio_stats.cpp
             tests/unit/mediapipelineconfig.cpp
             tests/unit/mediapipelineplanner.cpp
@@ -2009,7 +2009,6 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/pixelformat.cpp
             tests/unit/videocodec.cpp
             tests/unit/videocodec_registry.cpp
-            tests/unit/videopacket.cpp
             tests/unit/quicktime.cpp
             tests/unit/videotestpattern.cpp
         )

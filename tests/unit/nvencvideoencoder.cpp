@@ -19,14 +19,14 @@
 
 #include <promeki/videoencoder.h>
 #include <promeki/videocodec.h>
-#include <promeki/mediapacket.h>
 #include <promeki/mediaconfig.h>
-#include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/pixelformat.h>
 #include <promeki/buffer.h>
 #include <promeki/cuda.h>
 #include <promeki/enums.h>
+#include <promeki/compressedvideopayload.h>
+#include <promeki/uncompressedvideopayload.h>
 #include <cstdint>
 #include <cstring>
 
@@ -34,20 +34,17 @@ using namespace promeki;
 
 namespace {
 
-// Builds an NV12 frame whose Y plane is filled with @p yValue and
-// whose UV plane is filled with @p uvValue.  The zero-copy
-// Image::fromBuffer path is single-plane only, so we use the
-// allocating constructor and write the raw bytes via Image::data(),
-// which returns a writable void pointer into each plane's buffer.
-Image makeNv12Frame(int width, int height, uint8_t yValue = 128,
-                    uint8_t uvValue = 128) {
+UncompressedVideoPayload::Ptr makeNv12Frame(int width, int height,
+                                            uint8_t yValue = 128,
+                                            uint8_t uvValue = 128) {
         PixelFormat pd(PixelFormat::YUV8_420_SemiPlanar_Rec709);
-        Image img(Size2Du32(width, height), pd);
-        REQUIRE(img.planes().size() == 2);
+        auto img = UncompressedVideoPayload::allocate(
+                ImageDesc(Size2Du32(width, height), pd));
+        REQUIRE(img->planeCount() == 2);
         const size_t yBytes  = static_cast<size_t>(width) * height;
         const size_t uvBytes = static_cast<size_t>(width) * (height / 2);
-        std::memset(img.data(0), yValue,  yBytes);
-        std::memset(img.data(1), uvValue, uvBytes);
+        std::memset(img.modify()->data()[0].data(), yValue,  yBytes);
+        std::memset(img.modify()->data()[1].data(), uvValue, uvBytes);
         return img;
 }
 
@@ -67,8 +64,8 @@ bool looksLikeAnnexB(const Buffer::Ptr &b) {
 // available at runtime (no device, no driver library) so the caller
 // can early-return.
 int runSmallEncode(VideoCodec::ID codecId,
-                   VideoPacket::Ptr &firstPacket,
-                   VideoPacket::Ptr &lastPacket) {
+                   CompressedVideoPayload::Ptr &firstPacket,
+                   CompressedVideoPayload::Ptr &lastPacket) {
         auto r = VideoCodec(codecId).createEncoder();
         if(error(r).isError()) return -1;
         VideoEncoder *enc = value(r);
@@ -91,10 +88,10 @@ int runSmallEncode(VideoCodec::ID codecId,
         for(int i = 0; i < kFrames; ++i) {
                 // Slight luma variation frame-to-frame so the encoder
                 // sees some movement (helps exercise RC).
-                Image::Ptr f = Image::Ptr::create(makeNv12Frame(kWidth, kHeight,
-                                        static_cast<uint8_t>(96 + i * 4),
-                                        128));
-                if(enc->submitFrame(f) != Error::Ok) {
+                auto uvp = makeNv12Frame(kWidth, kHeight,
+                                         static_cast<uint8_t>(96 + i * 4),
+                                         128);
+                if(enc->submitPayload(uvp) != Error::Ok) {
                         // First real call lazily loads libnvidia-encode.
                         // If that fails, we fail gracefully by cleaning
                         // up and reporting zero packets — the outer test
@@ -102,7 +99,7 @@ int runSmallEncode(VideoCodec::ID codecId,
                         delete enc;
                         return -1;
                 }
-                while(auto pkt = enc->receivePacket()) {
+                while(auto pkt = enc->receiveCompressedPayload()) {
                         if(pkt->isEndOfStream()) break;
                         if(!firstPacket) firstPacket = pkt;
                         lastPacket = pkt;
@@ -111,7 +108,7 @@ int runSmallEncode(VideoCodec::ID codecId,
         }
 
         enc->flush();
-        while(auto pkt = enc->receivePacket()) {
+        while(auto pkt = enc->receiveCompressedPayload()) {
                 if(pkt->isEndOfStream()) {
                         lastPacket = pkt;
                         break;
@@ -145,16 +142,16 @@ TEST_CASE("NvencVideoEncoder: registered as Nvidia backend for H264/HEVC/AV1") {
 TEST_CASE("NvencVideoEncoder: H.264 encode produces keyframe and EOS") {
         if(!CudaDevice::isAvailable()) return;
 
-        VideoPacket::Ptr first, last;
+        CompressedVideoPayload::Ptr first, last;
         int n = runSmallEncode(VideoCodec::H264, first, last);
         if(n < 0) return;   // NVENC runtime unavailable — skip
 
         CHECK(n >= 1);
         REQUIRE(first);
-        CHECK(first->pixelFormat().id() == PixelFormat::H264);
+        CHECK(first->desc().pixelFormat().id() == PixelFormat::H264);
         CHECK(first->isKeyframe());
-        CHECK(first->size() > 0);
-        CHECK(looksLikeAnnexB(first->buffer()));
+        CHECK(first->plane(0).size() > 0);
+        CHECK(looksLikeAnnexB(first->plane(0).buffer()));
 
         REQUIRE(last);
         CHECK(last->isEndOfStream());
@@ -163,16 +160,16 @@ TEST_CASE("NvencVideoEncoder: H.264 encode produces keyframe and EOS") {
 TEST_CASE("NvencVideoEncoder: HEVC encode produces keyframe and EOS") {
         if(!CudaDevice::isAvailable()) return;
 
-        VideoPacket::Ptr first, last;
+        CompressedVideoPayload::Ptr first, last;
         int n = runSmallEncode(VideoCodec::HEVC, first, last);
         if(n < 0) return;
 
         CHECK(n >= 1);
         REQUIRE(first);
-        CHECK(first->pixelFormat().id() == PixelFormat::HEVC);
+        CHECK(first->desc().pixelFormat().id() == PixelFormat::HEVC);
         CHECK(first->isKeyframe());
-        CHECK(first->size() > 0);
-        CHECK(looksLikeAnnexB(first->buffer()));
+        CHECK(first->plane(0).size() > 0);
+        CHECK(looksLikeAnnexB(first->plane(0).buffer()));
 
         REQUIRE(last);
         CHECK(last->isEndOfStream());
@@ -200,11 +197,11 @@ TEST_CASE("NvencVideoEncoder: requestKeyframe forces IDR on next submit") {
         // Submit 3 frames: frame 0 is the implicit IDR, frames 1 and
         // 2 are non-keyframes.  Request a keyframe and submit frame
         // 3; it should come back as an IDR.
-        auto submit = [&](int idx) -> VideoPacket::Ptr {
-                Image::Ptr f = Image::Ptr::create(makeNv12Frame(kWidth, kHeight,
-                                        static_cast<uint8_t>(64 + idx * 8), 128));
-                if(enc->submitFrame(f) != Error::Ok) return VideoPacket::Ptr();
-                return enc->receivePacket();
+        auto submit = [&](int idx) -> CompressedVideoPayload::Ptr {
+                auto uvp = makeNv12Frame(kWidth, kHeight,
+                                         static_cast<uint8_t>(64 + idx * 8), 128);
+                if(enc->submitPayload(uvp) != Error::Ok) return CompressedVideoPayload::Ptr();
+                return enc->receiveCompressedPayload();
         };
 
         auto p0 = submit(0);
@@ -240,13 +237,11 @@ TEST_CASE("NvencVideoEncoder: rejects non-NV12 input") {
 
         // Build an RGB8 frame — deliberately the wrong format.
         PixelFormat pd(PixelFormat::RGB8_sRGB);
-        const size_t bytes = pd.memLayout().planeSize(0, 64, 64);
-        auto buf = Buffer::Ptr::create(bytes);
-        buf.modify()->fill(0x80);
-        buf.modify()->setSize(bytes);
-        Image::Ptr rgb = Image::Ptr::create(Image::fromBuffer(buf, 64, 64, pd));
+        auto rgb = UncompressedVideoPayload::allocate(ImageDesc(64, 64, pd));
+        REQUIRE(rgb.isValid());
+        std::memset(rgb.modify()->data()[0].data(), 0x80, rgb->plane(0).size());
 
-        Error err = enc->submitFrame(rgb);
+        Error err = enc->submitPayload(rgb);
         CHECK(err == Error::PixelFormatNotSupported);
 
         delete enc;

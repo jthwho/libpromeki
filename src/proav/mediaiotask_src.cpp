@@ -7,8 +7,10 @@
 
 #include <promeki/mediaiotask_src.h>
 #include <promeki/enums.h>
-#include <promeki/audio.h>
 #include <promeki/frame.h>
+#include <promeki/videopayload.h>
+#include <promeki/audiopayload.h>
+#include <promeki/uncompressedaudiopayload.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/mediaiodescription.h>
@@ -163,26 +165,36 @@ Error MediaIOTask_SRC::convertFrame(const Frame::Ptr &input, Frame::Ptr &output)
         Frame *outRaw = outFrame.modify();
         outRaw->metadata() = input->metadata();
 
-        for(const auto &srcImgPtr : input->imageList()) {
-                outRaw->imageList().pushToBack(srcImgPtr);
+        // Video is pass-through — just forward the payload pointers.
+        for(const VideoPayload::Ptr &srcVp : input->videoPayloads()) {
+                if(srcVp.isValid()) outRaw->addPayload(srcVp);
         }
 
-        for(const auto &srcAudioPtr : input->audioList()) {
-                if(!srcAudioPtr.isValid()) continue;
-                const Audio &srcAudio = *srcAudioPtr;
+        // Audio processing runs through the payload-native
+        // @ref UncompressedAudioPayload::convert; push the converted
+        // payload directly, no legacy bridge round-trip.
+        for(const AudioPayload::Ptr &srcAp : input->audioPayloads()) {
+                if(!srcAp.isValid()) continue;
+                const auto *srcUap = srcAp->as<UncompressedAudioPayload>();
+                if(srcUap == nullptr) {
+                        promekiErr("MediaIOTask_SRC: compressed audio payload "
+                                   "reached SRC — expected uncompressed PCM");
+                        return Error::NotSupported;
+                }
 
-                Audio dstAudio;
+                UncompressedAudioPayload::Ptr dstPayload;
                 if(_outputAudioDataTypeSet &&
-                   srcAudio.desc().format().id() != _outputAudioDataType) {
-                        dstAudio = srcAudio.convert(_outputAudioDataType);
-                        if(!dstAudio.isValid()) {
+                   srcUap->desc().format().id() != _outputAudioDataType) {
+                        dstPayload = srcUap->convert(
+                                AudioFormat(_outputAudioDataType));
+                        if(!dstPayload.isValid()) {
                                 promekiErr("MediaIOTask_SRC: audio convertTo failed");
                                 return Error::ConversionFailed;
                         }
                 } else {
-                        dstAudio = srcAudio;
+                        dstPayload = UncompressedAudioPayload::Ptr::create(*srcUap);
                 }
-                outRaw->audioList().pushToBack(Audio::Ptr::create(std::move(dstAudio)));
+                outRaw->addPayload(dstPayload);
         }
 
         output = std::move(outFrame);

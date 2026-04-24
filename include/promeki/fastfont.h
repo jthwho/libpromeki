@@ -9,7 +9,7 @@
 
 #include <promeki/font.h>
 #include <promeki/map.h>
-#include <promeki/image.h>
+#include <promeki/uncompressedvideopayload.h>
 #include <promeki/buffer.h>
 #include <promeki/uniqueptr.h>
 
@@ -79,8 +79,8 @@ class FastFont : public Font {
 
         private:
                 struct CachedGlyph {
-                        Image   image;          ///< Pre-rendered glyph image in the target pixel format.
-                        int     advanceX = 0;   ///< Horizontal advance to next glyph in pixels.
+                        UncompressedVideoPayload::Ptr payload; ///< Pre-rendered glyph payload.
+                        int                           advanceX = 0; ///< Horizontal advance to next glyph in pixels.
                 };
 
                 bool ensureFontLoaded();

@@ -1720,8 +1720,8 @@ void FastPathRGBA10LEtoV210(const void *const *srcPlanes,
 // v210 has a specialized bit-packing layout that the generic CSC
 // pipeline's unpack/pack can't handle (6 pixels in 16 bytes with
 // chroma subsampling and 128-byte line alignment).  There are fast
-// paths for v210 <-> RGBA10_LE_sRGB, but Image::convert() between
-// RGBA8 and v210 has no direct entry, and the general pipeline
+// paths for v210 <-> RGBA10_LE_sRGB, but UncompressedVideoPayload::convert()
+// between RGBA8 and v210 has no direct entry, and the general pipeline
 // silently produces garbage because UnpackInterleavedImpl treats v210
 // as a generic 3x10 interleaved 4:2:2 format.  These wrapper kernels
 // fill the 8-bit gap by inlining an RGBA8<->RGBA10 bit-depth step

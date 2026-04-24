@@ -13,9 +13,9 @@
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
 #include <promeki/benchmark.h>
-#include <promeki/image.h>
-#include <promeki/audio.h>
-#include <promeki/mediapacket.h>
+#include <promeki/mediapayload.h>
+#include <promeki/videopayload.h>
+#include <promeki/audiopayload.h>
 #include <promeki/metadata.h>
 #include <promeki/list.h>
 #include <promeki/stringlist.h>
@@ -28,20 +28,19 @@ PROMEKI_NAMESPACE_BEGIN
 class MediaDesc;
 
 /**
- * @brief A media frame containing images, audio, and metadata.
+ * @brief A media frame containing payloads and metadata.
  * @ingroup proav
  *
- * Aggregates one or more @ref Image entries (uncompressed or
- * compressed), one or more @ref Audio tracks, and a metadata
- * container into a single unit that represents a frame of media
- * content.
+ * Aggregates one or more @ref MediaPayload entries — uncompressed
+ * or compressed video (@ref VideoPayload) and audio
+ * (@ref AudioPayload) — together with a @ref Metadata container,
+ * into a single unit that represents one frame of media content.
  *
- * Compressed bitstream access units are not stored as a separate
- * list on the Frame — they travel with their owning essence via
- * @ref Image::packet and @ref Audio::packet.  A compressed Image
- * carries its encoded @ref VideoPacket directly; that's the
- * canonical location a downstream @ref VideoDecoder reads from,
- * and the canonical location a @ref VideoEncoder writes to.
+ * All essence lives in the @ref payloadList.  Use
+ * @ref videoPayloads / @ref audioPayloads to filter by kind.
+ * Compressed bitstream access units travel as
+ * @ref CompressedVideoPayload or @ref CompressedAudioPayload entries
+ * in the same list.
  */
 class Frame {
         PROMEKI_SHARED_FINAL(Frame)
@@ -57,28 +56,55 @@ class Frame {
                 Frame() = default;
 
                 /**
-                 * @brief Returns a const reference to the list of image planes.
-                 * @return The image pointer list.
+                 * @brief Returns a const reference to the list of media payloads.
+                 * @return The payload pointer list.
                  */
-                const Image::PtrList &imageList() const { return _imageList; }
+                const MediaPayload::PtrList &payloadList() const { return _payloads; }
 
                 /**
-                 * @brief Returns a mutable reference to the list of image planes.
-                 * @return The image pointer list.
+                 * @brief Returns a mutable reference to the list of media payloads.
+                 * @return The payload pointer list.
                  */
-                Image::PtrList &imageList() { return _imageList; }
+                MediaPayload::PtrList &payloadList() { return _payloads; }
 
                 /**
-                 * @brief Returns a const reference to the list of audio tracks.
-                 * @return The audio pointer list.
+                 * @brief Appends a payload to @ref payloadList.
                  */
-                const Audio::PtrList &audioList() const { return _audioList; }
+                void addPayload(MediaPayload::Ptr p) {
+                        _payloads.pushToBack(std::move(p));
+                }
 
                 /**
-                 * @brief Returns a mutable reference to the list of audio tracks.
-                 * @return The audio pointer list.
+                 * @brief Returns the @ref Video-kind entries from
+                 *        @ref payloadList as typed pointers.
+                 *
+                 * Walks @ref payloadList once and collects every
+                 * @ref MediaPayload whose @c kind is
+                 * @ref MediaPayloadKind::Video, returning them as a
+                 * fresh @ref VideoPayload::PtrList with shared
+                 * ownership (no clone).  Null payload entries are
+                 * skipped.
+                 *
+                 * The convenience consumers want during migration:
+                 * read once, get only the video side, still see
+                 * @ref UncompressedVideoPayload and
+                 * @ref CompressedVideoPayload polymorphically via
+                 * @ref MediaPayload::as.
+                 *
+                 * @return A fresh @ref VideoPayload::PtrList of all
+                 *         video-kind payloads in payload-list order.
                  */
-                Audio::PtrList &audioList() { return _audioList; }
+                VideoPayload::PtrList videoPayloads() const;
+
+                /**
+                 * @brief Returns the @ref Audio-kind entries from
+                 *        @ref payloadList as typed pointers.
+                 *
+                 * @return A fresh @ref AudioPayload::PtrList of all
+                 *         audio-kind payloads in payload-list order.
+                 * @sa videoPayloads
+                 */
+                AudioPayload::PtrList audioPayloads() const;
 
                 /**
                  * @brief Returns a const reference to the frame metadata.
@@ -106,31 +132,23 @@ class Frame {
                  * @return The composed VideoFormat, or an invalid
                  *         VideoFormat on failure.
                  */
-                VideoFormat videoFormat(size_t index) const {
-                        if(index >= _imageList.size()) return VideoFormat();
-                        const Image::Ptr &img = _imageList[index];
-                        if(!img) return VideoFormat();
-                        const ImageDesc &d = img->desc();
-                        return VideoFormat(d.size(),
-                                           _metadata.getAs<FrameRate>(Metadata::FrameRate),
-                                           d.videoScanMode());
-                }
+                VideoFormat videoFormat(size_t index) const;
 
                 /**
                  * @brief Assembles a MediaDesc describing this Frame.
                  *
-                 * Returns a MediaDesc populated from the frame's
-                 * own state: the frame rate is taken from
-                 * @c Metadata::FrameRate (if set), the image list
-                 * is built from the @ref Image::desc of each @ref Image in
-                 * @ref imageList, the audio list is built from the
-                 * @ref Audio::desc of each @ref Audio in @ref audioList,
-                 * and the frame's metadata is copied across.
+                 * Returns a MediaDesc populated from the frame's own
+                 * state: the frame rate is taken from
+                 * @c Metadata::FrameRate (if set), the video descriptors
+                 * are built from each @ref VideoPayload in
+                 * @ref payloadList, the audio descriptors from each
+                 * @ref AudioPayload, and the frame's metadata is copied
+                 * across.
                  *
                  * The returned MediaDesc is only
                  * @ref MediaDesc::isValid "valid" if both a frame
                  * rate is present in metadata and the frame carries
-                 * at least one image or audio entry.
+                 * at least one video or audio payload.
                  */
                 MediaDesc mediaDesc() const;
 
@@ -181,8 +199,8 @@ class Frame {
                  * on a mid-GOP video frame that will never be written.
                  */
                 enum CutPointScope {
-                        CutPointVideoOnly = 0,  ///< @brief Consider only @ref imageList.
-                        CutPointAudioOnly = 1,  ///< @brief Consider only @ref audioList.
+                        CutPointVideoOnly = 0,  ///< @brief Consider only video payloads.
+                        CutPointAudioOnly = 1,  ///< @brief Consider only audio payloads.
                         CutPointAudioVideo = 2  ///< @brief Consider every essence stream in the frame (default).
                 };
 
@@ -190,9 +208,9 @@ class Frame {
                  * @brief Returns true when stopping the stream before this
                  *        frame leaves the chosen essence streams intact.
                  *
-                 * Defers to @ref Image::isSafeCutPoint for every image in
-                 * @ref imageList and @ref Audio::isSafeCutPoint for every
-                 * audio unit in @ref audioList.  A scope that excludes a
+                 * Defers to @ref MediaPayload::isSafeCutPoint for every video
+                 * payload in @ref payloadList and every audio payload.
+                 * A scope that excludes a
                  * side of the essence skips that side entirely — useful
                  * for sinks that only accept one kind of essence and
                  * should not be held hostage to a mid-GOP frame that
@@ -204,8 +222,8 @@ class Frame {
                  * lists that always carry valid pointers.
                  *
                  * @param scope Which essence streams to consider.
-                 * @return @c true when the cut is safe for every image /
-                 *         audio unit in scope.
+                 * @return @c true when the cut is safe for every payload
+                 *         in scope.
                  */
                 bool isSafeCutPoint(CutPointScope scope = CutPointAudioVideo) const;
 
@@ -214,12 +232,12 @@ class Frame {
                  *        this frame's full contents.
                  *
                  * Emits the scalar-key block registered with
-                 * @c VariantLookup<Frame> (@c ImageCount, @c AudioCount,
-                 * @c HasBenchmark), the frame's metadata via
-                 * @ref Metadata::dump, the @ref configUpdate delta
-                 * when non-empty, and then @ref Image::dump /
-                 * @ref Audio::dump for every entry indented by two
-                 * spaces.
+                 * @c VariantLookup<Frame> (@c VideoPayloadCount,
+                 * @c AudioPayloadCount, @c HasBenchmark), the frame's
+                 * metadata via @ref Metadata::dump, the
+                 * @ref configUpdate delta when non-empty, and then
+                 * a subdump of each payload in @ref payloadList
+                 * indented by two spaces.
                  *
                  * No leading @c "Frame:" header is emitted — callers
                  * that need one (e.g. @c pmdf-inspect printing a
@@ -234,8 +252,7 @@ class Frame {
                 StringList dump(const String &indent = String()) const;
 
         private:
-                Image::PtrList         _imageList;
-                Audio::PtrList         _audioList;
+                MediaPayload::PtrList  _payloads;
                 Metadata               _metadata;
                 Benchmark::Ptr         _benchmark;
                 MediaConfig            _configUpdate;

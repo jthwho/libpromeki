@@ -13,10 +13,10 @@
 #include <promeki/error.h>
 #include <promeki/list.h>
 #include <promeki/result.h>
-#include <promeki/image.h>
 #include <promeki/videocodec.h>
 #include <promeki/backendweight.h>
-#include <promeki/videopacket.h>
+#include <promeki/compressedvideopayload.h>
+#include <promeki/uncompressedvideopayload.h>
 #include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -100,27 +100,26 @@ class VideoDecoder {
                 virtual void configure(const MediaConfig &config);
 
                 /**
-                 * @brief Submits one encoded packet for decoding.
-                 * @param packet The packet to decode, passed as a
-                 *               shared @ref VideoPacket::Ptr so the
-                 *               decoder can retain the packet without
-                 *               copying its payload.  Its
-                 *               @ref VideoPacket::pixelFormat should fall
-                 *               within this codec's compressed PixelFormat
-                 *               set (see @ref VideoCodec::compressedPixelFormats).
-                 *               A null Ptr is treated as @ref Error::Invalid.
+                 * @brief Submits one encoded payload for decoding.
+                 *
+                 * @param payload Compressed access unit to decode.  Its
+                 *                @ref ImageDesc::pixelFormat should fall
+                 *                within this codec's compressed
+                 *                PixelFormat set (see
+                 *                @ref VideoCodec::compressedPixelFormats).
+                 *                A null Ptr is treated as @ref Error::Invalid.
                  * @return @c Error::Ok on success.
                  */
-                virtual Error submitPacket(const VideoPacket::Ptr &packet) = 0;
+                virtual Error submitPayload(const CompressedVideoPayload::Ptr &payload) = 0;
 
                 /**
-                 * @brief Dequeues one decoded frame.
-                 * @return A valid @ref Image::Ptr, or a null Ptr when
-                 *         no frame is ready.
+                 * @brief Dequeues one decoded payload.
+                 * @return A valid @ref UncompressedVideoPayload::Ptr, or
+                 *         a null Ptr when no frame is ready.
                  */
-                virtual Image::Ptr receiveFrame() = 0;
+                virtual UncompressedVideoPayload::Ptr receiveVideoPayload() = 0;
 
-                /** @brief Signals end-of-stream; remaining frames can be drained with @ref receiveFrame. */
+                /** @brief Signals end-of-stream; remaining frames can be drained with @ref receiveVideoPayload. */
                 virtual Error flush() = 0;
 
                 /** @brief Discards any pending packets / frames. */

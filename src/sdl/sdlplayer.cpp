@@ -14,6 +14,13 @@
 #include <promeki/clock.h>
 #include <promeki/colormodel.h>
 #include <promeki/frame.h>
+#include <promeki/uncompressedvideopayload.h>
+#include <promeki/compressedvideopayload.h>
+#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/audiopayload.h>
+#include <promeki/videocodec.h>
+#include <promeki/videodecoder.h>
+#include <promeki/buffer.h>
 #include <promeki/imagedesc.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaconfig.h>
@@ -215,15 +222,21 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandOpen &cmd) {
                         static_cast<size_t>(adesc.sampleRate() / fps.toDouble())
                         * kAudioPrerollFrames;
                 if(prerollSamples > 0) {
-                        Audio silence(adesc, prerollSamples);
-                        silence.resize(prerollSamples);
-                        // The Audio buffer is allocated for the descriptor's
-                        // sample format (e.g. 2 bytes/sample for s16, 4 for
-                        // f32).  silence.zero() fills exactly that buffer —
-                        // hand-rolled memset with sizeof(float) would overrun
-                        // for any non-float descriptor and corrupt the heap.
-                        silence.zero();
-                        _audioOutput->pushAudio(silence);
+                        // Build a zero-filled silence payload in the
+                        // descriptor's sample format and hand it to
+                        // the audio output.  bufferSize() returns the
+                        // exact byte count so std::memset fills no
+                        // more than the allocated buffer regardless
+                        // of sample stride.
+                        size_t sz = adesc.bufferSize(prerollSamples);
+                        Buffer::Ptr pcm = Buffer::Ptr::create(sz);
+                        pcm.modify()->setSize(sz);
+                        std::memset(pcm.modify()->data(), 0, sz);
+                        BufferView view(pcm, 0, sz);
+                        auto silence = UncompressedAudioPayload::Ptr::create(
+                                adesc, prerollSamples,
+                                view);
+                        _audioOutput->pushAudio(*silence);
                 }
 
                 if(_useAudioClock) {
@@ -322,16 +335,46 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandWrite &cmd) {
         // thread only deals with display-ready frames.  Any decode
         // failure is counted and the frame is discarded.
         Frame::Ptr outFrame = frame;
-        if(!frame->imageList().isEmpty()) {
-                Image::Ptr srcImg = frame->imageList()[0];
-                if(srcImg.isValid() && srcImg->isCompressed()) {
-                        Image decoded = srcImg->convert(
-                                PixelFormat(PixelFormat::RGBA8_sRGB),
-                                srcImg->metadata());
+        auto vids = frame->videoPayloads();
+        if(!vids.isEmpty() && vids[0].isValid() && vids[0]->isCompressed()) {
+                auto cvp = sharedPointerCast<CompressedVideoPayload>(vids[0]);
+                if(cvp.isValid() && cvp->planeCount() > 0) {
+                        // Spin up a one-shot decoder for this codec,
+                        // configured to output RGBA8_sRGB so the widget
+                        // can upload the result directly.
+                        VideoCodec codec = cvp->desc().pixelFormat().videoCodec();
+                        MediaConfig decCfg;
+                        decCfg.set(MediaConfig::OutputPixelFormat,
+                                   PixelFormat(PixelFormat::RGBA8_sRGB));
+                        auto decResult = codec.createDecoder(&decCfg);
+                        if(error(decResult).isError()) {
+                                promekiWarn("SDLPlayerTask: createDecoder(%s) failed — "
+                                            "dropping frame",
+                                            codec.name().cstr());
+                                noteFrameDropped();
+                                stampWorkEnd();
+                                cmd.currentFrame++;
+                                cmd.frameCount = MediaIO::FrameCountInfinite;
+                                return Error::Ok;
+                        }
+                        VideoDecoder *dec = value(decResult);
+                        UncompressedVideoPayload::Ptr decoded;
+                        if(Error de = dec->submitPayload(cvp); de.isError()) {
+                                delete dec;
+                                promekiWarn("SDLPlayerTask: submitPayload failed — "
+                                            "dropping frame");
+                                noteFrameDropped();
+                                stampWorkEnd();
+                                cmd.currentFrame++;
+                                cmd.frameCount = MediaIO::FrameCountInfinite;
+                                return Error::Ok;
+                        }
+                        decoded = dec->receiveVideoPayload();
+                        delete dec;
                         if(!decoded.isValid()) {
                                 promekiWarn("SDLPlayerTask: decode of '%s' to "
                                             "RGBA8_sRGB failed — dropping frame",
-                                            srcImg->pixelFormat().name().cstr());
+                                            cvp->desc().pixelFormat().name().cstr());
                                 noteFrameDropped();
                                 stampWorkEnd();
                                 cmd.currentFrame++;
@@ -339,10 +382,9 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandWrite &cmd) {
                                 return Error::Ok;
                         }
                         outFrame = Frame::Ptr::create();
-                        outFrame.modify()->imageList().pushToBack(
-                                Image::Ptr::create(decoded));
-                        for(const auto &a : frame->audioList()) {
-                                outFrame.modify()->audioList().pushToBack(a);
+                        outFrame.modify()->addPayload(decoded);
+                        for(const AudioPayload::Ptr &ap : frame->audioPayloads()) {
+                                if(ap.isValid()) outFrame.modify()->addPayload(ap);
                         }
                         outFrame.modify()->metadata() = frame->metadata();
                 }
@@ -383,19 +425,19 @@ void SDLPlayerTask::pullLoop() {
                 if(!pr.frame.isValid()) continue;
 
                 // Video → hand off to the widget for main-thread paint.
-                if(!pr.frame->imageList().isEmpty()) {
-                        Image::Ptr img = pr.frame->imageList()[0];
-                        if(img.isValid() && _widget != nullptr) {
-                                _widget->presentImage(img);
-                        }
+                auto pullVids = pr.frame->videoPayloads();
+                if(!pullVids.isEmpty() && pullVids[0].isValid() &&
+                   _widget != nullptr) {
+                        auto uvp = sharedPointerCast<UncompressedVideoPayload>(pullVids[0]);
+                        if(uvp.isValid()) _widget->presentVideo(uvp);
                 }
 
                 // Audio → push to the output.
                 if(_audioConfigured && _audioOutput != nullptr) {
-                        for(const auto &aud : pr.frame->audioList()) {
-                                if(aud.isValid()) {
-                                        _audioOutput->pushAudio(*aud);
-                                }
+                        for(const AudioPayload::Ptr &ap : pr.frame->audioPayloads()) {
+                                if(!ap.isValid()) continue;
+                                const auto *uap = ap->as<UncompressedAudioPayload>();
+                                if(uap != nullptr) _audioOutput->pushAudio(*uap);
                         }
                 }
         }

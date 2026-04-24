@@ -20,7 +20,7 @@
 #include <promeki/enums.h>
 #include <promeki/enumlist.h>
 #include <promeki/audiotestpattern.h>
-#include <promeki/audio.h>
+#include <promeki/uncompressedaudiopayload.h>
 #include <cmath>
 
 using namespace promeki;
@@ -250,26 +250,35 @@ TEST_CASE("Inspector flags a sync offset change as a discontinuity") {
         Frame::Ptr shifted;
         REQUIRE(rig.tpg->readFrame(shifted).isOk());
         REQUIRE(shifted.isValid());
-        REQUIRE(shifted->audioList().size() == 1);
-        Audio::Ptr audPtr = shifted->audioList()[0];
-        REQUIRE(audPtr.isValid());
-        audPtr.modify();   // ensure exclusive ownership before writing
-        const Audio &aud = *audPtr;
-        REQUIRE(aud.desc().format().id() == AudioFormat::PCMI_Float32LE);
-        const int channels = aud.desc().channels();
-        const size_t samples = aud.samples();
+        auto auds = shifted->audioPayloads();
+        REQUIRE(auds.size() == 1);
+        AudioPayload::Ptr apBase = auds[0];
+        REQUIRE(apBase.isValid());
+        auto uap = sharedPointerCast<UncompressedAudioPayload>(apBase);
+        REQUIRE(uap.isValid());
+        UncompressedAudioPayload *apRaw = uap.modify();
+        REQUIRE(apRaw->desc().format().id() == AudioFormat::PCMI_Float32LE);
+        const int channels = apRaw->desc().channels();
+        const size_t samples = apRaw->sampleCount();
         REQUIRE(samples >= 4);
-        // Audio's data<T>() returns a typed pointer into the underlying
-        // mutable buffer (the `const` on Audio doesn't propagate
-        // through `Buffer::data()` since the buffer is conceptually a
-        // shared chunk of bytes), so we can write through it.
-        float *data = aud.data<float>();
+        REQUIRE(apRaw->planeCount() > 0);
+        float *data = reinterpret_cast<float *>(apRaw->data()[0].data());
         // Shift channel 0 (the LTC channel) left by one sample frame.
         // Other channels are left alone.
         for(size_t s = 0; s < samples - 1; s++) {
                 data[s * channels + 0] = data[(s + 1) * channels + 0];
         }
         data[(samples - 1) * channels + 0] = 0.0f;
+        // Replace the original audio payload on the frame with the
+        // modified one so the writer sees our edits (the uap clone we
+        // built via CoW-modify() isn't the one still in the frame's
+        // payload list).
+        for(MediaPayload::Ptr &p : shifted.modify()->payloadList()) {
+                if(p.isValid() && p->kind() == MediaPayloadKind::Audio) {
+                        p = uap;
+                        break;
+                }
+        }
 
         REQUIRE(rig.inspectorIo->writeFrame(shifted).isOk());
 
@@ -426,11 +435,12 @@ namespace {
 
 // Zero-crossing frequency estimator.  Accurate enough for ~30 cycles
 // of a multi-hundred-Hz tone in one frame at 48 kHz.
-double estimateFreqHz(const Audio &audio, size_t channel, double sampleRate) {
-        const float *data = audio.data<float>();
+double estimateFreqHz(const UncompressedAudioPayload &audio, size_t channel,
+                      double sampleRate) {
+        const float *data = reinterpret_cast<const float *>(audio.plane(0).data());
         if(data == nullptr) return 0.0;
         const size_t nch = audio.desc().channels();
-        const size_t n   = audio.samples();
+        const size_t n   = audio.sampleCount();
         if(n < 2) return 0.0;
 
         size_t crossings = 0;
@@ -494,10 +504,10 @@ TEST_CASE("Inspector pipeline carries a SrcProbe channel unharmed") {
         gen.setLtcLevel(AudioLevel::fromDbfs(-20.0));
         gen.setToneLevel(AudioLevel::fromDbfs(-20.0));
         REQUIRE(gen.configure().isOk());
-        Audio audio = gen.create(static_cast<size_t>(sampleRate));
+        auto audio = gen.createPayload(static_cast<size_t>(sampleRate));
         REQUIRE(audio.isValid());
 
-        double freq = estimateFreqHz(audio, 1, sampleRate);
+        double freq = estimateFreqHz(*audio, 1, sampleRate);
         CHECK(freq == doctest::Approx(AudioTestPattern::kSrcProbeFrequencyHz)
                          .epsilon(0.005));
 }
@@ -539,7 +549,7 @@ TEST_CASE("Inspector pipeline carries a ChannelId channel map unharmed") {
         gen.setChannelIdBaseFreq(1000.0);
         gen.setChannelIdStepFreq(100.0);
         REQUIRE(gen.configure().isOk());
-        Audio audio = gen.create(static_cast<size_t>(sampleRate));
+        auto audio = gen.createPayload(static_cast<size_t>(sampleRate));
         REQUIRE(audio.isValid());
 
         // Every ChannelId channel must carry the frequency its index
@@ -547,7 +557,7 @@ TEST_CASE("Inspector pipeline carries a ChannelId channel map unharmed") {
         // don't run the estimator on it.
         for(int ch = 1; ch <= 3; ++ch) {
                 double expected = AudioTestPattern::channelIdFrequency(ch, 1000.0, 100.0);
-                double observed = estimateFreqHz(audio, ch, sampleRate);
+                double observed = estimateFreqHz(*audio, ch, sampleRate);
                 CHECK(observed == doctest::Approx(expected).epsilon(0.005));
         }
 }

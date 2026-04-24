@@ -6,10 +6,10 @@
  */
 
 #include <cmath>
+#include <vector>
 #include <doctest/doctest.h>
 #include <promeki/audioresampler.h>
 #include <promeki/audiodesc.h>
-#include <promeki/audio.h>
 #include <promeki/audiobuffer.h>
 
 using namespace promeki;
@@ -20,14 +20,13 @@ AudioDesc nativeDesc(float rate, unsigned int ch) {
         return AudioDesc(AudioFormat::NativeFloat, rate, ch);
 }
 
-void fillSine(Audio &audio, float freq, float rate) {
-        float *d = audio.data<float>();
-        unsigned int ch = audio.desc().channels();
-        for(size_t i = 0; i < audio.samples(); ++i) {
+// Fills an interleaved float buffer with a sine wave.
+void fillSine(float *buf, size_t samples, unsigned int ch, float freq, float rate) {
+        for(size_t i = 0; i < samples; ++i) {
                 float val = std::sin(2.0f * static_cast<float>(M_PI) * freq *
                                      static_cast<float>(i) / rate);
                 for(unsigned int c = 0; c < ch; ++c) {
-                        d[i * ch + c] = val;
+                        buf[i * ch + c] = val;
                 }
         }
 }
@@ -42,6 +41,26 @@ size_t countZeroCrossings(const float *data, size_t samples, unsigned int ch) {
                 }
         }
         return crossings;
+}
+
+// Convenience wrapper: run a single chunk through the resampler, mirroring the
+// legacy Audio-based process() overload against raw float buffers.
+struct RawResult { size_t gen; Error err; };
+
+RawResult processRaw(AudioResampler &r,
+                     const std::vector<float> &in, unsigned int inCh,
+                     std::vector<float> &out, unsigned int outCh,
+                     bool endOfInput = false) {
+        if(inCh != outCh) return { 0, Error::FormatMismatch };
+        long inFrames  = static_cast<long>(in.size() / inCh);
+        long outMax    = static_cast<long>(out.size() / outCh);
+        long inputUsed = 0, outputGen = 0;
+        Error err = r.process(in.data(), inFrames,
+                              out.data(), outMax,
+                              inputUsed, outputGen, endOfInput);
+        if(err.isError()) return { 0, err };
+        out.resize(static_cast<size_t>(outputGen) * outCh);
+        return { static_cast<size_t>(outputGen), Error::Ok };
 }
 
 } // namespace
@@ -133,21 +152,17 @@ TEST_CASE("AudioResampler: 1:1 passthrough") {
         CHECK(r.setRatio(1.0).isOk());
 
         const size_t N = 1024;
-        Audio in(nativeDesc(48000.0f, 1), N);
-        fillSine(in, 1000.0f, 48000.0f);
-        Audio out(nativeDesc(48000.0f, 1), N + 64);
+        std::vector<float> in(N);
+        fillSine(in.data(), N, 1, 1000.0f, 48000.0f);
+        std::vector<float> out(N + 64);
 
-        auto [gen, err] = r.process(in, out);
+        auto [gen, err] = processRaw(r, in, 1, out, 1);
         CHECK(err.isOk());
         CHECK(gen > 0);
 
-        // Output should closely match input (within resampler filter delay).
-        // Skip the first few samples due to filter startup.
-        const float *inData  = in.data<const float>();
-        const float *outData = out.data<const float>();
         size_t start = gen > 32 ? 32 : 0;
         for(size_t i = start; i < gen && i < N; ++i) {
-                CHECK(outData[i] == doctest::Approx(inData[i]).epsilon(0.01));
+                CHECK(out[i] == doctest::Approx(in[i]).epsilon(0.01));
         }
 }
 
@@ -156,26 +171,20 @@ TEST_CASE("AudioResampler: downsample 48000 -> 44100") {
         CHECK(r.setup(1, SrcQuality::SincMedium).isOk());
         CHECK(r.setRatio(44100.0f, 48000.0f).isOk());
 
-        // Feed 1 second of 48000 Hz input.
         const size_t inCount = 48000;
-        Audio in(nativeDesc(48000.0f, 1), inCount);
-        fillSine(in, 1000.0f, 48000.0f);
+        std::vector<float> in(inCount);
+        fillSine(in.data(), inCount, 1, 1000.0f, 48000.0f);
 
-        // Output buffer for ~1 second at 44100.
         const size_t outMax = 44100 + 256;
-        Audio out(nativeDesc(44100.0f, 1), outMax);
+        std::vector<float> out(outMax);
 
-        auto [gen, err] = r.process(in, out, true);
+        auto [gen, err] = processRaw(r, in, 1, out, 1, true);
         CHECK(err.isOk());
 
-        // Should produce approximately 44100 samples.
         CHECK(gen > 43800);
         CHECK(gen < 44400);
 
-        // Verify the 1kHz signal is preserved (expect ~2000 zero crossings
-        // for 1 second of a 1kHz sine: 2 crossings per cycle).  Allow wide
-        // tolerance for the sinc filter startup/flush transient.
-        size_t crossings = countZeroCrossings(out.data<const float>(), gen, 1);
+        size_t crossings = countZeroCrossings(out.data(), gen, 1);
         CHECK(crossings > 1500);
         CHECK(crossings < 2100);
 }
@@ -186,18 +195,18 @@ TEST_CASE("AudioResampler: upsample 44100 -> 48000") {
         CHECK(r.setRatio(48000.0 / 44100.0).isOk());
 
         const size_t inCount = 44100;
-        Audio in(nativeDesc(44100.0f, 1), inCount);
-        fillSine(in, 1000.0f, 44100.0f);
+        std::vector<float> in(inCount);
+        fillSine(in.data(), inCount, 1, 1000.0f, 44100.0f);
 
         const size_t outMax = 48000 + 256;
-        Audio out(nativeDesc(48000.0f, 1), outMax);
+        std::vector<float> out(outMax);
 
-        auto [gen, err] = r.process(in, out, true);
+        auto [gen, err] = processRaw(r, in, 1, out, 1, true);
         CHECK(err.isOk());
         CHECK(gen > 47700);
         CHECK(gen < 48300);
 
-        size_t crossings = countZeroCrossings(out.data<const float>(), gen, 1);
+        size_t crossings = countZeroCrossings(out.data(), gen, 1);
         CHECK(crossings > 1900);
         CHECK(crossings < 2100);
 }
@@ -212,24 +221,21 @@ TEST_CASE("AudioResampler: variable ratio change is smooth") {
         CHECK(r.setRatio(1.0).isOk());
 
         const size_t chunkSize = 1024;
-        Audio in(nativeDesc(48000.0f, 1), chunkSize);
-        fillSine(in, 440.0f, 48000.0f);
-        Audio out(nativeDesc(48000.0f, 1), chunkSize + 256);
+        std::vector<float> in(chunkSize);
+        fillSine(in.data(), chunkSize, 1, 440.0f, 48000.0f);
+        std::vector<float> out(chunkSize + 256);
 
-        // Process at ratio 1.0.
-        auto [gen1, err1] = r.process(in, out);
+        auto [gen1, err1] = processRaw(r, in, 1, out, 1);
         CHECK(err1.isOk());
-        float lastSample = out.data<const float>()[gen1 > 0 ? gen1 - 1 : 0];
+        float lastSample = gen1 > 0 ? out[gen1 - 1] : 0.0f;
 
-        // Change ratio to 1.01 (1% speedup) and process again.
         CHECK(r.setRatio(1.01).isOk());
-        auto [gen2, err2] = r.process(in, out);
+        out.assign(chunkSize + 256, 0.0f);
+        auto [gen2, err2] = processRaw(r, in, 1, out, 1);
         CHECK(err2.isOk());
 
-        // Verify no click: the first output sample after the ratio change
-        // should be close to the last output sample of the previous chunk.
         if(gen2 > 0) {
-                float firstSample = out.data<const float>()[0];
+                float firstSample = out[0];
                 float diff = std::fabs(firstSample - lastSample);
                 CHECK(diff < 0.5f);
         }
@@ -245,68 +251,35 @@ TEST_CASE("AudioResampler: stereo") {
         CHECK(r.setRatio(48000.0 / 44100.0).isOk());
 
         const size_t inCount = 4410;
-        Audio in(nativeDesc(44100.0f, 2), inCount);
-        float *d = in.data<float>();
-        // Left: 440 Hz, Right: 880 Hz.
+        std::vector<float> in(inCount * 2);
         for(size_t i = 0; i < inCount; ++i) {
-                d[i * 2]     = std::sin(2.0f * static_cast<float>(M_PI) * 440.0f *
+                in[i * 2]     = std::sin(2.0f * static_cast<float>(M_PI) * 440.0f *
                                         static_cast<float>(i) / 44100.0f);
-                d[i * 2 + 1] = std::sin(2.0f * static_cast<float>(M_PI) * 880.0f *
+                in[i * 2 + 1] = std::sin(2.0f * static_cast<float>(M_PI) * 880.0f *
                                         static_cast<float>(i) / 44100.0f);
         }
 
         const size_t outMax = 4800 + 256;
-        Audio out(nativeDesc(48000.0f, 2), outMax);
+        std::vector<float> out(outMax * 2);
 
-        auto [gen, err] = r.process(in, out, true);
+        auto [gen, err] = processRaw(r, in, 2, out, 2, true);
         CHECK(err.isOk());
         CHECK(gen > 4600);
         CHECK(gen < 5100);
 
-        // Verify both channels independently via zero crossings.
-        // 0.1 seconds of audio: 440Hz -> ~88 crossings, 880Hz -> ~176.
-        // Allow wide tolerance for filter transient.
-        const float *od = out.data<const float>();
         size_t leftCross = 0, rightCross = 0;
         for(size_t i = 1; i < gen; ++i) {
-                float lp = od[(i - 1) * 2];
-                float lc = od[i * 2];
+                float lp = out[(i - 1) * 2];
+                float lc = out[i * 2];
                 if((lp >= 0.0f && lc < 0.0f) || (lp < 0.0f && lc >= 0.0f)) ++leftCross;
-                float rp = od[(i - 1) * 2 + 1];
-                float rc = od[i * 2 + 1];
+                float rp = out[(i - 1) * 2 + 1];
+                float rc = out[i * 2 + 1];
                 if((rp >= 0.0f && rc < 0.0f) || (rp < 0.0f && rc >= 0.0f)) ++rightCross;
         }
         CHECK(leftCross > 70);
         CHECK(leftCross < 110);
         CHECK(rightCross > 140);
         CHECK(rightCross < 220);
-}
-
-// ============================================================================
-// Channel/format mismatch errors
-// ============================================================================
-
-TEST_CASE("AudioResampler: channel mismatch returns FormatMismatch") {
-        AudioResampler r;
-        CHECK(r.setup(2, SrcQuality::SincFastest).isOk());
-        CHECK(r.setRatio(1.0).isOk());
-
-        Audio in(nativeDesc(48000.0f, 1), 256);
-        Audio out(nativeDesc(48000.0f, 2), 256);
-        auto [gen, err] = r.process(in, out);
-        CHECK(err == Error::FormatMismatch);
-        CHECK(gen == 0);
-}
-
-TEST_CASE("AudioResampler: non-native format returns FormatMismatch") {
-        AudioResampler r;
-        CHECK(r.setup(1, SrcQuality::SincFastest).isOk());
-        CHECK(r.setRatio(1.0).isOk());
-
-        Audio in(AudioDesc(AudioFormat::PCMI_S16LE, 48000.0f, 1), 256);
-        Audio out(nativeDesc(48000.0f, 1), 256);
-        auto [gen, err] = r.process(in, out);
-        CHECK(err == Error::FormatMismatch);
 }
 
 // ============================================================================
@@ -328,11 +301,11 @@ TEST_CASE("AudioResampler: all quality modes produce valid output") {
                 CHECK(r.setup(1, mode).isOk());
                 CHECK(r.setRatio(48000.0 / 44100.0).isOk());
 
-                Audio in(nativeDesc(44100.0f, 1), 4410);
-                fillSine(in, 1000.0f, 44100.0f);
-                Audio out(nativeDesc(48000.0f, 1), 5120);
+                std::vector<float> in(4410);
+                fillSine(in.data(), 4410, 1, 1000.0f, 44100.0f);
+                std::vector<float> out(5120);
 
-                auto [gen, err] = r.process(in, out, true);
+                auto [gen, err] = processRaw(r, in, 1, out, 1, true);
                 CHECK(err.isOk());
                 CHECK(gen > 4600);
                 CHECK(gen < 5100);
@@ -348,11 +321,11 @@ TEST_CASE("AudioResampler: reset clears state") {
         CHECK(r.setup(1, SrcQuality::SincFastest).isOk());
         CHECK(r.setRatio(2.0).isOk());
 
-        Audio in(nativeDesc(24000.0f, 1), 1024);
-        fillSine(in, 500.0f, 24000.0f);
-        Audio out(nativeDesc(48000.0f, 1), 2560);
+        std::vector<float> in(1024);
+        fillSine(in.data(), 1024, 1, 500.0f, 24000.0f);
+        std::vector<float> out(2560);
 
-        auto [gen1, err1] = r.process(in, out);
+        auto [gen1, err1] = processRaw(r, in, 1, out, 1);
         CHECK(err1.isOk());
         CHECK(gen1 > 0);
 
@@ -360,8 +333,8 @@ TEST_CASE("AudioResampler: reset clears state") {
         CHECK(r.ratio() == doctest::Approx(2.0));
         CHECK(r.channels() == 1);
 
-        // Process again after reset — should produce valid output.
-        auto [gen2, err2] = r.process(in, out);
+        out.assign(2560, 0.0f);
+        auto [gen2, err2] = processRaw(r, in, 1, out, 1);
         CHECK(err2.isOk());
         CHECK(gen2 > 0);
 }
@@ -404,26 +377,19 @@ TEST_CASE("AudioResampler: end-of-input flushes remaining samples") {
         CHECK(r.setup(1, SrcQuality::SincMedium).isOk());
         CHECK(r.setRatio(2.0).isOk());
 
-        // Process a tiny input with endOfInput=false, then flush with empty input.
-        Audio in(nativeDesc(24000.0f, 1), 64);
-        fillSine(in, 500.0f, 24000.0f);
-        Audio out1(nativeDesc(48000.0f, 1), 256);
+        std::vector<float> in(64);
+        fillSine(in.data(), 64, 1, 500.0f, 24000.0f);
+        std::vector<float> out1(256);
 
-        auto [gen1, err1] = r.process(in, out1, false);
+        auto [gen1, err1] = processRaw(r, in, 1, out1, 1, false);
         CHECK(err1.isOk());
 
-        // Flush: empty input, endOfInput=true.
-        Audio empty(nativeDesc(24000.0f, 1), 1);
-        empty.resize(0);
-        Audio out2(nativeDesc(48000.0f, 1), 256);
-
+        float outBuf[256] = {};
         long inputUsed = 0, outputGen = 0;
         Error err = r.process(static_cast<const float *>(nullptr), 0,
-                              out2.data<float>(), static_cast<long>(out2.maxSamples()),
+                              outBuf, 256,
                               inputUsed, outputGen, true);
         CHECK(err.isOk());
-        // The flush may produce a few trailing samples from the filter tail.
-        // We just verify it doesn't error.
 }
 
 // ============================================================================
@@ -437,26 +403,23 @@ TEST_CASE("AudioBuffer: push with resampling (rate mismatch)") {
         AudioDesc inFormat(AudioFormat::NativeFloat, 44100.0f, 1);
         fifo.setInputFormat(inFormat);
 
-        // Push 44100 samples of a 1kHz sine at 44100 Hz.
         const size_t inCount = 44100;
-        Audio in(inFormat, inCount);
-        fillSine(in, 1000.0f, 44100.0f);
+        std::vector<float> in(inCount);
+        fillSine(in.data(), inCount, 1, 1000.0f, 44100.0f);
 
-        Error err = fifo.push(in);
+        Error err = fifo.push(in.data(), inCount, inFormat);
         CHECK(err.isOk());
 
-        // Should have approximately 48000 samples in the buffer.
         size_t avail = fifo.available();
         CHECK(avail > 47500);
         CHECK(avail < 48500);
 
-        // Pop and verify signal integrity.
-        Audio out(outFormat, avail);
-        auto [got, popErr] = fifo.pop(out, avail);
+        std::vector<float> out(avail);
+        auto [got, popErr] = fifo.pop(out.data(), avail);
         CHECK(popErr.isOk());
         CHECK(got == avail);
 
-        size_t crossings = countZeroCrossings(out.data<const float>(), got, 1);
+        size_t crossings = countZeroCrossings(out.data(), got, 1);
         CHECK(crossings > 1900);
         CHECK(crossings < 2100);
 }
@@ -469,10 +432,10 @@ TEST_CASE("AudioBuffer: push with resampling and format conversion") {
         fifo.setInputFormat(inFormat);
 
         const size_t inCount = 4410;
-        Audio in(inFormat, inCount);
-        fillSine(in, 1000.0f, 44100.0f);
+        std::vector<float> in(inCount);
+        fillSine(in.data(), inCount, 1, 1000.0f, 44100.0f);
 
-        Error err = fifo.push(in);
+        Error err = fifo.push(in.data(), inCount, inFormat);
         CHECK(err.isOk());
 
         size_t avail = fifo.available();
@@ -500,35 +463,26 @@ TEST_CASE("AudioBuffer: drift correction enable/disable/query") {
 }
 
 TEST_CASE("AudioBuffer: drift correction same-rate drives fill toward target") {
-        // Same input and output rate (48000 Hz).  Drift correction is
-        // used to keep the fill level near targetSamples.
         AudioDesc fmt(AudioFormat::NativeFloat, 48000.0f, 1);
         const size_t capacity = 48000;
         AudioBuffer fifo(fmt, capacity);
         fifo.setInputFormat(fmt);
 
-        const size_t target = capacity / 2;  // 24000
+        const size_t target = capacity / 2;
         fifo.enableDriftCorrection(target, 0.01);
 
-        // Push a bunch of chunks into an empty buffer.  The buffer starts
-        // underfull so the drift ratio should be > 1.0 (produce slightly
-        // MORE output to fill faster).
         const size_t chunkSize = 1024;
-        Audio chunk(fmt, chunkSize);
-        fillSine(chunk, 440.0f, 48000.0f);
+        std::vector<float> chunk(chunkSize);
+        fillSine(chunk.data(), chunkSize, 1, 440.0f, 48000.0f);
 
-        // Push several chunks.
         for(int i = 0; i < 10; ++i) {
-                Error err = fifo.push(chunk);
+                Error err = fifo.push(chunk.data(), chunkSize, fmt);
                 CHECK(err.isOk());
         }
 
-        // The drift ratio should have been > 1.0 because the buffer was
-        // underfull (available < target).
         double r = fifo.driftRatio();
         CHECK(r > 1.0);
 
-        // Now pop samples to verify the buffer has data.
         size_t avail = fifo.available();
         CHECK(avail > 0);
 }
@@ -543,29 +497,24 @@ TEST_CASE("AudioBuffer: drift correction adjusts ratio based on fill level") {
         const double gain = 0.01;
         fifo.enableDriftCorrection(target, gain);
 
-        // Pre-fill the buffer to exactly the target level by pushing
-        // without drift correction, then enable it.
         fifo.disableDriftCorrection();
         {
-                Audio prefill(fmt, target);
-                fillSine(prefill, 440.0f, 48000.0f);
-                CHECK(fifo.push(prefill).isOk());
+                std::vector<float> prefill(target);
+                fillSine(prefill.data(), target, 1, 440.0f, 48000.0f);
+                CHECK(fifo.push(prefill.data(), target, fmt).isOk());
         }
         CHECK(fifo.available() == target);
         fifo.enableDriftCorrection(target, gain);
 
-        // Push a chunk.  Since available == target, the drift adjustment
-        // should be negligible: ratio ≈ 1.0.
-        Audio chunk(fmt, 1024);
-        fillSine(chunk, 440.0f, 48000.0f);
-        CHECK(fifo.push(chunk).isOk());
+        std::vector<float> chunk(1024);
+        fillSine(chunk.data(), 1024, 1, 440.0f, 48000.0f);
+        CHECK(fifo.push(chunk.data(), 1024, fmt).isOk());
 
         double r = fifo.driftRatio();
         CHECK(r == doctest::Approx(1.0).epsilon(0.02));
 }
 
 TEST_CASE("AudioBuffer: drift correction with rate mismatch") {
-        // Different input and output rates with drift correction on top.
         AudioDesc outFmt(AudioFormat::NativeFloat, 48000.0f, 1);
         AudioDesc inFmt(AudioFormat::NativeFloat, 44100.0f, 1);
         const size_t capacity = 96000;
@@ -575,17 +524,14 @@ TEST_CASE("AudioBuffer: drift correction with rate mismatch") {
         const size_t target = 24000;
         fifo.enableDriftCorrection(target, 0.005);
 
-        // Push 4410 samples at 44100 Hz.  Nominal ratio is 48000/44100 ≈ 1.088.
-        // With an empty buffer (available < target), drift pushes ratio
-        // slightly above nominal.
         const size_t inCount = 4410;
-        Audio in(inFmt, inCount);
-        fillSine(in, 1000.0f, 44100.0f);
-        CHECK(fifo.push(in).isOk());
+        std::vector<float> in(inCount);
+        fillSine(in.data(), inCount, 1, 1000.0f, 44100.0f);
+        CHECK(fifo.push(in.data(), inCount, inFmt).isOk());
 
         double r = fifo.driftRatio();
         double nominal = 48000.0 / 44100.0;
-        CHECK(r > nominal);  // underfull → ratio above nominal
+        CHECK(r > nominal);
 
         size_t avail = fifo.available();
         CHECK(avail > 4700);
@@ -601,37 +547,31 @@ TEST_CASE("AudioBuffer: drift correction ratio decreases when overfull") {
         const size_t target = 10000;
         const double gain = 0.01;
 
-        // Pre-fill well above target.
         fifo.disableDriftCorrection();
         {
-                Audio prefill(fmt, 40000);
-                fillSine(prefill, 440.0f, 48000.0f);
-                CHECK(fifo.push(prefill).isOk());
+                std::vector<float> prefill(40000);
+                fillSine(prefill.data(), 40000, 1, 440.0f, 48000.0f);
+                CHECK(fifo.push(prefill.data(), 40000, fmt).isOk());
         }
         CHECK(fifo.available() == 40000);
         fifo.enableDriftCorrection(target, gain);
 
-        // Push a chunk.  Buffer is very overfull so ratio should be < 1.0
-        // (produce fewer output samples to drain).
-        Audio chunk(fmt, 1024);
-        fillSine(chunk, 440.0f, 48000.0f);
-        CHECK(fifo.push(chunk).isOk());
+        std::vector<float> chunk(1024);
+        fillSine(chunk.data(), 1024, 1, 440.0f, 48000.0f);
+        CHECK(fifo.push(chunk.data(), 1024, fmt).isOk());
 
         double r = fifo.driftRatio();
         CHECK(r < 1.0);
 }
 
 TEST_CASE("AudioBuffer: no SRC overhead when drift correction is off and rates match") {
-        // Verify that same-rate pushes without drift correction use the
-        // fast path (no resampler) by confirming exact sample counts.
         AudioDesc fmt(AudioFormat::NativeFloat, 48000.0f, 1);
         AudioBuffer fifo(fmt, 48000);
         fifo.setInputFormat(fmt);
 
-        Audio chunk(fmt, 1000);
-        fillSine(chunk, 440.0f, 48000.0f);
-        CHECK(fifo.push(chunk).isOk());
+        std::vector<float> chunk(1000);
+        fillSine(chunk.data(), 1000, 1, 440.0f, 48000.0f);
+        CHECK(fifo.push(chunk.data(), 1000, fmt).isOk());
 
-        // Without resampling, available should be exactly 1000.
         CHECK(fifo.available() == 1000);
 }

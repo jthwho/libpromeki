@@ -11,6 +11,7 @@
 #include <promeki/paintengine.h>
 #include <promeki/imagedesc.h>
 #include <promeki/metadata.h>
+#include <promeki/uncompressedvideopayload.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -2097,57 +2098,57 @@ PixelFormat::IDList PixelFormat::registeredIDs() {
 // ---------------------------------------------------------------------------
 
 // paintengine_interleaved.cpp factories
-PaintEngine createPaintEngine_RGBA8(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_RGB8(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_BGRA8(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_BGR8(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_ARGB8(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_ABGR8(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_RGBA10_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_RGB10_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_BGRA10_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_BGR10_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_ARGB10_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_ABGR10_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_RGBA12_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_RGB12_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_BGRA12_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_BGR12_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_ARGB12_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_ABGR12_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_RGBA16_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_RGB16_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_BGRA16_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_BGR16_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_ARGB16_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_ABGR16_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_YUV8_444(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_YUV10_444_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_YUV12_444_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_YUV16_444_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_Mono8(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_Mono10_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_Mono12_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_Mono16_LE(const PixelFormat::Data *d, const Image &img);
+PaintEngine createPaintEngine_RGBA8(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_RGB8(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_BGRA8(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_BGR8(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_ARGB8(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_ABGR8(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_RGBA10_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_RGB10_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_BGRA10_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_BGR10_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_ARGB10_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_ABGR10_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_RGBA12_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_RGB12_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_BGRA12_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_BGR12_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_ARGB12_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_ABGR12_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_RGBA16_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_RGB16_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_BGRA16_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_BGR16_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_ARGB16_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_ABGR16_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_YUV8_444(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_YUV10_444_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_YUV12_444_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_YUV16_444_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_Mono8(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_Mono10_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_Mono12_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_Mono16_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
 
 // paintengine_422.cpp factories
-PaintEngine createPaintEngine_YUYV8(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_YUYV10_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_UYVY8(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_UYVY10_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_UYVY12_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_UYVY16_LE(const PixelFormat::Data *d, const Image &img);
+PaintEngine createPaintEngine_YUYV8(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_YUYV10_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_UYVY8(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_UYVY10_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_UYVY12_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_UYVY16_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
 
 // paintengine_multiplane.cpp factories
-PaintEngine createPaintEngine_MultiPlane8(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_MultiPlane10_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_MultiPlane12_LE(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_MultiPlane16_LE(const PixelFormat::Data *d, const Image &img);
+PaintEngine createPaintEngine_MultiPlane8(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_MultiPlane10_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_MultiPlane12_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_MultiPlane16_LE(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
 
 // paintengine_packed.cpp factories
-PaintEngine createPaintEngine_DPX_A(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_DPX_B(const PixelFormat::Data *d, const Image &img);
-PaintEngine createPaintEngine_v210(const PixelFormat::Data *d, const Image &img);
+PaintEngine createPaintEngine_DPX_A(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_DPX_B(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
+PaintEngine createPaintEngine_v210(const PixelFormat::Data *d, const UncompressedVideoPayload &payload);
 
 // ---------------------------------------------------------------------------
 // Register paint engine factories with PixelFormat entries.
@@ -2155,7 +2156,7 @@ PaintEngine createPaintEngine_v210(const PixelFormat::Data *d, const Image &img)
 
 static struct PixelFormatPaintEngineInit {
         PixelFormatPaintEngineInit() {
-                auto patch = [](PixelFormat::ID id, PaintEngine (*func)(const PixelFormat::Data *, const Image &)) {
+                auto patch = [](PixelFormat::ID id, PaintEngine (*func)(const PixelFormat::Data *, const UncompressedVideoPayload &)) {
                         PixelFormat pd(id);
                         if(!pd.isValid()) return;
                         PixelFormat::Data d = *pd.data();
@@ -2314,9 +2315,9 @@ size_t PixelFormat::planeSize(size_t planeIndex, const ImageDesc &desc) const {
                                         desc.linePad(), desc.lineAlign());
 }
 
-PaintEngine PixelFormat::createPaintEngine(const Image &img) const {
+PaintEngine PixelFormat::createPaintEngine(const UncompressedVideoPayload &payload) const {
         if(d->createPaintEngineFunc == nullptr) return PaintEngine();
-        return d->createPaintEngineFunc(d, img);
+        return d->createPaintEngineFunc(d, payload);
 }
 
 PROMEKI_NAMESPACE_END

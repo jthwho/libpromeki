@@ -13,8 +13,8 @@
 
 #include <doctest/doctest.h>
 #include <cmath>
+#include <cstring>
 #include <vector>
-#include <promeki/audio.h>
 #include <promeki/audiocodec.h>
 #include <promeki/audiodecoder.h>
 #include <promeki/audiodesc.h>
@@ -22,17 +22,19 @@
 #include <promeki/buffer.h>
 #include <promeki/enums.h>
 #include <promeki/mediaconfig.h>
-#include <promeki/mediapacket.h>
+#include <promeki/compressedaudiopayload.h>
+#include <promeki/uncompressedaudiopayload.h>
 
 using namespace promeki;
 
 namespace {
 
-// Generates an interleaved-stereo PCMI_S16LE Audio frame containing
-// a 440 Hz sine wave on both channels at unity-ish amplitude (~-3 dBFS).
-Audio makeSineFrameS16(size_t samplesPerChannel,
-                       float sampleRate, unsigned int channels,
-                       float freqHz, double phase) {
+// Generates an interleaved-stereo PCMI_S16LE UncompressedAudioPayload
+// containing a 440 Hz sine wave on both channels at unity-ish amplitude
+// (~-3 dBFS).
+UncompressedAudioPayload::Ptr makeSineFramePayloadS16(size_t samplesPerChannel,
+                                                     float sampleRate, unsigned int channels,
+                                                     float freqHz, double phase) {
         AudioDesc desc(AudioFormat::PCMI_S16LE, sampleRate, channels);
         const size_t bytes = desc.bufferSize(samplesPerChannel);
         auto buf = Buffer::Ptr::create(bytes);
@@ -46,7 +48,9 @@ Audio makeSineFrameS16(size_t samplesPerChannel,
                         *p++ = v;
                 }
         }
-        return Audio::fromBuffer(buf, desc);
+        BufferView planes;
+        planes.pushToBack(buf, 0, bytes);
+        return UncompressedAudioPayload::Ptr::create(desc, samplesPerChannel, planes);
 }
 
 // Computes RMS error between two interleaved s16 streams of equal
@@ -71,6 +75,19 @@ AudioDecoder *makeOpusDecoder(const MediaConfig *cfg = nullptr) {
         AudioCodec codec(AudioCodec::Opus);
         auto res = codec.createDecoder(cfg);
         return isOk(res) ? value(res) : nullptr;
+}
+
+// Finds the AudioFormat ID for the compressed Opus format (registered
+// by the Opus backend at static-init time) so test callsites can build
+// CompressedAudioPayloads with the right descriptor.
+AudioFormat opusCompressedFormat() {
+        // The Opus backend registers a compressed AudioFormat named
+        // "Opus" whose audioCodec() is AudioCodec::Opus.
+        for(AudioFormat::ID id : AudioFormat::registeredIDs()) {
+                AudioFormat f(id);
+                if(f.isCompressed() && f.audioCodec().id() == AudioCodec::Opus) return f;
+        }
+        return AudioFormat();
 }
 
 } // namespace
@@ -122,24 +139,24 @@ TEST_CASE("Opus: encoder/decoder round-trip preserves a sine wave within toleran
         original.reserve(chunk * chunks * ch);
 
         for(size_t i = 0; i < chunks; ++i) {
-                Audio::Ptr frame = Audio::Ptr::create(makeSineFrameS16(chunk, sr, ch, freq,
-                                                                       i * chunk * 2.0 * M_PI * freq / sr));
-                const auto *p = frame->data<int16_t>();
+                auto frame = makeSineFramePayloadS16(chunk, sr, ch, freq,
+                                                     i * chunk * 2.0 * M_PI * freq / sr);
+                const auto *p = reinterpret_cast<const int16_t *>(frame->plane(0).data());
                 original.insert(original.end(), p, p + chunk * ch);
-                CHECK(enc->submitFrame(frame) == promeki::Error::Ok);
-                while(auto pkt = enc->receivePacket()) {
-                        CHECK(pkt->audioCodec().id() == codec.id());
-                        CHECK(dec->submitPacket(pkt) == promeki::Error::Ok);
+                CHECK(enc->submitPayload(frame) == promeki::Error::Ok);
+                while(auto pkt = enc->receiveCompressedPayload()) {
+                        CHECK(pkt->desc().format().audioCodec().id() == codec.id());
+                        CHECK(dec->submitPayload(pkt) == promeki::Error::Ok);
                 }
         }
 
         // Drain the decoder and stitch the output together.
         std::vector<int16_t> decoded;
         while(true) {
-                Audio::Ptr out = dec->receiveFrame();
+                UncompressedAudioPayload::Ptr out = dec->receiveAudioPayload();
                 if(!out.isValid()) break;
-                const auto *p = out->data<int16_t>();
-                decoded.insert(decoded.end(), p, p + out->samples() * ch);
+                const auto *p = reinterpret_cast<const int16_t *>(out->plane(0).data());
+                decoded.insert(decoded.end(), p, p + out->sampleCount() * ch);
         }
 
         REQUIRE(!decoded.empty());
@@ -187,15 +204,15 @@ TEST_CASE("Opus: encoder rejects unsupported sample rates") {
 
         // 44.1 kHz is not in libopus's allowed set (8/12/16/24/48 kHz).
         AudioDesc badDesc(AudioFormat::PCMI_S16LE, 44100.0f, 2);
-        Audio bad = Audio::fromBuffer(
-                Buffer::Ptr::create(badDesc.bufferSize(960)),
-                badDesc);
-        bad.buffer().modify()->setSize(badDesc.bufferSize(960));
+        const size_t bytes = badDesc.bufferSize(960);
+        auto buf = Buffer::Ptr::create(bytes);
+        buf.modify()->setSize(bytes);
+        BufferView planes;
+        planes.pushToBack(buf, 0, bytes);
+        auto bad = UncompressedAudioPayload::Ptr::create(badDesc, 960, planes);
 
-        // Some sanity: the Audio is otherwise valid; opus rejects on
-        // descriptor mismatch.
-        CHECK(bad.isValid());
-        promeki::Error err = enc->submitFrame(Audio::Ptr::create(std::move(bad)));
+        CHECK(bad->isValid());
+        promeki::Error err = enc->submitPayload(bad);
         CHECK(err == promeki::Error::Invalid);
         CHECK_FALSE(enc->lastErrorMessage().isEmpty());
 
@@ -207,17 +224,17 @@ TEST_CASE("Opus: encoder flush emits a final EndOfStream packet") {
         REQUIRE(enc != nullptr);
 
         // Submit a single 20 ms frame, drain, then flush.
-        Audio::Ptr frame = Audio::Ptr::create(makeSineFrameS16(960, 48000.0f, 2, 440.0f, 0.0));
-        REQUIRE(enc->submitFrame(frame) == promeki::Error::Ok);
-        auto pkt = enc->receivePacket();
+        auto frame = makeSineFramePayloadS16(960, 48000.0f, 2, 440.0f, 0.0);
+        REQUIRE(enc->submitPayload(frame) == promeki::Error::Ok);
+        auto pkt = enc->receiveCompressedPayload();
         REQUIRE(pkt);
         CHECK_FALSE(pkt->isEndOfStream());
 
         CHECK(enc->flush() == promeki::Error::Ok);
-        auto eos = enc->receivePacket();
+        auto eos = enc->receiveCompressedPayload();
         REQUIRE(eos);
         CHECK(eos->isEndOfStream());
-        CHECK_FALSE(enc->receivePacket());
+        CHECK_FALSE(enc->receiveCompressedPayload());
         delete enc;
 }
 
@@ -270,20 +287,22 @@ TEST_CASE("Opus: encoder rejects unsupported channel count") {
 
         // Opus encoder accepts 1 or 2 channels only — feed it 6.
         AudioDesc badDesc(AudioFormat::PCMI_S16LE, 48000.0f, 6);
-        Audio bad = Audio::fromBuffer(
-                Buffer::Ptr::create(badDesc.bufferSize(960)),
-                badDesc);
-        bad.buffer().modify()->setSize(badDesc.bufferSize(960));
-        Error err = enc->submitFrame(Audio::Ptr::create(std::move(bad)));
+        const size_t bytes = badDesc.bufferSize(960);
+        auto buf = Buffer::Ptr::create(bytes);
+        buf.modify()->setSize(bytes);
+        BufferView planes;
+        planes.pushToBack(buf, 0, bytes);
+        auto bad = UncompressedAudioPayload::Ptr::create(badDesc, 960, planes);
+        Error err = enc->submitPayload(bad);
         CHECK(err == promeki::Error::Invalid);
         CHECK_FALSE(enc->lastErrorMessage().isEmpty());
         delete enc;
 }
 
-TEST_CASE("Opus: encoder rejects null Audio frame") {
+TEST_CASE("Opus: encoder rejects null payload") {
         AudioEncoder *enc = makeOpusEncoder();
         REQUIRE(enc != nullptr);
-        Error err = enc->submitFrame(Audio::Ptr());
+        Error err = enc->submitPayload(UncompressedAudioPayload::Ptr());
         CHECK(err == promeki::Error::Invalid);
         CHECK_FALSE(enc->lastErrorMessage().isEmpty());
         delete enc;
@@ -298,8 +317,8 @@ TEST_CASE("Opus: encoder rejects unsupported frame size") {
         cfg.set(MediaConfig::OpusFrameSizeMs, 7.0f);
         enc->configure(cfg);
 
-        Audio::Ptr frame = Audio::Ptr::create(makeSineFrameS16(480, 48000.0f, 2, 440.0f, 0.0));
-        Error err = enc->submitFrame(frame);
+        auto frame = makeSineFramePayloadS16(480, 48000.0f, 2, 440.0f, 0.0);
+        Error err = enc->submitPayload(frame);
         CHECK(err == promeki::Error::Invalid);
         CHECK_FALSE(enc->lastErrorMessage().isEmpty());
         delete enc;
@@ -309,9 +328,9 @@ TEST_CASE("Opus: encoder reset clears state and the next frame is encodable agai
         AudioEncoder *enc = makeOpusEncoder();
         REQUIRE(enc != nullptr);
 
-        Audio::Ptr frame = Audio::Ptr::create(makeSineFrameS16(960, 48000.0f, 2, 440.0f, 0.0));
-        REQUIRE(enc->submitFrame(frame) == promeki::Error::Ok);
-        REQUIRE(enc->receivePacket());
+        auto frame = makeSineFramePayloadS16(960, 48000.0f, 2, 440.0f, 0.0);
+        REQUIRE(enc->submitPayload(frame) == promeki::Error::Ok);
+        REQUIRE(enc->receiveCompressedPayload());
         // Flush + reset should leave the encoder ready to use with no
         // EOS in flight.
         REQUIRE(enc->flush() == promeki::Error::Ok);
@@ -319,8 +338,8 @@ TEST_CASE("Opus: encoder reset clears state and the next frame is encodable agai
 
         // After reset, the next submit/receive cycle must succeed and
         // not be polluted by the prior flush state.
-        REQUIRE(enc->submitFrame(frame) == promeki::Error::Ok);
-        auto pkt = enc->receivePacket();
+        REQUIRE(enc->submitPayload(frame) == promeki::Error::Ok);
+        auto pkt = enc->receiveCompressedPayload();
         REQUIRE(pkt);
         CHECK_FALSE(pkt->isEndOfStream());
         delete enc;
@@ -341,15 +360,17 @@ TEST_CASE("Opus: decoder rejects null and empty packets") {
         AudioDecoder *dec = makeOpusDecoder();
         REQUIRE(dec != nullptr);
 
-        Error err = dec->submitPacket(AudioPacket::Ptr());
+        Error err = dec->submitPayload(CompressedAudioPayload::Ptr());
         CHECK(err == promeki::Error::Invalid);
 
         // Valid Ptr but empty buffer — decoder ensureDecoder() runs first,
         // then bails on the empty buffer.
+        AudioFormat opusFmt = opusCompressedFormat();
+        REQUIRE(opusFmt.isValid());
+        AudioDesc cdesc(opusFmt, 48000.0f, 2);
         Buffer::Ptr empty = Buffer::Ptr::create(0);
-        AudioPacket::Ptr pkt = AudioPacket::Ptr::create(empty,
-                AudioCodec(AudioCodec::Opus));
-        Error err2 = dec->submitPacket(pkt);
+        auto pkt = CompressedAudioPayload::Ptr::create(cdesc, BufferView(empty, 0, 0));
+        Error err2 = dec->submitPayload(pkt);
         CHECK(err2 == promeki::Error::Invalid);
         CHECK_FALSE(dec->lastErrorMessage().isEmpty());
         delete dec;
@@ -365,12 +386,14 @@ TEST_CASE("Opus: decoder rejects unsupported sample rate") {
         cfg.set(MediaConfig::AudioChannels, int32_t(2));
         dec->configure(cfg);
 
+        AudioFormat opusFmt = opusCompressedFormat();
+        REQUIRE(opusFmt.isValid());
+        AudioDesc cdesc(opusFmt, 44100.0f, 2);
         Buffer::Ptr buf = Buffer::Ptr::create(8);
         buf.modify()->fill(0x00);
         buf.modify()->setSize(8);
-        AudioPacket::Ptr pkt = AudioPacket::Ptr::create(buf,
-                AudioCodec(AudioCodec::Opus));
-        Error err = dec->submitPacket(pkt);
+        auto pkt = CompressedAudioPayload::Ptr::create(cdesc, BufferView(buf, 0, 8));
+        Error err = dec->submitPayload(pkt);
         CHECK(err == promeki::Error::Invalid);
         CHECK_FALSE(dec->lastErrorMessage().isEmpty());
         delete dec;
@@ -386,12 +409,14 @@ TEST_CASE("Opus: decoder rejects unsupported channel count") {
         cfg.set(MediaConfig::AudioChannels, int32_t(6));
         dec->configure(cfg);
 
+        AudioFormat opusFmt = opusCompressedFormat();
+        REQUIRE(opusFmt.isValid());
+        AudioDesc cdesc(opusFmt, 48000.0f, 6);
         Buffer::Ptr buf = Buffer::Ptr::create(8);
         buf.modify()->fill(0x00);
         buf.modify()->setSize(8);
-        AudioPacket::Ptr pkt = AudioPacket::Ptr::create(buf,
-                AudioCodec(AudioCodec::Opus));
-        Error err = dec->submitPacket(pkt);
+        auto pkt = CompressedAudioPayload::Ptr::create(cdesc, BufferView(buf, 0, 8));
+        Error err = dec->submitPayload(pkt);
         CHECK(err == promeki::Error::Invalid);
         CHECK_FALSE(dec->lastErrorMessage().isEmpty());
         delete dec;
@@ -400,7 +425,7 @@ TEST_CASE("Opus: decoder rejects unsupported channel count") {
 TEST_CASE("Opus: decoder reset is a no-op when no decoder is initialised yet") {
         AudioDecoder *dec = makeOpusDecoder();
         REQUIRE(dec != nullptr);
-        // Neither configure() nor a successful submitPacket() has run,
+        // Neither configure() nor a successful submitPayload() has run,
         // so the lazy decoder hasn't been created yet — reset() should
         // still succeed cleanly.
         CHECK(dec->reset() == promeki::Error::Ok);
@@ -428,25 +453,27 @@ TEST_CASE("Opus: encoder Float32LE input path") {
         decCfg.set(MediaConfig::AudioChannels, int32_t(ch));
         dec->configure(decCfg);
 
-        // Build a Float32LE frame of zeros (silence).
+        // Build a Float32LE payload of zeros (silence).
         AudioDesc desc(AudioFormat::PCMI_Float32LE, sr, ch);
         const size_t bytes = desc.bufferSize(chunk);
         auto buf = Buffer::Ptr::create(bytes);
         buf.modify()->setSize(bytes);
         std::memset(buf.modify()->data(), 0, bytes);
-        Audio frame = Audio::fromBuffer(buf, desc);
-        REQUIRE(frame.isValid());
+        BufferView planes;
+        planes.pushToBack(buf, 0, bytes);
+        auto frame = UncompressedAudioPayload::Ptr::create(desc, chunk, planes);
+        REQUIRE(frame->isValid());
 
-        Error err = enc->submitFrame(Audio::Ptr::create(std::move(frame)));
+        Error err = enc->submitPayload(frame);
         CHECK(err == promeki::Error::Ok);
         // The encoder must produce at least one packet for the full
         // 20ms / 960-sample frame.
-        auto pkt = enc->receivePacket();
+        auto pkt = enc->receiveCompressedPayload();
         REQUIRE(pkt);
-        CHECK(pkt->size() > 0);
+        CHECK(pkt->plane(0).size() > 0);
         // Decode round-trip should succeed.
-        CHECK(dec->submitPacket(pkt) == promeki::Error::Ok);
-        Audio::Ptr out = dec->receiveFrame();
+        CHECK(dec->submitPayload(pkt) == promeki::Error::Ok);
+        UncompressedAudioPayload::Ptr out = dec->receiveAudioPayload();
         REQUIRE(out.isValid());
         delete enc;
         delete dec;
@@ -461,19 +488,16 @@ TEST_CASE("Opus: configure with OpusApplication::Voip is accepted") {
         enc->configure(cfg);
 
         // Submit one frame to force ensureEncoder() (which reads
-        // applicationFromEnum) to actually run.
-        Audio::Ptr frame = Audio::Ptr::create(
-                makeSineFrameS16(960, 48000.0f, 1, 440.0f, 0.0));
-        // Above sine helper writes both channels; build a mono variant
-        // by halving the Audio's channel count and trimming.  The
-        // existing helper unconditionally writes ch interleaved
-        // copies — for mono just request channels=1 explicitly.
+        // applicationFromEnum) to actually run — mono silence payload.
         AudioDesc monoDesc(AudioFormat::PCMI_S16LE, 48000.0f, 1);
-        auto buf = Buffer::Ptr::create(monoDesc.bufferSize(960));
-        buf.modify()->setSize(monoDesc.bufferSize(960));
-        std::memset(buf.modify()->data(), 0, buf->size());
-        Audio mono = Audio::fromBuffer(buf, monoDesc);
-        Error err = enc->submitFrame(Audio::Ptr::create(std::move(mono)));
+        const size_t bytes = monoDesc.bufferSize(960);
+        auto buf = Buffer::Ptr::create(bytes);
+        buf.modify()->setSize(bytes);
+        std::memset(buf.modify()->data(), 0, bytes);
+        BufferView planes;
+        planes.pushToBack(buf, 0, bytes);
+        auto mono = UncompressedAudioPayload::Ptr::create(monoDesc, 960, planes);
+        Error err = enc->submitPayload(mono);
         CHECK(err == promeki::Error::Ok);
         delete enc;
 }
@@ -488,11 +512,14 @@ TEST_CASE("Opus: configure with OpusApplication::LowDelay is accepted") {
 
         // A 5 ms frame at 48 kHz is 240 samples.
         AudioDesc desc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
-        auto buf = Buffer::Ptr::create(desc.bufferSize(240));
-        buf.modify()->setSize(desc.bufferSize(240));
-        std::memset(buf.modify()->data(), 0, buf->size());
-        Audio frame = Audio::fromBuffer(buf, desc);
-        Error err = enc->submitFrame(Audio::Ptr::create(std::move(frame)));
+        const size_t bytes = desc.bufferSize(240);
+        auto buf = Buffer::Ptr::create(bytes);
+        buf.modify()->setSize(bytes);
+        std::memset(buf.modify()->data(), 0, bytes);
+        BufferView planes;
+        planes.pushToBack(buf, 0, bytes);
+        auto frame = UncompressedAudioPayload::Ptr::create(desc, 240, planes);
+        Error err = enc->submitPayload(frame);
         CHECK(err == promeki::Error::Ok);
         delete enc;
 }
@@ -502,15 +529,13 @@ TEST_CASE("Opus: encoder rejects sample-rate change after first frame") {
         REQUIRE(enc != nullptr);
 
         // First frame at 48 kHz initialises the encoder.
-        Audio::Ptr first = Audio::Ptr::create(
-                makeSineFrameS16(960, 48000.0f, 2, 440.0f, 0.0));
-        REQUIRE(enc->submitFrame(first) == promeki::Error::Ok);
+        auto first = makeSineFramePayloadS16(960, 48000.0f, 2, 440.0f, 0.0);
+        REQUIRE(enc->submitPayload(first) == promeki::Error::Ok);
 
         // Second frame at 24 kHz must be rejected (encoder is locked
         // to its initial descriptor; mismatches surface Error::Invalid).
-        Audio::Ptr second = Audio::Ptr::create(
-                makeSineFrameS16(480, 24000.0f, 2, 440.0f, 0.0));
-        Error err = enc->submitFrame(second);
+        auto second = makeSineFramePayloadS16(480, 24000.0f, 2, 440.0f, 0.0);
+        Error err = enc->submitPayload(second);
         CHECK(err == promeki::Error::Invalid);
         delete enc;
 }

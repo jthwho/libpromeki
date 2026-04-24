@@ -58,7 +58,7 @@ SDLPlayerWidget::SDLPlayerWidget(SDLAudioOutput *audio,
 SDLPlayerWidget::~SDLPlayerWidget() {
         // Releasing the MediaIO tears down the task (which joins its
         // pull thread) before our SDLVideoWidget base is destroyed,
-        // so the task's last call into presentImage / renderPending
+        // so the task's last call into presentVideo / renderPending
         // is safe.
         _mediaIO.clear();
         _task = nullptr;
@@ -85,18 +85,18 @@ void SDLPlayerWidget::keyPressEvent(KeyEvent *e) {
         }
 }
 
-void SDLPlayerWidget::presentImage(const Image::Ptr &image) {
-        if(!image.isValid()) return;
+void SDLPlayerWidget::presentVideo(const UncompressedVideoPayload::Ptr &payload) {
+        if(!payload.isValid()) return;
         {
                 Mutex::Locker lock(_pendingMutex);
-                if(_pendingImage.isValid() && _task != nullptr) {
-                        // Previous image hasn't been picked up — this
-                        // replacement is a drop at the display stage.
-                        // Bill it to the task's lifetime counter so
-                        // MediaIO stats report it.
+                if(_pendingPayload.isValid() && _task != nullptr) {
+                        // Previous payload hasn't been picked up —
+                        // this replacement is a drop at the display
+                        // stage.  Bill it to the task's lifetime
+                        // counter so MediaIO stats report it.
                         _task->noteFrameDropped();
                 }
-                _pendingImage = image;
+                _pendingPayload = payload;
         }
         if(!_renderScheduled.exchange(true)) {
                 wakeMainThread();
@@ -118,15 +118,17 @@ void SDLPlayerWidget::wakeMainThread() {
 bool SDLPlayerWidget::renderPending() {
         _renderScheduled.setValue(false);
 
-        Image::Ptr img;
+        UncompressedVideoPayload::Ptr payload;
         {
                 Mutex::Locker lock(_pendingMutex);
-                if(!_pendingImage.isValid()) return false;
-                img = _pendingImage;
-                _pendingImage = Image::Ptr();
+                if(!_pendingPayload.isValid()) return false;
+                payload = _pendingPayload;
+                _pendingPayload = UncompressedVideoPayload::Ptr();
         }
 
-        setImage(*img);
+        // Forward directly to the SDLVideoWidget's payload-native
+        // upload path — zero-copy, planes shared with the source.
+        setPayload(payload);
 
         // Trigger a paint on the containing SDLWindow if we have one.
         ObjectBase *p = parent();

@@ -101,37 +101,6 @@ Error AudioResampler::setRatio(float inputRate, float outputRate) {
 // Process
 // ---------------------------------------------------------------------------
 
-AudioResampler::ProcessResult AudioResampler::process(
-        const Audio &input, Audio &output, bool endOfInput)
-{
-        if(!isValid()) return ProcessResult(0, Error::NotSupported);
-        if(!input.isValid() || !output.isValid()) return ProcessResult(0, Error::InvalidArgument);
-        if(!input.desc().isNative() || !output.desc().isNative()) {
-                promekiWarn("AudioResampler: input and output must be native float format");
-                return ProcessResult(0, Error::FormatMismatch);
-        }
-        if(input.desc().channels() != _impl->channels ||
-           output.desc().channels() != _impl->channels) {
-                promekiWarn("AudioResampler: channel count mismatch "
-                            "(resampler=%u, input=%u, output=%u)",
-                            _impl->channels, input.desc().channels(),
-                            output.desc().channels());
-                return ProcessResult(0, Error::FormatMismatch);
-        }
-
-        long inputUsed = 0;
-        long outputGen = 0;
-        Error err = process(
-                input.data<const float>(),
-                static_cast<long>(input.samples()),
-                output.data<float>(),
-                static_cast<long>(output.maxSamples()),
-                inputUsed, outputGen, endOfInput);
-        if(err.isError()) return ProcessResult(0, err);
-        output.resize(static_cast<size_t>(outputGen));
-        return makeResult(static_cast<size_t>(outputGen));
-}
-
 Error AudioResampler::process(
         const float *dataIn, long inputFrames,
         float *dataOut, long outputFrames,

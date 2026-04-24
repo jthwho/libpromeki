@@ -14,6 +14,8 @@
 #include <promeki/imagefile.h>
 #include <promeki/file.h>
 #include <promeki/buffer.h>
+#include <promeki/uncompressedvideopayload.h>
+#include <promeki/videopayload.h>
 #include <promeki/pixelformat.h>
 #include <promeki/metadata.h>
 
@@ -41,7 +43,8 @@ static constexpr size_t PNG_DIO_FALLBACK_ALIGN = 4096;
 // PixelFormats that PNG cannot represent (BGR/ARGB/ABGR component orders,
 // 10/12-bit packed formats, planar/semi-planar/YCbCr, float, palette as
 // output) are intentionally rejected here. Callers should run
-// Image::convert() upstream to land in one of the supported descs.
+// UncompressedVideoPayload::convert() upstream to land in one of the
+// supported descs.
 
 struct PngFormat {
         uint8_t colorType;     ///< spng_color_type value
@@ -155,37 +158,41 @@ PROMEKI_REGISTER_IMAGEFILEIO(ImageFileIO_PNG);
 
 Error ImageFileIO_PNG::save(ImageFile &imageFile, const MediaConfig &config) const {
         (void)config;
-        const Image image = imageFile.image();
         const String &filename = imageFile.filename();
 
-        if(!image.isValid()) {
-                promekiErr("PNG save '%s': image is not valid", filename.cstr());
+        VideoPayload::PtrList vps = imageFile.frame().videoPayloads();
+        const UncompressedVideoPayload *uvp = nullptr;
+        if(!vps.isEmpty() && vps[0].isValid()) uvp = vps[0]->as<UncompressedVideoPayload>();
+        if(uvp == nullptr || !uvp->desc().isValid() || uvp->planeCount() == 0) {
+                promekiErr("PNG save '%s': no uncompressed video payload", filename.cstr());
                 return Error::Invalid;
         }
+        const ImageDesc &desc = uvp->desc();
 
         PngFormat pf;
-        if(!pngFormatFromPixelFormat(image.pixelFormat().id(), pf)) {
+        if(!pngFormatFromPixelFormat(desc.pixelFormat().id(), pf)) {
                 promekiErr("PNG save '%s': pixel format '%s' not supported",
-                           filename.cstr(), image.pixelFormat().name().cstr());
+                           filename.cstr(), desc.pixelFormat().name().cstr());
                 return Error::PixelFormatNotSupported;
         }
 
-        const size_t width        = image.width();
-        const size_t height       = image.height();
+        const size_t width        = desc.size().width();
+        const size_t height       = desc.size().height();
         const size_t bytesPerPx   = static_cast<size_t>(pf.bitDepth / 8) * pf.channels;
         const size_t packedStride = width * bytesPerPx;
         const size_t packedSize   = packedStride * height;
-        const size_t lineStride   = image.lineStride(0);
+        auto view = uvp->plane(0);
+        const size_t lineStride   = (height > 0) ? view.size() / height : packedStride;
 
         // libspng's encoder reads its input as one tightly-packed buffer.
-        // If the source image has row padding (lineStride != packedStride)
+        // If the source payload has row padding (lineStride != packedStride)
         // or we need a 16-bit byte swap, repack into a scratch buffer.
-        // Otherwise, encode directly from the image plane.
+        // Otherwise, encode directly from the plane view.
         Buffer packedBuf;
-        const void *pixelData = image.data(0);
+        const void *pixelData = view.data();
         if(pf.swap16 || lineStride != packedStride) {
                 packedBuf = Buffer(packedSize);
-                const uint8_t *src = static_cast<const uint8_t *>(image.data(0));
+                const uint8_t *src = view.data();
                 uint8_t *dst       = static_cast<uint8_t *>(packedBuf.data());
                 for(size_t y = 0; y < height; ++y) {
                         std::memcpy(dst + y * packedStride,
@@ -231,8 +238,8 @@ Error ImageFileIO_PNG::save(ImageFile &imageFile, const MediaConfig &config) con
         // Color management: prefer an explicit gAMA chunk if metadata
         // carries one, otherwise tag as sRGB (perceptual intent). Every
         // PNG-supported PixelFormat in the table above is sRGB-tagged.
-        if(image.metadata().contains(Metadata::Gamma)) {
-                double gamma = image.metadata().get(Metadata::Gamma).get<double>();
+        if(desc.metadata().contains(Metadata::Gamma)) {
+                double gamma = desc.metadata().get(Metadata::Gamma).get<double>();
                 if(gamma > 0.0) spng_set_gama(ctx, gamma);
         } else {
                 spng_set_srgb(ctx, 0); // 0 = perceptual rendering intent
@@ -408,18 +415,21 @@ Error ImageFileIO_PNG::load(ImageFile &imageFile, const MediaConfig &config) con
                 return Error::DecodeFailed;
         }
 
-        Image image(ihdr.width, ihdr.height, PixelFormat(pdId));
-        if(!image.isValid()) {
+        ImageDesc idesc(ihdr.width, ihdr.height, pdId);
+        auto payload = UncompressedVideoPayload::allocate(idesc);
+        if(!payload.isValid()) {
                 spng_ctx_free(ctx);
-                promekiErr("PNG load '%s': failed to allocate %ux%u image",
+                promekiErr("PNG load '%s': failed to allocate %ux%u payload",
                            filename.cstr(), ihdr.width, ihdr.height);
                 return Error::NoMem;
         }
 
         // libspng decodes into a tightly-packed contiguous buffer. The
-        // proav Image plane is also tightly packed (no row padding) for
-        // every PixelFormat we map here, so the sizes must match exactly.
-        const size_t planeBytes = image.lineStride(0) * ihdr.height;
+        // payload's plane-0 BufferView is tightly packed (no row
+        // padding) for every PixelFormat we map here, so the sizes
+        // must match exactly.
+        auto view = payload.modify()->data()[0];
+        const size_t planeBytes = view.size();
         if(decodedSize != planeBytes) {
                 spng_ctx_free(ctx);
                 promekiErr("PNG load '%s': decoded size %zu != plane size %zu (stride mismatch)",
@@ -427,7 +437,7 @@ Error ImageFileIO_PNG::load(ImageFile &imageFile, const MediaConfig &config) con
                 return Error::BufferTooSmall;
         }
 
-        sret = spng_decode_image(ctx, image.data(0), decodedSize, spngFmt, 0);
+        sret = spng_decode_image(ctx, view.data(), decodedSize, spngFmt, 0);
         if(sret) {
                 promekiErr("PNG load '%s': spng_decode_image failed: %s",
                            filename.cstr(), spng_strerror(sret));
@@ -437,20 +447,23 @@ Error ImageFileIO_PNG::load(ImageFile &imageFile, const MediaConfig &config) con
 
         // Color management: an sRGB chunk wins (the PixelFormat already
         // carries that color model). Otherwise, if a gAMA chunk is
-        // present, stash it in metadata. With neither chunk present we
-        // assume sRGB per the PNG spec recommendation, which matches the
-        // PixelFormat default — nothing to do.
+        // present, stash it in the descriptor's metadata. With neither
+        // chunk present we assume sRGB per the PNG spec recommendation,
+        // which matches the PixelFormat default — nothing to do.
         uint8_t srgbIntent = 0;
         if(spng_get_srgb(ctx, &srgbIntent) != SPNG_OK) {
                 double gamma = 0.0;
                 if(spng_get_gama(ctx, &gamma) == SPNG_OK && gamma > 0.0) {
-                        image.metadata().set(Metadata::Gamma, gamma);
+                        payload.modify()->desc().metadata().set(
+                                Metadata::Gamma, gamma);
                 }
         }
 
         spng_ctx_free(ctx);
 
-        imageFile.setImage(image);
+        Frame frame;
+        frame.addPayload(payload);
+        imageFile.setFrame(frame);
         return Error::Ok;
 }
 

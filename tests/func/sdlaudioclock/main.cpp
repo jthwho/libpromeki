@@ -34,7 +34,9 @@
 #include <cstring>
 #include <thread>
 
-#include <promeki/audio.h>
+#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/buffer.h>
+#include <promeki/bufferview.h>
 #include <promeki/audiodesc.h>
 #include <promeki/logger.h>
 #include <promeki/sdl/sdlaudioclock.h>
@@ -99,11 +101,14 @@ struct Stats {
 void feedSilence(SDLAudioOutput *out, std::atomic<bool> *running) {
         const AudioDesc desc = out->desc();
         while(running->load(std::memory_order_relaxed)) {
-                Audio silence(desc, kChunkSamples);
-                silence.resize(kChunkSamples);
-                std::memset(silence.data<float>(), 0,
-                            kChunkSamples * desc.channels() * sizeof(float));
-                out->pushAudio(silence);
+                size_t sz = desc.bufferSize(kChunkSamples);
+                Buffer::Ptr pcm = Buffer::Ptr::create(sz);
+                pcm.modify()->setSize(sz);
+                std::memset(pcm.modify()->data(), 0, sz);
+                BufferView view(pcm, 0, sz);
+                auto silence = UncompressedAudioPayload::Ptr::create(
+                        desc, kChunkSamples, view);
+                out->pushAudio(*silence);
                 std::this_thread::sleep_for(
                         std::chrono::microseconds(kFeedIntervalMicros));
         }

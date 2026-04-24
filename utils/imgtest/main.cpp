@@ -17,7 +17,7 @@
 #include <cmath>
 #include <promeki/imagefile.h>
 #include <promeki/imagefileio.h>
-#include <promeki/image.h>
+#include <promeki/uncompressedvideopayload.h>
 #include <promeki/videotestpattern.h>
 #include <promeki/paintengine.h>
 #include <promeki/basicfont.h>
@@ -35,62 +35,47 @@ static int drawCenteredText(BasicFont &font, const String &text, int cx, int y) 
         return font.lineHeight();
 }
 
-// Build the master RGBA8 test image.
-// Layout (640x480):
-//   0..239   Color bars (top half)
-//   240..319 R / G / B / Luma ramps (4 x 20px)
-//   320..399 Geometric shapes (centered)
-//   400..479 Text (centered)
-static Image buildTestImage(size_t w, size_t h) {
-        // Start with color bars in the top portion
+// Build the master RGBA8 test payload.
+static UncompressedVideoPayload::Ptr buildTestImage(size_t w, size_t h) {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::ColorBars);
         ImageDesc desc(w, h, PixelFormat(PixelFormat::RGBA8_sRGB));
-        Image img = gen.create(desc);
+        auto img = gen.createPayload(desc);
 
-        PaintEngine pe = img.createPaintEngine();
+        PaintEngine pe = img->createPaintEngine();
         int iw = static_cast<int>(w);
         int ih = static_cast<int>(h);
 
         auto black = pe.createPixel(Color::Black);
 
-        // --- R/G/B/Luma ramps ---
-        int rampY = ih / 2;         // 240
+        int rampY = ih / 2;
         int rampH = 20;
         int rampMargin = 4;
         int rampX = rampMargin;
         int rampW = iw - rampMargin * 2;
 
-        // Black background for ramp area
         pe.fillRect(black, Rect<int32_t>(0, rampY, iw, rampH * 4));
 
-        // Draw ramps directly into the RGBA8 pixel buffer for efficiency
-        uint8_t *pixels = static_cast<uint8_t *>(img.data());
+        uint8_t *pixels = img.modify()->data()[0].data();
         size_t stride = w * 4;
         for(int x = 0; x < rampW; ++x) {
                 uint8_t v = static_cast<uint8_t>(x * 255 / (rampW - 1));
                 int px = rampX + x;
                 for(int dy = 0; dy < rampH; ++dy) {
-                        // Red ramp
                         uint8_t *p = pixels + (rampY + dy) * stride + px * 4;
                         p[0] = v; p[1] = 0; p[2] = 0; p[3] = 255;
-                        // Green ramp
                         p = pixels + (rampY + rampH + dy) * stride + px * 4;
                         p[0] = 0; p[1] = v; p[2] = 0; p[3] = 255;
-                        // Blue ramp
                         p = pixels + (rampY + rampH * 2 + dy) * stride + px * 4;
                         p[0] = 0; p[1] = 0; p[2] = v; p[3] = 255;
-                        // Luma ramp
                         p = pixels + (rampY + rampH * 3 + dy) * stride + px * 4;
                         p[0] = v; p[1] = v; p[2] = v; p[3] = 255;
                 }
         }
 
-        // --- Geometric shapes (centered, row below ramps) ---
         int shapeY = rampY + rampH * 4 + 8;
         int shapeRowH = 50;
 
-        // Black background for shapes area
         pe.fillRect(black, Rect<int32_t>(0, shapeY - 4, iw, shapeRowH + 8));
 
         auto red   = pe.createPixel(Color::Red);
@@ -102,33 +87,26 @@ static Image buildTestImage(size_t w, size_t h) {
         int cx = iw / 2;
         int shapeSpacing = 80;
 
-        // Filled rectangles
         pe.fillRect(red,   Rect<int32_t>(cx - shapeSpacing * 3, shapeY, 40, 30));
         pe.fillRect(green, Rect<int32_t>(cx - shapeSpacing * 2, shapeY, 40, 30));
         pe.fillRect(blue,  Rect<int32_t>(cx - shapeSpacing,     shapeY, 40, 30));
 
-        // Outlined rectangle
         pe.drawRect(yellow, Rect<int32_t>(cx, shapeY, 40, 30));
 
-        // Filled and outlined circles
         pe.fillCircle(red,   Point2Di32(cx + shapeSpacing + 20,     shapeY + 15), 14);
         pe.drawCircle(white, Point2Di32(cx + shapeSpacing * 2 + 20, shapeY + 15), 14);
 
-        // Diagonal lines
         pe.drawLine(white,  cx + shapeSpacing * 2 + 50, shapeY,
                             cx + shapeSpacing * 2 + 50 + 40, shapeY + 30);
         pe.drawLine(yellow, cx + shapeSpacing * 2 + 50 + 40, shapeY,
                             cx + shapeSpacing * 2 + 50, shapeY + 30);
 
-        // --- Text (centered) ---
         int textY = shapeY + shapeRowH + 12;
 
-        // Black background for text area
         pe.fillRect(black, Rect<int32_t>(0, textY - 4, iw, ih - textY + 4));
 
         BasicFont font(pe);
 
-        // "Red  Green  Blue" in their respective colors
         font.setFontSize(36);
         int totalTextW = font.measureText("Red") + font.measureText("  ") +
                          font.measureText("Green") + font.measureText("  ") +
@@ -147,13 +125,11 @@ static Image buildTestImage(size_t w, size_t h) {
         font.setForegroundColor(Color::Blue);
         font.drawText("Blue", tx, ty);
 
-        // Second line: white info text
         font.setFontSize(20);
         font.setForegroundColor(Color::White);
         ty += 44;
         drawCenteredText(font, "promeki image file I/O test", cx, ty);
 
-        // Third line: yellow format list
         font.setForegroundColor(Color::Yellow);
         ty += 28;
         drawCenteredText(font, "DPX / Cineon / TGA / SGI / PNM", cx, ty);
@@ -176,18 +152,17 @@ int main(int argc, char **argv) {
 
         const size_t w = 640, h = 480;
 
-        // Build the master RGBA8 test image
-        Image master = buildTestImage(w, h);
+        auto master = buildTestImage(w, h);
         if(!master.isValid()) {
                 std::fprintf(stderr, "Failed to build test image\n");
                 return 1;
         }
 
-        // Derive format-specific source images
-        Image rgb8(w, h, PixelFormat(PixelFormat::RGB8_sRGB));
+        auto rgb8 = UncompressedVideoPayload::allocate(
+                ImageDesc(w, h, PixelFormat(PixelFormat::RGB8_sRGB)));
         {
-                const uint8_t *src = static_cast<const uint8_t *>(master.data());
-                uint8_t *dst = static_cast<uint8_t *>(rgb8.data());
+                const uint8_t *src = master->plane(0).data();
+                uint8_t *dst = rgb8.modify()->data()[0].data();
                 for(size_t i = 0; i < w * h; ++i) {
                         dst[i * 3 + 0] = src[i * 4 + 0];
                         dst[i * 3 + 1] = src[i * 4 + 1];
@@ -195,10 +170,11 @@ int main(int argc, char **argv) {
                 }
         }
 
-        Image mono8(w, h, PixelFormat(PixelFormat::Mono8_sRGB));
+        auto mono8 = UncompressedVideoPayload::allocate(
+                ImageDesc(w, h, PixelFormat(PixelFormat::Mono8_sRGB)));
         {
-                const uint8_t *src = static_cast<const uint8_t *>(master.data());
-                uint8_t *dst = static_cast<uint8_t *>(mono8.data());
+                const uint8_t *src = master->plane(0).data();
+                uint8_t *dst = mono8.modify()->data()[0].data();
                 for(size_t i = 0; i < w * h; ++i) {
                         dst[i] = static_cast<uint8_t>(
                                 (src[i * 4 + 0] * 77 + src[i * 4 + 1] * 150 + src[i * 4 + 2] * 29) >> 8);
@@ -206,20 +182,16 @@ int main(int argc, char **argv) {
         }
 
         TestCase tests[] = {
-                // DPX — use RGB (no alpha) to avoid GM's inverted-matte convention
                 { "dpx_rgb8.dpx",      ImageFile::DPX, PixelFormat::RGB8_sRGB },
                 { "dpx_rgb10_be.dpx",  ImageFile::DPX, PixelFormat::RGB10_DPX_sRGB },
                 { "dpx_rgb16.dpx",     ImageFile::DPX, PixelFormat::RGB16_BE_sRGB },
 
-                // TGA
                 { "tga_rgba8.tga",     ImageFile::TGA, PixelFormat::RGBA8_sRGB },
 
-                // SGI
                 { "sgi_mono8.sgi",     ImageFile::SGI, PixelFormat::Mono8_sRGB },
                 { "sgi_rgb8.sgi",      ImageFile::SGI, PixelFormat::RGB8_sRGB },
                 { "sgi_rgba8.sgi",     ImageFile::SGI, PixelFormat::RGBA8_sRGB },
 
-                // PNM
                 { "pnm_rgb8.ppm",      ImageFile::PNM, PixelFormat::RGB8_sRGB },
                 { "pnm_mono8.pgm",     ImageFile::PNM, PixelFormat::Mono8_sRGB },
         };
@@ -229,20 +201,21 @@ int main(int argc, char **argv) {
                 char path[512];
                 std::snprintf(path, sizeof(path), "%s/%s", outDir, tc.filename);
 
-                const Image *src = &master;
-                if(tc.pixelFormat == PixelFormat::RGB8_sRGB)  src = &rgb8;
-                if(tc.pixelFormat == PixelFormat::Mono8_sRGB) src = &mono8;
+                UncompressedVideoPayload::Ptr src = master;
+                if(tc.pixelFormat == PixelFormat::RGB8_sRGB)  src = rgb8;
+                if(tc.pixelFormat == PixelFormat::Mono8_sRGB) src = mono8;
 
-                Image saveImg;
-                if(src->pixelFormat().id() == tc.pixelFormat) {
-                        saveImg = *src;
+                UncompressedVideoPayload::Ptr saveImg;
+                if(src->desc().pixelFormat().id() == tc.pixelFormat) {
+                        saveImg = src;
                 } else {
-                        saveImg = master.convert(PixelFormat(tc.pixelFormat), Metadata());
+                        saveImg = master->convert(PixelFormat(tc.pixelFormat), Metadata());
                         if(!saveImg.isValid()) {
-                                saveImg = Image(w, h, PixelFormat(tc.pixelFormat));
+                                saveImg = UncompressedVideoPayload::allocate(
+                                        ImageDesc(w, h, PixelFormat(tc.pixelFormat)));
                                 if(saveImg.isValid()) {
-                                        uint8_t *p = static_cast<uint8_t *>(saveImg.data());
-                                        size_t bytes = saveImg.pixelFormat().memLayout().planeSize(0, w, h);
+                                        uint8_t *p = saveImg.modify()->data()[0].data();
+                                        size_t bytes = saveImg->plane(0).size();
                                         for(size_t i = 0; i < bytes; ++i)
                                                 p[i] = static_cast<uint8_t>((i * 7) & 0xFF);
                                 }
@@ -251,7 +224,7 @@ int main(int argc, char **argv) {
 
                 ImageFile f(tc.formatId);
                 f.setFilename(path);
-                f.setImage(saveImg);
+                f.setVideoPayload(saveImg);
                 Error err = f.save();
                 if(err.isError()) {
                         std::fprintf(stderr, "FAIL %-30s  %s\n", tc.filename, err.name().cstr());

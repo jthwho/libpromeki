@@ -23,13 +23,13 @@ PROMEKI_NAMESPACE_BEGIN
  * Encodes uncompressed images (RGB8, RGBA8, YCbCr 4:2:2 YUYV/UYVY/planar,
  * YCbCr 4:2:0 planar/NV12) to JPEG compressed form.  Each call to
  * @ref submitFrame runs one JPEG encode through libjpeg-turbo and
- * queues the resulting compressed bytes as a @ref MediaPacket;
- * @ref receivePacket pops the head of that queue.
+ * queues the resulting compressed bytes as a @ref CompressedVideoPayload;
+ * @ref receiveCompressedPayload pops the head of that queue.
  *
  * Default subsampling is 4:2:2 for RFC 2435 RTP compatibility.
  *
- * Registered against @ref VideoCodec::JPEG.  Every emitted packet is
- * flagged @ref MediaPacket::Keyframe because every JPEG bitstream is
+ * Registered against @ref VideoCodec::JPEG.  Every emitted payload is
+ * flagged @ref MediaPayload::Keyframe because every JPEG bitstream is
  * independently decodable.
  *
  * @par Config keys
@@ -63,9 +63,8 @@ class JpegVideoEncoder : public VideoEncoder {
                 static List<int> supportedInputList();
 
                 void configure(const MediaConfig &config) override;
-                Error submitFrame(const Image::Ptr &frame,
-                                  const MediaTimeStamp &pts = MediaTimeStamp()) override;
-                VideoPacket::Ptr receivePacket() override;
+                Error submitPayload(const UncompressedVideoPayload::Ptr &payload) override;
+                CompressedVideoPayload::Ptr receiveCompressedPayload() override;
                 Error flush() override;
                 Error reset() override;
 
@@ -84,7 +83,7 @@ class JpegVideoEncoder : public VideoEncoder {
                 Subsampling                  _subsampling   = Subsampling422;
                 PixelFormat                  _outputPd;
                 int                          _capacity      = 8;
-                Deque<VideoPacket::Ptr>      _queue;
+                Deque<CompressedVideoPayload::Ptr> _queue;
                 bool                         _capacityWarned = false;
 };
 
@@ -93,8 +92,8 @@ class JpegVideoEncoder : public VideoEncoder {
  * @ingroup proav
  *
  * Symmetric counterpart to @ref JpegVideoEncoder — incoming
- * @ref MediaPacket bytes are handed to libjpeg-turbo for decode and
- * the resulting uncompressed Image is queued for @ref receiveFrame.
+ * @ref CompressedVideoPayload bytes are handed to libjpeg-turbo for decode and
+ * the resulting @ref UncompressedVideoPayload is queued for @ref receiveVideoPayload.
  * The decoder's target uncompressed pixel description is set via
  * @ref MediaConfig::OutputPixelFormat; when unset, the first
  * declared decode target for the input JPEG sub-format is used.
@@ -114,8 +113,8 @@ class JpegVideoDecoder : public VideoDecoder {
                 static List<int> supportedOutputList();
 
                 void configure(const MediaConfig &config) override;
-                Error submitPacket(const VideoPacket::Ptr &packet) override;
-                Image::Ptr receiveFrame() override;
+                Error submitPayload(const CompressedVideoPayload::Ptr &payload) override;
+                UncompressedVideoPayload::Ptr receiveVideoPayload() override;
                 Error flush() override;
                 Error reset() override;
 
@@ -126,7 +125,7 @@ class JpegVideoDecoder : public VideoDecoder {
 
                 PixelFormat            _outputPd;
                 int                    _capacity = 8;
-                Deque<Image::Ptr>      _queue;
+                Deque<UncompressedVideoPayload::Ptr> _queue;
                 bool                   _capacityWarned = false;
 };
 

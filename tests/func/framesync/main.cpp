@@ -180,11 +180,11 @@ int main(int argc, char **argv) {
         // honest: pull deadlines are real time, so if FrameSync
         // miscounts or its pull loop busy-waits the regression will
         // show up in the frames-per-second math below.
-        WallClock clock;
+        Clock::Ptr clock = Clock::Ptr::takeOwnership(new WallClock());
         FrameSync sync(String("functest"));
         sync.setTargetFrameRate(mdesc.frameRate());
         if(adesc.isValid()) sync.setTargetAudioDesc(adesc);
-        sync.setClock(&clock);
+        sync.setClock(clock);
         sync.reset();
 
         std::atomic<bool> running{true};
@@ -264,9 +264,9 @@ int main(int argc, char **argv) {
                                   "[pull %5lld] frameIndex=%lld "
                                   "repeated=%lld dropped=%lld errNs=%lld\n",
                                   (long long)pullIdx,
-                                  (long long)r.first().frameIndex,
-                                  (long long)r.first().framesRepeated,
-                                  (long long)r.first().framesDropped,
+                                  (long long)r.first().frameIndex.value(),
+                                  (long long)r.first().framesRepeated.value(),
+                                  (long long)r.first().framesDropped.value(),
                                   (long long)r.first().error.nanoseconds());
                                 std::fflush(stdout);
                         }
@@ -310,11 +310,11 @@ int main(int argc, char **argv) {
         std::printf("pull errors:       %llu\n",
                     (unsigned long long)pullErrors.load());
         std::printf("-- FrameSync --\n");
-        std::printf("  framesIn:        %lld\n",  (long long)sync.framesIn());
-        std::printf("  framesOut:       %lld\n",  (long long)sync.framesOut());
-        std::printf("  framesRepeated:  %lld\n",  (long long)sync.framesRepeated());
-        std::printf("  framesDropped:   %lld\n",  (long long)sync.framesDropped());
-        std::printf("  overflowDrops:   %lld\n",  (long long)sync.overflowDrops());
+        std::printf("  framesIn:        %lld\n",  (long long)sync.framesIn().value());
+        std::printf("  framesOut:       %lld\n",  (long long)sync.framesOut().value());
+        std::printf("  framesRepeated:  %lld\n",  (long long)sync.framesRepeated().value());
+        std::printf("  framesDropped:   %lld\n",  (long long)sync.framesDropped().value());
+        std::printf("  overflowDrops:   %lld\n",  (long long)sync.overflowDrops().value());
         std::printf("  srcVideoRateHz:  %.3f\n",  sync.currentSourceVideoRate());
         std::printf("  srcAudioRateHz:  %.3f\n",  sync.currentSourceAudioRate());
         std::printf("  resampleRatio:   %.6f\n",  sync.currentResampleRatio());

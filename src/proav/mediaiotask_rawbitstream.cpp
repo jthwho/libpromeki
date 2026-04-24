@@ -9,10 +9,9 @@
 #include <promeki/mediaconfig.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaiodescription.h>
-#include <promeki/videopacket.h>
 #include <promeki/bufferview.h>
 #include <promeki/frame.h>
-#include <promeki/image.h>
+#include <promeki/compressedvideopayload.h>
 #include <promeki/imagedesc.h>
 #include <promeki/logger.h>
 #include <promeki/pixelformat.h>
@@ -110,29 +109,34 @@ Error MediaIOTask_RawBitstream::executeCmd(MediaIOCommandWrite &cmd) {
 
         const Frame &frame = *cmd.frame;
         bool anyPacket = false;
-        for(const Image::Ptr &imgPtr : frame.imageList()) {
-                if(!imgPtr.isValid() || !imgPtr->isCompressed()) continue;
-                const VideoPacket::Ptr &pktPtr = imgPtr->packet();
-                if(!pktPtr.isValid()) continue;
-                const VideoPacket &pkt = *pktPtr;
-                const BufferView &view = pkt.view();
-                if(view.size() == 0 || !view.isValid()) continue;
-                int64_t n = _file.write(view.data(),
-                                        static_cast<int64_t>(view.size()));
-                if(n < 0 || static_cast<size_t>(n) != view.size()) {
-                        promekiErr("MediaIOTask_RawBitstream: short write (%lld / %zu)",
-                                   (long long)n, view.size());
-                        stampWorkEnd();
-                        return Error::IOError;
+        for(const VideoPayload::Ptr &vp : frame.videoPayloads()) {
+                if(!vp.isValid()) continue;
+                const auto *cvp = vp->as<CompressedVideoPayload>();
+                if(cvp == nullptr) continue;
+                // Write every plane of the compressed payload — most
+                // encoders emit a single contiguous bitstream but some
+                // (NVENC SPS+PPS+IDR concatenation) split it across
+                // multiple non-overlapping views of one buffer.
+                for(size_t pi = 0; pi < cvp->planeCount(); ++pi) {
+                        auto view = cvp->plane(pi);
+                        if(view.size() == 0 || !view.isValid()) continue;
+                        int64_t n = _file.write(view.data(),
+                                                static_cast<int64_t>(view.size()));
+                        if(n < 0 || static_cast<size_t>(n) != view.size()) {
+                                promekiErr("MediaIOTask_RawBitstream: short write (%lld / %zu)",
+                                           (long long)n, view.size());
+                                stampWorkEnd();
+                                return Error::IOError;
+                        }
+                        _packetsWritten++;
+                        _bytesWritten += static_cast<int64_t>(view.size());
+                        anyPacket = true;
                 }
-                _packetsWritten++;
-                _bytesWritten += static_cast<int64_t>(view.size());
-                anyPacket = true;
         }
         if(!anyPacket) {
                 if(!_warnedNoPackets) {
-                        promekiWarn("MediaIOTask_RawBitstream: Frame has no compressed "
-                                    "Image with an attached VideoPacket — is an encoder "
+                        promekiWarn("MediaIOTask_RawBitstream: Frame has no "
+                                    "CompressedVideoPayload — is an encoder "
                                     "stage upstream of this sink?");
                         _warnedNoPackets = true;
                 }
@@ -154,17 +158,16 @@ Error MediaIOTask_RawBitstream::executeCmd(MediaIOCommandStats &cmd) {
 
 // ---- Introspection / negotiation ----
 //
-// RawBitstream is a "dumb" sink — it copies MediaPacket payload bytes
-// verbatim to the file.  The only hard constraint is that the input
-// carries a compressed Image with an attached MediaPacket; the file
-// extension (.h264 / .h265 / .hevc / .bit) advertises which codec a
-// consumer should assume, but the writer itself doesn't enforce it.
+// RawBitstream is a "dumb" sink — it copies CompressedVideoPayload
+// bytes verbatim to the file.  The only hard constraint is that the
+// input carries a CompressedVideoPayload; the file extension
+// (.h264 / .h265 / .hevc / .bit) advertises which codec a consumer
+// should assume, but the writer itself doesn't enforce it.
 // So:
 //  - describe(): every registered compressed PixelFormat is acceptable.
 //  - proposeInput(): reject uncompressed input so the planner splices
 //    in a VideoEncoder ahead of us instead of routing raw frames that
-//    would hit the `no compressed Image with an attached MediaPacket`
-//    warning at runtime.
+//    would hit the `no CompressedVideoPayload` warning at runtime.
 
 Error MediaIOTask_RawBitstream::describe(MediaIODescription *out) const {
         if(out == nullptr) return Error::Invalid;

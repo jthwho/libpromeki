@@ -11,6 +11,7 @@
 #include <doctest/doctest.h>
 #include <promeki/imagefileio.h>
 #include <promeki/imagefile.h>
+#include <promeki/uncompressedvideopayload.h>
 #include <promeki/metadata.h>
 
 using namespace promeki;
@@ -32,66 +33,61 @@ TEST_CASE("ImageFileIO PNG: handler is registered") {
 // Round-trip helpers
 // ============================================================================
 
-// Fill an image plane with a deterministic, non-constant byte pattern so
-// the encoder/decoder can't silently produce zeros and still pass.
-static void fillPattern(Image &image) {
-        uint8_t *data = static_cast<uint8_t *>(image.data(0));
-        size_t bytes = image.lineStride(0) * image.height();
+static void fillPattern(UncompressedVideoPayload &image) {
+        uint8_t *data = image.data()[0].data();
+        size_t bytes = image.plane(0).size();
         for(size_t i = 0; i < bytes; ++i) {
                 data[i] = static_cast<uint8_t>((i * 2654435761u) >> 24);
         }
 }
 
 static void pngRoundTrip(const char *fn, size_t w, size_t h, PixelFormat::ID pdId) {
-        Image src(w, h, PixelFormat(pdId));
+        auto src = UncompressedVideoPayload::allocate(
+                ImageDesc(w, h, PixelFormat(pdId)));
         REQUIRE(src.isValid());
-        fillPattern(src);
+        fillPattern(*src.modify());
 
         ImageFile sf(ImageFile::PNG);
         sf.setFilename(fn);
-        sf.setImage(src);
+        sf.setVideoPayload(src);
         CHECK(sf.save() == Error::Ok);
 
         ImageFile lf(ImageFile::PNG);
         lf.setFilename(fn);
         CHECK(lf.load() == Error::Ok);
-        Image dst = lf.image();
+        auto dst = lf.uncompressedVideoPayload();
         REQUIRE(dst.isValid());
-        CHECK(dst.width() == w);
-        CHECK(dst.height() == h);
-        CHECK(dst.pixelFormat().id() == pdId);
-        CHECK(std::memcmp(src.data(0), dst.data(0),
-                          src.lineStride(0) * h) == 0);
+        CHECK(dst->desc().width() == w);
+        CHECK(dst->desc().height() == h);
+        CHECK(dst->desc().pixelFormat().id() == pdId);
+        CHECK(std::memcmp(src->plane(0).data(), dst->plane(0).data(),
+                          src->plane(0).size()) == 0);
 
         std::remove(fn);
 }
 
-// LE-variant round-trip: saving an LE 16-bit image triggers a byte-swap
-// to big-endian inside the encoder. The loader always returns the BE
-// variant, so we verify that the round-trip lands in the BE form and
-// that byte-swapping it matches the original LE bytes.
 static void pngLeRoundTrip(const char *fn, size_t w, size_t h,
                            PixelFormat::ID leId, PixelFormat::ID beId) {
-        Image src(w, h, PixelFormat(leId));
+        auto src = UncompressedVideoPayload::allocate(
+                ImageDesc(w, h, PixelFormat(leId)));
         REQUIRE(src.isValid());
-        fillPattern(src);
+        fillPattern(*src.modify());
 
         ImageFile sf(ImageFile::PNG);
         sf.setFilename(fn);
-        sf.setImage(src);
+        sf.setVideoPayload(src);
         CHECK(sf.save() == Error::Ok);
 
         ImageFile lf(ImageFile::PNG);
         lf.setFilename(fn);
         CHECK(lf.load() == Error::Ok);
-        Image dst = lf.image();
+        auto dst = lf.uncompressedVideoPayload();
         REQUIRE(dst.isValid());
-        CHECK(dst.pixelFormat().id() == beId);
+        CHECK(dst->desc().pixelFormat().id() == beId);
 
-        // Compare byte-swapped BE output to the original LE bytes.
-        const uint16_t *srcPixels = static_cast<const uint16_t *>(src.data(0));
-        const uint16_t *dstPixels = static_cast<const uint16_t *>(dst.data(0));
-        const size_t pixelCount = (src.lineStride(0) * h) / 2;
+        const uint16_t *srcPixels = reinterpret_cast<const uint16_t *>(src->plane(0).data());
+        const uint16_t *dstPixels = reinterpret_cast<const uint16_t *>(dst->plane(0).data());
+        const size_t pixelCount = src->plane(0).size() / 2;
         for(size_t i = 0; i < pixelCount; ++i) {
                 const uint16_t swapped = static_cast<uint16_t>((dstPixels[i] >> 8) | (dstPixels[i] << 8));
                 if(srcPixels[i] != swapped) {
@@ -165,25 +161,27 @@ TEST_CASE("ImageFileIO PNG: RGBA8 1920x1080 round-trip") {
 // ============================================================================
 
 TEST_CASE("ImageFileIO PNG: save BGR8 returns PixelFormatNotSupported") {
-        Image src(16, 16, PixelFormat::BGR8_sRGB);
+        auto src = UncompressedVideoPayload::allocate(
+                ImageDesc(16, 16, PixelFormat::BGR8_sRGB));
         REQUIRE(src.isValid());
-        src.fill(0x42);
+        std::memset(src.modify()->data()[0].data(), 0x42, src->plane(0).size());
 
         ImageFile sf(ImageFile::PNG);
         sf.setFilename("/tmp/promeki_png_bgr8.png");
-        sf.setImage(src);
+        sf.setVideoPayload(src);
         CHECK(sf.save() == Error::PixelFormatNotSupported);
         std::remove("/tmp/promeki_png_bgr8.png");
 }
 
 TEST_CASE("ImageFileIO PNG: save YUV returns PixelFormatNotSupported") {
-        Image src(16, 16, PixelFormat::YUV8_422_UYVY_Rec709);
+        auto src = UncompressedVideoPayload::allocate(
+                ImageDesc(16, 16, PixelFormat::YUV8_422_UYVY_Rec709));
         REQUIRE(src.isValid());
-        src.fill(0x80);
+        std::memset(src.modify()->data()[0].data(), 0x80, src->plane(0).size());
 
         ImageFile sf(ImageFile::PNG);
         sf.setFilename("/tmp/promeki_png_yuv.png");
-        sf.setImage(src);
+        sf.setVideoPayload(src);
         CHECK(sf.save() == Error::PixelFormatNotSupported);
         std::remove("/tmp/promeki_png_yuv.png");
 }
@@ -214,19 +212,17 @@ TEST_CASE("ImageFileIO PNG: load garbage file returns error") {
 }
 
 TEST_CASE("ImageFileIO PNG: load truncated file returns error") {
-        // Build a real PNG first, then truncate it to something past the
-        // signature but well short of the data.
-        Image src(64, 64, PixelFormat::RGBA8_sRGB);
+        auto src = UncompressedVideoPayload::allocate(
+                ImageDesc(64, 64, PixelFormat::RGBA8_sRGB));
         REQUIRE(src.isValid());
-        fillPattern(src);
+        fillPattern(*src.modify());
 
         const char *fn = "/tmp/promeki_png_truncated.png";
         ImageFile sf(ImageFile::PNG);
         sf.setFilename(fn);
-        sf.setImage(src);
+        sf.setVideoPayload(src);
         REQUIRE(sf.save() == Error::Ok);
 
-        // Truncate to 32 bytes (signature + partial IHDR, no IDAT).
         FILE *fp = std::fopen(fn, "r+b");
         REQUIRE(fp);
         std::fseek(fp, 0, SEEK_END);
@@ -248,23 +244,24 @@ TEST_CASE("ImageFileIO PNG: load truncated file returns error") {
 
 TEST_CASE("ImageFileIO PNG: gAMA metadata round-trip") {
         const char *fn = "/tmp/promeki_png_gamma.png";
-        Image src(32, 32, PixelFormat::RGB8_sRGB);
+        ImageDesc desc(32, 32, PixelFormat::RGB8_sRGB);
+        desc.metadata().set(Metadata::Gamma, 2.2);
+        auto src = UncompressedVideoPayload::allocate(desc);
         REQUIRE(src.isValid());
-        src.fill(0x7F);
-        src.metadata().set(Metadata::Gamma, 2.2);
+        std::memset(src.modify()->data()[0].data(), 0x7F, src->plane(0).size());
 
         ImageFile sf(ImageFile::PNG);
         sf.setFilename(fn);
-        sf.setImage(src);
+        sf.setVideoPayload(src);
         CHECK(sf.save() == Error::Ok);
 
         ImageFile lf(ImageFile::PNG);
         lf.setFilename(fn);
         CHECK(lf.load() == Error::Ok);
-        Image dst = lf.image();
+        auto dst = lf.uncompressedVideoPayload();
         REQUIRE(dst.isValid());
-        REQUIRE(dst.metadata().contains(Metadata::Gamma));
-        const double g = dst.metadata().get(Metadata::Gamma).get<double>();
+        REQUIRE(dst->desc().metadata().contains(Metadata::Gamma));
+        const double g = dst->desc().metadata().get(Metadata::Gamma).get<double>();
         CHECK(g > 2.15);
         CHECK(g < 2.25);
 

@@ -19,6 +19,7 @@
 PROMEKI_NAMESPACE_BEGIN
 
 class Image;
+class UncompressedVideoPayload;
 
 /**
  * @brief Pre-compiled color space conversion pipeline.
@@ -311,17 +312,16 @@ class CSCPipeline {
                 int stageCount() const { return _stages.size(); }
 
                 /**
-                 * @brief Converts an entire image.
+                 * @brief Converts an entire payload.
                  *
-                 * The source and destination images must have matching dimensions.
-                 * The source must use this pipeline's source PixelFormat and the
-                 * destination must use the target PixelFormat.
-                 *
-                 * @param src Source image.
-                 * @param dst Destination image (must be pre-allocated).
-                 * @return Error::Ok on success.
+                 * @p src must carry this pipeline's source PixelFormat
+                 * and @p dst this pipeline's destination PixelFormat,
+                 * matching dimensions.  @p dst must already have
+                 * allocated plane buffers (see
+                 * @ref UncompressedVideoPayload::allocate).
                  */
-                Error execute(const Image &src, Image &dst) const;
+                Error execute(const UncompressedVideoPayload &src,
+                              UncompressedVideoPayload &dst) const;
 
                 /**
                  * @brief Processes a single scanline.

@@ -18,17 +18,16 @@ void LtcEncoder::setLevel(float level) {
         return;
 }
 
-Audio LtcEncoder::encode(const Timecode &tc) {
+List<int8_t> LtcEncoder::encode(const Timecode &tc) {
         const VtcFormat *fmt = tc.vtcFormat();
-        if(fmt == nullptr) return Audio();
+        if(fmt == nullptr) return List<int8_t>();
 
         // Allocate buffer with headroom
         size_t approx = vtc_ltc_audio_frame_size_approx(_encoder.sample_rate, fmt);
         size_t bufSize = approx + approx / 4 + 64; // 25% headroom
 
-        // Create Audio object: mono, int8_t
-        AudioDesc desc(AudioFormat::PCMI_S8, (float)_encoder.sample_rate, 1);
-        Audio audio(desc, bufSize);
+        List<int8_t> out;
+        out.resize(bufSize);
 
         // Convert Timecode to VtcTimecode
         VtcTimecode vtc;
@@ -41,12 +40,11 @@ Audio LtcEncoder::encode(const Timecode &tc) {
         vtc.flags = 0;
 
         // Encode
-        int8_t *buf = audio.data<int8_t>();
-        size_t written = vtc_ltc_audio_encode(&_encoder, &vtc, buf, bufSize);
-        if(written == 0) return Audio();
+        size_t written = vtc_ltc_audio_encode(&_encoder, &vtc, out.data(), bufSize);
+        if(written == 0) return List<int8_t>();
 
-        audio.resize(written);
-        return audio;
+        out.resize(written);
+        return out;
 }
 
 size_t LtcEncoder::frameSizeApprox(const VtcFormat *format) const {

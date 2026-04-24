@@ -20,6 +20,7 @@
 PROMEKI_NAMESPACE_BEGIN
 
 class Image;
+class UncompressedVideoPayload;
 
 /**
  * @brief 2D drawing engine for rendering primitives onto images.
@@ -89,14 +90,14 @@ class PaintEngine {
                                 virtual ~Impl();
 
                                 /**
-                                 * @brief Blits a rectangular region from a source image onto the surface.
+                                 * @brief Blits a rectangular region from a source payload onto the surface.
                                  * @param destTopLeft Top-left corner on the destination surface.
-                                 * @param src         Source image to copy from.
+                                 * @param src         Source payload to copy from.
                                  * @param srcTopLeft  Top-left corner of the source region.
                                  * @param srcSize     Size of the source region to copy.
                                  * @return true on success, false on failure.
                                  */
-                                virtual bool blit(const Point2Di32 &destTopLeft, const Image &src,
+                                virtual bool blit(const Point2Di32 &destTopLeft, const UncompressedVideoPayload &src,
                                                 const Point2Di32 &srcTopLeft, const Size2Du32 &srcSize) const;
 
                                 /**
@@ -472,18 +473,17 @@ class PaintEngine {
                 }
 
                 /**
-                 * @brief Blits a rectangular region from a source image onto the surface.
+                 * @brief Blits a rectangular region from a source payload onto the surface.
                  * @param destTopLeft Top-left corner on the destination surface.
-                 * @param src         Source image to copy from.
+                 * @param src         Source payload to copy from.
                  * @param srcTopLeft  Top-left corner of the source region (default: origin).
                  * @param srcSize     Size of the source region (default: entire source).
                  * @return true on success, false on failure.
                  */
-                bool blit(const Point2Di32 &destTopLeft, const Image &src,
+                bool blit(const Point2Di32 &destTopLeft, const UncompressedVideoPayload &src,
                           const Point2Di32 &srcTopLeft = Point2Di32(0, 0), const Size2Du32 &srcSize = Size2Du32()) const {
                         return d->blit(destTopLeft, src, srcTopLeft, srcSize);
                 }
-
 
         private:
                 SharedPtr<Impl, false> d;

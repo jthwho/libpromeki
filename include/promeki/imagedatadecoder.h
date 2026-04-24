@@ -19,6 +19,7 @@
 PROMEKI_NAMESPACE_BEGIN
 
 class Image;
+class UncompressedVideoPayload;
 
 /**
  * @brief Companion decoder for @ref ImageDataEncoder.
@@ -198,23 +199,25 @@ class ImageDataDecoder {
                  * the same order, including failed ones.  Inspect each
                  * item's @c error field to tell success from failure.
                  *
-                 * @param img   Image to read from.  Must have the same
-                 *              descriptor as the one supplied to the
-                 *              constructor.
-                 * @param bands Bands to decode.
-                 * @param out   Output list of decoded items.
+                 * @param payload Payload to read from.  Must have the same
+                 *                descriptor as the one supplied to the
+                 *                constructor.
+                 * @param bands   Bands to decode.
+                 * @param out     Output list of decoded items.
                  * @return @c Error::Ok on success (every band attempted
                  *         and the result list is fully populated), or
-                 *         an error code if the image descriptor does
+                 *         an error code if the payload descriptor does
                  *         not match the decoder.
                  */
-                Error decode(const Image &img, const List<Band> &bands, DecodedList &out) const;
+                Error decode(const UncompressedVideoPayload &payload,
+                             const List<Band> &bands, DecodedList &out) const;
 
                 /**
                  * @brief Convenience overload — decodes one band and
                  *        returns its DecodedItem directly.
                  */
-                DecodedItem decode(const Image &img, const Band &band) const;
+                DecodedItem decode(const UncompressedVideoPayload &payload,
+                                   const Band &band) const;
 
         private:
                 ImageDesc       _desc;
@@ -225,7 +228,8 @@ class ImageDataDecoder {
                 SampleMode      _sampleMode       = SampleMode::AverageBand;
                 bool            _valid            = false;
 
-                DecodedItem decodeOne(const Image &img, const Band &band) const;
+                DecodedItem decodeOne(const UncompressedVideoPayload &payload,
+                                      const Band &band) const;
 };
 
 PROMEKI_NAMESPACE_END

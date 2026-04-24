@@ -7,11 +7,11 @@
 
 #include <cstdint>
 #include <promeki/mediaiotask_imagefile.h>
-#include <promeki/audio.h>
 #include <promeki/colormodel.h>
 #include <promeki/imagefileio.h>
 #include <promeki/iodevice.h>
-#include <promeki/image.h>
+#include <promeki/uncompressedvideopayload.h>
+#include <promeki/videopayload.h>
 #include <promeki/imagedesc.h>
 #include <promeki/logger.h>
 #include <promeki/imgseq.h>
@@ -469,13 +469,16 @@ Error MediaIOTask_ImageFile::openSingle(MediaIOCommandOpen &cmd,
                 ImageFile imgFile(_imageFileID);
                 imgFile.setFilename(_filename);
 
-                // For headerless formats, set hint image from config
+                // For headerless formats, set hint payload from config
                 Size2Du32 hintSize = cfg.getAs<Size2Du32>(MediaConfig::VideoSize, Size2Du32());
                 if(hintSize.width() > 0 && hintSize.height() > 0) {
                         PixelFormat pd = cfg.getAs<PixelFormat>(MediaConfig::VideoPixelFormat, PixelFormat());
                         if(pd.isValid()) {
-                                Image hint(hintSize.width(), hintSize.height(), pd.id());
-                                imgFile.setImage(hint);
+                                ImageDesc idesc(hintSize, pd);
+                                auto hint = UncompressedVideoPayload::Ptr::create(idesc);
+                                Frame hintFrame;
+                                hintFrame.addPayload(hint);
+                                imgFile.setFrame(hintFrame);
                         }
                 }
 
@@ -488,9 +491,9 @@ Error MediaIOTask_ImageFile::openSingle(MediaIOCommandOpen &cmd,
 
                 _frame = Frame::Ptr::create(imgFile.frame());
 
-                if(!_frame->imageList().isEmpty()) {
-                        const Image &img = *_frame->imageList()[0];
-                        ImageDesc idesc(img.width(), img.height(), img.pixelFormat().id());
+                auto vids = _frame->videoPayloads();
+                if(!vids.isEmpty() && vids[0].isValid()) {
+                        const ImageDesc &idesc = vids[0]->desc();
                         mediaDesc.imageList().pushToBack(idesc);
                 }
 
@@ -499,8 +502,9 @@ Error MediaIOTask_ImageFile::openSingle(MediaIOCommandOpen &cmd,
                 // descriptor in the MediaDesc and on the command so
                 // downstream consumers (SDL player, transcoders) know
                 // to wire up an audio sink.
-                if(!_frame->audioList().isEmpty()) {
-                        const AudioDesc &adesc = _frame->audioList()[0]->desc();
+                auto auds = _frame->audioPayloads();
+                if(!auds.isEmpty() && auds[0].isValid()) {
+                        const AudioDesc &adesc = auds[0]->desc();
                         if(adesc.isValid()) {
                                 mediaDesc.audioList().pushToBack(adesc);
                                 cmd.audioDesc = adesc;
@@ -737,8 +741,11 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                 ImageFile imgFile(_imageFileID);
                 imgFile.setFilename(firstPath);
                 if(_seqSize.width() > 0 && _seqSize.height() > 0 && _seqPixelFormat.isValid()) {
-                        Image hint(_seqSize.width(), _seqSize.height(), _seqPixelFormat.id());
-                        imgFile.setImage(hint);
+                        ImageDesc idesc(_seqSize, _seqPixelFormat);
+                        auto hint = UncompressedVideoPayload::Ptr::create(idesc);
+                        Frame hintFrame;
+                        hintFrame.addPayload(hint);
+                        imgFile.setFrame(hintFrame);
                 }
                 Error err = imgFile.load(_ioConfig);
                 if(err.isError()) {
@@ -747,10 +754,9 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                         return err;
                 }
                 const Frame &f = imgFile.frame();
-                if(!f.imageList().isEmpty()) {
-                        const Image &img = *f.imageList()[0];
-                        ImageDesc idesc(img.width(), img.height(), img.pixelFormat().id());
-                        mediaDesc.imageList().pushToBack(idesc);
+                auto headVids = f.videoPayloads();
+                if(!headVids.isEmpty() && headVids[0].isValid()) {
+                        mediaDesc.imageList().pushToBack(headVids[0]->desc());
                 }
 
                 // Surface embedded audio in the descriptor.  A DPX
@@ -758,8 +764,9 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                 // per-frame AUDIO user-data blocks; without this the
                 // controller would report "no audio" and downstream
                 // consumers would never wire up an audio sink.
-                if(!f.audioList().isEmpty()) {
-                        const AudioDesc &adesc = f.audioList()[0]->desc();
+                auto headAuds = f.audioPayloads();
+                if(!headAuds.isEmpty() && headAuds[0].isValid()) {
+                        const AudioDesc &adesc = headAuds[0]->desc();
                         if(adesc.isValid()) {
                                 mediaDesc.audioList().pushToBack(adesc);
                                 cmd.audioDesc = adesc;
@@ -1143,8 +1150,11 @@ Error MediaIOTask_ImageFile::readSequence(MediaIOCommandRead &cmd) {
         ImageFile imgFile(_imageFileID);
         imgFile.setFilename(fn);
         if(_seqSize.width() > 0 && _seqSize.height() > 0 && _seqPixelFormat.isValid()) {
-                Image hint(_seqSize.width(), _seqSize.height(), _seqPixelFormat.id());
-                imgFile.setImage(hint);
+                ImageDesc idesc(_seqSize, _seqPixelFormat);
+                auto hint = UncompressedVideoPayload::Ptr::create(idesc);
+                Frame hintFrame;
+                hintFrame.addPayload(hint);
+                imgFile.setFrame(hintFrame);
         }
         Error err = imgFile.load(_ioConfig);
         if(err.isError()) {
@@ -1163,16 +1173,25 @@ Error MediaIOTask_ImageFile::readSequence(MediaIOCommandRead &cmd) {
         if(_sidecarAudioOpen) {
                 size_t spf = _sidecarFrameRate.samplesPerFrame(
                         _sidecarSampleRate, _seqIndex.value());
-                Audio sidecarAudio;
-                Error audioErr = _sidecarAudio.read(sidecarAudio, spf);
+                UncompressedAudioPayload::Ptr sidecarPayload;
+                Error audioErr = _sidecarAudio.read(sidecarPayload, spf);
                 if(audioErr.isError()) {
                         promekiErr("MediaIOTask_ImageFile: sidecar audio read failed: %s",
                                 audioErr.name().cstr());
                         return audioErr;
                 }
-                // Sidecar audio replaces any embedded per-frame audio.
-                frame.modify()->audioList().clear();
-                frame.modify()->audioList().pushToBack(Audio::Ptr::create(sidecarAudio));
+                // Sidecar audio replaces any embedded per-frame
+                // audio.  Drop existing audio payloads (keep video)
+                // and append the sidecar payload directly.
+                Frame *fmut = frame.modify();
+                MediaPayload::PtrList keep;
+                keep.reserve(fmut->payloadList().size());
+                for(MediaPayload::Ptr &p : fmut->payloadList()) {
+                        if(!p.isValid()) { keep.pushToBack(p); continue; }
+                        if(p->kind() != MediaPayloadKind::Audio) keep.pushToBack(p);
+                }
+                fmut->payloadList() = std::move(keep);
+                if(sidecarPayload.isValid()) fmut->addPayload(sidecarPayload);
         }
 
         cmd.frame = frame;
@@ -1248,9 +1267,13 @@ Error MediaIOTask_ImageFile::writeSequence(MediaIOCommandWrite &cmd) {
 
         // Write audio to the sidecar file.
         if(_sidecarAudioOpen) {
-                if(!cmd.frame->audioList().isEmpty()) {
-                        const Audio &audio = *cmd.frame->audioList()[0];
-                        Error audioErr = _sidecarAudio.write(audio);
+                auto auds = cmd.frame->audioPayloads();
+                const UncompressedAudioPayload *uap = nullptr;
+                if(!auds.isEmpty() && auds[0].isValid()) {
+                        uap = auds[0]->as<UncompressedAudioPayload>();
+                }
+                if(uap != nullptr) {
+                        Error audioErr = _sidecarAudio.write(*uap);
                         if(audioErr.isError()) {
                                 promekiErr("MediaIOTask_ImageFile: sidecar audio write failed: %s",
                                         audioErr.name().cstr());
@@ -1261,9 +1284,15 @@ Error MediaIOTask_ImageFile::writeSequence(MediaIOCommandWrite &cmd) {
                         // maintain frame-accurate sync.
                         size_t spf = _sidecarFrameRate.samplesPerFrame(
                                 _sidecarSampleRate, _writeCount.value());
-                        Audio silence(_sidecarAudioDesc, spf);
-                        silence.zero();
-                        Error audioErr = _sidecarAudio.write(silence);
+                        const size_t bytes = _sidecarAudioDesc.bufferSize(spf);
+                        auto buf = Buffer::Ptr::create(bytes);
+                        buf.modify()->setSize(bytes);
+                        std::memset(buf.modify()->data(), 0, bytes);
+                        BufferView planes;
+                        planes.pushToBack(buf, 0, bytes);
+                        auto silence = UncompressedAudioPayload::Ptr::create(
+                                _sidecarAudioDesc, spf, planes);
+                        Error audioErr = _sidecarAudio.write(*silence);
                         if(audioErr.isError()) {
                                 promekiErr("MediaIOTask_ImageFile: sidecar audio silence write failed: %s",
                                         audioErr.name().cstr());

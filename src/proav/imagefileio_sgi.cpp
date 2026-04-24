@@ -11,6 +11,8 @@
 #include <promeki/imagefile.h>
 #include <promeki/file.h>
 #include <promeki/buffer.h>
+#include <promeki/uncompressedvideopayload.h>
+#include <promeki/videopayload.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -391,23 +393,25 @@ Error ImageFileIO_SGI::load(ImageFile &imageFile, const MediaConfig &config) con
                 }
         }
 
-        // Allocate image and convert planar → interleaved
-        Image image(w, h, PixelFormat(pdId));
-        if(!image.isValid()) {
-                promekiErr("SGI load '%s': failed to allocate image", filename.cstr());
+        // Allocate payload and convert planar → interleaved
+        ImageDesc idesc(w, h, pdId);
+        auto payload = UncompressedVideoPayload::allocate(idesc);
+        if(!payload.isValid()) {
+                promekiErr("SGI load '%s': failed to allocate payload", filename.cstr());
                 return Error::NoMem;
         }
+        uint8_t *dst = payload.modify()->data()[0].data();
 
         if(hdr.bpc == 1) {
-                deplanarize8(static_cast<uint8_t *>(image.data()),
+                deplanarize8(dst,
                              static_cast<const uint8_t *>(planarBuf.data()), w, h, z);
         } else {
-                deplanarize16(static_cast<uint16_t *>(image.data()),
+                deplanarize16(reinterpret_cast<uint16_t *>(dst),
                               static_cast<const uint16_t *>(planarBuf.data()), w, h, z);
         }
 
         Frame frame;
-        frame.imageList().pushToBack(Image::Ptr::create(image));
+        frame.addPayload(payload);
         imageFile.setFrame(frame);
         promekiDebug("SGI load '%s': %zux%zu %s (%s)", filename.cstr(), w, h,
                      PixelFormat(pdId).name().cstr(), hdr.storage ? "RLE" : "raw");
@@ -420,24 +424,28 @@ Error ImageFileIO_SGI::load(ImageFile &imageFile, const MediaConfig &config) con
 
 Error ImageFileIO_SGI::save(ImageFile &imageFile, const MediaConfig &config) const {
         (void)config;
-        const Image image = imageFile.image();
         const String &filename = imageFile.filename();
 
-        if(!image.isValid()) {
-                promekiErr("SGI save '%s': image is not valid", filename.cstr());
+        VideoPayload::PtrList vps = imageFile.frame().videoPayloads();
+        const UncompressedVideoPayload *uvp = nullptr;
+        if(!vps.isEmpty() && vps[0].isValid()) uvp = vps[0]->as<UncompressedVideoPayload>();
+        if(uvp == nullptr || !uvp->desc().isValid() || uvp->planeCount() == 0) {
+                promekiErr("SGI save '%s': no uncompressed video payload", filename.cstr());
                 return Error::Invalid;
         }
 
+        const ImageDesc &idesc = uvp->desc();
         uint8_t bpc;
         uint16_t zSize;
-        if(!sgiFormatParams(image.pixelFormat().id(), bpc, zSize)) {
+        if(!sgiFormatParams(idesc.pixelFormat().id(), bpc, zSize)) {
                 promekiErr("SGI save '%s': unsupported pixel format '%s'",
-                           filename.cstr(), image.pixelFormat().name().cstr());
+                           filename.cstr(), idesc.pixelFormat().name().cstr());
                 return Error::PixelFormatNotSupported;
         }
 
-        size_t w = image.width();
-        size_t h = image.height();
+        size_t w = idesc.size().width();
+        size_t h = idesc.size().height();
+        auto plane0 = uvp->plane(0);
 
         // Build header (always big-endian)
         SGIHeader hdr;
@@ -467,10 +475,10 @@ Error ImageFileIO_SGI::save(ImageFile &imageFile, const MediaConfig &config) con
 
         if(bpc == 1) {
                 planarize8(static_cast<uint8_t *>(planarBuf.data()),
-                           static_cast<const uint8_t *>(image.data()), w, h, zSize);
+                           plane0.data(), w, h, zSize);
         } else {
                 planarize16(static_cast<uint16_t *>(planarBuf.data()),
-                            static_cast<const uint16_t *>(image.data()), w, h, zSize);
+                            reinterpret_cast<const uint16_t *>(plane0.data()), w, h, zSize);
         }
 
         File file(filename);
@@ -488,7 +496,7 @@ Error ImageFileIO_SGI::save(ImageFile &imageFile, const MediaConfig &config) con
 
         file.close();
         promekiDebug("SGI save '%s': %zux%zu %s", filename.cstr(), w, h,
-                     image.pixelFormat().name().cstr());
+                     idesc.pixelFormat().name().cstr());
         return Error::Ok;
 }
 

@@ -6,7 +6,7 @@
  */
 
 #include <promeki/cscpipeline.h>
-#include <promeki/image.h>
+#include <promeki/uncompressedvideopayload.h>
 #include <promeki/colormodel.h>
 #include <promeki/logger.h>
 #include <promeki/map.h>
@@ -105,9 +105,9 @@ CSCPipeline::CSCPipeline(const PixelFormat &src, const PixelFormat &dst,
 // documented as thread-safe to call concurrently from multiple threads.
 // That makes it safe to share compiled pipelines process-wide via a
 // mutex-protected lookup table.  The alternative — constructing a
-// fresh CSCPipeline on every Image::convert() call — pays compile()'s
-// stage-building cost every frame even when the conversion target
-// never changes.
+// fresh CSCPipeline on every UncompressedVideoPayload::convert() call
+// — pays compile()'s stage-building cost every frame even when the
+// conversion target never changes.
 
 namespace {
 
@@ -790,92 +790,71 @@ void CSCPipeline::processLine(const void *const *srcPlanes,
         return;
 }
 
-Error CSCPipeline::execute(const Image &src, Image &dst) const {
+Error CSCPipeline::execute(const UncompressedVideoPayload &src,
+                           UncompressedVideoPayload &dst) const {
         if(!_valid) return Error::Invalid;
         if(!src.isValid() || !dst.isValid()) return Error::Invalid;
 
-        size_t width = src.width();
-        size_t height = src.height();
+        const ImageDesc &srcDesc = src.desc();
+        const ImageDesc &dstDesc = dst.desc();
+        const size_t width  = srcDesc.size().width();
+        const size_t height = srcDesc.size().height();
+        if(dstDesc.size().width() != width || dstDesc.size().height() != height) {
+                return Error::Invalid;
+        }
 
-        if(dst.width() != width || dst.height() != height) return Error::Invalid;
-
-        // Identity: copy planes directly
+        // Identity: copy planes directly.
         if(_identity) {
-                int planeCount = static_cast<int>(src.pixelFormat().planeCount());
-                for(int p = 0; p < planeCount; p++) {
-                        size_t planeSize = src.plane(p)->size();
-                        std::memcpy(dst.data(p), src.data(p), planeSize);
+                const int planeCount =
+                        static_cast<int>(srcDesc.pixelFormat().planeCount());
+                for(int p = 0; p < planeCount; ++p) {
+                        auto sv = src.plane(p);
+                        auto dv = dst.data()[p];
+                        const size_t n = std::min(sv.size(), dv.size());
+                        std::memcpy(dv.data(), sv.data(), n);
                 }
                 return Error::Ok;
         }
 
-        // Fast path
-        if(_fastPathFunc) {
-                int srcPlaneCount = static_cast<int>(_srcDesc.planeCount());
-                int dstPlaneCount = static_cast<int>(_dstDesc.planeCount());
-
-                CSCContext ctx(width);
-                if(!ctx.isValid()) return Error::NoMem;
-
-                for(size_t y = 0; y < height; y++) {
-                        const void *srcLinePtrs[4] = {};
-                        size_t srcStrides[4] = {};
-                        void *dstLinePtrs[4] = {};
-                        size_t dstStrides[4] = {};
-
-                        for(int p = 0; p < srcPlaneCount; p++) {
-                                size_t stride = src.lineStride(p);
-                                const PixelMemLayout::PlaneDesc &pd = _srcDesc.memLayout().planeDesc(p);
-                                size_t planeY = y / pd.vSubsampling;
-                                srcLinePtrs[p] = static_cast<const uint8_t *>(src.data(p)) + planeY * stride;
-                                srcStrides[p] = stride;
-                        }
-                        for(int p = 0; p < dstPlaneCount; p++) {
-                                size_t stride = dst.lineStride(p);
-                                const PixelMemLayout::PlaneDesc &pd = _dstDesc.memLayout().planeDesc(p);
-                                size_t planeY = y / pd.vSubsampling;
-                                dstLinePtrs[p] = static_cast<uint8_t *>(dst.data(p)) + planeY * stride;
-                                dstStrides[p] = stride;
-                        }
-
-                        _fastPathFunc(srcLinePtrs, srcStrides, dstLinePtrs, dstStrides,
-                                      width, ctx);
-                }
-                return Error::Ok;
-        }
-
-        // General pipeline
-        int srcPlaneCount = static_cast<int>(_srcDesc.planeCount());
-        int dstPlaneCount = static_cast<int>(_dstDesc.planeCount());
+        const int srcPlaneCount = static_cast<int>(_srcDesc.planeCount());
+        const int dstPlaneCount = static_cast<int>(_dstDesc.planeCount());
 
         CSCContext ctx(width);
         if(!ctx.isValid()) return Error::NoMem;
 
-        for(size_t y = 0; y < height; y++) {
+        for(size_t y = 0; y < height; ++y) {
                 const void *srcLinePtrs[4] = {};
-                size_t srcStrides[4] = {};
-                void *dstLinePtrs[4] = {};
-                size_t dstStrides[4] = {};
+                size_t      srcStrides [4] = {};
+                void       *dstLinePtrs[4] = {};
+                size_t      dstStrides [4] = {};
 
-                for(int p = 0; p < srcPlaneCount; p++) {
-                        size_t stride = src.lineStride(p);
-                        const PixelMemLayout::PlaneDesc &pd = _srcDesc.memLayout().planeDesc(p);
-                        size_t planeY = y / pd.vSubsampling;
-                        srcLinePtrs[p] = static_cast<const uint8_t *>(src.data(p)) + planeY * stride;
-                        srcStrides[p] = stride;
+                for(int p = 0; p < srcPlaneCount; ++p) {
+                        const size_t stride = _srcDesc.lineStride(p, srcDesc);
+                        const PixelMemLayout::PlaneDesc &pd =
+                                _srcDesc.memLayout().planeDesc(p);
+                        const size_t planeY = y / pd.vSubsampling;
+                        auto sv = src.plane(p);
+                        srcLinePtrs[p] = sv.data() + planeY * stride;
+                        srcStrides [p] = stride;
                 }
-                for(int p = 0; p < dstPlaneCount; p++) {
-                        size_t stride = dst.lineStride(p);
-                        const PixelMemLayout::PlaneDesc &pd = _dstDesc.memLayout().planeDesc(p);
-                        size_t planeY = y / pd.vSubsampling;
-                        dstLinePtrs[p] = static_cast<uint8_t *>(dst.data(p)) + planeY * stride;
-                        dstStrides[p] = stride;
+                for(int p = 0; p < dstPlaneCount; ++p) {
+                        const size_t stride = _dstDesc.lineStride(p, dstDesc);
+                        const PixelMemLayout::PlaneDesc &pd =
+                                _dstDesc.memLayout().planeDesc(p);
+                        const size_t planeY = y / pd.vSubsampling;
+                        auto dv = dst.data()[p];
+                        dstLinePtrs[p] = dv.data() + planeY * stride;
+                        dstStrides [p] = stride;
                 }
 
-                processLine(srcLinePtrs, srcStrides, dstLinePtrs, dstStrides,
-                            width, y, ctx);
+                if(_fastPathFunc) {
+                        _fastPathFunc(srcLinePtrs, srcStrides,
+                                      dstLinePtrs, dstStrides, width, ctx);
+                } else {
+                        processLine(srcLinePtrs, srcStrides,
+                                    dstLinePtrs, dstStrides, width, y, ctx);
+                }
         }
-
         return Error::Ok;
 }
 

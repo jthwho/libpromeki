@@ -431,14 +431,6 @@ size_t AudioBuffer::popLocked(void *dst, size_t samples) {
 // Push (public, locked)
 // ---------------------------------------------------------------------------
 
-Error AudioBuffer::push(const Audio &audio) {
-        if(!audio.isValid()) return Error::InvalidArgument;
-        Mutex::Locker lock(_mutex);
-        Error err = pushLocked(audio.buffer()->data(), audio.samples(), audio.desc());
-        if(err.isOk()) _cv.wakeOne();
-        return err;
-}
-
 Error AudioBuffer::push(const void *data, size_t samples, const AudioDesc &srcFormat) {
         Mutex::Locker lock(_mutex);
         Error err = pushLocked(data, samples, srcFormat);
@@ -450,20 +442,6 @@ Error AudioBuffer::push(const void *data, size_t samples, const AudioDesc &srcFo
 // Pop (public, locked, non-blocking)
 // ---------------------------------------------------------------------------
 
-AudioBuffer::PopResult AudioBuffer::pop(Audio &audio, size_t samples) {
-        if(!audio.isValid()) return PopResult(0, Error::FormatMismatch);
-        Mutex::Locker lock(_mutex);
-        if(audio.desc().format().id() != _format.format().id() ||
-           audio.desc().sampleRate() != _format.sampleRate() ||
-           audio.desc().channels() != _format.channels()) {
-                return PopResult(0, Error::FormatMismatch);
-        }
-        if(samples > audio.maxSamples()) samples = audio.maxSamples();
-        size_t got = popLocked(audio.buffer()->data(), samples);
-        audio.resize(got);
-        return makeResult(got);
-}
-
 AudioBuffer::PopResult AudioBuffer::pop(void *dst, size_t samples) {
         Mutex::Locker lock(_mutex);
         size_t got = popLocked(dst, samples);
@@ -473,25 +451,6 @@ AudioBuffer::PopResult AudioBuffer::pop(void *dst, size_t samples) {
 // ---------------------------------------------------------------------------
 // popWait (public, locked, blocking)
 // ---------------------------------------------------------------------------
-
-AudioBuffer::PopResult AudioBuffer::popWait(Audio &audio, size_t samples, unsigned int timeoutMs) {
-        if(!audio.isValid()) return PopResult(0, Error::FormatMismatch);
-        Mutex::Locker lock(_mutex);
-        if(audio.desc().format().id() != _format.format().id() ||
-           audio.desc().sampleRate() != _format.sampleRate() ||
-           audio.desc().channels() != _format.channels()) {
-                return PopResult(0, Error::FormatMismatch);
-        }
-        if(samples > audio.maxSamples()) samples = audio.maxSamples();
-        if(_count < samples) {
-                Error waitErr = _cv.wait(_mutex,
-                        [&]() { return _count >= samples; }, timeoutMs);
-                if(waitErr != Error::Ok) return PopResult(0, waitErr);
-        }
-        size_t got = popLocked(audio.buffer()->data(), samples);
-        audio.resize(got);
-        return makeResult(got);
-}
 
 AudioBuffer::PopResult AudioBuffer::popWait(void *dst, size_t samples, unsigned int timeoutMs) {
         Mutex::Locker lock(_mutex);

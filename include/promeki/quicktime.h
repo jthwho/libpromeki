@@ -38,7 +38,7 @@ PROMEKI_NAMESPACE_BEGIN
  * sample payloads. Compressed sample bytes flow through verbatim in
  * Sample::data buffers, and downstream consumers (or
  * MediaIOTask_QuickTime, which wraps compressed samples as
- * @c Image::fromCompressedData) are responsible for running any codec.
+ * @ref CompressedVideoPayload) are responsible for running any codec.
  *
  * Tracks are exposed as a plain list; each Track carries its codec
  * (as a PixelFormat for video, an AudioDesc for audio), frame rate,

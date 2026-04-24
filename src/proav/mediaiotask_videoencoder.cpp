@@ -13,11 +13,12 @@
 #include <promeki/enums.h>
 #include <promeki/frame.h>
 #include <promeki/framerate.h>
-#include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaiodescription.h>
-#include <promeki/videopacket.h>
+#include <promeki/compressedvideopayload.h>
+#include <promeki/uncompressedvideopayload.h>
+#include <promeki/audiopayload.h>
 #include <promeki/metadata.h>
 #include <promeki/pixelformat.h>
 #include <promeki/buffer.h>
@@ -183,7 +184,7 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandOpen &cmd) {
         // metadata — the first entry in the codec's compressed
         // PixelFormat list is the canonical bitstream variant.  Any
         // per-frame variation (JPEG's per-image subsampling choice,
-        // for example) is reflected on the emitted MediaPacket itself.
+        // for example) is reflected on the emitted CompressedVideoPayload itself.
         PixelFormat encOutPd;
         const auto compressedList = _codec.compressedPixelFormats();
         if(!compressedList.isEmpty()) {
@@ -276,47 +277,58 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandWrite &cmd) {
         // the upstream didn't set one we pass an invalid MediaTimeStamp
         // and let the encoder invent something (most codecs will use
         // internal frame indexing).
+        auto vids = frame.videoPayloads();
         MediaTimeStamp pts;
-        // Per-essence MediaTimeStamp lives on the Image (an essence
-        // object), not on the Frame; the Image::metadata() lookup
-        // succeeds transparently when the producer stamped the frame.
-        if(!frame.imageList().isEmpty()) {
-                const Image::Ptr &imgPtr = frame.imageList()[0];
-                if(imgPtr) {
-                        const Metadata &md = imgPtr->metadata();
-                        pts = md.getAs<MediaTimeStamp>(Metadata::MediaTimeStamp);
-                }
+        // Per-essence MediaTimeStamp lives on the payload descriptor
+        // (an essence descriptor), not on the Frame; the descriptor
+        // metadata lookup succeeds transparently when the producer
+        // stamped the frame.
+        if(!vids.isEmpty() && vids[0].isValid()) {
+                pts = vids[0]->desc().metadata()
+                        .getAs<MediaTimeStamp>(Metadata::MediaTimeStamp);
         }
 
-        if(frame.imageList().isEmpty()) {
+        if(vids.isEmpty()) {
                 // No image to encode — let the frame pass through so
                 // audio / metadata-only inputs aren't lost.
                 Frame::Ptr outFrame = Frame::Ptr::create();
                 outFrame.modify()->metadata() = frame.metadata();
-                for(const auto &a : frame.audioList()) {
-                        outFrame.modify()->audioList().pushToBack(a);
+                for(const AudioPayload::Ptr &ap : frame.audioPayloads()) {
+                        if(ap.isValid()) outFrame.modify()->addPayload(ap);
                 }
                 _outputQueue.pushToBack(std::move(outFrame));
                 stampWorkEnd();
                 return Error::Ok;
         }
 
-        if(frame.imageList().size() > 1 && !_multiImageWarned) {
-                promekiWarn("MediaIOTask_VideoEncoder: Frame carries %zu images; "
-                            "only image[0] will be encoded in this cut",
-                            (size_t)frame.imageList().size());
+        if(vids.size() > 1 && !_multiImageWarned) {
+                promekiWarn("MediaIOTask_VideoEncoder: Frame carries %zu video "
+                            "payloads; only payload[0] will be encoded in this cut",
+                            (size_t)vids.size());
                 _multiImageWarned = true;
         }
 
-        const Image::Ptr &srcImgPtr = frame.imageList()[0];
-        if(!srcImgPtr || !srcImgPtr->isValid()) {
+        // Cast the VideoPayload::Ptr down to an UncompressedVideoPayload::Ptr
+        // while preserving shared ownership — gives us a mutable
+        // payload handle the submitPayload entry can consume.
+        UncompressedVideoPayload::Ptr srcPayload =
+                sharedPointerCast<UncompressedVideoPayload>(vids[0]);
+        if(srcPayload.isNull()) {
+                promekiErr("MediaIOTask_VideoEncoder: input payload is not "
+                           "uncompressed video — nothing to encode");
                 stampWorkEnd();
                 return Error::InvalidArgument;
         }
-        if(srcImgPtr->metadata().getAs<bool>(Metadata::ForceKeyframe)) {
+        if(srcPayload->desc().metadata().getAs<bool>(Metadata::ForceKeyframe)) {
                 _encoder->requestKeyframe();
         }
-        Error err = _encoder->submitFrame(srcImgPtr, pts);
+        // Stamp PTS onto the payload so submitPayload picks it up
+        // as first-class state instead of requiring a sidecar arg.
+        // During migration the canonical storage is still the
+        // descriptor metadata key; once producers stamp payload.pts
+        // directly this lookup falls away.
+        if(pts.isValid()) srcPayload.modify()->setPts(pts);
+        Error err = _encoder->submitPayload(srcPayload);
         if(err.isError()) {
                 promekiErr("MediaIOTask_VideoEncoder: submitFrame failed: %s",
                            _encoder->lastErrorMessage().cstr());
@@ -341,9 +353,10 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandWrite &cmd) {
 void MediaIOTask_VideoEncoder::drainEncoderInto() {
         if(_encoder.isNull()) return;
         while(true) {
-                VideoPacket::Ptr pkt = _encoder->receivePacket();
-                if(!pkt) break;
-                if(pkt->isEndOfStream()) {
+                CompressedVideoPayload::Ptr outPayload =
+                        _encoder->receiveCompressedPayload();
+                if(!outPayload.isValid()) break;
+                if(outPayload->isEndOfStream()) {
                         // EOS is an encoder-internal signal that the
                         // session is drained; no need to propagate it
                         // as its own Frame (the pipeline uses the
@@ -351,13 +364,14 @@ void MediaIOTask_VideoEncoder::drainEncoderInto() {
                         continue;
                 }
 
-                // Pair the packet with the oldest queued source Frame
-                // — that's the one that produced this packet even if
-                // an intervening submit called drainEncoderInto too.
-                // The queue can legitimately be empty on a late flush
-                // if the caller already drained everything previously;
-                // in that case the output still carries the packet
-                // but with no audio / frame metadata.
+                // Pair the payload with the oldest queued source
+                // Frame — that's the one that produced this access
+                // unit even if an intervening submit called
+                // drainEncoderInto too.  An empty queue is legitimate
+                // on a late flush if the caller already drained
+                // everything previously; in that case the output
+                // still carries the payload but with no audio /
+                // frame metadata.
                 Frame::Ptr origin;
                 if(!_pendingSrcFrames.isEmpty()) {
                         origin = _pendingSrcFrames.front();
@@ -368,42 +382,28 @@ void MediaIOTask_VideoEncoder::drainEncoderInto() {
                 Frame     *out = outFrame.modify();
                 if(origin.isValid()) {
                         out->metadata() = origin->metadata();
-                        for(const auto &a : origin->audioList()) {
-                                out->audioList().pushToBack(a);
+                        for(const AudioPayload::Ptr &ap : origin->audioPayloads()) {
+                                if(ap.isValid()) out->addPayload(ap);
                         }
                 }
 
-                // Wrap the encoder's MediaPacket in a compressed Image
-                // so the packet travels with its owning essence.  The
-                // width/height come from the origin's first image (the
-                // compressed frame represents that picture).  The
-                // packet's BufferView buffers are adopted into plane
-                // 0 zero-copy — when the view spans the whole backing
-                // buffer that's literal zero-copy; otherwise fall back
-                // to a single copy into a plain Buffer::Ptr plane.
+                // The encoder's receiveCompressedPayload already
+                // returns the access unit as a @ref CompressedVideoPayload
+                // with the codec's pixel format + keyframe /
+                // parameter-set flags copied across.  The origin's
+                // first image supplies the display dimensions on the
+                // descriptor so downstream muxers can size their
+                // track entries correctly.
                 Size2Du32 imgSize;
-                if(origin.isValid() && !origin->imageList().isEmpty()) {
-                        imgSize = origin->imageList()[0]->size();
+                auto originVids = origin.isValid() ? origin->videoPayloads()
+                                                  : VideoPayload::PtrList();
+                if(!originVids.isEmpty() && originVids[0].isValid()) {
+                        imgSize = originVids[0]->desc().size();
                 }
-                const BufferView &view = pkt->view();
-                Buffer::Ptr plane;
-                if(view.buffer().isValid()
-                   && view.offset() == 0
-                   && view.size() == view.buffer()->size()) {
-                        plane = view.buffer();
-                } else if(view.isValid() && view.size() > 0) {
-                        plane = Buffer::Ptr::create(view.size());
-                        std::memcpy(plane.modify()->data(), view.data(), view.size());
-                        plane.modify()->setSize(view.size());
+                if(imgSize.isValid()) {
+                        outPayload.modify()->desc().setSize(imgSize);
                 }
-                Image compressed = plane.isValid()
-                        ? Image::fromBuffer(plane, imgSize.width(), imgSize.height(),
-                                            pkt->pixelFormat())
-                        : Image();
-                if(compressed.isValid()) {
-                        compressed.setPacket(pkt);
-                        out->imageList().pushToBack(Image::Ptr::create(std::move(compressed)));
-                }
+                out->addPayload(outPayload);
                 _outputQueue.pushToBack(std::move(outFrame));
                 _packetsOut++;
         }

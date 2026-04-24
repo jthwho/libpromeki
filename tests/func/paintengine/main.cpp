@@ -9,7 +9,7 @@
 #include <cstdlib>
 #include <promeki/pixelformat.h>
 #include <promeki/imagedesc.h>
-#include <promeki/image.h>
+#include <promeki/uncompressedvideopayload.h>
 #include <promeki/imagefile.h>
 #include <promeki/videotestpattern.h>
 #include <promeki/color.h>
@@ -76,23 +76,16 @@ int main(int argc, char **argv) {
                 const String &name = pd.name();
 
                 ImageDesc desc(Size2Du32(width, height), pd);
-                Image img = gen.create(desc);
+                auto img = gen.createPayload(desc);
                 if(!img.isValid()) {
                         std::fprintf(stderr, "FAIL  %-40s  create() failed\n", name.cstr());
                         failed++;
                         continue;
                 }
 
-                img.ensureExclusive();
-                Error burnErr = gen.applyBurn(img, name);
-                if(burnErr.isError()) {
-                        std::fprintf(stderr, "WARN  %-40s  applyBurn: %s\n",
-                                     name.cstr(), burnErr.name().cstr());
-                }
-
-                Image pngImg = img;
+                auto pngImg = img;
                 if(pd.id() != PixelFormat::RGBA8_sRGB) {
-                        pngImg = img.convert(PixelFormat(PixelFormat::RGBA8_sRGB), Metadata());
+                        pngImg = img->convert(PixelFormat(PixelFormat::RGBA8_sRGB), Metadata());
                         if(!pngImg.isValid()) {
                                 std::fprintf(stderr, "FAIL  %-40s  convert to RGBA8 failed\n",
                                              name.cstr());
@@ -104,7 +97,7 @@ int main(int argc, char **argv) {
                 String path = outDir + "/" + name + ".png";
                 ImageFile f(ImageFile::PNG);
                 f.setFilename(path);
-                f.setImage(pngImg);
+                f.setVideoPayload(pngImg);
                 Error saveErr = f.save();
                 if(saveErr.isError()) {
                         std::fprintf(stderr, "FAIL  %-40s  save: %s\n",

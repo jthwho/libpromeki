@@ -10,14 +10,15 @@
 #include <promeki/logger.h>
 #include <promeki/imagefileio.h>
 #include <promeki/imagefile.h>
-#include <promeki/image.h>
 #include <promeki/file.h>
 #include <promeki/buffer.h>
 #include <promeki/pixelformat.h>
 #include <promeki/videoencoder.h>
-#include <promeki/videopacket.h>
 #include <promeki/videocodec.h>
 #include <promeki/metadata.h>
+#include <promeki/videopayload.h>
+#include <promeki/compressedvideopayload.h>
+#include <promeki/uncompressedvideopayload.h>
 
 #include <SvtJpegxs.h>
 #include <SvtJpegxsDec.h>
@@ -126,12 +127,11 @@ PROMEKI_REGISTER_IMAGEFILEIO(ImageFileIO_JpegXS);
 // ---------------------------------------------------------------------------
 //
 // Like the JPEG backend, JPEG XS load keeps the bitstream intact: the
-// returned Image is compressed (isCompressed() == true) and its single
+// returned video payload is a CompressedVideoPayload whose single
 // plane points at the raw JPEG XS codestream bytes.  Consumers that
-// need uncompressed pixels run the image through Image::convert() —
-// the dispatcher routes compressed inputs through a JpegXsVideoDecoder
-// session automatically.  The pass-through path (JXS file → JXS file)
-// avoids any re-encode.
+// need uncompressed pixels hand the payload to a JpegXsVideoDecoder
+// session (or equivalent conversion entry point).  The pass-through
+// path (JXS file → JXS file) avoids any re-encode.
 
 Error ImageFileIO_JpegXS::load(ImageFile &imageFile, const MediaConfig &config) const {
         (void)config;
@@ -188,12 +188,15 @@ Error ImageFileIO_JpegXS::load(ImageFile &imageFile, const MediaConfig &config) 
                 return Error::CorruptData;
         }
 
-        Image img = Image::fromBuffer(fileBuf, width, height, PixelFormat(pdId));
-        if(!img.isValid()) {
-                promekiErr("JPEG XS load '%s': Image::fromBuffer failed", filename.cstr());
+        ImageDesc cdesc(Size2Du32(width, height), PixelFormat(pdId));
+        auto payload = CompressedVideoPayload::Ptr::create(cdesc, fileBuf);
+        if(!payload->isValid()) {
+                promekiErr("JPEG XS load '%s': compressed payload build failed", filename.cstr());
                 return Error::Invalid;
         }
-        imageFile.setImage(img);
+        Frame frame;
+        frame.addPayload(payload);
+        imageFile.setFrame(frame);
         return Error::Ok;
 }
 
@@ -207,36 +210,48 @@ Error ImageFileIO_JpegXS::load(ImageFile &imageFile, const MediaConfig &config) 
 //      payload bytes verbatim (zero-loss pass-through).
 //
 //   2. Input is uncompressed planar YUV that JpegXsVideoEncoder accepts
-//      directly: Image::convert() dispatches to the codec without a
-//      preparatory CSC.
+//      directly: UncompressedVideoPayload::convert() dispatches to the
+//      codec without a preparatory CSC.
 //
 //   3. Input is uncompressed but not in the codec's encodeSources:
-//      Image::convert() inserts a CSC to land on a supported format
-//      and then encodes.
+//      UncompressedVideoPayload::convert() inserts a CSC to land on a
+//      supported format and then encodes.
 //
-// Paths (2) and (3) are handled uniformly by calling Image::convert()
-// with a JPEG XS PixelFormat target.  The target subtype is chosen to
-// match the input's bit depth and subsampling where possible; otherwise
-// we fall back to JPEG_XS_YUV8_422_Rec709 which is the most common
-// broadcast format.
+// Paths (2) and (3) are handled uniformly by calling
+// UncompressedVideoPayload::convert() with a JPEG XS PixelFormat target.
+// The target subtype is chosen to match the input's bit depth and
+// subsampling where possible; otherwise we fall back to
+// JPEG_XS_YUV8_422_Rec709 which is the most common broadcast format.
 //
 // MediaConfig::JpegXsBpp / MediaConfig::JpegXsDecomposition on @p
-// config flow straight through Image::convert() into
+// config flow straight through UncompressedVideoPayload::convert() into
 // JpegXsVideoEncoder::configure().
 
 Error ImageFileIO_JpegXS::save(ImageFile &imageFile, const MediaConfig &config) const {
         const String &filename = imageFile.filename();
-        Image image = imageFile.image();
-        if(!image.isValid()) {
-                promekiErr("JPEG XS save '%s': image is not valid", filename.cstr());
+
+        VideoPayload::PtrList vps = imageFile.frame().videoPayloads();
+        if(vps.isEmpty() || !vps[0].isValid()) {
+                promekiErr("JPEG XS save '%s': no video payload", filename.cstr());
                 return Error::Invalid;
         }
 
         // Pass-through: keep the existing JPEG XS bitstream exactly.
-        if(image.isCompressed() && image.pixelFormat().videoCodec().id() == VideoCodec::JPEG_XS) {
-                const void *payload = image.data(0);
-                const size_t payloadSize = image.compressedSize();
-                if(payload == nullptr || payloadSize == 0) {
+        if(const auto *cvp = vps[0]->as<CompressedVideoPayload>()) {
+                if(cvp->desc().pixelFormat().videoCodec().id() != VideoCodec::JPEG_XS) {
+                        promekiErr("JPEG XS save '%s': unsupported compressed input codec '%s'",
+                                   filename.cstr(),
+                                   cvp->desc().pixelFormat().videoCodec().name().cstr());
+                        return Error::NotSupported;
+                }
+                if(cvp->planeCount() == 0) {
+                        promekiErr("JPEG XS save '%s': empty compressed payload",
+                                   filename.cstr());
+                        return Error::Invalid;
+                }
+                auto cview = cvp->plane(0);
+                const size_t payloadSize = cview.size();
+                if(payloadSize == 0) {
                         promekiErr("JPEG XS save '%s': empty compressed payload",
                                    filename.cstr());
                         return Error::Invalid;
@@ -250,11 +265,7 @@ Error ImageFileIO_JpegXS::save(ImageFile &imageFile, const MediaConfig &config) 
                                    filename.cstr(), err.name().cstr());
                         return err;
                 }
-                // writeBulk uses direct I/O for the aligned interior
-                // of the payload, falling back to normal I/O for any
-                // unaligned head/tail and when the source pointer is
-                // not page-aligned.
-                const int64_t written = file.writeBulk(payload,
+                const int64_t written = file.writeBulk(cview.data(),
                                                        static_cast<int64_t>(payloadSize));
                 file.close();
                 if(written != static_cast<int64_t>(payloadSize)) {
@@ -266,18 +277,16 @@ Error ImageFileIO_JpegXS::save(ImageFile &imageFile, const MediaConfig &config) 
                 return Error::Ok;
         }
 
-        // Compressed non-JPEG-XS inputs need to be decoded first.
-        if(image.isCompressed()) {
-                promekiErr("JPEG XS save '%s': unsupported compressed input codec '%s'",
-                           filename.cstr(),
-                           image.pixelFormat().videoCodec().name().cstr());
-                return Error::NotSupported;
+        const auto *uvp = vps[0]->as<UncompressedVideoPayload>();
+        if(uvp == nullptr || !uvp->desc().isValid() || uvp->planeCount() == 0) {
+                promekiErr("JPEG XS save '%s': input payload not valid", filename.cstr());
+                return Error::Invalid;
         }
 
         // Pick a JPEG XS subtype that matches the input's bit depth
         // and subsampling to avoid an extra CSC hop where possible.
         PixelFormat::ID targetId = PixelFormat::JPEG_XS_YUV8_422_Rec709;
-        switch(image.pixelFormat().id()) {
+        switch(uvp->desc().pixelFormat().id()) {
                 // 4:2:2 planar inputs — match bit depth directly.
                 case PixelFormat::YUV8_422_Planar_Rec709:
                         targetId = PixelFormat::JPEG_XS_YUV8_422_Rec709;
@@ -318,7 +327,7 @@ Error ImageFileIO_JpegXS::save(ImageFile &imageFile, const MediaConfig &config) 
                         // RGBA, mono, and anything else: fall back to
                         // JPEG XS RGB when the input is an RGB-family
                         // format, otherwise YUV 4:2:2.
-                        if(image.pixelFormat().colorModel().id() == ColorModel::sRGB)
+                        if(uvp->desc().pixelFormat().colorModel().id() == ColorModel::sRGB)
                                 targetId = PixelFormat::JPEG_XS_RGB8_sRGB;
                         else
                                 targetId = PixelFormat::JPEG_XS_YUV8_422_Rec709;
@@ -338,41 +347,48 @@ Error ImageFileIO_JpegXS::save(ImageFile &imageFile, const MediaConfig &config) 
         }
         VideoEncoder *enc = value(encResult);
 
-        Image encodeInput = image;
+        UncompressedVideoPayload::Ptr inPayload =
+                sharedPointerCast<UncompressedVideoPayload>(vps[0]);
         const auto &sources = PixelFormat(targetId).encodeSources();
         bool sourceOk = sources.isEmpty();
         for(PixelFormat::ID s : sources) {
-                if(image.pixelFormat().id() == s) { sourceOk = true; break; }
+                if(uvp->desc().pixelFormat().id() == s) { sourceOk = true; break; }
         }
         if(!sourceOk && !sources.isEmpty()) {
-                encodeInput = image.convert(PixelFormat(sources[0]),
-                                            image.metadata(), config);
-                if(!encodeInput.isValid()) {
+                inPayload = uvp->convert(PixelFormat(sources[0]),
+                                         uvp->desc().metadata(), config);
+                if(!inPayload.isValid()) {
                         delete enc;
                         promekiErr("JPEG XS save '%s': prep CSC %s -> %s failed",
                                    filename.cstr(),
-                                   image.pixelFormat().name().cstr(),
+                                   uvp->desc().pixelFormat().name().cstr(),
                                    PixelFormat(sources[0]).name().cstr());
                         return Error::ConversionFailed;
                 }
         }
 
-        if(Error e = enc->submitFrame(Image::Ptr::create(std::move(encodeInput))); e.isError()) {
+        if(!inPayload.isValid()) {
+                delete enc;
+                promekiErr("JPEG XS save '%s': payload build failed", filename.cstr());
+                return Error::ConversionFailed;
+        }
+        if(Error e = enc->submitPayload(inPayload); e.isError()) {
                 String msg = enc->lastErrorMessage();
                 delete enc;
                 promekiErr("JPEG XS save '%s': encode failed: %s",
                            filename.cstr(), msg.isEmpty() ? e.name().cstr() : msg.cstr());
                 return e;
         }
-        VideoPacket::Ptr pkt = enc->receivePacket();
+        CompressedVideoPayload::Ptr outPayload = enc->receiveCompressedPayload();
         delete enc;
-        if(!pkt) {
-                promekiErr("JPEG XS save '%s': encoder produced no packet",
+        if(!outPayload.isValid()) {
+                promekiErr("JPEG XS save '%s': encoder produced no payload",
                            filename.cstr());
                 return Error::EncodeFailed;
         }
-        const void *payload = pkt->view().data();
-        const size_t payloadSize = pkt->view().size();
+        auto encView = outPayload->plane(0);
+        const void *payload = encView.data();
+        const size_t payloadSize = encView.size();
         if(payload == nullptr || payloadSize == 0) {
                 promekiErr("JPEG XS save '%s': empty encoded payload", filename.cstr());
                 return Error::EncodeFailed;

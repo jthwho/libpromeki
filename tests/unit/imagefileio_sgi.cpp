@@ -10,6 +10,7 @@
 #include <doctest/doctest.h>
 #include <promeki/imagefileio.h>
 #include <promeki/imagefile.h>
+#include <promeki/uncompressedvideopayload.h>
 
 using namespace promeki;
 
@@ -23,26 +24,27 @@ TEST_CASE("ImageFileIO SGI: handler is registered") {
 }
 
 static void sgiRoundTrip(const char *fn, size_t w, size_t h, PixelFormat::ID pdId) {
-        Image src(w, h, PixelFormat(pdId));
+        auto src = UncompressedVideoPayload::allocate(
+                ImageDesc(w, h, PixelFormat(pdId)));
         REQUIRE(src.isValid());
-        uint8_t *data = static_cast<uint8_t *>(src.data());
-        size_t bytes = src.pixelFormat().memLayout().planeSize(0, w, h);
+        uint8_t *data = src.modify()->data()[0].data();
+        size_t bytes = src->plane(0).size();
         for(size_t i = 0; i < bytes; ++i) data[i] = static_cast<uint8_t>((i * 7 + 31) & 0xFF);
 
         ImageFile sf(ImageFile::SGI);
         sf.setFilename(fn);
-        sf.setImage(src);
+        sf.setVideoPayload(src);
         CHECK(sf.save() == Error::Ok);
 
         ImageFile lf(ImageFile::SGI);
         lf.setFilename(fn);
         CHECK(lf.load() == Error::Ok);
-        Image dst = lf.image();
+        auto dst = lf.uncompressedVideoPayload();
         REQUIRE(dst.isValid());
-        CHECK(dst.width() == w);
-        CHECK(dst.height() == h);
-        CHECK(dst.pixelFormat().id() == pdId);
-        CHECK(std::memcmp(src.data(), dst.data(), bytes) == 0);
+        CHECK(dst->desc().width() == w);
+        CHECK(dst->desc().height() == h);
+        CHECK(dst->desc().pixelFormat().id() == pdId);
+        CHECK(std::memcmp(src->plane(0).data(), dst->plane(0).data(), bytes) == 0);
 
         std::remove(fn);
 }

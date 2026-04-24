@@ -785,6 +785,111 @@ inline const MediaIODirection MediaIODirection::Sink      { 1 };
 inline const MediaIODirection MediaIODirection::Transform { 2 };
 
 /**
+ * @brief Well-known Enum type for the coarse category of a
+ *        @ref MediaPayload.
+ *
+ * Returned by @ref MediaPayload::kind for cheap dispatch without
+ * RTTI — pipeline glue can @c switch on the kind before falling
+ * back to @ref MediaPayload::as for field-level access on a
+ * concrete subclass.
+ *
+ * - @c Video         — Any video payload (compressed or
+ *                      uncompressed); see @ref VideoPayload.
+ * - @c Audio         — Any audio payload (compressed or
+ *                      uncompressed); see @ref AudioPayload.
+ * - @c Metadata      — Timed metadata track payloads (ID3 in MP4,
+ *                      KLV in MXF, GPMF in GoPro, …).  Reserved
+ *                      for future expansion.
+ * - @c Subtitle      — Subtitle / caption payloads (SRT, WebVTT,
+ *                      PGS, DVB).  Reserved for future expansion.
+ * - @c AncillaryData — SMPTE 291M ancillary data, SDI-carried
+ *                      side channels, CEA-608 / 708 closed
+ *                      captions.  Reserved for future expansion.
+ * - @c Custom        — Project-specific payload kind not covered
+ *                      by the values above; the concrete subclass
+ *                      identifies itself via its C++ type.
+ */
+class MediaPayloadKind : public TypedEnum<MediaPayloadKind> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("MediaPayloadKind", 0,
+                                { "Video",         0 },
+                                { "Audio",         1 },
+                                { "Metadata",      2 },
+                                { "Subtitle",      3 },
+                                { "AncillaryData", 4 },
+                                { "Custom",        5 });  // default: Video
+
+                using TypedEnum<MediaPayloadKind>::TypedEnum;
+
+                static const MediaPayloadKind Video;
+                static const MediaPayloadKind Audio;
+                static const MediaPayloadKind Metadata;
+                static const MediaPayloadKind Subtitle;
+                static const MediaPayloadKind AncillaryData;
+                static const MediaPayloadKind Custom;
+};
+
+inline const MediaPayloadKind MediaPayloadKind::Video         { 0 };
+inline const MediaPayloadKind MediaPayloadKind::Audio         { 1 };
+inline const MediaPayloadKind MediaPayloadKind::Metadata      { 2 };
+inline const MediaPayloadKind MediaPayloadKind::Subtitle      { 3 };
+inline const MediaPayloadKind MediaPayloadKind::AncillaryData { 4 };
+inline const MediaPayloadKind MediaPayloadKind::Custom        { 5 };
+
+/**
+ * @brief Well-known Enum type for the role of a compressed video
+ *        access unit within its stream.
+ *
+ * Returned by @ref CompressedVideoPayload::frameType for pipelines
+ * that need to distinguish independently decodable frames from
+ * forward- or bidirectionally-predicted ones without parsing the
+ * bitstream.  The accessor is @c virtual so codec-specific
+ * subclasses (H.264 / HEVC / ProRes wrappers) can map their
+ * internal slice / picture types onto this common vocabulary.
+ *
+ * - @c Unknown — Role is not known or not meaningful for this
+ *                codec / packet.
+ * - @c I       — Intra-coded frame — decodes standalone but may
+ *                not reset the DPB (distinguished from @c IDR for
+ *                bitstreams that allow non-IDR I-pictures).
+ * - @c P       — Predictive frame — references prior frames only.
+ * - @c B       — Bidirectionally-predicted frame — references both
+ *                past and future frames in decode order.
+ * - @c IDR     — Instantaneous Decoder Refresh — a keyframe that
+ *                also flushes the decoded picture buffer and is a
+ *                valid random-access entry point.
+ * - @c BRef    — Referenced B-frame (used by HEVC / AV1 hierarchical
+ *                coding); B-picture whose reconstruction is used by
+ *                other B pictures, so it is @em not discardable.
+ */
+class FrameType : public TypedEnum<FrameType> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("FrameType", 0,
+                                { "Unknown", 0 },
+                                { "I",       1 },
+                                { "P",       2 },
+                                { "B",       3 },
+                                { "IDR",     4 },
+                                { "BRef",    5 });  // default: Unknown
+
+                using TypedEnum<FrameType>::TypedEnum;
+
+                static const FrameType Unknown;
+                static const FrameType I;
+                static const FrameType P;
+                static const FrameType B;
+                static const FrameType IDR;
+                static const FrameType BRef;
+};
+
+inline const FrameType FrameType::Unknown { 0 };
+inline const FrameType FrameType::I       { 1 };
+inline const FrameType FrameType::P       { 2 };
+inline const FrameType FrameType::B       { 3 };
+inline const FrameType FrameType::IDR     { 4 };
+inline const FrameType FrameType::BRef    { 5 };
+
+/**
  * @brief Preferred audio source for image-sequence readers.
  *
  * Image sequences can carry audio in two places: embedded per-frame

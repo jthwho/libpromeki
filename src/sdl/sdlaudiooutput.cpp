@@ -9,6 +9,7 @@
 #include <promeki/sdl/sdlaudioclock.h>
 #include <promeki/string.h>
 #include <promeki/logger.h>
+#include <promeki/uncompressedaudiopayload.h>
 
 #include <SDL3/SDL.h>
 
@@ -38,8 +39,9 @@ bool SDLAudioOutput::open() {
         }
         if(_open) return true;
 
-        // We always push float32 to SDL — the Audio::convert() path
-        // handles conversion from any promeki format to native float.
+        // We always push float32 to SDL — the
+        // UncompressedAudioPayload::convert() path handles conversion
+        // from any promeki format to native float.
         SDL_AudioSpec spec = {};
         spec.format = SDL_AUDIO_F32;
         spec.channels = static_cast<int>(_desc.channels());
@@ -90,23 +92,34 @@ void SDLAudioOutput::close() {
         _totalBytesPushed = 0;
 }
 
-bool SDLAudioOutput::pushAudio(const Audio &audio) {
+bool SDLAudioOutput::pushAudio(const UncompressedAudioPayload &payload) {
         if(!_open || _stream == nullptr) return false;
+        if(!payload.isValid()) return false;
 
-        // Convert to native float if needed
-        const Audio *src = &audio;
-        Audio converted;
-        if(!audio.isNative()) {
-                converted = audio.convert(AudioFormat::NativeFloat);
+        // Convert to native float if needed.  The conversion uses the
+        // payload's own convert entry; on the fast path (already
+        // native float) we just keep a view of the original.
+        UncompressedAudioPayload::Ptr converted;
+        const UncompressedAudioPayload *src = &payload;
+        if(payload.desc().format().id() != AudioFormat::NativeFloat) {
+                converted = payload.convert(AudioFormat(AudioFormat::NativeFloat));
                 if(!converted.isValid()) {
                         promekiErr("SDLAudioOutput: audio format conversion failed");
                         return false;
                 }
-                src = &converted;
+                src = converted.ptr();
         }
 
-        size_t bytes = src->samples() * src->desc().channels() * sizeof(float);
-        if(!SDL_PutAudioStreamData(_stream, src->data<float>(), static_cast<int>(bytes))) {
+        // Native-float PCM lands in a single interleaved plane.
+        if(src->planeCount() == 0) return false;
+        auto view = src->plane(0);
+        const size_t bytes = src->sampleCount() * src->desc().channels() * sizeof(float);
+        if(view.size() < bytes) {
+                promekiErr("SDLAudioOutput: payload plane smaller than expected (%zu < %zu)",
+                           view.size(), bytes);
+                return false;
+        }
+        if(!SDL_PutAudioStreamData(_stream, view.data(), static_cast<int>(bytes))) {
                 promekiErr("SDLAudioOutput: SDL_PutAudioStreamData failed: %s",
                            SDL_GetError());
                 return false;

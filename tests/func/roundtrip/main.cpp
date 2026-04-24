@@ -34,7 +34,6 @@
  *   roundtrip-functest [--path DIR] [--regex PATTERN]... [--frames N] [--verbose]
  */
 
-#include <atomic>
 #include <cstdio>
 #include <cstdlib>
 
@@ -44,6 +43,7 @@
 #include <promeki/error.h>
 #include <promeki/eventloop.h>
 #include <promeki/filepath.h>
+#include <promeki/framecount.h>
 #include <promeki/framerate.h>
 #include <promeki/imagedesc.h>
 #include <promeki/list.h>
@@ -54,6 +54,7 @@
 #include <promeki/mediaiotask_inspector.h>
 #include <promeki/mediapipeline.h>
 #include <promeki/mediapipelineconfig.h>
+#include <promeki/objectbase.tpp>
 #include <promeki/pixelformat.h>
 #include <promeki/regex.h>
 #include <promeki/size2d.h>
@@ -449,11 +450,11 @@ static List<Case> buildCases() {
                                 // that one path, and generating a second
                                 // label like "mov:H264:H264" just adds
                                 // noise to the report.
-                                const List<int> &variants =
+                                const List<PixelFormat> variants =
                                         vc.compressedPixelFormats();
                                 if(variants.size() <= 1) continue;
                                 for(size_t k = 0; k < variants.size(); ++k) {
-                                        PixelFormat pd(PixelFormat::ID(variants[k]));
+                                        const PixelFormat &pd = variants[k];
                                         if(!pd.isValid()) continue;
                                         Case c;
                                         c.backendName = fd.name;
@@ -649,6 +650,12 @@ static MediaPipelineConfig buildWriteConfig(const Case &c,
         }
         cfg.addStage(makeFileSinkStage(path));
         cfg.addRoute(prev, String("out"));
+        // Bound the infinite TPG source by the test's frame budget —
+        // MediaPipeline closes each sink once it has received exactly
+        // N frames, rather than relying on a racy frame-counter signal
+        // that can strand frames in transform buffers or let the sink
+        // write one extra file before the async close takes effect.
+        cfg.setFrameCount(FrameCount(opts.frames));
         return cfg;
 }
 
@@ -682,9 +689,10 @@ struct RunResult {
 };
 
 // Drives one MediaPipeline through open / start / exec / close.  The
-// write path counts source frames and closes once the budget is hit;
-// the read path waits for the natural EOF cascade.  Either way the
-// blocking @c loop->exec() returns when @c closedSignal fires.
+// write path relies on @ref MediaPipelineConfig::setFrameCount so the
+// pipeline closes each sink after exactly N frames; the read path
+// waits for the natural EOF cascade.  Either way the blocking @c
+// loop->exec() returns when @c closedSignal fires.
 struct PhaseOutcome {
         bool    built   = false;
         bool    opened  = false;
@@ -701,8 +709,7 @@ struct PhaseOutcome {
 static PhaseOutcome runPhase(MediaPipeline &pipe,
                               const MediaPipelineConfig &cfg,
                               EventLoop *loop,
-                              unsigned int timeoutMs,
-                              const std::function<void(MediaPipeline &)> &onStart) {
+                              unsigned int timeoutMs) {
         PhaseOutcome p;
         p.buildError = pipe.build(cfg, /*autoplan=*/true);
         if(p.buildError.isError()) return p;
@@ -732,8 +739,6 @@ static PhaseOutcome runPhase(MediaPipeline &pipe,
                 return p;
         }
         p.started = true;
-
-        if(onStart) onStart(pipe);
 
         // Watchdog: a one-shot timer that fires the first time the
         // phase exceeds @p timeoutMs.  Most phases run in tens of
@@ -803,33 +808,15 @@ static RunResult runCase(const Case &c, const Options &opts,
         {
                 MediaPipelineConfig cfg = buildWriteConfig(c, path, opts, streamId);
                 MediaPipeline pipe;
-                std::atomic<int64_t> framesIn{0};
 
-                PhaseOutcome p = runPhase(pipe, cfg, loop, opts.phaseTimeoutMs,
-                        [&](MediaPipeline &pl) {
-                                // Hook the source's frameReady signal —
-                                // every emitted frame bumps the counter
-                                // and the N-th one triggers an async
-                                // close of the whole pipeline.  TPG is
-                                // an infinite source, so without this
-                                // the test never terminates.
-                                StringList names = pl.stageNames();
-                                if(names.isEmpty()) return;
-                                MediaIO *src = pl.stage(names[0]);
-                                if(src == nullptr) return;
-                                const int limit = opts.frames;
-                                MediaPipeline *plp = &pl;
-                                src->frameReadySignal.connect(
-                                        [&framesIn, limit, plp]() {
-                                                int64_t n = framesIn.fetch_add(
-                                                        1, std::memory_order_relaxed) + 1;
-                                                if(n == limit) {
-                                                        (void)plp->close(false);
-                                                }
-                                        }, plp);
-                        });
+                PhaseOutcome p = runPhase(pipe, cfg, loop, opts.phaseTimeoutMs);
 
-                r.framesWritten = framesIn.load();
+                // The pipeline's @ref MediaPipelineConfig::setFrameCount
+                // cap makes the write side terminate deterministically
+                // at exactly @c opts.frames.  Report the configured
+                // budget so the per-case line shows the same number we
+                // asked the pipeline to deliver.
+                r.framesWritten = opts.frames;
 
                 // Build / open / pipeline-error failures classify as
                 // Skip, not Fail, because they almost always mean
@@ -914,16 +901,16 @@ static RunResult runCase(const Case &c, const Options &opts,
                 }
 
                 PhaseOutcome p = runPhase(pipe, cfg, loop,
-                        opts.phaseTimeoutMs, nullptr);
+                        opts.phaseTimeoutMs);
                 // Read side runs until the source produces EOF and the
-                // close cascade completes — no callback needed.
+                // close cascade completes.
 
                 // Snapshot the inspector BEFORE deleting the MediaIO
                 // wrapper, which would destroy the adopted task.
                 InspectorSnapshot snap = inspTask->snapshot();
-                r.framesProcessed       = snap.framesProcessed;
-                r.framesWithPictureData = snap.framesWithPictureData;
-                r.framesWithLtc         = snap.framesWithLtc;
+                r.framesProcessed       = snap.framesProcessed.value();
+                r.framesWithPictureData = snap.framesWithPictureData.value();
+                r.framesWithLtc         = snap.framesWithLtc.value();
                 r.totalDiscontinuities  = snap.totalDiscontinuities;
 
                 // Injected stages are not deleted by MediaPipeline,

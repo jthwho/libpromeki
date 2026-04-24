@@ -10,13 +10,12 @@
  * ID at process startup with a Vendored weight.  Emits raw Opus
  * packets (one access unit per coded frame) — no Ogg / Matroska
  * container — so it can feed RTP (RFC 7587), MediaPipeline streaming,
- * and any other MediaPacket consumer without going through libsndfile.
+ * and any other MediaPayload consumer without going through libsndfile.
  */
 
 #include <opus/opus.h>
 #include <cstdint>
 #include <cstring>
-#include <promeki/audio.h>
 #include <promeki/deque.h>
 #include <promeki/list.h>
 #include <promeki/audiocodec.h>
@@ -30,10 +29,11 @@
 #include <promeki/error.h>
 #include <promeki/list.h>
 #include <promeki/mediaconfig.h>
-#include <promeki/mediapacket.h>
 #include <promeki/mediatimestamp.h>
 #include <promeki/string.h>
 #include <promeki/timestamp.h>
+#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/compressedaudiopayload.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -91,68 +91,66 @@ class OpusAudioEncoder : public AudioEncoder {
                         }
                 }
 
-                Error submitFrame(const Audio::Ptr &frame, const MediaTimeStamp &pts) override {
+                Error submitPayload(const UncompressedAudioPayload::Ptr &payload) override {
                         clearError();
-                        if(!frame.isValid() || !frame->isValid() || !frame->buffer()) {
-                                setError(Error::Invalid, "invalid audio frame");
+                        if(!payload.isValid() || !payload->isValid() || payload->planeCount() == 0) {
+                                setError(Error::Invalid, "invalid audio payload");
                                 return _lastError;
                         }
-                        if(!ensureEncoder(frame->desc())) return _lastError;
-                        if(frame->desc().sampleRate() != _sampleRate ||
-                           frame->desc().channels()   != _channels) {
+                        if(!ensureEncoder(payload->desc())) return _lastError;
+                        if(payload->desc().sampleRate() != _sampleRate ||
+                           payload->desc().channels()   != _channels) {
                                 setError(Error::Invalid,
-                                         "frame format does not match encoder configuration");
+                                         "payload format does not match encoder configuration");
                                 return _lastError;
                         }
 
-                        // Convert input to PCMI_S16LE if necessary so we
-                        // can append to the s16 staging buffer.  The
-                        // float path uses opus_encode_float in flushPending.
-                        Audio converted;
-                        const Audio *src = &*frame;
+                        UncompressedAudioPayload::Ptr converted;
+                        const UncompressedAudioPayload *src = payload.ptr();
                         if(_useFloat) {
-                                if(frame->desc().format().id() != AudioFormat::PCMI_Float32LE) {
-                                        converted = frame->convert(AudioFormat::PCMI_Float32LE);
+                                if(payload->desc().format().id() != AudioFormat::PCMI_Float32LE) {
+                                        converted = payload->convert(AudioFormat::PCMI_Float32LE);
                                         if(!converted.isValid()) {
                                                 setError(Error::Invalid,
                                                          "failed to convert input to PCMI_Float32LE");
                                                 return _lastError;
                                         }
-                                        src = &converted;
+                                        src = converted.ptr();
                                 }
                                 appendFloat(*src);
                         } else {
-                                if(frame->desc().format().id() != AudioFormat::PCMI_S16LE) {
-                                        converted = frame->convert(AudioFormat::PCMI_S16LE);
+                                if(payload->desc().format().id() != AudioFormat::PCMI_S16LE) {
+                                        converted = payload->convert(AudioFormat::PCMI_S16LE);
                                         if(!converted.isValid()) {
                                                 setError(Error::Invalid,
                                                          "failed to convert input to PCMI_S16LE");
                                                 return _lastError;
                                         }
-                                        src = &converted;
+                                        src = converted.ptr();
                                 }
                                 appendS16(*src);
                         }
 
                         if(!_havePts) {
-                                _basePts  = pts;
-                                _havePts  = pts.isValid();
+                                _basePts  = payload->pts();
+                                _havePts  = payload->pts().isValid();
                         }
 
                         flushFullFrames();
                         return Error::Ok;
                 }
 
-                AudioPacket::Ptr receivePacket() override {
+                CompressedAudioPayload::Ptr receiveCompressedPayload() override {
                         if(_outQueue.isEmpty()) {
                                 if(_flushed && !_eosEmitted) {
                                         _eosEmitted = true;
-                                        auto eos = AudioPacket::Ptr::create();
-                                        eos.modify()->setAudioCodec(codec());
+                                        AudioDesc eosDesc(AudioFormat(AudioFormat::Opus),
+                                                          _sampleRate, _channels);
+                                        auto eos = CompressedAudioPayload::Ptr::create(eosDesc);
                                         eos.modify()->markEndOfStream();
                                         return eos;
                                 }
-                                return AudioPacket::Ptr();
+                                return CompressedAudioPayload::Ptr();
                         }
                         return _outQueue.popFromFront();
                 }
@@ -245,17 +243,21 @@ class OpusAudioEncoder : public AudioEncoder {
                         return static_cast<size_t>(_frameSizeMs * _sampleRate / 1000.0f + 0.5f);
                 }
 
-                void appendS16(const Audio &src) {
-                        const auto *p = src.data<int16_t>();
-                        size_t n = src.samples() * _channels;
+                void appendS16(const UncompressedAudioPayload &src) {
+                        if(src.planeCount() == 0) return;
+                        auto view = src.plane(0);
+                        const auto *p = reinterpret_cast<const int16_t *>(view.data());
+                        size_t n = src.sampleCount() * _channels;
                         size_t oldSize = _pendingS16.size();
                         _pendingS16.resize(oldSize + n);
                         std::memcpy(_pendingS16.data() + oldSize, p, n * sizeof(int16_t));
                 }
 
-                void appendFloat(const Audio &src) {
-                        const auto *p = src.data<float>();
-                        size_t n = src.samples() * _channels;
+                void appendFloat(const UncompressedAudioPayload &src) {
+                        if(src.planeCount() == 0) return;
+                        auto view = src.plane(0);
+                        const auto *p = reinterpret_cast<const float *>(view.data());
+                        size_t n = src.sampleCount() * _channels;
                         size_t oldSize = _pendingFloat.size();
                         _pendingFloat.resize(oldSize + n);
                         std::memcpy(_pendingFloat.data() + oldSize, p, n * sizeof(float));
@@ -340,11 +342,18 @@ class OpusAudioEncoder : public AudioEncoder {
                 }
 
                 void emitPacket(const Buffer::Ptr &buf, size_t framePcmSamplesValue) {
-                        auto pkt = AudioPacket::Ptr::create();
-                        pkt.modify()->setBuffer(buf);
-                        pkt.modify()->setAudioCodec(codec());
-                        pkt.modify()->setPts(ptsForCurrentFrame());
-                        _outQueue.pushToBack(pkt);
+                        // Build a compressed audio payload whose single
+                        // plane covers the whole encoded Opus frame
+                        // buffer.  The descriptor identifies the
+                        // compressed codec (Opus) so downstream
+                        // consumers of this @ref CompressedAudioPayload
+                        // see the correct @ref AudioCodec.
+                        AudioDesc desc(AudioFormat(AudioFormat::Opus),
+                                       _sampleRate, _channels);
+                        BufferView view(buf, 0, buf->size());
+                        auto cvp = CompressedAudioPayload::Ptr::create(desc, view);
+                        cvp.modify()->setPts(ptsForCurrentFrame());
+                        _outQueue.pushToBack(cvp);
                         _samplesEmitted += framePcmSamplesValue;
                 }
 
@@ -357,7 +366,7 @@ class OpusAudioEncoder : public AudioEncoder {
                 float                   _frameSizeMs   = 20.0f;
                 List<int16_t>           _pendingS16;
                 List<float>             _pendingFloat;
-                Deque<AudioPacket::Ptr> _outQueue;
+                Deque<CompressedAudioPayload::Ptr> _outQueue;
                 MediaTimeStamp          _basePts;
                 bool                    _havePts       = false;
                 size_t                  _samplesEmitted = 0;
@@ -387,16 +396,16 @@ class OpusAudioDecoder : public AudioDecoder {
                         if(ch > 0) _outChannels = static_cast<unsigned int>(ch);
                 }
 
-                Error submitPacket(const AudioPacket::Ptr &packet) override {
+                Error submitPayload(const CompressedAudioPayload::Ptr &payload) override {
                         clearError();
-                        if(!packet.isValid() || !packet->isValid()) {
-                                setError(Error::Invalid, "invalid packet");
+                        if(!payload.isValid() || !payload->isValid() || payload->planeCount() == 0) {
+                                setError(Error::Invalid, "invalid payload");
                                 return _lastError;
                         }
                         if(!ensureDecoder()) return _lastError;
-                        const Buffer::Ptr &buf = packet->buffer();
-                        if(!buf || buf->size() == 0) {
-                                setError(Error::Invalid, "empty opus packet");
+                        auto view = payload->plane(0);
+                        if(view.size() == 0) {
+                                setError(Error::Invalid, "empty opus payload");
                                 return _lastError;
                         }
 
@@ -411,8 +420,8 @@ class OpusAudioDecoder : public AudioDecoder {
                         auto pcmBuf = Buffer::Ptr::create(pcmCap);
                         int decoded = opus_decode(
                                 _dec,
-                                static_cast<const unsigned char *>(buf->data()),
-                                static_cast<opus_int32>(buf->size()),
+                                static_cast<const unsigned char *>(view.data()),
+                                static_cast<opus_int32>(view.size()),
                                 static_cast<opus_int16 *>(pcmBuf.modify()->data()),
                                 kMaxPcmSamplesPerChannel,
                                 /* decode_fec = */ 0);
@@ -426,15 +435,17 @@ class OpusAudioDecoder : public AudioDecoder {
                                 static_cast<size_t>(decoded) *
                                 _outChannels * sizeof(int16_t);
                         pcmBuf.modify()->setSize(actualBytes);
-                        Audio out = Audio::fromBuffer(pcmBuf, outDesc);
-                        if(out.isValid()) {
-                                _frames.pushToBack(Audio::Ptr::create(std::move(out)));
-                        }
+                        BufferView planes;
+                        planes.pushToBack(pcmBuf, 0, pcmBuf->size());
+                        auto uap = UncompressedAudioPayload::Ptr::create(
+                                outDesc, static_cast<size_t>(decoded), planes);
+                        uap.modify()->setPts(payload->pts());
+                        _frames.pushToBack(std::move(uap));
                         return Error::Ok;
                 }
 
-                Audio::Ptr receiveFrame() override {
-                        if(_frames.isEmpty()) return Audio::Ptr();
+                UncompressedAudioPayload::Ptr receiveAudioPayload() override {
+                        if(_frames.isEmpty()) return UncompressedAudioPayload::Ptr();
                         return _frames.popFromFront();
                 }
 
@@ -478,7 +489,7 @@ class OpusAudioDecoder : public AudioDecoder {
                 OpusDecoder         *_dec        = nullptr;
                 float                _outRate    = 48000.0f;
                 unsigned int         _outChannels = 2;
-                Deque<Audio::Ptr>      _frames;
+                Deque<UncompressedAudioPayload::Ptr> _frames;
 };
 
 // =============================================================================

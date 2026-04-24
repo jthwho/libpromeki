@@ -9,13 +9,13 @@
 #include <promeki/mediaconfig.h>
 #include <promeki/enums.h>
 #include <promeki/frame.h>
-#include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaiodescription.h>
 #include <promeki/metadata.h>
 #include <promeki/pixelformat.h>
-#include <promeki/videopacket.h>
+#include <promeki/compressedvideopayload.h>
+#include <promeki/audiopayload.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -225,35 +225,37 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandWrite &cmd) {
 
         const Frame &frame = *cmd.frame;
 
-        // Collect every compressed Image on the Frame whose attached
-        // VideoPacket carries the bitstream we need to decode.  Under
-        // the Image::packet model that's the single source of truth —
-        // producers (encoder output, container demux, RTP reader,
-        // ImageFile loader) all attach the encoded bytes to the
-        // compressed Image they emit.
-        List<VideoPacket::Ptr> packets;
-        for(const Image::Ptr &imgPtr : frame.imageList()) {
-                if(!imgPtr.isValid() || !imgPtr->isCompressed()) continue;
-                const VideoPacket::Ptr &pkt = imgPtr->packet();
-                if(pkt.isValid() && pkt->isValid()) packets.pushToBack(pkt);
+        // Collect every compressed video payload on the Frame.  The
+        // decoder's payload-native @ref submitPayload entry delivers
+        // each CompressedVideoPayload straight to the backend, so we
+        // forward payloads directly without any packet-style bridge
+        // at this layer.
+        List<CompressedVideoPayload::Ptr> payloads;
+        for(const VideoPayload::Ptr &vp : frame.videoPayloads()) {
+                if(!vp.isValid()) continue;
+                CompressedVideoPayload::Ptr cvp =
+                        sharedPointerCast<CompressedVideoPayload>(vp);
+                if(cvp.isValid() && cvp->isValid()) {
+                        payloads.pushToBack(std::move(cvp));
+                }
         }
 
-        if(packets.isEmpty()) {
+        if(payloads.isEmpty()) {
                 promekiErr("MediaIOTask_VideoDecoder: write frame carries no "
-                           "compressed Image with an attached VideoPacket; "
-                           "upstream must call Image::setPacket on every "
-                           "compressed Image it emits");
+                           "CompressedVideoPayload; upstream must emit a "
+                           "compressed video payload for every frame that "
+                           "needs decoding");
                 stampWorkEnd();
                 return Error::InvalidArgument;
         }
 
         if(_decoder.isNull()) {
-                const VideoPacket &pkt = *packets[0];
-                VideoCodec codec = VideoCodec::fromPixelFormat(pkt.pixelFormat());
+                const PixelFormat &pf = payloads[0]->desc().pixelFormat();
+                VideoCodec codec = VideoCodec::fromPixelFormat(pf);
                 if(!codec.isValid()) {
                         promekiErr("MediaIOTask_VideoDecoder: cannot resolve "
                                    "VideoCodec from PixelFormat '%s'",
-                                   pkt.pixelFormat().name().cstr());
+                                   pf.name().cstr());
                         stampWorkEnd();
                         return Error::NotSupported;
                 }
@@ -263,9 +265,9 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandWrite &cmd) {
                         return err;
                 }
                 promekiInfo("MediaIOTask_VideoDecoder: auto-detected codec '%s' "
-                            "from packet PixelFormat '%s'",
+                            "from payload PixelFormat '%s'",
                             codec.name().cstr(),
-                            pkt.pixelFormat().name().cstr());
+                            pf.name().cstr());
         }
 
         if(static_cast<int>(_outputQueue.size()) >= _capacity && !_capacityWarned) {
@@ -275,11 +277,11 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandWrite &cmd) {
                 _capacityWarned = true;
         }
 
-        for(const VideoPacket::Ptr &pktPtr : packets) {
+        for(const CompressedVideoPayload::Ptr &payload : payloads) {
                 _pendingSrcFrames.pushToBack(cmd.frame);
-                Error err = _decoder->submitPacket(pktPtr);
+                Error err = _decoder->submitPayload(payload);
                 if(err.isError()) {
-                        promekiErr("MediaIOTask_VideoDecoder: submitPacket failed: %s",
+                        promekiErr("MediaIOTask_VideoDecoder: submitPayload failed: %s",
                                    _decoder->lastErrorMessage().cstr());
                         stampWorkEnd();
                         return err;
@@ -298,14 +300,16 @@ Error MediaIOTask_VideoDecoder::executeCmd(MediaIOCommandWrite &cmd) {
 void MediaIOTask_VideoDecoder::drainDecoderInto() {
         if(_decoder.isNull()) return;
         while(true) {
-                Image::Ptr imgPtr = _decoder->receiveFrame();
-                if(!imgPtr.isValid()) break;
+                UncompressedVideoPayload::Ptr outPayload =
+                        _decoder->receiveVideoPayload();
+                if(!outPayload.isValid()) break;
 
-                // Pair this image with the oldest queued source Frame
-                // — that's the packet Frame that produced it even when
-                // DPB warmup delays a few frames.  Empty queue is a
-                // best-effort fallback (shouldn't happen for I/P-only
-                // streams but leaves the image intact for any other).
+                // Pair this payload with the oldest queued source
+                // Frame — that's the packet Frame that produced it
+                // even when DPB warmup delays a few frames.  Empty
+                // queue is a best-effort fallback (shouldn't happen
+                // for I/P-only streams but leaves the payload intact
+                // for any other).
                 Frame::Ptr origin;
                 if(!_pendingSrcFrames.isEmpty()) {
                         origin = _pendingSrcFrames.front();
@@ -316,11 +320,11 @@ void MediaIOTask_VideoDecoder::drainDecoderInto() {
                 Frame     *out = outFrame.modify();
                 if(origin.isValid()) {
                         out->metadata() = origin->metadata();
-                        for(const auto &a : origin->audioList()) {
-                                out->audioList().pushToBack(a);
+                        for(const AudioPayload::Ptr &ap : origin->audioPayloads()) {
+                                if(ap.isValid()) out->addPayload(ap);
                         }
                 }
-                out->imageList().pushToBack(std::move(imgPtr));
+                out->addPayload(outPayload);
                 _outputQueue.pushToBack(std::move(outFrame));
                 _imagesOut++;
         }

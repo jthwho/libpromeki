@@ -10,7 +10,9 @@
 #include <cstring>
 #include <promeki/pixelformat.h>
 #include <promeki/paintengine.h>
-#include <promeki/image.h>
+#include <promeki/uncompressedvideopayload.h>
+#include <promeki/imagedesc.h>
+#include <promeki/buffer.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -27,7 +29,7 @@ class PaintEngine_DPX : public PaintEngine::Impl {
         public:
                 static constexpr int MaxCompValue = 1023;
 
-                Image           _image;
+                Buffer::Ptr     _plane0;
                 Size2Du32       _size;
                 uint8_t         *_buf;
                 size_t          _stride;
@@ -35,11 +37,12 @@ class PaintEngine_DPX : public PaintEngine::Impl {
                 float           _compOffset[3] = {};
                 float           _compScale[3] = {};
 
-                PaintEngine_DPX(const Image &img)
-                        : _image(img), _size(img.size()),
-                          _buf(static_cast<uint8_t *>(img.plane(0)->data())),
-                          _stride(img.lineStride(0)),
-                          _pixDesc(img.pixelFormat()) {
+                PaintEngine_DPX(const UncompressedVideoPayload &payload)
+                        : _plane0(payload.plane(0).buffer()),
+                          _size(payload.desc().size()),
+                          _buf(const_cast<uint8_t *>(payload.plane(0).data())),
+                          _stride(payload.desc().pixelFormat().lineStride(0, payload.desc())),
+                          _pixDesc(payload.desc().pixelFormat()) {
                         for(int i = 0; i < 3; i++) {
                                 const auto &cs = _pixDesc.compSemantic(i);
                                 _compOffset[i] = cs.rangeMin;
@@ -114,15 +117,18 @@ class PaintEngine_DPX : public PaintEngine::Impl {
                         storeBE(x, y, w);
                 }
 
-                bool blit(const Point2Di32 &dpt, const Image &src,
+                bool blit(const Point2Di32 &dpt, const UncompressedVideoPayload &src,
                           const Point2Di32 &spt, const Size2Du32 &ssz) const override {
-                        if(src.pixelFormat() != _pixDesc) return false;
-                        const uint8_t *sbuf = static_cast<const uint8_t *>(src.plane(0)->data());
-                        size_t sStride = src.lineStride(0);
+                        if(src.desc().pixelFormat() != _pixDesc) return false;
+                        if(src.planeCount() == 0) return false;
+                        const uint8_t *sbuf = static_cast<const uint8_t *>(src.plane(0).data());
+                        size_t sStride = src.desc().pixelFormat().lineStride(0, src.desc());
+                        const unsigned int sWpx = src.desc().size().width();
+                        const unsigned int sHpx = src.desc().size().height();
                         int sx = spt.x(), sy = spt.y();
                         int dx = dpt.x(), dy = dpt.y();
-                        int sw = ssz.isValid() ? ssz.width()  : src.width() - sx;
-                        int sh = ssz.isValid() ? ssz.height() : src.height() - sy;
+                        int sw = ssz.isValid() ? ssz.width()  : sWpx - sx;
+                        int sh = ssz.isValid() ? ssz.height() : sHpx - sy;
                         int dw = static_cast<int>(_size.width());
                         int dh = static_cast<int>(_size.height());
                         if(sx < 0) { sw += sx; dx -= sx; sx = 0; }
@@ -311,11 +317,11 @@ class PaintEngine_DPX : public PaintEngine::Impl {
 template class PaintEngine_DPX<false>;
 template class PaintEngine_DPX<true>;
 
-PaintEngine createPaintEngine_DPX_A(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_DPX<false>(img);
+PaintEngine createPaintEngine_DPX_A(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_DPX<false>(payload);
 }
-PaintEngine createPaintEngine_DPX_B(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_DPX<true>(img);
+PaintEngine createPaintEngine_DPX_B(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_DPX<true>(payload);
 }
 
 // =========================================================================
@@ -350,7 +356,7 @@ class PaintEngine_v210 : public PaintEngine::Impl {
                         {0, 20}, {2,  0}, {3, 10}
                 };
 
-                Image           _image;
+                Buffer::Ptr     _plane0;
                 Size2Du32       _size;
                 uint8_t         *_buf;
                 size_t          _stride;
@@ -358,11 +364,12 @@ class PaintEngine_v210 : public PaintEngine::Impl {
                 float           _compOffset[3] = {};
                 float           _compScale[3] = {};
 
-                PaintEngine_v210(const Image &img)
-                        : _image(img), _size(img.size()),
-                          _buf(static_cast<uint8_t *>(img.plane(0)->data())),
-                          _stride(img.lineStride(0)),
-                          _pixDesc(img.pixelFormat()) {
+                PaintEngine_v210(const UncompressedVideoPayload &payload)
+                        : _plane0(payload.plane(0).buffer()),
+                          _size(payload.desc().size()),
+                          _buf(const_cast<uint8_t *>(payload.plane(0).data())),
+                          _stride(payload.desc().pixelFormat().lineStride(0, payload.desc())),
+                          _pixDesc(payload.desc().pixelFormat()) {
                         for(int i = 0; i < 3; i++) {
                                 const auto &cs = _pixDesc.compSemantic(i);
                                 _compOffset[i] = cs.rangeMin;
@@ -436,15 +443,18 @@ class PaintEngine_v210 : public PaintEngine::Impl {
                         return ret;
                 }
 
-                bool blit(const Point2Di32 &dpt, const Image &src,
+                bool blit(const Point2Di32 &dpt, const UncompressedVideoPayload &src,
                           const Point2Di32 &spt, const Size2Du32 &ssz) const override {
-                        if(src.pixelFormat() != _pixDesc) return false;
-                        const uint8_t *sbuf = static_cast<const uint8_t *>(src.plane(0)->data());
-                        size_t sStride = src.lineStride(0);
+                        if(src.desc().pixelFormat() != _pixDesc) return false;
+                        if(src.planeCount() == 0) return false;
+                        const uint8_t *sbuf = static_cast<const uint8_t *>(src.plane(0).data());
+                        size_t sStride = src.desc().pixelFormat().lineStride(0, src.desc());
+                        const unsigned int sWpx = src.desc().size().width();
+                        const unsigned int sHpx = src.desc().size().height();
                         int sx = spt.x(), sy = spt.y();
                         int dx = dpt.x(), dy = dpt.y();
-                        int sw = ssz.isValid() ? ssz.width()  : src.width() - sx;
-                        int sh = ssz.isValid() ? ssz.height() : src.height() - sy;
+                        int sw = ssz.isValid() ? ssz.width()  : sWpx - sx;
+                        int sh = ssz.isValid() ? ssz.height() : sHpx - sy;
                         int dw = static_cast<int>(_size.width());
                         int dh = static_cast<int>(_size.height());
                         if(sx < 0) { sw += sx; dx -= sx; sx = 0; }
@@ -624,8 +634,8 @@ class PaintEngine_v210 : public PaintEngine::Impl {
                 }
 };
 
-PaintEngine createPaintEngine_v210(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_v210(img);
+PaintEngine createPaintEngine_v210(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_v210(payload);
 }
 
 PROMEKI_NAMESPACE_END

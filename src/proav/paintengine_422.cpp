@@ -10,7 +10,9 @@
 #include <cstring>
 #include <promeki/pixelformat.h>
 #include <promeki/paintengine.h>
-#include <promeki/image.h>
+#include <promeki/uncompressedvideopayload.h>
+#include <promeki/imagedesc.h>
+#include <promeki/buffer.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -27,7 +29,7 @@ class PaintEngine_422 : public PaintEngine::Impl {
                 static constexpr int Cb_off = IsUYVY ? 0 : BytesPerComp;
                 static constexpr int Cr_off = IsUYVY ? 2 * BytesPerComp : 3 * BytesPerComp;
 
-                Image           _image;
+                Buffer::Ptr     _plane0;
                 Size2Du32       _size;
                 uint8_t         *_buf;
                 size_t          _stride;
@@ -35,11 +37,12 @@ class PaintEngine_422 : public PaintEngine::Impl {
                 float           _compOffset[3] = {};
                 float           _compScale[3] = {};
 
-                PaintEngine_422(const Image &img)
-                        : _image(img), _size(img.size()),
-                          _buf(static_cast<uint8_t *>(img.plane(0)->data())),
-                          _stride(img.lineStride(0)),
-                          _pixDesc(img.pixelFormat()) {
+                PaintEngine_422(const UncompressedVideoPayload &payload)
+                        : _plane0(payload.plane(0).buffer()),
+                          _size(payload.desc().size()),
+                          _buf(const_cast<uint8_t *>(payload.plane(0).data())),
+                          _stride(payload.desc().pixelFormat().lineStride(0, payload.desc())),
+                          _pixDesc(payload.desc().pixelFormat()) {
                         for(int i = 0; i < 3; i++) {
                                 const auto &cs = _pixDesc.compSemantic(i);
                                 _compOffset[i] = cs.rangeMin;
@@ -94,15 +97,18 @@ class PaintEngine_422 : public PaintEngine::Impl {
                         return ret;
                 }
 
-                bool blit(const Point2Di32 &dpt, const Image &src,
+                bool blit(const Point2Di32 &dpt, const UncompressedVideoPayload &src,
                           const Point2Di32 &spt, const Size2Du32 &ssz) const override {
-                        if(src.pixelFormat() != _pixDesc) return false;
-                        const uint8_t *sbuf = static_cast<const uint8_t *>(src.plane(0)->data());
-                        size_t sStride = src.lineStride(0);
+                        if(src.desc().pixelFormat() != _pixDesc) return false;
+                        if(src.planeCount() == 0) return false;
+                        const uint8_t *sbuf = static_cast<const uint8_t *>(src.plane(0).data());
+                        size_t sStride = src.desc().pixelFormat().lineStride(0, src.desc());
+                        const unsigned int sWpx = src.desc().size().width();
+                        const unsigned int sHpx = src.desc().size().height();
                         int sx = spt.x(), sy = spt.y();
                         int dx = dpt.x(), dy = dpt.y();
-                        int sw = ssz.isValid() ? ssz.width()  : src.width() - sx;
-                        int sh = ssz.isValid() ? ssz.height() : src.height() - sy;
+                        int sw = ssz.isValid() ? ssz.width()  : sWpx - sx;
+                        int sh = ssz.isValid() ? ssz.height() : sHpx - sy;
                         int dw = static_cast<int>(_size.width());
                         int dh = static_cast<int>(_size.height());
                         if(sx < 0) { sw += sx; dx -= sx; sx = 0; }
@@ -319,23 +325,23 @@ template class PaintEngine_422<uint16_t, 16, true>;
 
 // --- Factory functions ---
 
-PaintEngine createPaintEngine_YUYV8(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_422<uint8_t, 8, false>(img);
+PaintEngine createPaintEngine_YUYV8(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_422<uint8_t, 8, false>(payload);
 }
-PaintEngine createPaintEngine_YUYV10_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_422<uint16_t, 10, false>(img);
+PaintEngine createPaintEngine_YUYV10_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_422<uint16_t, 10, false>(payload);
 }
-PaintEngine createPaintEngine_UYVY8(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_422<uint8_t, 8, true>(img);
+PaintEngine createPaintEngine_UYVY8(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_422<uint8_t, 8, true>(payload);
 }
-PaintEngine createPaintEngine_UYVY10_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_422<uint16_t, 10, true>(img);
+PaintEngine createPaintEngine_UYVY10_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_422<uint16_t, 10, true>(payload);
 }
-PaintEngine createPaintEngine_UYVY12_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_422<uint16_t, 12, true>(img);
+PaintEngine createPaintEngine_UYVY12_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_422<uint16_t, 12, true>(payload);
 }
-PaintEngine createPaintEngine_UYVY16_LE(const PixelFormat::Data *, const Image &img) {
-        return new PaintEngine_422<uint16_t, 16, true>(img);
+PaintEngine createPaintEngine_UYVY16_LE(const PixelFormat::Data *, const UncompressedVideoPayload &payload) {
+        return new PaintEngine_422<uint16_t, 16, true>(payload);
 }
 
 PROMEKI_NAMESPACE_END

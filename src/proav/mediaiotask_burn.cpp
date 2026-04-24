@@ -7,7 +7,6 @@
 
 #include <promeki/mediaiotask_burn.h>
 #include <promeki/enums.h>
-#include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/frame.h>
 #include <promeki/mediadesc.h>
@@ -16,6 +15,7 @@
 #include <promeki/pixelformat.h>
 #include <promeki/colormodel.h>
 #include <promeki/logger.h>
+#include <promeki/uncompressedvideopayload.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -140,33 +140,46 @@ Error MediaIOTask_Burn::burnFrame(const Frame::Ptr &input, Frame::Ptr &output) {
         Frame *outRaw = outFrame.modify();
         outRaw->metadata() = input->metadata();
 
-        for(const auto &srcAudioPtr : input->audioList()) {
-                outRaw->audioList().pushToBack(srcAudioPtr);
-        }
-
-        for(const auto &srcImgPtr : input->imageList()) {
-                outRaw->imageList().pushToBack(srcImgPtr);
+        // Pass every payload through by reference; the burn loop below
+        // calls modify() on each UncompressedVideoPayload slot to
+        // CoW-clone before painting, so upstream frames sharing the
+        // same Ptr stay unpainted.
+        for(const MediaPayload::Ptr &srcP : input->payloadList()) {
+                if(srcP.isValid()) outRaw->addPayload(srcP);
         }
 
         String burnText = VariantLookup<Frame>::format(*outFrame, _burnTextTemplate);
         if(!burnText.isEmpty()) {
-                for(size_t i = 0; i < outRaw->imageList().size(); ++i) {
-                        Image::Ptr &imgPtr = outRaw->imageList()[i];
-                        if(!imgPtr.isValid()) continue;
+                // Burn operates payload-native: walk every
+                // @ref UncompressedVideoPayload slot in the output's
+                // @ref Frame::payloadList.  Mutation goes through the
+                // @ref MediaPayload::Ptr stored in the list via
+                // @c modify() — that CoW-clones when the payload is
+                // shared with upstream frames, so their backing
+                // buffers stay unpainted.  After the clone the
+                // virtual clone hook keeps the payload's type intact
+                // so the @c static_cast below is safe.  No
+                // @ref Image dance, no
+                // @ref Frame::resyncVideoPayloadsFromImageList — the
+                // payload is the canonical representation downstream
+                // stages read.
+                for(MediaPayload::Ptr &payloadPtr : outRaw->payloadList()) {
+                        if(!payloadPtr.isValid()) continue;
+                        if(!payloadPtr->as<UncompressedVideoPayload>()) continue;
 
-                        if(!imgPtr->pixelFormat().hasPaintEngine()) {
+                        auto *uvp = static_cast<UncompressedVideoPayload *>(payloadPtr.modify());
+                        const PixelFormat &pf = uvp->desc().pixelFormat();
+                        if(!pf.hasPaintEngine()) {
                                 if(!_notPaintableWarned) {
                                         promekiWarn("MediaIOTask_Burn: pixel format %s "
                                                     "has no paint engine; skipping burn",
-                                                    imgPtr->pixelFormat().name().cstr());
+                                                    pf.name().cstr());
                                         _notPaintableWarned = true;
                                 }
                                 continue;
                         }
-
-                        Image *imgMut = imgPtr.modify();
-                        imgMut->ensureExclusive();
-                        Error burnErr = _pattern.applyBurn(*imgMut, burnText);
+                        uvp->ensureExclusive();
+                        Error burnErr = _pattern.applyBurn(*uvp, burnText);
                         if(burnErr.isError()) {
                                 promekiWarn("MediaIOTask_Burn: applyBurn failed: %s",
                                             burnErr.name().cstr());

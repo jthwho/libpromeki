@@ -484,8 +484,8 @@ Error QuickTimeReader::parseTrak(int64_t payloadOffset, int64_t payloadEnd) {
                                                 // Map the FourCC to the matching compressed
                                                 // AudioFormat entry; if we don't know it, fall
                                                 // back to an invalid AudioDesc.  The MediaIOTask
-                                                // layer surfaces compressed audio via
-                                                // Audio::fromBuffer so consumers can decode
+                                                // layer surfaces compressed audio as a
+                                                // CompressedAudioPayload so consumers can decode
                                                 // through their own codec subsystem.
                                                 AudioFormat compFmt = AudioFormat::lookupByFourCC(entryType);
                                                 AudioDesc adesc(compFmt,

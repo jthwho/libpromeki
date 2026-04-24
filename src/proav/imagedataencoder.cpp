@@ -8,10 +8,11 @@
 #include <cstring>
 #include <numeric>
 #include <promeki/imagedataencoder.h>
-#include <promeki/image.h>
 #include <promeki/paintengine.h>
 #include <promeki/color.h>
 #include <promeki/pixelmemlayout.h>
+#include <promeki/uncompressedvideopayload.h>
+#include <promeki/mediaconfig.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -55,21 +56,23 @@ size_t cellBytesForPlane(const PixelMemLayout &pf, size_t planeIndex, size_t cel
         return (cellPixels / ppb) * bpb;
 }
 
-// Build a small primer image of width @c cellPixels filled with
-// @p color, then convert it to @p targetDesc.  Returns an invalid
-// Image on any failure.
-Image buildPrimerImage(size_t cellPixels, const Color &color, const PixelFormat &targetDesc) {
-        if(cellPixels == 0) return Image();
+// Build a small primer payload of width @c cellPixels filled with
+// @p color, then convert it to @p targetDesc.  Returns a null Ptr on
+// any failure.
+UncompressedVideoPayload::Ptr buildPrimerPayload(size_t cellPixels,
+                                                 const Color &color,
+                                                 const PixelFormat &targetDesc) {
+        if(cellPixels == 0) return UncompressedVideoPayload::Ptr();
 
         // Render into RGBA8_sRGB first because it always has a paint
         // engine — RGBA8 → anything is the canonical CSC fast path.
-        Image rgba(static_cast<size_t>(cellPixels), size_t(1),
-                   PixelFormat(PixelFormat::RGBA8_sRGB));
-        if(!rgba.isValid()) return Image();
+        ImageDesc rgbaDesc(cellPixels, size_t(1), PixelFormat::RGBA8_sRGB);
+        auto rgba = UncompressedVideoPayload::allocate(rgbaDesc);
+        if(!rgba.isValid()) return UncompressedVideoPayload::Ptr();
         // RGBA8_sRGB always has a working paint engine, so no need to
         // validate the engine itself — only YUV / packed / compressed
         // formats fall back to the no-op engine.
-        PaintEngine pe = rgba.createPaintEngine();
+        PaintEngine pe = rgba->createPaintEngine();
         auto pixel = pe.createPixel(color);
         pe.fill(pixel);
 
@@ -77,7 +80,7 @@ Image buildPrimerImage(size_t cellPixels, const Color &color, const PixelFormat 
                 // No conversion needed — pass through.
                 return rgba;
         }
-        return rgba.convert(targetDesc, Metadata());
+        return rgba->convert(targetDesc, Metadata(), MediaConfig());
 }
 
 }  // namespace
@@ -165,16 +168,16 @@ bool ImageDataEncoder::buildPrimers() {
                             static_cast<uint8_t>(128),
                             static_cast<uint8_t>(128));
 
-        Image whiteCell   = buildPrimerImage(_bitWidth, Color::White, pd);
-        Image blackCell   = buildPrimerImage(_bitWidth, Color::Black, pd);
-        Image neutralCell = buildPrimerImage(_bitWidth, midGray,      pd);
+        auto whiteCell   = buildPrimerPayload(_bitWidth, Color::White, pd);
+        auto blackCell   = buildPrimerPayload(_bitWidth, Color::Black, pd);
+        auto neutralCell = buildPrimerPayload(_bitWidth, midGray,      pd);
         if(!whiteCell.isValid() || !blackCell.isValid() || !neutralCell.isValid()) return false;
 
-        Image padBlack;
-        Image padNeutral;
+        UncompressedVideoPayload::Ptr padBlack;
+        UncompressedVideoPayload::Ptr padNeutral;
         if(_padWidth > 0) {
-                padBlack   = buildPrimerImage(_padWidth, Color::Black, pd);
-                padNeutral = buildPrimerImage(_padWidth, midGray,      pd);
+                padBlack   = buildPrimerPayload(_padWidth, Color::Black, pd);
+                padNeutral = buildPrimerPayload(_padWidth, midGray,      pd);
                 if(!padBlack.isValid() || !padNeutral.isValid()) return false;
         }
 
@@ -188,16 +191,17 @@ bool ImageDataEncoder::buildPrimers() {
                 const auto &plane = pf.planeDesc(i);
                 const bool isChroma = (plane.hSubsampling > 1) || (plane.vSubsampling > 1);
 
-                const Image &cellOneSrc  = isChroma ? neutralCell : whiteCell;
-                const Image &cellZeroSrc = isChroma ? neutralCell : blackCell;
-                const Image *padSrc      = (_padWidth > 0) ? (isChroma ? &padNeutral : &padBlack) : nullptr;
+                const UncompressedVideoPayload &cellOneSrc  = isChroma ? *neutralCell : *whiteCell;
+                const UncompressedVideoPayload &cellZeroSrc = isChroma ? *neutralCell : *blackCell;
+                const UncompressedVideoPayload *padSrc      = (_padWidth > 0)
+                        ? (isChroma ? padNeutral.ptr() : padBlack.ptr()) : nullptr;
 
                 if(p.cellBytes > 0) {
                         p.oneCell  = Buffer(p.cellBytes);
                         p.zeroCell = Buffer(p.cellBytes);
                         if(!p.oneCell.isValid() || !p.zeroCell.isValid()) return false;
-                        std::memcpy(p.oneCell.data(),  cellOneSrc.data(static_cast<int>(i)),  p.cellBytes);
-                        std::memcpy(p.zeroCell.data(), cellZeroSrc.data(static_cast<int>(i)), p.cellBytes);
+                        std::memcpy(p.oneCell.data(),  cellOneSrc.plane(i).data(),  p.cellBytes);
+                        std::memcpy(p.zeroCell.data(), cellZeroSrc.plane(i).data(), p.cellBytes);
                         p.oneCell.setSize(p.cellBytes);
                         p.zeroCell.setSize(p.cellBytes);
                 }
@@ -205,21 +209,20 @@ bool ImageDataEncoder::buildPrimers() {
                 if(p.padBytes > 0 && padSrc != nullptr) {
                         p.padBuf = Buffer(p.padBytes);
                         if(!p.padBuf.isValid()) return false;
-                        std::memcpy(p.padBuf.data(), padSrc->data(static_cast<int>(i)), p.padBytes);
+                        std::memcpy(p.padBuf.data(), padSrc->plane(i).data(), p.padBytes);
                         p.padBuf.setSize(p.padBytes);
                 }
         }
         return true;
 }
 
-void ImageDataEncoder::writeOneScanline(Image &img, size_t planeIndex,
+void ImageDataEncoder::writeOneScanline(uint8_t *planeBase, size_t planeIndex,
                                         size_t lineInPlane,
                                         uint8_t syncBits,
                                         uint64_t payloadBits,
                                         uint8_t crcBits) const {
         const PlaneInfo &p = _planes[planeIndex];
-        uint8_t *base = static_cast<uint8_t *>(img.data(static_cast<int>(planeIndex)));
-        uint8_t *dest = base + lineInPlane * p.lineStride;
+        uint8_t *dest = planeBase + lineInPlane * p.lineStride;
         const size_t cb = p.cellBytes;
 
         // 76-bit row laid out in three pieces (passed in directly so the
@@ -253,23 +256,19 @@ void ImageDataEncoder::writeOneScanline(Image &img, size_t planeIndex,
         }
 }
 
-Error ImageDataEncoder::encode(Image &img, const List<Item> &items) const {
-        if(!_valid) return Error::Invalid;
-        if(!img.isValid()) return Error::Invalid;
-        if(img.desc().size() != _desc.size() ||
-           img.desc().pixelFormat() != _desc.pixelFormat()) {
-                return Error::InvalidArgument;
-        }
+namespace {
 
-        const size_t imgHeight = _desc.height();
-
-        // CRC instance built once per encode() call so the 256-entry
-        // table is computed exactly once regardless of how many items
-        // we process.  Cheap enough that we don't bother caching it
-        // across calls — encode() runs at frame rate, not per pixel.
+// Common inner loop: stamp each requested item across every plane.
+// Plane base pointers are resolved by the caller so this works for
+// both Image and UncompressedVideoPayload.
+template <typename PlaneBaseFn>
+Error encodeCommon(const ImageDataEncoder *self,
+                   size_t imgHeight,
+                   size_t planeCount,
+                   const List<ImageDataEncoder::Item> &items,
+                   PlaneBaseFn getPlaneBase) {
         Crc8 crc(CrcParams::Crc8Autosar);
-
-        for(const Item &it : items) {
+        for(const ImageDataEncoder::Item &it : items) {
                 // Bounds-check against the luma plane.  Items that
                 // overrun the bottom of the image are rejected outright
                 // rather than silently truncated.
@@ -292,28 +291,57 @@ Error ImageDataEncoder::encode(Image &img, const List<Item> &items) const {
 
                 // For each plane, walk the chroma-row range that
                 // overlaps the luma range and emit one cell row per
-                // chroma scan line.  For luma planes (vSubsampling
-                // == 1) this is just the luma range itself.
-                for(size_t pi = 0; pi < _planeCount; pi++) {
-                        const PlaneInfo &p = _planes[pi];
-                        if(p.cellBytes == 0) continue;
-
-                        const size_t vsub = p.vSubsampling;
-                        const size_t firstP = it.firstLine / vsub;
-                        const size_t lastExP = (lastEx + vsub - 1) / vsub;
-                        for(size_t line = firstP; line < lastExP; line++) {
-                                writeOneScanline(img, pi, line,
-                                                 SyncNibble, it.payload, crcVal);
-                        }
+                // chroma scan line.
+                for(size_t pi = 0; pi < planeCount; pi++) {
+                        uint8_t *base = getPlaneBase(pi);
+                        if(base == nullptr) continue;
+                        self->writeScanlineBase(base, pi, it, lastEx,
+                                                ImageDataEncoder::SyncNibble,
+                                                crcVal);
                 }
         }
         return Error::Ok;
 }
 
-Error ImageDataEncoder::encode(Image &img, const Item &item) const {
+} // namespace
+
+void ImageDataEncoder::writeScanlineBase(uint8_t *planeBase,
+                                         size_t planeIndex,
+                                         const Item &item,
+                                         uint64_t lastEx,
+                                         uint8_t syncBits,
+                                         uint8_t crcVal) const {
+        const PlaneInfo &p = _planes[planeIndex];
+        if(p.cellBytes == 0) return;
+        const size_t vsub = p.vSubsampling;
+        const size_t firstP = item.firstLine / vsub;
+        const size_t lastExP = (lastEx + vsub - 1) / vsub;
+        for(size_t line = firstP; line < lastExP; line++) {
+                writeOneScanline(planeBase, planeIndex, line,
+                                 syncBits, item.payload, crcVal);
+        }
+}
+
+Error ImageDataEncoder::encode(UncompressedVideoPayload &inout,
+                               const List<Item> &items) const {
+        if(!_valid) return Error::Invalid;
+        if(!inout.isValid()) return Error::Invalid;
+        if(inout.desc().size() != _desc.size() ||
+           inout.desc().pixelFormat() != _desc.pixelFormat()) {
+                return Error::InvalidArgument;
+        }
+        if(inout.planeCount() < _planeCount) return Error::Invalid;
+        return encodeCommon(this, _desc.height(), _planeCount, items,
+                [&inout](size_t pi) -> uint8_t * {
+                        return inout.data()[pi].data();
+                });
+}
+
+Error ImageDataEncoder::encode(UncompressedVideoPayload &inout,
+                               const Item &item) const {
         List<Item> single;
         single.pushToBack(item);
-        return encode(img, single);
+        return encode(inout, single);
 }
 
 PROMEKI_NAMESPACE_END

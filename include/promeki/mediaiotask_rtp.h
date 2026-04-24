@@ -10,6 +10,8 @@
 #include <promeki/namespace.h>
 #include <promeki/frame.h>
 #include <promeki/imagedesc.h>
+#include <promeki/videopayload.h>
+#include <promeki/uncompressedaudiopayload.h>
 #include <promeki/mediaiotask.h>
 #include <promeki/queue.h>
 #include <promeki/rtppacket.h>
@@ -448,13 +450,15 @@ class MediaIOTask_Rtp : public MediaIOTask {
                  * @c _frameCount) so the worker thread does not race
                  * with the strand thread that owns the counter.
                  *
-                 * @param image      The image plane to packetise.
+                 * @param payload    The video payload (uncompressed
+                 *                   raster or compressed bitstream)
+                 *                   to packetise.
                  * @param frameIndex Zero-based frame index for this
                  *                   transmission, used to compute
                  *                   the RTP timestamp via
                  *                   @ref FrameRate::cumulativeTicks.
                  */
-                Error sendVideo(const Image &image, const FrameNumber &frameIndex);
+                Error sendVideo(const VideoPayload &payload, const FrameNumber &frameIndex);
 
                 /**
                  * @brief Sends one audio chunk on the @c _audio stream.
@@ -463,7 +467,7 @@ class MediaIOTask_Rtp : public MediaIOTask {
                  * sample counter inside @c _audioState, so no frame
                  * index is needed here.
                  */
-                Error sendAudio(const Audio &audio);
+                Error sendAudio(const UncompressedAudioPayload &payload);
 
                 /**
                  * @brief Sends one metadata blob on the @c _data stream.
@@ -537,9 +541,10 @@ class MediaIOTask_Rtp : public MediaIOTask {
 
                 // RFC 4175 wire-format PixelFormat.  When the input
                 // pixel format doesn't match what RFC 4175 expects
-                // on the wire (e.g. YUYV vs UYVY), sendVideo()
-                // calls Image::convert() to the wire format before
-                // packing.  Invalid means no conversion needed.
+                // on the wire (e.g. YUYV vs UYVY), sendVideo() calls
+                // UncompressedVideoPayload::convert() to the wire
+                // format before packing.  Invalid means no conversion
+                // needed.
                 PixelFormat       _videoWirePixelFormat;
 
                 // Reader runtime

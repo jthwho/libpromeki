@@ -11,6 +11,8 @@
 #include <promeki/imagefile.h>
 #include <promeki/file.h>
 #include <promeki/buffer.h>
+#include <promeki/uncompressedvideopayload.h>
+#include <promeki/videopayload.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -123,15 +125,16 @@ Error ImageFileIO_TGA::load(ImageFile &imageFile, const MediaConfig &config) con
                 return Error::IOError;
         }
 
-        // Allocate RGBA8 image
-        Image image(w, h, PixelFormat(PixelFormat::RGBA8_sRGB));
-        if(!image.isValid()) {
-                promekiErr("TGA load '%s': failed to allocate image", filename.cstr());
+        // Allocate RGBA8 payload
+        ImageDesc idesc(w, h, PixelFormat::RGBA8_sRGB);
+        auto payload = UncompressedVideoPayload::allocate(idesc);
+        if(!payload.isValid()) {
+                promekiErr("TGA load '%s': failed to allocate payload", filename.cstr());
                 return Error::NoMem;
         }
 
         const uint8_t *src = static_cast<const uint8_t *>(rawBuf.data());
-        uint8_t *dst = static_cast<uint8_t *>(image.data());
+        uint8_t *dst = payload.modify()->data()[0].data();
         bool needFlip = !(hdr.imgdesc & TGA_ORIGIN_TOP); // bottom-up → flip
         bool hasAlpha = (srcBpp == 4);
 
@@ -159,7 +162,7 @@ Error ImageFileIO_TGA::load(ImageFile &imageFile, const MediaConfig &config) con
         }
 
         Frame frame;
-        frame.imageList().pushToBack(Image::Ptr::create(image));
+        frame.addPayload(payload);
         imageFile.setFrame(frame);
         promekiDebug("TGA load '%s': %zux%zu RGBA8 (%d-bit%s)", filename.cstr(), w, h,
                      hdr.bpp, needFlip ? ", flipped" : "");
@@ -172,21 +175,25 @@ Error ImageFileIO_TGA::load(ImageFile &imageFile, const MediaConfig &config) con
 
 Error ImageFileIO_TGA::save(ImageFile &imageFile, const MediaConfig &config) const {
         (void)config;
-        const Image image = imageFile.image();
         const String &filename = imageFile.filename();
 
-        if(!image.isValid()) {
-                promekiErr("TGA save '%s': image is not valid", filename.cstr());
+        VideoPayload::PtrList vps = imageFile.frame().videoPayloads();
+        const UncompressedVideoPayload *uvp = nullptr;
+        if(!vps.isEmpty() && vps[0].isValid()) uvp = vps[0]->as<UncompressedVideoPayload>();
+        if(uvp == nullptr || !uvp->desc().isValid() || uvp->planeCount() == 0) {
+                promekiErr("TGA save '%s': no uncompressed video payload", filename.cstr());
                 return Error::Invalid;
         }
-        if(image.pixelFormat().id() != PixelFormat::RGBA8_sRGB) {
+        const ImageDesc &idesc = uvp->desc();
+        if(idesc.pixelFormat().id() != PixelFormat::RGBA8_sRGB) {
                 promekiErr("TGA save '%s': only RGBA8 supported, got '%s'",
-                           filename.cstr(), image.pixelFormat().name().cstr());
+                           filename.cstr(), idesc.pixelFormat().name().cstr());
                 return Error::PixelFormatNotSupported;
         }
 
-        size_t w = image.width();
-        size_t h = image.height();
+        size_t w = idesc.size().width();
+        size_t h = idesc.size().height();
+        auto plane0 = uvp->plane(0);
 
         // Build header
         TGAHeader hdr;
@@ -200,7 +207,7 @@ Error ImageFileIO_TGA::save(ImageFile &imageFile, const MediaConfig &config) con
         // Convert RGBA → BGRA
         size_t pixelCount = w * h;
         Buffer outBuf(pixelCount * 4);
-        const uint8_t *src = static_cast<const uint8_t *>(image.data());
+        const uint8_t *src = plane0.data();
         uint8_t *dst = static_cast<uint8_t *>(outBuf.data());
         for(size_t i = 0; i < pixelCount; ++i) {
                 dst[i * 4 + 0] = src[i * 4 + 2]; // R → B

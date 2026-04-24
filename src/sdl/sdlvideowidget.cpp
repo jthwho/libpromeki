@@ -31,19 +31,19 @@ SDLVideoWidget::~SDLVideoWidget() {
         return;
 }
 
-void SDLVideoWidget::setImage(const Image &image) {
-        _currentImage = image;
+void SDLVideoWidget::setPayload(const UncompressedVideoPayload::Ptr &payload) {
+        _currentPayload = payload;
         update();
         return;
 }
 
 void SDLVideoWidget::paintEvent(PaintEvent *) {
-        if(!_currentImage.isValid()) return;
+        if(!_currentPayload.isValid() || !_currentPayload->isValid()) return;
 
         SDL_Renderer *renderer = findRenderer();
         if(renderer == nullptr) return;
 
-        if(!uploadCurrentImage()) return;
+        if(!uploadCurrentPayload()) return;
         if(_texture == nullptr) return;
 
         // Calculate destination rect within our widget geometry
@@ -190,11 +190,12 @@ bool SDLVideoWidget::isDirectlyMappable(const PixelFormat &pd) {
         return mapPixelFormat(pd) != 0;
 }
 
-bool SDLVideoWidget::uploadCurrentImage() {
-        if(!_currentImage.isValid()) return false;
+bool SDLVideoWidget::uploadCurrentPayload() {
+        if(!_currentPayload.isValid() || !_currentPayload->isValid()) return false;
         _frameCount++;
 
-        const PixelFormat &srcPd = _currentImage.pixelFormat();
+        const ImageDesc &idesc = _currentPayload->desc();
+        const PixelFormat &srcPd = idesc.pixelFormat();
 
         // The widget now relies on the planner-inserted CSC stage
         // upstream to deliver an SDL-native PixelFormat — no inline
@@ -212,11 +213,11 @@ bool SDLVideoWidget::uploadCurrentImage() {
         }
 
         _framesFastPath++;
-        ensureTexture(_currentImage.width(),
-                      _currentImage.height(), sdlFmt,
+        ensureTexture(idesc.size().width(),
+                      idesc.size().height(), sdlFmt,
                       mapColorspace(srcPd));
         if(_texture == nullptr) return false;
-        uploadImage(_currentImage, sdlFmt);
+        uploadPayload(*_currentPayload, sdlFmt);
         return true;
 }
 
@@ -290,8 +291,12 @@ void SDLVideoWidget::ensureTexture(int w, int h, uint32_t sdlPixFmt,
         return;
 }
 
-void SDLVideoWidget::uploadImage(const Image &image, uint32_t sdlPixFmt) {
+void SDLVideoWidget::uploadPayload(const UncompressedVideoPayload &payload,
+                                   uint32_t sdlPixFmt) {
         if(_texture == nullptr) return;
+
+        const PixelMemLayout &ml = payload.desc().pixelFormat().memLayout();
+        const size_t imgWidth = payload.desc().size().width();
 
         // Multi-plane YUV formats need SDL's dedicated update calls —
         // SDL_UpdateTexture assumes a single contiguous plane at the
@@ -301,12 +306,10 @@ void SDLVideoWidget::uploadImage(const Image &image, uint32_t sdlPixFmt) {
         switch(sdlPixFmt) {
                 case SDL_PIXELFORMAT_NV12:
                 case SDL_PIXELFORMAT_NV21: {
-                        const uint8_t *yPlane =
-                                static_cast<const uint8_t *>(image.data(0));
-                        const uint8_t *uvPlane =
-                                static_cast<const uint8_t *>(image.data(1));
-                        int yPitch = static_cast<int>(image.lineStride(0));
-                        int uvPitch = static_cast<int>(image.lineStride(1));
+                        const uint8_t *yPlane  = payload.plane(0).data();
+                        const uint8_t *uvPlane = payload.plane(1).data();
+                        int yPitch = static_cast<int>(ml.lineStride(0, imgWidth));
+                        int uvPitch = static_cast<int>(ml.lineStride(1, imgWidth));
                         if(!SDL_UpdateNVTexture(_texture, nullptr,
                                                 yPlane, yPitch,
                                                 uvPlane, uvPitch)) {
@@ -319,15 +322,12 @@ void SDLVideoWidget::uploadImage(const Image &image, uint32_t sdlPixFmt) {
                 case SDL_PIXELFORMAT_YV12: {
                         // Promeki's YUV8_420_Planar_Rec709 stores Y,Cb,Cr
                         // which matches IYUV (plane order: Y, U, V).
-                        const uint8_t *yPlane =
-                                static_cast<const uint8_t *>(image.data(0));
-                        const uint8_t *uPlane =
-                                static_cast<const uint8_t *>(image.data(1));
-                        const uint8_t *vPlane =
-                                static_cast<const uint8_t *>(image.data(2));
-                        int yPitch = static_cast<int>(image.lineStride(0));
-                        int uPitch = static_cast<int>(image.lineStride(1));
-                        int vPitch = static_cast<int>(image.lineStride(2));
+                        const uint8_t *yPlane = payload.plane(0).data();
+                        const uint8_t *uPlane = payload.plane(1).data();
+                        const uint8_t *vPlane = payload.plane(2).data();
+                        int yPitch = static_cast<int>(ml.lineStride(0, imgWidth));
+                        int uPitch = static_cast<int>(ml.lineStride(1, imgWidth));
+                        int vPitch = static_cast<int>(ml.lineStride(2, imgWidth));
                         if(!SDL_UpdateYUVTexture(_texture, nullptr,
                                                  yPlane, yPitch,
                                                  uPlane, uPitch,
@@ -342,8 +342,8 @@ void SDLVideoWidget::uploadImage(const Image &image, uint32_t sdlPixFmt) {
         }
 
         // Single-plane formats (RGB family + YUY2 / UYVY).
-        size_t stride = image.lineStride(0);
-        const void *pixels = image.data(0);
+        size_t stride = ml.lineStride(0, imgWidth);
+        const void *pixels = payload.plane(0).data();
 
         if(!SDL_UpdateTexture(_texture, nullptr, pixels, static_cast<int>(stride))) {
                 promekiErr("SDLVideoWidget: SDL_UpdateTexture failed: %s", SDL_GetError());

@@ -7,7 +7,6 @@
 
 #include <cmath>
 #include <promeki/audiogen.h>
-#include <promeki/audio.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -53,11 +52,9 @@ void AudioGen::setConfig(size_t chan, Config config) {
         return;
 }
 
-Audio AudioGen::generate(size_t samples) {
-        AudioDesc workingDesc = _desc.workingDesc();
-        Audio ret = Audio(workingDesc, samples);
-        if(!ret.isValid()) return Audio();
-        float *data = ret.data<float>();
+bool AudioGen::generate(float *out, size_t samples) {
+        if(out == nullptr) return false;
+        float *data = out;
         for(size_t chan = 0; chan < _desc.channels(); ++chan) {
                 switch(_chanConfig[chan].type) {
                         case Silence: genSilence(chan, data, samples); break;
@@ -66,7 +63,7 @@ Audio AudioGen::generate(size_t samples) {
                 data++; // FIXME: Need to set to new plane for planar.
         }
         _sampleCount += samples;
-        return ret;
+        return true;
 }
 
 PROMEKI_NAMESPACE_END

@@ -11,6 +11,7 @@
 #include <promeki/mediaiotask.h>
 #include <promeki/quicktime.h>
 #include <promeki/audiobuffer.h>
+#include <promeki/mediapayload.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -21,17 +22,17 @@ PROMEKI_NAMESPACE_BEGIN
  * Wraps the @c QuickTime engine to provide read and write access to
  * @c .mov / @c .mp4 / @c .m4v container files through the MediaIO
  * interface. Compressed sample bytes flow through the @c Frame as
- * compressed @c Image objects (created via @c Image::fromCompressedData),
- * with downstream consumers responsible for decoding via whichever
- * codec implementation they prefer. Uncompressed video tracks
- * (@c 2vuy / @c v210 / etc.) are wrapped as raster @c Image objects.
+ * @ref CompressedVideoPayload objects, with downstream consumers
+ * responsible for decoding via whichever codec implementation they
+ * prefer. Uncompressed video tracks (@c 2vuy / @c v210 / etc.) are
+ * wrapped as @ref UncompressedVideoPayload objects.
  *
  * @par Audio
  *
  * PCM audio tracks are read and written. On read, each @c Frame carries
- * an @c Audio object containing the PCM samples that correspond to the
- * video frame duration; compressed (e.g. AAC) audio tracks are surfaced
- * as compressed @c Audio objects created via @c Audio::fromCompressedData.
+ * an @ref UncompressedAudioPayload containing the PCM samples that
+ * correspond to the video frame duration; compressed (e.g. AAC) audio
+ * tracks are surfaced as @ref CompressedAudioPayload objects.
  * On write, @c Frame audio is accumulated in an @c AudioBuffer FIFO and
  * flushed to the engine writer in per-video-frame-aligned chunks. Source
  * audio that differs from the on-disk storage format (e.g. float32 input
@@ -96,7 +97,8 @@ class MediaIOTask_QuickTime : public MediaIOTask {
                 Error readVideoFrame(const FrameNumber &frameIndex, Frame::Ptr &outFrame);
 
                 /** @brief Pulls @p samples samples for the current audio track into @p out. */
-                Error readAudioSlice(uint64_t startSample, size_t samples, Audio &out);
+                Error readAudioSlice(uint64_t startSample, size_t samples,
+                                     MediaPayload::Ptr &out);
 
                 /** @brief Lazily registers writer tracks from the supplied frame. */
                 Error setupWriterFromFrame(const Frame &frame);

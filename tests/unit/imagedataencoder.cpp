@@ -8,7 +8,6 @@
 #include <doctest/doctest.h>
 #include <cstring>
 #include <promeki/imagedataencoder.h>
-#include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/pixelformat.h>
 #include <promeki/pixelmemlayout.h>
@@ -20,6 +19,7 @@
 #include <promeki/framerate.h>
 #include <promeki/size2d.h>
 #include <promeki/videoformat.h>
+#include <promeki/uncompressedvideopayload.h>
 
 using namespace promeki;
 
@@ -73,11 +73,14 @@ DecodedRow decodeRow(const uint8_t *line, size_t cellBytes, uint8_t whiteByte) {
         return out;
 }
 
-// Build an empty image of the given format and clear it.
-Image makeImage(size_t w, size_t h, PixelFormat::ID id) {
-        Image img(w, h, PixelFormat(id));
-        img.fill(0);
-        return img;
+// Build an empty payload of the given format and clear it.
+UncompressedVideoPayload::Ptr makePayload(size_t w, size_t h, PixelFormat::ID id) {
+        auto p = UncompressedVideoPayload::allocate(
+                ImageDesc(w, h, PixelFormat(id)));
+        for(size_t i = 0; i < p->planeCount(); ++i) {
+                std::memset(p.modify()->data()[i].data(), 0, p->plane(i).size());
+        }
+        return p;
 }
 
 }  // namespace
@@ -133,13 +136,13 @@ TEST_CASE("ImageDataEncoder RGBA8 single-item round-trip") {
         ImageDataEncoder enc(desc);
         REQUIRE(enc.isValid());
 
-        Image img = makeImage(1920, 64, PixelFormat::RGBA8_sRGB);
+        auto img = makePayload(1920, 64, PixelFormat::RGBA8_sRGB);
         const uint64_t payload = 0x0123456789ABCDEFull;
         ImageDataEncoder::Item item{ 0, 16, payload };
-        REQUIRE(enc.encode(img, item).isOk());
+        REQUIRE(enc.encode(*img.modify(), item).isOk());
 
         // For RGBA8_sRGB, "white" is component 0xff, "black" is 0x00.
-        const uint8_t *line = static_cast<const uint8_t *>(img.data(0));
+        const uint8_t *line = img->plane(0).data();
         const size_t   cellBytes = enc.bitWidth() * 4;  // 4 bytes per RGBA8 pixel
         DecodedRow row = decodeRow(line, cellBytes, 0xff);
 
@@ -154,7 +157,8 @@ TEST_CASE("ImageDataEncoder RGBA8 single-item round-trip") {
         CHECK(row.crc == crc.value());
 
         // Lines outside the band must remain untouched (still all-zero).
-        const uint8_t *outside = static_cast<const uint8_t *>(img.data(0)) + 32 * img.lineStride(0);
+        const size_t stride0 = img->desc().pixelFormat().memLayout().lineStride(0, img->desc().width());
+        const uint8_t *outside = img->plane(0).data() + 32 * stride0;
         bool allZero = true;
         for(size_t i = 0; i < 16; i++) if(outside[i] != 0) { allZero = false; break; }
         CHECK(allZero);
@@ -165,19 +169,20 @@ TEST_CASE("ImageDataEncoder RGBA8 two-item produces distinct rows") {
         ImageDataEncoder enc(desc);
         REQUIRE(enc.isValid());
 
-        Image img = makeImage(1920, 64, PixelFormat::RGBA8_sRGB);
+        auto img = makePayload(1920, 64, PixelFormat::RGBA8_sRGB);
         const uint64_t pa = 0xAAAAAAAAAAAAAAAAull;
         const uint64_t pb = 0x5555555555555555ull;
 
         List<ImageDataEncoder::Item> items;
         items.pushToBack({  0, 16, pa });
         items.pushToBack({ 16, 16, pb });
-        REQUIRE(enc.encode(img, items).isOk());
+        REQUIRE(enc.encode(*img.modify(), items).isOk());
 
         const size_t cellBytes = enc.bitWidth() * 4;
 
-        const uint8_t *lineA = static_cast<const uint8_t *>(img.data(0));
-        const uint8_t *lineB = static_cast<const uint8_t *>(img.data(0)) + 16 * img.lineStride(0);
+        const size_t stride0 = img->desc().pixelFormat().memLayout().lineStride(0, img->desc().width());
+        const uint8_t *lineA = img->plane(0).data();
+        const uint8_t *lineB = img->plane(0).data() + 16 * stride0;
 
         DecodedRow rowA = decodeRow(lineA, cellBytes, 0xff);
         DecodedRow rowB = decodeRow(lineB, cellBytes, 0xff);
@@ -205,12 +210,12 @@ TEST_CASE("ImageDataEncoder YUV8_422 round-trip on luma byte 0") {
         // pixelsPerBlock = 2 (YUYV macropixel) → 1920/76=25 → /2*2 = 24.
         CHECK(enc.bitWidth() == 24);
 
-        Image img = makeImage(1920, 32, PixelFormat::YUV8_422_Rec709);
+        auto img = makePayload(1920, 32, PixelFormat::YUV8_422_Rec709);
 
         const uint64_t payload = 0xDEADBEEFCAFEBABEull;
-        REQUIRE(enc.encode(img, ImageDataEncoder::Item{0, 16, payload}).isOk());
+        REQUIRE(enc.encode(*img.modify(), ImageDataEncoder::Item{0, 16, payload}).isOk());
 
-        const uint8_t *line = static_cast<const uint8_t *>(img.data(0));
+        const uint8_t *line = img->plane(0).data();
         // Cell stride in bytes: 24 px * (4 bytes / 2 px) = 48 bytes.
         const size_t cellBytes = enc.bitWidth() * 2;  // YUYV: 2 bytes/pixel
 
@@ -233,9 +238,9 @@ TEST_CASE("ImageDataEncoder planar 4:2:2 luma carries pattern, chroma uniform") 
         // hSub = 2 chroma → cell width must be even.
         CHECK((enc.bitWidth() % 2) == 0);
 
-        Image img = makeImage(1920, 32, PixelFormat::YUV8_422_Planar_Rec709);
+        auto img = makePayload(1920, 32, PixelFormat::YUV8_422_Planar_Rec709);
         const uint64_t payload = 0x1122334455667788ull;
-        REQUIRE(enc.encode(img, ImageDataEncoder::Item{0, 16, payload}).isOk());
+        REQUIRE(enc.encode(*img.modify(), ImageDataEncoder::Item{0, 16, payload}).isOk());
 
         // Plane 0 = Y, plane 1 = Cb, plane 2 = Cr.  Within the encoded
         // band the chroma planes must contain a single uniform value
@@ -246,10 +251,10 @@ TEST_CASE("ImageDataEncoder planar 4:2:2 luma carries pattern, chroma uniform") 
         // the entire band", which is the property the encoder
         // actually guarantees (the bit pattern must only modulate
         // luma, not chroma).
-        const uint8_t *cb = static_cast<const uint8_t *>(img.data(1));
-        const uint8_t *cr = static_cast<const uint8_t *>(img.data(2));
-        const size_t cbStride = img.lineStride(1);
-        const size_t crStride = img.lineStride(2);
+        const uint8_t *cb = img->plane(1).data();
+        const uint8_t *cr = img->plane(2).data();
+        const size_t cbStride = img->desc().pixelFormat().memLayout().lineStride(1, img->desc().width());
+        const size_t crStride = img->desc().pixelFormat().memLayout().lineStride(2, img->desc().width());
         const uint8_t cbRef = cb[0];
         const uint8_t crRef = cr[0];
         // Sanity: neutral should be near 128 for limited-range Cb/Cr.
@@ -273,7 +278,7 @@ TEST_CASE("ImageDataEncoder planar 4:2:2 luma carries pattern, chroma uniform") 
         // And the Y plane must round-trip the payload.  Use the
         // encoder's actual white-byte value (read from sync bit 0,
         // which is always white).
-        const uint8_t *y = static_cast<const uint8_t *>(img.data(0));
+        const uint8_t *y = img->plane(0).data();
         const uint8_t whiteY = y[0];
         DecodedRow row = decodeRow(y, enc.bitWidth(), whiteY);
         CHECK(row.sync == ImageDataEncoder::SyncNibble);
@@ -290,11 +295,10 @@ TEST_CASE("ImageDataEncoder v210 single-item round-trip") {
         REQUIRE(enc.isValid());
         CHECK(enc.bitWidth() == 24);  // multiple of 6 v210 block
 
-        Image img(1920, 32, PixelFormat::YUV10_422_v210_Rec709);
-        img.fill(0);
+        auto img = makePayload(1920, 32, PixelFormat::YUV10_422_v210_Rec709);
 
         const uint64_t payload = 0xF00DBABECAFEBEEFull;
-        REQUIRE(enc.encode(img, ImageDataEncoder::Item{0, 16, payload}).isOk());
+        REQUIRE(enc.encode(*img.modify(), ImageDataEncoder::Item{0, 16, payload}).isOk());
 
         // v210 layout: first 32-bit word of each block is
         // (Cb0:10 | Y0:10 | Cr0:10 | xx:2), little-endian.
@@ -305,7 +309,7 @@ TEST_CASE("ImageDataEncoder v210 single-item round-trip") {
         // 24-pixel cell = 4 v210 blocks (6 pixels each) = 64 bytes.
         // We only inspect the first block of each cell.
         const size_t cellBytes = (enc.bitWidth() / 6) * 16;  // 64 bytes
-        const uint8_t *line = static_cast<const uint8_t *>(img.data(0));
+        const uint8_t *line = img->plane(0).data();
 
         auto y0OfCell = [&](size_t cellIdx) -> uint16_t {
                 const uint8_t *p = line + cellIdx * cellBytes;
@@ -361,10 +365,10 @@ TEST_CASE("ImageDataEncoder rejects out-of-range items") {
         ImageDataEncoder enc(desc);
         REQUIRE(enc.isValid());
 
-        Image img = makeImage(1920, 32, PixelFormat::RGBA8_sRGB);
+        auto img = makePayload(1920, 32, PixelFormat::RGBA8_sRGB);
         // Item runs past the bottom of the image.
         ImageDataEncoder::Item bad{ 24, 16, 0 };
-        Error err = enc.encode(img, bad);
+        Error err = enc.encode(*img.modify(), bad);
         CHECK(err.isError());
         CHECK(err.code() == Error::OutOfRange);
 }
@@ -375,8 +379,8 @@ TEST_CASE("ImageDataEncoder rejects mismatched image descriptor") {
         REQUIRE(enc.isValid());
 
         // Build an image of a different size — encode must refuse.
-        Image other = makeImage(1280, 32, PixelFormat::RGBA8_sRGB);
-        Error err = enc.encode(other, ImageDataEncoder::Item{0, 16, 0});
+        auto other = makePayload(1280, 32, PixelFormat::RGBA8_sRGB);
+        Error err = enc.encode(*other.modify(), ImageDataEncoder::Item{0, 16, 0});
         CHECK(err.isError());
         CHECK(err.code() == Error::InvalidArgument);
 }
@@ -411,22 +415,24 @@ TEST_CASE("ImageDataEncoder end-to-end via TPG MediaIO") {
         Frame::Ptr frame;
         REQUIRE(io->readFrame(frame).isOk());
         REQUIRE(frame.isValid());
-        REQUIRE(frame->imageList().size() == 1);
-
-        const Image &img = *frame->imageList()[0];
-        REQUIRE(img.width() == 1920);
-        REQUIRE(img.pixelFormat().id() == PixelFormat::RGBA8_sRGB);
+        auto vids = frame->videoPayloads();
+        REQUIRE(vids.size() == 1);
+        const auto *uvp = vids[0]->as<UncompressedVideoPayload>();
+        REQUIRE(uvp != nullptr);
+        REQUIRE(uvp->desc().size().width() == 1920);
+        REQUIRE(uvp->desc().pixelFormat().id() == PixelFormat::RGBA8_sRGB);
 
         // Reconstruct the encoder's geometry parameters so the
         // decoder loop can walk cells at the right pitch.  These must
         // match exactly what ImageDataEncoder computed at construction.
-        ImageDataEncoder enc(img.desc());
+        ImageDataEncoder enc(uvp->desc());
         REQUIRE(enc.isValid());
         const size_t bitWidth = enc.bitWidth();
         const size_t cellBytes = bitWidth * 4;  // RGBA8: 4 bytes/pixel
+        const size_t lineStride = uvp->desc().pixelFormat().lineStride(0, uvp->desc());
 
         // Decode the first band (lines 0..15) — frame ID payload.
-        const uint8_t *line0 = static_cast<const uint8_t *>(img.data(0));
+        const uint8_t *line0 = uvp->plane(0).data();
         DecodedRow row0 = decodeRow(line0, cellBytes, 0xff);
         CHECK(row0.sync == ImageDataEncoder::SyncNibble);
 
@@ -444,7 +450,7 @@ TEST_CASE("ImageDataEncoder end-to-end via TPG MediaIO") {
         CHECK(row0.crc == crc.value());
 
         // Decode the second band (lines 16..31) — BCD timecode payload.
-        const uint8_t *line16 = line0 + 16 * img.lineStride(0);
+        const uint8_t *line16 = line0 + 16 * lineStride;
         DecodedRow row1 = decodeRow(line16, cellBytes, 0xff);
         CHECK(row1.sync == ImageDataEncoder::SyncNibble);
 

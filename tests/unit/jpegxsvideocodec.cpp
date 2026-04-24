@@ -21,19 +21,22 @@
 #include <promeki/videoencoder.h>
 #include <promeki/videodecoder.h>
 #include <promeki/mediaconfig.h>
-#include <promeki/mediapacket.h>
-#include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/pixelformat.h>
 #include <promeki/metadata.h>
 #include <promeki/timecode.h>
+#include <promeki/compressedvideopayload.h>
+#include <promeki/uncompressedvideopayload.h>
 
 using namespace promeki;
 
-// Fill a planar YUV Image with a deterministic pattern.  Works for
+// Fill a planar YUV payload with a deterministic pattern.  Works for
 // 8-bit (uint8_t samples) and 10/12-bit LE (uint16_t samples).
-static Image makePlanarYUV(int width, int height, PixelFormat::ID pd, int bitDepth, bool is420) {
-        Image img(width, height, pd);
+static UncompressedVideoPayload::Ptr makePlanarYUV(int width, int height,
+                                                   PixelFormat::ID pd,
+                                                   int bitDepth, bool is420) {
+        auto img = UncompressedVideoPayload::allocate(
+                ImageDesc(width, height, pd));
         if(!img.isValid()) return img;
         const int chromaMid = (bitDepth == 8) ? 128 : (bitDepth == 10) ? 512 : 2048;
         const int lumaMax   = (bitDepth == 8) ? 219 : (bitDepth == 10) ? 876 : 3504;
@@ -46,11 +49,12 @@ static Image makePlanarYUV(int width, int height, PixelFormat::ID pd, int bitDep
                         row[x * 2 + 1] = (uint8_t)((val >> 8) & 0xFF);
                 }
         };
+        const auto &ml = img->desc().pixelFormat().memLayout();
 
         // Luma plane — horizontal ramp.
         {
-                uint8_t *plane = static_cast<uint8_t *>(img.data(0));
-                const size_t stride = img.lineStride(0);
+                uint8_t *plane = img.modify()->data()[0].data();
+                const size_t stride = ml.lineStride(0, width);
                 for(int y = 0; y < height; y++) {
                         uint8_t *row = plane + y * stride;
                         for(int x = 0; x < width; x++) {
@@ -61,9 +65,9 @@ static Image makePlanarYUV(int width, int height, PixelFormat::ID pd, int bitDep
         // Chroma planes — flat midpoint.
         const int chromaW = width / 2;
         const int chromaH = is420 ? (height / 2) : height;
-        for(size_t p = 1; p < img.pixelFormat().planeCount(); p++) {
-                uint8_t *plane = static_cast<uint8_t *>(img.data(p));
-                const size_t stride = img.lineStride(p);
+        for(size_t p = 1; p < img->desc().pixelFormat().planeCount(); p++) {
+                uint8_t *plane = img.modify()->data()[p].data();
+                const size_t stride = ml.lineStride(p, width);
                 for(int y = 0; y < chromaH; y++) {
                         uint8_t *row = plane + y * stride;
                         for(int x = 0; x < chromaW; x++) {
@@ -74,12 +78,14 @@ static Image makePlanarYUV(int width, int height, PixelFormat::ID pd, int bitDep
         return img;
 }
 
-static Image makePlanarRGB8(int w, int h) {
-        Image img(w, h, PixelFormat(PixelFormat::RGB8_Planar_sRGB));
+static UncompressedVideoPayload::Ptr makePlanarRGB8(int w, int h) {
+        auto img = UncompressedVideoPayload::allocate(
+                ImageDesc(w, h, PixelFormat(PixelFormat::RGB8_Planar_sRGB)));
         if(!img.isValid()) return img;
+        const auto &ml = img->desc().pixelFormat().memLayout();
         for(int p = 0; p < 3; p++) {
-                uint8_t *plane = static_cast<uint8_t *>(img.data(p));
-                const size_t stride = img.lineStride(p);
+                uint8_t *plane = img.modify()->data()[p].data();
+                const size_t stride = ml.lineStride(p, w);
                 for(int y = 0; y < h; y++) {
                         uint8_t *row = plane + y * stride;
                         for(int x = 0; x < w; x++) {
@@ -99,38 +105,37 @@ static Image makePlanarRGB8(int w, int h) {
 // submit.
 // ---------------------------------------------------------------------------
 
-static VideoPacket::Ptr encodeOneJxsFrame(const Image &src, const MediaConfig &cfg) {
+static CompressedVideoPayload::Ptr encodeOneJxsFrame(const UncompressedVideoPayload::Ptr &src,
+                                                     const MediaConfig &cfg) {
         MediaConfig sessionCfg = cfg;
-        // Pick a sensible default OutputPixelFormat — every JPEG XS
-        // sub-format works, the encoder just needs a non-empty value
-        // to stamp on the packet.
         if(!sessionCfg.contains(MediaConfig::OutputPixelFormat)) {
                 sessionCfg.set(MediaConfig::OutputPixelFormat,
                                PixelFormat(PixelFormat::JPEG_XS_YUV8_422_Rec709));
         }
         auto encResult = VideoCodec(VideoCodec::JPEG_XS).createEncoder(&sessionCfg);
-        if(error(encResult).isError()) return VideoPacket::Ptr();
+        if(error(encResult).isError()) return CompressedVideoPayload::Ptr();
         VideoEncoder *enc = value(encResult);
-        Error err = enc->submitFrame(Image::Ptr::create(src));
-        if(err.isError()) { delete enc; return VideoPacket::Ptr(); }
-        VideoPacket::Ptr pkt = enc->receivePacket();
+        Error err = enc->submitPayload(src);
+        if(err.isError()) { delete enc; return CompressedVideoPayload::Ptr(); }
+        CompressedVideoPayload::Ptr pkt = enc->receiveCompressedPayload();
         delete enc;
         return pkt;
 }
 
-static Image decodeOneJxsFrame(const VideoPacket::Ptr &pkt, PixelFormat target,
-                               int width, int height) {
+static UncompressedVideoPayload::Ptr decodeOneJxsFrame(const CompressedVideoPayload::Ptr &pkt,
+                                                       PixelFormat target,
+                                                       int width, int height) {
         MediaConfig cfg;
         if(target.isValid()) cfg.set(MediaConfig::OutputPixelFormat, target);
         cfg.set(MediaConfig::VideoSize, Size2Du32(width, height));
         auto decResult = VideoCodec(VideoCodec::JPEG_XS).createDecoder(&cfg);
-        if(error(decResult).isError()) return Image();
+        if(error(decResult).isError()) return UncompressedVideoPayload::Ptr();
         VideoDecoder *dec = value(decResult);
-        Error err = dec->submitPacket(pkt);
-        if(err.isError()) { delete dec; return Image(); }
-        Image::Ptr out = dec->receiveFrame();
+        Error err = dec->submitPayload(pkt);
+        if(err.isError()) { delete dec; return UncompressedVideoPayload::Ptr(); }
+        UncompressedVideoPayload::Ptr out = dec->receiveVideoPayload();
         delete dec;
-        return out.isValid() ? *out : Image();
+        return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -182,7 +187,7 @@ TEST_CASE("JpegXsVideoEncoder_InvalidInput") {
         auto encResult = VideoCodec(VideoCodec::JPEG_XS).createEncoder(nullptr);
         REQUIRE_FALSE(error(encResult).isError());
         VideoEncoder *enc = value(encResult);
-        CHECK(enc->submitFrame(Image::Ptr()).isError());
+        CHECK(enc->submitPayload(UncompressedVideoPayload::Ptr()).isError());
         delete enc;
 }
 
@@ -197,9 +202,10 @@ TEST_CASE("JpegXsVideoEncoder_RejectsUnsupportedPixelFormat") {
         VideoEncoder *enc = value(encResult);
         // Force a configuration with a non-default OutputPixelFormat
         // for completeness; encoder still rejects the unsupported
-        // input format on submitFrame.
-        Image::Ptr img = Image::Ptr::create(64, 64, PixelFormat::RGB8_sRGB);
-        CHECK(enc->submitFrame(img).isError());
+        // input format on submitPayload.
+        auto uvp = UncompressedVideoPayload::allocate(
+                ImageDesc(64, 64, PixelFormat::RGB8_sRGB));
+        CHECK(enc->submitPayload(uvp).isError());
         delete enc;
 }
 
@@ -218,15 +224,15 @@ TEST_CASE("JpegXsVideoCodec_EncodeTagsCompressedPd") {
                 { PixelFormat::YUV12_420_Planar_LE_Rec709, PixelFormat::JPEG_XS_YUV12_420_Rec709, 12, true  },
         };
         for(const auto &c : cases) {
-                Image src = makePlanarYUV(320, 240, c.src, c.bitDepth, c.is420);
-                REQUIRE(src.isValid());
+                auto src = makePlanarYUV(320, 240, c.src, c.bitDepth, c.is420);
+                
                 MediaConfig cfg;
                 cfg.set(MediaConfig::OutputPixelFormat, PixelFormat(c.compressed));
-                VideoPacket::Ptr pkt = encodeOneJxsFrame(src, cfg);
+                CompressedVideoPayload::Ptr pkt = encodeOneJxsFrame(src, cfg);
                 REQUIRE_MESSAGE(pkt, "encode failed for ", (int)c.src);
-                CHECK(pkt->pixelFormat().id() == c.compressed);
-                CHECK(pkt->size() > 0);
-                CHECK(pkt->hasFlag(VideoPacket::Keyframe));
+                CHECK(pkt->desc().pixelFormat().id() == c.compressed);
+                CHECK(pkt->plane(0).size() > 0);
+                CHECK(pkt->isKeyframe());
         }
 }
 
@@ -245,17 +251,17 @@ TEST_CASE("JpegXsVideoCodec_RoundTripPlanar") {
                 { PixelFormat::YUV12_420_Planar_LE_Rec709, 12, true  },
         };
         for(const auto &c : cases) {
-                Image src = makePlanarYUV(320, 240, c.src, c.bitDepth, c.is420);
-                REQUIRE(src.isValid());
+                auto src = makePlanarYUV(320, 240, c.src, c.bitDepth, c.is420);
+                
                 MediaConfig cfg;
                 cfg.set(MediaConfig::JpegXsBpp, 8);  // near-lossless
-                VideoPacket::Ptr pkt = encodeOneJxsFrame(src, cfg);
+                CompressedVideoPayload::Ptr pkt = encodeOneJxsFrame(src, cfg);
                 REQUIRE_MESSAGE(pkt, "encode failed for ", (int)c.src);
-                Image dec = decodeOneJxsFrame(pkt, PixelFormat(c.src), 320, 240);
+                auto dec = decodeOneJxsFrame(pkt, PixelFormat(c.src), 320, 240);
                 REQUIRE_MESSAGE(dec.isValid(), "decode failed for ", (int)c.src);
-                CHECK(dec.width() == 320);
-                CHECK(dec.height() == 240);
-                CHECK(dec.pixelFormat().id() == c.src);
+                CHECK(dec->desc().width() == 320);
+                CHECK(dec->desc().height() == 240);
+                CHECK(dec->desc().pixelFormat().id() == c.src);
         }
 }
 
@@ -264,18 +270,18 @@ TEST_CASE("JpegXsVideoCodec_RoundTripPlanar") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("JpegXsVideoCodec_DefaultDecodeTarget") {
-        Image src = makePlanarYUV(160, 120, PixelFormat::YUV10_422_Planar_LE_Rec709, 10, false);
-        REQUIRE(src.isValid());
+        auto src = makePlanarYUV(160, 120, PixelFormat::YUV10_422_Planar_LE_Rec709, 10, false);
+        
         MediaConfig encCfg;
         encCfg.set(MediaConfig::OutputPixelFormat, PixelFormat(PixelFormat::JPEG_XS_YUV10_422_Rec709));
-        VideoPacket::Ptr pkt = encodeOneJxsFrame(src, encCfg);
+        CompressedVideoPayload::Ptr pkt = encodeOneJxsFrame(src, encCfg);
         REQUIRE(pkt);
 
         // Decode without OutputPixelFormat — the decoder picks the
         // natural target for the input bitstream.
-        Image dec = decodeOneJxsFrame(pkt, PixelFormat(), 160, 120);
+        auto dec = decodeOneJxsFrame(pkt, PixelFormat(), 160, 120);
         REQUIRE(dec.isValid());
-        CHECK(dec.pixelFormat().id() == PixelFormat::YUV10_422_Planar_LE_Rec709);
+        CHECK(dec->desc().pixelFormat().id() == PixelFormat::YUV10_422_Planar_LE_Rec709);
 }
 
 // ---------------------------------------------------------------------------
@@ -283,49 +289,41 @@ TEST_CASE("JpegXsVideoCodec_DefaultDecodeTarget") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("JpegXsVideoCodec_DecodeTargetMismatch") {
-        Image src = makePlanarYUV(160, 120, PixelFormat::YUV8_422_Planar_Rec709, 8, false);
-        REQUIRE(src.isValid());
-        VideoPacket::Ptr pkt = encodeOneJxsFrame(src, MediaConfig());
+        auto src = makePlanarYUV(160, 120, PixelFormat::YUV8_422_Planar_Rec709, 8, false);
+        
+        CompressedVideoPayload::Ptr pkt = encodeOneJxsFrame(src, MediaConfig());
         REQUIRE(pkt);
 
         // Encode is 4:2:2 and we ask the decoder to produce 4:2:0 —
         // the subsampling mismatch must be rejected.
-        Image dec = decodeOneJxsFrame(pkt,
+        auto dec = decodeOneJxsFrame(pkt,
                 PixelFormat(PixelFormat::YUV8_420_Planar_Rec709), 160, 120);
         CHECK_FALSE(dec.isValid());
 }
 
 // ---------------------------------------------------------------------------
-// Image::convert dispatch path — JPEG XS → RGBA8_sRGB
+// UncompressedVideoPayload::convert dispatch path — JPEG XS → RGBA8_sRGB
 // ---------------------------------------------------------------------------
 //
 // SDLPlayerTask relies on the codec layer to decode compressed
 // frames into RGBA8_sRGB before handing them to the widget.
 
 TEST_CASE("JpegXsVideoCodec_ImageConvertToRgba8") {
-        Image src = makePlanarYUV(64, 48, PixelFormat::YUV10_422_Planar_LE_Rec709, 10, false);
-        REQUIRE(src.isValid());
+        auto src = makePlanarYUV(64, 48, PixelFormat::YUV10_422_Planar_LE_Rec709, 10, false);
+        
         MediaConfig encCfg;
         encCfg.set(MediaConfig::JpegXsBpp, 8);
         encCfg.set(MediaConfig::OutputPixelFormat, PixelFormat(PixelFormat::JPEG_XS_YUV10_422_Rec709));
-        VideoPacket::Ptr pkt = encodeOneJxsFrame(src, encCfg);
+        CompressedVideoPayload::Ptr pkt = encodeOneJxsFrame(src, encCfg);
         REQUIRE(pkt);
 
-        // Wrap the encoded packet bytes back into a compressed Image
-        // so the codectesthelpers helper can drive the decode + CSC.
-        Image jxs = Image::fromCompressedData(
-                pkt->view().data(), pkt->size(),
-                64, 48, pkt->pixelFormat());
-        REQUIRE(jxs.isValid());
-        REQUIRE(jxs.isCompressed());
-
-        Image rgba = promeki::tests::decodeCompressedToImage(
-                jxs, PixelFormat(PixelFormat::RGBA8_sRGB));
+        auto rgba = promeki::tests::decodeCompressedPayload(
+                pkt, PixelFormat(PixelFormat::RGBA8_sRGB));
         REQUIRE(rgba.isValid());
-        CHECK_FALSE(rgba.isCompressed());
-        CHECK(rgba.pixelFormat().id() == PixelFormat::RGBA8_sRGB);
-        CHECK(rgba.width()  == 64);
-        CHECK(rgba.height() == 48);
+        CHECK_FALSE(rgba->isCompressed());
+        CHECK(rgba->desc().pixelFormat().id() == PixelFormat::RGBA8_sRGB);
+        CHECK(rgba->desc().width()  == 64);
+        CHECK(rgba->desc().height() == 48);
 }
 
 // ---------------------------------------------------------------------------
@@ -333,9 +331,9 @@ TEST_CASE("JpegXsVideoCodec_ImageConvertToRgba8") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("JpegXsVideoCodec_MetadataPreserved") {
-        Image src = makePlanarYUV(128, 96, PixelFormat::YUV8_422_Planar_Rec709, 8, false);
-        src.metadata().set(Metadata::Timecode, Timecode(Timecode::NDF24, 2, 15, 30, 12));
-        VideoPacket::Ptr pkt = encodeOneJxsFrame(src, MediaConfig());
+        auto src = makePlanarYUV(128, 96, PixelFormat::YUV8_422_Planar_Rec709, 8, false);
+        src.modify()->desc().metadata().set(Metadata::Timecode, Timecode(Timecode::NDF24, 2, 15, 30, 12));
+        CompressedVideoPayload::Ptr pkt = encodeOneJxsFrame(src, MediaConfig());
         REQUIRE(pkt);
         Timecode tc = pkt->metadata().get(Metadata::Timecode).get<Timecode>();
         CHECK(tc.hour() == 2);
@@ -349,15 +347,15 @@ TEST_CASE("JpegXsVideoCodec_MetadataPreserved") {
 
 TEST_CASE("JpegXsVideoEncoder_ConfigureFromMediaConfig") {
         SUBCASE("JpegXsBpp flows through configure()") {
-                Image src = makePlanarYUV(256, 192, PixelFormat::YUV8_422_Planar_Rec709, 8, false);
-                REQUIRE(src.isValid());
+                auto src = makePlanarYUV(256, 192, PixelFormat::YUV8_422_Planar_Rec709, 8, false);
+                
                 MediaConfig loCfg; loCfg.set(MediaConfig::JpegXsBpp, 2);
                 MediaConfig hiCfg; hiCfg.set(MediaConfig::JpegXsBpp, 8);
-                VideoPacket::Ptr loPkt = encodeOneJxsFrame(src, loCfg);
-                VideoPacket::Ptr hiPkt = encodeOneJxsFrame(src, hiCfg);
+                CompressedVideoPayload::Ptr loPkt = encodeOneJxsFrame(src, loCfg);
+                CompressedVideoPayload::Ptr hiPkt = encodeOneJxsFrame(src, hiCfg);
                 REQUIRE(loPkt);
                 REQUIRE(hiPkt);
-                CHECK(hiPkt->size() > loPkt->size());
+                CHECK(hiPkt->plane(0).size() > loPkt->plane(0).size());
         }
 
         SUBCASE("JpegXsDecomposition flows through configure()") {
@@ -382,44 +380,44 @@ TEST_CASE("JpegXsVideoEncoder_ConfigureFromMediaConfig") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("JpegXsVideoCodec_PlanarRGB8_Encode") {
-        Image src = makePlanarRGB8(320, 240);
-        REQUIRE(src.isValid());
+        auto src = makePlanarRGB8(320, 240);
+        
         MediaConfig cfg;
         cfg.set(MediaConfig::JpegXsBpp, 8);
         cfg.set(MediaConfig::OutputPixelFormat, PixelFormat(PixelFormat::JPEG_XS_RGB8_sRGB));
-        VideoPacket::Ptr pkt = encodeOneJxsFrame(src, cfg);
+        CompressedVideoPayload::Ptr pkt = encodeOneJxsFrame(src, cfg);
         REQUIRE(pkt);
-        CHECK(pkt->pixelFormat().id() == PixelFormat::JPEG_XS_RGB8_sRGB);
-        CHECK(pkt->size() > 0);
+        CHECK(pkt->desc().pixelFormat().id() == PixelFormat::JPEG_XS_RGB8_sRGB);
+        CHECK(pkt->plane(0).size() > 0);
 }
 
 TEST_CASE("JpegXsVideoCodec_PlanarRGB8_RoundTrip") {
-        Image src = makePlanarRGB8(256, 192);
-        REQUIRE(src.isValid());
+        auto src = makePlanarRGB8(256, 192);
+        
         MediaConfig encCfg;
         encCfg.set(MediaConfig::JpegXsBpp, 8);
         encCfg.set(MediaConfig::OutputPixelFormat, PixelFormat(PixelFormat::JPEG_XS_RGB8_sRGB));
-        VideoPacket::Ptr pkt = encodeOneJxsFrame(src, encCfg);
+        CompressedVideoPayload::Ptr pkt = encodeOneJxsFrame(src, encCfg);
         REQUIRE(pkt);
 
         // Decode to planar RGB (natural target).
-        Image dec = decodeOneJxsFrame(pkt, PixelFormat(), 256, 192);
+        auto dec = decodeOneJxsFrame(pkt, PixelFormat(), 256, 192);
         REQUIRE(dec.isValid());
-        CHECK(dec.pixelFormat().id() == PixelFormat::RGB8_Planar_sRGB);
-        CHECK(dec.width() == 256);
-        CHECK(dec.height() == 192);
+        CHECK(dec->desc().pixelFormat().id() == PixelFormat::RGB8_Planar_sRGB);
+        CHECK(dec->desc().width() == 256);
+        CHECK(dec->desc().height() == 192);
 
         // Convert planar → interleaved via CSC fast path.
-        Image rgb = dec.convert(PixelFormat(PixelFormat::RGB8_sRGB), dec.metadata());
+        auto rgb = dec->convert(PixelFormat(PixelFormat::RGB8_sRGB), dec->desc().metadata());
         REQUIRE(rgb.isValid());
-        CHECK(rgb.pixelFormat().id() == PixelFormat::RGB8_sRGB);
+        CHECK(rgb->desc().pixelFormat().id() == PixelFormat::RGB8_sRGB);
 }
 
 TEST_CASE("JpegXsVideoCodec_RGB8_ImageConvertRoundTrip") {
-        Image src(128, 96, PixelFormat(PixelFormat::RGB8_sRGB));
-        REQUIRE(src.isValid());
-        uint8_t *data = static_cast<uint8_t *>(src.data(0));
-        const size_t stride = src.lineStride(0);
+        auto src = UncompressedVideoPayload::allocate(
+                ImageDesc(128, 96, PixelFormat(PixelFormat::RGB8_sRGB)));
+        uint8_t *data = src.modify()->data()[0].data();
+        const size_t stride = src->desc().pixelFormat().memLayout().lineStride(0, 128);
         for(int y = 0; y < 96; y++) {
                 uint8_t *row = data + y * stride;
                 for(int x = 0; x < 128; x++) {
@@ -429,17 +427,16 @@ TEST_CASE("JpegXsVideoCodec_RGB8_ImageConvertRoundTrip") {
                 }
         }
 
-        Image jxs = promeki::tests::encodeImageToCompressed(
+        auto jxs = promeki::tests::encodePayloadToCompressed(
                 src, PixelFormat(PixelFormat::JPEG_XS_RGB8_sRGB));
         REQUIRE(jxs.isValid());
-        CHECK(jxs.isCompressed());
-        CHECK(jxs.pixelFormat().id() == PixelFormat::JPEG_XS_RGB8_sRGB);
+        CHECK(jxs->desc().pixelFormat().id() == PixelFormat::JPEG_XS_RGB8_sRGB);
 
-        Image decoded = promeki::tests::decodeCompressedToImage(
+        auto decoded = promeki::tests::decodeCompressedPayload(
                 jxs, PixelFormat(PixelFormat::RGB8_sRGB));
         REQUIRE(decoded.isValid());
-        CHECK_FALSE(decoded.isCompressed());
-        CHECK(decoded.pixelFormat().id() == PixelFormat::RGB8_sRGB);
-        CHECK(decoded.width() == 128);
-        CHECK(decoded.height() == 96);
+        CHECK_FALSE(decoded->isCompressed());
+        CHECK(decoded->desc().pixelFormat().id() == PixelFormat::RGB8_sRGB);
+        CHECK(decoded->desc().width() == 128);
+        CHECK(decoded->desc().height() == 96);
 }

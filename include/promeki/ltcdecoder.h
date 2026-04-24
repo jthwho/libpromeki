@@ -11,7 +11,7 @@
 #include <promeki/namespace.h>
 #include <promeki/timecode.h>
 #include <promeki/list.h>
-#include <promeki/audio.h>
+#include <promeki/uncompressedaudiopayload.h>
 #include <promeki/uniqueptr.h>
 #include <vtc/ltc_audio.h>
 
@@ -101,26 +101,30 @@ class LtcDecoder {
                 DecodedList decode(const int8_t *samples, size_t count);
 
                 /**
-                 * @brief Feeds an Audio object's selected channel to the decoder.
+                 * @brief Feeds an uncompressed audio payload's selected
+                 *        channel to the decoder.
                  *
                  * Format-agnostic — any sample format @ref AudioFormat
                  * supports is accepted.  The named channel is converted
                  * to int8 mono via @ref AudioFormat::samplesToFloat (the
                  * same per-format helper @ref AudioBuffer uses) followed
-                 * by a normalised float-to-int8 quantisation.  The audio's sample rate must
-                 * match the decoder's configured rate, otherwise an empty
-                 * list is returned.
+                 * by a normalised float-to-int8 quantisation.  The
+                 * payload's sample rate must match the decoder's
+                 * configured rate, otherwise an empty list is returned.
                  *
                  * The fast path for @c PCMI_S8 mono audio (when
-                 * @p channelIndex is 0) skips the conversion entirely and
-                 * feeds the raw bytes straight to libvtc.
+                 * @p channelIndex is 0) skips the conversion entirely
+                 * and feeds the raw bytes straight to libvtc.
                  *
-                 * @param audio        The audio chunk.
+                 * @param audio        The uncompressed audio payload.
+                 *                     Planar payloads are not supported
+                 *                     and return an empty list.
                  * @param channelIndex Zero-based channel index carrying LTC.
                  *                     Defaults to channel 0.
                  * @return List of decoded timecodes found in this chunk.
                  */
-                DecodedList decode(const Audio &audio, int channelIndex = 0);
+                DecodedList decode(const UncompressedAudioPayload &audio,
+                                   int channelIndex = 0);
 
                 /**
                  * @brief Clears the decoder state.
@@ -138,6 +142,16 @@ class LtcDecoder {
                 /// across the inspector / monitor use case.
                 std::vector<float>  _floatScratch;
                 std::vector<int8_t> _int8Scratch;
+
+                /// Shared implementation behind both @ref decode overloads.
+                /// Takes the raw interleaved byte range plus the descriptor
+                /// that describes it; returns an empty list on any guard
+                /// rejection (wrong sample rate, out-of-range channel
+                /// index, zero-channel descriptor).
+                DecodedList decodeInterleaved(const AudioDesc &desc,
+                                              const uint8_t *data,
+                                              size_t samples,
+                                              int channelIndex);
 
                 static void decoderCallback(const VtcTimecode *tc,
                         int64_t sampleStart, int64_t sampleLength, void *userData);

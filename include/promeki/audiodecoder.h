@@ -13,10 +13,10 @@
 #include <promeki/error.h>
 #include <promeki/list.h>
 #include <promeki/result.h>
-#include <promeki/audio.h>
 #include <promeki/audiocodec.h>
 #include <promeki/backendweight.h>
-#include <promeki/audiopacket.h>
+#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/compressedaudiopayload.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -26,9 +26,10 @@ class MediaConfig;
  * @brief Abstract base class for stateful audio decoders.
  * @ingroup proav
  *
- * Inverse of @ref AudioEncoder: encoded @ref AudioPacket access units
- * pushed via @ref submitPacket feed an internal pipeline and PCM
- * @ref Audio frames come back out of @ref receiveFrame.  The decoder
+ * Inverse of @ref AudioEncoder: encoded @ref CompressedAudioPayload
+ * access units pushed via @ref submitPacket feed an internal pipeline
+ * and @ref UncompressedAudioPayload frames come back out of
+ * @ref receiveFrame.  The decoder
  * may buffer several packets before producing its first frame (codec
  * start-up state, silence priming, reordering where present).
  *
@@ -90,22 +91,20 @@ class AudioDecoder {
                 virtual void configure(const MediaConfig &config);
 
                 /**
-                 * @brief Submits one encoded packet for decoding.
+                 * @brief Submits one encoded audio payload for decoding.
                  *
-                 * Passed by shared @ref AudioPacket::Ptr so the decoder
-                 * can retain the packet without copying its payload.
                  * A null Ptr is treated as @ref Error::Invalid.
                  */
-                virtual Error submitPacket(const AudioPacket::Ptr &packet) = 0;
+                virtual Error submitPayload(const CompressedAudioPayload::Ptr &payload) = 0;
 
                 /**
-                 * @brief Dequeues one decoded PCM frame.
-                 * @return A valid @ref Audio::Ptr, or a null Ptr when
-                 *         no frame is ready.
+                 * @brief Dequeues one decoded PCM payload.
+                 * @return A valid @ref UncompressedAudioPayload::Ptr, or
+                 *         a null Ptr when no frame is ready.
                  */
-                virtual Audio::Ptr receiveFrame() = 0;
+                virtual UncompressedAudioPayload::Ptr receiveAudioPayload() = 0;
 
-                /** @brief Signals end-of-stream; remaining frames can be drained with @ref receiveFrame. */
+                /** @brief Signals end-of-stream; remaining frames can be drained with @ref receiveAudioPayload. */
                 virtual Error flush() = 0;
 
                 /** @brief Discards any pending packets / frames. */

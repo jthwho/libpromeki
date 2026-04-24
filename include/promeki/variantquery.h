@@ -21,8 +21,6 @@
 PROMEKI_NAMESPACE_BEGIN
 
 class Frame;
-class Image;
-class Audio;
 
 namespace detail {
 
@@ -133,11 +131,8 @@ bool evalVariantQuery(const VariantQueryNode *root, const VariantQueryContext &c
  * keys.  For @ref Frame:
  *  - Metadata key (behind @c "Meta." prefix): @c "Meta.Title"
  *  - Frame scalar: @c "ImageCount"
- *  - Subscripted image/audio: @c "Image[0].Width", @c "Audio[0].Meta.Album"
+ *  - Subscripted image/audio: @c "VideoPayload[0].Width", @c "AudioPayload[0].Meta.Album"
  *  - Subscripted scalar: @c "VideoFormat[1]"
- *
- * For @ref Image and @ref Audio the vocabulary is whatever keys
- * their own @c VariantLookup registration exposes.
  *
  * @par Operators
  * - @c == / @c != — equality via @ref Variant::operator==.  When one
@@ -168,8 +163,8 @@ bool evalVariantQuery(const VariantQueryNode *root, const VariantQueryContext &c
  *     if(q.match(*f)) std::cout << "match\n";
  * }
  *
- * VariantQuery<Image>::parse("Width > 1920 && PixelFormat == \"RGBA8_sRGB\"");
- * VariantQuery<Audio>::parse("Channels == 2 && SampleRate >= 48000");
+ * VariantQuery<VideoPayload>::parse("Width > 1920 && PixelFormat == \"RGBA8_sRGB\"");
+ * VariantQuery<AudioPayload>::parse("Channels == 2 && SampleRate >= 48000");
  * @endcode
  *
  * @tparam T The target type.  Must have @c VariantLookup<T>
@@ -236,7 +231,5 @@ class VariantQuery {
 };
 
 extern template class VariantQuery<Frame>;
-extern template class VariantQuery<Image>;
-extern template class VariantQuery<Audio>;
 
 PROMEKI_NAMESPACE_END

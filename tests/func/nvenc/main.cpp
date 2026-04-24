@@ -34,11 +34,11 @@ int main() {
 #include <promeki/cuda.h>
 #include <promeki/enums.h>
 #include <promeki/error.h>
-#include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/mediaconfig.h>
-#include <promeki/mediapacket.h>
 #include <promeki/metadata.h>
+#include <promeki/compressedvideopayload.h>
+#include <promeki/uncompressedvideopayload.h>
 #include <promeki/nvencvideoencoder.h>
 #include <promeki/pixelformat.h>
 #include <promeki/string.h>
@@ -52,23 +52,40 @@ using namespace promeki;
 
 namespace {
 
+// After the MediaPayload migration, `Img` as a distinct type is
+// gone — everything flows as UncompressedVideoPayload / Ptr.  The
+// functional test was written against the old Img value-type API,
+// so we alias to the payload Ptr and adjust the few call sites that
+// actually depend on the Img-as-value semantics below.  Almost
+// every `.foo()` on an Img in the old code was a value-type method
+// call; on the Ptr those go through `->` for const access and
+// `.modify()->` for mutation, exactly matching how other library
+// code handles CoW payload pointers.
+using Img = UncompressedVideoPayload::Ptr;
+
 // Helpers: the functional test was written against the old string-keyed
 // createEncoderByName() surface; under the new API every codec
 // is a typed VideoCodec, so we resolve the name once here and return a
 // fresh encoder/decoder session (or nullptr) keeping call sites
 // unchanged.
 VideoEncoder *createEncoderByName(const char *codecName) {
-        VideoCodec vc = VideoCodec::lookup(codecName);
-        if(!vc.isValid()) return nullptr;
+        auto lr = VideoCodec::lookup(codecName);
+        if(!isOk(lr)) return nullptr;
+        VideoCodec vc = value(lr);
         auto r = vc.createEncoder();
         return isOk(r) ? value(r) : nullptr;
 }
 
 VideoDecoder *createDecoderByName(const char *codecName) {
-        VideoCodec vc = VideoCodec::lookup(codecName);
-        if(!vc.isValid()) return nullptr;
+        auto lr = VideoCodec::lookup(codecName);
+        if(!isOk(lr)) return nullptr;
+        VideoCodec vc = value(lr);
         auto r = vc.createDecoder();
         return isOk(r) ? value(r) : nullptr;
+}
+
+Error submitImage(VideoEncoder *enc, Img img) {
+        return enc->submitPayload(std::move(img));
 }
 
 struct Options {
@@ -209,18 +226,17 @@ void skip(const char *name, const char *reason) {
         ++gSkip;
 }
 
-Image generateSource(const Options &opts) {
+Img generateSource(const Options &opts) {
         VideoTestPattern gen;
         gen.setPattern(VideoPattern::ColorBars);
-        Image img(Size2Du32(opts.width, opts.height), PixelFormat(PixelFormat::RGBA8_sRGB));
-        gen.render(img);
-        return img;
+        return gen.createPayload(ImageDesc(Size2Du32(opts.width, opts.height),
+                                           PixelFormat(PixelFormat::RGBA8_sRGB)));
 }
 
-Image convertTo(const Image &src, PixelFormat::ID id) {
+Img convertTo(const Img &src, PixelFormat::ID id) {
         PixelFormat pd(id);
         Metadata meta;
-        return src.convert(pd, meta);
+        return src->convert(pd, meta);
 }
 
 struct EncodeResult {
@@ -234,7 +250,7 @@ struct EncodeResult {
 };
 
 EncodeResult runEncode(const char *codecName,
-                       const List<Image> &frames,
+                       const List<Img> &frames,
                        const MediaConfig &cfg,
                        bool verbose) {
         EncodeResult r;
@@ -247,22 +263,22 @@ EncodeResult runEncode(const char *codecName,
         enc->configure(cfg);
 
         for(int i = 0; i < frames.size(); ++i) {
-                Error err = enc->submitFrame(Image::Ptr::create(frames[i]));
+                Error err = submitImage(enc, frames[i]);
                 if(err.isError()) {
                         r.errorMsg = enc->lastErrorMessage();
                         delete enc;
                         return r;
                 }
-                while(auto pkt = enc->receivePacket()) {
+                while(auto pkt = enc->receiveCompressedPayload()) {
                         if(pkt->isEndOfStream()) { r.gotEos = true; break; }
-                        r.totalBytes += pkt->size();
+                        r.totalBytes += pkt->plane(0).size();
                         if(pkt->isKeyframe()) {
                                 if(r.packets == 0) r.firstIsKey = true;
                                 ++r.keyframes;
                         }
                         if(verbose) {
                                 logf("    pkt %3d: %6zu bytes%s\n",
-                                        r.packets, pkt->size(),
+                                        r.packets, pkt->plane(0).size(),
                                         pkt->isKeyframe() ? " [KEY]" : "");
                         }
                         ++r.packets;
@@ -270,13 +286,13 @@ EncodeResult runEncode(const char *codecName,
         }
 
         enc->flush();
-        while(auto pkt = enc->receivePacket()) {
+        while(auto pkt = enc->receiveCompressedPayload()) {
                 if(pkt->isEndOfStream()) { r.gotEos = true; break; }
-                r.totalBytes += pkt->size();
+                r.totalBytes += pkt->plane(0).size();
                 if(pkt->isKeyframe()) ++r.keyframes;
                 if(verbose) {
                         logf("    pkt %3d: %6zu bytes%s (flush)\n",
-                                r.packets, pkt->size(),
+                                r.packets, pkt->plane(0).size(),
                                 pkt->isKeyframe() ? " [KEY]" : "");
                 }
                 ++r.packets;
@@ -297,7 +313,7 @@ struct FormatCodecCombo {
         const char     *label;
 };
 
-void testBasicEncode(const Options &opts, const Image &src) {
+void testBasicEncode(const Options &opts, const Img &src) {
         section("Basic encode (format x codec)");
 
         FormatCodecCombo combos[] = {
@@ -325,13 +341,13 @@ void testBasicEncode(const Options &opts, const Image &src) {
 
         for(const auto &c : combos) {
                 tryStart(c.label);
-                Image converted = convertTo(src, c.pixelFormat);
+                Img converted = convertTo(src, c.pixelFormat);
                 if(!converted.isValid()) {
                         skip(c.label, "CSC conversion failed");
                         continue;
                 }
 
-                List<Image> frames;
+                List<Img> frames;
                 for(int i = 0; i < opts.frames; ++i) frames.pushToBack(converted);
 
                 auto r = runEncode(c.codec, frames, cfg, opts.verbose);
@@ -348,11 +364,11 @@ void testBasicEncode(const Options &opts, const Image &src) {
         }
 }
 
-void testForceKeyframe(const Options &opts, const Image &src) {
+void testForceKeyframe(const Options &opts, const Img &src) {
         section("ForceKeyframe metadata");
 
         const char *codecs[] = { "H264", "HEVC", "AV1" };
-        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        Img nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) {
                 skip("ForceKeyframe", "CSC conversion failed");
                 return;
@@ -374,31 +390,31 @@ void testForceKeyframe(const Options &opts, const Image &src) {
                 int numFrames = std::max(opts.frames, 10);
                 int forceAt = numFrames / 2;
                 bool submitOk = true;
-                List<MediaPacket::Ptr> packets;
+                List<CompressedVideoPayload::Ptr> packets;
 
                 for(int i = 0; i < numFrames; ++i) {
-                        Image frame = nv12;
+                        Img frame = nv12;
                         if(i == forceAt) {
                                 // The VideoEncoder API uses requestKeyframe()
                                 // directly.  Metadata::ForceKeyframe is the
                                 // higher-level hook that MediaIOTask_VideoEncoder
                                 // translates into requestKeyframe(); setting
                                 // both here just documents the intent.
-                                frame.metadata().set(
+                                frame.modify()->metadata().set(
                                         Metadata::ForceKeyframe, true);
                                 enc->requestKeyframe();
                         }
-                        if(enc->submitFrame(Image::Ptr::create(std::move(frame))) != Error::Ok) {
+                        if(submitImage(enc, std::move(frame)) != Error::Ok) {
                                 submitOk = false;
                                 break;
                         }
-                        while(auto pkt = enc->receivePacket()) {
+                        while(auto pkt = enc->receiveCompressedPayload()) {
                                 if(pkt->isEndOfStream()) break;
                                 packets.pushToBack(pkt);
                         }
                 }
                 enc->flush();
-                while(auto pkt = enc->receivePacket()) {
+                while(auto pkt = enc->receiveCompressedPayload()) {
                         if(pkt->isEndOfStream()) break;
                         packets.pushToBack(pkt);
                 }
@@ -437,18 +453,18 @@ void testForceKeyframe(const Options &opts, const Image &src) {
                 logf("          forced IDR at frame %d, %d total keyframes in %d packets\n",
                         forceAt,
                         (int)std::count_if(packets.begin(), packets.end(),
-                                [](const MediaPacket::Ptr &p) { return p->isKeyframe(); }),
+                                [](const CompressedVideoPayload::Ptr &p) { return p->isKeyframe(); }),
                         (int)packets.size());
         }
 }
 
-void testRateControlModes(const Options &opts, const Image &src) {
+void testRateControlModes(const Options &opts, const Img &src) {
         section("Rate control modes");
 
-        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        Img nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) { skip("RC modes", "CSC failed"); return; }
 
-        List<Image> frames;
+        List<Img> frames;
         for(int i = 0; i < opts.frames; ++i) frames.pushToBack(nv12);
 
         struct RcTest {
@@ -484,13 +500,13 @@ void testRateControlModes(const Options &opts, const Image &src) {
         }
 }
 
-void testPresets(const Options &opts, const Image &src) {
+void testPresets(const Options &opts, const Img &src) {
         section("Encoder presets");
 
-        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        Img nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) { skip("Presets", "CSC failed"); return; }
 
-        List<Image> frames;
+        List<Img> frames;
         for(int i = 0; i < opts.frames; ++i) frames.pushToBack(nv12);
 
         struct PresetTest {
@@ -521,14 +537,14 @@ void testPresets(const Options &opts, const Image &src) {
         }
 }
 
-void testGopAndIdr(const Options &opts, const Image &src) {
+void testGopAndIdr(const Options &opts, const Img &src) {
         section("GOP / IDR interval");
 
-        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        Img nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) { skip("GOP/IDR", "CSC failed"); return; }
 
         int numFrames = std::max(opts.frames, 60);
-        List<Image> frames;
+        List<Img> frames;
         for(int i = 0; i < numFrames; ++i) frames.pushToBack(nv12);
 
         struct GopTest {
@@ -566,18 +582,18 @@ void testGopAndIdr(const Options &opts, const Image &src) {
                 int pktCount = 0;
 
                 for(int i = 0; i < numFrames; ++i) {
-                        if(enc->submitFrame(Image::Ptr::create(frames[i])) != Error::Ok) {
+                        if(submitImage(enc, frames[i]) != Error::Ok) {
                                 submitOk = false;
                                 break;
                         }
-                        while(auto pkt = enc->receivePacket()) {
+                        while(auto pkt = enc->receiveCompressedPayload()) {
                                 if(pkt->isEndOfStream()) break;
                                 if(pkt->isKeyframe()) ++keyCount;
                                 ++pktCount;
                         }
                 }
                 enc->flush();
-                while(auto pkt = enc->receivePacket()) {
+                while(auto pkt = enc->receiveCompressedPayload()) {
                         if(pkt->isEndOfStream()) break;
                         if(pkt->isKeyframe()) ++keyCount;
                         ++pktCount;
@@ -596,7 +612,7 @@ void testGopAndIdr(const Options &opts, const Image &src) {
         }
 }
 
-void testProfileLevel(const Options &opts, const Image &src) {
+void testProfileLevel(const Options &opts, const Img &src) {
         section("Profile / level");
 
         struct ProfileTest {
@@ -622,13 +638,13 @@ void testProfileLevel(const Options &opts, const Image &src) {
 
         for(const auto &t : tests) {
                 tryStart(t.label);
-                Image converted = convertTo(src, t.pixelFormat);
+                Img converted = convertTo(src, t.pixelFormat);
                 if(!converted.isValid()) {
                         skip(t.label, "CSC conversion failed");
                         continue;
                 }
 
-                List<Image> frames;
+                List<Img> frames;
                 for(int i = 0; i < std::min(opts.frames, 10); ++i)
                         frames.pushToBack(converted);
 
@@ -648,14 +664,14 @@ void testProfileLevel(const Options &opts, const Image &src) {
         }
 }
 
-void testBFrames(const Options &opts, const Image &src) {
+void testBFrames(const Options &opts, const Img &src) {
         section("B-frames");
 
-        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        Img nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) { skip("B-frames", "CSC failed"); return; }
 
         int numFrames = std::max(opts.frames, 30);
-        List<Image> frames;
+        List<Img> frames;
         for(int i = 0; i < numFrames; ++i) frames.pushToBack(nv12);
 
         struct BTest {
@@ -698,14 +714,14 @@ void testBFrames(const Options &opts, const Image &src) {
         }
 }
 
-void testLookahead(const Options &opts, const Image &src) {
+void testLookahead(const Options &opts, const Img &src) {
         section("Look-ahead");
 
-        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        Img nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) { skip("Look-ahead", "CSC failed"); return; }
 
         int numFrames = std::max(opts.frames, 30);
-        List<Image> frames;
+        List<Img> frames;
         for(int i = 0; i < numFrames; ++i) frames.pushToBack(nv12);
 
         struct LaTest {
@@ -745,13 +761,13 @@ void testLookahead(const Options &opts, const Image &src) {
         }
 }
 
-void testAdaptiveQuantization(const Options &opts, const Image &src) {
+void testAdaptiveQuantization(const Options &opts, const Img &src) {
         section("Adaptive quantization");
 
-        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        Img nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) { skip("AQ", "CSC failed"); return; }
 
-        List<Image> frames;
+        List<Img> frames;
         for(int i = 0; i < opts.frames; ++i) frames.pushToBack(nv12);
 
         struct AqTest {
@@ -788,13 +804,13 @@ void testAdaptiveQuantization(const Options &opts, const Image &src) {
         }
 }
 
-void testMultiPass(const Options &opts, const Image &src) {
+void testMultiPass(const Options &opts, const Img &src) {
         section("Multi-pass encoding");
 
-        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        Img nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) { skip("MultiPass", "CSC failed"); return; }
 
-        List<Image> frames;
+        List<Img> frames;
         for(int i = 0; i < opts.frames; ++i) frames.pushToBack(nv12);
 
         struct MpTest {
@@ -825,15 +841,15 @@ void testMultiPass(const Options &opts, const Image &src) {
         }
 }
 
-void testRepeatHeaders(const Options &opts, const Image &src) {
+void testRepeatHeaders(const Options &opts, const Img &src) {
         section("Repeat headers");
 
-        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        Img nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) { skip("RepeatHeaders", "CSC failed"); return; }
 
         const char *codecs[] = { "H264", "HEVC", "AV1" };
         int numFrames = std::max(opts.frames, 60);
-        List<Image> frames;
+        List<Img> frames;
         for(int i = 0; i < numFrames; ++i) frames.pushToBack(nv12);
 
         for(const char *codec : codecs) {
@@ -864,13 +880,13 @@ void testRepeatHeaders(const Options &opts, const Image &src) {
         }
 }
 
-void testHdrMetadata(const Options &opts, const Image &src) {
+void testHdrMetadata(const Options &opts, const Img &src) {
         section("HDR metadata");
 
-        Image p010 = convertTo(src, PixelFormat::YUV10_420_SemiPlanar_LE_Rec709);
+        Img p010 = convertTo(src, PixelFormat::YUV10_420_SemiPlanar_LE_Rec709);
         if(!p010.isValid()) { skip("HDR", "P010 CSC failed"); return; }
 
-        List<Image> frames;
+        List<Img> frames;
         for(int i = 0; i < opts.frames; ++i) frames.pushToBack(p010);
 
         struct HdrTest {
@@ -912,7 +928,7 @@ void testHdrMetadata(const Options &opts, const Image &src) {
         }
 }
 
-void testLossless(const Options &opts, const Image &src) {
+void testLossless(const Options &opts, const Img &src) {
         section("Lossless encoding");
 
         struct LosslessTest {
@@ -933,13 +949,13 @@ void testLossless(const Options &opts, const Image &src) {
 
         for(const auto &t : tests) {
                 tryStart(t.label);
-                Image converted = convertTo(src, t.pixelFormat);
+                Img converted = convertTo(src, t.pixelFormat);
                 if(!converted.isValid()) {
                         skip(t.label, "CSC conversion failed");
                         continue;
                 }
 
-                List<Image> frames;
+                List<Img> frames;
                 for(int i = 0; i < std::min(opts.frames, 10); ++i)
                         frames.pushToBack(converted);
 
@@ -956,11 +972,11 @@ void testLossless(const Options &opts, const Image &src) {
         }
 }
 
-void testColorDescription(const Options &opts, const Image &src) {
+void testColorDescription(const Options &opts, const Img &src) {
         section("Color description (VUI / AV1)");
 
-        Image nv12   = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
-        Image p010   = convertTo(src, PixelFormat::YUV10_420_SemiPlanar_LE_Rec709);
+        Img nv12   = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        Img p010   = convertTo(src, PixelFormat::YUV10_420_SemiPlanar_LE_Rec709);
         if(!nv12.isValid()) { skip("ColorDesc", "NV12 CSC failed"); return; }
         if(!p010.isValid()) { skip("ColorDesc", "P010 CSC failed"); return; }
 
@@ -1020,9 +1036,9 @@ void testColorDescription(const Options &opts, const Image &src) {
 
         for(const auto &t : tests) {
                 tryStart(t.label);
-                Image converted = (t.pdId == PixelFormat::YUV8_420_SemiPlanar_Rec709) ? nv12 : p010;
+                Img converted = (t.pdId == PixelFormat::YUV8_420_SemiPlanar_Rec709) ? nv12 : p010;
 
-                List<Image> frames;
+                List<Img> frames;
                 for(int i = 0; i < numFrames; ++i) frames.pushToBack(converted);
 
                 MediaConfig cfg;
@@ -1044,10 +1060,10 @@ void testColorDescription(const Options &opts, const Image &src) {
         }
 }
 
-void testTimecode(const Options &opts, const Image &src) {
+void testTimecode(const Options &opts, const Img &src) {
         section("Timecode SEI");
 
-        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        Img nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) { skip("Timecode", "NV12 CSC failed"); return; }
 
         struct TcTest {
@@ -1089,23 +1105,23 @@ void testTimecode(const Options &opts, const Image &src) {
                 size_t totalBytes = 0;
                 int packets = 0;
                 for(int i = 0; i < numFrames; ++i) {
-                        Image frame = nv12;
-                        frame.metadata().set(Metadata::Timecode, tc);
-                        if(enc->submitFrame(Image::Ptr::create(std::move(frame))) != Error::Ok) {
+                        Img frame = nv12;
+                        frame.modify()->metadata().set(Metadata::Timecode, tc);
+                        if(submitImage(enc, std::move(frame)) != Error::Ok) {
                                 submitOk = false;
                                 break;
                         }
                         ++tc;
-                        while(auto pkt = enc->receivePacket()) {
+                        while(auto pkt = enc->receiveCompressedPayload()) {
                                 if(pkt->isEndOfStream()) break;
-                                totalBytes += pkt->size();
+                                totalBytes += pkt->plane(0).size();
                                 ++packets;
                         }
                 }
                 enc->flush();
-                while(auto pkt = enc->receivePacket()) {
+                while(auto pkt = enc->receiveCompressedPayload()) {
                         if(pkt->isEndOfStream()) break;
-                        totalBytes += pkt->size();
+                        totalBytes += pkt->plane(0).size();
                         ++packets;
                 }
                 delete enc;
@@ -1119,10 +1135,10 @@ void testTimecode(const Options &opts, const Image &src) {
         }
 }
 
-void testInterlaced(const Options &opts, const Image &src) {
+void testInterlaced(const Options &opts, const Img &src) {
         section("Interlaced scan mode");
 
-        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        Img nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
         if(!nv12.isValid()) { skip("Interlaced", "NV12 CSC failed"); return; }
 
         struct ScanTest {
@@ -1163,20 +1179,20 @@ void testInterlaced(const Options &opts, const Image &src) {
                 size_t totalBytes = 0;
                 int packets = 0;
                 for(int i = 0; i < numFrames; ++i) {
-                        if(enc->submitFrame(Image::Ptr::create(nv12)) != Error::Ok) {
+                        if(submitImage(enc, nv12) != Error::Ok) {
                                 submitOk = false;
                                 break;
                         }
-                        while(auto pkt = enc->receivePacket()) {
+                        while(auto pkt = enc->receiveCompressedPayload()) {
                                 if(pkt->isEndOfStream()) break;
-                                totalBytes += pkt->size();
+                                totalBytes += pkt->plane(0).size();
                                 ++packets;
                         }
                 }
                 enc->flush();
-                while(auto pkt = enc->receivePacket()) {
+                while(auto pkt = enc->receiveCompressedPayload()) {
                         if(pkt->isEndOfStream()) break;
-                        totalBytes += pkt->size();
+                        totalBytes += pkt->plane(0).size();
                         ++packets;
                 }
                 delete enc;
@@ -1191,33 +1207,33 @@ void testInterlaced(const Options &opts, const Image &src) {
 }
 
 // Encode a stream with the given MediaConfig, then decode it back and
-// return the Metadata from the first decoded Image.  Returns an empty
+// return the Metadata from the first decoded Img.  Returns an empty
 // Metadata if any step failed; the error message is copied into
 // @p errOut.  Both codecs must be supported in the current NVENC/NVDEC
 // build.
 Metadata encodeDecodeRoundTrip(const char *codecName,
-                               const List<Image> &inFrames,
+                               const List<Img> &inFrames,
                                const MediaConfig &encCfg,
                                String &errOut) {
         VideoEncoder *enc = createEncoderByName(codecName);
         if(!enc) { errOut = String::sprintf("no encoder for %s", codecName); return {}; }
         enc->configure(encCfg);
 
-        List<MediaPacket::Ptr> packets;
+        List<CompressedVideoPayload::Ptr> packets;
         for(const auto &img : inFrames) {
-                Error err = enc->submitFrame(Image::Ptr::create(img));
+                Error err = submitImage(enc, img);
                 if(err.isError()) {
                         errOut = enc->lastErrorMessage();
                         delete enc;
                         return {};
                 }
-                while(auto pkt = enc->receivePacket()) {
+                while(auto pkt = enc->receiveCompressedPayload()) {
                         if(pkt->isEndOfStream()) break;
                         packets.pushToBack(pkt);
                 }
         }
         enc->flush();
-        while(auto pkt = enc->receivePacket()) {
+        while(auto pkt = enc->receiveCompressedPayload()) {
                 if(pkt->isEndOfStream()) break;
                 packets.pushToBack(pkt);
         }
@@ -1242,17 +1258,17 @@ Metadata encodeDecodeRoundTrip(const char *codecName,
         Metadata firstMeta;
         bool gotFrame = false;
         for(const auto &pkt : packets) {
-                Error err = dec->submitPacket(pkt);
+                Error err = dec->submitPayload(pkt);
                 if(err.isError()) { errOut = dec->lastErrorMessage(); delete dec; return {}; }
                 while(true) {
-                        Image::Ptr img = dec->receiveFrame();
+                        UncompressedVideoPayload::Ptr img = dec->receiveVideoPayload();
                         if(!img.isValid()) break;
                         if(!gotFrame) { firstMeta = img->metadata(); gotFrame = true; }
                 }
         }
         dec->flush();
         while(true) {
-                Image::Ptr img = dec->receiveFrame();
+                UncompressedVideoPayload::Ptr img = dec->receiveVideoPayload();
                 if(!img.isValid()) break;
                 if(!gotFrame) { firstMeta = img->metadata(); gotFrame = true; }
         }
@@ -1261,11 +1277,11 @@ Metadata encodeDecodeRoundTrip(const char *codecName,
         return firstMeta;
 }
 
-void testEncodeDecodeRoundTrip(const Options &opts, const Image &src) {
+void testEncodeDecodeRoundTrip(const Options &opts, const Img &src) {
         section("Encode → decode round-trip (NVENC → NVDEC)");
 
-        Image nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
-        Image p010 = convertTo(src, PixelFormat::YUV10_420_SemiPlanar_LE_Rec709);
+        Img nv12 = convertTo(src, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        Img p010 = convertTo(src, PixelFormat::YUV10_420_SemiPlanar_LE_Rec709);
         if(!nv12.isValid()) { skip("RoundTrip", "NV12 CSC failed"); return; }
         if(!p010.isValid()) { skip("RoundTrip", "P010 CSC failed"); return; }
 
@@ -1275,12 +1291,12 @@ void testEncodeDecodeRoundTrip(const Options &opts, const Image &src) {
         {
                 const char *label = "HEVC HDR10 + SEI round-trip";
                 tryStart(label);
-                List<Image> frames;
+                List<Img> frames;
                 Timecode::Mode mode(Timecode::NDF30);
                 Timecode tc(mode, 1, 0, 0, 0);
                 for(int i = 0; i < numFrames; ++i) {
-                        Image f = p010;
-                        f.metadata().set(Metadata::Timecode, tc);
+                        Img f = p010;
+                        f.modify()->metadata().set(Metadata::Timecode, tc);
                         ++tc;
                         frames.pushToBack(f);
                 }
@@ -1360,12 +1376,12 @@ void testEncodeDecodeRoundTrip(const Options &opts, const Image &src) {
         {
                 const char *label = "H264 Rec.709 + timecode round-trip";
                 tryStart(label);
-                List<Image> frames;
+                List<Img> frames;
                 Timecode::Mode mode(Timecode::NDF30);
                 Timecode tc(mode, 10, 0, 0, 0);
                 for(int i = 0; i < numFrames; ++i) {
-                        Image f = nv12;
-                        f.metadata().set(Metadata::Timecode, tc);
+                        Img f = nv12;
+                        f.modify()->metadata().set(Metadata::Timecode, tc);
                         ++tc;
                         frames.pushToBack(f);
                 }
@@ -1425,7 +1441,7 @@ void testEncodeDecodeRoundTrip(const Options &opts, const Image &src) {
         // bitstream whose SPS has frame_mbs_only_flag = 1 (progressive).
         // NVDEC correctly reports CUVIDPARSERDISPINFO::progressive_frame = 1
         // for any such bitstream, which maps to VideoScanMode::Progressive
-        // on the decoded Image — regardless of any pic_struct = top/bottom
+        // on the decoded Img — regardless of any pic_struct = top/bottom
         // we set in the per-pic Picture Timing SEI.  (In fact pic_struct
         // values 3 / 4 are only spec-valid when frame_mbs_only_flag = 0,
         // so spec-strict decoders ignore them in our output.)
@@ -1453,7 +1469,7 @@ void testEncodeDecodeRoundTrip(const Options &opts, const Image &src) {
                 skip(label, "encoder uses frameFieldMode=FRAME — PAFF coding required for "
                             "interlaced bitstream; see comment above");
                 if(false) {
-                        List<Image> frames;
+                        List<Img> frames;
                         for(int i = 0; i < numFrames; ++i) frames.pushToBack(nv12);
 
                         MediaConfig cfg;
@@ -1507,7 +1523,7 @@ void testEncodeDecodeRoundTrip(const Options &opts, const Image &src) {
                 skip(label, "NVENC API does not expose pic_struct in HEVC pic_timing SEI; "
                             "encoder also uses frameFieldMode=FRAME — see comment above");
                 if(false) {
-                        List<Image> frames;
+                        List<Img> frames;
                         for(int i = 0; i < numFrames; ++i) frames.pushToBack(nv12);
 
                         MediaConfig cfg;
@@ -1550,8 +1566,10 @@ void testUnsupportedFormat(const Options &opts) {
         cfg.set(MediaConfig::BitrateKbps, int32_t(2000));
         enc->configure(cfg);
 
-        Image::Ptr rgb = Image::Ptr::create(Size2Du32(256, 128), PixelFormat(PixelFormat::RGB8_sRGB));
-        Error err = enc->submitFrame(rgb);
+        Img rgb = UncompressedVideoPayload::allocate(
+                ImageDesc(Size2Du32(256, 128),
+                          PixelFormat(PixelFormat::RGB8_sRGB)));
+        Error err = submitImage(enc, std::move(rgb));
         delete enc;
 
         if(err == Error::PixelFormatNotSupported) {
@@ -1569,12 +1587,12 @@ void testSupportedInputsList() {
         VideoEncoder *enc = createEncoderByName("H264");
         if(!enc) { skip("supportedInputs", "no encoder"); return; }
 
-        List<int> inputs = enc->codec().encoderSupportedInputs();
+        List<PixelFormat> inputs = enc->codec().encoderSupportedInputs();
         delete enc;
 
         bool hasNv12 = false;
-        for(int id : inputs) {
-                if(id == static_cast<int>(PixelFormat::YUV8_420_SemiPlanar_Rec709)) {
+        for(const PixelFormat &pf : inputs) {
+                if(pf.id() == PixelFormat::YUV8_420_SemiPlanar_Rec709) {
                         hasNv12 = true;
                 }
         }
@@ -1608,7 +1626,7 @@ int main(int argc, char **argv) {
         logf("CUDA device: %s\n", CudaDevice::current().name().cstr());
 
         logf("\nGenerating source frame...\n");
-        Image src = generateSource(opts);
+        Img src = generateSource(opts);
         if(!src.isValid()) {
                 logf("Failed to generate source frame.\n");
                 closeLog();

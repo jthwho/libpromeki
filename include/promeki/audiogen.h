@@ -14,22 +14,22 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-class Audio;
-
 /**
  * @brief Audio signal generator for producing test tones and silence.
  * @ingroup proav
  *
  * Generates multi-channel audio data based on per-channel configuration.
  * Each channel can independently produce silence or a sine tone at a
- * configurable frequency and level.
+ * configurable frequency and level.  Output is written directly into a
+ * caller-supplied interleaved @c float buffer.
  *
  * @par Example
  * @code
  * AudioDesc desc(48000, 2);
  * AudioGen gen(desc);
  * gen.setConfig(0, { AudioGen::Sine, 1000.0f, AudioLevel::fromDbfs(-10.0), 0.0f, 0.0f });
- * Audio audio = gen.generate(4800);
+ * float samples[4800 * 2];
+ * gen.generate(samples, 4800);
  * @endcode
  */
 class AudioGen {
@@ -57,11 +57,20 @@ class AudioGen {
                 AudioGen(const AudioDesc &desc);
 
                 /**
-                 * @brief Generates the specified number of audio samples.
-                 * @param samples Number of samples to generate.
-                 * @return An Audio object containing the generated samples.
+                 * @brief Generates the specified number of interleaved
+                 *        float samples into @p out.
+                 *
+                 * The caller must provide a buffer sized at least
+                 * @c samples * channels floats; the function writes
+                 * exactly that many samples per channel and advances
+                 * the internal sample cursor.
+                 *
+                 * @param out     Interleaved float output buffer.
+                 * @param samples Number of samples per channel.
+                 * @return @c true on success, @c false if @p out is
+                 *         null.
                  */
-                Audio generate(size_t samples);
+                bool generate(float *out, size_t samples);
 
                 /**
                  * @brief Returns the configuration for the given channel.

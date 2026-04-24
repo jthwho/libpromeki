@@ -9,7 +9,7 @@
 
 #include <promeki/namespace.h>
 #include <promeki/widget.h>
-#include <promeki/image.h>
+#include <promeki/uncompressedvideopayload.h>
 
 struct SDL_Texture;
 struct SDL_Renderer;
@@ -17,12 +17,14 @@ struct SDL_Renderer;
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief Widget that displays a promeki Image via SDL texture rendering.
+ * @brief Widget that displays an @ref UncompressedVideoPayload via SDL
+ *        texture rendering.
  * @ingroup sdl_core
  *
- * SDLVideoWidget manages an SDL_Texture and renders a promeki Image
- * within its widget geometry.  It handles aspect-ratio-preserving
- * scaling with letterbox/pillarbox bars.
+ * SDLVideoWidget manages an SDL_Texture and renders an
+ * @ref UncompressedVideoPayload within its widget geometry.  It
+ * handles aspect-ratio-preserving scaling with letterbox/pillarbox
+ * bars.
  *
  * The widget obtains the SDL_Renderer from its ancestor SDLWindow.
  * It must be a child (direct or indirect) of an SDLWindow to render.
@@ -34,10 +36,11 @@ PROMEKI_NAMESPACE_BEGIN
  * RGBA/BGRA/ARGB/ABGR and the host-endian 16-bit variants of those)
  * are uploaded to an SDL texture as-is.  Everything else — DPX
  * packings, v210, 10/12-bit words, YUV, float, linear, non-host
- * endian — is routed through @c Image::convert() and displayed as
- * RGBA8_sRGB via the CSC pipeline.  @c isDirectlyMappable() reports
- * only the fast path: non-directly-mappable formats still render
- * correctly, just via an extra conversion step.
+ * endian — must be converted upstream (e.g. by a planner-inserted
+ * CSC stage) to an SDL-native PixelFormat before it reaches the
+ * widget; the widget itself does not perform CSC.
+ * @c isDirectlyMappable() reports which formats skip the planner's
+ * CSC stage.
  *
  * Compressed pixel descriptions (e.g. @c JPEG_RGB8_sRGB) are not
  * supported — the caller must decode them first.
@@ -47,7 +50,7 @@ PROMEKI_NAMESPACE_BEGIN
  * SDLWindow window("Player", 1280, 720);
  * SDLVideoWidget *video = new SDLVideoWidget(&window);
  * video->setGeometry(window.geometry());
- * video->setImage(myImage);
+ * video->setPayload(myPayload);
  * window.show();
  * @endcode
  */
@@ -74,15 +77,17 @@ class SDLVideoWidget : public Widget {
                 SDLVideoWidget &operator=(const SDLVideoWidget &) = delete;
 
                 /**
-                 * @brief Sets the image to display.
+                 * @brief Sets the payload to display.
                  *
-                 * The image is uploaded to an SDL texture on the next
-                 * paint.  If the pixel format is not directly supported
-                 * by SDL, it is converted to RGBA8.
+                 * The payload is uploaded to an SDL texture on the
+                 * next paint.  If the pixel format is not directly
+                 * supported by SDL, the upload fails and the frame
+                 * is dropped — callers must deliver an SDL-native
+                 * PixelFormat (see @ref isDirectlyMappable).
                  *
-                 * @param image The image to display.
+                 * @param payload The payload to display.
                  */
-                void setImage(const Image &image);
+                void setPayload(const UncompressedVideoPayload::Ptr &payload);
 
                 /**
                  * @brief Sets the scaling mode.
@@ -164,14 +169,15 @@ class SDLVideoWidget : public Widget {
                 uint32_t        _texturePixFmt = 0;
                 uint32_t        _textureColorspace = 0;
                 ScaleMode       _scaleMode = ScaleFit;
-                Image           _currentImage;
+                UncompressedVideoPayload::Ptr _currentPayload;
                 uint32_t        _frameCount = 0;
                 uint32_t        _framesFastPath = 0;
 
                 void ensureTexture(int w, int h, uint32_t sdlPixFmt,
                                    uint32_t sdlColorspace);
-                void uploadImage(const Image &image, uint32_t sdlPixFmt);
-                bool uploadCurrentImage();
+                void uploadPayload(const UncompressedVideoPayload &payload,
+                                   uint32_t sdlPixFmt);
+                bool uploadCurrentPayload();
                 SDL_Renderer *findRenderer() const;
 };
 

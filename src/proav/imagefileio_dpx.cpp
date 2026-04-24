@@ -14,7 +14,10 @@
 #include <promeki/file.h>
 #include <promeki/fileinfo.h>
 #include <promeki/buffer.h>
-#include <promeki/audio.h>
+#include <promeki/uncompressedvideopayload.h>
+#include <promeki/videopayload.h>
+#include <promeki/audiopayload.h>
+#include <promeki/uncompressedaudiopayload.h>
 #include <promeki/timecode.h>
 #include <promeki/metadata.h>
 
@@ -654,11 +657,30 @@ static void fillHeaderFromMetadata(DPXHeader *hdr, const Metadata &meta, const S
 // Embedded audio
 // ===========================================================================
 
-static Audio readEmbeddedAudio(const Buffer &buf) {
-        if(buf.size() < sizeof(DPXUserData)) return Audio();
+static UncompressedAudioPayload::Ptr readEmbeddedAudio(const Buffer &buf) {
+        if(buf.size() < sizeof(DPXUserData)) return UncompressedAudioPayload::Ptr();
 
         const auto *user = reinterpret_cast<const DPXUserData *>(buf.data());
-        if(std::memcmp(user->user, "AUDIO", 5) != 0) return Audio();
+        if(std::memcmp(user->user, "AUDIO", 5) != 0) return UncompressedAudioPayload::Ptr();
+
+        auto buildPayload = [&](AudioFormat::ID dt, float rate,
+                                unsigned int chans, size_t samples,
+                                size_t headerBytes) -> UncompressedAudioPayload::Ptr {
+                AudioDesc desc(dt, rate, chans);
+                if(!desc.isValid()) return UncompressedAudioPayload::Ptr();
+                size_t dataBytes = desc.bufferSize(samples);
+                if(dataBytes == 0 || buf.size() < headerBytes + dataBytes) {
+                        return UncompressedAudioPayload::Ptr();
+                }
+                Buffer::Ptr pcm = Buffer::Ptr::create(dataBytes);
+                std::memcpy(pcm.modify()->data(),
+                            static_cast<const uint8_t *>(buf.data()) + headerBytes,
+                            dataBytes);
+                pcm.modify()->setSize(dataBytes);
+                BufferView view(pcm, 0, dataBytes);
+                return UncompressedAudioPayload::Ptr::create(desc, samples,
+                                                             view);
+        };
 
         if(user->type == AUDIO_MAGIC_V1 && user->size >= static_cast<int32_t>(sizeof(DPXAudioHeaderV1))) {
                 const auto *ahdr = reinterpret_cast<const DPXAudioHeaderV1 *>(buf.data());
@@ -668,16 +690,12 @@ static Audio readEmbeddedAudio(const Buffer &buf) {
                         case 2: dt = AudioFormat::PCMI_S16LE; break;
                         case 3: dt = AudioFormat::PCMI_S24LE; break;
                         case 4: dt = AudioFormat::PCMI_S32LE; break;
-                        default: return Audio();
+                        default: return UncompressedAudioPayload::Ptr();
                 }
-                AudioDesc desc(dt, static_cast<float>(ahdr->rate), static_cast<unsigned int>(ahdr->chans));
-                Audio audio(desc, static_cast<size_t>(ahdr->samps));
-                if(!audio.isValid()) return Audio();
-                size_t dataBytes = desc.bufferSize(static_cast<size_t>(ahdr->samps));
-                std::memcpy(audio.buffer()->data(),
-                            static_cast<const uint8_t *>(buf.data()) + sizeof(DPXAudioHeaderV1),
-                            dataBytes);
-                return audio;
+                return buildPayload(dt, static_cast<float>(ahdr->rate),
+                                    static_cast<unsigned int>(ahdr->chans),
+                                    static_cast<size_t>(ahdr->samps),
+                                    sizeof(DPXAudioHeaderV1));
         }
 
         if(user->type == AUDIO_MAGIC_V2 && user->size >= static_cast<int32_t>(sizeof(DPXAudioHeaderV2))) {
@@ -696,35 +714,37 @@ static Audio readEmbeddedAudio(const Buffer &buf) {
                                 dt = static_cast<AudioFormat::ID>(ahdr->model);
                                 break;
                 }
-                AudioDesc desc(dt, static_cast<float>(ahdr->rate), static_cast<unsigned int>(ahdr->chans));
-                Audio audio(desc, static_cast<size_t>(ahdr->samps));
-                if(!audio.isValid()) return Audio();
-                size_t dataBytes = desc.bufferSize(static_cast<size_t>(ahdr->samps));
-                std::memcpy(audio.buffer()->data(),
-                            static_cast<const uint8_t *>(buf.data()) + sizeof(DPXAudioHeaderV2),
-                            dataBytes);
-                return audio;
+                return buildPayload(dt, static_cast<float>(ahdr->rate),
+                                    static_cast<unsigned int>(ahdr->chans),
+                                    static_cast<size_t>(ahdr->samps),
+                                    sizeof(DPXAudioHeaderV2));
         }
 
-        return Audio();
+        return UncompressedAudioPayload::Ptr();
 }
 
-static size_t writeEmbeddedAudio(uint8_t *dest, const Audio &audio) {
+static size_t writeEmbeddedAudio(uint8_t *dest, const UncompressedAudioPayload &payload) {
         DPXAudioHeaderV2 ahdr;
         std::memset(&ahdr, 0, sizeof(ahdr));
         std::memcpy(ahdr.user.user, "AUDIO", 6);
         ahdr.user.type = AUDIO_MAGIC_V2;
-        size_t dataBytes = audio.desc().bufferSize(audio.samples());
+        const AudioDesc &desc = payload.desc();
+        const size_t samples = payload.sampleCount();
+        size_t dataBytes = desc.bufferSize(samples);
         ahdr.user.size = static_cast<int32_t>(sizeof(DPXAudioHeaderV2) + dataBytes);
-        ahdr.model = static_cast<uint32_t>(audio.desc().format().id());
-        ahdr.samps = static_cast<int32_t>(audio.samples());
-        ahdr.chans = static_cast<int32_t>(audio.desc().channels());
-        ahdr.rate  = static_cast<int32_t>(audio.desc().sampleRate());
+        ahdr.model = static_cast<uint32_t>(desc.format().id());
+        ahdr.samps = static_cast<int32_t>(samples);
+        ahdr.chans = static_cast<int32_t>(desc.channels());
+        ahdr.rate  = static_cast<int32_t>(desc.sampleRate());
         ahdr.timecode = 0xFFFFFFFF;
         ahdr.userbits = 0xFFFFFFFF;
 
         std::memcpy(dest, &ahdr, sizeof(ahdr));
-        std::memcpy(dest + sizeof(ahdr), audio.buffer()->data(), dataBytes);
+        if(payload.planeCount() > 0) {
+                auto view = payload.plane(0);
+                std::memcpy(dest + sizeof(ahdr), view.data(),
+                            dataBytes < view.size() ? dataBytes : view.size());
+        }
         return sizeof(ahdr) + dataBytes;
 }
 
@@ -809,14 +829,14 @@ Error ImageFileIO_DPX::load(ImageFile &imageFile, const MediaConfig &config) con
         PixelFormat pd(pdId);
 
         // 5. Read user data section (may contain embedded audio)
-        Audio audio;
+        UncompressedAudioPayload::Ptr audioPayload;
         int64_t userSize = static_cast<int64_t>(hdr.finfo.offset) - static_cast<int64_t>(sizeof(DPXHeader));
         if(userSize > 0) {
                 Buffer userBuf(static_cast<size_t>(userSize));
                 n = file.read(userBuf.data(), userSize);
                 if(n == userSize) {
                         userBuf.setSize(static_cast<size_t>(userSize));
-                        audio = readEmbeddedAudio(userBuf);
+                        audioPayload = readEmbeddedAudio(userBuf);
                 }
         }
 
@@ -842,24 +862,27 @@ Error ImageFileIO_DPX::load(ImageFile &imageFile, const MediaConfig &config) con
                 return err;
         }
 
-        // 7. Create Image and copy data
-        Image image(w, h, pd);
-        if(!image.isValid()) {
-                promekiErr("DPX load '%s': failed to allocate %zux%zu image", filename.cstr(), w, h);
+        // 7. Allocate payload and copy data
+        ImageDesc idesc(w, h, pd);
+        auto payload = UncompressedVideoPayload::allocate(idesc);
+        if(!payload.isValid()) {
+                promekiErr("DPX load '%s': failed to allocate %zux%zu payload",
+                           filename.cstr(), w, h);
                 return Error::NoMem;
         }
-        std::memcpy(image.data(), imgBuf.data(), imageBytes);
+        uint8_t *dst = payload.modify()->data()[0].data();
+        std::memcpy(dst, imgBuf.data(), imageBytes);
 
         // 7b. Byte-swap for descriptor 52 (ABGR) → RGBA
         if(hdr.imgelm[0].desc == 52 && hdr.imgelm[0].bitdepth == 8) {
-                swapABGRtoRGBA(static_cast<uint8_t *>(image.data()), w * h);
+                swapABGRtoRGBA(dst, w * h);
         }
 
         // 8. Build Frame
         Frame frame;
-        frame.imageList().pushToBack(Image::Ptr::create(image));
-        if(audio.isValid()) {
-                frame.audioList().pushToBack(Audio::Ptr::create(audio));
+        frame.addPayload(payload);
+        if(audioPayload.isValid()) {
+                frame.addPayload(audioPayload);
         }
 
         // 9. Extract metadata
@@ -884,35 +907,43 @@ Error ImageFileIO_DPX::load(ImageFile &imageFile, const MediaConfig &config) con
 Error ImageFileIO_DPX::save(ImageFile &imageFile, const MediaConfig &config) const {
         (void)config;
         const Frame &frame = imageFile.frame();
-        if(frame.imageList().isEmpty()) {
+        auto vids = frame.videoPayloads();
+        if(vids.isEmpty()) {
                 promekiErr("DPX save: no image in frame");
                 return Error::Invalid;
         }
 
-        const Image &image = *frame.imageList()[0];
-        if(!image.isValid()) {
-                promekiErr("DPX save: image is not valid");
+        const auto *uvp = vids[0]->as<UncompressedVideoPayload>();
+        if(uvp == nullptr || !uvp->desc().isValid() || uvp->planeCount() == 0) {
+                promekiErr("DPX save: DPX is a raster format — "
+                           "compressed video payloads are not supported");
                 return Error::Invalid;
         }
 
         const String &filename = imageFile.filename();
         const Metadata &meta = frame.metadata();
-        PixelFormat::ID pdId = image.pixelFormat().id();
+        const ImageDesc &idesc = uvp->desc();
+        PixelFormat::ID pdId = idesc.pixelFormat().id();
+        const size_t width = idesc.size().width();
+        const size_t height = idesc.size().height();
+        auto plane0 = uvp->plane(0);
 
         // 1. Calculate sizes
         size_t headerSize = sizeof(DPXHeader);
         size_t audioSize = 0;
-        Audio audio;
-        if(!frame.audioList().isEmpty()) {
-                audio = *frame.audioList()[0];
-                if(audio.isValid()) {
-                        audioSize = sizeof(DPXAudioHeaderV2) + audio.desc().bufferSize(audio.samples());
+        const UncompressedAudioPayload *audioPayload = nullptr;
+        auto auds = frame.audioPayloads();
+        if(!auds.isEmpty() && auds[0].isValid()) {
+                audioPayload = auds[0]->as<UncompressedAudioPayload>();
+                if(audioPayload != nullptr) {
+                        audioSize = sizeof(DPXAudioHeaderV2) +
+                                    audioPayload->desc().bufferSize(audioPayload->sampleCount());
                         headerSize += audioSize;
                 }
         }
         headerSize = ALIGN_UP(headerSize, DPX_ALIGN);
 
-        size_t imageBytes = image.pixelFormat().memLayout().planeSize(0, image.width(), image.height());
+        size_t imageBytes = plane0.size();
         size_t imagePadded = ALIGN_UP(imageBytes, DPX_ALIGN);
         size_t totalSize = headerSize + imagePadded;
 
@@ -923,9 +954,9 @@ Error ImageFileIO_DPX::save(ImageFile &imageFile, const MediaConfig &config) con
         dpxInit(hdr);
 
         // 3. Embed audio if present
-        if(audioSize > 0) {
+        if(audioPayload != nullptr) {
                 uint8_t *audioStart = static_cast<uint8_t *>(hdrBuf.data()) + sizeof(DPXHeader);
-                writeEmbeddedAudio(audioStart, audio);
+                writeEmbeddedAudio(audioStart, *audioPayload);
         }
 
         // 4. Fill header fields
@@ -934,8 +965,8 @@ Error ImageFileIO_DPX::save(ImageFile &imageFile, const MediaConfig &config) con
 
         hdr->imginfo.orient = 0;
         hdr->imginfo.nelem = 1;
-        hdr->imginfo.width = static_cast<uint32_t>(image.width());
-        hdr->imginfo.height = static_cast<uint32_t>(image.height());
+        hdr->imginfo.width = static_cast<uint32_t>(width);
+        hdr->imginfo.height = static_cast<uint32_t>(height);
 
         hdr->imgelm[0].sign = 0;
         hdr->imgelm[0].encoding = 0;
@@ -944,7 +975,7 @@ Error ImageFileIO_DPX::save(ImageFile &imageFile, const MediaConfig &config) con
         if(!setDPXImageElement(hdr, pdId)) {
                 promekiErr("DPX save '%s': pixel format '%s' is not supported "
                            "by this writer",
-                           filename.cstr(), image.pixelFormat().name().cstr());
+                           filename.cstr(), idesc.pixelFormat().name().cstr());
                 return Error::PixelFormatNotSupported;
         }
         setDPXTransferCharacteristic(hdr);
@@ -983,14 +1014,14 @@ Error ImageFileIO_DPX::save(ImageFile &imageFile, const MediaConfig &config) con
         //    - DIO padding needs a separate aligned buffer when imagePadded > imageBytes.
         bool needPixelSwap = (pdId == PixelFormat::ARGB8_sRGB);
         Buffer imgWriteBuf;
-        const void *imgWritePtr = image.data();
+        const void *imgWritePtr = plane0.data();
         if(needPixelSwap || imagePadded > imageBytes) {
                 imgWriteBuf = Buffer(imagePadded, DPX_ALIGN);
                 imgWriteBuf.fill(0);
-                std::memcpy(imgWriteBuf.data(), image.data(), imageBytes);
+                std::memcpy(imgWriteBuf.data(), plane0.data(), imageBytes);
                 if(needPixelSwap) {
                         swapARGBtoRGBA(static_cast<uint8_t *>(imgWriteBuf.data()),
-                                       image.width() * image.height());
+                                       width * height);
                 }
                 imgWritePtr = imgWriteBuf.data();
         }
@@ -1014,7 +1045,7 @@ Error ImageFileIO_DPX::save(ImageFile &imageFile, const MediaConfig &config) con
 
         file.close();
         promekiDebug("DPX save '%s': %zux%zu %s", filename.cstr(),
-                     image.width(), image.height(), image.pixelFormat().name().cstr());
+                     width, height, idesc.pixelFormat().name().cstr());
         return Error::Ok;
 }
 

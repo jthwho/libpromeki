@@ -12,7 +12,7 @@
 #include <promeki/mutex.h>
 #include <promeki/atomic.h>
 #include <promeki/framecount.h>
-#include <promeki/image.h>
+#include <promeki/uncompressedvideopayload.h>
 #include <promeki/mediaio.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -119,12 +119,12 @@ class SDLPlayerWidget : public SDLVideoWidget {
 
         private:
                 // Called by the owning @ref SDLPlayerTask on its pull
-                // thread when a new frame is ready for display.
-                // Stashes the image and wakes the main thread.
-                void presentImage(const Image::Ptr &image);
+                // thread when a new video payload is ready for display.
+                // Stashes the payload and wakes the main thread.
+                void presentVideo(const UncompressedVideoPayload::Ptr &payload);
 
                 // Main-thread handler invoked in response to the wake
-                // event — swaps the stashed image into the
+                // event — swaps the stashed payload into the
                 // SDLVideoWidget and triggers a paint on the containing
                 // window.
                 bool renderPending();
@@ -137,7 +137,7 @@ class SDLPlayerWidget : public SDLVideoWidget {
 
                 // Main-thread render stash (written by the pull thread,
                 // drained by the main thread).
-                Image::Ptr      _pendingImage;
+                UncompressedVideoPayload::Ptr _pendingPayload;
                 mutable Mutex   _pendingMutex;
                 Atomic<bool>    _renderScheduled;
                 Atomic<int64_t> _framesPresented;

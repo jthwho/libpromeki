@@ -17,8 +17,8 @@
 #include <promeki/dir.h>
 #include <promeki/fourcc.h>
 #include <promeki/buildinfo.h>
-#include <promeki/image.h>
-#include <promeki/audio.h>
+#include <promeki/uncompressedvideopayload.h>
+#include <promeki/uncompressedaudiopayload.h>
 #include <promeki/metadata.h>
 #include <promeki/pixelformat.h>
 
@@ -572,22 +572,22 @@ struct FrameBridge::Impl {
                       static_cast<uint32_t>(metaBytes));
 
                 // Images (single image for MVP).
-                if(!frame.imageList().isEmpty()) {
-                        const Image::Ptr &img = frame.imageList().at(0);
-                        if(img) {
+                auto vids = frame.videoPayloads();
+                if(!vids.isEmpty() && vids[0].isValid()) {
+                        const auto *uvp = vids[0]->as<UncompressedVideoPayload>();
+                        if(uvp != nullptr) {
                                 size_t off = slotOff.imagesOff;
-                                int n = img->desc().planeCount();
-                                for(int p = 0; p < n &&
-                                    p < static_cast<int>(planeSizes.size());
-                                    ++p) {
-                                        const Buffer::Ptr &plane = img->plane(p);
-                                        if(plane) {
+                                const size_t n = uvp->planeCount();
+                                for(size_t p = 0; p < n &&
+                                    p < planeSizes.size(); ++p) {
+                                        auto plane = uvp->plane(p);
+                                        if(plane.isValid()) {
                                                 size_t copyBytes = planeSizes[p];
-                                                if(plane->size() < copyBytes) {
-                                                        copyBytes = plane->size();
+                                                if(plane.size() < copyBytes) {
+                                                        copyBytes = plane.size();
                                                 }
                                                 std::memcpy(base + off,
-                                                            plane->data(),
+                                                            plane.data(),
                                                             copyBytes);
                                         }
                                         off += planeSizes[p];
@@ -597,18 +597,21 @@ struct FrameBridge::Impl {
 
                 // Audio (single track for MVP).
                 uint64_t audioSamples = 0;
-                if(!frame.audioList().isEmpty()) {
-                        const Audio::Ptr &a = frame.audioList().at(0);
-                        if(a) {
-                                size_t samples = a->samples();
+                auto auds = frame.audioPayloads();
+                if(!auds.isEmpty() && auds[0].isValid()) {
+                        const auto *uap = auds[0]->as<UncompressedAudioPayload>();
+                        if(uap != nullptr && uap->planeCount() > 0) {
+                                const size_t samples = uap->sampleCount();
                                 if(samples > audioCapacitySamples) {
                                         storeSeq(base + slotOff.seqOff, seq + 1);
                                         return Error::OutOfRange;
                                 }
                                 audioSamples = samples;
-                                size_t bytes = audioDesc.bufferSize(samples);
+                                auto pv = uap->plane(0);
+                                const size_t bytes = audioDesc.bufferSize(samples);
+                                const size_t copyBytes = pv.size() < bytes ? pv.size() : bytes;
                                 std::memcpy(base + slotOff.audioOff,
-                                            a->buffer()->data(), bytes);
+                                            pv.data(), copyBytes);
                         }
                 }
                 put64(slotOff.audioSampleCtOff, audioSamples);
@@ -671,40 +674,45 @@ struct FrameBridge::Impl {
                                 rs >> meta;
                         }
 
-                        // Image (single image, multi-plane)
-                        Image::Ptr img;
+                        // Video payload (single video, multi-plane)
+                        UncompressedVideoPayload::Ptr videoPayload;
                         if(!mediaDesc.imageList().isEmpty()) {
                                 const ImageDesc &id = mediaDesc.imageList()[0];
-                                img = Image::Ptr::create(id);
+                                BufferView planes;
                                 size_t off = slotOff.imagesOff;
                                 int n = id.planeCount();
                                 for(int p = 0; p < n &&
                                     p < static_cast<int>(planeSizes.size());
                                     ++p) {
-                                        const Buffer::Ptr &plane = img->plane(p);
-                                        if(plane) {
-                                                size_t sz = planeSizes[p];
-                                                if(plane->size() > 0 &&
-                                                   plane->size() >= sz) {
-                                                        std::memcpy(plane->data(),
-                                                                    base + off,
-                                                                    sz);
-                                                }
+                                        size_t sz = planeSizes[p];
+                                        auto buf = Buffer::Ptr::create(sz);
+                                        buf.modify()->setSize(sz);
+                                        if(sz > 0) {
+                                                std::memcpy(buf.modify()->data(),
+                                                            base + off, sz);
                                         }
-                                        off += planeSizes[p];
+                                        planes.pushToBack(buf, 0, sz);
+                                        off += sz;
                                 }
+                                videoPayload = UncompressedVideoPayload::Ptr::create(
+                                        id, planes);
                         }
 
-                        // Audio
-                        Audio::Ptr aud;
+                        // Audio payload (single track)
+                        UncompressedAudioPayload::Ptr audioPayload;
                         if(audioSamples > 0) {
-                                aud = Audio::Ptr::create(
-                                        audioDesc,
-                                        static_cast<size_t>(audioSamples));
                                 size_t bytes = audioDesc.bufferSize(
                                         static_cast<size_t>(audioSamples));
-                                std::memcpy(aud.modify()->buffer()->data(),
+                                auto buf = Buffer::Ptr::create(bytes);
+                                buf.modify()->setSize(bytes);
+                                std::memcpy(buf.modify()->data(),
                                             base + slotOff.audioOff, bytes);
+                                BufferView planes;
+                                planes.pushToBack(buf, 0, bytes);
+                                audioPayload = UncompressedAudioPayload::Ptr::create(
+                                        audioDesc,
+                                        static_cast<size_t>(audioSamples),
+                                        planes);
                         }
 
                         // Check seq2 after we've copied everything.
@@ -713,8 +721,8 @@ struct FrameBridge::Impl {
                         if(seq1 != seq2) continue;  // torn — retry
 
                         Frame *mut = frame.modify();
-                        if(img)  mut->imageList().pushToBack(img);
-                        if(aud)  mut->audioList().pushToBack(aud);
+                        if(videoPayload) mut->addPayload(videoPayload);
+                        if(audioPayload) mut->addPayload(audioPayload);
                         mut->metadata() = meta;
                         mut->metadata().set(Metadata::FrameNumber,
                                 FrameNumber(int64_t(frameNumber)));

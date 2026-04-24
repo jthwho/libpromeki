@@ -69,6 +69,32 @@ PROMEKI_NAMESPACE_BEGIN
         virtual BASE *_promeki_clone() const override { return new DERIVED(*this); }
 
 /**
+ * @brief Macro for abstract intermediate classes in a shared hierarchy.
+ *
+ * Use this on a class that derives from a base already marked with
+ * @ref PROMEKI_SHARED (or a hand-rolled equivalent) and that stays
+ * @em abstract — concrete leaves below supply the actual clone.
+ * The macro adds a covariant pure-virtual override of
+ * @c _promeki_clone so @c SharedPtr<INTERMEDIATE>::modify() detaches
+ * directly into an @c INTERMEDIATE pointer without a downcast, and
+ * @c sharedPointerCast<INTERMEDIATE>(basePtr) yields a typed Ptr whose
+ * @c modify() is valid without further work at the call site.
+ *
+ * Example:
+ *
+ * @code
+ * class VideoPayload : public MediaPayload {
+ *     PROMEKI_SHARED_ABSTRACT(VideoPayload)
+ *     public:
+ *         / concrete leaves provide _promeki_clone
+ * };
+ * @endcode
+ */
+#define PROMEKI_SHARED_ABSTRACT(INTERMEDIATE) \
+    public: \
+        INTERMEDIATE *_promeki_clone() const override = 0;
+
+/**
  * @brief Macro for non-polymorphic native shared objects.
  *
  * Use this instead of PROMEKI_SHARED when the class will never be subclassed
@@ -280,8 +306,8 @@ class SharedPtr {
          * Only participates in overload resolution when @c U publicly
          * derives from @c T, @c U != @c T, both types are native shared
          * objects, and both use the default storage type (storage = the
-         * object itself).  This lets a @c SharedPtr<VideoPacket>
-         * convert to a @c SharedPtr<MediaPacket> without cloning, with
+         * object itself).  This lets a @c SharedPtr<CompressedVideoPayload>
+         * convert to a @c SharedPtr<MediaPayload> without cloning, with
          * the refcount sitting on the shared base's @c _promeki_refct.
          */
         template<typename U, bool UCoW, typename UST,
@@ -458,9 +484,9 @@ class SharedPtr {
  *
  * @par Example
  * @code
- * MediaPacket::Ptr mp = encoder->receivePacket();
- * if(auto vp = sharedPointerCast<VideoPacket>(mp)) {
- *         // vp is VideoPacket::Ptr sharing ownership with mp
+ * MediaPayload::Ptr mp = encoder->receivePayload();
+ * if(auto vp = sharedPointerCast<CompressedVideoPayload>(mp)) {
+ *         // vp is CompressedVideoPayload::Ptr sharing ownership with mp
  * }
  * @endcode
  */

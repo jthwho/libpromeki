@@ -11,7 +11,6 @@
 #include <promeki/config.h>
 #include <promeki/audiobuffer.h>
 #include <promeki/audiodesc.h>
-#include <promeki/audio.h>
 
 using namespace promeki;
 
@@ -143,25 +142,23 @@ TEST_CASE("AudioBuffer: push/pop across the wraparound boundary") {
 }
 
 // ============================================================================
-// Push through an Audio object
+// Push via raw buffer with matching format (same code path as the legacy
+// push(Audio) overload)
 // ============================================================================
 
-TEST_CASE("AudioBuffer: push via Audio, pop via Audio") {
+TEST_CASE("AudioBuffer: push raw matching format, pop raw") {
         AudioBuffer ab(s16LE48k2ch(), 64);
-        Audio in(s16LE48k2ch(), 8);
-        int16_t *data = in.data<int16_t>();
-        for(size_t i = 0; i < 16; ++i) data[i] = static_cast<int16_t>(i * 100);
+        int16_t in[16];
+        for(size_t i = 0; i < 16; ++i) in[i] = static_cast<int16_t>(i * 100);
 
-        REQUIRE(ab.push(in).isOk());
+        REQUIRE(ab.push(in, 8, s16LE48k2ch()).isOk());
         CHECK(ab.available() == 8);
 
-        Audio out(s16LE48k2ch(), 16);
+        int16_t out[16] = {};
         auto [popped, popErr] = ab.pop(out, 8);
         CHECK(popErr.isOk());
         CHECK(popped == 8);
-        CHECK(out.samples() == 8);
-        const int16_t *outData = out.data<int16_t>();
-        for(size_t i = 0; i < 16; ++i) CHECK(outData[i] == static_cast<int16_t>(i * 100));
+        for(size_t i = 0; i < 16; ++i) CHECK(out[i] == static_cast<int16_t>(i * 100));
 }
 
 // ============================================================================

@@ -14,7 +14,6 @@
 #include <promeki/atomic.h>
 #include <promeki/framerate.h>
 #include <promeki/audiodesc.h>
-#include <promeki/image.h>
 #include <promeki/framesync.h>
 #include <promeki/sdl/sdlaudioclock.h>
 

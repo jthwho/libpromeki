@@ -9,7 +9,7 @@
 
 #include <promeki/namespace.h>
 #include <promeki/timecode.h>
-#include <promeki/audio.h>
+#include <promeki/list.h>
 #include <promeki/uniqueptr.h>
 #include <vtc/ltc_audio.h>
 
@@ -20,8 +20,9 @@ PROMEKI_NAMESPACE_BEGIN
  * @ingroup proav
  *
  * Wraps libvtc's VtcLTCEncoder to produce biphase-mark-encoded audio
- * representing SMPTE timecode. The output is mono int8_t audio suitable
- * for mixing into an audio stream or output on a dedicated channel.
+ * representing SMPTE timecode. The output is mono int8_t audio samples
+ * suitable for mixing into an audio stream or output on a dedicated
+ * channel.
  *
  * Not copyable (owns encoder state). Movable.
  *
@@ -29,8 +30,8 @@ PROMEKI_NAMESPACE_BEGIN
  * @code
  * LtcEncoder enc(48000, 0.5f);
  * Timecode tc(Timecode::NDF24, 1, 0, 0, 0);
- * Audio audio = enc.encode(tc);
- * // audio contains ~2000 int8_t samples of LTC for this frame
+ * List<int8_t> samples = enc.encode(tc);
+ * // samples contains ~2000 int8_t samples of LTC for this frame
  * @endcode
  */
 class LtcEncoder {
@@ -72,11 +73,12 @@ class LtcEncoder {
                 void setLevel(float level);
 
                 /**
-                 * @brief Encodes one timecode frame into mono int8_t audio.
+                 * @brief Encodes one timecode frame into mono int8_t samples.
                  * @param tc The timecode value to encode.
-                 * @return An Audio object containing the LTC samples (mono, PCMI_S8).
+                 * @return A list of mono PCMI_S8 samples (one per
+                 *         sample in the frame).  Empty on failure.
                  */
-                Audio encode(const Timecode &tc);
+                List<int8_t> encode(const Timecode &tc);
 
                 /**
                  * @brief Returns the approximate number of samples per LTC frame.

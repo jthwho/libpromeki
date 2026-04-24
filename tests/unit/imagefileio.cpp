@@ -10,6 +10,7 @@
 #include <doctest/doctest.h>
 #include <promeki/imagefileio.h>
 #include <promeki/imagefile.h>
+#include <promeki/uncompressedvideopayload.h>
 
 using namespace promeki;
 
@@ -39,23 +40,27 @@ TEST_CASE("ImageFileIO: RawYUV UYVY 8-bit round-trip") {
         const size_t w = 64, h = 48;
         const char *fn = "/tmp/promeki_test.uyvy";
 
-        Image src(w, h, PixelFormat::YUV8_422_UYVY_Rec709);
+        auto src = UncompressedVideoPayload::allocate(
+                ImageDesc(w, h, PixelFormat::YUV8_422_UYVY_Rec709));
         REQUIRE(src.isValid());
-        uint8_t *data = static_cast<uint8_t *>(src.data());
-        size_t bytes = src.pixelFormat().memLayout().planeSize(0, w, h);
+        uint8_t *data = src.modify()->data()[0].data();
+        size_t bytes = src->plane(0).size();
         for(size_t i = 0; i < bytes; i++) data[i] = (uint8_t)(i & 0xFF);
 
         ImageFile sf(ImageFile::RawYUV);
         sf.setFilename(fn);
-        sf.setImage(src);
+        sf.setVideoPayload(src);
         CHECK(sf.save() == Error::Ok);
 
-        Image hint(w, h, PixelFormat::YUV8_422_UYVY_Rec709);
+        auto hint = UncompressedVideoPayload::allocate(
+                ImageDesc(w, h, PixelFormat::YUV8_422_UYVY_Rec709));
         ImageFile lf(ImageFile::RawYUV);
         lf.setFilename(fn);
-        lf.setImage(hint);
+        lf.setVideoPayload(hint);
         CHECK(lf.load() == Error::Ok);
-        CHECK(std::memcmp(data, lf.image().data(), bytes) == 0);
+        auto got = lf.uncompressedVideoPayload();
+        REQUIRE(got.isValid());
+        CHECK(std::memcmp(data, got->plane(0).data(), bytes) == 0);
 
         std::remove(fn);
 }
@@ -68,23 +73,27 @@ TEST_CASE("ImageFileIO: RawYUV YUYV 8-bit round-trip") {
         const size_t w = 64, h = 48;
         const char *fn = "/tmp/promeki_test.yuyv";
 
-        Image src(w, h, PixelFormat::YUV8_422_Rec709);
+        auto src = UncompressedVideoPayload::allocate(
+                ImageDesc(w, h, PixelFormat::YUV8_422_Rec709));
         REQUIRE(src.isValid());
-        uint8_t *data = static_cast<uint8_t *>(src.data());
-        size_t bytes = src.pixelFormat().memLayout().planeSize(0, w, h);
+        uint8_t *data = src.modify()->data()[0].data();
+        size_t bytes = src->plane(0).size();
         for(size_t i = 0; i < bytes; i++) data[i] = (uint8_t)((i * 7) & 0xFF);
 
         ImageFile sf(ImageFile::RawYUV);
         sf.setFilename(fn);
-        sf.setImage(src);
+        sf.setVideoPayload(src);
         CHECK(sf.save() == Error::Ok);
 
-        Image hint(w, h, PixelFormat::YUV8_422_Rec709);
+        auto hint = UncompressedVideoPayload::allocate(
+                ImageDesc(w, h, PixelFormat::YUV8_422_Rec709));
         ImageFile lf(ImageFile::RawYUV);
         lf.setFilename(fn);
-        lf.setImage(hint);
+        lf.setVideoPayload(hint);
         CHECK(lf.load() == Error::Ok);
-        CHECK(std::memcmp(data, lf.image().data(), bytes) == 0);
+        auto got = lf.uncompressedVideoPayload();
+        REQUIRE(got.isValid());
+        CHECK(std::memcmp(data, got->plane(0).data(), bytes) == 0);
 
         std::remove(fn);
 }
@@ -95,40 +104,46 @@ TEST_CASE("ImageFileIO: RawYUV YUYV 8-bit round-trip") {
 
 TEST_CASE("ImageFileIO: RawYUV guesses 1920x1080 UYVY from file size") {
         const char *fn = "/tmp/promeki_test_guess.uyvy";
-        Image src(1920, 1080, PixelFormat::YUV8_422_UYVY_Rec709);
+        auto src = UncompressedVideoPayload::allocate(
+                ImageDesc(1920, 1080, PixelFormat::YUV8_422_UYVY_Rec709));
         REQUIRE(src.isValid());
-        src.fill(0x80);
+        std::memset(src.modify()->data()[0].data(), 0x80, src->plane(0).size());
 
         ImageFile sf(ImageFile::RawYUV);
         sf.setFilename(fn);
-        sf.setImage(src);
+        sf.setVideoPayload(src);
         CHECK(sf.save() == Error::Ok);
 
         ImageFile lf(ImageFile::RawYUV);
         lf.setFilename(fn);
         CHECK(lf.load() == Error::Ok);
-        CHECK(lf.image().width() == 1920);
-        CHECK(lf.image().height() == 1080);
+        auto got = lf.uncompressedVideoPayload();
+        REQUIRE(got.isValid());
+        CHECK(got->desc().width() == 1920);
+        CHECK(got->desc().height() == 1080);
 
         std::remove(fn);
 }
 
 TEST_CASE("ImageFileIO: RawYUV guesses 1920x1080 v210 from file size") {
         const char *fn = "/tmp/promeki_test_guess.v210";
-        Image src(1920, 1080, PixelFormat::YUV10_422_v210_Rec709);
+        auto src = UncompressedVideoPayload::allocate(
+                ImageDesc(1920, 1080, PixelFormat::YUV10_422_v210_Rec709));
         REQUIRE(src.isValid());
-        src.fill(0x00);
+        std::memset(src.modify()->data()[0].data(), 0x00, src->plane(0).size());
 
         ImageFile sf(ImageFile::RawYUV);
         sf.setFilename(fn);
-        sf.setImage(src);
+        sf.setVideoPayload(src);
         CHECK(sf.save() == Error::Ok);
 
         ImageFile lf(ImageFile::RawYUV);
         lf.setFilename(fn);
         CHECK(lf.load() == Error::Ok);
-        CHECK(lf.image().width() == 1920);
-        CHECK(lf.image().height() == 1080);
+        auto got = lf.uncompressedVideoPayload();
+        REQUIRE(got.isValid());
+        CHECK(got->desc().width() == 1920);
+        CHECK(got->desc().height() == 1080);
 
         std::remove(fn);
 }
@@ -139,23 +154,27 @@ TEST_CASE("ImageFileIO: RawYUV guesses 1920x1080 v210 from file size") {
 
 TEST_CASE("ImageFileIO: RawYUV v210 round-trip") {
         const char *fn = "/tmp/promeki_test.v210";
-        Image src(1920, 1080, PixelFormat::YUV10_422_v210_Rec709);
+        auto src = UncompressedVideoPayload::allocate(
+                ImageDesc(1920, 1080, PixelFormat::YUV10_422_v210_Rec709));
         REQUIRE(src.isValid());
-        src.fill(0x00);
-        uint8_t *data = static_cast<uint8_t *>(src.data());
+        std::memset(src.modify()->data()[0].data(), 0x00, src->plane(0).size());
+        uint8_t *data = src.modify()->data()[0].data();
         for(size_t i = 0; i < 128; i++) data[i] = (uint8_t)i;
 
         ImageFile sf(ImageFile::RawYUV);
         sf.setFilename(fn);
-        sf.setImage(src);
+        sf.setVideoPayload(src);
         CHECK(sf.save() == Error::Ok);
 
-        Image hint(1920, 1080, PixelFormat::YUV10_422_v210_Rec709);
+        auto hint = UncompressedVideoPayload::allocate(
+                ImageDesc(1920, 1080, PixelFormat::YUV10_422_v210_Rec709));
         ImageFile lf(ImageFile::RawYUV);
         lf.setFilename(fn);
-        lf.setImage(hint);
+        lf.setVideoPayload(hint);
         CHECK(lf.load() == Error::Ok);
-        CHECK(std::memcmp(data, lf.image().data(), 128) == 0);
+        auto got = lf.uncompressedVideoPayload();
+        REQUIRE(got.isValid());
+        CHECK(std::memcmp(data, got->plane(0).data(), 128) == 0);
 
         std::remove(fn);
 }
@@ -168,30 +187,34 @@ TEST_CASE("ImageFileIO: RawYUV I420 planar round-trip") {
         const size_t w = 64, h = 48;
         const char *fn = "/tmp/promeki_test.i420";
 
-        Image src(w, h, PixelFormat::YUV8_420_Planar_Rec709);
+        auto src = UncompressedVideoPayload::allocate(
+                ImageDesc(w, h, PixelFormat::YUV8_420_Planar_Rec709));
         REQUIRE(src.isValid());
-        REQUIRE(src.pixelFormat().planeCount() == 3);
+        REQUIRE(src->planeCount() == 3);
 
         for(size_t p = 0; p < 3; p++) {
-                uint8_t *data = static_cast<uint8_t *>(src.data(p));
-                size_t bytes = src.pixelFormat().memLayout().planeSize(p, w, h);
+                uint8_t *data = src.modify()->data()[p].data();
+                size_t bytes = src->plane(p).size();
                 for(size_t i = 0; i < bytes; i++) data[i] = (uint8_t)((i + p * 37) & 0xFF);
         }
 
         ImageFile sf(ImageFile::RawYUV);
         sf.setFilename(fn);
-        sf.setImage(src);
+        sf.setVideoPayload(src);
         CHECK(sf.save() == Error::Ok);
 
-        Image hint(w, h, PixelFormat::YUV8_420_Planar_Rec709);
+        auto hint = UncompressedVideoPayload::allocate(
+                ImageDesc(w, h, PixelFormat::YUV8_420_Planar_Rec709));
         ImageFile lf(ImageFile::RawYUV);
         lf.setFilename(fn);
-        lf.setImage(hint);
+        lf.setVideoPayload(hint);
         CHECK(lf.load() == Error::Ok);
+        auto got = lf.uncompressedVideoPayload();
+        REQUIRE(got.isValid());
 
         for(size_t p = 0; p < 3; p++) {
-                size_t bytes = src.pixelFormat().memLayout().planeSize(p, w, h);
-                CHECK(std::memcmp(src.data(p), lf.image().data(p), bytes) == 0);
+                size_t bytes = src->plane(p).size();
+                CHECK(std::memcmp(src->plane(p).data(), got->plane(p).data(), bytes) == 0);
         }
 
         std::remove(fn);
@@ -205,30 +228,34 @@ TEST_CASE("ImageFileIO: RawYUV NV12 round-trip") {
         const size_t w = 64, h = 48;
         const char *fn = "/tmp/promeki_test.nv12";
 
-        Image src(w, h, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        auto src = UncompressedVideoPayload::allocate(
+                ImageDesc(w, h, PixelFormat::YUV8_420_SemiPlanar_Rec709));
         REQUIRE(src.isValid());
-        REQUIRE(src.pixelFormat().planeCount() == 2);
+        REQUIRE(src->planeCount() == 2);
 
         for(size_t p = 0; p < 2; p++) {
-                uint8_t *data = static_cast<uint8_t *>(src.data(p));
-                size_t bytes = src.pixelFormat().memLayout().planeSize(p, w, h);
+                uint8_t *data = src.modify()->data()[p].data();
+                size_t bytes = src->plane(p).size();
                 for(size_t i = 0; i < bytes; i++) data[i] = (uint8_t)((i + p * 53) & 0xFF);
         }
 
         ImageFile sf(ImageFile::RawYUV);
         sf.setFilename(fn);
-        sf.setImage(src);
+        sf.setVideoPayload(src);
         CHECK(sf.save() == Error::Ok);
 
-        Image hint(w, h, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        auto hint = UncompressedVideoPayload::allocate(
+                ImageDesc(w, h, PixelFormat::YUV8_420_SemiPlanar_Rec709));
         ImageFile lf(ImageFile::RawYUV);
         lf.setFilename(fn);
-        lf.setImage(hint);
+        lf.setVideoPayload(hint);
         CHECK(lf.load() == Error::Ok);
+        auto got = lf.uncompressedVideoPayload();
+        REQUIRE(got.isValid());
 
         for(size_t p = 0; p < 2; p++) {
-                size_t bytes = src.pixelFormat().memLayout().planeSize(p, w, h);
-                CHECK(std::memcmp(src.data(p), lf.image().data(p), bytes) == 0);
+                size_t bytes = src->plane(p).size();
+                CHECK(std::memcmp(src->plane(p).data(), got->plane(p).data(), bytes) == 0);
         }
 
         std::remove(fn);
@@ -240,21 +267,26 @@ TEST_CASE("ImageFileIO: RawYUV NV12 round-trip") {
 
 TEST_CASE("ImageFileIO: Smart .yuv guesses I420 for 1920x1080") {
         const char *fn = "/tmp/promeki_test_smart.yuv";
-        Image src(1920, 1080, PixelFormat::YUV8_420_Planar_Rec709);
+        auto src = UncompressedVideoPayload::allocate(
+                ImageDesc(1920, 1080, PixelFormat::YUV8_420_Planar_Rec709));
         REQUIRE(src.isValid());
-        src.fill(0x80);
+        for(size_t p = 0; p < src->planeCount(); p++) {
+                std::memset(src.modify()->data()[p].data(), 0x80, src->plane(p).size());
+        }
 
         ImageFile sf(ImageFile::RawYUV);
         sf.setFilename(fn);
-        sf.setImage(src);
+        sf.setVideoPayload(src);
         CHECK(sf.save() == Error::Ok);
 
         ImageFile lf(ImageFile::RawYUV);
         lf.setFilename(fn);
         CHECK(lf.load() == Error::Ok);
-        CHECK(lf.image().width() == 1920);
-        CHECK(lf.image().height() == 1080);
-        CHECK(lf.image().pixelFormat().id() == PixelFormat::YUV8_420_Planar_Rec709);
+        auto got = lf.uncompressedVideoPayload();
+        REQUIRE(got.isValid());
+        CHECK(got->desc().width() == 1920);
+        CHECK(got->desc().height() == 1080);
+        CHECK(got->desc().pixelFormat().id() == PixelFormat::YUV8_420_Planar_Rec709);
 
         std::remove(fn);
 }

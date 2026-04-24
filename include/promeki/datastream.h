@@ -282,7 +282,8 @@ class DataStream {
                         TypeFrameCount          = 0x44, ///< @brief FrameCount (length-prefixed string round-trip)
                         TypeMediaDuration       = 0x45, ///< @brief MediaDuration (length-prefixed string round-trip)
                         TypeUrl                 = 0x46, ///< @brief Url (length-prefixed string round-trip)
-                        TypeAudioFormat         = 0x47  ///< @brief AudioFormat (length-prefixed name)
+                        TypeAudioFormat         = 0x47, ///< @brief AudioFormat (length-prefixed name)
+                        TypeMediaPayload        = 0x48  ///< @brief MediaPayload (FourCC + common state + subclass-serialised tail)
                 };
 
                 /** @brief Current wire format version. */

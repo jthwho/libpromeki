@@ -127,17 +127,40 @@ Error MediaIOTask_DebugMedia::executeCmd(MediaIOCommandOpen &cmd) {
         _framesRead     = 0;
         _framesWritten  = 0;
 
-        // We intentionally do not peek the first frame here to populate
-        // mediaDesc / frameRate — doing so advances the file cursor and
-        // tripped up the test harness.  Callers that need the format
-        // before the first read can call MediaIO::readFrame once and
-        // inspect the returned Frame.
         cmd.metadata             = _file->sessionInfo();
         cmd.canSeek              = true;
         cmd.frameCount           = _file->frameCount();
         cmd.defaultStep          = 1;
         cmd.defaultPrefetchDepth = 1;
         cmd.defaultWriteDepth    = 0;
+
+        // Peek frame 0 so the MediaIO layer can report mediaDesc /
+        // audioDesc / frameRate without the caller having to read
+        // the first frame first.  The pipeline planner relies on
+        // this to discover the produced MediaDesc of a PMDF source
+        // stage before the pipeline is opened.  We rewind the file
+        // cursor to frame 0 so the caller's first readFrame() still
+        // sees the peeked frame.
+        if(cmd.frameCount.isFinite() && cmd.frameCount.value() > 0) {
+                Frame::Ptr firstFrame;
+                Error pe = _file->readFrameAt(FrameNumber(0), firstFrame);
+                if(pe.isOk() && firstFrame.isValid()) {
+                        MediaDesc md = firstFrame->mediaDesc();
+                        cmd.mediaDesc = md;
+                        cmd.frameRate = md.frameRate();
+                        if(!md.audioList().isEmpty()) {
+                                cmd.audioDesc = md.audioList()[0];
+                        }
+                        // Rewind — readFrame() advanced past the peek;
+                        // seek back so the first real read returns frame 0.
+                        (void)_file->seek(FrameNumber(0));
+                } else if(pe.isError()) {
+                        promekiWarn("MediaIOTask_DebugMedia: peek of frame 0 "
+                                    "failed on '%s' (%s); mediaDesc will be "
+                                    "empty until the first readFrame()",
+                                    _filename.cstr(), pe.name().cstr());
+                }
+        }
         return Error::Ok;
 }
 

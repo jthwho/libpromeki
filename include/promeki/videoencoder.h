@@ -13,10 +13,10 @@
 #include <promeki/error.h>
 #include <promeki/list.h>
 #include <promeki/result.h>
-#include <promeki/image.h>
 #include <promeki/videocodec.h>
 #include <promeki/backendweight.h>
-#include <promeki/videopacket.h>
+#include <promeki/compressedvideopayload.h>
+#include <promeki/uncompressedvideopayload.h>
 #include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -30,8 +30,8 @@ class MediaConfig;
  * A VideoEncoder is a single push-frame / pull-packet codec session.
  * Concrete session classes hold codec state (reference frames,
  * rate-control context, internal allocators, …) across successive
- * @ref submitFrame calls and emit @ref VideoPacket access units via
- * @ref receivePacket as the codec decides they're ready.
+ * @ref submitFrame calls and emit @ref CompressedVideoPayload access
+ * units via @ref receivePacket as the codec decides they're ready.
  *
  * Encoders expose no codec-family metadata directly — the caller asks
  * the @ref codec wrapper returned by @ref codec() instead.  The codec
@@ -85,8 +85,7 @@ class MediaConfig;
  *      packet reflects decode order.
  *   5. When the input stream is exhausted, call @ref flush and keep
  *      draining until @ref receivePacket returns a packet whose
- *      @c Metadata::EndOfStream is set (test with
- *      @ref MediaPacket::isEndOfStream).
+ *      @c MediaPayload::Flags::EndOfStream flag is set.
  *   6. Destroy the encoder.
  *
  * Implementations are not required to be thread-safe.  Each pipeline
@@ -134,7 +133,7 @@ class VideoEncoder {
                  * the factory was registered under, so downstream code
                  * can round-trip through @c codec().toString() to obtain
                  * the canonical @c "Name:Backend" form.  Stamped onto
-                 * every outgoing @ref VideoPacket by the common session
+                 * every outgoing @ref CompressedVideoPayload by the common session
                  * plumbing.
                  */
                 VideoCodec codec() const { return _codec; }
@@ -155,25 +154,31 @@ class VideoEncoder {
                 virtual void configure(const MediaConfig &config);
 
                 /**
-                 * @brief Submits one uncompressed frame for encoding.
+                 * @brief Submits one uncompressed payload for encoding.
                  *
-                 * @param frame The source image in one of the supported
-                 *              uncompressed pixel formats, passed as a
-                 *              shared @ref Image::Ptr so the encoder
-                 *              can retain a reference without copying
-                 *              the plane buffers.  A null Ptr is
-                 *              treated as @ref Error::Invalid.
-                 * @param pts   Presentation timestamp for this frame.
+                 * The payload already carries its own PTS as first-class
+                 * state — callers stamp the payload's PTS before
+                 * submitting.  A null Ptr is treated as @ref Error::Invalid.
+                 *
+                 * @param payload The source payload in one of the
+                 *                backend's supported uncompressed pixel
+                 *                formats (see
+                 *                @ref VideoCodec::encoderSupportedInputs).
                  * @return @c Error::Ok on success, or an error code
-                 *         describing why the frame was rejected.
+                 *         describing why the payload was rejected.
                  */
-                virtual Error submitFrame(const Image::Ptr &frame,
-                                          const MediaTimeStamp &pts = MediaTimeStamp()) = 0;
+                virtual Error submitPayload(const UncompressedVideoPayload::Ptr &payload) = 0;
 
                 /**
-                 * @brief Dequeues one encoded packet, or a null Ptr when none is ready.
+                 * @brief Dequeues one encoded payload, or a null Ptr when none is ready.
+                 *
+                 * The returned @ref CompressedVideoPayload carries the
+                 * access-unit bytes, PTS / DTS / duration, and keyframe /
+                 * parameter-set / end-of-stream flags.  Packets may
+                 * arrive with PTS out of order (B-frames); the DTS
+                 * reflects decode order.
                  */
-                virtual VideoPacket::Ptr receivePacket() = 0;
+                virtual CompressedVideoPayload::Ptr receiveCompressedPayload() = 0;
 
                 /** @brief Signals end-of-stream and asks the encoder to drain remaining packets. */
                 virtual Error flush() = 0;

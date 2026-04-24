@@ -7,8 +7,7 @@
 
 #include <promeki/imagefile.h>
 #include <promeki/imagefileio.h>
-#include <promeki/image.h>
-#include <promeki/videopacket.h>
+#include <promeki/compressedvideopayload.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -23,21 +22,17 @@ Error ImageFile::load(const MediaConfig &config) {
         Error err = _io->load(*this, config);
         if(err.isError()) return err;
 
-        // Attach a VideoPacket to every compressed Image the backend
-        // loaded — plane 0 already holds the encoded bitstream, so we
-        // just wrap it as a zero-copy packet and hand the ownership
-        // over to the Image.  A downstream @ref VideoDecoder consumes
-        // @ref Image::packet to decode intraframe bitstreams (JPEG,
-        // JPEG XS) read from disk.  Every packet is flagged Keyframe
-        // because intraframe codecs have no inter-frame state.
-        for(Image::Ptr &imgPtr : _frame.imageList()) {
-                if(!imgPtr.isValid() || !imgPtr->isCompressed()) continue;
-                if(imgPtr->packet().isValid()) continue;
-                const Buffer::Ptr &plane = imgPtr->plane(0);
-                if(!plane.isValid() || plane->size() == 0) continue;
-                auto pkt = VideoPacket::Ptr::create(plane, imgPtr->pixelFormat());
-                pkt.modify()->addFlag(VideoPacket::Keyframe);
-                imgPtr.modify()->setPacket(std::move(pkt));
+        // Stamp the Keyframe flag onto every compressed video
+        // payload the backend loaded — intraframe codecs (JPEG,
+        // JPEG XS, …) have no inter-frame state, so every loaded
+        // access unit is a self-contained decode entry point.
+        // Downstream readers (Frame::isSafeCutPoint, the raw-
+        // bitstream sink, the inspector) consult the payload's
+        // Keyframe flag directly.
+        for(MediaPayload::Ptr &payloadPtr : _frame.payloadList()) {
+                if(!payloadPtr.isValid()) continue;
+                if(!payloadPtr->as<CompressedVideoPayload>()) continue;
+                payloadPtr.modify()->addFlag(MediaPayload::Keyframe);
         }
         return Error::Ok;
 }

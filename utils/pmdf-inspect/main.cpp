@@ -19,8 +19,6 @@
 #include <promeki/debugmediafile.h>
 #include <promeki/variantquery.h>
 #include <promeki/frame.h>
-#include <promeki/image.h>
-#include <promeki/audio.h>
 #include <promeki/mediaio.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/metadata.h>
@@ -328,23 +326,25 @@ int cmdDumpToc(DebugMediaFile &f) {
 
 Frame::Ptr trimForImage(const Frame::Ptr &in, int imageIdx) {
         if(!in.isValid()) return Frame::Ptr();
-        if(imageIdx < 0 || static_cast<size_t>(imageIdx) >= in->imageList().size())
+        auto vids = in->videoPayloads();
+        if(imageIdx < 0 || static_cast<size_t>(imageIdx) >= vids.size())
                 return Frame::Ptr();
         Frame::Ptr out = Frame::Ptr::create();
         Frame *raw = out.modify();
         raw->metadata() = in->metadata();
-        raw->imageList().pushToBack(in->imageList()[imageIdx]);
+        raw->addPayload(vids[imageIdx]);
         return out;
 }
 
 Frame::Ptr trimForAudio(const Frame::Ptr &in, int audioIdx) {
         if(!in.isValid()) return Frame::Ptr();
-        if(audioIdx < 0 || static_cast<size_t>(audioIdx) >= in->audioList().size())
+        auto auds = in->audioPayloads();
+        if(audioIdx < 0 || static_cast<size_t>(audioIdx) >= auds.size())
                 return Frame::Ptr();
         Frame::Ptr out = Frame::Ptr::create();
         Frame *raw = out.modify();
         raw->metadata() = in->metadata();
-        raw->audioList().pushToBack(in->audioList()[audioIdx]);
+        raw->addPayload(auds[audioIdx]);
         return out;
 }
 

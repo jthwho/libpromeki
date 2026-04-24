@@ -21,10 +21,10 @@
 #include <linux/videodev2.h>
 #include <alsa/asoundlib.h>
 #include <promeki/mediaiotask_v4l2.h>
-#include <promeki/image.h>
-#include <promeki/audio.h>
+#include <promeki/uncompressedvideopayload.h>
+#include <promeki/compressedvideopayload.h>
+#include <promeki/uncompressedaudiopayload.h>
 #include <promeki/frame.h>
-#include <promeki/videopacket.h>
 #include <promeki/pixelformat.h>
 #include <promeki/mediadesc.h>
 #include <promeki/metadata.h>
@@ -1207,41 +1207,38 @@ void MediaIOTask_V4L2::videoCaptureLoop() {
                 imgMeta.set(Metadata::CaptureTime, captureMts);
                 imgMeta.set(Metadata::MediaTimeStamp, captureMts);
 
-                Image img = Image::fromBuffer(imgBuf,
-                                              _imageDesc.size().width(),
-                                              _imageDesc.size().height(),
-                                              pd, imgMeta);
-                if(!img.isValid()) {
-                        promekiWarn("MediaIOTask_V4L2: Image::fromBuffer returned "
-                                    "invalid image (bytesUsed=%zu, expected=%zu, pd=%s)",
-                                    bytesUsed,
-                                    pd.planeSize(0, _imageDesc),
-                                    pd.name().cstr());
-                        noteFrameDropped();
-                        continue;
-                }
-                Image::Ptr imgPtr = Image::Ptr::create(img);
-
-                // Compressed captures (MJPEG, etc.) need a VideoPacket
-                // pointing at the encoded bytes so a downstream
-                // VideoDecoder can find the bitstream via the
-                // Image::packet accessor.  Every V4L2 capture is a
-                // keyframe (no inter-frame prediction at this layer).
+                ImageDesc capDesc(_imageDesc.size(), pd);
+                capDesc.metadata() = imgMeta;
+                VideoPayload::Ptr payload;
                 if(pd.isCompressed()) {
-                        auto pkt = VideoPacket::Ptr::create(imgBuf, pd);
-                        pkt.modify()->setPts(captureMts);
-                        pkt.modify()->setDts(captureMts);
-                        pkt.modify()->addFlag(VideoPacket::Keyframe);
-                        imgPtr.modify()->setPacket(std::move(pkt));
+                        // Compressed captures (MJPEG, etc.): wrap the
+                        // whole kernel buffer as a CompressedVideoPayload.
+                        // Every V4L2 capture is a keyframe (no inter-
+                        // frame prediction at this layer).
+                        auto cvp = CompressedVideoPayload::Ptr::create(
+                                capDesc, imgBuf);
+                        cvp.modify()->setPts(captureMts);
+                        cvp.modify()->setDts(captureMts);
+                        cvp.modify()->addFlag(MediaPayload::Keyframe);
+                        payload = cvp;
+                } else {
+                        // Uncompressed: adopt the kernel buffer as
+                        // plane 0 of an UncompressedVideoPayload.
+                        BufferView planes;
+                        planes.pushToBack(imgBuf, 0, imgBuf->size());
+                        auto uvp = UncompressedVideoPayload::Ptr::create(
+                                capDesc, planes);
+                        uvp.modify()->setPts(captureMts);
+                        payload = uvp;
                 }
 
                 // Drop oldest if queue is over depth to keep latency low
                 while(_videoQueue.size() >= static_cast<size_t>(VideoQueueDepth)) {
-                        Image::Ptr discard;
+                        VideoPayload::Ptr discard;
                         if(!_videoQueue.popOrFail(discard)) break;
                         noteFrameDropped();
                 }
-                _videoQueue.push(std::move(imgPtr));
+                _videoQueue.push(std::move(payload));
                 _framesCaptured.fetch_add(1, std::memory_order_relaxed);
         }
         promekiDebug("MediaIOTask_V4L2: video capture thread exiting  "
@@ -1553,7 +1550,7 @@ Error MediaIOTask_V4L2::executeCmd(MediaIOCommandRead &cmd) {
 
         // Extract the V4L2 capture timestamp and accumulate
         // frame-to-frame timing for the periodic debug report.
-        Variant ctVar = imgPtr->metadata().get(Metadata::CaptureTime);
+        Variant ctVar = imgPtr->desc().metadata().get(Metadata::CaptureTime);
         if(ctVar.isValid()) {
                 MediaTimeStamp ctMts = ctVar.get<MediaTimeStamp>();
                 TimeStamp ct = ctMts.timeStamp();
@@ -1572,7 +1569,7 @@ Error MediaIOTask_V4L2::executeCmd(MediaIOCommandRead &cmd) {
         }
 
         Frame::Ptr frame = Frame::Ptr::create();
-        frame.modify()->imageList().pushToBack(std::move(imgPtr));
+        frame.modify()->addPayload(std::move(imgPtr));
 
         // Wait for enough audio samples to fill this frame.  The
         // audio capture thread pushes continuously at the ALSA rate;
@@ -1606,9 +1603,15 @@ Error MediaIOTask_V4L2::executeCmd(MediaIOCommandRead &cmd) {
                 size_t avail = _audioRing.available();
                 if(avail > 0) {
                         AudioDesc nativeDesc = _audioRing.format();
-                        Audio audio(nativeDesc, avail);
-                        auto [got, err] = _audioRing.pop(audio, avail);
+                        size_t bufBytes = nativeDesc.bufferSize(avail);
+                        Buffer::Ptr pcm = Buffer::Ptr::create(bufBytes);
+                        auto [got, err] = _audioRing.pop(pcm.modify()->data(), avail);
                         if(err.isError()) return err;
+                        size_t usedBytes = nativeDesc.bufferSize(got);
+                        pcm.modify()->setSize(usedBytes);
+                        BufferView view(pcm, 0, usedBytes);
+                        auto audioPayload = UncompressedAudioPayload::Ptr::create(
+                                nativeDesc, got, view);
 
                         // Look up the wall time of the first popped
                         // sample from the push-record queue, and
@@ -1651,10 +1654,10 @@ Error MediaIOTask_V4L2::executeCmd(MediaIOCommandRead &cmd) {
                         TimeStamp audioTs;
                         audioTs.setValue(TimeStamp::Value(
                                 std::chrono::nanoseconds(firstSampleWallNs)));
-                        audio.metadata().set(Metadata::MediaTimeStamp,
+                        audioPayload.modify()->desc().metadata().set(
+                                Metadata::MediaTimeStamp,
                                 MediaTimeStamp(audioTs, AlsaClock));
-                        frame.modify()->audioList().pushToBack(
-                                Audio::Ptr::create(audio));
+                        frame.modify()->addPayload(audioPayload);
                 }
 
                 // Sample the ring level for the periodic average

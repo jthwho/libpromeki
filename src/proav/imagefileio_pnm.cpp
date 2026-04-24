@@ -13,6 +13,8 @@
 #include <promeki/imagefile.h>
 #include <promeki/file.h>
 #include <promeki/buffer.h>
+#include <promeki/uncompressedvideopayload.h>
+#include <promeki/videopayload.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -171,23 +173,26 @@ Error ImageFileIO_PNM::load(ImageFile &imageFile, const MediaConfig &config) con
                 pdId = (maxval >= 256) ? PixelFormat::Mono16_BE_sRGB : PixelFormat::Mono8_sRGB;
         }
 
-        Image image(width, height, PixelFormat(pdId));
-        if(!image.isValid()) {
-                promekiErr("PNM load '%s': failed to allocate image", filename.cstr());
+        ImageDesc idesc(width, height, pdId);
+        auto payload = UncompressedVideoPayload::allocate(idesc);
+        if(!payload.isValid()) {
+                promekiErr("PNM load '%s': failed to allocate payload", filename.cstr());
                 return Error::NoMem;
         }
-
-        size_t imageBytes = image.pixelFormat().memLayout().planeSize(0, width, height);
+        UncompressedVideoPayload *raw = payload.modify();
+        auto view = raw->data()[0];
+        const size_t imageBytes = view.size();
+        uint8_t *dstBase = view.data();
 
         if(pnmIsBinary(type)) {
                 // Binary: direct copy
                 size_t avail = static_cast<size_t>(end - p);
                 size_t toCopy = (avail < imageBytes) ? avail : imageBytes;
-                std::memcpy(image.data(), p, toCopy);
+                std::memcpy(dstBase, p, toCopy);
         } else {
                 // ASCII: parse integers
-                uint8_t *dst8 = static_cast<uint8_t *>(image.data());
-                uint16_t *dst16 = static_cast<uint16_t *>(image.data());
+                uint8_t  *dst8  = dstBase;
+                uint16_t *dst16 = reinterpret_cast<uint16_t *>(dstBase);
                 size_t pixels = imageBytes;
                 if(maxval >= 256) pixels = imageBytes / 2;
 
@@ -206,7 +211,7 @@ Error ImageFileIO_PNM::load(ImageFile &imageFile, const MediaConfig &config) con
         }
 
         Frame frame;
-        frame.imageList().pushToBack(Image::Ptr::create(image));
+        frame.addPayload(payload);
         imageFile.setFrame(frame);
         promekiDebug("PNM load '%s': %ux%u %s (%s)", filename.cstr(), width, height,
                      PixelFormat(pdId).name().cstr(), magic);
@@ -219,18 +224,25 @@ Error ImageFileIO_PNM::load(ImageFile &imageFile, const MediaConfig &config) con
 
 Error ImageFileIO_PNM::save(ImageFile &imageFile, const MediaConfig &config) const {
         (void)config;
-        const Image image = imageFile.image();
         const String &filename = imageFile.filename();
 
-        if(!image.isValid()) {
-                promekiErr("PNM save '%s': image is not valid", filename.cstr());
+        VideoPayload::PtrList vps = imageFile.frame().videoPayloads();
+        const UncompressedVideoPayload *uvp = nullptr;
+        if(!vps.isEmpty() && vps[0].isValid()) uvp = vps[0]->as<UncompressedVideoPayload>();
+        if(uvp == nullptr) {
+                promekiErr("PNM save '%s': no uncompressed video payload", filename.cstr());
+                return Error::Invalid;
+        }
+        const ImageDesc &desc = uvp->desc();
+        if(!desc.isValid() || uvp->planeCount() == 0) {
+                promekiErr("PNM save '%s': payload not valid", filename.cstr());
                 return Error::Invalid;
         }
 
         // Determine PNM type from pixel format
         const char *magic;
         unsigned int maxval;
-        PixelFormat::ID pdId = image.pixelFormat().id();
+        PixelFormat::ID pdId = desc.pixelFormat().id();
 
         switch(pdId) {
                 case PixelFormat::RGB8_sRGB:
@@ -243,16 +255,20 @@ Error ImageFileIO_PNM::save(ImageFile &imageFile, const MediaConfig &config) con
                         magic = "P5"; maxval = 65535; break;
                 default:
                         promekiErr("PNM save '%s': unsupported pixel format '%s'",
-                                   filename.cstr(), image.pixelFormat().name().cstr());
+                                   filename.cstr(), desc.pixelFormat().name().cstr());
                         return Error::PixelFormatNotSupported;
         }
+
+        const size_t width = desc.size().width();
+        const size_t height = desc.size().height();
 
         // Build header
         char header[64];
         int headerLen = std::snprintf(header, sizeof(header), "%s\n%zu %zu\n%u\n",
-                                      magic, image.width(), image.height(), maxval);
+                                      magic, width, height, maxval);
 
-        size_t imageBytes = image.pixelFormat().memLayout().planeSize(0, image.width(), image.height());
+        auto view = uvp->plane(0);
+        const size_t imageBytes = view.size();
 
         File file(filename);
         Error err = file.open(File::WriteOnly, File::Create | File::Truncate);
@@ -266,12 +282,12 @@ Error ImageFileIO_PNM::save(ImageFile &imageFile, const MediaConfig &config) con
         if(written != headerLen) { file.close(); return Error::IOError; }
 
         // Write binary pixel data
-        written = file.write(image.data(), static_cast<int64_t>(imageBytes));
+        written = file.write(view.data(), static_cast<int64_t>(imageBytes));
         if(written != static_cast<int64_t>(imageBytes)) { file.close(); return Error::IOError; }
 
         file.close();
         promekiDebug("PNM save '%s': %zux%zu %s", filename.cstr(),
-                     image.width(), image.height(), image.pixelFormat().name().cstr());
+                     width, height, desc.pixelFormat().name().cstr());
         return Error::Ok;
 }
 

@@ -25,8 +25,8 @@ PROMEKI_NAMESPACE_BEGIN
  * Thin subclass of @ref VariantDatabase "VariantDatabase<"MediaConfig">"
  * that adds a canonical catalog of well-known @ref ID constants for every
  * configurable knob in libpromeki.  All media components — @ref MediaIO
- * backends, @ref Image::convert, @ref CSCPipeline — share this single
- * registry so:
+ * backends, @ref UncompressedVideoPayload::convert, @ref CSCPipeline —
+ * share this single registry so:
  *
  * - A key set at one layer can be forwarded to another without any
  *   translation or key mapping.

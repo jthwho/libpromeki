@@ -8,8 +8,6 @@
 #include <cmath>
 #include <promeki/mediaiotask_tpg.h>
 #include <promeki/videoformat.h>
-#include <promeki/image.h>
-#include <promeki/audio.h>
 #include <promeki/frame.h>
 #include <promeki/pixelformat.h>
 #include <promeki/metadata.h>
@@ -19,6 +17,7 @@
 #include <promeki/imagedataencoder.h>
 #include <promeki/logger.h>
 #include <promeki/mediaiodescription.h>
+#include <promeki/uncompressedvideopayload.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -384,9 +383,9 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandRead &cmd) {
                 size_t samples = _frameRate.samplesPerFrame(
                         static_cast<int64_t>(_audioDesc.sampleRate()),
                         _frameCount.value());
-                Audio audio = _audioPattern->create(samples, tc);
-                if(audio.isValid()) {
-                        frame.modify()->audioList().pushToBack(Audio::Ptr::create(audio));
+                auto payload = _audioPattern->createPayload(samples, tc);
+                if(payload.isValid()) {
+                        frame.modify()->addPayload(payload);
                 }
         }
 
@@ -394,13 +393,21 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandRead &cmd) {
         // frame so the per-frame burn template (resolved below) can see
         // it via {Image[0].*} and {VideoFormat}.
         if(_videoEnabled) {
-                Image img = _videoPattern.create(_imageDesc, _motionOffset,
-                                                 _timecodeEnabled ? tc : Timecode());
-                if(_timecodeEnabled) {
-                        img.metadata().set(Metadata::Timecode, tc);
+                auto payload = _videoPattern.createPayload(
+                        _imageDesc, _motionOffset,
+                        _timecodeEnabled ? tc : Timecode());
+                if(payload.isValid()) {
+                        if(_timecodeEnabled) {
+                                // Stamp on the descriptor's metadata —
+                                // that's what toImage() surfaces on
+                                // the materialised Image's metadata()
+                                // and what payload-native readers see
+                                // via VideoPayload::desc().metadata().
+                                payload.modify()->desc().metadata().set(
+                                        Metadata::Timecode, tc);
+                        }
+                        frame.modify()->addPayload(payload);
                 }
-                frame.modify()->imageList().pushToBack(
-                        Image::Ptr::create(std::move(img)));
         }
 
         // Frame-level metadata.  Written before the burn template
@@ -412,21 +419,40 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandRead &cmd) {
                 frame.modify()->metadata().set(Metadata::Timecode, tc);
         }
 
-        // Resolve and apply the burn against the now-populated frame.
-        // All mutations go through the Image::Ptr already inside the
-        // frame's imageList so the frame always reflects the final
-        // state.  modify() on the Ptr detaches from the cached
-        // background plane; ensureExclusive() detaches the pixel
-        // buffers so painting is safe.
+        // Resolve and apply the burn / data-encoder against the
+        // now-populated frame.  Mutations go through the last video
+        // payload @ref Frame::addImage pushed onto
+        // @ref payloadList — downstream pipeline stages consume the
+        // payload list, and the paint / data-encoder entries take an
+        // @ref UncompressedVideoPayload directly.
+        //
+        // To keep the mutation in the list's slot (rather than on a
+        // CoW-clone the caller never sees) we call @c modify() on
+        // the @ref MediaPayload::Ptr stored in the list.  CoW clones
+        // the payload when it's shared — the virtual clone hook
+        // preserves the @c UncompressedVideoPayload type — so the
+        // subsequent @c static_cast is safe.
+        auto lastVideoPayloadSlot = [&](Frame *f) -> MediaPayload::Ptr * {
+                MediaPayload::PtrList &list = f->payloadList();
+                for(size_t i = list.size(); i > 0; --i) {
+                        MediaPayload::Ptr &slot = list[i - 1];
+                        if(!slot.isValid()) continue;
+                        if(slot->as<UncompressedVideoPayload>()) return &slot;
+                }
+                return nullptr;
+        };
+
         if(_videoEnabled && _burnEnabled && !_burnTextTemplate.isEmpty()) {
                 String burnText = VariantLookup<Frame>::format(*frame, _burnTextTemplate);
                 if(!burnText.isEmpty()) {
-                        Image *imgMut = frame.modify()->imageList().back().modify();
-                        imgMut->ensureExclusive();
-                        Error burnErr = _videoPattern.applyBurn(*imgMut, burnText);
-                        if(burnErr.isError()) {
-                                promekiWarn("MediaIOTask_TPG: applyBurn failed: %s",
-                                            burnErr.name().cstr());
+                        if(MediaPayload::Ptr *slot = lastVideoPayloadSlot(frame.modify())) {
+                                auto *uvp = static_cast<UncompressedVideoPayload *>(slot->modify());
+                                uvp->ensureExclusive();
+                                Error burnErr = _videoPattern.applyBurn(*uvp, burnText);
+                                if(burnErr.isError()) {
+                                        promekiWarn("MediaIOTask_TPG: applyBurn failed: %s",
+                                                    burnErr.name().cstr());
+                                }
                         }
                 }
         }
@@ -447,12 +473,14 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandRead &cmd) {
                 List<ImageDataEncoder::Item> items;
                 items.pushToBack({ 0, _dataEncoderRepeat, frameId });
                 items.pushToBack({ _dataEncoderRepeat, _dataEncoderRepeat, tcBcd });
-                Image *imgMut = frame.modify()->imageList().back().modify();
-                imgMut->ensureExclusive();
-                Error encErr = _dataEncoder.encode(*imgMut, items);
-                if(encErr.isError()) {
-                        promekiWarn("MediaIOTask_TPG: data encoder pass "
-                                    "failed: %s", encErr.name().cstr());
+                if(MediaPayload::Ptr *slot = lastVideoPayloadSlot(frame.modify())) {
+                        auto *uvp = static_cast<UncompressedVideoPayload *>(slot->modify());
+                        uvp->ensureExclusive();
+                        Error encErr = _dataEncoder.encode(*uvp, items);
+                        if(encErr.isError()) {
+                                promekiWarn("MediaIOTask_TPG: data encoder pass "
+                                            "failed: %s", encErr.name().cstr());
+                        }
                 }
         }
 

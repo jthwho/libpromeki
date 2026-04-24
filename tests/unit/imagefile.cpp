@@ -7,19 +7,20 @@
 
 #include <doctest/doctest.h>
 #include <promeki/imagefile.h>
+#include <promeki/uncompressedvideopayload.h>
 
 using namespace promeki;
 
 TEST_CASE("ImageFile: default construction") {
         ImageFile f;
         CHECK(f.filename().isEmpty());
-        CHECK(!f.image().isValid());
+        CHECK(!f.videoPayload().isValid());
 }
 
 TEST_CASE("ImageFile: construction with ID") {
         ImageFile f(ImageFile::PNG);
         CHECK(f.filename().isEmpty());
-        CHECK(!f.image().isValid());
+        CHECK(!f.videoPayload().isValid());
 }
 
 TEST_CASE("ImageFile: filename accessors") {
@@ -31,31 +32,30 @@ TEST_CASE("ImageFile: filename accessors") {
         CHECK(f.filename() == "/tmp/other.png");
 }
 
-TEST_CASE("ImageFile: image accessors") {
+TEST_CASE("ImageFile: payload accessors") {
         ImageFile f;
-        CHECK(!f.image().isValid());
-        Image img(64, 64, PixelFormat::RGBA8_sRGB);
-        REQUIRE(img.isValid());
-        f.setImage(img);
-        CHECK(f.image().isValid());
-        CHECK(f.image().width() == 64);
-        CHECK(f.image().height() == 64);
+        CHECK(!f.videoPayload().isValid());
+        auto payload = UncompressedVideoPayload::allocate(
+                ImageDesc(64, 64, PixelFormat::RGBA8_sRGB));
+        REQUIRE(payload.isValid());
+        f.setVideoPayload(payload);
+        auto got = f.videoPayload();
+        CHECK(got.isValid());
+        CHECK(got->desc().width() == 64);
+        CHECK(got->desc().height() == 64);
 }
 
 TEST_CASE("ImageFile: isValid states") {
-        // Default constructed with Invalid ID
         ImageFile invalid;
-        // No filename and no image, not in a loadable/savable state
         CHECK(invalid.filename().isEmpty());
-        CHECK(!invalid.image().isValid());
+        CHECK(!invalid.videoPayload().isValid());
 
-        // Constructed with PNG ID and given a filename
         ImageFile valid(ImageFile::PNG);
         valid.setFilename("/tmp/test.png");
         CHECK(!valid.filename().isEmpty());
 
-        // With an image set as well
-        Image img(32, 32, PixelFormat::RGBA8_sRGB);
-        valid.setImage(img);
-        CHECK(valid.image().isValid());
+        auto payload = UncompressedVideoPayload::allocate(
+                ImageDesc(32, 32, PixelFormat::RGBA8_sRGB));
+        valid.setVideoPayload(payload);
+        CHECK(valid.videoPayload().isValid());
 }

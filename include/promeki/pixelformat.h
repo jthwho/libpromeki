@@ -20,6 +20,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 class Image;
 class ImageDesc;
+class UncompressedVideoPayload;
 class PaintEngine;
 
 /**
@@ -443,7 +444,7 @@ class PixelFormat {
                          * @param img The image to create a paint engine for.
                          * @return A PaintEngine, or an invalid PaintEngine if not supported.
                          */
-                        PaintEngine (*createPaintEngineFunc)(const Data *d, const Image &img) = nullptr;
+                        PaintEngine (*createPaintEngineFunc)(const Data *d, const UncompressedVideoPayload &payload) = nullptr;
                 };
 
                 /**
@@ -598,14 +599,14 @@ class PixelFormat {
                 size_t planeSize(size_t planeIndex, const ImageDesc &desc) const;
 
                 /**
-                 * @brief Creates a PaintEngine for drawing on the given image.
+                 * @brief Creates a PaintEngine for drawing on the given payload.
                  *
                  * Returns an invalid PaintEngine for compressed formats.
                  *
-                 * @param img The image to create a paint engine for.
+                 * @param payload The uncompressed video payload to create a paint engine for.
                  * @return A PaintEngine configured for this pixel description.
                  */
-                PaintEngine createPaintEngine(const Image &img) const;
+                PaintEngine createPaintEngine(const UncompressedVideoPayload &payload) const;
 
                 /**
                  * @brief Returns whether this pixel format has a registered
@@ -615,7 +616,8 @@ class PixelFormat {
                  * will return an invalid no-op engine from @c createPaintEngine
                  * rather than a working one.  Callers that need to draw
                  * directly can use this to decide whether to render via an
-                 * RGB scratch image followed by @c Image::convert().
+                 * RGB scratch payload followed by
+                 * @c UncompressedVideoPayload::convert().
                  *
                  * @return @c true if @c createPaintEngine would return a
                  *         working engine, @c false otherwise.

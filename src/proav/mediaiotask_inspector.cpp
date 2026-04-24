@@ -11,7 +11,6 @@
 #include <ctime>
 #include <unistd.h>
 #include <promeki/mediaiotask_inspector.h>
-#include <promeki/audio.h>
 #include <promeki/audiodesc.h>
 #include <promeki/buffer.h>
 #include <promeki/clockdomain.h>
@@ -19,7 +18,12 @@
 #include <promeki/enumlist.h>
 #include <promeki/enums.h>
 #include <promeki/frame.h>
-#include <promeki/image.h>
+#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/uncompressedvideopayload.h>
+#include <promeki/compressedvideopayload.h>
+#include <promeki/videocodec.h>
+#include <promeki/videodecoder.h>
+#include <promeki/mediaconfig.h>
 #include <promeki/imagedesc.h>
 #include <promeki/ltcdecoder.h>
 #include <promeki/pixelformat.h>
@@ -86,16 +90,13 @@ void formatIsoUtc(int64_t epochNs, char *out, size_t outLen) {
                 tm.tm_hour, tm.tm_min, tm.tm_sec, msec);
 }
 
-// Sums every plane's buffer into one byte count — gives the "on the
-// wire" frame size, which is what a stats-file reader most likely
-// wants.  Returns 0 if the image has no planes.
-size_t imageByteSize(const Image &img) {
-        size_t total = 0;
-        const Buffer::PtrList &planes = img.planes();
-        for(size_t i = 0; i < planes.size(); ++i) {
-                if(planes[i].isValid()) total += planes[i]->size();
-        }
-        return total;
+// Sums every plane's bytes into one count — gives the "on the wire"
+// frame size, which is what a stats-file reader most likely wants.
+// Returns 0 if the payload has no planes.  MediaPayload::size()
+// already performs the sum, so this is now a thin wrapper kept for
+// call-site clarity at the CSV-row assembly point.
+size_t payloadByteSize(const VideoPayload &vp) {
+        return vp.size();
 }
 
 }  // namespace
@@ -453,21 +454,31 @@ Error MediaIOTask_Inspector::executeCmd(MediaIOCommandClose &cmd) {
 }
 
 void MediaIOTask_Inspector::decompressImages(Frame &frame) {
-        // Walk every image in the frame; any that carries a
-        // compressed PixelFormat gets replaced in-place with the
-        // decompressed output of Image::convert().  The target
-        // format is the first entry in the codec's decodeTargets
-        // list — guaranteed to be a native decode format so
-        // convert() skips the post-decode CSC stage.  If the codec
-        // advertises no decode targets (shouldn't happen for a
-        // working codec), we fall back to RGBA8_sRGB which every
-        // codec can reach via CSC.
-        Image::PtrList &images = frame.imageList();
-        for(size_t i = 0; i < images.size(); ++i) {
-                Image::Ptr &imgPtr = images[i];
-                if(!imgPtr.isValid() || !imgPtr->isCompressed()) continue;
+        // Walk every video payload in the frame.  Any that carries
+        // a compressed PixelFormat is replaced in-place with an
+        // uncompressed @ref UncompressedVideoPayload produced by a
+        // short-lived @ref VideoDecoder session.  The target format
+        // is the first entry in the codec's decodeTargets list —
+        // guaranteed to be a native decode format so the decoder
+        // can skip any post-decode CSC.  When the codec advertises
+        // no decode targets, fall back to @c RGBA8_sRGB and let the
+        // payload-native CSC land it via
+        // @ref UncompressedVideoPayload::convert.
+        for(MediaPayload::Ptr &payloadPtr : frame.payloadList()) {
+                if(!payloadPtr.isValid()) continue;
+                const auto *cvpConst = payloadPtr->as<CompressedVideoPayload>();
+                if(cvpConst == nullptr) continue;
 
-                const PixelFormat &srcPd = imgPtr->desc().pixelFormat();
+                const PixelFormat &srcPd = cvpConst->desc().pixelFormat();
+                const VideoCodec codec = srcPd.videoCodec();
+                if(!codec.isValid() || !codec.canDecode()) {
+                        promekiWarn("MediaIOTask_Inspector: no decoder for "
+                                    "%s — skipping decompress on frame %lld",
+                                    srcPd.name().cstr(),
+                                    static_cast<long long>(_frameIndex.value()));
+                        continue;
+                }
+
                 PixelFormat targetPd;
                 if(!srcPd.decodeTargets().isEmpty()) {
                         targetPd = PixelFormat(srcPd.decodeTargets()[0]);
@@ -475,16 +486,70 @@ void MediaIOTask_Inspector::decompressImages(Frame &frame) {
                         targetPd = PixelFormat(PixelFormat::RGBA8_sRGB);
                 }
 
-                Image decoded = imgPtr->convert(targetPd, imgPtr->metadata());
-                if(!decoded.isValid()) {
+                MediaConfig cfg;
+                cfg.set(MediaConfig::VideoSize, cvpConst->desc().size());
+                // Ask the decoder for a native output first; we CSC to
+                // targetPd below if the decoder's emitted format differs.
+                const auto supportedOut = codec.decoderSupportedOutputs();
+                bool targetOk = supportedOut.isEmpty();
+                for(const PixelFormat &s : supportedOut) {
+                        if(s == targetPd) { targetOk = true; break; }
+                }
+                if(targetOk) cfg.set(MediaConfig::OutputPixelFormat, targetPd);
+
+                auto decRes = codec.createDecoder(&cfg);
+                if(error(decRes).isError()) {
+                        promekiWarn("MediaIOTask_Inspector: createDecoder "
+                                    "failed for %s on frame %lld",
+                                    srcPd.name().cstr(),
+                                    static_cast<long long>(_frameIndex.value()));
+                        continue;
+                }
+                VideoDecoder *dec = value(decRes);
+
+                // Re-cast to mutable Ptr for the decoder's const-Ptr
+                // parameter.  The decoder doesn't mutate the payload;
+                // sharedPointerCast keeps ownership shared.
+                auto cvpPtr = sharedPointerCast<CompressedVideoPayload>(payloadPtr);
+                if(!cvpPtr.isValid()) { delete dec; continue; }
+
+                Error err = dec->submitPayload(cvpPtr);
+                UncompressedVideoPayload::Ptr out;
+                if(err.isOk()) out = dec->receiveVideoPayload();
+                delete dec;
+
+                if(!out.isValid()) {
                         promekiWarn("MediaIOTask_Inspector: failed to decompress "
-                                    "%s image on frame %lld — downstream checks "
+                                    "%s payload on frame %lld — downstream checks "
                                     "may report failures",
                                     srcPd.name().cstr(),
                                     static_cast<long long>(_frameIndex.value()));
                         continue;
                 }
-                imgPtr = Image::Ptr::create(std::move(decoded));
+
+                // Finish the hop to targetPd via payload-native CSC
+                // when the decoder didn't emit it directly.
+                if(out->desc().pixelFormat() != targetPd) {
+                        auto csc = out->convert(targetPd, out->metadata());
+                        if(csc.isValid()) out = csc;
+                }
+
+                // Carry the MediaTimeStamp from the compressed source
+                // onto the decoded payload.  The outer MediaIO already
+                // stamped a synthetic MTS on the compressed payload in
+                // writeFrame, but that stamp lives on the old payload's
+                // descriptor — replacing the Ptr here drops it, and the
+                // timestamp continuity check would then report every
+                // decoded frame as "missing MediaTimeStamp".
+                MediaTimeStamp srcMts = cvpConst->desc().metadata()
+                        .get(Metadata::MediaTimeStamp)
+                        .get<MediaTimeStamp>();
+                if(srcMts.isValid()) {
+                        out.modify()->desc().metadata().set(
+                                Metadata::MediaTimeStamp, srcMts);
+                }
+
+                payloadPtr = out;
         }
 }
 
@@ -493,28 +558,25 @@ void MediaIOTask_Inspector::initDecoders(const Frame &frame) {
 
         // Picture decoder needs a valid image to learn the descriptor.
         if(_decodeImageData) {
-                if(!frame.imageList().isEmpty()) {
-                        const Image::Ptr &imgPtr = frame.imageList()[0];
-                        if(imgPtr.isValid()) {
-                                _imageDataDecoder = ImageDataDecoder(imgPtr->desc());
-                                if(!_imageDataDecoder.isValid()) {
-                                        promekiWarn("MediaIOTask_Inspector: image data decoder "
-                                                    "could not be initialised for %s",
-                                                    imgPtr->desc().toString().cstr());
-                                }
+                auto vids = frame.videoPayloads();
+                if(!vids.isEmpty() && vids[0].isValid()) {
+                        const ImageDesc &d = vids[0]->desc();
+                        _imageDataDecoder = ImageDataDecoder(d);
+                        if(!_imageDataDecoder.isValid()) {
+                                promekiWarn("MediaIOTask_Inspector: image data decoder "
+                                            "could not be initialised for %s",
+                                            d.toString().cstr());
                         }
                 }
         }
 
         // LTC decoder needs the audio sample rate.
         if(_decodeLtc) {
-                if(!frame.audioList().isEmpty()) {
-                        const Audio::Ptr &aud = frame.audioList()[0];
-                        if(aud.isValid()) {
-                                const int rate = static_cast<int>(aud->desc().sampleRate());
-                                if(rate > 0) {
-                                        _ltcDecoder = LtcDecoder::UPtr::create(rate);
-                                }
+                auto auds = frame.audioPayloads();
+                if(!auds.isEmpty() && auds[0].isValid()) {
+                        const int rate = static_cast<int>(auds[0]->desc().sampleRate());
+                        if(rate > 0) {
+                                _ltcDecoder = LtcDecoder::UPtr::create(rate);
                         }
                 }
         }
@@ -541,9 +603,12 @@ void MediaIOTask_Inspector::runImageDataCheck(const Frame &frame, InspectorEvent
         // any early return below leaves the event's defaults intact.
 
         if(!_imageDataDecoder.isValid()) return;
-        if(frame.imageList().isEmpty()) return;
-        const Image::Ptr &imgPtr = frame.imageList()[0];
-        if(!imgPtr.isValid()) return;
+        auto vids = frame.videoPayloads();
+        if(vids.isEmpty()) return;
+        const VideoPayload::Ptr &vp = vids[0];
+        if(!vp.isValid()) return;
+        const auto *uvp = vp->as<UncompressedVideoPayload>();
+        if(uvp == nullptr) return;  // picture-data band decoder runs on raster only
 
         // Two TPG-convention bands: frame ID at lines [0, N), timecode
         // at lines [N, 2N), where N = _imageDataRepeatLines.
@@ -554,7 +619,7 @@ void MediaIOTask_Inspector::runImageDataCheck(const Frame &frame, InspectorEvent
                            static_cast<uint32_t>(_imageDataRepeatLines) });
 
         ImageDataDecoder::DecodedList items;
-        Error err = _imageDataDecoder.decode(*imgPtr, bands, items);
+        Error err = _imageDataDecoder.decode(*uvp, bands, items);
         if(err.isError() || items.size() != 2) return;
         if(items[0].error.isError() || items[1].error.isError()) return;
 
@@ -579,20 +644,23 @@ void MediaIOTask_Inspector::runImageDataCheck(const Frame &frame, InspectorEvent
 void MediaIOTask_Inspector::runLtcCheck(const Frame &frame, InspectorEvent &event) {
         event.ltcDecoderEnabled = true;
         if(!_ltcDecoder) return;
-        if(frame.audioList().isEmpty()) return;
-        const Audio::Ptr &aud = frame.audioList()[0];
-        if(!aud.isValid()) return;
+        auto auds = frame.audioPayloads();
+        if(auds.isEmpty()) return;
+        const AudioPayload::Ptr &ap = auds[0];
+        if(!ap.isValid()) return;
+        const auto *uap = ap->as<UncompressedAudioPayload>();
+        if(uap == nullptr) return;  // LTC only decodes from PCM
 
         // Capture the cumulative-sample anchor that marks the start of
         // *this* audio chunk before we feed it to the decoder, so we
         // can convert the decoder's absolute sampleStart values into
         // within-chunk offsets afterwards.  LtcDecoder accepts the
-        // raw Audio in any format and pulls the named channel itself,
-        // so the inspector no longer has to do its own demux + int8
-        // conversion.
+        // raw payload in any PCM format and pulls the named channel
+        // itself, so the inspector no longer has to do its own demux
+        // + int8 conversion.
         const int64_t chunkStartAbs = _ltcCumulativeSamples;
-        auto results = _ltcDecoder->decode(*aud, _ltcChannel);
-        _ltcCumulativeSamples += static_cast<int64_t>(aud->samples());
+        auto results = _ltcDecoder->decode(*uap, _ltcChannel);
+        _ltcCumulativeSamples += static_cast<int64_t>(uap->sampleCount());
 
         if(results.isEmpty()) return;
 
@@ -627,10 +695,11 @@ void MediaIOTask_Inspector::runAvSyncCheck(const Frame &frame, InspectorEvent &e
         if(!_checkTcSync) return;
         if(!event.pictureDecoded || !event.ltcDecoded) return;
         if(!event.ltcTimecode.isValid()) return;
-        if(frame.audioList().isEmpty()) return;
-        const Audio::Ptr &aud = frame.audioList()[0];
-        if(!aud.isValid()) return;
-        const int64_t sampleRate = static_cast<int64_t>(aud->desc().sampleRate());
+        auto auds = frame.audioPayloads();
+        if(auds.isEmpty()) return;
+        const AudioPayload::Ptr &ap = auds[0];
+        if(!ap.isValid()) return;
+        const int64_t sampleRate = static_cast<int64_t>(ap->desc().sampleRate());
         if(sampleRate <= 0) return;
 
         // The picture-side BCD wire format only carries digits + the
@@ -833,37 +902,34 @@ void MediaIOTask_Inspector::runContinuityCheck(InspectorEvent &event) {
 void MediaIOTask_Inspector::runTimestampCheck(const Frame &frame, InspectorEvent &event) {
         event.timestampTestEnabled = true;
 
-        // Pull the per-essence MediaTimeStamps.  MediaIO is
-        // responsible for ensuring every essence carries one (backends
-        // with hardware timestamps set them directly; MediaIO fills in
-        // a Synthetic fallback otherwise), so "missing" here is a real
-        // fault — we surface it as a warning and a discontinuity.
-        if(!frame.imageList().isEmpty()) {
-                const Image::Ptr &imgPtr = frame.imageList()[0];
-                if(imgPtr.isValid()) {
-                        MediaTimeStamp mts = imgPtr->metadata()
-                                .get(Metadata::MediaTimeStamp)
-                                .get<MediaTimeStamp>();
-                        if(mts.isValid()) {
-                                event.videoTimestampValid = true;
-                                event.videoTimestampNs =
-                                        mts.timeStamp().nanoseconds() +
-                                        mts.offset().nanoseconds();
-                        }
+        // Pull the per-essence MediaTimeStamps from the payload
+        // descriptors.  MediaIO is responsible for ensuring every
+        // essence carries one (backends with hardware timestamps set
+        // them directly; MediaIO fills in a Synthetic fallback
+        // otherwise), so "missing" here is a real fault — we surface
+        // it as a warning and a discontinuity.
+        auto vids = frame.videoPayloads();
+        if(!vids.isEmpty() && vids[0].isValid()) {
+                MediaTimeStamp mts = vids[0]->desc().metadata()
+                        .get(Metadata::MediaTimeStamp)
+                        .get<MediaTimeStamp>();
+                if(mts.isValid()) {
+                        event.videoTimestampValid = true;
+                        event.videoTimestampNs =
+                                mts.timeStamp().nanoseconds() +
+                                mts.offset().nanoseconds();
                 }
         }
-        if(!frame.audioList().isEmpty()) {
-                const Audio::Ptr &audPtr = frame.audioList()[0];
-                if(audPtr.isValid()) {
-                        MediaTimeStamp mts = audPtr->metadata()
-                                .get(Metadata::MediaTimeStamp)
-                                .get<MediaTimeStamp>();
-                        if(mts.isValid()) {
-                                event.audioTimestampValid = true;
-                                event.audioTimestampNs =
-                                        mts.timeStamp().nanoseconds() +
-                                        mts.offset().nanoseconds();
-                        }
+        auto auds = frame.audioPayloads();
+        if(!auds.isEmpty() && auds[0].isValid()) {
+                MediaTimeStamp mts = auds[0]->desc().metadata()
+                        .get(Metadata::MediaTimeStamp)
+                        .get<MediaTimeStamp>();
+                if(mts.isValid()) {
+                        event.audioTimestampValid = true;
+                        event.audioTimestampNs =
+                                mts.timeStamp().nanoseconds() +
+                                mts.offset().nanoseconds();
                 }
         }
 
@@ -887,7 +953,7 @@ void MediaIOTask_Inspector::runTimestampCheck(const Frame &frame, InspectorEvent
         // fire unconditionally rather than "only after a previously
         // valid frame" because MediaIO guarantees one on every essence
         // — the very first missing stamp is already a real failure.
-        if(!frame.imageList().isEmpty() && !event.videoTimestampValid) {
+        if(!vids.isEmpty() && !event.videoTimestampValid) {
                 InspectorDiscontinuity d;
                 d.kind          = InspectorDiscontinuity::MissingVideoTimestamp;
                 d.previousValue = String("valid");
@@ -895,7 +961,7 @@ void MediaIOTask_Inspector::runTimestampCheck(const Frame &frame, InspectorEvent
                 d.description   = String("Video MediaTimeStamp missing on frame");
                 event.discontinuities.pushToBack(d);
         }
-        if(!frame.audioList().isEmpty() && !event.audioTimestampValid) {
+        if(!auds.isEmpty() && !event.audioTimestampValid) {
                 InspectorDiscontinuity d;
                 d.kind          = InspectorDiscontinuity::MissingAudioTimestamp;
                 d.previousValue = String("valid");
@@ -924,11 +990,15 @@ void MediaIOTask_Inspector::runTimestampCheck(const Frame &frame, InspectorEvent
 void MediaIOTask_Inspector::runAudioSamplesCheck(const Frame &frame, InspectorEvent &event) {
         event.audioSamplesTestEnabled = true;
 
-        if(frame.audioList().isEmpty()) return;
-        const Audio::Ptr &audPtr = frame.audioList()[0];
-        if(!audPtr.isValid()) return;
+        auto auds = frame.audioPayloads();
+        if(auds.isEmpty()) return;
+        const AudioPayload::Ptr &ap = auds[0];
+        if(!ap.isValid()) return;
+        // Sample counts only apply to uncompressed PCM payloads.
+        const auto *uap = ap->as<UncompressedAudioPayload>();
+        if(uap == nullptr) return;
 
-        const int64_t n = static_cast<int64_t>(audPtr->samples());
+        const int64_t n = static_cast<int64_t>(uap->sampleCount());
         event.audioSamplesValid     = true;
         event.audioSamplesThisFrame = n;
 
@@ -939,7 +1009,7 @@ void MediaIOTask_Inspector::runAudioSamplesCheck(const Frame &frame, InspectorEv
         // mark is the time from anchor to the *next* frame, not the
         // samples that precede the anchor.  Any timestamp gap resets
         // the anchor so the next valid chunk starts a fresh window.
-        MediaTimeStamp audMts = audPtr->metadata()
+        MediaTimeStamp audMts = uap->desc().metadata()
                 .get(Metadata::MediaTimeStamp)
                 .get<MediaTimeStamp>();
         if(!audMts.isValid()) {
@@ -1225,16 +1295,18 @@ void MediaIOTask_Inspector::runCaptureStats(const Frame &frame,
         String imgHeight      = String("-");
         String pixelFormat      = String("-");
         String imageBytes     = String("-");
-        if(!frame.imageList().isEmpty()) {
-                const Image::Ptr &imgPtr = frame.imageList()[0];
-                if(imgPtr.isValid()) {
-                        imgWidth    = String::number(imgPtr->size().width());
-                        imgHeight   = String::number(imgPtr->size().height());
-                        pixelFormat   = PixelFormat(imgPtr->desc().pixelFormat()).name();
+        {
+                auto vids = frame.videoPayloads();
+                if(!vids.isEmpty() && vids[0].isValid()) {
+                        const VideoPayload &vp = *vids[0];
+                        const ImageDesc &id = vp.desc();
+                        imgWidth    = String::number(id.size().width());
+                        imgHeight   = String::number(id.size().height());
+                        pixelFormat = id.pixelFormat().name();
                         imageBytes  = String::number(static_cast<int64_t>(
-                                imageByteSize(*imgPtr)));
+                                payloadByteSize(vp)));
 
-                        MediaTimeStamp mts = imgPtr->metadata()
+                        MediaTimeStamp mts = id.metadata()
                                 .get(Metadata::MediaTimeStamp)
                                 .get<MediaTimeStamp>();
                         if(mts.isValid()) {
@@ -1262,21 +1334,26 @@ void MediaIOTask_Inspector::runCaptureStats(const Frame &frame,
         String audioRateHz    = String("-");
         String audioChannels  = String("-");
         String audioBytes     = String("-");
-        if(!frame.audioList().isEmpty()) {
-                const Audio::Ptr &audPtr = frame.audioList()[0];
-                if(audPtr.isValid()) {
-                        const AudioDesc &ad = audPtr->desc();
-                        audioSamples  = String::number(static_cast<int64_t>(
-                                audPtr->samples()));
+        {
+                auto auds = frame.audioPayloads();
+                if(!auds.isEmpty() && auds[0].isValid()) {
+                        const AudioPayload &ap = *auds[0];
+                        const AudioDesc &ad = ap.desc();
+                        // Sample count is only meaningful for PCM
+                        // payloads; compressed audio reports zero here.
+                        const auto *uap = ap.as<UncompressedAudioPayload>();
+                        const size_t sampleCount = uap != nullptr
+                                ? uap->sampleCount() : size_t(0);
+                        audioSamples  = String::number(static_cast<int64_t>(sampleCount));
                         audioFormat   = ad.format().name();
                         audioRateHz   = String::sprintf("%.2f", ad.sampleRate());
                         audioChannels = String::number(static_cast<int64_t>(
                                 ad.channels()));
                         audioBytes    = String::number(static_cast<int64_t>(
                                 ad.bytesPerSample() * ad.channels() *
-                                audPtr->samples()));
+                                sampleCount));
 
-                        MediaTimeStamp mts = audPtr->metadata()
+                        MediaTimeStamp mts = ad.metadata()
                                 .get(Metadata::MediaTimeStamp)
                                 .get<MediaTimeStamp>();
                         if(mts.isValid()) {

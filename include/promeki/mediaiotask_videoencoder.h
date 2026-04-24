@@ -11,7 +11,6 @@
 #include <promeki/mediaiotask.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/videoencoder.h>
-#include <promeki/mediapacket.h>
 #include <promeki/string.h>
 #include <promeki/videocodec.h>
 
@@ -23,12 +22,12 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @c MediaIOTask_VideoEncoder wires a @ref VideoEncoder session into
  * the MediaIO command/signal model.  It accepts a Frame on
- * @c writeFrame(), feeds @ref Image "image[0]" into the encoder via
- * @ref VideoEncoder::submitFrame, and drains @ref
- * VideoEncoder::receivePacket producing one output Frame per emitted
- * @ref VideoPacket.  Audio tracks on the source Frame are forwarded
- * alongside each output packet so downstream stages still see them
- * on the same PTS.
+ * @c writeFrame(), feeds the first @ref UncompressedVideoPayload into
+ * the encoder via @ref VideoEncoder::submitPayload, and drains
+ * @ref VideoEncoder::receiveCompressedPayload producing one output
+ * Frame per emitted @ref CompressedVideoPayload.  Audio tracks on the
+ * source Frame are forwarded alongside each output payload so
+ * downstream stages still see them on the same PTS.
  *
  * The registered backend name is @c "VideoEncoder"; callers pick a
  * concrete codec via the @ref MediaConfig::VideoCodec key (e.g.
@@ -52,11 +51,11 @@ PROMEKI_NAMESPACE_BEGIN
  *   support needs an EOS protocol between the pipeline and this
  *   task and is deferred.
  * - No SPS/PPS/VPS extraction — parameter sets are concatenated with
- *   the first IDR in a single @ref VideoPacket, which is what the
- *   NVENC backend naturally emits.  Splitting them into their own
- *   @ref VideoPacket::ParameterSet packets (using the @ref BufferView
- *   slicing we just landed) comes when the RTP H.264 / MP4 sinks
- *   need it.
+ *   the first IDR in a single @ref CompressedVideoPayload, which is
+ *   what the NVENC backend naturally emits.  Splitting them into
+ *   their own @ref CompressedVideoPayload::ParameterSet payloads
+ *   (using the @ref BufferView slicing we just landed) comes when
+ *   the RTP H.264 / MP4 sinks need it.
  *
  * @par Config keys
  *
@@ -89,8 +88,8 @@ PROMEKI_NAMESPACE_BEGIN
  * enc->writeFrame(nv12Frame);
  * Frame::Ptr encoded;
  * enc->readFrame(encoded);
- * // encoded->imageList()[0] is a compressed Image whose
- * // Image::packet() carries the H.264 bitstream.
+ * // encoded->videoPayloads()[0] is a CompressedVideoPayload
+ * // carrying the H.264 bitstream.
  * enc->close();
  * @endcode
  */
@@ -140,8 +139,8 @@ class MediaIOTask_VideoEncoder : public MediaIOTask {
 
                 // FIFO of submitted source Frames awaiting a matching
                 // packet from the encoder.  One entry is pushed per
-                // successful submitFrame() and popped per emitted
-                // VideoPacket; the pairing is order-preserving because
+                // successful submitPayload() and popped per emitted
+                // CompressedVideoPayload; the pairing is order-preserving because
                 // the encoder runs in 1-in / 1-out sync mode (no
                 // B-frames, no look-ahead).  Needed to preserve the
                 // source frame's metadata + audio across the

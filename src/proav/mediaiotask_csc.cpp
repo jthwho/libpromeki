@@ -7,9 +7,8 @@
 
 #include <promeki/mediaiotask_csc.h>
 #include <promeki/cscregistry.h>
-#include <promeki/image.h>
-#include <promeki/audio.h>
 #include <promeki/frame.h>
+#include <promeki/uncompressedvideopayload.h>
 #include <promeki/imagedesc.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaconfig.h>
@@ -231,40 +230,37 @@ Error MediaIOTask_CSC::executeCmd(MediaIOCommandClose &cmd) {
         return Error::Ok;
 }
 
-Error MediaIOTask_CSC::convertImage(const Image &input, Image &output) {
+Error MediaIOTask_CSC::convertPayload(const UncompressedVideoPayload &input,
+                                      UncompressedVideoPayload::Ptr &output) const
+{
         if(!input.isValid()) {
-                output = Image();
+                output = UncompressedVideoPayload::Ptr();
                 return Error::Invalid;
         }
 
-        if(!_outputPixelFormatSet) {
-                output = input;
+        const PixelFormat &srcPd = input.desc().pixelFormat();
+        if(!_outputPixelFormatSet || srcPd == _outputPixelFormat) {
+                output = UncompressedVideoPayload::Ptr::create(input);
                 return Error::Ok;
         }
 
-        if(input.pixelFormat() == _outputPixelFormat) {
-                output = input;
-                return Error::Ok;
-        }
-
-        if(input.pixelFormat().isCompressed() || _outputPixelFormat.isCompressed()) {
+        if(srcPd.isCompressed() || _outputPixelFormat.isCompressed()) {
                 promekiErr("MediaIOTask_CSC: %s -> %s is a compression hop; "
                            "use MediaIOTask_VideoEncoder / MediaIOTask_VideoDecoder",
-                           input.pixelFormat().name().cstr(),
+                           srcPd.name().cstr(),
                            _outputPixelFormat.name().cstr());
                 return Error::NotSupported;
         }
 
         MediaConfig convertConfig;
-        Image converted = input.convert(_outputPixelFormat, input.metadata(),
-                                        convertConfig);
-        if(!converted.isValid()) {
+        output = input.convert(_outputPixelFormat, input.desc().metadata(),
+                               convertConfig);
+        if(!output.isValid()) {
                 promekiErr("MediaIOTask_CSC: convert %s -> %s failed",
-                           input.pixelFormat().name().cstr(),
+                           srcPd.name().cstr(),
                            _outputPixelFormat.name().cstr());
                 return Error::ConversionFailed;
         }
-        output = std::move(converted);
         return Error::Ok;
 }
 
@@ -277,17 +273,31 @@ Error MediaIOTask_CSC::convertFrame(const Frame::Ptr &input, Frame::Ptr &output)
         Frame *outRaw = outFrame.modify();
         outRaw->metadata() = input->metadata();
 
-        for(const auto &srcImgPtr : input->imageList()) {
-                if(!srcImgPtr.isValid()) continue;
-                const Image &srcImg = *srcImgPtr;
-                Image dstImg;
-                Error err = convertImage(srcImg, dstImg);
+        // Read video from the new MediaPayload world.  CSC is a raster
+        // transform — compressed payloads are rejected here rather
+        // than silently mangled.  The per-payload @ref
+        // UncompressedVideoPayload::convert runs CSC natively on the
+        // payload; we push the destination payload directly into the
+        // output frame so we skip the Image bridge round-trip.
+        for(const VideoPayload::Ptr &srcVp : input->videoPayloads()) {
+                if(!srcVp.isValid()) continue;
+                const auto *srcUvp = srcVp->as<UncompressedVideoPayload>();
+                if(srcUvp == nullptr) {
+                        promekiErr("MediaIOTask_CSC: compressed video payload "
+                                   "reached CSC — expected uncompressed input");
+                        return Error::NotSupported;
+                }
+                UncompressedVideoPayload::Ptr dstPayload;
+                Error err = convertPayload(*srcUvp, dstPayload);
                 if(err.isError()) return err;
-                outRaw->imageList().pushToBack(Image::Ptr::create(std::move(dstImg)));
+                if(!dstPayload.isValid()) return Error::ConversionFailed;
+                outRaw->addPayload(dstPayload);
         }
 
-        for(const auto &srcAudioPtr : input->audioList()) {
-                outRaw->audioList().pushToBack(srcAudioPtr);
+        // Audio is pure pass-through — just forward the audio payload
+        // pointers into the output frame.
+        for(const AudioPayload::Ptr &srcAp : input->audioPayloads()) {
+                if(srcAp.isValid()) outRaw->addPayload(srcAp);
         }
 
         output = std::move(outFrame);
@@ -378,8 +388,9 @@ Error MediaIOTask_CSC::proposeInput(const MediaDesc &offered,
         }
 
         // CSC accepts any uncompressed shape as-is — it will run
-        // the configured Image::convert on each frame.  The output
-        // shape is governed by OutputPixelFormat, not the input.
+        // the configured UncompressedVideoPayload::convert on each
+        // frame.  The output shape is governed by OutputPixelFormat,
+        // not the input.
         *preferred = offered;
         return Error::Ok;
 }

@@ -8,6 +8,9 @@
 #include <doctest/doctest.h>
 #include <promeki/ltcencoder.h>
 #include <promeki/ltcdecoder.h>
+#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/buffer.h>
+#include <promeki/bufferview.h>
 
 using namespace promeki;
 
@@ -49,17 +52,14 @@ TEST_CASE("LtcDecoder_RoundTrip") {
     LtcEncoder enc(48000, 0.5f);
     LtcDecoder dec(48000);
 
-    // Encode several sequential frames and concatenate the audio
+    // Encode several sequential frames and concatenate the samples
     Timecode tc(Timecode::NDF24, 1, 0, 0, 0);
     List<int8_t> allSamples;
 
     for(int i = 0; i < 10; i++) {
-        Audio audio = enc.encode(tc);
-        REQUIRE(audio.isValid());
-        int8_t *data = audio.data<int8_t>();
-        for(size_t j = 0; j < audio.samples(); j++) {
-            allSamples.pushToBack(data[j]);
-        }
+        List<int8_t> samples = enc.encode(tc);
+        REQUIRE(!samples.isEmpty());
+        for(int8_t v : samples) allSamples.pushToBack(v);
         ++tc;
     }
 
@@ -102,24 +102,13 @@ TEST_CASE("LtcDecoder_DecodeAudio") {
     LtcDecoder dec(48000);
 
     Timecode tc(Timecode::NDF24, 1, 0, 0, 0);
-    Audio audio = enc.encode(tc);
-    REQUIRE(audio.isValid());
+    List<int8_t> samples = enc.encode(tc);
+    REQUIRE(!samples.isEmpty());
 
-    auto results = dec.decode(audio);
+    auto results = dec.decode(samples.data(), samples.size());
     // Single frame may or may not decode depending on decoder startup
     // Just verify it doesn't crash and returns valid list
     CHECK(results.size() >= 0);
-}
-
-// ============================================================================
-// Decode invalid Audio
-// ============================================================================
-
-TEST_CASE("LtcDecoder_DecodeInvalidAudio") {
-    LtcDecoder dec(48000);
-    Audio audio;
-    auto results = dec.decode(audio);
-    CHECK(results.isEmpty());
 }
 
 // ============================================================================
@@ -137,28 +126,31 @@ TEST_CASE("LtcDecoder_DecodeAudio_Float32Stereo") {
     promeki::List<int8_t> mono;
     for(int i = 0; i < 8; i++) {
         Timecode tc(Timecode::NDF24, 1, 0, 0, i);
-        Audio chunk = enc.encode(tc);
-        REQUIRE(chunk.isValid());
-        const int8_t *src = chunk.data<int8_t>();
-        for(size_t s = 0; s < chunk.samples(); s++) mono.pushToBack(src[s]);
+        List<int8_t> chunk = enc.encode(tc);
+        REQUIRE(!chunk.isEmpty());
+        for(int8_t v : chunk) mono.pushToBack(v);
     }
 
-    // Build a float32 stereo Audio of the same length, with LTC on
+    // Build a float32 stereo payload of the same length, with LTC on
     // channel 0 and silence on channel 1.  This is the same shape the
     // TPG produces when AudioMode == LTC.
     AudioDesc stereoDesc(AudioFormat::PCMI_Float32LE, 48000.0f, 2);
-    Audio stereo(stereoDesc, mono.size());
-    stereo.resize(mono.size());
-    float *out = stereo.data<float>();
+    size_t stereoBytes = stereoDesc.bufferSize(mono.size());
+    Buffer::Ptr stereoBuf = Buffer::Ptr::create(stereoBytes);
+    stereoBuf.modify()->setSize(stereoBytes);
+    float *out = reinterpret_cast<float *>(stereoBuf.modify()->data());
     for(size_t s = 0; s < mono.size(); s++) {
         out[s * 2 + 0] = static_cast<float>(mono[s]) / 127.0f;
         out[s * 2 + 1] = 0.0f;
     }
+    BufferView stereoView(stereoBuf, 0, stereoBytes);
+    auto stereo = UncompressedAudioPayload::Ptr::create(
+            stereoDesc, mono.size(), stereoView);
 
     // Format-agnostic decode pulls channel 0 out, converts to int8,
     // and feeds the underlying decoder — exactly the path the inspector
     // takes for TPG audio.
-    auto results = dec.decode(stereo, 0);
+    auto results = dec.decode(*stereo, 0);
     REQUIRE(results.size() > 0);
     // The first recovered timecode should be one of the frames we
     // encoded — match the hour/minute/second; the frame digit may
@@ -171,17 +163,25 @@ TEST_CASE("LtcDecoder_DecodeAudio_Float32Stereo") {
 TEST_CASE("LtcDecoder_DecodeAudio_RejectsMismatchedSampleRate") {
     LtcDecoder dec(48000);
     AudioDesc desc(AudioFormat::PCMI_Float32LE, 44100.0f, 2);
-    Audio audio(desc, 1024);
-    audio.resize(1024);
-    auto results = dec.decode(audio, 0);
+    size_t sz = desc.bufferSize(1024);
+    Buffer::Ptr buf = Buffer::Ptr::create(sz);
+    buf.modify()->setSize(sz);
+    BufferView view(buf, 0, sz);
+    auto audio = UncompressedAudioPayload::Ptr::create(desc, 1024,
+            view);
+    auto results = dec.decode(*audio, 0);
     CHECK(results.isEmpty());
 }
 
 TEST_CASE("LtcDecoder_DecodeAudio_RejectsBadChannelIndex") {
     LtcDecoder dec(48000);
     AudioDesc desc(AudioFormat::PCMI_Float32LE, 48000.0f, 2);
-    Audio audio(desc, 1024);
-    audio.resize(1024);
-    auto results = dec.decode(audio, 5);   // out-of-range
+    size_t sz = desc.bufferSize(1024);
+    Buffer::Ptr buf = Buffer::Ptr::create(sz);
+    buf.modify()->setSize(sz);
+    BufferView view(buf, 0, sz);
+    auto audio = UncompressedAudioPayload::Ptr::create(desc, 1024,
+            view);
+    auto results = dec.decode(*audio, 5);   // out-of-range
     CHECK(results.isEmpty());
 }

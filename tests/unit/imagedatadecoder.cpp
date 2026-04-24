@@ -9,23 +9,28 @@
 #include <cstring>
 #include <promeki/imagedatadecoder.h>
 #include <promeki/imagedataencoder.h>
-#include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/pixelformat.h>
+#include <promeki/uncompressedvideopayload.h>
 
 using namespace promeki;
 
 namespace {
 
-// Encode a single payload into a fresh black image and return it.
-Image encodeOne(uint32_t width, uint32_t height, PixelFormat::ID id,
-                uint64_t payload, uint32_t firstLine = 0, uint32_t lineCount = 16) {
+// Encode a single payload into a fresh black payload and return it.
+UncompressedVideoPayload::Ptr encodeOne(uint32_t width, uint32_t height,
+                                        PixelFormat::ID id, uint64_t payload,
+                                        uint32_t firstLine = 0,
+                                        uint32_t lineCount = 16) {
         ImageDesc desc(width, height, id);
         ImageDataEncoder enc(desc);
         REQUIRE(enc.isValid());
-        Image img(width, height, PixelFormat(id));
-        img.fill(0);
-        REQUIRE(enc.encode(img, ImageDataEncoder::Item{firstLine, lineCount, payload}).isOk());
+        auto img = UncompressedVideoPayload::allocate(desc);
+        for(size_t i = 0; i < img->planeCount(); ++i) {
+                std::memset(img.modify()->data()[i].data(), 0, img->plane(i).size());
+        }
+        REQUIRE(enc.encode(*img.modify(),
+                           ImageDataEncoder::Item{firstLine, lineCount, payload}).isOk());
         return img;
 }
 
@@ -37,11 +42,11 @@ Image encodeOne(uint32_t width, uint32_t height, PixelFormat::ID id,
 
 TEST_CASE("ImageDataDecoder RGBA8 round-trip") {
         const uint64_t payload = 0x0123456789ABCDEFull;
-        Image img = encodeOne(1920, 64, PixelFormat::RGBA8_sRGB, payload);
+        auto img = encodeOne(1920, 64, PixelFormat::RGBA8_sRGB, payload);
 
-        ImageDataDecoder dec(img.desc());
+        ImageDataDecoder dec(img->desc());
         REQUIRE(dec.isValid());
-        auto item = dec.decode(img, ImageDataDecoder::Band{0, 16});
+        auto item = dec.decode(*img, ImageDataDecoder::Band{0, 16});
         REQUIRE(item.error.isOk());
         CHECK(item.payload == payload);
         CHECK(item.decodedSync == ImageDataDecoder::SyncNibble);
@@ -49,45 +54,44 @@ TEST_CASE("ImageDataDecoder RGBA8 round-trip") {
 
 TEST_CASE("ImageDataDecoder YUV8_422 round-trip") {
         const uint64_t payload = 0xDEADBEEFCAFEBABEull;
-        Image img = encodeOne(1920, 64, PixelFormat::YUV8_422_Rec709, payload);
+        auto img = encodeOne(1920, 64, PixelFormat::YUV8_422_Rec709, payload);
 
-        ImageDataDecoder dec(img.desc());
+        ImageDataDecoder dec(img->desc());
         REQUIRE(dec.isValid());
-        auto item = dec.decode(img, ImageDataDecoder::Band{0, 16});
+        auto item = dec.decode(*img, ImageDataDecoder::Band{0, 16});
         REQUIRE(item.error.isOk());
         CHECK(item.payload == payload);
 }
 
 TEST_CASE("ImageDataDecoder YUV8_422 planar round-trip") {
         const uint64_t payload = 0x1122334455667788ull;
-        Image img = encodeOne(1920, 64, PixelFormat::YUV8_422_Planar_Rec709, payload);
+        auto img = encodeOne(1920, 64, PixelFormat::YUV8_422_Planar_Rec709, payload);
 
-        ImageDataDecoder dec(img.desc());
+        ImageDataDecoder dec(img->desc());
         REQUIRE(dec.isValid());
-        auto item = dec.decode(img, ImageDataDecoder::Band{0, 16});
+        auto item = dec.decode(*img, ImageDataDecoder::Band{0, 16});
         REQUIRE(item.error.isOk());
         CHECK(item.payload == payload);
 }
 
 TEST_CASE("ImageDataDecoder v210 round-trip") {
         const uint64_t payload = 0xF00DBABECAFEBEEFull;
-        Image img = encodeOne(1920, 64, PixelFormat::YUV10_422_v210_Rec709, payload);
+        auto img = encodeOne(1920, 64, PixelFormat::YUV10_422_v210_Rec709, payload);
 
-        ImageDataDecoder dec(img.desc());
+        ImageDataDecoder dec(img->desc());
         REQUIRE(dec.isValid());
-        auto item = dec.decode(img, ImageDataDecoder::Band{0, 16});
+        auto item = dec.decode(*img, ImageDataDecoder::Band{0, 16});
         REQUIRE(item.error.isOk());
         CHECK(item.payload == payload);
 }
 
 TEST_CASE("ImageDataDecoder NV12 (4:2:0 semi-planar) round-trip") {
         const uint64_t payload = 0x0011223344556677ull;
-        // NV12 needs at least vSub*2 lines per band; use 16 (the default).
-        Image img = encodeOne(1920, 64, PixelFormat::YUV8_420_SemiPlanar_Rec709, payload);
+        auto img = encodeOne(1920, 64, PixelFormat::YUV8_420_SemiPlanar_Rec709, payload);
 
-        ImageDataDecoder dec(img.desc());
+        ImageDataDecoder dec(img->desc());
         REQUIRE(dec.isValid());
-        auto item = dec.decode(img, ImageDataDecoder::Band{0, 16});
+        auto item = dec.decode(*img, ImageDataDecoder::Band{0, 16});
         REQUIRE(item.error.isOk());
         CHECK(item.payload == payload);
 }
@@ -102,12 +106,12 @@ TEST_CASE("ImageDataDecoder multiple-band decode") {
         ImageDesc desc(1920, 64, PixelFormat::RGBA8_sRGB);
         ImageDataEncoder enc(desc);
         REQUIRE(enc.isValid());
-        Image img(1920, 64, PixelFormat(PixelFormat::RGBA8_sRGB));
-        img.fill(0);
+        auto img = UncompressedVideoPayload::allocate(desc);
+        std::memset(img.modify()->data()[0].data(), 0, img->plane(0).size());
         List<ImageDataEncoder::Item> encItems;
         encItems.pushToBack({  0, 16, pa });
         encItems.pushToBack({ 16, 16, pb });
-        REQUIRE(enc.encode(img, encItems).isOk());
+        REQUIRE(enc.encode(*img.modify(), encItems).isOk());
 
         ImageDataDecoder dec(desc);
         REQUIRE(dec.isValid());
@@ -115,7 +119,7 @@ TEST_CASE("ImageDataDecoder multiple-band decode") {
         bands.pushToBack({  0, 16 });
         bands.pushToBack({ 16, 16 });
         ImageDataDecoder::DecodedList out;
-        REQUIRE(dec.decode(img, bands, out).isOk());
+        REQUIRE(dec.decode(*img, bands, out).isOk());
         REQUIRE(out.size() == 2);
         CHECK(out[0].error.isOk());
         CHECK(out[1].error.isOk());
@@ -129,12 +133,12 @@ TEST_CASE("ImageDataDecoder multiple-band decode") {
 
 TEST_CASE("ImageDataDecoder MiddleLine sample mode round-trip") {
         const uint64_t payload = 0x0123456789ABCDEFull;
-        Image img = encodeOne(1920, 64, PixelFormat::RGBA8_sRGB, payload);
+        auto img = encodeOne(1920, 64, PixelFormat::RGBA8_sRGB, payload);
 
-        ImageDataDecoder dec(img.desc());
+        ImageDataDecoder dec(img->desc());
         REQUIRE(dec.isValid());
         dec.setSampleMode(ImageDataDecoder::SampleMode::MiddleLine);
-        auto item = dec.decode(img, ImageDataDecoder::Band{0, 16});
+        auto item = dec.decode(*img, ImageDataDecoder::Band{0, 16});
         REQUIRE(item.error.isOk());
         CHECK(item.payload == payload);
 }
@@ -145,23 +149,20 @@ TEST_CASE("ImageDataDecoder MiddleLine sample mode round-trip") {
 
 TEST_CASE("ImageDataDecoder averaging recovers from a single corrupted row") {
         const uint64_t payload = 0x0123456789ABCDEFull;
-        Image img = encodeOne(1920, 64, PixelFormat::RGBA8_sRGB, payload);
+        auto img = encodeOne(1920, 64, PixelFormat::RGBA8_sRGB, payload);
 
-        // Splatter row 8 of the band with random-ish noise so a single
-        // scan line would no longer decode correctly.  (Use a fixed
-        // pattern so the test is deterministic.)
-        uint8_t *line = static_cast<uint8_t *>(img.data(0)) + 8 * img.lineStride(0);
-        for(size_t x = 0; x < img.width() * 4; x++) {
+        const size_t stride0 = img->desc().pixelFormat().memLayout().lineStride(0, img->desc().width());
+        uint8_t *line = img.modify()->data()[0].data() + 8 * stride0;
+        const size_t w = img->desc().width();
+        for(size_t x = 0; x < w * 4; x++) {
                 line[x] = static_cast<uint8_t>(x ^ 0x5a);
         }
 
-        ImageDataDecoder dec(img.desc());
+        ImageDataDecoder dec(img->desc());
         REQUIRE(dec.isValid());
 
-        // AverageBand mode should still recover the payload since the
-        // corrupted row is averaged with 15 clean ones.
         dec.setSampleMode(ImageDataDecoder::SampleMode::AverageBand);
-        auto avg = dec.decode(img, ImageDataDecoder::Band{0, 16});
+        auto avg = dec.decode(*img, ImageDataDecoder::Band{0, 16});
         REQUIRE(avg.error.isOk());
         CHECK(avg.payload == payload);
 }
@@ -171,35 +172,22 @@ TEST_CASE("ImageDataDecoder averaging recovers from a single corrupted row") {
 // ============================================================================
 
 TEST_CASE("ImageDataDecoder reports CorruptData when CRC fails") {
-        // Use an all-1s payload so every payload cell is white in the
-        // encoded image — that way our "stomp to black" surely flips
-        // a bit instead of landing on a column that was already black.
         const uint64_t payload = 0xFFFFFFFFFFFFFFFFull;
-        Image img = encodeOne(1920, 64, PixelFormat::RGBA8_sRGB, payload);
+        auto img = encodeOne(1920, 64, PixelFormat::RGBA8_sRGB, payload);
 
-        // Stomp every row of the band over a 50-pixel-wide swath
-        // (two full bit cells worth at the encoder's bit width of
-        // 25 px) inside the payload region.  A swath this wide is
-        // guaranteed to land on at least one cell centre and flip
-        // its decoded bit, regardless of the exact pitch the
-        // decoder discovers from the sync nibble.
+        const size_t stride0 = img->desc().pixelFormat().memLayout().lineStride(0, img->desc().width());
         for(uint32_t row = 0; row < 16; row++) {
-                uint8_t *line = static_cast<uint8_t *>(img.data(0)) + row * img.lineStride(0);
+                uint8_t *line = img.modify()->data()[0].data() + row * stride0;
                 for(int x = 200; x < 250; x++) {
-                        line[x * 4 + 0] = 0;  // R
-                        line[x * 4 + 1] = 0;  // G
-                        line[x * 4 + 2] = 0;  // B
+                        line[x * 4 + 0] = 0;
+                        line[x * 4 + 1] = 0;
+                        line[x * 4 + 2] = 0;
                 }
         }
 
-        ImageDataDecoder dec(img.desc());
+        ImageDataDecoder dec(img->desc());
         REQUIRE(dec.isValid());
-        auto item = dec.decode(img, ImageDataDecoder::Band{0, 16});
-        // The corrupted bit should now flip, causing a CRC mismatch.
-        // We don't strictly require the CRC path to fire — the row
-        // could also be rejected at sync detection if the corruption
-        // landed in the sync nibble — but it must NOT silently return
-        // the original payload.
+        auto item = dec.decode(*img, ImageDataDecoder::Band{0, 16});
         REQUIRE(item.error.isError());
         CHECK(item.error.code() == Error::CorruptData);
 }
@@ -213,9 +201,10 @@ TEST_CASE("ImageDataDecoder rejects mismatched image descriptor") {
         ImageDataDecoder dec(desc);
         REQUIRE(dec.isValid());
 
-        Image other(1280, 32, PixelFormat(PixelFormat::RGBA8_sRGB));
-        other.fill(0);
-        auto item = dec.decode(other, ImageDataDecoder::Band{0, 16});
+        auto other = UncompressedVideoPayload::allocate(
+                ImageDesc(1280, 32, PixelFormat(PixelFormat::RGBA8_sRGB)));
+        std::memset(other.modify()->data()[0].data(), 0, other->plane(0).size());
+        auto item = dec.decode(*other, ImageDataDecoder::Band{0, 16});
         CHECK(item.error.isError());
         CHECK(item.error.code() == Error::InvalidArgument);
 }
@@ -225,9 +214,10 @@ TEST_CASE("ImageDataDecoder rejects band that runs past the bottom") {
         ImageDataDecoder dec(desc);
         REQUIRE(dec.isValid());
 
-        Image img(1920, 32, PixelFormat(PixelFormat::RGBA8_sRGB));
-        img.fill(0);
-        auto item = dec.decode(img, ImageDataDecoder::Band{24, 16});
+        auto img = UncompressedVideoPayload::allocate(
+                ImageDesc(1920, 32, PixelFormat(PixelFormat::RGBA8_sRGB)));
+        std::memset(img.modify()->data()[0].data(), 0, img->plane(0).size());
+        auto item = dec.decode(*img, ImageDataDecoder::Band{24, 16});
         CHECK(item.error.isError());
 }
 
@@ -237,13 +227,12 @@ TEST_CASE("ImageDataDecoder rejects band that runs past the bottom") {
 
 TEST_CASE("ImageDataDecoder reports the discovered bit width") {
         const uint64_t payload = 0x0123456789ABCDEFull;
-        Image img = encodeOne(1920, 64, PixelFormat::RGBA8_sRGB, payload);
+        auto img = encodeOne(1920, 64, PixelFormat::RGBA8_sRGB, payload);
 
-        ImageDataDecoder dec(img.desc());
+        ImageDataDecoder dec(img->desc());
         REQUIRE(dec.isValid());
-        auto item = dec.decode(img, ImageDataDecoder::Band{0, 16});
+        auto item = dec.decode(*img, ImageDataDecoder::Band{0, 16});
         REQUIRE(item.error.isOk());
-        // Encoder picks bitWidth = 1920 / 76 = 25 for RGBA8.
         CHECK(item.bitWidth >= 24.5);
         CHECK(item.bitWidth <= 25.5);
         CHECK(dec.expectedBitWidth() == 25);

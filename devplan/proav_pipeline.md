@@ -211,7 +211,7 @@ The interesting next consumer is `mediaplay --save-pipeline`: with `MediaConfig:
 
 ### Copy-on-write mutation safety
 
-Multiple stages may hold references to the same `Buffer::Ptr` (shared via `SharedPtr` COW) when the pipeline fans out. Mutating consumers must call `ensureExclusive()` on `Image` and `Audio` before writing buffer data. `Image::ensureExclusive()` / `isExclusive()` exist; `Audio::ensureExclusive()` / `isExclusive()` still need to be added (tracked in the remaining-work list below). Buffer allocation (including COW clones) goes through the buffer's `MemSpace`, so pooled allocation is a MemSpace-level concern.
+Multiple stages may hold references to the same `Buffer::Ptr` (shared via `SharedPtr` COW) when the pipeline fans out. Mutating consumers must call `ensureExclusive()` on any `MediaPayload` before writing buffer data. `MediaPayload::ensureExclusive()` / `isExclusive()` are provided on the base class (Phase 4v) and handle the dedup-aware plane-list clone path via `BufferView::ensureExclusive()`. Buffer allocation (including COW clones) goes through the buffer's `MemSpace`, so pooled allocation is a MemSpace-level concern.
 
 ### Memory space statistics — COMPLETE
 
@@ -221,7 +221,7 @@ Multiple stages may hold references to the same `Buffer::Ptr` (shared via `Share
 
 ## Remaining Work Checklist
 
-- [ ] `Audio::ensureExclusive()` / `Audio::isExclusive()` — parity with `Image`
+- [x] `Audio::ensureExclusive()` / `Audio::isExclusive()` — superseded by `MediaPayload::ensureExclusive()` / `isExclusive()` on the base class (Phase 4v)
 - [x] `MemSpace::Stats` — per-space atomic counters, `stats()` / `statsSnapshot()` / `resetStats()`, peak/live/max-alloc tracking, `statsReport()` / `logStats()` / `logAllStats()`, wired into `mediaplay --memstats`
 - [ ] `MemSpacePool` — recycling `MemSpace` for fixed-size buffers, optional pre-allocation, LIFO recycle stack, pool hit/miss metrics
 - [ ] `MediaPipelineConfig` data object (JSON + DataStream round-trip)

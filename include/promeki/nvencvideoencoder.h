@@ -46,7 +46,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Supported input formats (v1)
  * Only @ref PixelFormat::YUV8_420_SemiPlanar_Rec709 (NV12) is accepted
  * for the first cut.  Callers with RGB or other YCbCr sources should
- * convert first via @ref Image::convert.  Additional formats (NV12
+ * convert first via @ref UncompressedVideoPayload::convert.  Additional formats (NV12
  * BT.601, 10-bit P010, device-memory buffers for zero-copy) will be
  * added in later iterations.
  *
@@ -96,9 +96,8 @@ class NvencVideoEncoder : public VideoEncoder {
                 static List<int> supportedInputList();
 
                 void configure(const MediaConfig &config) override;
-                Error submitFrame(const Image::Ptr &frame,
-                                  const MediaTimeStamp &pts = MediaTimeStamp()) override;
-                VideoPacket::Ptr receivePacket() override;
+                Error submitPayload(const UncompressedVideoPayload::Ptr &payload) override;
+                CompressedVideoPayload::Ptr receiveCompressedPayload() override;
                 Error flush() override;
                 Error reset() override;
                 void requestKeyframe() override;

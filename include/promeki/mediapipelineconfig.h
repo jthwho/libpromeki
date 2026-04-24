@@ -203,7 +203,7 @@ class MediaPipelineConfig {
                  * For interframe-coded streams (@ref VideoCodec::CodingTemporal)
                  * the cutoff respects GOP boundaries: once the target has
                  * been reached, the pipeline keeps writing until the next
-                 * frame carries a @ref MediaPacket::Keyframe flag, then
+                 * frame carries a @ref MediaPayload::Keyframe flag, then
                  * stops before writing that keyframe.  The sink therefore
                  * always receives a complete sequence of GOPs, even if
                  * that means overshooting the target by up to one GOP.

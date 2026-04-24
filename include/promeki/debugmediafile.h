@@ -175,10 +175,11 @@ class DebugMediaFile : public ObjectBase {
                  * @brief Appends @p frame to the file.
                  *
                  * Serialises the frame's metadata, config update,
-                 * every image (with ImageDesc, VideoPacket, and raw
-                 * plane bytes) and every audio track (AudioDesc,
-                 * AudioPacket, raw sample bytes) into a single FRAM
-                 * chunk.  Valid only in @c Mode::Write.
+                 * every video payload (ImageDesc plus the uncompressed
+                 * plane bytes or the CompressedVideoPayload blob) and
+                 * every audio payload (AudioDesc plus the uncompressed
+                 * sample bytes or the CompressedAudioPayload blob) into
+                 * a single FRAM chunk.  Valid only in @c Mode::Write.
                  *
                  * @param frame The frame to write.  Must be valid.
                  * @return @c Error::Ok on success, or an I/O error.

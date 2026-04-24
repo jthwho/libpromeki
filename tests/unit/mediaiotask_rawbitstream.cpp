@@ -6,11 +6,11 @@
  *
  * Tests for MediaIOTask_RawBitstream's introspection / negotiation
  * path (@c describe and @c proposeInput).  RawBitstream is a "dumb"
- * sink that appends @ref MediaPacket payloads to a file verbatim — it
- * must advertise the compressed accept set via @c describe and reject
- * uncompressed input via @c proposeInput so the planner splices in a
- * VideoEncoder ahead of us instead of routing raw frames that would
- * hit the "no compressed Image" warning at runtime.
+ * sink that appends @ref CompressedVideoPayload bytes to a file
+ * verbatim — it must advertise the compressed accept set via @c describe
+ * and reject uncompressed input via @c proposeInput so the planner
+ * splices in a VideoEncoder ahead of us instead of routing raw frames
+ * that would hit the "no CompressedVideoPayload" warning at runtime.
  */
 
 #include <doctest/doctest.h>

@@ -12,6 +12,7 @@
 #include <promeki/imagefile.h>
 #include <promeki/file.h>
 #include <promeki/buffer.h>
+#include <promeki/uncompressedvideopayload.h>
 #include <promeki/metadata.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -318,15 +319,17 @@ Error ImageFileIO_Cineon::load(ImageFile &imageFile, const MediaConfig &config) 
                 return err;
         }
 
-        Image image(w, h, pd);
-        if(!image.isValid()) {
-                promekiErr("Cineon load '%s': failed to allocate image", filename.cstr());
+        ImageDesc idesc(w, h, pd);
+        auto payload = UncompressedVideoPayload::allocate(idesc);
+        if(!payload.isValid()) {
+                promekiErr("Cineon load '%s': failed to allocate payload", filename.cstr());
                 return Error::NoMem;
         }
-        std::memcpy(image.data(), imgBuf.data(), imageBytes);
+        std::memcpy(payload.modify()->data()[0].data(),
+                    imgBuf.data(), imageBytes);
 
         Frame frame;
-        frame.imageList().pushToBack(Image::Ptr::create(image));
+        frame.addPayload(payload);
         extractCineonMetadata(frame.metadata(), &hdr);
 
         imageFile.setFrame(frame);

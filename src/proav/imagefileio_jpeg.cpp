@@ -14,10 +14,11 @@
 #include <promeki/logger.h>
 #include <promeki/imagefileio.h>
 #include <promeki/imagefile.h>
-#include <promeki/image.h>
 #include <promeki/videoencoder.h>
-#include <promeki/videopacket.h>
 #include <promeki/videocodec.h>
+#include <promeki/videopayload.h>
+#include <promeki/compressedvideopayload.h>
+#include <promeki/uncompressedvideopayload.h>
 #include <promeki/file.h>
 #include <promeki/buffer.h>
 #include <promeki/pixelformat.h>
@@ -34,10 +35,10 @@ PROMEKI_DEBUG(JPEG)
 // libjpeg reads enough of the bitstream to report width, height, colour
 // space and the per-component sampling factors without touching any
 // scanlines.  We use that to decide which JPEG_xxx PixelFormat best
-// describes the file on disk.  The PixelFormat is stored on the resulting
-// Image so downstream consumers can decide whether to pass the bitstream
-// through verbatim (JPEG → JPEG copy) or let Image::convert() route it
-// through a JpegVideoDecoder session for rendering.
+// describes the file on disk.  The PixelFormat is stored on the
+// resulting CompressedVideoPayload so downstream consumers can decide
+// whether to pass the bitstream through verbatim (JPEG → JPEG copy) or
+// route the payload through a JpegVideoDecoder session for rendering.
 
 namespace {
 
@@ -136,18 +137,19 @@ PROMEKI_REGISTER_IMAGEFILEIO(ImageFileIO_JPEG);
 // Load
 // ---------------------------------------------------------------------------
 //
-// JPEG load keeps the bitstream intact: the returned Image is compressed
-// (isCompressed() == true) and its single plane points at the raw JPEG
-// bytes.  Consumers that need uncompressed pixels run the image through
-// Image::convert() — the dispatcher routes compressed inputs through a
-// JpegVideoDecoder session automatically.  The pass-through MediaIO copy
-// path (JPEG file → JPEG file) therefore avoids any re-encode.
+// JPEG load keeps the bitstream intact: the returned video payload is a
+// CompressedVideoPayload whose single plane points at the raw JPEG
+// bytes.  Consumers that need uncompressed pixels hand the payload to a
+// JpegVideoDecoder session (or equivalent conversion entry point).  The
+// pass-through MediaIO copy path (JPEG file → JPEG file) therefore
+// avoids any re-encode.
 
 Error ImageFileIO_JPEG::load(ImageFile &imageFile, const MediaConfig &config) const {
         // Load is a pure pass-through — the on-disk JPEG bytes flow into
-        // the returned Image untouched, with no codec invocation.  No
-        // config keys apply on the read path today (the future EXIF /
-        // IPTC pickers will read from @ref MediaConfig once they exist).
+        // the returned CompressedVideoPayload untouched, with no codec
+        // invocation.  No config keys apply on the read path today (the
+        // future EXIF / IPTC pickers will read from @ref MediaConfig
+        // once they exist).
         (void)config;
         const String &filename = imageFile.filename();
 
@@ -173,8 +175,8 @@ Error ImageFileIO_JPEG::load(ImageFile &imageFile, const MediaConfig &config) co
 
         // Single-buffer slurp.  JPEG headers can only be parsed from a
         // contiguous memory block, and the bitstream we want to hand to
-        // Image::fromBuffer() has to live in one Buffer anyway.  Use
-        // Buffer::Ptr::modify() so readBulk() sees a non-const
+        // the CompressedVideoPayload has to live in one Buffer anyway.
+        // Use Buffer::Ptr::modify() so readBulk() sees a non-const
         // reference — the buffer has exclusive ownership at this point,
         // so modify() is just an unwrap.
         Buffer::Ptr fileBuf = Buffer::Ptr::create(static_cast<size_t>(fileSize));
@@ -202,14 +204,17 @@ Error ImageFileIO_JPEG::load(ImageFile &imageFile, const MediaConfig &config) co
                 return Error::CorruptData;
         }
 
-        // Zero-copy wrap: the Image adopts fileBuf as plane 0 and the
-        // compressedSize metadata is set from the buffer length.
-        Image img = Image::fromBuffer(fileBuf, width, height, PixelFormat(pdId));
-        if(!img.isValid()) {
-                promekiErr("JPEG load '%s': Image::fromBuffer failed", filename.cstr());
+        // Zero-copy wrap: the payload adopts fileBuf's bytes as its
+        // sole plane.
+        ImageDesc cdesc(Size2Du32(width, height), PixelFormat(pdId));
+        auto payload = CompressedVideoPayload::Ptr::create(cdesc, fileBuf);
+        if(!payload->isValid()) {
+                promekiErr("JPEG load '%s': compressed payload build failed", filename.cstr());
                 return Error::Invalid;
         }
-        imageFile.setImage(img);
+        Frame frame;
+        frame.addPayload(payload);
+        imageFile.setFrame(frame);
         return Error::Ok;
 }
 
@@ -224,43 +229,55 @@ Error ImageFileIO_JPEG::load(ImageFile &imageFile, const MediaConfig &config) co
 //      pass-through that MediaIO uses for zero-loss JPEG copies.
 //
 //   2. Input is uncompressed and JpegVideoEncoder accepts its PixelFormat
-//      directly: Image::convert() dispatches to the codec without a
-//      preparatory CSC.
+//      directly: UncompressedVideoPayload::convert() dispatches to the
+//      codec without a preparatory CSC.
 //
 //   3. Input is uncompressed but not in the target codec's encodeSources:
-//      Image::convert() inserts a CSC to land on a supported format and
-//      then encodes.
+//      UncompressedVideoPayload::convert() inserts a CSC to land on a
+//      supported format and then encodes.
 //
-// Paths (2) and (3) are handled uniformly by calling Image::convert() with
-// a JPEG PixelFormat target.  The target subtype is chosen to maximise the
-// chance of avoiding an intermediate CSC for common source formats:
-// JPEG_YUV8_422_Rec709 for YUV inputs, JPEG_RGB8_sRGB for RGB/mono
-// inputs, falling back to RGB for anything else.
+// Paths (2) and (3) are handled uniformly by calling
+// UncompressedVideoPayload::convert() with a JPEG PixelFormat target.
+// The target subtype is chosen to maximise the chance of avoiding an
+// intermediate CSC for common source formats: JPEG_YUV8_422_Rec709 for
+// YUV inputs, JPEG_RGB8_sRGB for RGB/mono inputs, falling back to RGB
+// for anything else.
 //
 // MediaConfig::JpegQuality / MediaConfig::JpegSubsampling on @p config
-// flow straight through Image::convert() into JpegVideoEncoder::configure(),
-// so callers can write `mediaplay -oc JpegQuality:95 -o out.jpg` and have
-// it take effect on the file backend exactly the same way it would on the
-// converter backend.
+// flow straight through UncompressedVideoPayload::convert() into
+// JpegVideoEncoder::configure(), so callers can write `mediaplay -oc
+// JpegQuality:95 -o out.jpg` and have it take effect on the file
+// backend exactly the same way it would on the converter backend.
 
 Error ImageFileIO_JPEG::save(ImageFile &imageFile, const MediaConfig &config) const {
         const String &filename = imageFile.filename();
-        Image image = imageFile.image();
-        if(!image.isValid()) {
-                promekiErr("JPEG save '%s': image is not valid", filename.cstr());
+
+        VideoPayload::PtrList vps = imageFile.frame().videoPayloads();
+        if(vps.isEmpty() || !vps[0].isValid()) {
+                promekiErr("JPEG save '%s': no video payload", filename.cstr());
                 return Error::Invalid;
         }
 
         // Pass-through: keep the existing JPEG bitstream exactly.
-        if(image.isCompressed() && image.pixelFormat().videoCodec().id() == VideoCodec::JPEG) {
-                const void *payload = image.data(0);
-                const size_t payloadSize = image.compressedSize();
-                if(payload == nullptr || payloadSize == 0) {
+        if(const auto *cvp = vps[0]->as<CompressedVideoPayload>()) {
+                if(cvp->desc().pixelFormat().videoCodec().id() != VideoCodec::JPEG) {
+                        promekiErr("JPEG save '%s': unsupported compressed input codec '%s'",
+                                   filename.cstr(),
+                                   cvp->desc().pixelFormat().videoCodec().name().cstr());
+                        return Error::NotSupported;
+                }
+                if(cvp->planeCount() == 0) {
                         promekiErr("JPEG save '%s': empty compressed payload",
                                    filename.cstr());
                         return Error::Invalid;
                 }
-
+                auto cview = cvp->plane(0);
+                const size_t payloadSize = cview.size();
+                if(payloadSize == 0) {
+                        promekiErr("JPEG save '%s': empty compressed payload",
+                                   filename.cstr());
+                        return Error::Invalid;
+                }
                 File file(filename);
                 Error err = file.open(File::WriteOnly,
                                       File::Create | File::Truncate);
@@ -269,7 +286,7 @@ Error ImageFileIO_JPEG::save(ImageFile &imageFile, const MediaConfig &config) co
                                    filename.cstr(), err.name().cstr());
                         return err;
                 }
-                const int64_t written = file.write(payload,
+                const int64_t written = file.write(cview.data(),
                                                    static_cast<int64_t>(payloadSize));
                 file.close();
                 if(written != static_cast<int64_t>(payloadSize)) {
@@ -281,21 +298,16 @@ Error ImageFileIO_JPEG::save(ImageFile &imageFile, const MediaConfig &config) co
                 return Error::Ok;
         }
 
-        // Compressed non-JPEG inputs need to be decoded to an uncompressed
-        // format before we can re-encode as JPEG.  Image::convert() handles
-        // the decode → re-encode chain but we detect the failure early for
-        // a clearer error message.
-        if(image.isCompressed()) {
-                promekiErr("JPEG save '%s': unsupported compressed input codec '%s'",
-                           filename.cstr(),
-                           image.pixelFormat().videoCodec().name().cstr());
-                return Error::NotSupported;
+        const auto *uvp = vps[0]->as<UncompressedVideoPayload>();
+        if(uvp == nullptr || !uvp->desc().isValid() || uvp->planeCount() == 0) {
+                promekiErr("JPEG save '%s': input payload not valid", filename.cstr());
+                return Error::Invalid;
         }
 
         // Pick a JPEG subtype that matches the input colour family to
         // avoid an extra CSC hop where possible.
         PixelFormat::ID targetId = PixelFormat::JPEG_RGB8_sRGB;
-        switch(image.pixelFormat().id()) {
+        switch(uvp->desc().pixelFormat().id()) {
                 case PixelFormat::YUV8_422_Rec709:
                 case PixelFormat::YUV8_422_UYVY_Rec709:
                 case PixelFormat::YUV8_422_Planar_Rec709:
@@ -313,14 +325,6 @@ Error ImageFileIO_JPEG::save(ImageFile &imageFile, const MediaConfig &config) co
                         break;
         }
 
-        // Run the encode through a one-shot JpegVideoEncoder session.
-        // Image::convert no longer dispatches to compression codecs;
-        // each compressor lives behind the VideoEncoder contract so
-        // pipelines can amortise its session state across frames.  For
-        // a single-image file save we just create, configure, push,
-        // pull, destroy.  Forward the caller's MediaConfig and force
-        // the chosen JPEG sub-target so the encoder lands on the
-        // format we picked above instead of its own default.
         MediaConfig encCfg = config;
         encCfg.set(MediaConfig::OutputPixelFormat, PixelFormat(targetId));
         auto encResult = VideoCodec(VideoCodec::JPEG).createEncoder(&encCfg);
@@ -331,45 +335,52 @@ Error ImageFileIO_JPEG::save(ImageFile &imageFile, const MediaConfig &config) co
         }
         VideoEncoder *enc = value(encResult);
 
-        // The encoder happily accepts the source image as-is when its
+        // The encoder happily accepts the source payload as-is when its
         // PixelFormat is in supportedInputs(); otherwise we run a CSC to
         // the codec's preferred encode source (typically the YUV
         // variant matching the chosen target's chroma subsampling).
-        Image encodeInput = image;
+        UncompressedVideoPayload::Ptr inPayload =
+                sharedPointerCast<UncompressedVideoPayload>(vps[0]);
         const auto &sources = PixelFormat(targetId).encodeSources();
         bool sourceOk = sources.isEmpty();
         for(PixelFormat::ID s : sources) {
-                if(image.pixelFormat().id() == s) { sourceOk = true; break; }
+                if(uvp->desc().pixelFormat().id() == s) { sourceOk = true; break; }
         }
         if(!sourceOk && !sources.isEmpty()) {
-                encodeInput = image.convert(PixelFormat(sources[0]),
-                                            image.metadata(), config);
-                if(!encodeInput.isValid()) {
+                inPayload = uvp->convert(PixelFormat(sources[0]),
+                                         uvp->desc().metadata(), config);
+                if(!inPayload.isValid()) {
                         delete enc;
                         promekiErr("JPEG save '%s': prep CSC %s -> %s failed",
                                    filename.cstr(),
-                                   image.pixelFormat().name().cstr(),
+                                   uvp->desc().pixelFormat().name().cstr(),
                                    PixelFormat(sources[0]).name().cstr());
                         return Error::ConversionFailed;
                 }
         }
 
-        if(Error e = enc->submitFrame(Image::Ptr::create(std::move(encodeInput))); e.isError()) {
+        if(!inPayload.isValid()) {
+                delete enc;
+                promekiErr("JPEG save '%s': payload build failed", filename.cstr());
+                return Error::ConversionFailed;
+        }
+        if(Error e = enc->submitPayload(inPayload); e.isError()) {
                 String msg = enc->lastErrorMessage();
                 delete enc;
                 promekiErr("JPEG save '%s': encode failed: %s",
                            filename.cstr(), msg.isEmpty() ? e.name().cstr() : msg.cstr());
                 return e;
         }
-        VideoPacket::Ptr pkt = enc->receivePacket();
+        CompressedVideoPayload::Ptr outPayload = enc->receiveCompressedPayload();
         delete enc;
-        if(!pkt) {
-                promekiErr("JPEG save '%s': encoder produced no packet",
+        if(!outPayload.isValid()) {
+                promekiErr("JPEG save '%s': encoder produced no payload",
                            filename.cstr());
                 return Error::EncodeFailed;
         }
-        const void *payload = pkt->view().data();
-        const size_t payloadSize = pkt->view().size();
+        auto encView = outPayload->plane(0);
+        const void *payload = encView.data();
+        const size_t payloadSize = encView.size();
         if(payload == nullptr || payloadSize == 0) {
                 promekiErr("JPEG save '%s': empty encoded payload", filename.cstr());
                 return Error::EncodeFailed;
