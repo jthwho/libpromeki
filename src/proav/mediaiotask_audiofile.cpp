@@ -11,7 +11,7 @@
 #include <promeki/iodevice.h>
 #include <promeki/frame.h>
 #include <promeki/audiopayload.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/mediadesc.h>
 #include <promeki/metadata.h>
 #include <promeki/timecode.h>
@@ -252,7 +252,7 @@ Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandClose &cmd) {
 
 Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandRead &cmd) {
         stampWorkBegin();
-        UncompressedAudioPayload::Ptr payload;
+        PcmAudioPayload::Ptr payload;
         Error err = _audioFile.read(payload, _samplesPerFrame);
         if(err.isError()) { stampWorkEnd(); return err; }
 
@@ -281,7 +281,7 @@ Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandWrite &cmd) {
                 return Error::InvalidArgument;
         }
         stampWorkBegin();
-        const auto *uap = auds[0]->as<UncompressedAudioPayload>();
+        const auto *uap = auds[0]->as<PcmAudioPayload>();
         if(uap == nullptr) {
                 stampWorkEnd();
                 return Error::InvalidArgument;

@@ -23,7 +23,7 @@
 #include <promeki/mediaiotask_v4l2.h>
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/compressedvideopayload.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/frame.h>
 #include <promeki/pixelformat.h>
 #include <promeki/mediadesc.h>
@@ -1205,7 +1205,6 @@ void MediaIOTask_V4L2::videoCaptureLoop() {
                 Metadata imgMeta;
                 MediaTimeStamp captureMts(captureTime, V4L2KernelClock);
                 imgMeta.set(Metadata::CaptureTime, captureMts);
-                imgMeta.set(Metadata::MediaTimeStamp, captureMts);
 
                 ImageDesc capDesc(_imageDesc.size(), pd);
                 capDesc.metadata() = imgMeta;
@@ -1610,7 +1609,7 @@ Error MediaIOTask_V4L2::executeCmd(MediaIOCommandRead &cmd) {
                         size_t usedBytes = nativeDesc.bufferSize(got);
                         pcm.modify()->setSize(usedBytes);
                         BufferView view(pcm, 0, usedBytes);
-                        auto audioPayload = UncompressedAudioPayload::Ptr::create(
+                        auto audioPayload = PcmAudioPayload::Ptr::create(
                                 nativeDesc, got, view);
 
                         // Look up the wall time of the first popped
@@ -1654,8 +1653,7 @@ Error MediaIOTask_V4L2::executeCmd(MediaIOCommandRead &cmd) {
                         TimeStamp audioTs;
                         audioTs.setValue(TimeStamp::Value(
                                 std::chrono::nanoseconds(firstSampleWallNs)));
-                        audioPayload.modify()->desc().metadata().set(
-                                Metadata::MediaTimeStamp,
+                        audioPayload.modify()->setPts(
                                 MediaTimeStamp(audioTs, AlsaClock));
                         frame.modify()->addPayload(audioPayload);
                 }

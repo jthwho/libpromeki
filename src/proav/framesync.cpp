@@ -15,7 +15,7 @@
 #include <promeki/metadata.h>
 #include <promeki/videopayload.h>
 #include <promeki/audiopayload.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/logger.h>
 
 #include <cstring>
@@ -39,10 +39,8 @@ static constexpr double kSourceRateTimeConstantS = 1.0;
 // Helpers
 // ============================================================================
 
-static bool firstTimestampNs(const Metadata &metadata, int64_t &outNs) {
-        MediaTimeStamp mts = metadata
-                .get(Metadata::MediaTimeStamp)
-                .get<MediaTimeStamp>();
+static bool firstTimestampNs(const MediaPayload &payload, int64_t &outNs) {
+        const MediaTimeStamp &mts = payload.pts();
         if(!mts.isValid()) return false;
         outNs = mts.timeStamp().nanoseconds() + mts.offset().nanoseconds();
         return true;
@@ -197,12 +195,12 @@ Error FrameSync::pushFrame(const Frame::Ptr &frame) {
         auto vids = frame->videoPayloads();
         if(!vids.isEmpty() && vids[0].isValid()) {
                 qf.hasVideoTs = firstTimestampNs(
-                        vids[0]->desc().metadata(), qf.videoTsNs);
+                        *vids[0], qf.videoTsNs);
         }
         auto auds = frame->audioPayloads();
         if(!auds.isEmpty() && auds[0].isValid()) {
                 qf.hasAudioTs = firstTimestampNs(
-                        auds[0]->desc().metadata(), qf.audioTsNs);
+                        *auds[0], qf.audioTsNs);
         }
 
         {
@@ -262,12 +260,12 @@ Error FrameSync::pushFrame(const Frame::Ptr &frame) {
                 // discard the buffer at the @c isNative() check and
                 // emit silence instead.
                 if(!auds.isEmpty() && auds[0].isValid()) {
-                        const auto *uap = auds[0]->as<UncompressedAudioPayload>();
+                        const auto *uap = auds[0]->as<PcmAudioPayload>();
                         if(uap != nullptr && uap->sampleCount() > 0) {
                                 updateSourceAudioRate(*uap, qf.audioTsNs);
-                                UncompressedAudioPayload::Ptr toQueue;
+                                PcmAudioPayload::Ptr toQueue;
                                 if(uap->desc().format().id() == AudioFormat::NativeFloat) {
-                                        toQueue = sharedPointerCast<UncompressedAudioPayload>(auds[0]);
+                                        toQueue = sharedPointerCast<PcmAudioPayload>(auds[0]);
                                 } else {
                                         toQueue = uap->convert(AudioFormat(AudioFormat::NativeFloat));
                                         if(!toQueue.isValid()) {
@@ -297,7 +295,7 @@ void FrameSync::pushEndOfStream() {
 // Source-rate tracking
 // ============================================================================
 
-void FrameSync::updateSourceAudioRate(const UncompressedAudioPayload &audio, int64_t audioTsNs) {
+void FrameSync::updateSourceAudioRate(const PcmAudioPayload &audio, int64_t audioTsNs) {
         // Seed from the nominal source rate the first time we see audio.
         if(_sourceAudioRateHz <= 0.0) {
                 _sourceAudioRateHz = audio.desc().sampleRate();
@@ -478,13 +476,13 @@ void FrameSync::selectVideo(int64_t sourceTimeNs,
         outVideo = _heldVideo;
 }
 
-UncompressedAudioPayload::Ptr FrameSync::produceAudio(int64_t targetSamples) {
+PcmAudioPayload::Ptr FrameSync::produceAudio(int64_t targetSamples) {
         if(!_targetAudioDesc.isValid() || targetSamples <= 0) {
-                return UncompressedAudioPayload::Ptr();
+                return PcmAudioPayload::Ptr();
         }
         const unsigned int channels = _targetAudioDesc.channels();
         const float       targetRate = _targetAudioDesc.sampleRate();
-        if(channels == 0 || targetRate <= 0.0f) return UncompressedAudioPayload::Ptr();
+        if(channels == 0 || targetRate <= 0.0f) return PcmAudioPayload::Ptr();
 
         // Lazy init the resampler once we know channel count.
         if(_resampler.isNull()) {
@@ -494,7 +492,7 @@ UncompressedAudioPayload::Ptr FrameSync::produceAudio(int64_t targetSamples) {
                         promekiWarn("FrameSync[%s]: resampler setup failed",
                                     _name.cstr());
                         _resampler.clear();
-                        return UncompressedAudioPayload::Ptr();
+                        return PcmAudioPayload::Ptr();
                 }
         }
 
@@ -526,7 +524,7 @@ UncompressedAudioPayload::Ptr FrameSync::produceAudio(int64_t targetSamples) {
         // pull side reads plane(0) as float — so the output buffer is
         // allocated as native float regardless of @c _targetAudioDesc 's
         // declared sample format.  Downstream consumers that need a
-        // different sample format convert via UncompressedAudioPayload::convert.
+        // different sample format convert via PcmAudioPayload::convert.
         AudioDesc outDesc(AudioFormat::NativeFloat, targetRate, channels);
         const size_t outBytes = outDesc.bufferSize(targetSamples);
         auto outBuf = Buffer::Ptr::create(outBytes);
@@ -537,7 +535,7 @@ UncompressedAudioPayload::Ptr FrameSync::produceAudio(int64_t targetSamples) {
         long outWritten = 0;
         while(outWritten < (long)targetSamples) {
                 if(_audioInput.isEmpty()) break;
-                const UncompressedAudioPayload::Ptr &front = _audioInput.front();
+                const PcmAudioPayload::Ptr &front = _audioInput.front();
                 if(!front.isValid() || front->sampleCount() == 0 ||
                    front->desc().format().id() != AudioFormat::NativeFloat ||
                    front->planeCount() == 0) {
@@ -584,7 +582,7 @@ UncompressedAudioPayload::Ptr FrameSync::produceAudio(int64_t targetSamples) {
 
         BufferView planes;
         planes.pushToBack(outBuf, 0, outBytes);
-        return UncompressedAudioPayload::Ptr::create(outDesc,
+        return PcmAudioPayload::Ptr::create(outDesc,
                 static_cast<size_t>(targetSamples), planes);
 }
 
@@ -696,7 +694,7 @@ Result<FrameSync::PullResult> FrameSync::pullFrame(bool blockOnEmpty) {
                 audioTargetSamples = (int64_t)_targetFrameRate.samplesPerFrame(
                         (int64_t)_targetAudioDesc.sampleRate(), currentIndex);
         }
-        UncompressedAudioPayload::Ptr outAudio;
+        PcmAudioPayload::Ptr outAudio;
         int64_t    actualNs = 0;
         int64_t    frameSyncDrop = 0;
         int64_t    frameSyncRepeat = 0;
@@ -760,22 +758,17 @@ Result<FrameSync::PullResult> FrameSync::pullFrame(bool blockOnEmpty) {
         Frame::Ptr outFrame = Frame::Ptr::create();
         if(outVideo.isValid()) {
                 // modify() CoW-clones the payload so our output stamp
-                // doesn't overwrite the source payload's metadata
+                // doesn't overwrite the source payload's timestamp
                 // when the same payload is emitted across multiple
                 // repeats.
                 auto stamped = outVideo;
-                stamped.modify()->metadata().set(Metadata::MediaTimeStamp, outStamp);
-                stamped.modify()->metadata().set(Metadata::PresentationTime, outStamp);
+                stamped.modify()->setPts(outStamp);
                 outFrame.modify()->addPayload(stamped);
         }
         if(outAudio.isValid()) {
-                outAudio.modify()->metadata().set(
-                        Metadata::MediaTimeStamp, outStamp);
-                outAudio.modify()->metadata().set(
-                        Metadata::PresentationTime, outStamp);
+                outAudio.modify()->setPts(outStamp);
                 outFrame.modify()->addPayload(outAudio);
         }
-        outFrame.modify()->metadata().set(Metadata::MediaTimeStamp, outStamp);
         outFrame.modify()->metadata().set(Metadata::FrameNumber, FrameNumber(currentIndex));
         // FrameSyncDrop/FrameSyncRepeat are declared as int32 in the
         // Metadata schema; clamp here so an unexpectedly large

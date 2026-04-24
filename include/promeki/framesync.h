@@ -13,7 +13,7 @@
 #include <promeki/audiodesc.h>
 #include <promeki/audioresampler.h>
 #include <promeki/videopayload.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/framecount.h>
 #include <promeki/framenumber.h>
 #include <promeki/framerate.h>
@@ -367,8 +367,8 @@ class FrameSync {
                                  VideoPayload::Ptr &outVideo,
                                  int64_t &outRepeated,
                                  int64_t &outDropped);
-                UncompressedAudioPayload::Ptr produceAudio(int64_t targetSamples);
-                void       updateSourceAudioRate(const UncompressedAudioPayload &audio,
+                PcmAudioPayload::Ptr produceAudio(int64_t targetSamples);
+                void       updateSourceAudioRate(const PcmAudioPayload &audio,
                                                  int64_t audioTsNs);
                 void       updateSourceVideoRate(int64_t videoTsNs);
 
@@ -426,7 +426,7 @@ class FrameSync {
 
                 // Audio resampler pipeline.
                 AudioResampler::UPtr _resampler;
-                List<UncompressedAudioPayload::Ptr> _audioInput; // pending input audio, FIFO
+                List<PcmAudioPayload::Ptr> _audioInput; // pending input audio, FIFO
                 int64_t            _audioSamplesConsumed = 0;   // of current front audio
 
                 // Rate tracking.

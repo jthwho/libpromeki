@@ -10,6 +10,7 @@
 #include <promeki/namespace.h>
 #include <promeki/uniqueptr.h>
 #include <promeki/videopayload.h>
+#include <promeki/variantlookup.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -51,6 +52,8 @@ class PaintEngine;
  */
 class UncompressedVideoPayload : public VideoPayload {
         public:
+                PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH(UncompressedVideoPayload)
+
                 virtual UncompressedVideoPayload *_promeki_clone() const override {
                         return new UncompressedVideoPayload(*this);
                 }

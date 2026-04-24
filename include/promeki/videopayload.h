@@ -10,9 +10,13 @@
 #include <promeki/namespace.h>
 #include <promeki/mediapayload.h>
 #include <promeki/imagedesc.h>
+#include <promeki/duration.h>
+#include <promeki/variant.h>
 #include <promeki/list.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief Abstract base for any video payload — compressed or
@@ -82,13 +86,79 @@ class VideoPayload : public MediaPayload {
                 /** @brief Replaces the image descriptor. */
                 void setDesc(const ImageDesc &d) { _desc = d; }
 
+                /**
+                 * @brief Returns the per-payload wall-clock duration,
+                 *        or a zero @ref Duration when unset.
+                 *
+                 * Video payloads have no intrinsic rate — the enclosing
+                 * pipeline (MediaIO / frame-rate converter) is the one
+                 * that knows how long a frame represents.  A
+                 * zero-valued duration is the "not yet stamped"
+                 * sentinel; @ref MediaIO treats that case as a fill
+                 * site and assigns one frame of the session rate.
+                 */
+                Duration duration() const override { return _duration; }
+
+                /** @brief Stores @p val as the payload's duration. */
+                Error setDuration(const Duration &val) override {
+                        _duration = val;
+                        return Error::Ok;
+                }
+
+                /**
+                 * @brief Video payloads always support a duration —
+                 *        always returns @c true.
+                 *
+                 * @ref hasDuration is a type-level predicate that
+                 * answers "is a duration meaningful for this payload
+                 * kind?" rather than "has one been assigned?"  Callers
+                 * that want the latter should test
+                 * @c duration().isZero().
+                 */
+                bool hasDuration() const override { return true; }
+
+                /**
+                 * @brief Forwards to the descriptor's metadata.
+                 *
+                 * Every video payload keeps its per-stream metadata
+                 * (@c FrameRate, colorimetry, origination, …) on the
+                 * @ref ImageDesc that already travels with it.
+                 * Implementing @ref MediaPayload::metadata by
+                 * forwarding here keeps one authoritative store per
+                 * payload and lets generic consumers reach it
+                 * uniformly via the base API.
+                 */
+                const Metadata &metadata() const override { return _desc.metadata(); }
+
+                /** @copydoc metadata() const */
+                Metadata &metadata() override { return _desc.metadata(); }
+
                 VideoPayload(const VideoPayload &) = default;
                 VideoPayload(VideoPayload &&) = default;
                 VideoPayload &operator=(const VideoPayload &) = default;
                 VideoPayload &operator=(VideoPayload &&) = default;
 
+        protected:
+                /**
+                 * @brief Writes the VideoPayload-level common tail
+                 *        (duration presence + value) to @p s.
+                 *
+                 * Called from each concrete leaf's @ref serialisePayload
+                 * after the leaf has written its @ref ImageDesc so the
+                 * duration rides on every video subclass without
+                 * duplicating the logic.
+                 */
+                void serialiseVideoCommon(DataStream &s) const;
+
+                /**
+                 * @brief Reads the VideoPayload-level common tail
+                 *        written by @ref serialiseVideoCommon.
+                 */
+                void deserialiseVideoCommon(DataStream &s);
+
         private:
                 ImageDesc _desc;
+                Duration  _duration;
 };
 
 PROMEKI_NAMESPACE_END

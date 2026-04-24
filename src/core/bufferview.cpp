@@ -7,8 +7,12 @@
 
 #include <limits>
 #include <promeki/bufferview.h>
+#include <promeki/variantlookup.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+// VariantLookup registration is appended after the implementation —
+// see the bottom of this file for the Entry-scoped scalars.
 
 // Sentinel for "no buffer" slices.  Stored in View::bufferIdx when the
 // slice carries a null Buffer::Ptr — no entry is inserted into
@@ -25,6 +29,15 @@ const Buffer::Ptr &BufferView::Entry::buffer() const {
         const View &v = _list->_views[_idx];
         if(v.bufferIdx == kNoBuffer) return kNull;
         return _list->_buffers[v.bufferIdx];
+}
+
+size_t BufferView::Entry::bufferIndex() const {
+        // Surface the internal deduplication index so callers can
+        // tell "do these two slices share a backing buffer?" without
+        // reaching for Buffer::Ptr equality — useful for dump /
+        // query paths that want a compact integer handle.
+        if(_list == nullptr) return kNoBuffer;
+        return _list->_views[_idx].bufferIdx;
 }
 
 size_t BufferView::Entry::offset() const {
@@ -173,5 +186,38 @@ void BufferView::ensureExclusive() {
                 if(b.referenceCount() > 1) b.modify();
         }
 }
+
+// ============================================================================
+// VariantLookup registration for BufferView::Entry
+//
+// Exposes a single slice's (buffer-index, offset, size) triple as
+// Variant scalars so the payload-level @c Buffer[N].* indexedChild
+// on @ref MediaPayload resolves uniformly — the Entry proxy is
+// cheap to construct on demand, which is why MediaPayload uses the
+// by-value indexedChild overload against @c BufferView::Entry.
+// ============================================================================
+
+PROMEKI_LOOKUP_REGISTER(BufferView::Entry)
+        .scalar("Index",
+                [](const BufferView::Entry &e) -> std::optional<Variant> {
+                        return Variant(static_cast<uint64_t>(e.bufferIndex()));
+                })
+        .scalar("Offset",
+                [](const BufferView::Entry &e) -> std::optional<Variant> {
+                        return Variant(static_cast<uint64_t>(e.offset()));
+                })
+        .scalar("Size",
+                [](const BufferView::Entry &e) -> std::optional<Variant> {
+                        return Variant(static_cast<uint64_t>(e.size()));
+                })
+        .scalar("BufferSize",
+                [](const BufferView::Entry &e) -> std::optional<Variant> {
+                        const Buffer::Ptr &b = e.buffer();
+                        return Variant(static_cast<uint64_t>(b.isValid() ? b->size() : 0u));
+                })
+        .scalar("IsValid",
+                [](const BufferView::Entry &e) -> std::optional<Variant> {
+                        return Variant(e.isValid());
+                });
 
 PROMEKI_NAMESPACE_END

@@ -16,7 +16,7 @@
 #include <promeki/frame.h>
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/compressedvideopayload.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/audiopayload.h>
 #include <promeki/videocodec.h>
 #include <promeki/videodecoder.h>
@@ -233,7 +233,7 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandOpen &cmd) {
                         pcm.modify()->setSize(sz);
                         std::memset(pcm.modify()->data(), 0, sz);
                         BufferView view(pcm, 0, sz);
-                        auto silence = UncompressedAudioPayload::Ptr::create(
+                        auto silence = PcmAudioPayload::Ptr::create(
                                 adesc, prerollSamples,
                                 view);
                         _audioOutput->pushAudio(*silence);
@@ -436,7 +436,7 @@ void SDLPlayerTask::pullLoop() {
                 if(_audioConfigured && _audioOutput != nullptr) {
                         for(const AudioPayload::Ptr &ap : pr.frame->audioPayloads()) {
                                 if(!ap.isValid()) continue;
-                                const auto *uap = ap->as<UncompressedAudioPayload>();
+                                const auto *uap = ap->as<PcmAudioPayload>();
                                 if(uap != nullptr) _audioOutput->pushAudio(*uap);
                         }
                 }

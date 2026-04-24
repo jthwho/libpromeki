@@ -12,6 +12,7 @@
 #include <promeki/audiopayload.h>
 #include <promeki/buffer.h>
 #include <promeki/audiocodec.h>
+#include <promeki/variantlookup.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -22,12 +23,12 @@ PROMEKI_NAMESPACE_BEGIN
  * @ingroup proav
  *
  * Block-based audio codecs (Opus, AAC, MP3, FLAC) emit exactly one
- * encoded audio frame per payload; its decoded length is recorded
- * on the base as @ref MediaPayload::duration (and, implicitly, via
- * the descriptor's sample rate).  The encoded bytes live in the
- * base's plane list as a single @ref BufferView; multiple packets
- * may share one backing @ref Buffer when the encoder emits them
- * concatenated.
+ * encoded audio frame per payload; its decoded length lives in the
+ * base as @ref AudioPayload::sampleCount, from which
+ * @ref MediaPayload::duration is derived using the descriptor's
+ * sample rate.  The encoded bytes live in the base's plane list as
+ * a single @ref BufferView; multiple packets may share one backing
+ * @ref Buffer when the encoder emits them concatenated.
  *
  * Whether a given packet is a self-contained decode entry point is
  * codec-dependent.  Most compressed audio codecs of interest here
@@ -51,13 +52,16 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Example
  * @code
  * AudioDesc desc(AudioFormat(AudioFormat::Opus), 48000, 2);
- * auto pkt = CompressedAudioPayload::Ptr::create(desc, encodedBuffer);
+ * auto pkt = CompressedAudioPayload::Ptr::create(
+ *         desc, encodedBuffer, /\*sampleCount=*\/960);
  * pkt.modify()->setPts(pts);
- * pkt.modify()->setDuration(Duration::fromSamples(960, 48000));
+ * // Duration is derived: 960 / 48000 = 20 ms.
  * @endcode
  */
 class CompressedAudioPayload : public AudioPayload {
         public:
+                PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH(CompressedAudioPayload)
+
                 virtual CompressedAudioPayload *_promeki_clone() const override {
                         return new CompressedAudioPayload(*this);
                 }
@@ -76,29 +80,39 @@ class CompressedAudioPayload : public AudioPayload {
 
                 /**
                  * @brief Constructs a compressed audio payload with the
-                 *        given descriptor.  Plane list left empty.
+                 *        given descriptor and (optional) sample count.
+                 *        Plane list left empty.
+                 *
+                 * @p sampleCount is the number of decoded samples per
+                 * channel that the encoded access unit represents.
+                 * Block audio codecs (Opus, AAC, MP3, …) always know
+                 * this value at encode time.
                  */
-                explicit CompressedAudioPayload(const AudioDesc &desc) :
-                        AudioPayload(desc) { }
+                explicit CompressedAudioPayload(const AudioDesc &desc,
+                                                size_t sampleCount = 0) :
+                        AudioPayload(desc, sampleCount) { }
 
                 /**
                  * @brief Constructs a compressed audio payload with a
-                 *        descriptor and plane list.
+                 *        descriptor, (optional) sample count, and plane
+                 *        list.
                  *
                  * The single-slice shape (one shared buffer) is
                  * constructed by passing @c BufferView(buf, offset,
                  * size) directly.
                  */
                 CompressedAudioPayload(const AudioDesc &desc,
-                                       const BufferView &data) :
-                        AudioPayload(desc, data) { }
+                                       const BufferView &data,
+                                       size_t sampleCount = 0) :
+                        AudioPayload(desc, sampleCount, data) { }
 
                 /**
                  * @brief Constructs a compressed audio payload that owns
                  *        a whole buffer as its single-plane payload.
                  */
-                CompressedAudioPayload(const AudioDesc &desc, Buffer::Ptr buffer) :
-                        AudioPayload(desc,
+                CompressedAudioPayload(const AudioDesc &desc, Buffer::Ptr buffer,
+                                       size_t sampleCount = 0) :
+                        AudioPayload(desc, sampleCount,
                                 buffer ? BufferView(buffer, 0, buffer->size())
                                        : BufferView()) { }
 

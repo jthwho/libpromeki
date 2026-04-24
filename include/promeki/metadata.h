@@ -275,21 +275,6 @@ class Metadata : public VariantDatabase<"Metadata"> {
                                 .setDefault(promeki::MediaTimeStamp())
                                 .setDescription("Timestamp when the library or device captured this data."));
 
-                /// @brief Timestamp at which this essence should be presented.
-                ///
-                /// Set by downstream scheduling or pacing logic to indicate
-                /// when a frame should be rendered or transmitted.
-                PROMEKI_DECLARE_ID(PresentationTime,
-                        VariantSpec().setType(Variant::TypeMediaTimeStamp)
-                                .setDefault(promeki::MediaTimeStamp())
-                                .setDescription("Timestamp when this essence should be presented."));
-
-                /// @brief Clock-domain-aware timestamp for media timing.
-                PROMEKI_DECLARE_ID(MediaTimeStamp,
-                        VariantSpec().setType(Variant::TypeMediaTimeStamp)
-                                .setDefault(promeki::MediaTimeStamp())
-                                .setDescription("Clock-domain-aware timestamp for media timing."));
-
                 /// @brief FrameBridge publish timestamp for this frame.
                 ///
                 /// The moment the publisher placed this frame in the
@@ -663,6 +648,123 @@ class Metadata : public VariantDatabase<"Metadata"> {
                                 .setEnumType(promeki::VideoScanMode::Type)
                                 .setDescription("Raster scan mode "
                                                 "(Progressive / Interlaced*)."));
+
+                // ============================================================
+                // Encoder per-frame statistics
+                //
+                // These keys are populated by a @ref VideoEncoder on each
+                // emitted @ref CompressedVideoPayload.  They describe how
+                // the encoder coded a specific frame and are useful for
+                // rate-control tuning, quality analytics, and diagnosing
+                // bitrate / latency anomalies.  A decoder will typically
+                // not repopulate them when re-decoding a stream.
+                // ============================================================
+
+                /// @brief Average quantization parameter of the encoded
+                /// frame.  Codec-dependent range (H.264 / HEVC: 0-51,
+                /// AV1: 0-255).  Lower is higher quality / higher
+                /// bitrate.
+                PROMEKI_DECLARE_ID(CodecFrameAvgQP,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("Average QP of the encoded frame."));
+
+                /// @brief Coding complexity of the encoded frame — Sum of
+                /// Absolute Transformed Differences over the whole
+                /// picture as reported by the encoder.
+                PROMEKI_DECLARE_ID(CodecFrameSatd,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("Frame SATD (Sum of Absolute Transformed Differences)."));
+
+                /// @brief Index of this frame in encode order
+                /// (encoder-internal sequence).
+                ///
+                /// Encoders that reorder frames (B-pyramid, HEVC RA) emit
+                /// frames in encode order while the stream is consumed
+                /// in display order.  Pair with
+                /// @ref CodecDisplayOrderIdx to measure reorder depth.
+                PROMEKI_DECLARE_ID(CodecEncodeOrderIdx,
+                        VariantSpec().setType(Variant::TypeU32)
+                                .setDefault(uint32_t(0))
+                                .setDescription("Frame index in encode order."));
+
+                /// @brief Index of this frame in display order.
+                PROMEKI_DECLARE_ID(CodecDisplayOrderIdx,
+                        VariantSpec().setType(Variant::TypeU32)
+                                .setDefault(uint32_t(0))
+                                .setDescription("Frame index in display order."));
+
+                /// @brief Temporal scalability layer ID of this frame
+                /// (0 = base).
+                ///
+                /// For temporally-scalable streams (H.264 SVC, HEVC
+                /// TSVC, AV1 temporal layers), higher layers can be
+                /// dropped by a downstream selector to reduce bitrate
+                /// or frame rate without touching the base layer.
+                PROMEKI_DECLARE_ID(CodecTemporalId,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("Temporal scalability layer ID (0 = base layer)."));
+
+                /// @brief Offset from the most recent keyframe, in
+                /// display order.
+                ///
+                /// Zero on a keyframe; 1, 2, 3, ... on subsequent frames
+                /// until the next keyframe resets the count.  Useful
+                /// for diagnosing GOP structure and rate-control
+                /// behaviour across a GOP.
+                PROMEKI_DECLARE_ID(CodecGopPosition,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("Offset from last keyframe (0 = keyframe)."));
+
+                /// @brief Number of intra-coded blocks in the encoded
+                /// frame.
+                ///
+                /// The block unit is codec-defined: macroblocks (H.264),
+                /// coding tree blocks (HEVC), superblocks (AV1).
+                /// Populated only when the encoder is configured to
+                /// report rate-control statistics.
+                PROMEKI_DECLARE_ID(CodecIntraBlockCount,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("Count of intra-coded blocks (codec-specific unit)."));
+
+                /// @brief Number of inter-coded blocks in the encoded
+                /// frame.
+                ///
+                /// The block unit matches @ref CodecIntraBlockCount
+                /// (MB / CTB / SB).  Populated only when the encoder is
+                /// configured to report rate-control statistics.
+                PROMEKI_DECLARE_ID(CodecInterBlockCount,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("Count of inter-coded blocks (codec-specific unit)."));
+
+                /// @brief Average motion vector X component for the
+                /// encoded frame.
+                ///
+                /// Units are codec-defined (typically quarter-pixel for
+                /// H.264 / HEVC).  Populated only when the encoder is
+                /// configured to report rate-control statistics.
+                PROMEKI_DECLARE_ID(CodecAvgMotionVectorX,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setDescription("Average motion vector X (codec-defined units)."));
+
+                /// @brief Average motion vector Y component for the
+                /// encoded frame.
+                PROMEKI_DECLARE_ID(CodecAvgMotionVectorY,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setDescription("Average motion vector Y (codec-defined units)."));
 
                 // ============================================================
                 // Methods

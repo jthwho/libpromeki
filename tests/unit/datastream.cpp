@@ -43,6 +43,14 @@
 #include <promeki/contentlightlevel.h>
 #include <promeki/url.h>
 #include <promeki/ciepoint.h>
+#include <promeki/duration.h>
+#include <promeki/videocodec.h>
+#include <promeki/audiocodec.h>
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
+#include <promeki/socketaddress.h>
+#include <promeki/sdpsession.h>
+#endif
 
 using namespace promeki;
 
@@ -79,9 +87,9 @@ TEST_CASE("DataStream: writer writes header") {
         CHECK(raw[1] == 0x4D); // 'M'
         CHECK(raw[2] == 0x44); // 'D'
         CHECK(raw[3] == 0x53); // 'S'
-        // Version 1 in big-endian
+        // Version 2 in big-endian
         CHECK(raw[4] == 0x00);
-        CHECK(raw[5] == 0x01);
+        CHECK(raw[5] == 0x02);
         // Default byte order is BigEndian → 'B'
         CHECK(raw[6] == 'B');
         // Reserved bytes 7-15 must be zero
@@ -489,20 +497,21 @@ TEST_CASE("DataStream: round-trip Variant primitives") {
 TEST_CASE("DataStream: big-endian vs little-endian wire format") {
         uint32_t testVal = 0x01020304;
 
-        // Big-endian: 16-byte header + 1-byte type tag + 4-byte value
+        // Big-endian: 16-byte header + 2-byte type tag + 4-byte value
         WriterFixture f1;
         {
                 DataStream ws = DataStream::createWriter(&f1.dev, DataStream::BigEndian);
                 ws << testVal;
         }
-        // After header(16) + tag(1), the 4 value bytes start at offset 17
+        // After header(16) + tag(2), the 4 value bytes start at offset 18
         uint8_t *raw = static_cast<uint8_t *>(f1.buf.data());
         CHECK(raw[6] == 'B'); // byte-order marker
-        CHECK(raw[16] == DataStream::TypeUInt32);
-        CHECK(raw[17] == 0x01);
-        CHECK(raw[18] == 0x02);
-        CHECK(raw[19] == 0x03);
-        CHECK(raw[20] == 0x04);
+        CHECK(raw[16] == 0x00); // tag high byte (big-endian)
+        CHECK(raw[17] == DataStream::TypeUInt32);
+        CHECK(raw[18] == 0x01);
+        CHECK(raw[19] == 0x02);
+        CHECK(raw[20] == 0x03);
+        CHECK(raw[21] == 0x04);
 
         f1.dev.seek(0);
         {
@@ -521,11 +530,12 @@ TEST_CASE("DataStream: big-endian vs little-endian wire format") {
         }
         raw = static_cast<uint8_t *>(f2.buf.data());
         CHECK(raw[6] == 'L'); // byte-order marker
-        CHECK(raw[16] == DataStream::TypeUInt32);
-        CHECK(raw[17] == 0x04);
-        CHECK(raw[18] == 0x03);
-        CHECK(raw[19] == 0x02);
-        CHECK(raw[20] == 0x01);
+        CHECK(raw[16] == DataStream::TypeUInt32); // tag low byte (little-endian)
+        CHECK(raw[17] == 0x00); // tag high byte (little-endian)
+        CHECK(raw[18] == 0x04);
+        CHECK(raw[19] == 0x03);
+        CHECK(raw[20] == 0x02);
+        CHECK(raw[21] == 0x01);
 
         f2.dev.seek(0);
         {
@@ -544,11 +554,12 @@ TEST_CASE("DataStream: byte order for 16-bit values") {
                 DataStream ws = DataStream::createWriter(&f.dev, DataStream::BigEndian);
                 ws << testVal;
         }
-        // header(16) + tag(1) = offset 17
+        // header(16) + tag(2) = value at offset 18
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
-        CHECK(raw[16] == DataStream::TypeUInt16);
-        CHECK(raw[17] == 0xAB);
-        CHECK(raw[18] == 0xCD);
+        CHECK(raw[16] == 0x00); // tag high byte
+        CHECK(raw[17] == DataStream::TypeUInt16);
+        CHECK(raw[18] == 0xAB);
+        CHECK(raw[19] == 0xCD);
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
@@ -565,8 +576,8 @@ TEST_CASE("DataStream: byte order for 64-bit values") {
                 DataStream ws = DataStream::createWriter(&f.dev, DataStream::BigEndian);
                 ws << testVal;
         }
-        // header(16) + tag(1) = offset 17
-        uint8_t *raw = static_cast<uint8_t *>(f.buf.data()) + 17;
+        // header(16) + tag(2) = value at offset 18
+        uint8_t *raw = static_cast<uint8_t *>(f.buf.data()) + 18;
         for(int i = 0; i < 8; ++i) CHECK(raw[i] == static_cast<uint8_t>(i + 1));
         f.dev.seek(0);
         {
@@ -599,15 +610,15 @@ TEST_CASE("DataStream: type mismatch sets ReadCorruptData") {
 }
 
 TEST_CASE("DataStream: ReadPastEnd on truncated data") {
-        // Write a header + TypeUInt32 tag + only 2 of the 4 value bytes
+        // Write a header + TypeUInt32 tag + only 2 of the 4 value bytes.
+        // The tag is emitted through writeTag() so the test stays
+        // agnostic to the on-wire tag width.
         Buffer buf(TestBufSize);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
         {
                 DataStream ws = DataStream::createWriter(&dev);
-                // Write a uint32 tag + partial value using raw access
-                uint8_t tag = DataStream::TypeUInt32;
-                ws.writeRawData(&tag, 1);
+                ws.writeTag(DataStream::TypeUInt32);
                 uint8_t partial[2] = { 0x01, 0x02 };
                 ws.writeRawData(partial, 2);
         }
@@ -676,10 +687,10 @@ TEST_CASE("DataStream: skipRawData") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                // Each uint8_t is tag(1) + value(1) = 2 bytes.
-                // Skip first entry (2 bytes)
-                ssize_t skipped = rs.skipRawData(2);
-                CHECK(skipped == 2);
+                // Each uint8_t is tag(2) + value(1) = 3 bytes.
+                // Skip first entry (3 bytes)
+                ssize_t skipped = rs.skipRawData(3);
+                CHECK(skipped == 3);
                 uint8_t val;
                 rs >> val;
                 CHECK(val == 0xBB);
@@ -961,8 +972,8 @@ TEST_CASE("DataStream: WriteFailed on full buffer") {
         BufferIODevice dev(&buf);
         dev.open(IODevice::WriteOnly);
         DataStream ws = DataStream::createWriter(&dev);
-        // Writing a uint32_t (tag + 4 bytes = 5 bytes) should fail with
-        // only 2 bytes remaining.
+        // Writing a uint32_t (tag(2) + value(4) = 6 bytes) should fail
+        // with only 2 bytes remaining after the header.
         if(ws.status() == DataStream::Ok) {
                 ws << static_cast<uint32_t>(42);
                 CHECK(ws.status() == DataStream::WriteFailed);
@@ -2245,12 +2256,12 @@ TEST_CASE("DataStream golden: uint32_t big-endian exact bytes") {
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
         // Bytes 0-15: PMDS header (checked elsewhere)
-        // Byte 16: TypeUInt32 tag (0x06)
-        CHECK(raw[16] == 0x06);
-        // Bytes 17-20: 0xDEADBEEF big-endian
-        CHECK(raw[17] == 0xDE); CHECK(raw[18] == 0xAD);
-        CHECK(raw[19] == 0xBE); CHECK(raw[20] == 0xEF);
-        CHECK(f.dev.pos() == 21);
+        // Bytes 16-17: TypeUInt32 tag 0x0006 (big-endian)
+        CHECK(raw[16] == 0x00); CHECK(raw[17] == 0x06);
+        // Bytes 18-21: 0xDEADBEEF big-endian
+        CHECK(raw[18] == 0xDE); CHECK(raw[19] == 0xAD);
+        CHECK(raw[20] == 0xBE); CHECK(raw[21] == 0xEF);
+        CHECK(f.dev.pos() == 22);
 }
 
 TEST_CASE("DataStream golden: String exact bytes") {
@@ -2260,15 +2271,15 @@ TEST_CASE("DataStream golden: String exact bytes") {
                 ws << String("hi");
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
-        // Byte 16: TypeString tag (0x0C)
-        CHECK(raw[16] == 0x0C);
-        // Bytes 17-20: length = 2 (big-endian uint32)
-        CHECK(raw[17] == 0x00); CHECK(raw[18] == 0x00);
-        CHECK(raw[19] == 0x00); CHECK(raw[20] == 0x02);
-        // Bytes 21-22: UTF-8 "hi"
-        CHECK(raw[21] == 'h');
-        CHECK(raw[22] == 'i');
-        CHECK(f.dev.pos() == 23);
+        // Bytes 16-17: TypeString tag 0x000C
+        CHECK(raw[16] == 0x00); CHECK(raw[17] == 0x0C);
+        // Bytes 18-21: length = 2 (big-endian uint32)
+        CHECK(raw[18] == 0x00); CHECK(raw[19] == 0x00);
+        CHECK(raw[20] == 0x00); CHECK(raw[21] == 0x02);
+        // Bytes 22-23: UTF-8 "hi"
+        CHECK(raw[22] == 'h');
+        CHECK(raw[23] == 'i');
+        CHECK(f.dev.pos() == 24);
 }
 
 TEST_CASE("DataStream golden: UUID direct write exact bytes") {
@@ -2282,11 +2293,11 @@ TEST_CASE("DataStream golden: UUID direct write exact bytes") {
                 ws << id;
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
-        // Byte 16: TypeUUID tag (0x10)
-        CHECK(raw[16] == 0x10);
-        // Bytes 17-32: raw UUID bytes
-        for(int i = 0; i < 16; ++i) CHECK(raw[17 + i] == i);
-        CHECK(f.dev.pos() == 33);
+        // Bytes 16-17: TypeUUID tag 0x0010 (big-endian default)
+        CHECK(raw[16] == 0x00); CHECK(raw[17] == 0x10);
+        // Bytes 18-33: raw UUID bytes
+        for(int i = 0; i < 16; ++i) CHECK(raw[18 + i] == i);
+        CHECK(f.dev.pos() == 34);
 }
 
 TEST_CASE("DataStream golden: Size2D<uint32_t> exact bytes") {
@@ -2296,19 +2307,19 @@ TEST_CASE("DataStream golden: Size2D<uint32_t> exact bytes") {
                 ws << Size2Du32(1920, 1080);
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
-        // Byte 16: TypeSize2D tag (0x13)
-        CHECK(raw[16] == 0x13);
-        // Byte 17: TypeUInt32 tag (0x06) for width
-        CHECK(raw[17] == 0x06);
-        // Bytes 18-21: width = 1920 = 0x00000780 (big-endian)
-        CHECK(raw[18] == 0x00); CHECK(raw[19] == 0x00);
-        CHECK(raw[20] == 0x07); CHECK(raw[21] == 0x80);
-        // Byte 22: TypeUInt32 tag (0x06) for height
-        CHECK(raw[22] == 0x06);
-        // Bytes 23-26: height = 1080 = 0x00000438 (big-endian)
-        CHECK(raw[23] == 0x00); CHECK(raw[24] == 0x00);
-        CHECK(raw[25] == 0x04); CHECK(raw[26] == 0x38);
-        CHECK(f.dev.pos() == 27);
+        // Bytes 16-17: TypeSize2D tag 0x0013
+        CHECK(raw[16] == 0x00); CHECK(raw[17] == 0x13);
+        // Bytes 18-19: TypeUInt32 tag 0x0006 for width
+        CHECK(raw[18] == 0x00); CHECK(raw[19] == 0x06);
+        // Bytes 20-23: width = 1920 = 0x00000780 (big-endian)
+        CHECK(raw[20] == 0x00); CHECK(raw[21] == 0x00);
+        CHECK(raw[22] == 0x07); CHECK(raw[23] == 0x80);
+        // Bytes 24-25: TypeUInt32 tag 0x0006 for height
+        CHECK(raw[24] == 0x00); CHECK(raw[25] == 0x06);
+        // Bytes 26-29: height = 1080 = 0x00000438 (big-endian)
+        CHECK(raw[26] == 0x00); CHECK(raw[27] == 0x00);
+        CHECK(raw[28] == 0x04); CHECK(raw[29] == 0x38);
+        CHECK(f.dev.pos() == 30);
 }
 
 TEST_CASE("DataStream golden: Rational<int> exact bytes") {
@@ -2318,19 +2329,19 @@ TEST_CASE("DataStream golden: Rational<int> exact bytes") {
                 ws << Rational<int>(24000, 1001);
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
-        // Byte 16: TypeRational tag (0x14)
-        CHECK(raw[16] == 0x14);
-        // Byte 17: TypeInt32 tag (0x05) for numerator
-        CHECK(raw[17] == 0x05);
-        // Bytes 18-21: numerator = 24000 = 0x00005DC0 (big-endian)
-        CHECK(raw[18] == 0x00); CHECK(raw[19] == 0x00);
-        CHECK(raw[20] == 0x5D); CHECK(raw[21] == 0xC0);
-        // Byte 22: TypeInt32 tag (0x05) for denominator
-        CHECK(raw[22] == 0x05);
-        // Bytes 23-26: denominator = 1001 = 0x000003E9 (big-endian)
-        CHECK(raw[23] == 0x00); CHECK(raw[24] == 0x00);
-        CHECK(raw[25] == 0x03); CHECK(raw[26] == 0xE9);
-        CHECK(f.dev.pos() == 27);
+        // Bytes 16-17: TypeRational tag 0x0014
+        CHECK(raw[16] == 0x00); CHECK(raw[17] == 0x14);
+        // Bytes 18-19: TypeInt32 tag 0x0005 for numerator
+        CHECK(raw[18] == 0x00); CHECK(raw[19] == 0x05);
+        // Bytes 20-23: numerator = 24000 = 0x00005DC0 (big-endian)
+        CHECK(raw[20] == 0x00); CHECK(raw[21] == 0x00);
+        CHECK(raw[22] == 0x5D); CHECK(raw[23] == 0xC0);
+        // Bytes 24-25: TypeInt32 tag 0x0005 for denominator
+        CHECK(raw[24] == 0x00); CHECK(raw[25] == 0x05);
+        // Bytes 26-29: denominator = 1001 = 0x000003E9 (big-endian)
+        CHECK(raw[26] == 0x00); CHECK(raw[27] == 0x00);
+        CHECK(raw[28] == 0x03); CHECK(raw[29] == 0xE9);
+        CHECK(f.dev.pos() == 30);
 }
 
 TEST_CASE("DataStream golden: Invalid Variant exact bytes") {
@@ -2341,9 +2352,9 @@ TEST_CASE("DataStream golden: Invalid Variant exact bytes") {
                 ws << invalid;
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
-        // Byte 16: TypeInvalid tag (0x0E), no payload
-        CHECK(raw[16] == 0x0E);
-        CHECK(f.dev.pos() == 17);
+        // Bytes 16-17: TypeInvalid tag 0x000E, no payload
+        CHECK(raw[16] == 0x00); CHECK(raw[17] == 0x0E);
+        CHECK(f.dev.pos() == 18);
 }
 
 TEST_CASE("DataStream golden: List<int32_t> exact bytes") {
@@ -2356,21 +2367,21 @@ TEST_CASE("DataStream golden: List<int32_t> exact bytes") {
                 ws << list;
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
-        // Byte 16: TypeList tag (0x20)
-        CHECK(raw[16] == 0x20);
-        // Bytes 17-21: count = 2 written as TypeUInt32 + big-endian value
-        CHECK(raw[17] == 0x06); // TypeUInt32
-        CHECK(raw[18] == 0x00); CHECK(raw[19] == 0x00);
-        CHECK(raw[20] == 0x00); CHECK(raw[21] == 0x02);
-        // Bytes 22-26: element 1 = int32(1) written as TypeInt32 + big-endian
-        CHECK(raw[22] == 0x05); // TypeInt32
-        CHECK(raw[23] == 0x00); CHECK(raw[24] == 0x00);
-        CHECK(raw[25] == 0x00); CHECK(raw[26] == 0x01);
-        // Bytes 27-31: element 2 = int32(2)
-        CHECK(raw[27] == 0x05);
-        CHECK(raw[28] == 0x00); CHECK(raw[29] == 0x00);
-        CHECK(raw[30] == 0x00); CHECK(raw[31] == 0x02);
-        CHECK(f.dev.pos() == 32);
+        // Bytes 16-17: TypeList tag 0x0020
+        CHECK(raw[16] == 0x00); CHECK(raw[17] == 0x20);
+        // Bytes 18-23: count = 2 written as TypeUInt32 + big-endian value
+        CHECK(raw[18] == 0x00); CHECK(raw[19] == 0x06); // TypeUInt32
+        CHECK(raw[20] == 0x00); CHECK(raw[21] == 0x00);
+        CHECK(raw[22] == 0x00); CHECK(raw[23] == 0x02);
+        // Bytes 24-29: element 1 = int32(1) written as TypeInt32 + big-endian
+        CHECK(raw[24] == 0x00); CHECK(raw[25] == 0x05); // TypeInt32
+        CHECK(raw[26] == 0x00); CHECK(raw[27] == 0x00);
+        CHECK(raw[28] == 0x00); CHECK(raw[29] == 0x01);
+        // Bytes 30-35: element 2 = int32(2)
+        CHECK(raw[30] == 0x00); CHECK(raw[31] == 0x05);
+        CHECK(raw[32] == 0x00); CHECK(raw[33] == 0x00);
+        CHECK(raw[34] == 0x00); CHECK(raw[35] == 0x02);
+        CHECK(f.dev.pos() == 36);
 }
 
 TEST_CASE("DataStream golden: MemSpace exact bytes") {
@@ -2380,14 +2391,14 @@ TEST_CASE("DataStream golden: MemSpace exact bytes") {
                 ws << MemSpace(MemSpace::SystemSecure);
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
-        // Byte 16: TypeMemSpace tag (0x19)
-        CHECK(raw[16] == 0x19);
-        // Byte 17: TypeUInt32 tag (0x06) for the ID
-        CHECK(raw[17] == 0x06);
-        // Bytes 18-21: ID = SystemSecure = 1 (big-endian)
-        CHECK(raw[18] == 0x00); CHECK(raw[19] == 0x00);
-        CHECK(raw[20] == 0x00); CHECK(raw[21] == 0x01);
-        CHECK(f.dev.pos() == 22);
+        // Bytes 16-17: TypeMemSpace tag 0x0019
+        CHECK(raw[16] == 0x00); CHECK(raw[17] == 0x19);
+        // Bytes 18-19: TypeUInt32 tag 0x0006 for the ID
+        CHECK(raw[18] == 0x00); CHECK(raw[19] == 0x06);
+        // Bytes 20-23: ID = SystemSecure = 1 (big-endian)
+        CHECK(raw[20] == 0x00); CHECK(raw[21] == 0x00);
+        CHECK(raw[22] == 0x00); CHECK(raw[23] == 0x01);
+        CHECK(f.dev.pos() == 24);
 }
 
 // ============================================================================
@@ -2822,3 +2833,150 @@ TEST_CASE("DataStream: round-trip Metadata carrying HDR types") {
                 CHECK(out.getAs<String>(Metadata::Title) == String("HDR Test"));
         }
 }
+
+TEST_CASE("DataStream: round-trip Duration direct") {
+        WriterFixture f;
+        const Duration in = Duration::fromNanoseconds(1'234'567'890LL);
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << in;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        {
+                DataStream rs = DataStream::createReader(&f.dev);
+                Duration out;
+                rs >> out;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK(out.nanoseconds() == in.nanoseconds());
+        }
+}
+
+TEST_CASE("DataStream: round-trip Variant Duration") {
+        WriterFixture f;
+        const Duration in = Duration::fromMilliseconds(42);
+        Variant v(in);
+        REQUIRE(v.type() == Variant::TypeDuration);
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << v;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        {
+                DataStream rs = DataStream::createReader(&f.dev);
+                Variant out;
+                rs >> out;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK(out.type() == Variant::TypeDuration);
+                CHECK(out.get<Duration>().nanoseconds() == in.nanoseconds());
+        }
+}
+
+TEST_CASE("DataStream: round-trip Variant VideoCodec") {
+        WriterFixture f;
+        auto r = VideoCodec::fromString("H264");
+        REQUIRE_FALSE(error(r).isError());
+        const VideoCodec in = value(r);
+        Variant v(in);
+        REQUIRE(v.type() == Variant::TypeVideoCodec);
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << v;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        {
+                DataStream rs = DataStream::createReader(&f.dev);
+                Variant out;
+                rs >> out;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK(out.type() == Variant::TypeVideoCodec);
+                CHECK(out.get<VideoCodec>().toString() == in.toString());
+        }
+}
+
+TEST_CASE("DataStream: round-trip Variant AudioCodec") {
+        WriterFixture f;
+        auto r = AudioCodec::fromString("Opus");
+        REQUIRE_FALSE(error(r).isError());
+        const AudioCodec in = value(r);
+        Variant v(in);
+        REQUIRE(v.type() == Variant::TypeAudioCodec);
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << v;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        {
+                DataStream rs = DataStream::createReader(&f.dev);
+                Variant out;
+                rs >> out;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK(out.type() == Variant::TypeAudioCodec);
+                CHECK(out.get<AudioCodec>().toString() == in.toString());
+        }
+}
+
+#if PROMEKI_ENABLE_NETWORK
+TEST_CASE("DataStream: round-trip Variant SocketAddress") {
+        WriterFixture f;
+        auto r = SocketAddress::fromString("192.168.1.50:5004");
+        REQUIRE_FALSE(error(r).isError());
+        const SocketAddress in = value(r);
+        Variant v(in);
+        REQUIRE(v.type() == Variant::TypeSocketAddress);
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << v;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        {
+                DataStream rs = DataStream::createReader(&f.dev);
+                Variant out;
+                rs >> out;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK(out.type() == Variant::TypeSocketAddress);
+                CHECK(out.get<SocketAddress>() == in);
+        }
+}
+
+TEST_CASE("DataStream: round-trip Variant SdpSession") {
+        WriterFixture f;
+        // Minimal RFC 4566 SDP that SdpSession::fromString accepts —
+        // just enough to exercise the wire path, not a conformance
+        // test of the parser itself.
+        const String sdp =
+                "v=0\r\n"
+                "o=- 123456 1 IN IP4 192.168.1.1\r\n"
+                "s=Test Session\r\n"
+                "c=IN IP4 239.0.0.1\r\n"
+                "t=0 0\r\n"
+                "m=video 5004 RTP/AVP 96\r\n"
+                "a=rtpmap:96 raw/90000\r\n";
+        auto r = SdpSession::fromString(sdp);
+        REQUIRE_FALSE(error(r).isError());
+        const SdpSession in = value(r);
+        Variant v(in);
+        REQUIRE(v.type() == Variant::TypeSdpSession);
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << v;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        {
+                DataStream rs = DataStream::createReader(&f.dev);
+                Variant out;
+                rs >> out;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK(out.type() == Variant::TypeSdpSession);
+                // Compare via toString — equality on SdpSession would
+                // require field-wise comparison which isn't the goal
+                // of this wire-level test.
+                CHECK(out.get<SdpSession>().toString() == in.toString());
+        }
+}
+#endif

@@ -391,7 +391,7 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandRead &cmd) {
 
         // Video background — pure pattern, no burn yet.  Pushed to the
         // frame so the per-frame burn template (resolved below) can see
-        // it via {Image[0].*} and {VideoFormat}.
+        // it via {Video[0].*} and {VideoFormat}.
         if(_videoEnabled) {
                 auto payload = _videoPattern.createPayload(
                         _imageDesc, _motionOffset,

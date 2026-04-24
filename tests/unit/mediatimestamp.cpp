@@ -163,10 +163,12 @@ TEST_CASE("MediaTimeStamp: Metadata set/get") {
         TimeStamp ts = TimeStamp::now();
         MediaTimeStamp mts(ts, ClockDomain::Synthetic);
 
+        // CaptureTime is a MediaTimeStamp-typed Metadata ID; use it to
+        // exercise Variant round-trip through Metadata.
         Metadata meta;
-        meta.set(Metadata::MediaTimeStamp, mts);
+        meta.set(Metadata::CaptureTime, mts);
 
-        MediaTimeStamp retrieved = meta.get(Metadata::MediaTimeStamp)
+        MediaTimeStamp retrieved = meta.get(Metadata::CaptureTime)
                 .get<MediaTimeStamp>();
         CHECK(retrieved.isValid());
         CHECK(retrieved.domain() == ClockDomain::Synthetic);

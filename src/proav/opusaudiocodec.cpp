@@ -32,7 +32,7 @@
 #include <promeki/mediatimestamp.h>
 #include <promeki/string.h>
 #include <promeki/timestamp.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/compressedaudiopayload.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -91,7 +91,7 @@ class OpusAudioEncoder : public AudioEncoder {
                         }
                 }
 
-                Error submitPayload(const UncompressedAudioPayload::Ptr &payload) override {
+                Error submitPayload(const PcmAudioPayload::Ptr &payload) override {
                         clearError();
                         if(!payload.isValid() || !payload->isValid() || payload->planeCount() == 0) {
                                 setError(Error::Invalid, "invalid audio payload");
@@ -105,8 +105,8 @@ class OpusAudioEncoder : public AudioEncoder {
                                 return _lastError;
                         }
 
-                        UncompressedAudioPayload::Ptr converted;
-                        const UncompressedAudioPayload *src = payload.ptr();
+                        PcmAudioPayload::Ptr converted;
+                        const PcmAudioPayload *src = payload.ptr();
                         if(_useFloat) {
                                 if(payload->desc().format().id() != AudioFormat::PCMI_Float32LE) {
                                         converted = payload->convert(AudioFormat::PCMI_Float32LE);
@@ -243,7 +243,7 @@ class OpusAudioEncoder : public AudioEncoder {
                         return static_cast<size_t>(_frameSizeMs * _sampleRate / 1000.0f + 0.5f);
                 }
 
-                void appendS16(const UncompressedAudioPayload &src) {
+                void appendS16(const PcmAudioPayload &src) {
                         if(src.planeCount() == 0) return;
                         auto view = src.plane(0);
                         const auto *p = reinterpret_cast<const int16_t *>(view.data());
@@ -253,7 +253,7 @@ class OpusAudioEncoder : public AudioEncoder {
                         std::memcpy(_pendingS16.data() + oldSize, p, n * sizeof(int16_t));
                 }
 
-                void appendFloat(const UncompressedAudioPayload &src) {
+                void appendFloat(const PcmAudioPayload &src) {
                         if(src.planeCount() == 0) return;
                         auto view = src.plane(0);
                         const auto *p = reinterpret_cast<const float *>(view.data());
@@ -351,7 +351,8 @@ class OpusAudioEncoder : public AudioEncoder {
                         AudioDesc desc(AudioFormat(AudioFormat::Opus),
                                        _sampleRate, _channels);
                         BufferView view(buf, 0, buf->size());
-                        auto cvp = CompressedAudioPayload::Ptr::create(desc, view);
+                        auto cvp = CompressedAudioPayload::Ptr::create(
+                                desc, view, framePcmSamplesValue);
                         cvp.modify()->setPts(ptsForCurrentFrame());
                         _outQueue.pushToBack(cvp);
                         _samplesEmitted += framePcmSamplesValue;
@@ -437,15 +438,15 @@ class OpusAudioDecoder : public AudioDecoder {
                         pcmBuf.modify()->setSize(actualBytes);
                         BufferView planes;
                         planes.pushToBack(pcmBuf, 0, pcmBuf->size());
-                        auto uap = UncompressedAudioPayload::Ptr::create(
+                        auto uap = PcmAudioPayload::Ptr::create(
                                 outDesc, static_cast<size_t>(decoded), planes);
                         uap.modify()->setPts(payload->pts());
                         _frames.pushToBack(std::move(uap));
                         return Error::Ok;
                 }
 
-                UncompressedAudioPayload::Ptr receiveAudioPayload() override {
-                        if(_frames.isEmpty()) return UncompressedAudioPayload::Ptr();
+                PcmAudioPayload::Ptr receiveAudioPayload() override {
+                        if(_frames.isEmpty()) return PcmAudioPayload::Ptr();
                         return _frames.popFromFront();
                 }
 
@@ -489,7 +490,7 @@ class OpusAudioDecoder : public AudioDecoder {
                 OpusDecoder         *_dec        = nullptr;
                 float                _outRate    = 48000.0f;
                 unsigned int         _outChannels = 2;
-                Deque<UncompressedAudioPayload::Ptr> _frames;
+                Deque<PcmAudioPayload::Ptr> _frames;
 };
 
 // =============================================================================

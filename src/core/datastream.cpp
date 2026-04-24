@@ -124,18 +124,24 @@ bool DataStream::atEnd() const {
 // Type tags
 // ============================================================================
 
+// Tags are a fixed 16-bit width on the wire so the library can grow
+// past 256 built-in types and still leave room for user extensions
+// (see @c UserTypeIdBegin).  Byte order follows the stream's
+// @c _byteOrder — the same rule every other multi-byte primitive
+// observes — so a BigEndian and LittleEndian reader both decode the
+// identical tag without a dedicated tag-order marker.
+
 void DataStream::writeTag(TypeId id) {
-        uint8_t tag = static_cast<uint8_t>(id);
-        writeBytes(&tag, 1);
+        writeUInt16(static_cast<uint16_t>(id));
 }
 
 bool DataStream::readTag(TypeId expected) {
         if(_status != Ok) return false;
-        uint8_t tag = 0;
-        if(!readBytes(&tag, 1)) return false;
-        if(tag != static_cast<uint8_t>(expected)) {
+        uint16_t tag = readUInt16();
+        if(_status != Ok) return false;
+        if(tag != static_cast<uint16_t>(expected)) {
                 setError(ReadCorruptData,
-                        String::sprintf("expected tag 0x%02X, got 0x%02X",
+                        String::sprintf("expected tag 0x%04X, got 0x%04X",
                                 static_cast<unsigned>(expected),
                                 static_cast<unsigned>(tag)));
                 return false;
@@ -143,10 +149,10 @@ bool DataStream::readTag(TypeId expected) {
         return true;
 }
 
-uint8_t DataStream::readAnyTag() {
+uint16_t DataStream::readAnyTag() {
         if(_status != Ok) return 0;
-        uint8_t tag = 0;
-        if(!readBytes(&tag, 1)) return 0;
+        uint16_t tag = readUInt16();
+        if(_status != Ok) return 0;
         return tag;
 }
 
@@ -892,6 +898,16 @@ DataStream &DataStream::operator<<(const MediaDuration &val) {
         return *this;
 }
 
+DataStream &DataStream::operator<<(const Duration &val) {
+        // Duration is a simple int64 wall-clock nanoseconds value —
+        // encode it directly rather than round-tripping through a
+        // string so the wire form is both compact and preserves the
+        // full 64-bit precision without parsing cost.
+        writeTag(TypeDuration);
+        writeInt64(val.nanoseconds());
+        return *this;
+}
+
 DataStream &DataStream::operator<<(const Url &val) {
         writeTag(TypeUrl);
         // Serialize via the canonical string form — round-trips
@@ -920,63 +936,85 @@ DataStream &DataStream::operator<<(const StringList &val) {
         return *this;
 }
 
+DataStream &DataStream::operator<<(const VideoCodec &val) {
+        // VideoCodec round-trips through its "Codec[:Backend]" string
+        // form (see VideoCodec::toString / fromString), which preserves
+        // both the codec identity and the backend pin when one is set.
+        writeTag(TypeVideoCodec);
+        writeStringData(val.toString());
+        return *this;
+}
+
+DataStream &DataStream::operator<<(const AudioCodec &val) {
+        // AudioCodec uses the same "Codec[:Backend]" string round-trip
+        // as VideoCodec.
+        writeTag(TypeAudioCodec);
+        writeStringData(val.toString());
+        return *this;
+}
+
+DataStream &DataStream::operator<<(const SocketAddress &val) {
+        // SocketAddress round-trips through "host:port" (IPv6 uses the
+        // bracketed form, e.g. "[::1]:5004") via toString / fromString.
+        writeTag(TypeSocketAddress);
+        writeStringData(val.toString());
+        return *this;
+}
+
+DataStream &DataStream::operator<<(const SdpSession &val) {
+        // SdpSession is serialised as an RFC 4566 SDP text blob — the
+        // canonical external form understood by every SDP consumer.
+        // Unknown extension attributes the parser doesn't recognise
+        // may not survive round-trips, but the core session / media
+        // description is lossless.
+        writeTag(TypeSdpSession);
+        writeStringData(val.toString());
+        return *this;
+}
+
 // ============================================================================
 // Variant write — dispatches by the Variant's current type
+//
+// The switch body is generated from @c PROMEKI_VARIANT_TYPES so every
+// type registered in the Variant type list is guaranteed to have a
+// case here.  The generated case delegates through
+// @c writeVariantValue<T> — its @c *this << v.get<T>() expression
+// fails to compile if there is no @c operator<<(DataStream&, const T&)
+// for @c T, which is exactly the class of bug we want caught at build
+// time rather than surfacing as a runtime @c WriteFailed.  Adding a
+// new Variant type without the matching operator is now a compile
+// error instead of silent data loss.
 // ============================================================================
+
+namespace {
+        template <typename T>
+        void writeVariantValue(DataStream &s, const Variant &v) {
+                if constexpr (std::is_same_v<T, std::monostate>) {
+                        // TypeInvalid carries no payload; only the tag.
+                        s.writeTag(DataStream::TypeInvalid);
+                } else {
+                        // Important: the @c s << v.get<T>() form would
+                        // silently satisfy any missing specific
+                        // operator via the converting @c Variant ctor
+                        // and then recurse right back here at runtime.
+                        // The explicit invocation below uses ordinary
+                        // overload resolution (no pointer-to-member
+                        // casts needed — there's no ambiguity to
+                        // disambiguate) so the coverage static_asserts
+                        // below are what actually guard the fallback
+                        // hazard at build time.
+                        s << v.get<T>();
+                }
+        }
+} // namespace
+
 
 DataStream &DataStream::operator<<(const Variant &val) {
         switch(val.type()) {
-                case Variant::TypeInvalid:
-                        writeTag(TypeInvalid);
-                        break;
-                case Variant::TypeBool:   *this << val.get<bool>(); break;
-                case Variant::TypeU8:     *this << val.get<uint8_t>(); break;
-                case Variant::TypeS8:     *this << val.get<int8_t>(); break;
-                case Variant::TypeU16:    *this << val.get<uint16_t>(); break;
-                case Variant::TypeS16:    *this << val.get<int16_t>(); break;
-                case Variant::TypeU32:    *this << val.get<uint32_t>(); break;
-                case Variant::TypeS32:    *this << val.get<int32_t>(); break;
-                case Variant::TypeU64:    *this << val.get<uint64_t>(); break;
-                case Variant::TypeS64:    *this << val.get<int64_t>(); break;
-                case Variant::TypeFloat:  *this << val.get<float>(); break;
-                case Variant::TypeDouble: *this << val.get<double>(); break;
-                case Variant::TypeString: *this << val.get<String>(); break;
-                case Variant::TypeDateTime:   *this << val.get<DateTime>(); break;
-                case Variant::TypeTimeStamp:  *this << val.get<TimeStamp>(); break;
-                case Variant::TypeSize2D:     *this << val.get<Size2Du32>(); break;
-                case Variant::TypeUUID:       *this << val.get<UUID>(); break;
-                case Variant::TypeUMID:       *this << val.get<UMID>(); break;
-                case Variant::TypeTimecode:   *this << val.get<Timecode>(); break;
-                case Variant::TypeRational:   *this << val.get<Rational<int>>(); break;
-                case Variant::TypeFrameRate:  *this << val.get<FrameRate>(); break;
-                case Variant::TypeVideoFormat: *this << val.get<VideoFormat>(); break;
-                case Variant::TypeStringList: *this << val.get<StringList>(); break;
-                case Variant::TypeColor:      *this << val.get<Color>(); break;
-                case Variant::TypeColorModel: *this << val.get<ColorModel>(); break;
-                case Variant::TypeMemSpace:   *this << val.get<MemSpace>(); break;
-                case Variant::TypePixelMemLayout: *this << val.get<PixelMemLayout>(); break;
-                case Variant::TypePixelFormat:  *this << val.get<PixelFormat>(); break;
-                case Variant::TypeAudioFormat:  *this << val.get<AudioFormat>(); break;
-                case Variant::TypeEnum:       *this << val.get<Enum>(); break;
-                case Variant::TypeEnumList:   *this << val.get<EnumList>(); break;
-                case Variant::TypeMediaTimeStamp: *this << val.get<MediaTimeStamp>(); break;
-                case Variant::TypeFrameNumber:    *this << val.get<FrameNumber>(); break;
-                case Variant::TypeFrameCount:     *this << val.get<FrameCount>(); break;
-                case Variant::TypeMediaDuration:  *this << val.get<MediaDuration>(); break;
-                case Variant::TypeMasteringDisplay:
-                        *this << val.get<MasteringDisplay>(); break;
-                case Variant::TypeContentLightLevel:
-                        *this << val.get<ContentLightLevel>(); break;
-                case Variant::TypeUrl:        *this << val.get<Url>(); break;
-#if PROMEKI_ENABLE_NETWORK
-                case Variant::TypeMacAddress: *this << val.get<MacAddress>(); break;
-                case Variant::TypeEUI64:      *this << val.get<EUI64>(); break;
-#endif
-                default:
-                        setError(WriteFailed,
-                                String::sprintf("Variant::write: unknown type %d",
-                                        static_cast<int>(val.type())));
-                        break;
+#define X(name, type) \
+                case Variant::name: writeVariantValue<type>(*this, val); break;
+                PROMEKI_VARIANT_TYPES
+#undef X
         }
         return *this;
 }
@@ -1070,7 +1108,7 @@ DataStream &DataStream::operator>>(Buffer &val) {
 DataStream &DataStream::operator>>(Buffer::Ptr &val) {
         // Peek the tag: TypeInvalid → null Ptr, TypeBuffer → allocated Ptr,
         // anything else → ReadCorruptData.
-        uint8_t tag = readAnyTag();
+        uint16_t tag = readAnyTag();
         if(_status != Ok) { val = Buffer::Ptr(); return *this; }
         if(tag == TypeInvalid) {
                 val = Buffer::Ptr();
@@ -1079,7 +1117,7 @@ DataStream &DataStream::operator>>(Buffer::Ptr &val) {
         if(tag != TypeBuffer) {
                 setError(ReadCorruptData,
                         String::sprintf(
-                                "expected tag 0x%02X (TypeBuffer) or 0x%02X (TypeInvalid), got 0x%02X",
+                                "expected tag 0x%04X (TypeBuffer) or 0x%04X (TypeInvalid), got 0x%04X",
                                 static_cast<unsigned>(TypeBuffer),
                                 static_cast<unsigned>(TypeInvalid),
                                 static_cast<unsigned>(tag)));
@@ -1249,6 +1287,14 @@ DataStream &DataStream::operator>>(MediaDuration &val) {
         return *this;
 }
 
+DataStream &DataStream::operator>>(Duration &val) {
+        if(!readTag(TypeDuration)) { val = Duration(); return *this; }
+        const int64_t ns = readInt64();
+        if(_status != Ok) { val = Duration(); return *this; }
+        val = Duration::fromNanoseconds(ns);
+        return *this;
+}
+
 DataStream &DataStream::operator>>(MacAddress &val) {
         if(!readTag(TypeMacAddress)) { val = MacAddress(); return *this; }
         String s = readStringData();
@@ -1282,6 +1328,82 @@ DataStream &DataStream::operator>>(EUI64 &val) {
 DataStream &DataStream::operator>>(StringList &val) {
         if(!readTag(TypeStringList)) { val = StringList(); return *this; }
         val = readStringListData();
+        return *this;
+}
+
+DataStream &DataStream::operator>>(Url &val) {
+        if(!readTag(TypeUrl)) { val = Url(); return *this; }
+        String s = readStringData();
+        if(_status != Ok) { val = Url(); return *this; }
+        Error pe;
+        Url u = Url::fromString(s, &pe);
+        if(pe.isError() || !u.isValid()) {
+                setError(ReadCorruptData,
+                        String::sprintf("Failed to parse Url from '%s'", s.cstr()));
+                val = Url();
+                return *this;
+        }
+        val = u;
+        return *this;
+}
+
+DataStream &DataStream::operator>>(VideoCodec &val) {
+        if(!readTag(TypeVideoCodec)) { val = VideoCodec(); return *this; }
+        String s = readStringData();
+        if(_status != Ok) { val = VideoCodec(); return *this; }
+        auto r = VideoCodec::fromString(s);
+        if(error(r).isError()) {
+                setError(ReadCorruptData,
+                        String::sprintf("Failed to parse VideoCodec from '%s'", s.cstr()));
+                val = VideoCodec();
+                return *this;
+        }
+        val = value(r);
+        return *this;
+}
+
+DataStream &DataStream::operator>>(AudioCodec &val) {
+        if(!readTag(TypeAudioCodec)) { val = AudioCodec(); return *this; }
+        String s = readStringData();
+        if(_status != Ok) { val = AudioCodec(); return *this; }
+        auto r = AudioCodec::fromString(s);
+        if(error(r).isError()) {
+                setError(ReadCorruptData,
+                        String::sprintf("Failed to parse AudioCodec from '%s'", s.cstr()));
+                val = AudioCodec();
+                return *this;
+        }
+        val = value(r);
+        return *this;
+}
+
+DataStream &DataStream::operator>>(SocketAddress &val) {
+        if(!readTag(TypeSocketAddress)) { val = SocketAddress(); return *this; }
+        String s = readStringData();
+        if(_status != Ok) { val = SocketAddress(); return *this; }
+        auto r = SocketAddress::fromString(s);
+        if(error(r).isError()) {
+                setError(ReadCorruptData,
+                        String::sprintf("Failed to parse SocketAddress from '%s'", s.cstr()));
+                val = SocketAddress();
+                return *this;
+        }
+        val = value(r);
+        return *this;
+}
+
+DataStream &DataStream::operator>>(SdpSession &val) {
+        if(!readTag(TypeSdpSession)) { val = SdpSession(); return *this; }
+        String s = readStringData();
+        if(_status != Ok) { val = SdpSession(); return *this; }
+        auto r = SdpSession::fromString(s);
+        if(error(r).isError()) {
+                setError(ReadCorruptData,
+                        String::sprintf("Failed to parse SdpSession from SDP text"));
+                val = SdpSession();
+                return *this;
+        }
+        val = value(r);
         return *this;
 }
 
@@ -1390,6 +1512,12 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                         val = md;
                         break;
                 }
+                case TypeDuration: {
+                        const int64_t ns = readInt64();
+                        if(_status != Ok) { val = Variant(); break; }
+                        val = Duration::fromNanoseconds(ns);
+                        break;
+                }
                 case TypeStringList:  val = readStringListData(); break;
                 case TypeMasteringDisplay: {
                         // Outer tag already consumed; inner values are tagged
@@ -1428,7 +1556,59 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                         val = u;
                         break;
                 }
+                case TypeVideoCodec: {
+                        String s = readStringData();
+                        if(_status != Ok) { val = Variant(); break; }
+                        auto r = VideoCodec::fromString(s);
+                        if(error(r).isError()) {
+                                setError(ReadCorruptData,
+                                        String::sprintf("Failed to parse VideoCodec from '%s'", s.cstr()));
+                                val = Variant();
+                                break;
+                        }
+                        val = value(r);
+                        break;
+                }
+                case TypeAudioCodec: {
+                        String s = readStringData();
+                        if(_status != Ok) { val = Variant(); break; }
+                        auto r = AudioCodec::fromString(s);
+                        if(error(r).isError()) {
+                                setError(ReadCorruptData,
+                                        String::sprintf("Failed to parse AudioCodec from '%s'", s.cstr()));
+                                val = Variant();
+                                break;
+                        }
+                        val = value(r);
+                        break;
+                }
 #if PROMEKI_ENABLE_NETWORK
+                case TypeSocketAddress: {
+                        String s = readStringData();
+                        if(_status != Ok) { val = Variant(); break; }
+                        auto r = SocketAddress::fromString(s);
+                        if(error(r).isError()) {
+                                setError(ReadCorruptData,
+                                        String::sprintf("Failed to parse SocketAddress from '%s'", s.cstr()));
+                                val = Variant();
+                                break;
+                        }
+                        val = value(r);
+                        break;
+                }
+                case TypeSdpSession: {
+                        String s = readStringData();
+                        if(_status != Ok) { val = Variant(); break; }
+                        auto r = SdpSession::fromString(s);
+                        if(error(r).isError()) {
+                                setError(ReadCorruptData,
+                                        "Failed to parse SdpSession from SDP text");
+                                val = Variant();
+                                break;
+                        }
+                        val = value(r);
+                        break;
+                }
                 case TypeMacAddress: {
                         String s = readStringData();
                         if(_status != Ok) { val = Variant(); break; }
@@ -1449,7 +1629,7 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                 default:
                         setError(ReadCorruptData,
                                 String::sprintf(
-                                        "Variant::read: tag 0x%02X is not Variant-representable",
+                                        "Variant::read: tag 0x%04X is not Variant-representable",
                                         static_cast<unsigned>(id)));
                         val = Variant();
                         break;
@@ -1457,10 +1637,105 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
 }
 
 DataStream &DataStream::operator>>(Variant &val) {
-        uint8_t tag = readAnyTag();
+        uint16_t tag = readAnyTag();
         if(_status != Ok) { val = Variant(); return *this; }
         readVariantPayload(static_cast<TypeId>(tag), val);
         return *this;
 }
+
+// ============================================================================
+// Compile-time coverage check
+//
+// For every type registered in @c PROMEKI_VARIANT_TYPES, assert that
+// a dedicated wire-format @c operator<< / @c operator>> exists for
+// the concrete type — not just an expression that happens to compile
+// via @c Variant 's implicit converting constructor.  Without this
+// strictness, a missing dedicated operator would silently fall back
+// to the @c Variant overload, which then recurses right back here
+// and either infinite-loops at runtime or writes a useless tag.
+//
+// Strategy:
+//
+//   - @c has_member_write / @c has_member_read detect an *exact-match*
+//     member function via pointer-to-member-function cast.  Pointer
+//     casts never apply user-defined conversions, so there's no way
+//     for the @c Variant ctor to mask a missing specific overload.
+//
+//   - For the handful of Variant types whose wire operator is a free
+//     function template (Size2D, Rational) or a non-member inline
+//     (MasteringDisplay, ContentLightLevel), we explicitly trait them
+//     as writable/readable.  These specialisations live right here so
+//     anyone re-routing a type away from free-function templates
+//     knows exactly what to update.
+//
+// @c std::monostate is whitelisted because @c TypeInvalid has no
+// payload — it's handled by the X-macro write dispatch and the
+// read-switch's explicit @c TypeInvalid case.
+// ============================================================================
+
+namespace {
+        // Exact-match member function detection.  Primitives are
+        // passed by value (see the many @c operator<<(int32_t val)
+        // members); everything else is passed by @c const &.  Probe
+        // both signatures so either pattern counts as "covered".
+        template <typename T, typename = void>
+        struct has_member_write : std::false_type {};
+        template <typename T>
+        struct has_member_write<T, std::void_t<decltype(
+                static_cast<DataStream &(DataStream::*)(const T &)>(
+                        &DataStream::operator<<))>> : std::true_type {};
+        template <typename T>
+        struct has_member_write<T, std::void_t<decltype(
+                static_cast<DataStream &(DataStream::*)(T)>(
+                        &DataStream::operator<<))>> : std::true_type {};
+
+        template <typename T, typename = void>
+        struct has_member_read : std::false_type {};
+        template <typename T>
+        struct has_member_read<T, std::void_t<decltype(
+                static_cast<DataStream &(DataStream::*)(T &)>(
+                        &DataStream::operator>>))>> : std::true_type {};
+
+        // Free-function / inline-template allowlist.  Adding a new
+        // entry here is a deliberate acknowledgement that the type's
+        // wire operator lives outside of @c DataStream 's member
+        // functions; prefer adding a member operator for new types
+        // instead.
+        template <typename T> struct has_free_write : std::false_type {};
+        template <typename T> struct has_free_read  : std::false_type {};
+        template <typename T> struct has_free_write<Size2DTemplate<T>> : std::true_type {};
+        template <typename T> struct has_free_read<Size2DTemplate<T>>  : std::true_type {};
+        template <typename T> struct has_free_write<Rational<T>> : std::true_type {};
+        template <typename T> struct has_free_read<Rational<T>>  : std::true_type {};
+        template <> struct has_free_write<MasteringDisplay>  : std::true_type {};
+        template <> struct has_free_read<MasteringDisplay>   : std::true_type {};
+        template <> struct has_free_write<ContentLightLevel> : std::true_type {};
+        template <> struct has_free_read<ContentLightLevel>  : std::true_type {};
+
+        template <typename T>
+        inline constexpr bool has_datastream_write_v =
+                has_member_write<T>::value || has_free_write<T>::value;
+        template <typename T>
+        inline constexpr bool has_datastream_read_v =
+                has_member_read<T>::value || has_free_read<T>::value;
+
+#define X(name, type) \
+        static_assert(std::is_same_v<type, std::monostate> || \
+                      has_datastream_write_v<type>, \
+                      "Variant " #name " (" #type ") has no exact-match " \
+                      "operator<<(DataStream&, const " #type "&) — add a " \
+                      "DataStream member operator<< (preferred) or a free " \
+                      "template specialisation entry above, then update the " \
+                      "Variant write dispatch."); \
+        static_assert(std::is_same_v<type, std::monostate> || \
+                      has_datastream_read_v<type>, \
+                      "Variant " #name " (" #type ") has no exact-match " \
+                      "operator>>(DataStream&, " #type "&) — add a " \
+                      "DataStream member operator>> (preferred) or a free " \
+                      "template specialisation entry above, then update " \
+                      "readVariantPayload().");
+        PROMEKI_VARIANT_TYPES
+#undef X
+} // namespace
 
 PROMEKI_NAMESPACE_END

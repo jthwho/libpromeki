@@ -12,7 +12,7 @@
 #include <promeki/audiotestpattern.h>
 #include <promeki/audiogen.h>
 #include <promeki/ltcencoder.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/timecode.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -424,7 +424,7 @@ const List<float> &AudioTestPattern::avSyncBurst(size_t samples) const {
         return _avSyncToneCache.find(samples)->second;
 }
 
-UncompressedAudioPayload::Ptr AudioTestPattern::createPayload(
+PcmAudioPayload::Ptr AudioTestPattern::createPayload(
         size_t samples, const Timecode &tc) const {
         // Allocate a fresh Buffer, fill it with the pattern, then
         // hand it off to the payload.  Writing *before* wrapping
@@ -444,9 +444,9 @@ UncompressedAudioPayload::Ptr AudioTestPattern::createPayload(
         }
 
         BufferView view(buf, 0, bufBytes);
-        auto payload = UncompressedAudioPayload::Ptr::create(
+        auto payload = PcmAudioPayload::Ptr::create(
                 workingDesc, samples, view);
-        if(!payload.isValid()) return UncompressedAudioPayload::Ptr();
+        if(!payload.isValid()) return PcmAudioPayload::Ptr();
         return payload;
 }
 

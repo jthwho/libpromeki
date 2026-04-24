@@ -14,6 +14,7 @@
 #include <promeki/buffer.h>
 #include <promeki/videocodec.h>
 #include <promeki/enums.h>
+#include <promeki/variantlookup.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -63,6 +64,8 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class CompressedVideoPayload : public VideoPayload {
         public:
+                PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH(CompressedVideoPayload)
+
                 virtual CompressedVideoPayload *_promeki_clone() const override {
                         return new CompressedVideoPayload(*this);
                 }
@@ -82,12 +85,12 @@ class CompressedVideoPayload : public VideoPayload {
                  *
                  * Stored in the high bits of the base
                  * @ref MediaPayload::Flag bitmask so the two enums can
-                 * share the same 32-bit word.  Use @ref addFlag /
-                 * @ref hasFlag (inherited from the base) to manipulate
-                 * values.
+                 * share the same 64-bit word.  Use @ref addFlag /
+                 * @ref setFlag / @ref hasFlag (inherited from the
+                 * base) to manipulate values.
                  */
-                enum VideoFlag : uint32_t {
-                        ParameterSet = 1u << 16, ///< Carries only parameter sets (SPS / PPS / VPS); no slice data.
+                enum VideoFlag : uint64_t {
+                        ParameterSet = 1ull << 16, ///< Carries only parameter sets (SPS / PPS / VPS); no slice data.
                 };
 
                 /** @brief Constructs an empty compressed video payload. */

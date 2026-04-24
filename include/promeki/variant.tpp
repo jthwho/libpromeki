@@ -299,6 +299,7 @@ To VariantImpl<Types...>::get(Error *err) const {
                         if constexpr (std::is_same_v<From, FrameNumber>) return arg.toString();
                         if constexpr (std::is_same_v<From, FrameCount>) return arg.toString();
                         if constexpr (std::is_same_v<From, MediaDuration>) return arg.toString();
+                        if constexpr (std::is_same_v<From, Duration>) return arg.toString();
                         if constexpr (std::is_same_v<From, Rational<int>>) return arg.toString();
                         if constexpr (std::is_same_v<From, FrameRate>) return arg.toString();
                         if constexpr (std::is_same_v<From, VideoFormat>) return arg.toString();

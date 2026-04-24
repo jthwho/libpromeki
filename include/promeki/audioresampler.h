@@ -27,7 +27,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * All input must be in the native interleaved float32 format
  * (AudioFormat::NativeFloat).  Use
- * @ref UncompressedAudioPayload::convert or @ref AudioDesc::samplesToFloat
+ * @ref PcmAudioPayload::convert or @ref AudioDesc::samplesToFloat
  * to convert before feeding data in.
  *
  * The resampler is not internally thread-safe; the caller must

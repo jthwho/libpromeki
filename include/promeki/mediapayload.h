@@ -8,6 +8,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
 #include <promeki/buffer.h>
@@ -18,12 +19,15 @@
 #include <promeki/string.h>
 #include <promeki/list.h>
 #include <promeki/enums.h>
+#include <promeki/variant.h>
+#include <promeki/error.h>
 
 #include <promeki/fourcc.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 class DataStream;
+class VariantSpec;
 
 /**
  * @brief Abstract polymorphic base for any media payload flowing
@@ -99,21 +103,25 @@ class MediaPayload {
                  *
                  * Values are bitwise-OR'able.  Replace the entire mask via
                  * @ref setFlags, or manipulate individual bits via
-                 * @ref addFlag / @ref removeFlag / @ref hasFlag.  The
-                 * convenience predicates (@ref isKeyframe,
-                 * @ref isDiscardable, @ref isCorrupt,
-                 * @ref isEndOfStream) read from this mask.
+                 * @ref addFlag / @ref removeFlag / @ref setFlag /
+                 * @ref hasFlag.  The convenience predicates
+                 * (@ref isKeyframe, @ref isDiscardable, @ref isCorrupt,
+                 * @ref isEndOfStream, @ref isIntraRefresh) read from this
+                 * mask.
                  *
                  * Flags specific to one payload family (for example,
                  * @c ParameterSet on compressed video) live on the
-                 * concrete subclass rather than the base.
+                 * concrete subclass rather than the base.  The mask is
+                 * 64 bits wide so subclass flags never have to
+                 * compete for the same bit range as the base flags.
                  */
-                enum Flag : uint32_t {
-                        None        = 0,        ///< No flags set.
-                        Keyframe    = 1u << 0,  ///< Self-contained decode entry point (trivially true for uncompressed payloads).
-                        Discardable = 1u << 1,  ///< Non-reference payload — safe to drop without affecting later decode.
-                        Corrupt     = 1u << 2,  ///< Payload is known to be corrupt; pair with @c Metadata::CorruptReason when a message is available.
-                        EndOfStream = 1u << 3,  ///< Terminal payload in the stream.
+                enum Flag : uint64_t {
+                        None         = 0,          ///< No flags set.
+                        Keyframe     = 1ull << 0,  ///< Self-contained decode entry point (trivially true for uncompressed payloads).
+                        Discardable  = 1ull << 1,  ///< Non-reference payload — safe to drop without affecting later decode.
+                        Corrupt      = 1ull << 2,  ///< Payload is known to be corrupt; pair with @c Metadata::CorruptReason when a message is available.
+                        EndOfStream  = 1ull << 3,  ///< Terminal payload in the stream.
+                        IntraRefresh = 1ull << 4,  ///< Intra-coded but not a random-access point — part of a gradual refresh cycle (distinct from @c Keyframe).
                 };
 
                 /** @brief Constructs an empty payload (no data, default timestamps). */
@@ -224,30 +232,112 @@ class MediaPayload {
                 /** @brief Sets the decode timestamp. */
                 void setDts(const MediaTimeStamp &ts) { _dts = ts; }
 
-                /** @brief Returns the nominal duration of the payload. */
-                const Duration &duration() const { return _duration; }
+                /**
+                 * @brief Returns the wall-clock duration spanned by this
+                 *        payload, or a zero @ref Duration when no
+                 *        duration is available.
+                 *
+                 * Polymorphic hook — the base default returns
+                 * @c Duration() because @ref MediaPayload does not
+                 * itself own any state from which a duration could be
+                 * derived.  Subclasses override:
+                 *
+                 *  - @ref AudioPayload computes @c sampleCount() /
+                 *    @c desc().sampleRate() — one source of truth, no
+                 *    storage needed.
+                 *  - @ref VideoPayload returns a native duration
+                 *    field populated by the enclosing pipeline
+                 *    (typically @ref MediaIO stamps one frame of the
+                 *    session frame rate when the producer did not).
+                 *
+                 * A zero @ref Duration from a payload whose
+                 * @ref hasDuration returns @c true means "no value
+                 * has been stamped yet" — @ref MediaIO uses that
+                 * combination as its fill trigger.
+                 */
+                virtual Duration duration() const { return Duration(); }
 
-                /** @brief Sets the nominal duration of the payload. */
-                void setDuration(const Duration &d) { _duration = d; }
+                /**
+                 * @brief Assigns a wall-clock duration to this payload.
+                 *
+                 * The base returns @ref Error::NotSupported.  Subclasses
+                 * override to accept: @ref VideoPayload stores the
+                 * value natively and returns @ref Error::Ok;
+                 * @ref AudioPayload still returns
+                 * @ref Error::NotSupported because its duration is
+                 * derived from intrinsic @c sampleCount /
+                 * @c sampleRate — call sites that want to change an
+                 * audio duration must adjust the sample count
+                 * instead.
+                 */
+                virtual Error setDuration(const Duration &val) {
+                        (void)val;
+                        return Error::NotSupported;
+                }
+
+                /**
+                 * @brief Returns @c true when this payload kind
+                 *        supports a duration at all.
+                 *
+                 * Type-level predicate — the answer is fixed by the
+                 * concrete class, not by whether @ref setDuration has
+                 * been called yet.  @ref VideoPayload and
+                 * @ref AudioPayload both override to return @c true
+                 * unconditionally; the base returns @c false so a
+                 * custom non-AV payload opts in explicitly.
+                 *
+                 * @ref MediaIO pairs this with @c duration().isZero()
+                 * to decide whether a payload needs a fallback
+                 * duration stamped before it leaves the pipeline.
+                 */
+                virtual bool hasDuration() const { return false; }
 
                 // ---- Flags ------------------------------------------------
 
                 /** @brief Returns the raw flag bitmask. */
-                uint32_t flags() const { return _flags; }
+                uint64_t flags() const { return _flags; }
 
                 /** @brief Replaces the entire flag bitmask. */
-                void setFlags(uint32_t f) { _flags = f; }
+                void setFlags(uint64_t f) { _flags = f; }
 
                 /** @brief Sets a single flag in the bitmask. */
-                void addFlag(Flag f) { _flags |= static_cast<uint32_t>(f); }
+                void addFlag(Flag f) { _flags |= static_cast<uint64_t>(f); }
 
                 /** @brief Clears a single flag from the bitmask. */
-                void removeFlag(Flag f) { _flags &= ~static_cast<uint32_t>(f); }
+                void removeFlag(Flag f) { _flags &= ~static_cast<uint64_t>(f); }
+
+                /**
+                 * @brief Sets or clears a flag depending on @p on.
+                 *
+                 * Equivalent to @ref addFlag when @p on is @c true and
+                 * @ref removeFlag when it is @c false.  Convenient for
+                 * call sites that derive a flag's value from a
+                 * condition (e.g. @c setFlag(Keyframe, picType==IDR)).
+                 */
+                void setFlag(Flag f, bool on) {
+                        if(on) addFlag(f);
+                        else   removeFlag(f);
+                }
 
                 /** @brief Returns true when the given flag is set. */
                 bool hasFlag(Flag f) const {
-                        return (_flags & static_cast<uint32_t>(f)) != 0;
+                        return (_flags & static_cast<uint64_t>(f)) != 0;
                 }
+
+                /**
+                 * @brief Returns a short human-readable name for a
+                 *        single base @ref Flag bit, or @c nullptr
+                 *        when @p f is not a recognised single-bit
+                 *        value.
+                 *
+                 * Intended for diagnostics and logging — callers that
+                 * want to dump a full mask should walk each bit.
+                 * Returns @c "None" for @c MediaPayload::None.
+                 * Subclass-specific flags (for example
+                 * @c CompressedVideoPayload::ParameterSet) are not
+                 * recognised by this base function.
+                 */
+                static const char *flagName(Flag f);
 
                 /**
                  * @brief Convenience: true when the payload is a self-
@@ -291,6 +381,20 @@ class MediaPayload {
                 /** @brief Convenience: true when the @c EndOfStream flag is set. */
                 bool isEndOfStream() const { return hasFlag(EndOfStream); }
 
+                /**
+                 * @brief Convenience: true when the @c IntraRefresh flag
+                 *        is set — the payload is intra-coded but not a
+                 *        random-access point.
+                 *
+                 * Distinct from @ref isKeyframe: a gradual-refresh
+                 * slice refreshes part of the frame each GOP so the
+                 * stream becomes decodable only after a full refresh
+                 * cycle completes, not at any single frame.  Seekers
+                 * and random-access consumers must use @ref isKeyframe
+                 * or @ref isSafeCutPoint, not this predicate.
+                 */
+                bool isIntraRefresh() const { return hasFlag(IntraRefresh); }
+
                 /** @brief Sets (or clears) the @c EndOfStream flag. */
                 void markEndOfStream(bool v = true) {
                         if(v) addFlag(EndOfStream);
@@ -308,21 +412,44 @@ class MediaPayload {
                  */
                 void markCorrupt(const String &reason = String()) {
                         addFlag(Corrupt);
-                        if(!reason.isEmpty()) _metadata.set(Metadata::CorruptReason, reason);
+                        if(!reason.isEmpty()) metadata().set(Metadata::CorruptReason, reason);
                 }
 
                 /** @brief Returns the recorded corruption reason, or an empty string. */
                 String corruptReason() const {
-                        return _metadata.getAs<String>(Metadata::CorruptReason);
+                        return metadata().getAs<String>(Metadata::CorruptReason);
                 }
 
                 // ---- Metadata ---------------------------------------------
 
-                /** @brief Returns the metadata container. */
-                const Metadata &metadata() const { return _metadata; }
+                /**
+                 * @brief Returns the payload's metadata container.
+                 *
+                 * Pure virtual on the base — each concrete subclass
+                 * decides where the metadata lives:
+                 *
+                 *  - @ref VideoPayload and @ref AudioPayload forward
+                 *    to @c desc().metadata(), so
+                 *    @c VideoPayload::metadata returns the
+                 *    @ref ImageDesc metadata (the @c FrameRate /
+                 *    colorimetry / timecode keys) and
+                 *    @c AudioPayload::metadata returns the
+                 *    @ref AudioDesc metadata.  The metadata lives
+                 *    next to the descriptor it annotates.
+                 *  - Non-AV subclasses (subtitle, ancillary, custom)
+                 *    maintain their own @ref Metadata member and
+                 *    return a reference to it.
+                 *
+                 * This lets @ref markCorrupt, @ref corruptReason,
+                 * @ref VariantLookup's @c Meta.* binding and any
+                 * generic consumer hold a @ref MediaPayload reference
+                 * and reach the right metadata store without knowing
+                 * the concrete type.
+                 */
+                virtual const Metadata &metadata() const = 0;
 
-                /** @brief Returns a mutable reference to the metadata container. */
-                Metadata &metadata() { return _metadata; }
+                /** @copydoc metadata() const */
+                virtual Metadata &metadata() = 0;
 
                 // ---- Safe downcast ----------------------------------------
 
@@ -443,6 +570,78 @@ class MediaPayload {
                         ensureExclusiveExtras();
                 }
 
+                // ---- VariantLookup polymorphic dispatch -------------------
+
+                /**
+                 * @brief Resolves @p key against the @em most-derived
+                 *        VariantLookup registry for this payload.
+                 *
+                 * Opt-in hook consumed by @ref VariantLookup — the
+                 * concept @ref detail::HasVariantLookupDispatch picks
+                 * it up by name.  The concrete leaf's override calls
+                 * @c VariantLookup<ConcreteLeaf>::resolveDirect so the
+                 * leaf's keys land first and the upward cascade
+                 * (@c inheritsFrom on VideoPayload / AudioPayload /
+                 * MediaPayload) fills in inherited keys.  Pure virtual
+                 * on the abstract base — concrete leaves use
+                 * @ref PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH to
+                 * generate the override uniformly.
+                 */
+                virtual std::optional<Variant> variantLookupResolve(
+                        const String &key, Error *err = nullptr) const = 0;
+
+                /**
+                 * @brief Assigns @p value under @p key into this
+                 *        payload, dispatching through the most-derived
+                 *        VariantLookup registry.  @sa @ref variantLookupResolve.
+                 */
+                virtual bool variantLookupAssign(
+                        const String &key, const Variant &value,
+                        Error *err = nullptr) = 0;
+
+                /**
+                 * @brief Returns the declared @ref VariantSpec for
+                 *        @p key, dispatching through the most-derived
+                 *        VariantLookup registry.  @sa
+                 *        @ref variantLookupResolve.
+                 */
+                virtual const VariantSpec *variantLookupSpecFor(
+                        const String &key, Error *err = nullptr) const = 0;
+
+                /**
+                 * @brief Returns the scalar key names the most-derived
+                 *        VariantLookup registry exposes.
+                 *
+                 * Drives introspection consumers such as
+                 * @ref Frame::dump that want to enumerate every
+                 * surfaceable scalar on a payload — the base-type
+                 * enumerator @c VariantLookup<VideoPayload>::registeredScalars
+                 * only walks the intermediate's registry, which
+                 * excludes concrete-leaf specifics (e.g.
+                 * @ref CompressedVideoPayload::frameType,
+                 * @ref PcmAudioPayload::sampleCount).  The
+                 * virtual dispatch routes through the concrete leaf
+                 * so its @c registeredScalars is used, with inherited
+                 * keys de-duplicated by the lookup's own merge.
+                 */
+                virtual StringList variantLookupScalarNames() const = 0;
+
+                /**
+                 * @brief Returns a complete recursive dump of this
+                 *        payload.
+                 *
+                 * Concrete leaves override via
+                 * @ref PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH to forward
+                 * into @c VariantLookup<Self>::dump, which walks every
+                 * scalar (cascading up through the inherit chain),
+                 * every child composition (@c Desc.* on video / audio
+                 * descriptors), and every database binding (@c Meta.*
+                 * entries) through the most-derived registry.
+                 * @ref Frame::dump uses this to emit one uniform
+                 * section per payload regardless of kind.
+                 */
+                virtual StringList variantLookupDump(const String &indent = String()) const = 0;
+
         protected:
                 /**
                  * @brief Hook for subclasses to report whether their
@@ -472,10 +671,8 @@ class MediaPayload {
                 BufferView       _data;
                 MediaTimeStamp   _pts;
                 MediaTimeStamp   _dts;
-                Duration         _duration;
-                Metadata         _metadata;
                 int              _streamIndex = 0;
-                uint32_t         _flags = 0;
+                uint64_t         _flags = 0;
 };
 
 /** @brief Writes a MediaPayload::Ptr to a DataStream. */
@@ -507,6 +704,54 @@ DataStream &operator>>(DataStream &s, MediaPayload::Ptr &p);
                         } \
                 }; \
                 static Cls##_MediaPayloadRegistrar s_##Cls##_mediaPayloadRegistrar; \
+        }
+
+/**
+ * @brief Implements MediaPayload's VariantLookup dispatch hooks for a
+ *        concrete leaf.
+ * @ingroup proav
+ *
+ * Place in the @c public section of a concrete @ref MediaPayload
+ * subclass's @c class body.  Expands to overrides of
+ * @ref MediaPayload::variantLookupResolve / @c variantLookupAssign /
+ * @c variantLookupSpecFor that forward to
+ * @c VariantLookup<Self>::resolveDirect / @c assignDirect /
+ * @c specForDirect, so a caller holding a reference-to-base lands on
+ * @p Self's registry and the upward cascade fills in inherited keys.
+ * Using @c *Direct (not the public dispatch entry) avoids infinite
+ * recursion through the virtual.
+ *
+ * @param Self The concrete subclass the macro is expanded inside of.
+ *
+ * @par Example
+ * @code
+ * class UncompressedVideoPayload : public VideoPayload {
+ *         public:
+ *                 PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH(UncompressedVideoPayload)
+ *                 ...
+ * };
+ * @endcode
+ */
+#define PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH(Self) \
+        std::optional<::promeki::Variant> variantLookupResolve( \
+                const ::promeki::String &key, ::promeki::Error *err = nullptr) const override { \
+                return ::promeki::VariantLookup<Self>::resolveDirect(*this, key, err); \
+        } \
+        bool variantLookupAssign( \
+                const ::promeki::String &key, const ::promeki::Variant &value, \
+                ::promeki::Error *err = nullptr) override { \
+                return ::promeki::VariantLookup<Self>::assignDirect(*this, key, value, err); \
+        } \
+        const ::promeki::VariantSpec *variantLookupSpecFor( \
+                const ::promeki::String &key, ::promeki::Error *err = nullptr) const override { \
+                return ::promeki::VariantLookup<Self>::specForDirect(key, err); \
+        } \
+        ::promeki::StringList variantLookupScalarNames() const override { \
+                return ::promeki::VariantLookup<Self>::registeredScalars(); \
+        } \
+        ::promeki::StringList variantLookupDump( \
+                const ::promeki::String &indent = ::promeki::String()) const override { \
+                return ::promeki::VariantLookup<Self>::dump(*this, indent); \
         }
 
 PROMEKI_NAMESPACE_END

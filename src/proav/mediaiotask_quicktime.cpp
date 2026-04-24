@@ -17,7 +17,7 @@
 #include <promeki/frame.h>
 #include <promeki/compressedvideopayload.h>
 #include <promeki/uncompressedvideopayload.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/compressedaudiopayload.h>
 #include <promeki/audiopayload.h>
 #include <promeki/mediadesc.h>
@@ -568,7 +568,15 @@ Error MediaIOTask_QuickTime::readAudioSlice(uint64_t startSample, size_t samples
         if(_audioDesc.isCompressed()) {
                 // Compressed audio: wrap the range bytes as a single-plane
                 // compressed payload so downstream consumers can decode.
-                auto p = CompressedAudioPayload::Ptr::create(_audioDesc, view);
+                // Approximate the decoded sample count as the first
+                // access unit's duration times the number of access
+                // units — correct for uniform-block codecs (AAC, Opus
+                // with fixed frame size), a rough approximation
+                // otherwise.
+                const size_t approxSampleCount =
+                        static_cast<size_t>(range.duration) * samples;
+                auto p = CompressedAudioPayload::Ptr::create(
+                        _audioDesc, view, approxSampleCount);
                 if(!p.isValid()) return Error::DecodeFailed;
                 out = p;
                 return Error::Ok;
@@ -578,7 +586,7 @@ Error MediaIOTask_QuickTime::readAudioSlice(uint64_t startSample, size_t samples
         // plane.  Sample count derived from buffer size / stride.
         size_t frameBytes = _audioDesc.bytesPerSample() * _audioDesc.channels();
         size_t sampleCount = (frameBytes > 0) ? (rangeSize / frameBytes) : 0;
-        auto p = UncompressedAudioPayload::Ptr::create(_audioDesc, sampleCount,
+        auto p = PcmAudioPayload::Ptr::create(_audioDesc, sampleCount,
                                                        view);
         if(!p.isValid()) return Error::DecodeFailed;
         out = p;
@@ -884,7 +892,7 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandWrite &cmd) {
         // audio stays in the FIFO until the next frame or close().
         auto audsWrite = frame.audioPayloads();
         if(_writerAudioTrackId != 0 && !audsWrite.isEmpty() && audsWrite[0].isValid()) {
-                const auto *uap = audsWrite[0]->as<UncompressedAudioPayload>();
+                const auto *uap = audsWrite[0]->as<PcmAudioPayload>();
                 if(uap != nullptr && uap->planeCount() > 0) {
                         auto view = uap->plane(0);
                         Error aerr = _writerAudioFifo.push(view.data(),

@@ -18,7 +18,7 @@
 #include <promeki/fourcc.h>
 #include <promeki/buildinfo.h>
 #include <promeki/uncompressedvideopayload.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/metadata.h>
 #include <promeki/pixelformat.h>
 
@@ -537,11 +537,10 @@ struct FrameBridge::Impl {
                 };
 
                 put64(slotOff.frameNumberOff, nextFrameNumber);
+                // ptsNum/ptsDen: reserved for a future carry of the
+                // payload's native pts; currently always 0/1 pending
+                // a transport-level pts encoding decision.
                 int64_t ptsNum = 0, ptsDen = 1;
-                if(frame.metadata().contains(Metadata::PresentationTime)) {
-                        // Optional; we carry ptsNum/ptsDen if present, else 0/1.
-                        // For MVP we simply leave defaults.
-                }
                 put64s(slotOff.ptsNumOff, ptsNum);
                 put64s(slotOff.ptsDenOff, ptsDen);
                 put32(slotOff.flagsOff, 0u);
@@ -599,7 +598,7 @@ struct FrameBridge::Impl {
                 uint64_t audioSamples = 0;
                 auto auds = frame.audioPayloads();
                 if(!auds.isEmpty() && auds[0].isValid()) {
-                        const auto *uap = auds[0]->as<UncompressedAudioPayload>();
+                        const auto *uap = auds[0]->as<PcmAudioPayload>();
                         if(uap != nullptr && uap->planeCount() > 0) {
                                 const size_t samples = uap->sampleCount();
                                 if(samples > audioCapacitySamples) {
@@ -699,7 +698,7 @@ struct FrameBridge::Impl {
                         }
 
                         // Audio payload (single track)
-                        UncompressedAudioPayload::Ptr audioPayload;
+                        PcmAudioPayload::Ptr audioPayload;
                         if(audioSamples > 0) {
                                 size_t bytes = audioDesc.bufferSize(
                                         static_cast<size_t>(audioSamples));
@@ -709,7 +708,7 @@ struct FrameBridge::Impl {
                                             base + slotOff.audioOff, bytes);
                                 BufferView planes;
                                 planes.pushToBack(buf, 0, bytes);
-                                audioPayload = UncompressedAudioPayload::Ptr::create(
+                                audioPayload = PcmAudioPayload::Ptr::create(
                                         audioDesc,
                                         static_cast<size_t>(audioSamples),
                                         planes);

@@ -272,21 +272,12 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandWrite &cmd) {
 
         const Frame &frame = *cmd.frame;
 
-        // Read the first image's MediaTimeStamp from metadata so the
-        // encoder can thread PTS back out on the matching packet.  If
-        // the upstream didn't set one we pass an invalid MediaTimeStamp
-        // and let the encoder invent something (most codecs will use
-        // internal frame indexing).
+        // The payload's native pts threads through to the encoded
+        // packet — most encoders record the input pts and stamp it
+        // back on the matching output.  An invalid pts is fine:
+        // downstream callers treat it as "producer didn't set one"
+        // and the codec falls back to its internal frame indexing.
         auto vids = frame.videoPayloads();
-        MediaTimeStamp pts;
-        // Per-essence MediaTimeStamp lives on the payload descriptor
-        // (an essence descriptor), not on the Frame; the descriptor
-        // metadata lookup succeeds transparently when the producer
-        // stamped the frame.
-        if(!vids.isEmpty() && vids[0].isValid()) {
-                pts = vids[0]->desc().metadata()
-                        .getAs<MediaTimeStamp>(Metadata::MediaTimeStamp);
-        }
 
         if(vids.isEmpty()) {
                 // No image to encode — let the frame pass through so
@@ -322,12 +313,6 @@ Error MediaIOTask_VideoEncoder::executeCmd(MediaIOCommandWrite &cmd) {
         if(srcPayload->desc().metadata().getAs<bool>(Metadata::ForceKeyframe)) {
                 _encoder->requestKeyframe();
         }
-        // Stamp PTS onto the payload so submitPayload picks it up
-        // as first-class state instead of requiring a sidecar arg.
-        // During migration the canonical storage is still the
-        // descriptor metadata key; once producers stamp payload.pts
-        // directly this lookup falls away.
-        if(pts.isValid()) srcPayload.modify()->setPts(pts);
         Error err = _encoder->submitPayload(srcPayload);
         if(err.isError()) {
                 promekiErr("MediaIOTask_VideoEncoder: submitFrame failed: %s",

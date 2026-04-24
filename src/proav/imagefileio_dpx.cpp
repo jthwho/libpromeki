@@ -17,7 +17,7 @@
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/videopayload.h>
 #include <promeki/audiopayload.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/timecode.h>
 #include <promeki/metadata.h>
 
@@ -657,20 +657,20 @@ static void fillHeaderFromMetadata(DPXHeader *hdr, const Metadata &meta, const S
 // Embedded audio
 // ===========================================================================
 
-static UncompressedAudioPayload::Ptr readEmbeddedAudio(const Buffer &buf) {
-        if(buf.size() < sizeof(DPXUserData)) return UncompressedAudioPayload::Ptr();
+static PcmAudioPayload::Ptr readEmbeddedAudio(const Buffer &buf) {
+        if(buf.size() < sizeof(DPXUserData)) return PcmAudioPayload::Ptr();
 
         const auto *user = reinterpret_cast<const DPXUserData *>(buf.data());
-        if(std::memcmp(user->user, "AUDIO", 5) != 0) return UncompressedAudioPayload::Ptr();
+        if(std::memcmp(user->user, "AUDIO", 5) != 0) return PcmAudioPayload::Ptr();
 
         auto buildPayload = [&](AudioFormat::ID dt, float rate,
                                 unsigned int chans, size_t samples,
-                                size_t headerBytes) -> UncompressedAudioPayload::Ptr {
+                                size_t headerBytes) -> PcmAudioPayload::Ptr {
                 AudioDesc desc(dt, rate, chans);
-                if(!desc.isValid()) return UncompressedAudioPayload::Ptr();
+                if(!desc.isValid()) return PcmAudioPayload::Ptr();
                 size_t dataBytes = desc.bufferSize(samples);
                 if(dataBytes == 0 || buf.size() < headerBytes + dataBytes) {
-                        return UncompressedAudioPayload::Ptr();
+                        return PcmAudioPayload::Ptr();
                 }
                 Buffer::Ptr pcm = Buffer::Ptr::create(dataBytes);
                 std::memcpy(pcm.modify()->data(),
@@ -678,7 +678,7 @@ static UncompressedAudioPayload::Ptr readEmbeddedAudio(const Buffer &buf) {
                             dataBytes);
                 pcm.modify()->setSize(dataBytes);
                 BufferView view(pcm, 0, dataBytes);
-                return UncompressedAudioPayload::Ptr::create(desc, samples,
+                return PcmAudioPayload::Ptr::create(desc, samples,
                                                              view);
         };
 
@@ -690,7 +690,7 @@ static UncompressedAudioPayload::Ptr readEmbeddedAudio(const Buffer &buf) {
                         case 2: dt = AudioFormat::PCMI_S16LE; break;
                         case 3: dt = AudioFormat::PCMI_S24LE; break;
                         case 4: dt = AudioFormat::PCMI_S32LE; break;
-                        default: return UncompressedAudioPayload::Ptr();
+                        default: return PcmAudioPayload::Ptr();
                 }
                 return buildPayload(dt, static_cast<float>(ahdr->rate),
                                     static_cast<unsigned int>(ahdr->chans),
@@ -720,10 +720,10 @@ static UncompressedAudioPayload::Ptr readEmbeddedAudio(const Buffer &buf) {
                                     sizeof(DPXAudioHeaderV2));
         }
 
-        return UncompressedAudioPayload::Ptr();
+        return PcmAudioPayload::Ptr();
 }
 
-static size_t writeEmbeddedAudio(uint8_t *dest, const UncompressedAudioPayload &payload) {
+static size_t writeEmbeddedAudio(uint8_t *dest, const PcmAudioPayload &payload) {
         DPXAudioHeaderV2 ahdr;
         std::memset(&ahdr, 0, sizeof(ahdr));
         std::memcpy(ahdr.user.user, "AUDIO", 6);
@@ -829,7 +829,7 @@ Error ImageFileIO_DPX::load(ImageFile &imageFile, const MediaConfig &config) con
         PixelFormat pd(pdId);
 
         // 5. Read user data section (may contain embedded audio)
-        UncompressedAudioPayload::Ptr audioPayload;
+        PcmAudioPayload::Ptr audioPayload;
         int64_t userSize = static_cast<int64_t>(hdr.finfo.offset) - static_cast<int64_t>(sizeof(DPXHeader));
         if(userSize > 0) {
                 Buffer userBuf(static_cast<size_t>(userSize));
@@ -931,10 +931,10 @@ Error ImageFileIO_DPX::save(ImageFile &imageFile, const MediaConfig &config) con
         // 1. Calculate sizes
         size_t headerSize = sizeof(DPXHeader);
         size_t audioSize = 0;
-        const UncompressedAudioPayload *audioPayload = nullptr;
+        const PcmAudioPayload *audioPayload = nullptr;
         auto auds = frame.audioPayloads();
         if(!auds.isEmpty() && auds[0].isValid()) {
-                audioPayload = auds[0]->as<UncompressedAudioPayload>();
+                audioPayload = auds[0]->as<PcmAudioPayload>();
                 if(audioPayload != nullptr) {
                         audioSize = sizeof(DPXAudioHeaderV2) +
                                     audioPayload->desc().bufferSize(audioPayload->sampleCount());

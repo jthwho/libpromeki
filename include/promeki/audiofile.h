@@ -12,7 +12,7 @@
 #include <promeki/string.h>
 #include <promeki/error.h>
 #include <promeki/audiodesc.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/iodevice.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -32,8 +32,8 @@ PROMEKI_NAMESPACE_BEGIN
  * non-file backends (e.g. BufferIODevice for in-memory operation).
  *
  * @par Payload-native I/O
- * @ref read emits @ref UncompressedAudioPayload::Ptr; @ref write accepts
- * an @ref UncompressedAudioPayload.  The single plane's @ref BufferView
+ * @ref read emits @ref PcmAudioPayload::Ptr; @ref write accepts
+ * an @ref PcmAudioPayload.  The single plane's @ref BufferView
  * is expected to be interleaved PCM in the format declared by
  * @ref desc().
  *
@@ -171,19 +171,19 @@ class AudioFile {
 
                                 /**
                                  * @brief Reads audio samples from the file.
-                                 * @param out Receives an UncompressedAudioPayload::Ptr
+                                 * @param out Receives an PcmAudioPayload::Ptr
                                  *            carrying the decoded samples.
                                  * @param maxSamples Maximum number of samples to read.
                                  * @return Error::Ok on success, or an error on failure.
                                  */
-                                virtual Error read(UncompressedAudioPayload::Ptr &out, size_t maxSamples);
+                                virtual Error read(PcmAudioPayload::Ptr &out, size_t maxSamples);
 
                                 /**
                                  * @brief Writes audio samples to the file.
-                                 * @param payload The UncompressedAudioPayload to write.
+                                 * @param payload The PcmAudioPayload to write.
                                  * @return Error::Ok on success, or an error on failure.
                                  */
-                                virtual Error write(const UncompressedAudioPayload &payload);
+                                virtual Error write(const PcmAudioPayload &payload);
 
                                 /**
                                  * @brief Seeks to a specific sample position in the file.
@@ -305,21 +305,21 @@ class AudioFile {
 
                 /**
                  * @brief Reads audio samples from the file.
-                 * @param out Receives an UncompressedAudioPayload::Ptr
+                 * @param out Receives an PcmAudioPayload::Ptr
                  *            carrying the decoded samples.
                  * @param maxSamples Maximum number of samples to read.
                  * @return Error::Ok on success, or an error on failure.
                  */
-                Error read(UncompressedAudioPayload::Ptr &out, size_t maxSamples) {
+                Error read(PcmAudioPayload::Ptr &out, size_t maxSamples) {
                         return d.modify()->read(out, maxSamples);
                 }
 
                 /**
                  * @brief Writes audio samples to the file.
-                 * @param payload The UncompressedAudioPayload to write.
+                 * @param payload The PcmAudioPayload to write.
                  * @return Error::Ok on success, or an error on failure.
                  */
-                Error write(const UncompressedAudioPayload &payload) {
+                Error write(const PcmAudioPayload &payload) {
                         return d.modify()->write(payload);
                 }
 

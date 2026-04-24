@@ -13,10 +13,11 @@
 #include <promeki/videopayload.h>
 #include <promeki/audiopayload.h>
 #include <promeki/uncompressedvideopayload.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/compressedvideopayload.h>
 #include <promeki/compressedaudiopayload.h>
 #include <promeki/variantlookup.h>
+#include <promeki/map.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -94,7 +95,7 @@ StringList Frame::dump(const String &indent) const {
         VariantLookup<Frame>::forEachScalar([this, &out, &indent](const String &name) {
                 auto v = VariantLookup<Frame>::resolve(*this, name);
                 if(v.has_value()) {
-                        out += indent + name + ": " + v->format(String());
+                        out += indent + name + " [" + v->typeName() + "]: " + v->format(String());
                 }
         });
 
@@ -118,40 +119,37 @@ StringList Frame::dump(const String &indent) const {
                 });
         }
 
-        size_t videoIdx = 0;
-        size_t audioIdx = 0;
+        // Unified payload section — one header per payload followed
+        // by the concrete leaf's full VariantLookup dump (scalars
+        // across the inherit chain, @c Desc.* child, @c Meta.*
+        // database, and any codec-specific composites).  Works the
+        // same way for Video, Audio, and any future payload kind so
+        // we never silently skip a payload section again.
         const String sub = indent + "  ";
+        Map<int, size_t> kindIdx;
         for(const MediaPayload::Ptr &p : _payloads) {
                 if(!p.isValid()) {
                         out += indent + "<null payload>";
                         continue;
                 }
-                if(p->kind() == MediaPayloadKind::Video) {
-                        out += indent + String::sprintf("VideoPayload[%zu]:", videoIdx++);
-                        if(const auto *vp = p->as<VideoPayload>()) {
-                                VariantLookup<VideoPayload>::forEachScalar(
-                                        [vp, &out, &sub](const String &name) {
-                                                auto v = VariantLookup<VideoPayload>::resolve(*vp, name);
-                                                if(v.has_value()) {
-                                                        out += sub + name + ": " + v->format(String());
-                                                }
-                                        });
-                        }
-                } else if(p->kind() == MediaPayloadKind::Audio) {
-                        out += indent + String::sprintf("AudioPayload[%zu]:", audioIdx++);
-                        if(const auto *ap = p->as<AudioPayload>()) {
-                                VariantLookup<AudioPayload>::forEachScalar(
-                                        [ap, &out, &sub](const String &name) {
-                                                auto v = VariantLookup<AudioPayload>::resolve(*ap, name);
-                                                if(v.has_value()) {
-                                                        out += sub + name + ": " + v->format(String());
-                                                }
-                                        });
-                        }
+                const MediaPayloadKind &kind = p->kind();
+                size_t idx = 0;
+                auto it = kindIdx.find(kind.value());
+                if(it != kindIdx.end()) {
+                        idx = it->second;
+                        it->second = idx + 1;
                 } else {
-                        out += indent + String::sprintf("Payload[%s]:",
-                                                       String(p->kind().valueName()).cstr());
+                        kindIdx.insert(kind.value(), 1u);
                 }
+                // Header uses the kind's symbolic name verbatim
+                // (@c "Video", @c "Audio", @c "Subtitle", ...) —
+                // matches the short-form indexedChild keys Frame
+                // registers so dump output and query expressions
+                // share one vocabulary.
+                const String label(kind.valueName());
+                out += indent + String::sprintf("%s[%zu]:", label.cstr(), idx);
+                StringList lines = p->variantLookupDump(sub);
+                for(const String &l : lines) out += l;
         }
         return out;
 }
@@ -161,7 +159,7 @@ PROMEKI_LOOKUP_REGISTER(Frame)
                 [](const Frame &f) -> std::optional<Variant> {
                         return Variant(static_cast<uint64_t>(f.payloadList().size()));
                 })
-        .scalar("ImageCount",
+        .scalar("VideoCount",
                 [](const Frame &f) -> std::optional<Variant> {
                         return Variant(static_cast<uint64_t>(f.videoPayloads().size()));
                 })
@@ -191,7 +189,13 @@ PROMEKI_LOOKUP_REGISTER(Frame)
         // list goes out of scope.  Walking @c payloadList in place
         // yields a stable raw pointer for the duration of the
         // enclosing Frame reference.
-        .indexedChild<VideoPayload>("VideoPayload",
+        //
+        // The registered names are the short @c "Video" / @c "Audio"
+        // rather than @c "VideoPayload" / @c "AudioPayload" — inside
+        // the Frame context the payload layer is implicit, and the
+        // short form matches the @ref Frame::dump header so query
+        // strings and dump output use one vocabulary.
+        .indexedChild<VideoPayload>("Video",
                 [](const Frame &f, size_t i) -> const VideoPayload * {
                         size_t idx = 0;
                         for(const MediaPayload::Ptr &p : f.payloadList()) {
@@ -209,52 +213,6 @@ PROMEKI_LOOKUP_REGISTER(Frame)
                                    p->kind() != MediaPayloadKind::Video) continue;
                                 if(idx++ != i) continue;
                                 return p.modify()->as<VideoPayload>();
-                        }
-                        return nullptr;
-                })
-        // Legacy @c Image[N] alias: template strings authored before
-        // the payload migration use @c {Image[0].*} / @c {Audio[0].*}.
-        // The alias resolves to the same @ref VideoPayload /
-        // @ref AudioPayload scalar bindings.
-        .indexedChild<VideoPayload>("Image",
-                [](const Frame &f, size_t i) -> const VideoPayload * {
-                        size_t idx = 0;
-                        for(const MediaPayload::Ptr &p : f.payloadList()) {
-                                if(!p.isValid() ||
-                                   p->kind() != MediaPayloadKind::Video) continue;
-                                if(idx++ != i) continue;
-                                return p->as<VideoPayload>();
-                        }
-                        return nullptr;
-                },
-                [](Frame &f, size_t i) -> VideoPayload * {
-                        size_t idx = 0;
-                        for(MediaPayload::Ptr &p : f.payloadList()) {
-                                if(!p.isValid() ||
-                                   p->kind() != MediaPayloadKind::Video) continue;
-                                if(idx++ != i) continue;
-                                return p.modify()->as<VideoPayload>();
-                        }
-                        return nullptr;
-                })
-        .indexedChild<AudioPayload>("AudioPayload",
-                [](const Frame &f, size_t i) -> const AudioPayload * {
-                        size_t idx = 0;
-                        for(const MediaPayload::Ptr &p : f.payloadList()) {
-                                if(!p.isValid() ||
-                                   p->kind() != MediaPayloadKind::Audio) continue;
-                                if(idx++ != i) continue;
-                                return p->as<AudioPayload>();
-                        }
-                        return nullptr;
-                },
-                [](Frame &f, size_t i) -> AudioPayload * {
-                        size_t idx = 0;
-                        for(MediaPayload::Ptr &p : f.payloadList()) {
-                                if(!p.isValid() ||
-                                   p->kind() != MediaPayloadKind::Audio) continue;
-                                if(idx++ != i) continue;
-                                return p.modify()->as<AudioPayload>();
                         }
                         return nullptr;
                 })

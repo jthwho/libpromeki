@@ -20,7 +20,7 @@
 #include <promeki/enums.h>
 #include <promeki/enumlist.h>
 #include <promeki/audiotestpattern.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <cmath>
 
 using namespace promeki;
@@ -254,9 +254,9 @@ TEST_CASE("Inspector flags a sync offset change as a discontinuity") {
         REQUIRE(auds.size() == 1);
         AudioPayload::Ptr apBase = auds[0];
         REQUIRE(apBase.isValid());
-        auto uap = sharedPointerCast<UncompressedAudioPayload>(apBase);
+        auto uap = sharedPointerCast<PcmAudioPayload>(apBase);
         REQUIRE(uap.isValid());
-        UncompressedAudioPayload *apRaw = uap.modify();
+        PcmAudioPayload *apRaw = uap.modify();
         REQUIRE(apRaw->desc().format().id() == AudioFormat::PCMI_Float32LE);
         const int channels = apRaw->desc().channels();
         const size_t samples = apRaw->sampleCount();
@@ -435,7 +435,7 @@ namespace {
 
 // Zero-crossing frequency estimator.  Accurate enough for ~30 cycles
 // of a multi-hundred-Hz tone in one frame at 48 kHz.
-double estimateFreqHz(const UncompressedAudioPayload &audio, size_t channel,
+double estimateFreqHz(const PcmAudioPayload &audio, size_t channel,
                       double sampleRate) {
         const float *data = reinterpret_cast<const float *>(audio.plane(0).data());
         if(data == nullptr) return 0.0;

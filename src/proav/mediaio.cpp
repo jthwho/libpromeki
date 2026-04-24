@@ -40,6 +40,50 @@ PROMEKI_DEBUG(MediaIO)
 static std::atomic<int> g_nextLocalId{0};
 
 // ============================================================================
+// Timing auto-fill
+// ============================================================================
+//
+// Fills in each payload's native pts and — for any payload that
+// supports durations and whose @c duration is zero — a fallback
+// duration of one frame at the session rate.  The pipeline contract
+// is that every payload arrives downstream with a valid pts; the
+// helper guarantees it without overwriting anything the producer
+// already stamped.
+//
+// @ref MediaPayload::hasDuration is a type-level predicate: true
+// means "a duration is meaningful for this payload kind."  Concrete
+// @ref AudioPayload refuses @ref setDuration because its duration
+// is derived from intrinsic state — an attempt here silently no-ops,
+// which is fine since audio's @c duration() is zero only when the
+// payload is empty.  Concrete @ref VideoPayload accepts and stores
+// the one-frame value.
+
+static void ensurePayloadTiming(Frame::Ptr &frame,
+                                const MediaTimeStamp &synMts,
+                                const FrameRate &frameRate) {
+        if(!frame.isValid()) return;
+        const Duration oneFrame = frameRate.isValid()
+                ? frameRate.frameDuration()
+                : Duration();
+        for(size_t i = 0; i < frame->payloadList().size(); ++i) {
+                const MediaPayload::Ptr &p = frame->payloadList()[i];
+                if(!p.isValid()) continue;
+                MediaPayload *mp = frame.modify()
+                        ->payloadList()[i]
+                        .modify();
+                if(!mp->pts().isValid()) mp->setPts(synMts);
+                if(mp->hasDuration() &&
+                   mp->duration().isZero() &&
+                   !oneFrame.isZero()) {
+                        // Best-effort: subclasses whose duration is
+                        // derived (audio) return NotSupported and we
+                        // leave their duration alone.
+                        mp->setDuration(oneFrame);
+                }
+        }
+}
+
+// ============================================================================
 // Format registry
 // ============================================================================
 
@@ -1416,8 +1460,10 @@ Error MediaIO::readFrame(Frame::Ptr &frame, bool block) {
                                 frame.modify()->metadata().set(
                                         Metadata::MediaDescChanged, true);
                         }
-                        // Auto-stamp MediaTimeStamp on each essence if the
-                        // backend did not provide one.
+                        // Fill in any missing native pts / video
+                        // duration with a Synthetic fallback.  Every
+                        // payload arrives downstream with valid
+                        // timing regardless of backend support.
                         {
                                 int64_t ns = _frameRate.cumulativeTicks(
                                         INT64_C(1000000000),
@@ -1426,43 +1472,7 @@ Error MediaIO::readFrame(Frame::Ptr &frame, bool block) {
                                         Duration::fromNanoseconds(ns);
                                 MediaTimeStamp synMts(synTs,
                                         ClockDomain::Synthetic);
-                                // Apply the Synthetic fallback
-                                // directly to payloadList — the
-                                // canonical representation every
-                                // downstream reader consumes.
-                                for(size_t i = 0;
-                                    i < frame->payloadList().size(); ++i) {
-                                        const MediaPayload::Ptr &p =
-                                                frame->payloadList()[i];
-                                        if(!p.isValid()) continue;
-                                        if(p->kind() == MediaPayloadKind::Video) {
-                                                auto *vp = frame.modify()
-                                                        ->payloadList()[i]
-                                                        .modify()
-                                                        ->as<VideoPayload>();
-                                                if(vp && !vp->desc().metadata()
-                                                        .get(Metadata::MediaTimeStamp)
-                                                        .get<MediaTimeStamp>()
-                                                        .isValid()) {
-                                                        vp->desc().metadata().set(
-                                                                Metadata::MediaTimeStamp,
-                                                                synMts);
-                                                }
-                                        } else if(p->kind() == MediaPayloadKind::Audio) {
-                                                auto *ap = frame.modify()
-                                                        ->payloadList()[i]
-                                                        .modify()
-                                                        ->as<AudioPayload>();
-                                                if(ap && !ap->desc().metadata()
-                                                        .get(Metadata::MediaTimeStamp)
-                                                        .get<MediaTimeStamp>()
-                                                        .isValid()) {
-                                                        ap->desc().metadata().set(
-                                                                Metadata::MediaTimeStamp,
-                                                                synMts);
-                                                }
-                                        }
-                                }
+                                ensurePayloadTiming(frame, synMts, _frameRate);
                         }
                 }
         } else if(cmdRead->result == Error::EndOfFile) {
@@ -1518,8 +1528,9 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
         cmdWrite->frame = frame;
         MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdWrite);
 
-        // Auto-stamp MediaTimeStamp on each essence if the caller
-        // did not provide one.
+        // Fill in any missing native pts / video duration with a
+        // Synthetic fallback.  Every payload the backend sees has
+        // valid timing regardless of whether the caller stamped it.
         if(cmdWrite->frame.isValid()) {
                 int64_t ns = _frameRate.cumulativeTicks(
                         INT64_C(1000000000),
@@ -1527,42 +1538,7 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
                 TimeStamp synTs = _originTime +
                         Duration::fromNanoseconds(ns);
                 MediaTimeStamp synMts(synTs, ClockDomain::Synthetic);
-                // Apply the Synthetic fallback directly to
-                // payloadList — the canonical representation every
-                // downstream stage reads.
-                for(size_t i = 0;
-                    i < cmdWrite->frame->payloadList().size(); ++i) {
-                        const MediaPayload::Ptr &p =
-                                cmdWrite->frame->payloadList()[i];
-                        if(!p.isValid()) continue;
-                        if(p->kind() == MediaPayloadKind::Video) {
-                                auto *vp = cmdWrite->frame.modify()
-                                        ->payloadList()[i]
-                                        .modify()
-                                        ->as<VideoPayload>();
-                                if(vp && !vp->desc().metadata()
-                                        .get(Metadata::MediaTimeStamp)
-                                        .get<MediaTimeStamp>()
-                                        .isValid()) {
-                                        vp->desc().metadata().set(
-                                                Metadata::MediaTimeStamp,
-                                                synMts);
-                                }
-                        } else if(p->kind() == MediaPayloadKind::Audio) {
-                                auto *ap = cmdWrite->frame.modify()
-                                        ->payloadList()[i]
-                                        .modify()
-                                        ->as<AudioPayload>();
-                                if(ap && !ap->desc().metadata()
-                                        .get(Metadata::MediaTimeStamp)
-                                        .get<MediaTimeStamp>()
-                                        .isValid()) {
-                                        ap->desc().metadata().set(
-                                                Metadata::MediaTimeStamp,
-                                                synMts);
-                                }
-                        }
-                }
+                ensurePayloadTiming(cmdWrite->frame, synMts, _frameRate);
                 _writeFrameCount++;
         }
 

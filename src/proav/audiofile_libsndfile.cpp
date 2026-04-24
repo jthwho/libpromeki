@@ -377,7 +377,7 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                         return Error::Ok;
                 }
 
-                Error write(const UncompressedAudioPayload &payload) override {
+                Error write(const PcmAudioPayload &payload) override {
                         if(_operation != AudioFile::Writer) {
                                 promekiWarn("write: Attempt to write but in operation %d", _operation);
                                 return Error::Invalid;
@@ -420,7 +420,7 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                         return Error::Ok;
                 }
 
-                Error read(UncompressedAudioPayload::Ptr &out, size_t samples) override {
+                Error read(PcmAudioPayload::Ptr &out, size_t samples) override {
                         if(_operation != AudioFile::Reader) {
                                 promekiWarn("read: Attempt to read but in operation %d", _operation);
                                 return Error::Invalid;
@@ -462,7 +462,7 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                         buf.modify()->setSize(actualBytes);
                         BufferView planes;
                         planes.pushToBack(buf, 0, actualBytes);
-                        out = UncompressedAudioPayload::Ptr::create(_desc,
+                        out = PcmAudioPayload::Ptr::create(_desc,
                                 static_cast<size_t>(ct), planes);
                         return Error::Ok;
                 }

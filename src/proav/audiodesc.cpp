@@ -7,6 +7,8 @@
 
 #include <promeki/audiodesc.h>
 #include <promeki/sdpsession.h>
+#include <promeki/variantlookup.h>
+#include <promeki/variantdatabase.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -78,5 +80,54 @@ AudioDesc AudioDesc::fromJson(const JsonObject &json, Error *err) {
         if(err) *err = Error::Ok;
         return AudioDesc(fmt, sampleRate, chans);
 }
+
+// ============================================================================
+// VariantLookup registration
+//
+// Self-contained introspection for @ref AudioDesc so a bare
+// descriptor (no payload context) is queryable / printable via
+// @c VariantLookup<AudioDesc>.  The @ref AudioPayload registration
+// re-surfaces every one of these fields directly (rather than going
+// through a @c Desc composition) so pipeline queries like
+// @c Audio[0].SampleRate stay flat and don't need to know that
+// AudioDesc has its own lookup.
+// ============================================================================
+
+PROMEKI_LOOKUP_REGISTER(AudioDesc)
+        .scalar("Format",
+                [](const AudioDesc &d) -> std::optional<Variant> {
+                        return Variant(d.format());
+                })
+        .scalar("SampleRate",
+                [](const AudioDesc &d) -> std::optional<Variant> {
+                        return Variant(d.sampleRate());
+                })
+        .scalar("Channels",
+                [](const AudioDesc &d) -> std::optional<Variant> {
+                        return Variant(static_cast<uint32_t>(d.channels()));
+                })
+        .scalar("BytesPerSample",
+                [](const AudioDesc &d) -> std::optional<Variant> {
+                        return Variant(static_cast<uint64_t>(d.bytesPerSample()));
+                })
+        .scalar("IsValid",
+                [](const AudioDesc &d) -> std::optional<Variant> {
+                        return Variant(d.isValid());
+                })
+        .scalar("IsCompressed",
+                [](const AudioDesc &d) -> std::optional<Variant> {
+                        return Variant(d.isCompressed());
+                })
+        .scalar("IsNative",
+                [](const AudioDesc &d) -> std::optional<Variant> {
+                        return Variant(d.isNative());
+                })
+        .database<"Metadata">("Meta",
+                [](const AudioDesc &d) -> const VariantDatabase<"Metadata"> * {
+                        return &d.metadata();
+                },
+                [](AudioDesc &d) -> VariantDatabase<"Metadata"> * {
+                        return &d.metadata();
+                });
 
 PROMEKI_NAMESPACE_END

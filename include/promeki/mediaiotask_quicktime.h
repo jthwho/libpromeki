@@ -30,7 +30,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Audio
  *
  * PCM audio tracks are read and written. On read, each @c Frame carries
- * an @ref UncompressedAudioPayload containing the PCM samples that
+ * an @ref PcmAudioPayload containing the PCM samples that
  * correspond to the video frame duration; compressed (e.g. AAC) audio
  * tracks are surfaced as @ref CompressedAudioPayload objects.
  * On write, @c Frame audio is accumulated in an @c AudioBuffer FIFO and

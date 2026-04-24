@@ -18,7 +18,7 @@
 #include <promeki/enumlist.h>
 #include <promeki/enums.h>
 #include <promeki/frame.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/compressedvideopayload.h>
 #include <promeki/videocodec.h>
@@ -534,19 +534,15 @@ void MediaIOTask_Inspector::decompressImages(Frame &frame) {
                         if(csc.isValid()) out = csc;
                 }
 
-                // Carry the MediaTimeStamp from the compressed source
-                // onto the decoded payload.  The outer MediaIO already
-                // stamped a synthetic MTS on the compressed payload in
-                // writeFrame, but that stamp lives on the old payload's
-                // descriptor — replacing the Ptr here drops it, and the
-                // timestamp continuity check would then report every
-                // decoded frame as "missing MediaTimeStamp".
-                MediaTimeStamp srcMts = cvpConst->desc().metadata()
-                        .get(Metadata::MediaTimeStamp)
-                        .get<MediaTimeStamp>();
-                if(srcMts.isValid()) {
-                        out.modify()->desc().metadata().set(
-                                Metadata::MediaTimeStamp, srcMts);
+                // Carry the PTS from the compressed source onto the
+                // decoded payload.  The outer MediaIO already stamped
+                // a synthetic PTS on the compressed payload in
+                // writeFrame, but replacing the Ptr here drops it —
+                // and the timestamp continuity check would then
+                // report every decoded frame as "missing PTS".
+                const MediaTimeStamp &srcPts = cvpConst->pts();
+                if(srcPts.isValid()) {
+                        out.modify()->setPts(srcPts);
                 }
 
                 payloadPtr = out;
@@ -648,7 +644,7 @@ void MediaIOTask_Inspector::runLtcCheck(const Frame &frame, InspectorEvent &even
         if(auds.isEmpty()) return;
         const AudioPayload::Ptr &ap = auds[0];
         if(!ap.isValid()) return;
-        const auto *uap = ap->as<UncompressedAudioPayload>();
+        const auto *uap = ap->as<PcmAudioPayload>();
         if(uap == nullptr) return;  // LTC only decodes from PCM
 
         // Capture the cumulative-sample anchor that marks the start of
@@ -902,17 +898,14 @@ void MediaIOTask_Inspector::runContinuityCheck(InspectorEvent &event) {
 void MediaIOTask_Inspector::runTimestampCheck(const Frame &frame, InspectorEvent &event) {
         event.timestampTestEnabled = true;
 
-        // Pull the per-essence MediaTimeStamps from the payload
-        // descriptors.  MediaIO is responsible for ensuring every
-        // essence carries one (backends with hardware timestamps set
-        // them directly; MediaIO fills in a Synthetic fallback
-        // otherwise), so "missing" here is a real fault — we surface
-        // it as a warning and a discontinuity.
+        // Pull the per-essence PTS from each payload.  MediaIO is
+        // responsible for ensuring every essence carries one (backends
+        // with hardware timestamps set them directly; MediaIO fills in
+        // a Synthetic fallback otherwise), so "missing" here is a real
+        // fault — we surface it as a warning and a discontinuity.
         auto vids = frame.videoPayloads();
         if(!vids.isEmpty() && vids[0].isValid()) {
-                MediaTimeStamp mts = vids[0]->desc().metadata()
-                        .get(Metadata::MediaTimeStamp)
-                        .get<MediaTimeStamp>();
+                const MediaTimeStamp &mts = vids[0]->pts();
                 if(mts.isValid()) {
                         event.videoTimestampValid = true;
                         event.videoTimestampNs =
@@ -922,9 +915,7 @@ void MediaIOTask_Inspector::runTimestampCheck(const Frame &frame, InspectorEvent
         }
         auto auds = frame.audioPayloads();
         if(!auds.isEmpty() && auds[0].isValid()) {
-                MediaTimeStamp mts = auds[0]->desc().metadata()
-                        .get(Metadata::MediaTimeStamp)
-                        .get<MediaTimeStamp>();
+                const MediaTimeStamp &mts = auds[0]->pts();
                 if(mts.isValid()) {
                         event.audioTimestampValid = true;
                         event.audioTimestampNs =
@@ -995,7 +986,7 @@ void MediaIOTask_Inspector::runAudioSamplesCheck(const Frame &frame, InspectorEv
         const AudioPayload::Ptr &ap = auds[0];
         if(!ap.isValid()) return;
         // Sample counts only apply to uncompressed PCM payloads.
-        const auto *uap = ap->as<UncompressedAudioPayload>();
+        const auto *uap = ap->as<PcmAudioPayload>();
         if(uap == nullptr) return;
 
         const int64_t n = static_cast<int64_t>(uap->sampleCount());
@@ -1003,15 +994,13 @@ void MediaIOTask_Inspector::runAudioSamplesCheck(const Frame &frame, InspectorEv
         event.audioSamplesThisFrame = n;
 
         // Derive the measured sample rate from cumulative samples and
-        // the elapsed audio MediaTimeStamp span.  The *first* anchored
-        // frame establishes the origin; samples from that frame are
+        // the elapsed audio PTS span.  The *first* anchored frame
+        // establishes the origin; samples from that frame are
         // deliberately excluded because the measurement window they
         // mark is the time from anchor to the *next* frame, not the
         // samples that precede the anchor.  Any timestamp gap resets
         // the anchor so the next valid chunk starts a fresh window.
-        MediaTimeStamp audMts = uap->desc().metadata()
-                .get(Metadata::MediaTimeStamp)
-                .get<MediaTimeStamp>();
+        const MediaTimeStamp &audMts = uap->pts();
         if(!audMts.isValid()) {
                 _audioSamplesAnchorSet = false;
                 return;
@@ -1306,9 +1295,7 @@ void MediaIOTask_Inspector::runCaptureStats(const Frame &frame,
                         imageBytes  = String::number(static_cast<int64_t>(
                                 payloadByteSize(vp)));
 
-                        MediaTimeStamp mts = id.metadata()
-                                .get(Metadata::MediaTimeStamp)
-                                .get<MediaTimeStamp>();
+                        const MediaTimeStamp &mts = vp.pts();
                         if(mts.isValid()) {
                                 const int64_t ns =
                                         mts.timeStamp().nanoseconds() +
@@ -1341,7 +1328,7 @@ void MediaIOTask_Inspector::runCaptureStats(const Frame &frame,
                         const AudioDesc &ad = ap.desc();
                         // Sample count is only meaningful for PCM
                         // payloads; compressed audio reports zero here.
-                        const auto *uap = ap.as<UncompressedAudioPayload>();
+                        const auto *uap = ap.as<PcmAudioPayload>();
                         const size_t sampleCount = uap != nullptr
                                 ? uap->sampleCount() : size_t(0);
                         audioSamples  = String::number(static_cast<int64_t>(sampleCount));
@@ -1353,9 +1340,7 @@ void MediaIOTask_Inspector::runCaptureStats(const Frame &frame,
                                 ad.bytesPerSample() * ad.channels() *
                                 sampleCount));
 
-                        MediaTimeStamp mts = ad.metadata()
-                                .get(Metadata::MediaTimeStamp)
-                                .get<MediaTimeStamp>();
+                        const MediaTimeStamp &mts = ap.pts();
                         if(mts.isValid()) {
                                 const int64_t ns =
                                         mts.timeStamp().nanoseconds() +

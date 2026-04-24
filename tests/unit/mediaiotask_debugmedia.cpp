@@ -22,7 +22,7 @@
 #include <promeki/mediaio.h>
 #include <promeki/metadata.h>
 #include <promeki/pixelformat.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/uncompressedvideopayload.h>
 
 using namespace promeki;
@@ -47,7 +47,7 @@ Frame::Ptr makeSmokeFrame() {
         Buffer::Ptr abuf = Buffer::Ptr::create(adesc.bufferSize(samples));
         abuf.modify()->setSize(adesc.bufferSize(samples));
         BufferView aview(abuf, 0, abuf->size());
-        UncompressedAudioPayload::Ptr ap = UncompressedAudioPayload::Ptr::create(
+        PcmAudioPayload::Ptr ap = PcmAudioPayload::Ptr::create(
                 adesc, samples, aview);
         if(!ap.isValid()) return Frame::Ptr();
         f.modify()->addPayload(ap);

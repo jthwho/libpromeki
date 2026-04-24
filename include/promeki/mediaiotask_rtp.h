@@ -11,7 +11,7 @@
 #include <promeki/frame.h>
 #include <promeki/imagedesc.h>
 #include <promeki/videopayload.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/mediaiotask.h>
 #include <promeki/queue.h>
 #include <promeki/rtppacket.h>
@@ -467,7 +467,7 @@ class MediaIOTask_Rtp : public MediaIOTask {
                  * sample counter inside @c _audioState, so no frame
                  * index is needed here.
                  */
-                Error sendAudio(const UncompressedAudioPayload &payload);
+                Error sendAudio(const PcmAudioPayload &payload);
 
                 /**
                  * @brief Sends one metadata blob on the @c _data stream.

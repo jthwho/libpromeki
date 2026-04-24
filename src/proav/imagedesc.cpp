@@ -8,6 +8,8 @@
 #include <promeki/imagedesc.h>
 #include <promeki/sdpsession.h>
 #include <promeki/colormodel.h>
+#include <promeki/variantlookup.h>
+#include <promeki/variantdatabase.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -299,5 +301,74 @@ SdpMediaDescription ImageDesc::toSdp(uint8_t payloadType) const {
 
         return md;
 }
+
+// ============================================================================
+// VariantLookup registration
+//
+// Self-contained introspection for @ref ImageDesc so a bare
+// descriptor (no payload context) is queryable / printable via
+// @c VariantLookup<ImageDesc>.  The @ref VideoPayload registration
+// re-surfaces every one of these fields directly (rather than going
+// through a @c Desc composition) so pipeline queries like
+// @c Video[0].Width stay flat and don't need to know that ImageDesc
+// has its own lookup.
+// ============================================================================
+
+PROMEKI_LOOKUP_REGISTER(ImageDesc)
+        .scalar("Width",
+                [](const ImageDesc &d) -> std::optional<Variant> {
+                        return Variant(static_cast<uint32_t>(d.width()));
+                })
+        .scalar("Height",
+                [](const ImageDesc &d) -> std::optional<Variant> {
+                        return Variant(static_cast<uint32_t>(d.height()));
+                })
+        .scalar("Size",
+                [](const ImageDesc &d) -> std::optional<Variant> {
+                        return Variant(d.size());
+                })
+        .scalar("PixelFormat",
+                [](const ImageDesc &d) -> std::optional<Variant> {
+                        return Variant(d.pixelFormat());
+                })
+        .scalar("PixelMemLayout",
+                [](const ImageDesc &d) -> std::optional<Variant> {
+                        return Variant(d.memLayout());
+                })
+        .scalar("ColorModel",
+                [](const ImageDesc &d) -> std::optional<Variant> {
+                        return Variant(d.colorModel());
+                })
+        .scalar("LinePad",
+                [](const ImageDesc &d) -> std::optional<Variant> {
+                        return Variant(static_cast<uint64_t>(d.linePad()));
+                })
+        .scalar("LineAlign",
+                [](const ImageDesc &d) -> std::optional<Variant> {
+                        return Variant(static_cast<uint64_t>(d.lineAlign()));
+                })
+        .scalar("ScanMode",
+                [](const ImageDesc &d) -> std::optional<Variant> {
+                        return Variant(String(d.videoScanMode().valueName()));
+                })
+        .scalar("PlaneCount",
+                [](const ImageDesc &d) -> std::optional<Variant> {
+                        return Variant(static_cast<uint64_t>(d.planeCount()));
+                })
+        .scalar("IsValid",
+                [](const ImageDesc &d) -> std::optional<Variant> {
+                        return Variant(d.isValid());
+                })
+        .scalar("IsCompressed",
+                [](const ImageDesc &d) -> std::optional<Variant> {
+                        return Variant(d.pixelFormat().isCompressed());
+                })
+        .database<"Metadata">("Meta",
+                [](const ImageDesc &d) -> const VariantDatabase<"Metadata"> * {
+                        return &d.metadata();
+                },
+                [](ImageDesc &d) -> VariantDatabase<"Metadata"> * {
+                        return &d.metadata();
+                });
 
 PROMEKI_NAMESPACE_END

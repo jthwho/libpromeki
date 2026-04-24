@@ -928,6 +928,25 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                 .setDescription("Emit SMPTE timecode SEI "
                                                 "(H.264 picture timing / HEVC time code)."));
 
+                /// @brief bool — populate expensive per-frame encoder
+                /// statistics on every emitted @ref CompressedVideoPayload.
+                ///
+                /// Cheap stats (average QP, frame SATD, encode / display
+                /// order index, temporal layer, GOP position) are always
+                /// stamped and cost effectively nothing at lock time.
+                /// This flag gates the more expensive family that requires
+                /// the encoder to aggregate per-block information across
+                /// the whole picture: @ref Metadata::CodecIntraBlockCount,
+                /// @ref Metadata::CodecInterBlockCount,
+                /// @ref Metadata::CodecAvgMotionVectorX, and
+                /// @ref Metadata::CodecAvgMotionVectorY.  Default @c false
+                /// because most pipelines do not consume the RC stats.
+                PROMEKI_DECLARE_ID(VideoEncoderStats,
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(false)
+                                .setDescription("Populate expensive per-frame encoder "
+                                                "RC stats (intra/inter block counts, avg MV)."));
+
                 /// @brief @ref ColorPrimaries — color primaries signalled
                 /// in the VUI (H.264/HEVC) or color description (AV1).
                 /// Numeric values per ISO/IEC 23091-4 / ITU-T H.273.

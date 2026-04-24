@@ -21,6 +21,7 @@
 #include <promeki/mediatimestamp.h>
 #include <promeki/framenumber.h>
 #include <promeki/framecount.h>
+#include <promeki/duration.h>
 #include <promeki/mediaduration.h>
 #include <promeki/datetime.h>
 #include <promeki/size2d.h>
@@ -146,6 +147,7 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeFrameNumber, FrameNumber) \
         X(TypeFrameCount, FrameCount)   \
         X(TypeMediaDuration, MediaDuration) \
+        X(TypeDuration, Duration)       \
         X(TypeSize2D, Size2Du32)           \
         X(TypeUUID, UUID)               \
         X(TypeUMID, UMID)               \
@@ -337,6 +339,7 @@ template <typename... Types> class VariantImpl {
                                 case TypeFrameNumber:
                                 case TypeFrameCount:
                                 case TypeMediaDuration:
+                                case TypeDuration:
                                 case TypeSize2D:
                                 case TypeUUID:
                                 case TypeUMID:

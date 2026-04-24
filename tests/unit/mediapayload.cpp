@@ -15,7 +15,7 @@
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/compressedvideopayload.h>
 #include <promeki/audiopayload.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/compressedaudiopayload.h>
 #include <promeki/imagedesc.h>
 #include <promeki/audiodesc.h>
@@ -204,11 +204,11 @@ TEST_CASE("CompressedVideoPayload: invalid when pixel format is not compressed")
 }
 
 // ---------------------------------------------------------------
-// UncompressedAudioPayload
+// PcmAudioPayload
 // ---------------------------------------------------------------
 
-TEST_CASE("UncompressedAudioPayload: default-constructed is invalid") {
-        UncompressedAudioPayload p;
+TEST_CASE("PcmAudioPayload: default-constructed is invalid") {
+        PcmAudioPayload p;
         CHECK_FALSE(p.isValid());
         CHECK(p.kind() == MediaPayloadKind::Audio);
         CHECK_FALSE(p.isCompressed());
@@ -216,13 +216,13 @@ TEST_CASE("UncompressedAudioPayload: default-constructed is invalid") {
         CHECK(p.sampleCount() == 0);
 }
 
-TEST_CASE("UncompressedAudioPayload: desc + sample count + plane list") {
+TEST_CASE("PcmAudioPayload: desc + sample count + plane list") {
         AudioDesc desc(AudioFormat(AudioFormat::PCMI_Float32LE), 48000.0f, 2);
         size_t samples = 1024;
         auto buf = Buffer::Ptr::create(desc.bufferSize(samples));
         buf.modify()->setSize(desc.bufferSize(samples));
 
-        UncompressedAudioPayload p(desc, samples,
+        PcmAudioPayload p(desc, samples,
                                    BufferView({ BufferView(buf, 0, buf->size()) }));
         CHECK(p.isValid());
         CHECK(p.sampleCount() == samples);
@@ -272,11 +272,47 @@ TEST_CASE("MediaPayload: timestamps and duration on any subclass") {
 
         p.setPts(pts);
         p.setDts(dts);
-        p.setDuration(Duration::fromMilliseconds(33));
+        // hasDuration is a type-level predicate: VideoPayload
+        // supports durations unconditionally.  A fresh payload's
+        // duration is zero until a stage stamps one.
+        CHECK(p.hasDuration());
+        CHECK(p.duration().isZero());
+        Error e = p.setDuration(Duration::fromMilliseconds(33));
+        CHECK(e.isOk());
 
         CHECK(p.pts() == pts);
         CHECK(p.dts() == dts);
+        CHECK(p.hasDuration());
         CHECK(p.duration() == Duration::fromMilliseconds(33));
+}
+
+TEST_CASE("MediaPayload: audio duration is derived from sample count and rate") {
+        AudioDesc desc(AudioFormat(AudioFormat::PCMI_Float32LE), 48000.0f, 2);
+        PcmAudioPayload p(desc, 960);
+        CHECK(p.hasDuration());
+        // 960 samples @ 48000 Hz = 20 ms.
+        CHECK(p.duration() == Duration::fromMilliseconds(20));
+        // setDuration on audio is NotSupported — the value is
+        // derived, not stored.
+        Error e = p.setDuration(Duration::fromMilliseconds(5));
+        CHECK(e.code() == Error::NotSupported);
+        CHECK(p.duration() == Duration::fromMilliseconds(20));
+}
+
+TEST_CASE("MediaPayload: hasDuration is a type-level predicate") {
+        // Video: supports durations regardless of whether one has
+        // been stamped.
+        UncompressedVideoPayload uvp;
+        CHECK(uvp.hasDuration());
+        CHECK(uvp.duration().isZero());
+        CompressedVideoPayload cvp;
+        CHECK(cvp.hasDuration());
+        CHECK(cvp.duration().isZero());
+
+        // Audio: supports durations regardless of sample count.
+        PcmAudioPayload empty;
+        CHECK(empty.hasDuration());
+        CHECK(empty.duration().isZero());
 }
 
 TEST_CASE("MediaPayload: generic flag manipulation") {
@@ -298,6 +334,70 @@ TEST_CASE("MediaPayload: generic flag manipulation") {
 
         p.setFlags(0);
         CHECK(p.flags() == 0);
+}
+
+TEST_CASE("MediaPayload: setFlag(Flag, bool) conditional set/clear") {
+        CompressedVideoPayload p;
+        CHECK(p.flags() == 0);
+
+        p.setFlag(MediaPayload::Keyframe, true);
+        CHECK(p.isKeyframe());
+        p.setFlag(MediaPayload::Keyframe, true);
+        CHECK(p.isKeyframe());                              // idempotent
+
+        p.setFlag(MediaPayload::Discardable, false);
+        CHECK_FALSE(p.isDiscardable());                     // clearing an unset bit is a no-op
+        CHECK(p.isKeyframe());                              // unaffected
+
+        p.setFlag(MediaPayload::Keyframe, false);
+        CHECK_FALSE(p.isKeyframe());
+}
+
+TEST_CASE("MediaPayload: IntraRefresh flag is distinct from Keyframe") {
+        CompressedVideoPayload p;
+        CHECK_FALSE(p.isIntraRefresh());
+        CHECK_FALSE(p.isKeyframe());
+
+        p.addFlag(MediaPayload::IntraRefresh);
+        CHECK(p.isIntraRefresh());
+        CHECK_FALSE(p.isKeyframe());                        // gradual refresh is NOT a random-access point
+        CHECK_FALSE(p.isSafeCutPoint());
+
+        p.addFlag(MediaPayload::Keyframe);
+        CHECK(p.isIntraRefresh());
+        CHECK(p.isKeyframe());                              // the two can coexist, but typically do not
+}
+
+TEST_CASE("MediaPayload: flag bitmask is 64 bits wide") {
+        CompressedVideoPayload p;
+
+        // Set a base flag in the low bits and the subclass ParameterSet
+        // flag in bit 16 — both must round-trip losslessly.
+        p.addFlag(MediaPayload::Keyframe);
+        p.markParameterSet(true);
+        CHECK(p.isKeyframe());
+        CHECK(p.isParameterSet());
+
+        // Exercise a high bit that would truncate under a 32-bit mask.
+        const uint64_t highBit = 1ull << 40;
+        p.setFlags(p.flags() | highBit);
+        CHECK((p.flags() & highBit) == highBit);
+        CHECK(p.isKeyframe());                              // older bits preserved
+        CHECK(p.isParameterSet());
+}
+
+TEST_CASE("MediaPayload: flagName returns mnemonic for known bits") {
+        CHECK(String(MediaPayload::flagName(MediaPayload::None))         == "None");
+        CHECK(String(MediaPayload::flagName(MediaPayload::Keyframe))     == "Keyframe");
+        CHECK(String(MediaPayload::flagName(MediaPayload::Discardable))  == "Discardable");
+        CHECK(String(MediaPayload::flagName(MediaPayload::Corrupt))      == "Corrupt");
+        CHECK(String(MediaPayload::flagName(MediaPayload::EndOfStream))  == "EndOfStream");
+        CHECK(String(MediaPayload::flagName(MediaPayload::IntraRefresh)) == "IntraRefresh");
+
+        // A compound mask is not a recognised single-bit value.
+        const auto compound = static_cast<MediaPayload::Flag>(
+                MediaPayload::Keyframe | MediaPayload::Corrupt);
+        CHECK(MediaPayload::flagName(compound) == nullptr);
 }
 
 TEST_CASE("MediaPayload: EndOfStream flag") {
@@ -391,11 +491,11 @@ TEST_CASE("sharedPointerCast: downcasts MediaPayload::Ptr to the concrete leaf")
 
 TEST_CASE("MediaPayload::as<T>: dynamic downcast returns null on miss") {
         AudioDesc desc(AudioFormat(AudioFormat::PCMI_S16LE), 48000.0f, 2);
-        UncompressedAudioPayload p(desc);
+        PcmAudioPayload p(desc);
 
         const MediaPayload *mp = &p;
         CHECK(mp->as<AudioPayload>() != nullptr);
-        CHECK(mp->as<UncompressedAudioPayload>() != nullptr);
+        CHECK(mp->as<PcmAudioPayload>() != nullptr);
         CHECK(mp->as<VideoPayload>() == nullptr);
         CHECK(mp->as<CompressedAudioPayload>() == nullptr);
 }
@@ -438,7 +538,7 @@ TEST_CASE("isSafeCutPoint: uncompressed video is always safe") {
 }
 
 TEST_CASE("isSafeCutPoint: uncompressed audio is always safe") {
-        UncompressedAudioPayload p;
+        PcmAudioPayload p;
         CHECK(p.isSafeCutPoint());
 }
 
@@ -517,7 +617,7 @@ TEST_CASE("MediaPayload::PtrList: mixed payloads in one list") {
         MediaPayload::PtrList list;
         list.pushToBack(UncompressedVideoPayload::Ptr::create(
                 vdesc, BufferView({ BufferView(vbuf, 0, vbuf->size()) })));
-        list.pushToBack(UncompressedAudioPayload::Ptr::create(
+        list.pushToBack(PcmAudioPayload::Ptr::create(
                 adesc, size_t(1024),
                 BufferView({ BufferView(abuf, 0, abuf->size()) })));
 

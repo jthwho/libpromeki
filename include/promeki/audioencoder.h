@@ -15,7 +15,7 @@
 #include <promeki/result.h>
 #include <promeki/audiocodec.h>
 #include <promeki/backendweight.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/compressedaudiopayload.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -27,7 +27,7 @@ class MediaConfig;
  * @ingroup proav
  *
  * AudioEncoder is a single push-frame / pull-packet codec session:
- * @ref UncompressedAudioPayload frames pushed via @ref submitFrame
+ * @ref PcmAudioPayload frames pushed via @ref submitFrame
  * feed an internal pipeline, and encoded
  * @ref CompressedAudioPayload access units come back out of
  * @ref receivePacket zero, one, or many submits later depending on the
@@ -65,7 +65,7 @@ class MediaConfig;
  *   1. Resolve a session via @ref AudioCodec::createEncoder.
  *   2. Call @ref configure with a @ref MediaConfig.  (Skip when a
  *      config was already supplied to @c createEncoder.)
- *   3. For each @ref UncompressedAudioPayload frame, call @ref submitFrame.
+ *   3. For each @ref PcmAudioPayload frame, call @ref submitFrame.
  *   4. After each submit, drain with @ref receivePacket until it
  *      returns a null Ptr.  Each emitted packet carries this codec's
  *      @ref codec() value so downstream code can route it without
@@ -126,7 +126,7 @@ class AudioEncoder {
                  * before submitting.  A null Ptr is treated as
                  * @ref Error::Invalid.
                  */
-                virtual Error submitPayload(const UncompressedAudioPayload::Ptr &payload) = 0;
+                virtual Error submitPayload(const PcmAudioPayload::Ptr &payload) = 0;
 
                 /** @brief Dequeues one encoded payload, or a null Ptr when none is ready. */
                 virtual CompressedAudioPayload::Ptr receiveCompressedPayload() = 0;

@@ -23,7 +23,7 @@
 #include <promeki/audioencoder.h>
 #include <promeki/buffer.h>
 #include <promeki/mediaconfig.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/compressedaudiopayload.h>
 
 using namespace promeki;
@@ -54,7 +54,7 @@ class PassthroughAudioEncoder : public AudioEncoder {
                         _cfgBitrate = config.getAs<int32_t>(MediaConfig::BitrateKbps);
                 }
 
-                Error submitPayload(const UncompressedAudioPayload::Ptr &payload) override {
+                Error submitPayload(const PcmAudioPayload::Ptr &payload) override {
                         clearError();
                         if(!payload.isValid() || !payload->isValid() || payload->planeCount() == 0) {
                                 setError(Error::Invalid, "invalid audio payload");
@@ -130,18 +130,18 @@ class PassthroughAudioDecoder : public AudioDecoder {
                         return Error::Ok;
                 }
 
-                UncompressedAudioPayload::Ptr receiveAudioPayload() override {
-                        if(_pending.empty()) return UncompressedAudioPayload::Ptr();
+                PcmAudioPayload::Ptr receiveAudioPayload() override {
+                        if(_pending.empty()) return PcmAudioPayload::Ptr();
                         CompressedAudioPayload::Ptr in = std::move(_pending.front());
                         _pending.pop_front();
-                        if(in->planeCount() == 0) return UncompressedAudioPayload::Ptr();
+                        if(in->planeCount() == 0) return PcmAudioPayload::Ptr();
                         // Compute sample count from bytes and the
                         // configured output format.
                         auto view = in->plane(0);
                         size_t sampleBytes = _outDesc.bytesPerSample() * _outDesc.channels();
                         size_t samples = sampleBytes ? view.size() / sampleBytes : 0;
                         BufferView planes(view.buffer(), view.offset(), view.size());
-                        auto uap = UncompressedAudioPayload::Ptr::create(_outDesc, samples, planes);
+                        auto uap = PcmAudioPayload::Ptr::create(_outDesc, samples, planes);
                         uap.modify()->setPts(in->pts());
                         return uap;
                 }
@@ -235,7 +235,7 @@ struct PassthroughRegistrar {
 static PassthroughRegistrar _passthroughRegistrar;
 
 // Helper: build a small PCM audio payload with deterministic bytes.
-UncompressedAudioPayload::Ptr makePcmPayload(size_t samples, uint8_t fill,
+PcmAudioPayload::Ptr makePcmPayload(size_t samples, uint8_t fill,
                                              const AudioDesc &desc = AudioDesc(AudioFormat::PCMI_S16LE,
                                                                                48000.0f, 2)) {
         const size_t bytes = desc.bufferSize(samples);
@@ -244,7 +244,7 @@ UncompressedAudioPayload::Ptr makePcmPayload(size_t samples, uint8_t fill,
         buf.modify()->setSize(bytes);
         BufferView planes;
         planes.pushToBack(buf, 0, bytes);
-        return UncompressedAudioPayload::Ptr::create(desc, samples, planes);
+        return PcmAudioPayload::Ptr::create(desc, samples, planes);
 }
 
 AudioEncoder *makePassthroughEncoder(const MediaConfig *cfg = nullptr) {
@@ -394,7 +394,7 @@ TEST_CASE("AudioEncoder: submitPayload rejects invalid input") {
         AudioEncoder *enc = makePassthroughEncoder();
         REQUIRE(enc != nullptr);
 
-        UncompressedAudioPayload::Ptr empty;
+        PcmAudioPayload::Ptr empty;
         Error err = enc->submitPayload(empty);
         CHECK(err == Error::Invalid);
         CHECK(enc->lastError() == Error::Invalid);
@@ -419,7 +419,7 @@ TEST_CASE("Audio codec: encoder -> packet -> decoder round-trip") {
         CHECK(pkt->desc().format().audioCodec().id() == gPassthroughCodecId);
 
         CHECK(dec->submitPayload(pkt) == Error::Ok);
-        UncompressedAudioPayload::Ptr out = dec->receiveAudioPayload();
+        PcmAudioPayload::Ptr out = dec->receiveAudioPayload();
         REQUIRE(out.isValid());
 
         auto srcPlane = src->plane(0);
@@ -667,7 +667,7 @@ TEST_CASE("AudioDecoder: configure forwards AudioRate / AudioChannels") {
         AudioDesc cdesc(gPassthroughCompressedFormat, 48000.0f, 2);
         auto fEntry = frame->plane(0); auto pkt = CompressedAudioPayload::Ptr::create(cdesc, BufferView(fEntry.buffer(), fEntry.offset(), fEntry.size()));
         CHECK(dec->submitPayload(pkt) == Error::Ok);
-        UncompressedAudioPayload::Ptr out = dec->receiveAudioPayload();
+        PcmAudioPayload::Ptr out = dec->receiveAudioPayload();
         REQUIRE(out.isValid());
         CHECK(out->desc().sampleRate() == 48000.0f);
         CHECK(out->desc().channels() == 2u);

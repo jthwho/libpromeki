@@ -76,7 +76,7 @@ LtcDecoder::DecodedList LtcDecoder::decodeInterleaved(
 }
 
 LtcDecoder::DecodedList LtcDecoder::decode(
-        const UncompressedAudioPayload &audio, int channelIndex)
+        const PcmAudioPayload &audio, int channelIndex)
 {
         if(!audio.isValid()) return DecodedList();
         if(audio.planeCount() == 0) return DecodedList();

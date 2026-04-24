@@ -232,12 +232,16 @@ class Frame {
                  *        this frame's full contents.
                  *
                  * Emits the scalar-key block registered with
-                 * @c VariantLookup<Frame> (@c VideoPayloadCount,
-                 * @c AudioPayloadCount, @c HasBenchmark), the frame's
-                 * metadata via @ref Metadata::dump, the
-                 * @ref configUpdate delta when non-empty, and then
-                 * a subdump of each payload in @ref payloadList
-                 * indented by two spaces.
+                 * @c VariantLookup<Frame> (@c VideoCount,
+                 * @c AudioCount, @c HasBenchmark, @c PayloadCount,
+                 * @c VideoFormat), the frame's metadata via
+                 * @ref Metadata::dump, the @ref configUpdate delta
+                 * when non-empty, and then a subdump of each payload
+                 * in @ref payloadList indented by two spaces.  Each
+                 * payload section is headed with the kind name and
+                 * per-kind index (@c "Video[0]:", @c "Audio[0]:",
+                 * @c "Subtitle[0]:", …) and its body is the
+                 * concrete leaf's full @ref VariantLookup dump.
                  *
                  * No leading @c "Frame:" header is emitted — callers
                  * that need one (e.g. @c pmdf-inspect printing a

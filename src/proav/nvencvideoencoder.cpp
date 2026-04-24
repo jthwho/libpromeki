@@ -16,6 +16,7 @@
 #include <promeki/pixelformat.h>
 #include <promeki/buffer.h>
 #include <promeki/cuda.h>
+#include <promeki/duration.h>
 #include <promeki/framerate.h>
 #include <promeki/logger.h>
 #include <promeki/enums.h>
@@ -148,6 +149,22 @@ GUID toNvencPreset(const Enum &p) {
         if(p == VideoEncoderPreset::HighQuality)     return NV_ENC_PRESET_P6_GUID;
         if(p == VideoEncoderPreset::Lossless)        return NV_ENC_PRESET_P2_GUID;
         return NV_ENC_PRESET_P4_GUID;
+}
+
+FrameType toFrameType(NV_ENC_PIC_TYPE t) {
+        switch(t) {
+                case NV_ENC_PIC_TYPE_P:             return FrameType::P;
+                case NV_ENC_PIC_TYPE_B:             return FrameType::B;
+                case NV_ENC_PIC_TYPE_I:             return FrameType::I;
+                case NV_ENC_PIC_TYPE_IDR:           return FrameType::IDR;
+                case NV_ENC_PIC_TYPE_BI:            return FrameType::B;
+                case NV_ENC_PIC_TYPE_SKIPPED:       return FrameType::P;
+                case NV_ENC_PIC_TYPE_INTRA_REFRESH: return FrameType::I;
+                case NV_ENC_PIC_TYPE_NONREF_P:      return FrameType::P;
+                case NV_ENC_PIC_TYPE_SWITCH:        return FrameType::P;
+                case NV_ENC_PIC_TYPE_UNKNOWN:       return FrameType::Unknown;
+        }
+        return FrameType::Unknown;
 }
 
 NV_ENC_TUNING_INFO toNvencTuning(const Enum &p) {
@@ -361,6 +378,20 @@ NV_ENC_DISPLAY_PIC_STRUCT toNvencDisplayPicStruct(VideoScanMode mode) {
         return NV_ENC_PIC_STRUCT_DISPLAY_FRAME;
 }
 
+// Map NVENC's output NV_ENC_PIC_STRUCT (as reported on
+// NV_ENC_LOCK_BITSTREAM::pictureStruct) back to a promeki VideoScanMode
+// so downstream consumers can read the encoded picture's scan type off
+// the emitted CompressedVideoPayload's metadata.  Note this is a
+// separate enum from NV_ENC_DISPLAY_PIC_STRUCT used at submit time.
+VideoScanMode fromNvencLockedPicStruct(NV_ENC_PIC_STRUCT ps) {
+        switch(ps) {
+                case NV_ENC_PIC_STRUCT_FRAME:            return VideoScanMode::Progressive;
+                case NV_ENC_PIC_STRUCT_FIELD_TOP_BOTTOM: return VideoScanMode::InterlacedEvenFirst;
+                case NV_ENC_PIC_STRUCT_FIELD_BOTTOM_TOP: return VideoScanMode::InterlacedOddFirst;
+        }
+        return VideoScanMode::Unknown;
+}
+
 // Convert a promeki Timecode to NVENC's NV_ENC_TIME_CODE.  NVENC feeds
 // the clockTimestamp[0] set straight through to the picture timing
 // (H.264) / time code (HEVC) SEI payload — see Annex D of ITU-T H.264
@@ -439,6 +470,8 @@ class NvencVideoEncoder::Impl {
                                 readEnum(MediaConfig::VideoRange).value());
                         _cfgScanMode = VideoScanMode(readEnum(
                                 MediaConfig::VideoScanMode).value());
+                        _enableRCStats = cfg.getAs<bool>(
+                                MediaConfig::VideoEncoderStats, false);
                         _needReconfigure = _sessionOpen;
                 }
 
@@ -698,6 +731,20 @@ class NvencVideoEncoder::Impl {
                 MediaConfig    _cfg;
                 bool           _needReconfigure = false;
                 bool           _timecodeSEI     = false;
+                // When true, lockBitstream is called with getRCStats=1
+                // so NVENC aggregates intra/inter block counts and
+                // average motion vectors for the emitted frame.  This
+                // is slightly more expensive on the encoder; keep it
+                // off unless downstream actually consumes those stats.
+                bool           _enableRCStats   = false;
+                // Display-order frame index of the most recent emitted
+                // keyframe.  GOP position for each non-keyframe is
+                // computed as NV_ENC_LOCK_BITSTREAM::frameIdxDisplay
+                // minus this value so it reflects display-order offset
+                // even when B-frames reorder the encode stream.  Reset
+                // to 0 at session teardown so the first keyframe after
+                // restart anchors a fresh GOP.
+                uint32_t       _lastKeyDisplayIdx = 0;
 
                 // Session-level raster scan mode.  @c _cfgScanMode holds
                 // the unresolved value as authored by the caller via
@@ -746,6 +793,14 @@ class NvencVideoEncoder::Impl {
                 uint32_t       _height   = 0;
                 uint64_t       _frameIdx = 0;
                 size_t         _numSlots = 4;
+
+                // FrameRate resolved at session init and used to
+                // stamp each emitted packet's duration.  Captured
+                // here (not re-read from _cfg in lockAndBuildPacket)
+                // so later reconfigure() calls can replace it
+                // atomically alongside the other session-scoped
+                // state.
+                FrameRate      _sessionFrameRate;
 
                 std::vector<Slot> _slots;
                 std::deque<Slot*> _freeSlots;
@@ -1188,6 +1243,7 @@ class NvencVideoEncoder::Impl {
                         init.darHeight       = _height;
                         init.frameRateNum    = fr.numerator();
                         init.frameRateDen    = fr.denominator();
+                        _sessionFrameRate    = fr;
                         init.enablePTD       = 1;
                         init.encodeConfig    = &encCfg;
 
@@ -1373,6 +1429,13 @@ class NvencVideoEncoder::Impl {
                         NV_ENC_LOCK_BITSTREAM lb{};
                         lb.version = NV_ENC_LOCK_BITSTREAM_VER;
                         lb.outputBitstream = slot->out;
+                        // getRCStats enables NVENC's per-block intra /
+                        // inter counting and motion-vector averaging.
+                        // Cheap stats (avg QP, SATD, indices, temporal
+                        // id) come back unconditionally, so only pay
+                        // the extra work when the caller asked for it
+                        // via MediaConfig::VideoEncoderStats.
+                        lb.getRCStats = _enableRCStats ? 1 : 0;
                         NVENCSTATUS st = gNvenc.nvEncLockBitstream(_encoder, &lb);
                         if(st != NV_ENC_SUCCESS) {
                                 setError(Error::LibraryFailure,
@@ -1384,25 +1447,120 @@ class NvencVideoEncoder::Impl {
                         std::memcpy(buf.modify()->data(), lb.bitstreamBufferPtr,
                                     lb.bitstreamSizeInBytes);
                         buf.modify()->setSize(lb.bitstreamSizeInBytes);
+                        const FrameType ft = toFrameType(lb.pictureType);
+                        // Random-access keyframes are only true IDR or
+                        // I pictures — INTRA_REFRESH is intra-coded but
+                        // not a valid random-access point, so it rides
+                        // on the IntraRefresh flag instead.  NONREF_P
+                        // is a regular P that later frames do not
+                        // reference, which maps to the generic
+                        // Discardable flag for droppable-frame transport.
                         const bool isKey = (lb.pictureType == NV_ENC_PIC_TYPE_IDR
                                          || lb.pictureType == NV_ENC_PIC_TYPE_I);
+                        const bool isIntraRefresh =
+                                (lb.pictureType == NV_ENC_PIC_TYPE_INTRA_REFRESH);
+                        const bool isNonRef =
+                                (lb.pictureType == NV_ENC_PIC_TYPE_NONREF_P);
+
+                        // Snapshot the fields we care about before
+                        // unlocking — the lb struct is safe to read
+                        // after unlock, but keep the dependency on
+                        // NVENC's memory explicit by pulling them out
+                        // first.
+                        const uint32_t          frameIdxEncode  = lb.frameIdx;
+                        const uint32_t          frameIdxDisplay = lb.frameIdxDisplay;
+                        const uint32_t          avgQP           = lb.frameAvgQP;
+                        const uint32_t          satd            = lb.frameSatd;
+                        const uint32_t          temporalId      = lb.temporalId;
+                        const NV_ENC_PIC_STRUCT picStruct       = lb.pictureStruct;
+                        const uint32_t          intraBlocks     = lb.intraMBCount;
+                        const uint32_t          interBlocks     = lb.interMBCount;
+                        const int32_t           avgMVX          = lb.averageMVX;
+                        const int32_t           avgMVY          = lb.averageMVY;
 
                         gNvenc.nvEncUnlockBitstream(_encoder, slot->out);
+
+                        // GOP position in display order: on a
+                        // keyframe, anchor this frame as the start of
+                        // a new GOP (position 0); on non-keyframes,
+                        // take the signed offset from the anchor so
+                        // reordered B-frames report their true
+                        // display-order distance, not their encode
+                        // position.  int32_t comparison handles
+                        // frameIdxDisplay wrap safely for session
+                        // lifetimes under ~2^31 frames.
+                        uint32_t gopPosition = 0;
+                        if(isKey) {
+                                _lastKeyDisplayIdx = frameIdxDisplay;
+                        } else {
+                                gopPosition = static_cast<uint32_t>(
+                                        static_cast<int32_t>(frameIdxDisplay) -
+                                        static_cast<int32_t>(_lastKeyDisplayIdx));
+                        }
 
                         BufferView view(buf, 0, lb.bitstreamSizeInBytes);
                         ImageDesc cdesc(Size2Du32(_width, _height), outputPixelFormat());
                         auto pkt = CompressedVideoPayload::Ptr::create(cdesc, view);
                         pkt.modify()->setPts(slot->pts);
                         pkt.modify()->setDts(slot->pts);
-                        if(isKey) pkt.modify()->addFlag(MediaPayload::Keyframe);
+                        pkt.modify()->setFrameType(ft);
+                        pkt.modify()->setFlag(MediaPayload::Keyframe,     isKey);
+                        pkt.modify()->setFlag(MediaPayload::IntraRefresh, isIntraRefresh);
+                        pkt.modify()->setFlag(MediaPayload::Discardable,  isNonRef);
+
                         // Carry per-image metadata across the codec
                         // boundary: things like Timecode and user keys
                         // that don't live in the H.264 / HEVC bitstream
                         // ride along on the payload and get re-applied
                         // by the matching VideoDecoder.
+                        Metadata &pmeta = pkt.modify()->metadata();
                         if(!slot->imageMeta.isEmpty()) {
-                                pkt.modify()->metadata() = slot->imageMeta;
+                                pmeta = slot->imageMeta;
                                 slot->imageMeta = Metadata();
+                        }
+
+                        // Encoder output statistics — stamp the cheap
+                        // family unconditionally, and the RC-stats
+                        // family only when enabled at configure time.
+                        pmeta.set(Metadata::CodecFrameAvgQP,
+                                 static_cast<int32_t>(avgQP));
+                        pmeta.set(Metadata::CodecFrameSatd,
+                                 static_cast<int32_t>(satd));
+                        pmeta.set(Metadata::CodecEncodeOrderIdx,  frameIdxEncode);
+                        pmeta.set(Metadata::CodecDisplayOrderIdx, frameIdxDisplay);
+                        pmeta.set(Metadata::CodecTemporalId,
+                                 static_cast<int32_t>(temporalId));
+                        pmeta.set(Metadata::CodecGopPosition,
+                                 static_cast<int32_t>(gopPosition));
+
+                        // Scan mode observed at the output.  Write
+                        // through as an Enum wrapped around the
+                        // VideoScanMode value so the payload carries
+                        // the same encoding the decoder stamps.
+                        const VideoScanMode picScan = fromNvencLockedPicStruct(picStruct);
+                        pmeta.set(Metadata::VideoScanMode,
+                                 Enum(promeki::VideoScanMode::Type, picScan.value()));
+
+                        // Duration: derive one frame's wall-clock
+                        // duration from the session frame rate when
+                        // valid.  Video payloads have no intrinsic
+                        // rate, so the encoder is responsible for
+                        // stamping it.
+                        if(_sessionFrameRate.isValid()) {
+                                Rational<int> r(
+                                        static_cast<int>(_sessionFrameRate.numerator()),
+                                        static_cast<int>(_sessionFrameRate.denominator()));
+                                pkt.modify()->setDuration(
+                                        Duration::fromSamples(int64_t(1), r));
+                        }
+
+                        if(_enableRCStats) {
+                                pmeta.set(Metadata::CodecIntraBlockCount,
+                                         static_cast<int32_t>(intraBlocks));
+                                pmeta.set(Metadata::CodecInterBlockCount,
+                                         static_cast<int32_t>(interBlocks));
+                                pmeta.set(Metadata::CodecAvgMotionVectorX, avgMVX);
+                                pmeta.set(Metadata::CodecAvgMotionVectorY, avgMVY);
                         }
                         return pkt;
                 }
@@ -1434,6 +1592,7 @@ class NvencVideoEncoder::Impl {
                         }
                         _width = _height = 0;
                         _frameIdx = 0;
+                        _lastKeyDisplayIdx = 0;
                         _eosPending = false;
                 }
 

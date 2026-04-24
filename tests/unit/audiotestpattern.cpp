@@ -8,7 +8,7 @@
 #include <cmath>
 #include <doctest/doctest.h>
 #include <promeki/audiotestpattern.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/audiodesc.h>
 #include <promeki/audiolevel.h>
 #include <promeki/enumlist.h>
@@ -20,7 +20,7 @@ using namespace promeki;
 namespace {
 
 // Helper: peak amplitude of a single channel of an interleaved payload.
-float audioPeakChannel(const UncompressedAudioPayload &audio, int channel) {
+float audioPeakChannel(const PcmAudioPayload &audio, int channel) {
         const float *data = reinterpret_cast<const float *>(audio.plane(0).data());
         if(data == nullptr) return 0.0f;
         const size_t nch = audio.desc().channels();
@@ -36,7 +36,7 @@ float audioPeakChannel(const UncompressedAudioPayload &audio, int channel) {
 
 // Helper: estimate dominant frequency of a channel via zero-crossings.
 // Good enough for the single-tone tests in this file.
-double estimateFrequencyHz(const UncompressedAudioPayload &audio, int channel,
+double estimateFrequencyHz(const PcmAudioPayload &audio, int channel,
                            double sampleRate) {
         const float *data = reinterpret_cast<const float *>(audio.plane(0).data());
         if(data == nullptr) return 0.0;

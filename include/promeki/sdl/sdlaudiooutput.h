@@ -12,7 +12,7 @@
 #include <promeki/clock.h>
 #include <promeki/clockdomain.h>
 #include <promeki/audiodesc.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 
 struct SDL_AudioStream;
 
@@ -107,7 +107,7 @@ class SDLAudioOutput : public ObjectBase {
                  * @param payload The payload's PCM bytes to play.
                  * @return true on success.
                  */
-                bool pushAudio(const UncompressedAudioPayload &payload);
+                bool pushAudio(const PcmAudioPayload &payload);
 
                 /**
                  * @brief Returns the number of bytes currently queued.

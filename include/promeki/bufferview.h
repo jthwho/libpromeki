@@ -87,6 +87,20 @@ class BufferView {
                                 /** @brief Returns the shared backing buffer. */
                                 const Buffer::Ptr &buffer() const;
 
+                                /**
+                                 * @brief Returns the index of the backing
+                                 *        buffer in the parent's deduplicated
+                                 *        buffer table.
+                                 *
+                                 * Two slices that share the same @ref Buffer
+                                 * report the same @ref bufferIndex, so
+                                 * callers can detect buffer sharing without
+                                 * comparing pointers.  Returns the maximum
+                                 * @c size_t value when the entry carries no
+                                 * buffer.
+                                 */
+                                size_t bufferIndex() const;
+
                                 /** @brief Returns the byte offset into the buffer. */
                                 size_t offset() const;
 

@@ -130,8 +130,8 @@ bool evalVariantQuery(const VariantQueryNode *root, const VariantQueryContext &c
  * All the forms accepted by @c VariantLookup<T>::resolve are valid
  * keys.  For @ref Frame:
  *  - Metadata key (behind @c "Meta." prefix): @c "Meta.Title"
- *  - Frame scalar: @c "ImageCount"
- *  - Subscripted image/audio: @c "VideoPayload[0].Width", @c "AudioPayload[0].Meta.Album"
+ *  - Frame scalar: @c "VideoCount"
+ *  - Subscripted video / audio: @c "Video[0].Width", @c "Audio[0].Meta.Album"
  *  - Subscripted scalar: @c "VideoFormat[1]"
  *
  * @par Operators
@@ -143,7 +143,7 @@ bool evalVariantQuery(const VariantQueryNode *root, const VariantQueryContext &c
  *   @c Meta.OutputPixelFormat == "RGBA8_sRGB" work out of the box.
  *   When no spec is declared, @ref Variant "Variant's" own cross-type
  *   conversion still handles common cases (e.g.
- *   @c Image[0].PixelFormat == "RGBA8_sRGB").
+ *   @c Video[0].PixelFormat == "RGBA8_sRGB").
  * - @c < / @c <= / @c > / @c >= — ordering.  Tries numeric (both sides
  *   convertible to @c double), else @ref Timecode (when one side is
  *   a Timecode), else String lexicographic.  Returns false when

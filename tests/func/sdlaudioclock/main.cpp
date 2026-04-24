@@ -34,7 +34,7 @@
 #include <cstring>
 #include <thread>
 
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/buffer.h>
 #include <promeki/bufferview.h>
 #include <promeki/audiodesc.h>
@@ -106,7 +106,7 @@ void feedSilence(SDLAudioOutput *out, std::atomic<bool> *running) {
                 pcm.modify()->setSize(sz);
                 std::memset(pcm.modify()->data(), 0, sz);
                 BufferView view(pcm, 0, sz);
-                auto silence = UncompressedAudioPayload::Ptr::create(
+                auto silence = PcmAudioPayload::Ptr::create(
                         desc, kChunkSamples, view);
                 out->pushAudio(*silence);
                 std::this_thread::sleep_for(

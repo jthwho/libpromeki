@@ -14,7 +14,7 @@
 #include <promeki/error.h>
 #include <promeki/audiolevel.h>
 #include <promeki/audiodesc.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/enumlist.h>
 #include <promeki/enums.h>
 #include <promeki/list.h>
@@ -299,7 +299,7 @@ class AudioTestPattern {
                  *                degrade to silence on those channels.
                  * @return A new payload, or a null Ptr on failure.
                  */
-                SharedPtr<UncompressedAudioPayload, true, UncompressedAudioPayload>
+                SharedPtr<PcmAudioPayload, true, PcmAudioPayload>
                 createPayload(size_t samples, const Timecode &tc) const;
 
                 /**
@@ -308,7 +308,7 @@ class AudioTestPattern {
                  * Equivalent to @c createPayload(samples, Timecode()) —
                  * LTC and AvSync channels degrade to silence.
                  */
-                SharedPtr<UncompressedAudioPayload, true, UncompressedAudioPayload>
+                SharedPtr<PcmAudioPayload, true, PcmAudioPayload>
                 createPayload(size_t samples) const {
                         return createPayload(samples, Timecode());
                 }
@@ -502,7 +502,7 @@ class AudioTestPattern {
                 // channel of the configured pattern into @p out,
                 // advancing all phase and cursor state.  Used by both
                 // @ref create (Audio allocation) and @ref createPayload
-                // (UncompressedAudioPayload allocation).
+                // (PcmAudioPayload allocation).
                 void writePattern(float *out, size_t samples,
                                   const Timecode &tc) const;
                 void buildWhiteNoiseBuffer();

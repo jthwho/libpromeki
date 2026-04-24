@@ -103,7 +103,7 @@ class Lexer {
                         if(isDigit(c) || (c == '-' && isDigit(peek(1)))) return readNumber(startCol);
 
                         // Identifier or keyword ('has', 'true', 'false', plain identifier
-                        // paths like 'Image[0].Meta.Timecode').
+                        // paths like 'Video[0].Meta.Timecode').
                         if(isIdStart(c)) return readIdent(startCol);
 
                         _err = String::sprintf("unexpected character '%c' at col %d", c, startCol);
@@ -132,7 +132,7 @@ class Lexer {
                 static bool isIdBody(char c) {
                         // Identifier path continuation: letters, digits, underscore,
                         // and the subscript / member-access punctuation so
-                        // "Image[0].Meta.Width" is one token.
+                        // "Video[0].Meta.Width" is one token.
                         return isIdStart(c) || (c >= '0' && c <= '9')
                                || c == '.' || c == '[' || c == ']';
                 }

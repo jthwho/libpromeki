@@ -7,9 +7,11 @@
 
 #pragma once
 
+#include <cstddef>
 #include <promeki/namespace.h>
 #include <promeki/mediapayload.h>
 #include <promeki/audiodesc.h>
+#include <promeki/duration.h>
 #include <promeki/list.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -23,7 +25,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @ref AudioDesc that describes the format, sample rate, channel
  * count, and per-stream metadata.  The descriptor is the single
  * source of truth for "what is this audio?"; concrete leaves
- * (@ref UncompressedAudioPayload and @ref CompressedAudioPayload)
+ * (@ref PcmAudioPayload and @ref CompressedAudioPayload)
  * extend this base with whatever per-payload state only makes
  * sense for their side of the compressed / uncompressed split.
  *
@@ -62,18 +64,22 @@ class AudioPayload : public MediaPayload {
                 AudioPayload() = default;
 
                 /**
-                 * @brief Constructs an audio payload with the given descriptor.
-                 *
-                 * Plane list left empty; attach via @ref setData or via
-                 * the two-argument constructor below.
+                 * @brief Constructs an audio payload with the given
+                 *        descriptor and (optional) sample count.
                  */
-                explicit AudioPayload(const AudioDesc &desc) : _desc(desc) { }
+                explicit AudioPayload(const AudioDesc &desc,
+                                      size_t sampleCount = 0) :
+                        _desc(desc), _sampleCount(sampleCount) { }
 
                 /**
-                 * @brief Constructs an audio payload with a descriptor and planes.
+                 * @brief Constructs an audio payload with a descriptor,
+                 *        sample count, and plane list.
                  */
-                AudioPayload(const AudioDesc &desc, const BufferView &data) :
-                        MediaPayload(data), _desc(desc) { }
+                AudioPayload(const AudioDesc &desc,
+                             size_t sampleCount,
+                             const BufferView &data) :
+                        MediaPayload(data), _desc(desc),
+                        _sampleCount(sampleCount) { }
 
                 /** @brief Returns @ref MediaPayloadKind::Audio. */
                 const MediaPayloadKind &kind() const override { return MediaPayloadKind::Audio; }
@@ -87,6 +93,62 @@ class AudioPayload : public MediaPayload {
                 /** @brief Replaces the audio descriptor. */
                 void setDesc(const AudioDesc &d) { _desc = d; }
 
+                /**
+                 * @brief Returns the number of samples per channel
+                 *        carried in this payload.
+                 *
+                 * For PCM, this is literally the number of linear
+                 * samples stored in each plane.  For compressed
+                 * audio, this is the number of decoded samples the
+                 * encoded access unit represents — a property of the
+                 * packet that cannot be recovered from the encoded
+                 * bytes alone and which the producer records here
+                 * (e.g. 960 for a 20 ms Opus packet at 48 kHz, 1024
+                 * for AAC-LC, 1152 for MP3 Layer III).  Every audio
+                 * payload carries this value because every block
+                 * codec of interest emits a well-defined decoded
+                 * sample count per packet.
+                 */
+                size_t sampleCount() const { return _sampleCount; }
+
+                /** @brief Sets the number of samples per channel. */
+                void setSampleCount(size_t n) { _sampleCount = n; }
+
+                /**
+                 * @brief Returns the wall-clock duration spanned by
+                 *        the payload, computed as @c sampleCount /
+                 *        @c desc().sampleRate().
+                 */
+                Duration duration() const override {
+                        return Duration::fromSamples(
+                                static_cast<int64_t>(_sampleCount),
+                                _desc.sampleRate());
+                }
+
+                /**
+                 * @brief Audio payloads always support a duration —
+                 *        always returns @c true.
+                 *
+                 * @ref hasDuration is a type-level predicate that
+                 * answers "is a duration meaningful for this payload
+                 * kind?" rather than "has one been assigned?"  Audio
+                 * payloads carry an intrinsic @c sampleCount /
+                 * @c sampleRate pair from which @ref duration is
+                 * always computable, so the answer is unconditionally
+                 * yes — a zero duration simply reflects a zero
+                 * sample count.
+                 */
+                bool hasDuration() const override { return true; }
+
+                /**
+                 * @brief Forwards to the descriptor's metadata.  @sa
+                 *        @ref MediaPayload::metadata.
+                 */
+                const Metadata &metadata() const override { return _desc.metadata(); }
+
+                /** @copydoc metadata() const */
+                Metadata &metadata() override { return _desc.metadata(); }
+
                 AudioPayload(const AudioPayload &) = default;
                 AudioPayload(AudioPayload &&) = default;
                 AudioPayload &operator=(const AudioPayload &) = default;
@@ -94,6 +156,7 @@ class AudioPayload : public MediaPayload {
 
         private:
                 AudioDesc _desc;
+                size_t    _sampleCount = 0;
 };
 
 PROMEKI_NAMESPACE_END

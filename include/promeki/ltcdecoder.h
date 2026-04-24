@@ -11,7 +11,7 @@
 #include <promeki/namespace.h>
 #include <promeki/timecode.h>
 #include <promeki/list.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/uniqueptr.h>
 #include <vtc/ltc_audio.h>
 
@@ -123,7 +123,7 @@ class LtcDecoder {
                  *                     Defaults to channel 0.
                  * @return List of decoded timecodes found in this chunk.
                  */
-                DecodedList decode(const UncompressedAudioPayload &audio,
+                DecodedList decode(const PcmAudioPayload &audio,
                                    int channelIndex = 0);
 
                 /**

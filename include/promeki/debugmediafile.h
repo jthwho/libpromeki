@@ -107,7 +107,7 @@ class DebugMediaFile : public ObjectBase {
                 struct FrameIndexEntry {
                         int64_t     fileOffset     = 0;  ///< Byte offset of the FRAM chunk header.
                         FrameNumber frameNumber;         ///< Frame index recorded in the chunk.
-                        int64_t     presentationUs = 0;  ///< @ref Metadata::PresentationTime in microseconds, or 0.
+                        int64_t     presentationUs = 0;  ///< Presentation time in microseconds (reserved for future use, currently always 0).
                 };
 
                 /** @brief The file-signature magic (8 bytes). */

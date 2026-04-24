@@ -516,3 +516,190 @@ TEST_CASE("VariantLookup: forEachScalar iterates every scalar") {
         CHECK(seen.contains("KidCount"));
         CHECK(seen.contains("RejectsStrings"));
 }
+
+// ========================================================================
+// Inheritance cascade (inheritsFrom<Base>)
+// ========================================================================
+//
+// Synthetic three-tier hierarchy exercising the Registrar::inheritsFrom
+// cascade:
+//   CascadeBase   — Base scalar/setter + read-only scalar + indexed scalar
+//   CascadeMid    — inherits CascadeBase, adds a Mid scalar that shadows
+//                   nothing, plus a child composition
+//   CascadeDerived— inherits CascadeMid, adds a Derived-only scalar
+//
+// The tests below pin: (a) derived classes resolve keys registered on
+// any ancestor, (b) writes go to the correct tier, (c) a derived
+// class can shadow a base key, (d) introspection merges names across
+// the chain, (e) the segment parse error (IdNotFound vs ParseFailed)
+// is preserved through the cascade.
+
+namespace {
+
+struct CascadeBase {
+        uint32_t  baseValue    = 1;
+        uint32_t  baseRo       = 99;
+        uint32_t  indexedVals[3] = { 10, 20, 30 };
+        virtual ~CascadeBase() = default;
+};
+
+struct CascadeMid : public CascadeBase {
+        uint32_t   midValue   = 2;
+        LookupChild child;
+};
+
+struct CascadeDerived : public CascadeMid {
+        uint32_t derivedValue = 3;
+        uint32_t baseValue    = 4;   // Shadow on the derived.
+};
+
+} // namespace
+
+PROMEKI_LOOKUP_REGISTER(CascadeBase)
+        .scalar("BaseValue",
+                [](const CascadeBase &o) -> std::optional<Variant> {
+                        return Variant(o.baseValue);
+                },
+                [](CascadeBase &o, const Variant &v) -> Error {
+                        Error e;
+                        uint32_t x = v.get<uint32_t>(&e);
+                        if(e.isError()) return Error::ConversionFailed;
+                        o.baseValue = x;
+                        return Error::Ok;
+                })
+        .scalar("BaseRo",
+                [](const CascadeBase &o) -> std::optional<Variant> {
+                        return Variant(o.baseRo);
+                })
+        .indexedScalar("IndexedBase",
+                [](const CascadeBase &o, size_t i) -> std::optional<Variant> {
+                        if(i >= 3) return std::nullopt;
+                        return Variant(o.indexedVals[i]);
+                });
+
+PROMEKI_LOOKUP_REGISTER(CascadeMid)
+        .inheritsFrom<CascadeBase>()
+        .scalar("MidValue",
+                [](const CascadeMid &o) -> std::optional<Variant> {
+                        return Variant(o.midValue);
+                })
+        .child<LookupChild>("Kid",
+                [](const CascadeMid &o) -> const LookupChild * { return &o.child; },
+                [](CascadeMid &o) -> LookupChild * { return &o.child; });
+
+PROMEKI_LOOKUP_REGISTER(CascadeDerived)
+        .inheritsFrom<CascadeMid>()
+        .scalar("DerivedValue",
+                [](const CascadeDerived &o) -> std::optional<Variant> {
+                        return Variant(o.derivedValue);
+                })
+        // Shadow BaseValue — the derived value wins at this tier
+        // because the own-registry check runs before the cascade.
+        .scalar("BaseValue",
+                [](const CascadeDerived &o) -> std::optional<Variant> {
+                        return Variant(o.baseValue);
+                });
+
+TEST_CASE("VariantLookup cascade: derived resolves base scalars") {
+        CascadeDerived d;
+        d.midValue   = 5;
+        d.baseRo     = 77;
+        Error err;
+        auto mid  = VariantLookup<CascadeDerived>::resolve(d, "MidValue", &err);
+        REQUIRE(mid.has_value());
+        CHECK(err.isOk());
+        CHECK(mid->get<uint32_t>() == 5u);
+
+        auto baseRo = VariantLookup<CascadeDerived>::resolve(d, "BaseRo", &err);
+        REQUIRE(baseRo.has_value());
+        CHECK(err.isOk());
+        CHECK(baseRo->get<uint32_t>() == 77u);
+}
+
+TEST_CASE("VariantLookup cascade: derived shadows base scalar") {
+        CascadeDerived d;
+        d.CascadeBase::baseValue = 11;   // base storage
+        d.baseValue              = 22;   // derived storage
+        auto v = VariantLookup<CascadeDerived>::resolve(d, "BaseValue");
+        REQUIRE(v.has_value());
+        CHECK(v->get<uint32_t>() == 22u); // derived wins
+}
+
+TEST_CASE("VariantLookup cascade: base's indexed scalar reachable from derived") {
+        CascadeDerived d;
+        d.indexedVals[1] = 444;
+        auto v = VariantLookup<CascadeDerived>::resolve(d, "IndexedBase[1]");
+        REQUIRE(v.has_value());
+        CHECK(v->get<uint32_t>() == 444u);
+}
+
+TEST_CASE("VariantLookup cascade: shadow handler takes precedence over base setter") {
+        // A shadowed scalar that's read-only on the derived should
+        // fail with ReadOnly rather than silently routing to the
+        // base's setter — the derived class owns the key once it
+        // registers it.
+        CascadeDerived d;
+        Error err;
+        CHECK_FALSE(VariantLookup<CascadeDerived>::assign(d, "BaseValue",
+                                                          Variant(uint32_t(999)), &err));
+        CHECK(err == Error::ReadOnly);
+}
+
+TEST_CASE("VariantLookup cascade: non-shadowed base key assigns through cascade") {
+        // A key registered only on the base must cascade all the way
+        // up when assigned through the derived's lookup.
+        // CascadeBase registers BaseValue with a setter; CascadeMid
+        // shadows nothing, so assigning through CascadeMid goes
+        // directly to the base's setter.
+        CascadeMid m;
+        Error err;
+        CHECK(VariantLookup<CascadeMid>::assign(m, "BaseValue",
+                                                Variant(uint32_t(42)), &err));
+        CHECK(err.isOk());
+        CHECK(m.baseValue == 42u);
+}
+
+TEST_CASE("VariantLookup cascade: unknown key still reports IdNotFound") {
+        CascadeDerived d;
+        Error err;
+        auto v = VariantLookup<CascadeDerived>::resolve(d, "NoSuchKey", &err);
+        CHECK_FALSE(v.has_value());
+        CHECK(err == Error::IdNotFound);
+}
+
+TEST_CASE("VariantLookup cascade: parse-failure short-circuits before cascade") {
+        CascadeDerived d;
+        Error err;
+        auto v = VariantLookup<CascadeDerived>::resolve(d, "Kid[bad].Value", &err);
+        CHECK_FALSE(v.has_value());
+        CHECK(err == Error::ParseFailed);
+}
+
+TEST_CASE("VariantLookup cascade: introspection merges names") {
+        StringList s = VariantLookup<CascadeDerived>::registeredScalars();
+        CHECK(s.contains("DerivedValue"));
+        CHECK(s.contains("MidValue"));
+        CHECK(s.contains("BaseValue"));
+        CHECK(s.contains("BaseRo"));
+
+        StringList ix = VariantLookup<CascadeDerived>::registeredIndexedScalars();
+        CHECK(ix.contains("IndexedBase"));
+
+        StringList kids = VariantLookup<CascadeDerived>::registeredChildren();
+        CHECK(kids.contains("Kid"));
+}
+
+TEST_CASE("VariantLookup cascade: forEachScalar walks the chain deduped") {
+        StringList seen;
+        VariantLookup<CascadeDerived>::forEachScalar([&seen](const String &n) {
+                seen.pushToBack(n);
+        });
+        CHECK(seen.contains("DerivedValue"));
+        CHECK(seen.contains("MidValue"));
+        CHECK(seen.contains("BaseValue"));
+        CHECK(seen.contains("BaseRo"));
+        // Shadow should appear once, not twice.
+        int baseValueCount = 0;
+        for(const String &n : seen) if(n == "BaseValue") ++baseValueCount;
+        CHECK(baseValueCount == 1);
+}

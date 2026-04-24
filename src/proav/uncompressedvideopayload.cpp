@@ -72,9 +72,21 @@ UncompressedVideoPayload::Ptr UncompressedVideoPayload::allocate(
 
 // ============================================================================
 // VariantLookup registration
+//
+// VideoPayload surfaces every @ref ImageDesc field directly as a
+// first-class scalar on the payload — no @c Desc.* composition, no
+// second lookup hop.  In the payload context the descriptor is an
+// implementation detail, so queries like @c Video[0].Width stay flat.
+//
+// @c Meta.* is @b not re-registered here.  @ref MediaPayload's Meta
+// binding lives on the base and resolves through the virtual
+// @ref MediaPayload::metadata, which @ref VideoPayload overrides to
+// return @c desc().metadata() — so the cascade already hands back
+// descriptor metadata on video payloads without a second binding.
 // ============================================================================
 
 PROMEKI_LOOKUP_REGISTER(VideoPayload)
+        .inheritsFrom<MediaPayload>()
         .scalar("Width",
                 [](const VideoPayload &p) -> std::optional<Variant> {
                         return Variant(static_cast<uint32_t>(p.desc().width()));
@@ -111,28 +123,21 @@ PROMEKI_LOOKUP_REGISTER(VideoPayload)
                 [](const VideoPayload &p) -> std::optional<Variant> {
                         return Variant(String(p.desc().videoScanMode().valueName()));
                 })
-        .scalar("PlaneCount",
+        // ImageDesc's "format declares N planes" vs MediaPayload's
+        // "payload carries M buffer slices" are genuinely different —
+        // the former may say 3 for YUV-planar while the latter says 1
+        // for a single-buffer packed read.  Expose the format-side
+        // count under a distinct name so the two don't shadow.
+        .scalar("FormatPlaneCount",
                 [](const VideoPayload &p) -> std::optional<Variant> {
-                        return Variant(static_cast<uint64_t>(p.planeCount()));
-                })
-        .scalar("IsValid",
-                [](const VideoPayload &p) -> std::optional<Variant> {
-                        return Variant(p.isValid());
-                })
-        .scalar("IsCompressed",
-                [](const VideoPayload &p) -> std::optional<Variant> {
-                        return Variant(p.isCompressed());
-                })
-        .scalar("IsExclusive",
-                [](const VideoPayload &p) -> std::optional<Variant> {
-                        return Variant(p.isExclusive());
-                })
-        .database<"Metadata">("Meta",
-                [](const VideoPayload &p) -> const VariantDatabase<"Metadata"> * {
-                        return &p.desc().metadata();
-                },
-                [](VideoPayload &p) -> VariantDatabase<"Metadata"> * {
-                        return &p.desc().metadata();
+                        return Variant(static_cast<uint64_t>(p.desc().planeCount()));
                 });
+
+// No concrete-leaf fields to add on top of VideoPayload — the leaf
+// exists purely to anchor the @c variantLookupResolve dispatch on the
+// uncompressed side.  inheritsFrom<VideoPayload>() gives it the
+// complete set of inherited keys.
+PROMEKI_LOOKUP_REGISTER(UncompressedVideoPayload)
+        .inheritsFrom<VideoPayload>();
 
 PROMEKI_NAMESPACE_END

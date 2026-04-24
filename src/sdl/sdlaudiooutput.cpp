@@ -9,7 +9,7 @@
 #include <promeki/sdl/sdlaudioclock.h>
 #include <promeki/string.h>
 #include <promeki/logger.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 
 #include <SDL3/SDL.h>
 
@@ -40,7 +40,7 @@ bool SDLAudioOutput::open() {
         if(_open) return true;
 
         // We always push float32 to SDL — the
-        // UncompressedAudioPayload::convert() path handles conversion
+        // PcmAudioPayload::convert() path handles conversion
         // from any promeki format to native float.
         SDL_AudioSpec spec = {};
         spec.format = SDL_AUDIO_F32;
@@ -92,15 +92,15 @@ void SDLAudioOutput::close() {
         _totalBytesPushed = 0;
 }
 
-bool SDLAudioOutput::pushAudio(const UncompressedAudioPayload &payload) {
+bool SDLAudioOutput::pushAudio(const PcmAudioPayload &payload) {
         if(!_open || _stream == nullptr) return false;
         if(!payload.isValid()) return false;
 
         // Convert to native float if needed.  The conversion uses the
         // payload's own convert entry; on the fast path (already
         // native float) we just keep a view of the original.
-        UncompressedAudioPayload::Ptr converted;
-        const UncompressedAudioPayload *src = &payload;
+        PcmAudioPayload::Ptr converted;
+        const PcmAudioPayload *src = &payload;
         if(payload.desc().format().id() != AudioFormat::NativeFloat) {
                 converted = payload.convert(AudioFormat(AudioFormat::NativeFloat));
                 if(!converted.isValid()) {

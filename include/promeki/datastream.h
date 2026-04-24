@@ -38,6 +38,7 @@ class EUI64;
 class FrameNumber;
 class FrameCount;
 class MediaDuration;
+class Duration;
 // Forward-declared Variant-alternative types used only as `const T &` /
 // `T &` parameters on DataStream's operator overloads.  Full definitions
 // are included in datastream.cpp (via variant.h), so declarations here
@@ -59,6 +60,10 @@ class Enum;
 class EnumList;
 class StringList;
 class Url;
+class VideoCodec;
+class AudioCodec;
+class SocketAddress;
+class SdpSession;
 
 /**
  * @brief Binary stream for structured, portable serialization.
@@ -198,9 +203,10 @@ class DataStream {
                 /**
                  * @brief Type identifiers written before each value.
                  *
-                 * Every operator<< writes a one-byte TypeId before the
-                 * payload. Every operator>> reads and validates it. A
-                 * mismatch sets status to ReadCorruptData.
+                 * Every operator<< writes a two-byte TypeId before the
+                 * payload, honouring the stream's byte order.  Every
+                 * operator>> reads and validates it.  A mismatch sets
+                 * status to ReadCorruptData.
                  *
                  * Raw byte methods (readRawData, writeRawData, skipRawData)
                  * do NOT write or expect type tags — they are unframed.
@@ -209,8 +215,18 @@ class DataStream {
                  * writing a `Variant` holding a `UUID` emits the same bytes
                  * as writing a direct `UUID`. This lets readers switch between
                  * direct and Variant forms without coordinating wire layouts.
+                 *
+                 * @par Tag namespace
+                 * The 16-bit tag space is partitioned so library types and
+                 * user-defined extensions never collide:
+                 *  - @c 0x0000 – @c 0x3FFF — reserved for built-in library
+                 *    types (values assigned by this enum).
+                 *  - @c 0x4000 – @c 0xFFFF — open for user / application
+                 *    extension tags.  Users should pick values at the top
+                 *    end to stay clear of any future library growth.
+                 * @see @c UserTypeIdBegin / @c UserTypeIdEnd below.
                  */
-                enum TypeId : uint8_t {
+                enum TypeId : uint16_t {
                         // Primitives ---------------------------------------------
                         TypeInt8        = 0x01, ///< @brief int8_t
                         TypeUInt8       = 0x02, ///< @brief uint8_t
@@ -283,11 +299,36 @@ class DataStream {
                         TypeMediaDuration       = 0x45, ///< @brief MediaDuration (length-prefixed string round-trip)
                         TypeUrl                 = 0x46, ///< @brief Url (length-prefixed string round-trip)
                         TypeAudioFormat         = 0x47, ///< @brief AudioFormat (length-prefixed name)
-                        TypeMediaPayload        = 0x48  ///< @brief MediaPayload (FourCC + common state + subclass-serialised tail)
+                        TypeMediaPayload        = 0x48, ///< @brief MediaPayload (FourCC + common state + subclass-serialised tail)
+                        TypeDuration            = 0x49, ///< @brief Duration (int64 nanoseconds)
+                        TypeSocketAddress       = 0x4A, ///< @brief SocketAddress (length-prefixed string round-trip)
+                        TypeSdpSession          = 0x4B, ///< @brief SdpSession (length-prefixed string round-trip, RFC 4566)
+                        TypeVideoCodec          = 0x4C, ///< @brief VideoCodec (length-prefixed "Codec[:Backend]" round-trip)
+                        TypeAudioCodec          = 0x4D  ///< @brief AudioCodec (length-prefixed "Codec[:Backend]" round-trip)
                 };
 
-                /** @brief Current wire format version. */
-                static constexpr uint16_t CurrentVersion = 1;
+                /**
+                 * @brief First tag value available for user / application
+                 *        extension types.
+                 *
+                 * The library reserves @c 0x0000 – @c 0x3FFF for its own
+                 * use.  Anything at or above @c UserTypeIdBegin belongs
+                 * to the application.  Pick values at the top end
+                 * (approaching @c UserTypeIdEnd) to stay clear of
+                 * potential library growth.
+                 */
+                static constexpr uint16_t UserTypeIdBegin = 0x4000;
+
+                /** @brief Largest legal user tag value (inclusive). */
+                static constexpr uint16_t UserTypeIdEnd = 0xFFFF;
+
+                /**
+                 * @brief Current wire format version.
+                 *
+                 * Version 2 widened the @ref TypeId tag from 8 to 16
+                 * bits.  Older @c v1 streams are not forward-compatible.
+                 */
+                static constexpr uint16_t CurrentVersion = 2;
 
                 /** @brief Total size of the stream header in bytes. */
                 static constexpr size_t HeaderSize = 16;
@@ -496,6 +537,8 @@ class DataStream {
                 DataStream &operator<<(const FrameCount &val);
                 /** @brief Writes a MediaDuration as a length-prefixed string. */
                 DataStream &operator<<(const MediaDuration &val);
+                /** @brief Writes a Duration as a tagged int64 nanoseconds count. */
+                DataStream &operator<<(const Duration &val);
                 /** @brief Writes a MacAddress as a length-prefixed string. */
                 DataStream &operator<<(const MacAddress &val);
                 /** @brief Writes an EUI64 as a length-prefixed string. */
@@ -504,6 +547,14 @@ class DataStream {
                 DataStream &operator<<(const StringList &val);
                 /** @brief Writes a Url as a length-prefixed string (toString form). */
                 DataStream &operator<<(const Url &val);
+                /** @brief Writes a VideoCodec as a length-prefixed "Codec[:Backend]" string. */
+                DataStream &operator<<(const VideoCodec &val);
+                /** @brief Writes an AudioCodec as a length-prefixed "Codec[:Backend]" string. */
+                DataStream &operator<<(const AudioCodec &val);
+                /** @brief Writes a SocketAddress as a tagged "host:port" string. */
+                DataStream &operator<<(const SocketAddress &val);
+                /** @brief Writes an SdpSession as a tagged RFC 4566 SDP string. */
+                DataStream &operator<<(const SdpSession &val);
 
                 // ============================================================
                 // Read operators — primitives
@@ -582,12 +633,24 @@ class DataStream {
                 DataStream &operator>>(FrameCount &val);
                 /** @brief Reads a MediaDuration from a length-prefixed string. */
                 DataStream &operator>>(MediaDuration &val);
+                /** @brief Reads a Duration from a tagged int64 nanoseconds count. */
+                DataStream &operator>>(Duration &val);
                 /** @brief Reads a MacAddress from a length-prefixed string. */
                 DataStream &operator>>(MacAddress &val);
                 /** @brief Reads an EUI64 from a length-prefixed string. */
                 DataStream &operator>>(EUI64 &val);
                 /** @brief Reads a StringList from tagged count + length-prefixed elements. */
                 DataStream &operator>>(StringList &val);
+                /** @brief Reads a Url from a tagged length-prefixed string. */
+                DataStream &operator>>(Url &val);
+                /** @brief Reads a VideoCodec from a tagged "Codec[:Backend]" string. */
+                DataStream &operator>>(VideoCodec &val);
+                /** @brief Reads an AudioCodec from a tagged "Codec[:Backend]" string. */
+                DataStream &operator>>(AudioCodec &val);
+                /** @brief Reads a SocketAddress from a tagged "host:port" string. */
+                DataStream &operator>>(SocketAddress &val);
+                /** @brief Reads an SdpSession from a tagged RFC 4566 SDP string. */
+                DataStream &operator>>(SdpSession &val);
 
                 // ============================================================
                 // Result<T>-returning read API
@@ -688,13 +751,13 @@ class DataStream {
                 void readHeader();
 
                 /**
-                 * @brief Reads a type tag byte without validation.
+                 * @brief Reads a 16-bit type tag without validation.
                  *
                  * Used by Variant reads and peek-style dispatch. Sets status
-                 * to ReadPastEnd if the byte cannot be read.
-                 * @return The tag byte, or 0 on failure.
+                 * to ReadPastEnd if the bytes cannot be read.
+                 * @return The tag value, or 0 on failure.
                  */
-                uint8_t readAnyTag();
+                uint16_t readAnyTag();
 
                 /**
                  * @brief Reads a Variant payload for the given TypeId tag.

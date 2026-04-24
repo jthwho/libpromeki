@@ -1134,7 +1134,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/uncompressedvideopayload.h
         include/promeki/compressedvideopayload.h
         include/promeki/audiopayload.h
-        include/promeki/uncompressedaudiopayload.h
+        include/promeki/pcmaudiopayload.h
         include/promeki/compressedaudiopayload.h
         include/promeki/mediaiotask.h
         include/promeki/nvencvideoencoder.h
@@ -1200,7 +1200,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/pipelinestats.cpp
         src/proav/mediapayload.cpp
         src/proav/uncompressedvideopayload.cpp
-        src/proav/uncompressedaudiopayload.cpp
+        src/proav/pcmaudiopayload.cpp
         src/proav/mediaiotask.cpp
         src/proav/mediaiotask_csc.cpp
         src/proav/mediaiotask_src.cpp

@@ -15,7 +15,7 @@
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/compressedvideopayload.h>
 #include <promeki/audiopayload.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/imagedesc.h>
 #include <promeki/audiodesc.h>
 #include <promeki/mediadesc.h>
@@ -1287,14 +1287,13 @@ void MediaIOTask_Rtp::emitVideoFrame() {
 
         // Stamp the payload with RTP and capture metadata before
         // handing it to the Frame.  CaptureTime is when the library
-        // saw the first packet of this frame (rxFrameStartTime);
-        // MediaTimeStamp uses the same value.
+        // saw the first packet of this frame (rxFrameStartTime); the
+        // payload's native pts/dts are set from the same value below.
         MediaTimeStamp capMts(_video.rxFrameStartTime, _video.clockDomain);
         ImageDesc idesc = _video.readerImageDesc;
         {
                 Metadata &m = idesc.metadata();
                 m.set(Metadata::CaptureTime, capMts);
-                m.set(Metadata::MediaTimeStamp, capMts);
                 m.set(Metadata::RtpTimestamp, frameRtpTimestamp);
                 m.set(Metadata::RtpPacketCount, framePacketCount);
                 if(!_video.ptpGrandmaster.isNull()) {
@@ -1357,20 +1356,17 @@ void MediaIOTask_Rtp::emitVideoFrame() {
                                 size_t usedBytes = _audio.readerAudioDesc.bufferSize(got);
                                 pcm.modify()->setSize(usedBytes);
                                 BufferView view(pcm, 0, usedBytes);
-                                auto audioPayload = UncompressedAudioPayload::Ptr::create(
+                                auto audioPayload = PcmAudioPayload::Ptr::create(
                                         _audio.readerAudioDesc, got,
                                         view);
                                 ClockDomain audioCd = _audio.clockDomain.isValid()
                                         ? _audio.clockDomain
                                         : _video.clockDomain;
+                                MediaTimeStamp audMts(_video.rxFrameStartTime,
+                                                audioCd);
                                 audioPayload.modify()->desc().metadata().set(
-                                        Metadata::CaptureTime,
-                                        MediaTimeStamp(_video.rxFrameStartTime,
-                                                audioCd));
-                                audioPayload.modify()->desc().metadata().set(
-                                        Metadata::MediaTimeStamp,
-                                        MediaTimeStamp(_video.rxFrameStartTime,
-                                                audioCd));
+                                        Metadata::CaptureTime, audMts);
+                                audioPayload.modify()->setPts(audMts);
                                 f->addPayload(audioPayload);
                         }
                 }
@@ -1454,15 +1450,14 @@ void MediaIOTask_Rtp::onAudioPacket(const RtpPacket &pkt) {
                         size_t usedBytes = _audio.readerAudioDesc.bufferSize(got);
                         pcm.modify()->setSize(usedBytes);
                         BufferView view(pcm, 0, usedBytes);
-                        auto audioPayload = UncompressedAudioPayload::Ptr::create(
+                        auto audioPayload = PcmAudioPayload::Ptr::create(
                                 _audio.readerAudioDesc, got,
                                 view);
                         MediaTimeStamp capMts(TimeStamp::now(),
                                 _audio.clockDomain);
                         audioPayload.modify()->desc().metadata().set(
                                 Metadata::CaptureTime, capMts);
-                        audioPayload.modify()->desc().metadata().set(
-                                Metadata::MediaTimeStamp, capMts);
+                        audioPayload.modify()->setPts(capMts);
                         _audio.framesReceived++;
                         Frame::Ptr frame = Frame::Ptr::create();
                         frame.modify()->addPayload(audioPayload);
@@ -2067,7 +2062,7 @@ Error MediaIOTask_Rtp::sendVideo(const VideoPayload &payload, const FrameNumber 
         return Error::Ok;
 }
 
-Error MediaIOTask_Rtp::sendAudio(const UncompressedAudioPayload &payload) {
+Error MediaIOTask_Rtp::sendAudio(const PcmAudioPayload &payload) {
         if(!_audio.active) return Error::Ok;
         if(_audio.session == nullptr || _audio.payload == nullptr) return Error::Invalid;
         if(payload.sampleCount() == 0) return Error::Ok;
@@ -2224,7 +2219,7 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandWrite &cmd) {
         auto auds = frame.audioPayloads();
         if(_audio.active && _audio.txThread != nullptr &&
            !auds.isEmpty() && auds[0].isValid()) {
-                auto uap = sharedPointerCast<UncompressedAudioPayload>(auds[0]);
+                auto uap = sharedPointerCast<PcmAudioPayload>(auds[0]);
                 if(uap.isValid()) {
                         _audio.txThread->_workQueue.push(TxWorkItem{
                                 [this, uap]() {

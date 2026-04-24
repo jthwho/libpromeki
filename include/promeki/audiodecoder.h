@@ -15,7 +15,7 @@
 #include <promeki/result.h>
 #include <promeki/audiocodec.h>
 #include <promeki/backendweight.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/compressedaudiopayload.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -28,7 +28,7 @@ class MediaConfig;
  *
  * Inverse of @ref AudioEncoder: encoded @ref CompressedAudioPayload
  * access units pushed via @ref submitPacket feed an internal pipeline
- * and @ref UncompressedAudioPayload frames come back out of
+ * and @ref PcmAudioPayload frames come back out of
  * @ref receiveFrame.  The decoder
  * may buffer several packets before producing its first frame (codec
  * start-up state, silence priming, reordering where present).
@@ -99,10 +99,10 @@ class AudioDecoder {
 
                 /**
                  * @brief Dequeues one decoded PCM payload.
-                 * @return A valid @ref UncompressedAudioPayload::Ptr, or
+                 * @return A valid @ref PcmAudioPayload::Ptr, or
                  *         a null Ptr when no frame is ready.
                  */
-                virtual UncompressedAudioPayload::Ptr receiveAudioPayload() = 0;
+                virtual PcmAudioPayload::Ptr receiveAudioPayload() = 0;
 
                 /** @brief Signals end-of-stream; remaining frames can be drained with @ref receiveAudioPayload. */
                 virtual Error flush() = 0;

@@ -1,5 +1,5 @@
 /**
- * @file      uncompressedaudiopayload.h
+ * @file      pcmaudiopayload.h
  * @copyright Howard Logic. All rights reserved.
  *
  * See LICENSE file in the project root folder.
@@ -11,11 +11,12 @@
 #include <promeki/namespace.h>
 #include <promeki/uniqueptr.h>
 #include <promeki/audiopayload.h>
+#include <promeki/variantlookup.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief Uncompressed audio payload — PCM samples in the format
+ * @brief PCM audio payload — linear PCM samples in the format
  *        described by the base @ref AudioPayload's @ref AudioDesc.
  * @ingroup proav
  *
@@ -24,13 +25,13 @@ PROMEKI_NAMESPACE_BEGIN
  * layout applies is determined by the descriptor's
  * @ref AudioFormat (@c AudioFormat::isPlanar).
  *
- * Each uncompressed audio payload represents a contiguous run of
+ * Each PCM audio payload represents a contiguous run of
  * @ref sampleCount samples per channel.  Every PCM payload is
  * trivially keyframe-able (decoding any sample does not require
  * any earlier sample), so @ref isKeyframe is overridden to always
  * return @c true.
  *
- * UncompressedAudioPayload is intentionally not @c final.
+ * PcmAudioPayload is intentionally not @c final.
  *
  * @par Example — allocating from a descriptor
  * @code
@@ -38,48 +39,50 @@ PROMEKI_NAMESPACE_BEGIN
  * size_t samples = 1024;
  * auto buf = Buffer::Ptr::create(desc.bufferSize(samples));
  * BufferView plane0(buf, 0, buf->size());
- * auto payload = UncompressedAudioPayload::Ptr::create(
+ * auto payload = PcmAudioPayload::Ptr::create(
  *         desc, samples, plane0);
  * @endcode
  */
-class UncompressedAudioPayload : public AudioPayload {
+class PcmAudioPayload : public AudioPayload {
         public:
-                virtual UncompressedAudioPayload *_promeki_clone() const override {
-                        return new UncompressedAudioPayload(*this);
+                PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH(PcmAudioPayload)
+
+                virtual PcmAudioPayload *_promeki_clone() const override {
+                        return new PcmAudioPayload(*this);
                 }
 
-                /** @brief Shared-pointer alias for UncompressedAudioPayload ownership. */
-                using Ptr = SharedPtr<UncompressedAudioPayload, /*CopyOnWrite=*/true, UncompressedAudioPayload>;
+                /** @brief Shared-pointer alias for PcmAudioPayload ownership. */
+                using Ptr = SharedPtr<PcmAudioPayload, /*CopyOnWrite=*/true, PcmAudioPayload>;
 
-                /** @brief List of shared pointers to UncompressedAudioPayload instances. */
+                /** @brief List of shared pointers to PcmAudioPayload instances. */
                 using PtrList = promeki::List<Ptr>;
 
-                /** @brief Unique-ownership pointer to an UncompressedAudioPayload. */
-                using UPtr = UniquePtr<UncompressedAudioPayload>;
+                /** @brief Unique-ownership pointer to a PcmAudioPayload. */
+                using UPtr = UniquePtr<PcmAudioPayload>;
 
-                /** @brief Constructs an empty uncompressed audio payload. */
-                UncompressedAudioPayload() = default;
-
-                /**
-                 * @brief Constructs an uncompressed audio payload with the
-                 *        given descriptor and (optional) sample count.
-                 */
-                explicit UncompressedAudioPayload(const AudioDesc &desc,
-                                                  size_t sampleCount = 0) :
-                        AudioPayload(desc), _sampleCount(sampleCount) { }
+                /** @brief Constructs an empty PCM audio payload. */
+                PcmAudioPayload() = default;
 
                 /**
-                 * @brief Constructs an uncompressed audio payload with a
-                 *        descriptor, sample count, and plane list.
+                 * @brief Constructs a PCM audio payload with the given
+                 *        descriptor and (optional) sample count.
                  */
-                UncompressedAudioPayload(const AudioDesc &desc,
-                                         size_t sampleCount,
-                                         const BufferView &data) :
-                        AudioPayload(desc, data), _sampleCount(sampleCount) { }
+                explicit PcmAudioPayload(const AudioDesc &desc,
+                                         size_t sampleCount = 0) :
+                        AudioPayload(desc, sampleCount) { }
+
+                /**
+                 * @brief Constructs a PCM audio payload with a descriptor,
+                 *        sample count, and plane list.
+                 */
+                PcmAudioPayload(const AudioDesc &desc,
+                                size_t sampleCount,
+                                const BufferView &data) :
+                        AudioPayload(desc, sampleCount, data) { }
 
                 /**
                  * @brief Always returns @c false — this class only models
-                 *        uncompressed PCM payloads.
+                 *        linear PCM payloads.
                  */
                 bool isCompressed() const override { return false; }
 
@@ -96,33 +99,24 @@ class UncompressedAudioPayload : public AudioPayload {
                 bool isSafeCutPoint() const override { return true; }
 
                 /**
-                 * @brief Returns the number of samples per channel carried
-                 *        in this payload.
-                 */
-                size_t sampleCount() const { return _sampleCount; }
-
-                /** @brief Sets the number of samples per channel. */
-                void setSampleCount(size_t n) { _sampleCount = n; }
-
-                /**
                  * @brief Converts this payload to a different PCM audio
                  *        format.
                  *
                  * Thin payload-native wrapper for audio-format conversion
                  * — runs the per-format PCM converter in place on this
                  * payload's samples and returns the result as a fresh
-                 * @ref UncompressedAudioPayload.  Target format must be
+                 * @ref PcmAudioPayload.  Target format must be
                  * a PCM format; compressed targets go through an
                  * @ref AudioEncoder session.
                  *
                  * @param dstFormat The target PCM @ref AudioFormat.
-                 * @return A fresh uncompressed payload in @p dstFormat,
-                 *         or a null Ptr on failure.
+                 * @return A fresh PCM payload in @p dstFormat, or a null
+                 *         Ptr on failure.
                  */
                 Ptr convert(const AudioFormat &dstFormat) const;
 
                 /** @brief Stable FourCC for DataStream serialisation. */
-                static constexpr FourCC kSubclassFourCC{'U','A','d','p'};
+                static constexpr FourCC kSubclassFourCC{'P','A','d','p'};
 
                 uint32_t subclassFourCC() const override {
                         return kSubclassFourCC.value();
@@ -134,13 +128,10 @@ class UncompressedAudioPayload : public AudioPayload {
                 /** @copydoc MediaPayload::deserialisePayload */
                 void deserialisePayload(DataStream &s) override;
 
-                UncompressedAudioPayload(const UncompressedAudioPayload &) = default;
-                UncompressedAudioPayload(UncompressedAudioPayload &&) = default;
-                UncompressedAudioPayload &operator=(const UncompressedAudioPayload &) = default;
-                UncompressedAudioPayload &operator=(UncompressedAudioPayload &&) = default;
-
-        private:
-                size_t _sampleCount = 0;
+                PcmAudioPayload(const PcmAudioPayload &) = default;
+                PcmAudioPayload(PcmAudioPayload &&) = default;
+                PcmAudioPayload &operator=(const PcmAudioPayload &) = default;
+                PcmAudioPayload &operator=(PcmAudioPayload &&) = default;
 };
 
 PROMEKI_NAMESPACE_END

@@ -1173,7 +1173,7 @@ Error MediaIOTask_ImageFile::readSequence(MediaIOCommandRead &cmd) {
         if(_sidecarAudioOpen) {
                 size_t spf = _sidecarFrameRate.samplesPerFrame(
                         _sidecarSampleRate, _seqIndex.value());
-                UncompressedAudioPayload::Ptr sidecarPayload;
+                PcmAudioPayload::Ptr sidecarPayload;
                 Error audioErr = _sidecarAudio.read(sidecarPayload, spf);
                 if(audioErr.isError()) {
                         promekiErr("MediaIOTask_ImageFile: sidecar audio read failed: %s",
@@ -1268,9 +1268,9 @@ Error MediaIOTask_ImageFile::writeSequence(MediaIOCommandWrite &cmd) {
         // Write audio to the sidecar file.
         if(_sidecarAudioOpen) {
                 auto auds = cmd.frame->audioPayloads();
-                const UncompressedAudioPayload *uap = nullptr;
+                const PcmAudioPayload *uap = nullptr;
                 if(!auds.isEmpty() && auds[0].isValid()) {
-                        uap = auds[0]->as<UncompressedAudioPayload>();
+                        uap = auds[0]->as<PcmAudioPayload>();
                 }
                 if(uap != nullptr) {
                         Error audioErr = _sidecarAudio.write(*uap);
@@ -1290,7 +1290,7 @@ Error MediaIOTask_ImageFile::writeSequence(MediaIOCommandWrite &cmd) {
                         std::memset(buf.modify()->data(), 0, bytes);
                         BufferView planes;
                         planes.pushToBack(buf, 0, bytes);
-                        auto silence = UncompressedAudioPayload::Ptr::create(
+                        auto silence = PcmAudioPayload::Ptr::create(
                                 _sidecarAudioDesc, spf, planes);
                         Error audioErr = _sidecarAudio.write(*silence);
                         if(audioErr.isError()) {

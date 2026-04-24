@@ -26,11 +26,11 @@ PROMEKI_NAMESPACE_BEGIN
  * values; the offset expresses a known fixed delay (e.g. pipeline
  * latency) relative to the domain.
  *
- * Stored per-essence in Image and Audio metadata via
- * Metadata::MediaTimeStamp.  MediaIO guarantees that every essence in
- * every Frame carries a valid MediaTimeStamp — backends that have
- * hardware timestamps set them directly; MediaIO fills in a Synthetic
- * fallback for backends that do not.
+ * Stored per-essence as the native @c pts() / @c dts() of each
+ * @ref MediaPayload.  MediaIO guarantees that every essence in every
+ * Frame carries a valid @c pts — backends that have hardware
+ * timestamps set them directly; MediaIO fills in a Synthetic fallback
+ * for backends that do not.
  *
  * @par String format
  * `"<domain_name> <timestamp_seconds> <+/-offset_ns>"`

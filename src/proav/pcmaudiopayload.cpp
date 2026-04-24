@@ -1,24 +1,24 @@
 /**
- * @file      uncompressedaudiopayload.cpp
+ * @file      pcmaudiopayload.cpp
  * @copyright Howard Logic. All rights reserved.
  *
  * See LICENSE file in the project root folder.
  */
 
 #include <cstring>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/variantlookup.h>
 #include <promeki/variantdatabase.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-UncompressedAudioPayload::Ptr UncompressedAudioPayload::convert(
+PcmAudioPayload::Ptr PcmAudioPayload::convert(
         const AudioFormat &dstFormat) const
 {
         if(!isValid() || !dstFormat.isValid()) return Ptr();
         if(dstFormat.isCompressed()) {
-                promekiErr("UncompressedAudioPayload::convert: target "
+                promekiErr("PcmAudioPayload::convert: target "
                            "audio format '%s' is compressed — use an "
                            "audio encoder instead",
                            dstFormat.name().cstr());
@@ -33,7 +33,7 @@ UncompressedAudioPayload::Ptr UncompressedAudioPayload::convert(
         // kernels right now — planar layouts would need per-channel
         // conversion which the legacy converter also did not provide.
         if(planeCount() != 1) {
-                promekiErr("UncompressedAudioPayload::convert: planar "
+                promekiErr("PcmAudioPayload::convert: planar "
                            "PCM conversion not supported (planeCount=%zu)",
                            planeCount());
                 return Ptr();
@@ -82,9 +82,24 @@ UncompressedAudioPayload::Ptr UncompressedAudioPayload::convert(
 
 // ============================================================================
 // VariantLookup registration
+//
+// AudioPayload surfaces every @ref AudioDesc field directly as a
+// first-class scalar on the payload — no @c Desc.* composition, no
+// second lookup hop.  In the payload context the descriptor is an
+// implementation detail, so queries like @c Audio[0].SampleRate stay
+// flat.  @c SampleCount also lives here because every audio payload
+// (PCM or compressed block codec) carries a per-channel decoded
+// sample count.
+//
+// @c Meta.* is @b not re-registered here.  @ref MediaPayload's Meta
+// binding lives on the base and resolves through the virtual
+// @ref MediaPayload::metadata, which @ref AudioPayload overrides to
+// return @c desc().metadata() — so the cascade already hands back
+// descriptor metadata on audio payloads without a second binding.
 // ============================================================================
 
 PROMEKI_LOOKUP_REGISTER(AudioPayload)
+        .inheritsFrom<MediaPayload>()
         .scalar("SampleRate",
                 [](const AudioPayload &p) -> std::optional<Variant> {
                         return Variant(p.desc().sampleRate());
@@ -97,31 +112,20 @@ PROMEKI_LOOKUP_REGISTER(AudioPayload)
                 [](const AudioPayload &p) -> std::optional<Variant> {
                         return Variant(p.desc().format());
                 })
-        .scalar("Samples",
-                [](const AudioPayload &p) -> std::optional<Variant> {
-                        if(const auto *uap = p.as<UncompressedAudioPayload>()) {
-                                return Variant(static_cast<uint64_t>(uap->sampleCount()));
-                        }
-                        return Variant(static_cast<uint64_t>(0));
-                })
         .scalar("BytesPerSample",
                 [](const AudioPayload &p) -> std::optional<Variant> {
                         return Variant(static_cast<uint64_t>(p.desc().bytesPerSample()));
                 })
-        .scalar("IsValid",
+        .scalar("IsNative",
                 [](const AudioPayload &p) -> std::optional<Variant> {
-                        return Variant(p.isValid());
+                        return Variant(p.desc().isNative());
                 })
-        .scalar("IsCompressed",
+        .scalar("SampleCount",
                 [](const AudioPayload &p) -> std::optional<Variant> {
-                        return Variant(p.isCompressed());
-                })
-        .database<"Metadata">("Meta",
-                [](const AudioPayload &p) -> const VariantDatabase<"Metadata"> * {
-                        return &p.desc().metadata();
-                },
-                [](AudioPayload &p) -> VariantDatabase<"Metadata"> * {
-                        return &p.desc().metadata();
+                        return Variant(static_cast<uint64_t>(p.sampleCount()));
                 });
+
+PROMEKI_LOOKUP_REGISTER(PcmAudioPayload)
+        .inheritsFrom<AudioPayload>();
 
 PROMEKI_NAMESPACE_END

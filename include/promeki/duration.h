@@ -9,8 +9,10 @@
 
 #include <chrono>
 #include <cstdint>
+#include <type_traits>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
+#include <promeki/rational.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -83,6 +85,58 @@ class Duration {
                  */
                 static Duration fromNanoseconds(int64_t ns) {
                         return Duration(std::chrono::nanoseconds(ns));
+                }
+
+                /**
+                 * @brief Computes the wall-clock duration spanned by
+                 *        @p count samples at integer rate @p rate.
+                 *
+                 * Integer overload.  Rate is interpreted as samples
+                 * per second.  A zero rate yields a zero Duration.
+                 */
+                template<typename Int,
+                         std::enable_if_t<std::is_integral_v<Int>, int> = 0>
+                static Duration fromSamples(int64_t count, Int rate) {
+                        if(rate == 0) return Duration();
+                        return fromNanoseconds(count * 1'000'000'000LL /
+                                               static_cast<int64_t>(rate));
+                }
+
+                /**
+                 * @brief Computes the wall-clock duration spanned by
+                 *        @p count samples at floating-point rate @p rate.
+                 *
+                 * Rate is interpreted as samples per second.  A zero or
+                 * non-finite rate yields a zero Duration.
+                 */
+                template<typename Float,
+                         std::enable_if_t<std::is_floating_point_v<Float>, int> = 0>
+                static Duration fromSamples(int64_t count, Float rate) {
+                        if(!(rate > Float(0))) return Duration();
+                        const double ns = static_cast<double>(count) *
+                                          1'000'000'000.0 /
+                                          static_cast<double>(rate);
+                        return fromNanoseconds(static_cast<int64_t>(ns));
+                }
+
+                /**
+                 * @brief Computes the wall-clock duration spanned by
+                 *        @p count samples at rational rate @p rate.
+                 *
+                 * Rate is interpreted as samples per second.  Retains
+                 * full precision of the rational — commonly useful for
+                 * fractional video frame rates (24000/1001, 30000/1001).
+                 * An invalid or zero-numerator rate yields a zero
+                 * Duration.
+                 */
+                template<typename T>
+                static Duration fromSamples(int64_t count, const Rational<T> &rate) {
+                        if(!rate.isValid() || rate.numerator() == 0) {
+                                return Duration();
+                        }
+                        const int64_t num = static_cast<int64_t>(rate.numerator());
+                        const int64_t den = static_cast<int64_t>(rate.denominator());
+                        return fromNanoseconds(count * den * 1'000'000'000LL / num);
                 }
 
                 /** @brief Default constructor. Creates a zero duration. */

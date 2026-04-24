@@ -10,7 +10,7 @@
 #include <promeki/frame.h>
 #include <promeki/videopayload.h>
 #include <promeki/audiopayload.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/mediaiodescription.h>
@@ -171,18 +171,18 @@ Error MediaIOTask_SRC::convertFrame(const Frame::Ptr &input, Frame::Ptr &output)
         }
 
         // Audio processing runs through the payload-native
-        // @ref UncompressedAudioPayload::convert; push the converted
+        // @ref PcmAudioPayload::convert; push the converted
         // payload directly, no legacy bridge round-trip.
         for(const AudioPayload::Ptr &srcAp : input->audioPayloads()) {
                 if(!srcAp.isValid()) continue;
-                const auto *srcUap = srcAp->as<UncompressedAudioPayload>();
+                const auto *srcUap = srcAp->as<PcmAudioPayload>();
                 if(srcUap == nullptr) {
                         promekiErr("MediaIOTask_SRC: compressed audio payload "
                                    "reached SRC — expected uncompressed PCM");
                         return Error::NotSupported;
                 }
 
-                UncompressedAudioPayload::Ptr dstPayload;
+                PcmAudioPayload::Ptr dstPayload;
                 if(_outputAudioDataTypeSet &&
                    srcUap->desc().format().id() != _outputAudioDataType) {
                         dstPayload = srcUap->convert(
@@ -192,7 +192,7 @@ Error MediaIOTask_SRC::convertFrame(const Frame::Ptr &input, Frame::Ptr &output)
                                 return Error::ConversionFailed;
                         }
                 } else {
-                        dstPayload = UncompressedAudioPayload::Ptr::create(*srcUap);
+                        dstPayload = PcmAudioPayload::Ptr::create(*srcUap);
                 }
                 outRaw->addPayload(dstPayload);
         }

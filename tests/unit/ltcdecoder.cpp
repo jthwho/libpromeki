@@ -8,7 +8,7 @@
 #include <doctest/doctest.h>
 #include <promeki/ltcencoder.h>
 #include <promeki/ltcdecoder.h>
-#include <promeki/uncompressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/buffer.h>
 #include <promeki/bufferview.h>
 
@@ -144,7 +144,7 @@ TEST_CASE("LtcDecoder_DecodeAudio_Float32Stereo") {
         out[s * 2 + 1] = 0.0f;
     }
     BufferView stereoView(stereoBuf, 0, stereoBytes);
-    auto stereo = UncompressedAudioPayload::Ptr::create(
+    auto stereo = PcmAudioPayload::Ptr::create(
             stereoDesc, mono.size(), stereoView);
 
     // Format-agnostic decode pulls channel 0 out, converts to int8,
@@ -167,7 +167,7 @@ TEST_CASE("LtcDecoder_DecodeAudio_RejectsMismatchedSampleRate") {
     Buffer::Ptr buf = Buffer::Ptr::create(sz);
     buf.modify()->setSize(sz);
     BufferView view(buf, 0, sz);
-    auto audio = UncompressedAudioPayload::Ptr::create(desc, 1024,
+    auto audio = PcmAudioPayload::Ptr::create(desc, 1024,
             view);
     auto results = dec.decode(*audio, 0);
     CHECK(results.isEmpty());
@@ -180,7 +180,7 @@ TEST_CASE("LtcDecoder_DecodeAudio_RejectsBadChannelIndex") {
     Buffer::Ptr buf = Buffer::Ptr::create(sz);
     buf.modify()->setSize(sz);
     BufferView view(buf, 0, sz);
-    auto audio = UncompressedAudioPayload::Ptr::create(desc, 1024,
+    auto audio = PcmAudioPayload::Ptr::create(desc, 1024,
             view);
     auto results = dec.decode(*audio, 5);   // out-of-range
     CHECK(results.isEmpty());
