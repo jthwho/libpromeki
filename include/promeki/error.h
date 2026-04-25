@@ -100,6 +100,8 @@ class Error {
                         FontUnavailable,         ///< Font could not be loaded or has zero metrics.
                         BrokenPipe,              ///< Peer closed the stream before we could write (EPIPE).
                         ConnectionReset,         ///< Peer reset the connection while we were reading/writing (ECONNRESET).
+                        ConnectionRefused,       ///< Peer refused the connection attempt (ECONNREFUSED).
+                        HostNotFound,            ///< DNS lookup for the requested host failed.
                         ParseFailed,             ///< Text input (expression, URL, etc.) failed to parse.
                         ClockDomainMismatch,     ///< Operation mixed MediaTimeStamps from different ClockDomains.
                         ObjectGone,              ///< Referenced object has been destroyed.

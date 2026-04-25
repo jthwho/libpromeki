@@ -73,6 +73,21 @@ class TcpServer : public ObjectBase {
                 TcpSocket *nextPendingConnection();
 
                 /**
+                 * @brief Drains the next pending connection as a raw fd.
+                 *
+                 * Equivalent to @ref nextPendingConnection except the
+                 * caller takes the bare descriptor and is responsible
+                 * for closing it.  Useful when the caller wants to
+                 * wrap the descriptor in something other than a plain
+                 * @ref TcpSocket — for example an @ref SslSocket
+                 * that needs to drive a TLS handshake on top.
+                 *
+                 * @return The accepted fd, or -1 when no connection
+                 *         is pending or accept() failed.
+                 */
+                int nextPendingDescriptor();
+
+                /**
                  * @brief Returns true if there are pending connections.
                  * @return True if at least one connection is waiting.
                  */
@@ -90,6 +105,31 @@ class TcpServer : public ObjectBase {
                  * @param count The maximum count.
                  */
                 void setMaxPendingConnections(int count) { _maxPending = count; }
+
+                /**
+                 * @brief Returns the raw socket file descriptor, or -1.
+                 *
+                 * Exposed so callers driving accept from an
+                 * @ref EventLoop can register the listening fd with
+                 * @ref EventLoop::addIoSource and call
+                 * @ref nextPendingConnection on read-readiness.
+                 *
+                 * @return The fd, or -1 when not listening.
+                 */
+                int socketDescriptor() const { return _fd; }
+
+                /**
+                 * @brief Sets the listening socket to (non-)blocking mode.
+                 *
+                 * Required for callers that drain the accept queue
+                 * from inside an @ref EventLoop::addIoSource callback
+                 * — otherwise @ref nextPendingConnection blocks
+                 * forever once the queue is drained.
+                 *
+                 * @param enable True for non-blocking, false for blocking.
+                 * @return @ref Error::Ok on success, or a system error.
+                 */
+                Error setNonBlocking(bool enable);
 
                 /** @brief Emitted when a new connection is available. @signal */
                 PROMEKI_SIGNAL(newConnection);

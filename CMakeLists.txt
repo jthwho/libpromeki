@@ -79,6 +79,8 @@ option(PROMEKI_USE_CCACHE       "Use ccache as a compiler launcher when availabl
 # src/core/buildinfo.cpp.in (buildFeatureString) and
 # include/promeki/config.h.in so the flag appears in build-info output.
 option(PROMEKI_ENABLE_NETWORK  "Include networking support"             ON)
+option(PROMEKI_ENABLE_HTTP     "Include HTTP server / client (vendored llhttp)" ON)
+option(PROMEKI_ENABLE_TLS      "Include TLS support (vendored mbedTLS)"  ON)
 option(PROMEKI_ENABLE_PROAV    "Include pro A/V support"                ON)
 option(PROMEKI_ENABLE_MUSIC    "Include music support"                  ON)
 option(PROMEKI_ENABLE_PNG      "Include PNG image I/O"                  ON)
@@ -186,6 +188,8 @@ option(PROMEKI_USE_SYSTEM_NLOHMANN_JSON "Use system nlohmann_json instead of ven
 option(PROMEKI_USE_SYSTEM_VTC           "Use system libvtc instead of vendored"         OFF)
 option(PROMEKI_USE_SYSTEM_HIGHWAY      "Use system Highway instead of vendored"        OFF)
 option(PROMEKI_USE_SYSTEM_CIRF          "Use system cirf instead of vendored"           OFF)
+option(PROMEKI_USE_SYSTEM_LLHTTP        "Use system llhttp instead of vendored"         OFF)
+option(PROMEKI_USE_SYSTEM_MBEDTLS       "Use system mbedTLS instead of vendored"        OFF)
 
 # Build statistics wrapper #####################################################
 # When PROMEKI_BUILD_STATS is ON and the platform has GNU `/usr/bin/time -v`,
@@ -270,6 +274,12 @@ if(PROMEKI_ENABLE_AUDIO AND NOT PROMEKI_ENABLE_PROAV)
 endif()
 if(PROMEKI_ENABLE_OPUS AND NOT PROMEKI_ENABLE_PROAV)
     message(FATAL_ERROR "PROMEKI_ENABLE_OPUS requires PROMEKI_ENABLE_PROAV")
+endif()
+if(PROMEKI_ENABLE_HTTP AND NOT PROMEKI_ENABLE_NETWORK)
+    message(FATAL_ERROR "PROMEKI_ENABLE_HTTP requires PROMEKI_ENABLE_NETWORK")
+endif()
+if(PROMEKI_ENABLE_TLS AND NOT PROMEKI_ENABLE_NETWORK)
+    message(FATAL_ERROR "PROMEKI_ENABLE_TLS requires PROMEKI_ENABLE_NETWORK")
 endif()
 if(PROMEKI_ENABLE_SRC AND NOT PROMEKI_ENABLE_PROAV)
     message(FATAL_ERROR "PROMEKI_ENABLE_SRC requires PROMEKI_ENABLE_PROAV")
@@ -502,6 +512,90 @@ else()
     include(${PROMEKI_CIRF_DIR}/cmake/CIRFAddResources.cmake)
 
     set(PROMEKI_CIRF_RUNTIME_TARGET cirf_runtime)
+endif()
+
+# --- llhttp (HTTP/1.x parser, needed by the HTTP stack) ---
+# llhttp is a small C parser (3 source files + 1 header) maintained by
+# the Node.js project.  We build it directly as a static library here
+# rather than via add_subdirectory(thirdparty/llhttp) because llhttp's
+# own CMakeLists.txt requires CMake 3.25+ (we target 3.22), defaults to
+# BUILD_SHARED_LIBS=ON, and unconditionally installs targets — none of
+# which we want when consuming it as a sub-dependency.  The vendored
+# tarball ships with everything already code-generated, so no extra
+# build-time tooling is needed.
+if(PROMEKI_ENABLE_HTTP)
+    if(PROMEKI_USE_SYSTEM_LLHTTP)
+        # llhttp ships a CMake config but also works via pkg-config;
+        # prefer the imported target when available.
+        find_package(llhttp QUIET)
+        if(llhttp_FOUND)
+            set(PROMEKI_LLHTTP_TARGET llhttp::llhttp)
+        else()
+            find_package(PkgConfig REQUIRED)
+            pkg_check_modules(LLHTTP REQUIRED IMPORTED_TARGET libllhttp)
+            set(PROMEKI_LLHTTP_TARGET PkgConfig::LLHTTP)
+        endif()
+    else()
+        set(PROMEKI_LLHTTP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/llhttp)
+        add_library(promeki_llhttp STATIC
+            ${PROMEKI_LLHTTP_DIR}/src/api.c
+            ${PROMEKI_LLHTTP_DIR}/src/http.c
+            ${PROMEKI_LLHTTP_DIR}/src/llhttp.c
+        )
+        target_include_directories(promeki_llhttp PUBLIC
+            $<BUILD_INTERFACE:${PROMEKI_LLHTTP_DIR}/include>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/promeki/thirdparty>
+        )
+        set_target_properties(promeki_llhttp PROPERTIES
+            C_STANDARD 99
+            C_STANDARD_REQUIRED ON
+            POSITION_INDEPENDENT_CODE ON
+            OUTPUT_NAME promeki_llhttp
+        )
+        set(PROMEKI_LLHTTP_TARGET promeki_llhttp)
+    endif()
+endif()
+
+# --- mbedTLS (TLS implementation, needed by SslSocket / HTTPS) ---
+# mbedTLS is a permissive (Apache-2.0 / GPL-2.0+ dual-licensed)
+# self-contained TLS library — no external dependencies, fits the
+# "no transitive surprises" requirement for libpromeki's network
+# stack.  We pin to the 3.6.x LTS line and build the static
+# libraries only; programs and tests are skipped to keep build time
+# and binary size in check.
+#
+# mbedTLS exports targets named `mbedtls`, `mbedx509`, and either
+# `mbedcrypto` (older releases) or `tfpsacrypto` (3.6+ PSA path) —
+# we capture the actual crypto target name into PROMEKI_MBEDCRYPTO_TARGET
+# so SSL-side code can link against it without caring which.
+if(PROMEKI_ENABLE_TLS)
+    if(PROMEKI_USE_SYSTEM_MBEDTLS)
+        find_package(MbedTLS REQUIRED)
+        set(PROMEKI_MBEDTLS_TARGET    MbedTLS::mbedtls)
+        set(PROMEKI_MBEDX509_TARGET   MbedTLS::mbedx509)
+        set(PROMEKI_MBEDCRYPTO_TARGET MbedTLS::mbedcrypto)
+    else()
+        set(ENABLE_PROGRAMS                       OFF CACHE BOOL "" FORCE)
+        set(ENABLE_TESTING                        OFF CACHE BOOL "" FORCE)
+        set(MBEDTLS_FATAL_WARNINGS                OFF CACHE BOOL "" FORCE)
+        set(USE_STATIC_MBEDTLS_LIBRARY            ON  CACHE BOOL "" FORCE)
+        set(USE_SHARED_MBEDTLS_LIBRARY            OFF CACHE BOOL "" FORCE)
+        set(DISABLE_PACKAGE_CONFIG_AND_INSTALL    ON  CACHE BOOL "" FORCE)
+        # mbedTLS 3.6 builds tfpsacrypto by default; preserve that
+        # name when we link, with a fallback to the older
+        # `mbedcrypto` target name on releases that still ship it.
+        add_subdirectory(thirdparty/mbedtls EXCLUDE_FROM_ALL)
+        # mbedTLS's static targets are built with -fPIC by default
+        # because USE_STATIC_MBEDTLS_LIBRARY honors
+        # CMAKE_POSITION_INDEPENDENT_CODE which we set above.
+        set(PROMEKI_MBEDTLS_TARGET    mbedtls)
+        set(PROMEKI_MBEDX509_TARGET   mbedx509)
+        if(TARGET tfpsacrypto)
+            set(PROMEKI_MBEDCRYPTO_TARGET tfpsacrypto)
+        else()
+            set(PROMEKI_MBEDCRYPTO_TARGET mbedcrypto)
+        endif()
+    endif()
 endif()
 
 # --- Google Highway (SIMD, needed by CSC) ---
@@ -816,6 +910,7 @@ set(PROMEKI_HEADERS
     include/promeki/audiocodec.h
     include/promeki/audioformat.h
     include/promeki/backendweight.h
+    include/promeki/base64.h
     include/promeki/cmdlineparser.h
     include/promeki/color.h
     include/promeki/colormodel.h
@@ -946,6 +1041,7 @@ set(PROMEKI_SOURCES
     src/core/masteringdisplay.cpp
     src/core/audiocodec.cpp
     src/core/audioformat.cpp
+    src/core/base64.cpp
     src/core/crashhandler.cpp
     src/core/crc.cpp
     src/core/cuda.cpp
@@ -1091,6 +1187,50 @@ if(PROMEKI_ENABLE_NETWORK)
         src/network/tcpsocket.cpp
         src/network/udpsocket.cpp
         src/network/udpsockettransport.cpp
+    )
+endif()
+
+# TLS sources (subset of network; vendored mbedTLS)
+if(PROMEKI_ENABLE_TLS)
+    list(APPEND PROMEKI_HEADERS
+        include/promeki/sslcontext.h
+        include/promeki/sslsocket.h
+    )
+    list(APPEND PROMEKI_SOURCES
+        src/network/sslcontext.cpp
+        src/network/sslsocket.cpp
+    )
+endif()
+
+# HTTP sources (subset of network; vendored llhttp parser)
+if(PROMEKI_ENABLE_HTTP)
+    list(APPEND PROMEKI_HEADERS
+        include/promeki/httpclient.h
+        include/promeki/httpconnection.h
+        include/promeki/httpfilehandler.h
+        include/promeki/httphandler.h
+        include/promeki/httpheaders.h
+        include/promeki/httpmethod.h
+        include/promeki/httprequest.h
+        include/promeki/httpresponse.h
+        include/promeki/httprouter.h
+        include/promeki/httpserver.h
+        include/promeki/httpstatus.h
+        include/promeki/websocket.h
+    )
+    list(APPEND PROMEKI_SOURCES
+        src/network/httpclient.cpp
+        src/network/httpconnection.cpp
+        src/network/httpfilehandler.cpp
+        src/network/httphandler.cpp
+        src/network/httpheaders.cpp
+        src/network/httpmethod.cpp
+        src/network/httprequest.cpp
+        src/network/httpresponse.cpp
+        src/network/httprouter.cpp
+        src/network/httpserver.cpp
+        src/network/httpstatus.cpp
+        src/network/websocket.cpp
     )
 endif()
 
@@ -1536,6 +1676,27 @@ if(PROMEKI_ENABLE_PROAV)
     endif()
 endif()
 
+# HTTP stack — depends only on PROMEKI_ENABLE_NETWORK, so it lives
+# outside the PROAV-conditional block above.  llhttp is linked PRIVATE
+# (it's an implementation-detail parser; the public surface is purely
+# our own HttpRequest / HttpResponse / HttpServer types).
+if(PROMEKI_ENABLE_HTTP)
+    target_link_libraries(promeki PRIVATE ${PROMEKI_LLHTTP_TARGET})
+    target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_HTTP)
+endif()
+
+# TLS stack — same shape as HTTP (network-only, PRIVATE link).
+# mbedTLS: link the SSL/TLS layer last so the linker resolves
+# x509 / crypto symbols that the SSL layer references.
+if(PROMEKI_ENABLE_TLS)
+    target_link_libraries(promeki PRIVATE
+        ${PROMEKI_MBEDTLS_TARGET}
+        ${PROMEKI_MBEDX509_TARGET}
+        ${PROMEKI_MBEDCRYPTO_TARGET}
+    )
+    target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_TLS)
+endif()
+
 # TUI Library ##################################################################
 
 if(PROMEKI_BUILD_TUI)
@@ -1795,6 +1956,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/audioformat.cpp
         tests/unit/audiolevel.cpp
         tests/unit/backendweight.cpp
+        tests/unit/base64.cpp
         tests/unit/typeregistry_isolation.cpp
         tests/unit/benchmarkrunner.cpp
         tests/unit/buffer.cpp
@@ -1947,6 +2109,33 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/network/tcpsocket.cpp
             tests/unit/network/udpsocket.cpp
             tests/unit/network/udpsockettransport.cpp
+        )
+    endif()
+
+    if(PROMEKI_ENABLE_TLS)
+        list(APPEND UNITTEST_SOURCES
+            tests/unit/network/sslcontext.cpp
+            tests/unit/network/sslsocket.cpp
+        )
+        if(PROMEKI_ENABLE_HTTP)
+            list(APPEND UNITTEST_SOURCES
+                tests/unit/network/httptls.cpp
+            )
+        endif()
+    endif()
+
+    if(PROMEKI_ENABLE_HTTP)
+        list(APPEND UNITTEST_SOURCES
+            tests/unit/network/httpclient.cpp
+            tests/unit/network/httpheaders.cpp
+            tests/unit/network/httpmethod.cpp
+            tests/unit/network/httpstatus.cpp
+            tests/unit/network/httprequest.cpp
+            tests/unit/network/httpresponse.cpp
+            tests/unit/network/httprouter.cpp
+            tests/unit/network/httpserver.cpp
+            tests/unit/network/httpfilehandler.cpp
+            tests/unit/network/websocket.cpp
         )
     endif()
 

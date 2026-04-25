@@ -93,6 +93,12 @@ String buildFeatureString() {
 #if PROMEKI_ENABLE_NETWORK
         features += "NETWORK";
 #endif
+#if PROMEKI_ENABLE_HTTP
+        features += "HTTP";
+#endif
+#if PROMEKI_ENABLE_TLS
+        features += "TLS";
+#endif
 #if PROMEKI_ENABLE_PROAV
         features += "PROAV";
 #endif

@@ -37,3 +37,9 @@
 [submodule "thirdparty/opus"]
 	path = thirdparty/opus
 	url = https://github.com/xiph/opus.git
+[submodule "thirdparty/llhttp"]
+	path = thirdparty/llhttp
+	url = https://github.com/nodejs/llhttp.git
+[submodule "thirdparty/mbedtls"]
+	path = thirdparty/mbedtls
+	url = https://github.com/Mbed-TLS/mbedtls.git

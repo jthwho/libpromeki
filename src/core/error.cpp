@@ -95,6 +95,8 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(FontUnavailable, NONE, "Font could not be loaded or has zero metrics"),
         DEFINE_ERROR(BrokenPipe, EPIPE, "Peer closed the stream"),
         DEFINE_ERROR(ConnectionReset, ECONNRESET, "Peer reset the connection"),
+        DEFINE_ERROR(ConnectionRefused, ECONNREFUSED, "Peer refused the connection"),
+        DEFINE_ERROR(HostNotFound, NONE, "DNS lookup for the requested host failed"),
         DEFINE_ERROR(ParseFailed, NONE, "Text input failed to parse"),
         DEFINE_ERROR(ClockDomainMismatch, NONE, "Operation mixed MediaTimeStamps from different ClockDomains"),
         DEFINE_ERROR(ObjectGone, NONE, "Referenced object has been destroyed"),

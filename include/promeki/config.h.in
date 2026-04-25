@@ -14,6 +14,8 @@
 #pragma once
 
 #cmakedefine01 PROMEKI_ENABLE_NETWORK
+#cmakedefine01 PROMEKI_ENABLE_HTTP
+#cmakedefine01 PROMEKI_ENABLE_TLS
 #cmakedefine01 PROMEKI_ENABLE_PROAV
 #cmakedefine01 PROMEKI_ENABLE_MUSIC
 #cmakedefine01 PROMEKI_ENABLE_PNG

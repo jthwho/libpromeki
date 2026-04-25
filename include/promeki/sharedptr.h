@@ -10,6 +10,7 @@
 
 #include <atomic>
 #include <cassert>
+#include <cstdlib>
 #include <typeinfo>
 #include <utility>
 #include <promeki/namespace.h>
@@ -47,6 +48,26 @@ PROMEKI_NAMESPACE_BEGIN
         virtual BASE *_promeki_clone() const { return new BASE(*this); }
 
 /**
+ * @brief Macro for non-copyable polymorphic shared base classes.
+ *
+ * Same role as @ref PROMEKI_SHARED, but the virtual @c _promeki_clone
+ * stub aborts instead of copy-constructing — pick this when @c BASE
+ * (or any of its members) is genuinely non-copyable
+ * (e.g. holds a @c Promise<T>, @c UniquePtr, or
+ * @c std::atomic-only state) and copy-on-write semantics
+ * therefore cannot be supported.
+ *
+ * Callers @b must use @c SharedPtr<BASE, false> (CoW disabled);
+ * derived classes that @em are copyable can override the clone via
+ * @ref PROMEKI_SHARED_DERIVED, otherwise pair this with
+ * @ref PROMEKI_SHARED_DERIVED_NOCOPY in the leaves.
+ */
+#define PROMEKI_SHARED_NOCOPY(BASE) \
+    public: \
+        RefCount _promeki_refct; \
+        virtual BASE *_promeki_clone() const { std::abort(); }
+
+/**
  * @brief Macro to simplify making a derived object into a native shared object
  *
  * This assumes the base class has used PROMEKI_SHARED() macro or otherwise
@@ -67,6 +88,21 @@ PROMEKI_NAMESPACE_BEGIN
 #define PROMEKI_SHARED_DERIVED(BASE, DERIVED) \
     public: \
         virtual BASE *_promeki_clone() const override { return new DERIVED(*this); }
+
+/**
+ * @brief Macro for non-copyable derived shared classes.
+ *
+ * Same role as @ref PROMEKI_SHARED_DERIVED, but the virtual
+ * @c _promeki_clone override aborts instead of copy-constructing.
+ * Use this when @c DERIVED adds non-copyable state (e.g. an owned
+ * @c Promise, @c std::atomic, or @c UniquePtr) on top of a
+ * shared base.  As with @ref PROMEKI_SHARED_NOCOPY, the matching
+ * @c SharedPtr<BASE, false> (CoW disabled) is required so the
+ * abort path is never taken at runtime.
+ */
+#define PROMEKI_SHARED_DERIVED_NOCOPY(BASE, DERIVED) \
+    public: \
+        virtual BASE *_promeki_clone() const override { std::abort(); }
 
 /**
  * @brief Macro for abstract intermediate classes in a shared hierarchy.
@@ -115,6 +151,35 @@ PROMEKI_NAMESPACE_BEGIN
     public: \
         RefCount _promeki_refct; \
         TYPE *_promeki_clone() const { return new TYPE(*this); }
+
+/**
+ * @brief Macro for non-polymorphic, non-copyable native shared objects.
+ *
+ * Same role as @ref PROMEKI_SHARED_FINAL, but the @c _promeki_clone
+ * stub aborts instead of copy-constructing.  Use this when @c TYPE
+ * holds a member that cannot be copied (e.g. @c Promise<T>,
+ * @c std::atomic-only state, @c UniquePtr) — the macro-generated
+ * copy-clone path would otherwise fail to compile.
+ *
+ * Callers @b must use @c SharedPtr<TYPE, false> (CoW disabled);
+ * the default @c SharedPtr<TYPE> path triggers @c _promeki_clone
+ * inside @c modify() and would hit the abort at runtime.
+ *
+ * Example:
+ *
+ * @code
+ * struct Pending {
+ *     PROMEKI_SHARED_FINAL_NOCOPY(Pending)
+ *     Promise<HttpResponse> promise;     // non-copyable
+ *     // ...
+ * };
+ * using PendingPtr = SharedPtr<Pending, false>;
+ * @endcode
+ */
+#define PROMEKI_SHARED_FINAL_NOCOPY(TYPE) \
+    public: \
+        RefCount _promeki_refct; \
+        TYPE *_promeki_clone() const { std::abort(); }
 
 /**
  * @brief An atomic reference count object

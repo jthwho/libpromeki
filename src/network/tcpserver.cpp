@@ -21,6 +21,7 @@
 #       include <sys/socket.h>
 #       include <netinet/in.h>
 #       include <poll.h>
+#       include <fcntl.h>
 #endif
 
 PROMEKI_NAMESPACE_BEGIN
@@ -107,14 +108,20 @@ void TcpServer::close() {
 }
 
 TcpSocket *TcpServer::nextPendingConnection() {
-        if(_fd < 0) return nullptr;
+        const int fd = nextPendingDescriptor();
+        if(fd < 0) return nullptr;
+        TcpSocket *sock = new TcpSocket();
+        sock->setSocketDescriptor(fd);
+        return sock;
+}
+
+int TcpServer::nextPendingDescriptor() {
+        if(_fd < 0) return -1;
         struct sockaddr_storage storage;
         socklen_t addrLen = sizeof(storage);
-        int clientFd = ::accept(_fd, reinterpret_cast<struct sockaddr *>(&storage), &addrLen);
-        if(clientFd < 0) return nullptr;
-        TcpSocket *sock = new TcpSocket();
-        sock->setSocketDescriptor(clientFd);
-        return sock;
+        const int clientFd = ::accept(_fd,
+                reinterpret_cast<struct sockaddr *>(&storage), &addrLen);
+        return clientFd;
 }
 
 bool TcpServer::hasPendingConnections() const {
@@ -123,6 +130,22 @@ bool TcpServer::hasPendingConnections() const {
         pfd.fd = _fd;
         pfd.events = POLLIN;
         return ::poll(&pfd, 1, 0) > 0;
+}
+
+Error TcpServer::setNonBlocking(bool enable) {
+        if(_fd < 0) return Error::NotOpen;
+#if defined(PROMEKI_PLATFORM_WINDOWS)
+        u_long mode = enable ? 1 : 0;
+        if(::ioctlsocket(_fd, FIONBIO, &mode) != 0) return Error::syserr();
+        return Error::Ok;
+#else
+        int flags = ::fcntl(_fd, F_GETFL, 0);
+        if(flags < 0) return Error::syserr();
+        if(enable) flags |= O_NONBLOCK;
+        else       flags &= ~O_NONBLOCK;
+        if(::fcntl(_fd, F_SETFL, flags) < 0) return Error::syserr();
+        return Error::Ok;
+#endif
 }
 
 Error TcpServer::waitForNewConnection(unsigned int timeoutMs) {

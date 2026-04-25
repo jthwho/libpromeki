@@ -13,6 +13,7 @@
 #include <promeki/error.h>
 #include <promeki/result.h>
 #include <promeki/uniqueptr.h>
+#include <promeki/sharedptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -32,6 +33,18 @@ class IODevice : public ObjectBase {
         public:
                 /** @brief Unique-ownership pointer to an IODevice. */
                 using UPtr = UniquePtr<IODevice>;
+
+                /**
+                 * @brief Shared-ownership pointer to an IODevice.
+                 *
+                 * CoW is disabled because IODevice is polymorphic and
+                 * has identity (its read/write cursor matters across
+                 * all observers).  Suitable for handing the same
+                 * device to multiple consumers (e.g. a streamed
+                 * @ref HttpResponse body that the connection drains
+                 * after the response leaves the handler scope).
+                 */
+                using Shared = SharedPtr<IODevice, false>;
 
                 /** @brief Mode flags controlling how a device is opened. */
                 enum OpenMode {

@@ -7,11 +7,13 @@
 
 #pragma once
 
+#include <chrono>
 #include <filesystem>
 #include <optional>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/filepath.h>
+#include <promeki/datetime.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -192,6 +194,39 @@ class FileInfo {
                         std::error_code ec;
                         auto perms = std::filesystem::status(_path, ec).permissions();
                         return (perms & std::filesystem::perms::owner_exec) != std::filesystem::perms::none;
+                }
+
+                /**
+                 * @brief Returns the file's last-modified wall-clock time.
+                 *
+                 * Returns a default-constructed @ref DateTime (epoch
+                 * value) when the path is missing or @c last_write_time
+                 * fails — callers that need to distinguish "epoch" from
+                 * "missing" should @ref FileInfo::exists first.
+                 *
+                 * Used by HTTP responses (ETag / Last-Modified) and
+                 * anywhere a wall-clock view of file mtime is needed.
+                 *
+                 * @return The last-modified time, or epoch on failure.
+                 */
+                DateTime lastModified() const {
+                        std::error_code ec;
+                        auto t = std::filesystem::last_write_time(_path, ec);
+                        if(ec) return DateTime();
+                        // file_time_type is not directly convertible to
+                        // system_clock::time_point in pre-C++20 stdlibs,
+                        // and clock_cast (C++20) is not yet ubiquitous in
+                        // the libstdc++/libc++ versions in our matrix.
+                        // Shift the file_clock instant onto system_clock
+                        // by anchoring both clocks at "now" and applying
+                        // the delta — accurate to one tick of either
+                        // clock, which is plenty for HTTP semantics.
+                        const auto now_fc = decltype(t)::clock::now();
+                        const auto now_sc = std::chrono::system_clock::now();
+                        const auto sc = std::chrono::time_point_cast<
+                                std::chrono::system_clock::duration>(
+                                        t - now_fc + now_sc);
+                        return DateTime(sc);
                 }
 
         private:

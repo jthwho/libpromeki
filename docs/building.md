@@ -13,6 +13,24 @@ user-facing CMake option is documented here.
 - CMake 3.22 or newer
 - `git` (required — the build clones vendored dependencies via
   submodules)
+- Python 3 with the `jsonschema` and `jinja2` modules (only when
+  `PROMEKI_ENABLE_TLS` is on, the default).  The vendored
+  mbedTLS 3.6 LTS runs a build-time PSA Crypto driver-wrapper
+  generator that imports both modules.  Install with one of:
+
+  ```sh
+  # Debian / Ubuntu
+  sudo apt install python3-jsonschema python3-jinja2
+
+  # Fedora / RHEL
+  sudo dnf install python3-jsonschema python3-jinja2
+
+  # Generic / macOS — virtualenv recommended
+  python3 -m pip install jsonschema jinja2
+  ```
+
+  If TLS support is not needed, configure with
+  `-DPROMEKI_ENABLE_TLS=OFF` to skip the requirement.
 
 Some vendored libraries (libjpeg-turbo, SVT-JPEG-XS) contain
 hand-written SIMD assembly. When `nasm` or `yasm` is on `PATH`

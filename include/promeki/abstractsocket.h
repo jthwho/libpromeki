@@ -212,6 +212,18 @@ class AbstractSocket : public IODevice {
                 /** @brief Emitted when the socket state changes. @signal */
                 PROMEKI_SIGNAL(stateChanged, SocketState);
 
+                /**
+                 * @brief Sets the socket to non-blocking mode.
+                 *
+                 * Required for sockets driven by an
+                 * @ref EventLoop::addIoSource — blocking reads/writes
+                 * would stall the loop.
+                 *
+                 * @param enable True for non-blocking, false for blocking.
+                 * @return Error::Ok on success, or an error on failure.
+                 */
+                Error setNonBlocking(bool enable);
+
         protected:
                 /**
                  * @brief Creates the underlying socket descriptor.
@@ -228,13 +240,6 @@ class AbstractSocket : public IODevice {
                  * Subclasses should call this from their close() override.
                  */
                 void closeSocket();
-
-                /**
-                 * @brief Sets the socket to non-blocking mode.
-                 * @param enable True for non-blocking, false for blocking.
-                 * @return Error::Ok on success, or an error on failure.
-                 */
-                Error setNonBlocking(bool enable);
 
                 /**
                  * @brief Updates the local address from the socket descriptor.
