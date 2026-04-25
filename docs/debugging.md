@@ -381,6 +381,124 @@ variables:
 
 ---
 
+---
+
+## Debug HTTP Server {#debug_http_server}
+
+When `PROMEKI_ENABLE_HTTP` is on (the default), `Application` can embed
+a lightweight HTTP debug server that exposes diagnostic information over
+a browser-friendly REST API and a baked-in web UI.
+
+### Quickstart: env-var activation {#debug_http_envvar}
+
+Set `PROMEKI_DEBUG_SERVER` to a `host:port` spec before launching your
+application.  The constructor picks it up automatically — no code
+changes required:
+
+```sh
+# Bind to loopback on port 8085 (short form)
+PROMEKI_DEBUG_SERVER=:8085 ./myapp
+
+# Explicit host — binds to all interfaces
+PROMEKI_DEBUG_SERVER=0.0.0.0:8085 ./myapp
+```
+
+Parse or bind failures are logged at `warn` level and are never fatal;
+the application continues without a debug server.
+
+Then open `http://localhost:8085/` in a browser — it redirects to the
+built-in debug UI at `/promeki/debug/`.
+
+### Programmatic control {#debug_http_programmatic}
+
+```cpp
+Application app(argc, argv);
+
+// Start on a specific port (loopback-only by default)
+if(Error err = Application::startDebugServer(8085); err.isError()) {
+        promekiWarn("debug server failed: %s", err.toString().cstr());
+}
+
+// ... later, to shut it down cleanly:
+Application::stopDebugServer();
+
+// Grab the server to add your own routes:
+if(DebugServer *dbg = Application::debugServer()) {
+        dbg->httpServer().route("/my/route", HttpMethod::Get, handler);
+}
+```
+
+`startDebugServer()` returns `Error::AlreadyOpen` if the server is
+already listening.  Call `stopDebugServer()` first to rebind.
+
+### Using DebugServer directly {#debug_http_direct}
+
+Applications that own their own `HttpServer` can skip `Application`
+integration and cherry-pick individual module installers from
+`<promeki/debugmodules.h>`:
+
+```cpp
+// Attach only the build-info and logger endpoints to your own server
+installBuildInfoDebugRoutes(myServer, "/debug/api");
+installLoggerDebugRoutes(myServer, "/debug/api");
+```
+
+Or use the full convenience wrapper on a dedicated server:
+
+```cpp
+DebugServer dbg;
+dbg.installDefaultModules();                 // mounts everything
+if(Error err = dbg.listen(8085); err.isError()) {
+        promekiWarn("debug server failed: %s", err.toString().cstr());
+}
+return app.exec();
+```
+
+### API endpoints {#debug_http_api}
+
+All endpoints are mounted under `/promeki/debug/api` by default.
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/promeki/debug/api/build` | GET | Build metadata, features, platform info |
+| `/promeki/debug/api/env` | GET | Full process environment as a JSON object |
+| `/promeki/debug/api/options/_schema` | GET | LibraryOptions key schema (read-only) |
+| `/promeki/debug/api/memory` | GET | Live `MemSpace` allocation counters |
+| `/promeki/debug/api/logger` | GET | Logger state: level, console, debug channels |
+| `/promeki/debug/api/logger/level` | PUT | Set log level — body `{"level": <0-4>}` |
+| `/promeki/debug/api/logger/debug/{name}` | PUT | Toggle a debug channel — body `{"enabled": <bool>}` |
+| `/promeki/debug/api/logger/stream` | WS | Stream log entries as JSON frames |
+
+### Logger listener API {#debug_logging_listeners}
+
+The debug server's WebSocket log stream is built on a general-purpose
+listener API exposed by `Logger`.  Applications can install their own
+listeners to consume log entries programmatically:
+
+```cpp
+Logger::ListenerHandle h = Logger::defaultLogger().installListener(
+        [](const Logger::LogEntry &entry, const String &threadName) {
+                // Called on the logger worker thread — marshal if needed
+                myLogView->append(entry.msg);
+        }, /*replayCount=*/50);   // replay last 50 entries first
+
+// Stop receiving:
+Logger::defaultLogger().removeListener(h);
+```
+
+`removeListener()` blocks until the worker thread has acknowledged
+removal, so it is safe to destroy state captured by the lambda
+immediately after it returns.
+
+The history ring size (default 1024) controls how many entries are
+available for replay:
+
+```cpp
+Logger::defaultLogger().setHistorySize(4096);
+```
+
+---
+
 ## Quick Reference {#debug_summary}
 
 ### Environment Variables {#debug_summary_env}
@@ -388,6 +506,7 @@ variables:
 | Variable | Purpose | Example |
 |----------|---------|---------|
 | `PROMEKI_DEBUG` | Enable per-module debug logging | `PROMEKI_DEBUG=ThreadPool,MediaIO` |
+| `PROMEKI_DEBUG_SERVER` | Start the debug HTTP server | `PROMEKI_DEBUG_SERVER=:8085` |
 | `PROMEKI_OPT_CrashHandler` | Enable/disable crash handlers | `PROMEKI_OPT_CrashHandler=false` |
 | `PROMEKI_OPT_CoreDumps` | Enable core dumps | `PROMEKI_OPT_CoreDumps=true` |
 | `PROMEKI_OPT_CrashLogDir` | Override crash log directory | `PROMEKI_OPT_CrashLogDir=/var/log/myapp` |
@@ -403,10 +522,14 @@ cmake --build build
 # 2. Run with debug logging for the subsystem you're investigating
 PROMEKI_DEBUG=ThreadPool ./build/myapp
 
-# 3. If a crash occurs, check the crash log
+# 3. Optionally attach the debug HTTP UI to inspect runtime state
+PROMEKI_DEBUG_SERVER=:8085 PROMEKI_DEBUG=ThreadPool ./build/myapp
+# Then open http://localhost:8085/ in a browser
+
+# 4. If a crash occurs, check the crash log
 cat /tmp/promeki-crash-myapp-12345.log
 
-# 4. For deeper investigation, enable core dumps
+# 5. For deeper investigation, enable core dumps
 PROMEKI_OPT_CoreDumps=true ./build/myapp
 # After crash:
 gdb ./build/myapp core

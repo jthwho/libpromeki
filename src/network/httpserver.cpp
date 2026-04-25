@@ -236,12 +236,16 @@ void HttpServer::routeWebSocket(const String &pattern,
 
                         // Install the upgrade hook.  Captured by
                         // value so it stays alive on the response
-                        // copy that HttpConnection serializes.
-                        res.setUpgradeHook([userHandler](TcpSocket *sock) {
+                        // copy that HttpConnection serializes.  We
+                        // also capture a snapshot of the request so
+                        // the user handler can read the query string,
+                        // headers, and path-params it was routed by.
+                        HttpRequest reqCopy = req;
+                        res.setUpgradeHook([userHandler, reqCopy](TcpSocket *sock) {
                                 if(sock == nullptr) return;
                                 WebSocket *ws = new WebSocket();
                                 ws->adoptUpgradedSocket(sock);
-                                userHandler(ws);
+                                userHandler(ws, reqCopy);
                         });
                 });
 }

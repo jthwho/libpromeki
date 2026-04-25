@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ProMeKi Debug</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+        <h1>[ProMeKi]</h1>
+        <nav>
+                <button data-tab="log" class="active">Log</button>
+                <button data-tab="memory">Memory</button>
+                <button data-tab="library">Library</button>
+        </nav>
+        <span id="conn-status" class="status">connecting…</span>
+</header>
+
+<main>
+
+<!-- ============================================================ Log -->
+<section id="tab-log" class="tab active">
+        <div class="log-toolbar">
+                <label>Level &le;
+                        <select id="filter-level">
+                                <option value="-1">all</option>
+                                <option value="0">Force</option>
+                                <option value="1">Debug</option>
+                                <option value="2">Info</option>
+                                <option value="3">Warn</option>
+                                <option value="4">Err</option>
+                        </select>
+                </label>
+                <label>File <input id="filter-file" type="text" placeholder="substring"></label>
+                <label>Thread <input id="filter-thread" type="text" placeholder="substring"></label>
+                <label>Text <input id="filter-text" type="text" placeholder="substring"></label>
+                <button id="btn-clear" type="button">Clear</button>
+                <button id="btn-pause" type="button">Pause</button>
+                <button id="btn-channels" type="button">Debug Channels…</button>
+                <span id="log-status"></span>
+        </div>
+        <div id="log-stream">
+                <table id="log-table">
+                        <thead>
+                                <tr>
+                                        <th class="col-ts">Date</th>
+                                        <th class="col-lvl">Lvl</th>
+                                        <th class="col-th">Thread</th>
+                                        <th class="col-fl">File:Line</th>
+                                        <th class="col-msg">Message</th>
+                                </tr>
+                        </thead>
+                        <tbody id="log-tbody"></tbody>
+                </table>
+        </div>
+</section>
+
+<!-- ============================================================ Memory -->
+<section id="tab-memory" class="tab">
+        <div id="memory-grid">loading…</div>
+</section>
+
+<!-- ============================================================ Library -->
+<section id="tab-library" class="tab">
+        <article>
+                <h2>Build Details</h2>
+                <div id="build-table">loading…</div>
+                <h3>Banner</h3>
+                <pre id="build-lines"></pre>
+        </article>
+        <article>
+                <h2>Library Options</h2>
+                <div class="filter-row">
+                        <label>Filter <input id="options-filter" type="text"
+                                placeholder="key, value, or description"></label>
+                </div>
+                <div id="options-table">loading…</div>
+        </article>
+        <article>
+                <h2>Environment</h2>
+                <div class="filter-row">
+                        <label>Filter <input id="env-filter" type="text"
+                                placeholder="key or value substring"></label>
+                </div>
+                <div id="env-table">loading…</div>
+        </article>
+</section>
+
+</main>
+
+<!-- ============================================================ Modal: debug channels -->
+<div id="channels-modal" class="modal" role="dialog" aria-hidden="true">
+        <div class="modal-card">
+                <div class="modal-header">
+                        <h2>Debug Channels</h2>
+                        <div class="modal-controls">
+                                <button id="channels-enable-all" type="button"
+                                        title="Enable every channel currently visible">Enable visible</button>
+                                <button id="channels-disable-all" type="button"
+                                        title="Disable every channel currently visible">Disable visible</button>
+                                <button id="channels-close" type="button">Close</button>
+                        </div>
+                </div>
+                <div class="modal-body">
+                        <input id="channel-filter" type="text" placeholder="filter…" autocomplete="off">
+                        <div id="channels-grid">loading…</div>
+                </div>
+        </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

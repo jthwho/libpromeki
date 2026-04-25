@@ -155,6 +155,24 @@ void Logger::log(LogLevel loglevel, const char *file, int line, const StringList
         _queue.push(std::move(cmdlist));
 }
 
+Logger::ListenerHandle Logger::installListener(LogListener listener, size_t replayCount) {
+        if(!listener) return 0;
+        if(_terminating.value()) return 0;
+        auto promise = std::make_shared<Promise<ListenerHandle>>();
+        Future<ListenerHandle> future = promise->future();
+        _queue.emplace(CmdInstallListener{std::move(listener), replayCount, promise});
+        return future.result().first();
+}
+
+void Logger::removeListener(ListenerHandle handle) {
+        if(handle == 0) return;
+        if(_terminating.value()) return;
+        auto promise = std::make_shared<Promise<void>>();
+        Future<void> future = promise->future();
+        _queue.emplace(CmdRemoveListener{handle, promise});
+        future.waitForFinished();
+}
+
 Logger::~Logger() {
         // Drain any commands already enqueued, then close the gate
         // so subsequent public log()/setX() calls become no-ops, then
@@ -168,6 +186,32 @@ Logger::~Logger() {
 Logger &Logger::defaultLogger() {
         static Logger ret;
         return ret;
+}
+
+Logger::DebugChannel::List Logger::debugChannels() {
+        DebugChannel::List out;
+        const DebugDatabase &db = debugDatabase();
+        for(const auto &[name, items] : db) {
+                for(const auto &item : items) {
+                        DebugChannel ch;
+                        ch.name    = name;
+                        ch.file    = item.file;
+                        ch.line    = item.line;
+                        ch.enabled = item.enabler != nullptr ? *item.enabler : false;
+                        out.pushToBack(ch);
+                }
+        }
+        return out;
+}
+
+bool Logger::setDebugChannel(const String &name, bool enabled) {
+        DebugDatabase &db = debugDatabase();
+        auto it = db.find(name);
+        if(it == db.end()) return false;
+        for(auto &item : it->second) {
+                if(item.enabler != nullptr) *item.enabler = enabled;
+        }
+        return true;
 }
 
 char Logger::levelToChar(LogLevel level) {
@@ -278,6 +322,24 @@ void Logger::worker() {
                         using T = std::decay_t<decltype(arg)>;
                         if constexpr (std::is_same_v<T, LogEntry>) {
                                 writeLog(arg, logFile);
+                                auto it = _threadNames.find(arg.threadId);
+                                String tname = it != _threadNames.end() ? it->second : String();
+                                // Append to the history ring, trimming to the
+                                // currently configured size.  Trimming is done
+                                // here (rather than on setHistorySize) so the
+                                // size knob can be changed from any thread
+                                // without taking a lock.
+                                size_t cap = _historySize.value();
+                                if(cap > 0) {
+                                        _history.pushToBack(HistoryEntry{arg, tname});
+                                        while(_history.size() > cap) _history.popFromFront();
+                                } else if(_history.size() > 0) {
+                                        _history.clear();
+                                }
+                                // Fan out to any registered listeners.
+                                for(auto &lst : _listeners) {
+                                        lst.fn(arg, tname);
+                                }
                         } else if constexpr (std::is_same_v<T, CmdSetThreadName>) {
                                 _threadNames[arg.threadId] = arg.name;
                         } else if constexpr (std::is_same_v<T, CmdSetFile>) {
@@ -289,6 +351,30 @@ void Logger::worker() {
                                         _fileFormatter = arg.formatter ? arg.formatter : defaultFileFormatter();
                                 }
                         } else if constexpr (std::is_same_v<T, CmdSync>) {
+                                arg.promise->setValue();
+                        } else if constexpr (std::is_same_v<T, CmdInstallListener>) {
+                                // Replay the tail of the history ring to the
+                                // new listener, then register it — both happen
+                                // on this worker thread so no entry can slip
+                                // between the replay and the live subscription.
+                                size_t replay = arg.replayCount;
+                                if(replay > _history.size()) replay = _history.size();
+                                size_t start = _history.size() - replay;
+                                for(size_t i = start; i < _history.size(); i++) {
+                                        const HistoryEntry &h = _history[i];
+                                        arg.listener(h.entry, h.threadName);
+                                }
+                                ListenerHandle handle =
+                                        _nextListenerHandle.fetchAndAdd(1) + 1;
+                                _listeners.pushToBack(ListenerEntry{handle, std::move(arg.listener)});
+                                arg.promise->setValue(handle);
+                        } else if constexpr (std::is_same_v<T, CmdRemoveListener>) {
+                                for(auto it = _listeners.begin(); it != _listeners.end(); ++it) {
+                                        if(it->handle == arg.handle) {
+                                                _listeners.remove(it);
+                                                break;
+                                        }
+                                }
                                 arg.promise->setValue();
                         } else if constexpr (std::is_same_v<T, CmdTerminate>) {
                                 running = false;

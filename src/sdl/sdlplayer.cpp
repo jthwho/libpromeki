@@ -290,19 +290,22 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandClose &cmd) {
         (void)cmd;
         promekiDebug("SDLPlayerTask::executeCmd(Close) ENTER");
 
-        // If playback was paused, the pull thread has already
-        // exited — unpause so the clock's internal state doesn't
-        // persist into the next open, then tear down the thread
-        // (a no-op when already joined).  Close calls
-        // @c _sync.interrupt explicitly here (unlike pause) — we
-        // need to pry the strand's pushFrame out of any queue-full
-        // backpressure wait so Close itself doesn't deadlock, and
-        // losing the in-flight frame is fine when we're shutting
-        // down anyway.
+        // Pause the clock before joining the pull thread.  The pull
+        // thread can be parked deep inside @ref Clock::sleepUntil,
+        // which is uninterruptible — @ref FrameSync::interrupt only
+        // wakes @c _cv.wait inside @c pullFrame, not the lock-free
+        // @c sleepUntil section.  Pausing the clock makes
+        // @ref SDLAudioClock::sleepUntilNs's polling loop return
+        // @ref Error::ClockPaused within ~100 us, which @c pullLoop
+        // treats as a clean exit.  Without this, a stalled audio
+        // device (consumed counter not advancing) leaves the pull
+        // thread spinning forever and the close hangs in @c join().
+        // The strand's @c pushFrame back-pressure is unwound by the
+        // separate @c pushEndOfStream + @c interrupt below.
         {
                 Mutex::Locker lock(_clockMutex);
-                if(_clock.isValid() && _clock->isPaused()) {
-                        (void)_clock.modify()->setPause(false);
+                if(_clock.isValid() && !_clock->isPaused() && _clock->canPause()) {
+                        (void)_clock.modify()->setPause(true);
                 }
                 _sync.pushEndOfStream();
                 _sync.interrupt();

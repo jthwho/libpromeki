@@ -14,6 +14,8 @@
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
 #include <promeki/queue.h>
+#include <promeki/deque.h>
+#include <promeki/list.h>
 #include <promeki/map.h>
 #include <promeki/mutex.h>
 #include <promeki/atomic.h>
@@ -137,6 +139,36 @@ class Logger {
                 using LogFormatter = std::function<String(const LogFormat &fmt)>;
 
                 /**
+                 * @brief Opaque identifier for a registered log listener.
+                 *
+                 * Returned by @ref installListener and accepted by
+                 * @ref removeListener.  Zero is reserved for "no
+                 * listener" and is never returned for a successful
+                 * installation.
+                 */
+                using ListenerHandle = uint64_t;
+
+                /**
+                 * @brief Callback invoked for every log entry processed.
+                 *
+                 * Listeners receive the structured entry plus the
+                 * resolved thread name as it was at the time the entry
+                 * was processed.  Both arguments are valid only for the
+                 * duration of the call — copy anything you need to
+                 * retain.
+                 *
+                 * Listeners are always invoked on the logger's worker
+                 * thread; if the consumer lives on a different
+                 * @ref EventLoop, marshal the entry across via
+                 * @ref EventLoop::postCallable rather than blocking.
+                 */
+                using LogListener = std::function<void(const LogEntry &entry,
+                                                       const String &threadName)>;
+
+                /** @brief Default size of the in-memory history ring used for replay. */
+                static constexpr size_t DefaultHistorySize = 1024;
+
+                /**
                  * @brief Returns the singleton default Logger instance.
                  * @return A reference to the default Logger.
                  */
@@ -160,6 +192,45 @@ class Logger {
                  * @param name The new thread name.
                  */
                 static void setThreadName(const String &name);
+
+                /** @brief Plain-value description of a registered debug channel. */
+                struct DebugChannel {
+                        String  name;           ///< Channel name as passed to PROMEKI_DEBUG.
+                        String  file;           ///< Source file containing the registration.
+                        int     line = 0;       ///< Line number of the registration.
+                        bool    enabled = false;///< Current enabled state.
+
+                        using List = promeki::List<DebugChannel>;
+                };
+
+                /**
+                 * @brief Returns every PROMEKI_DEBUG channel known to the process.
+                 *
+                 * Channels are reported by name; the same name registered
+                 * from multiple translation units appears once per
+                 * registration site.  The returned list is a snapshot —
+                 * subsequent toggles via @ref setDebugChannel will not
+                 * be reflected in copies that have already been
+                 * returned.
+                 */
+                static DebugChannel::List debugChannels();
+
+                /**
+                 * @brief Enables or disables every PROMEKI_DEBUG site bearing @p name.
+                 *
+                 * Iterates the debug-flag registry and sets every
+                 * matching enabler.  Returns @c true if at least one
+                 * site was updated; @c false if no channel by that
+                 * name has been registered.
+                 *
+                 * Note: each site's enabler is a plain @c bool, so
+                 * concurrent read/write is technically a data race —
+                 * but the practical worst case is that a logging site
+                 * sees the wrong value for a handful of evaluations
+                 * around the toggle, which matches Qt's `setDebug`
+                 * semantics and is acceptable for diagnostic flags.
+                 */
+                static bool setDebugChannel(const String &name, bool enabled);
 
                 /**
                  * @brief Returns the default file log formatter.
@@ -303,6 +374,59 @@ class Logger {
                 }
 
                 /**
+                 * @brief Registers a listener that will receive every future log entry.
+                 *
+                 * Installation is processed on the worker thread, so by
+                 * the time this call returns the listener is guaranteed
+                 * to either see a given entry via @p replayCount or as
+                 * a live notification — never both, never neither.
+                 *
+                 * The replay step delivers the last
+                 * @c min(replayCount, history.size()) entries currently
+                 * held in the in-memory history ring (see
+                 * @ref setHistorySize) in chronological order before the
+                 * subscription becomes live.
+                 *
+                 * @param listener      Callback invoked for each entry.
+                 *                      Empty function is rejected and
+                 *                      yields a zero handle.
+                 * @param replayCount   Number of recent entries to
+                 *                      deliver synchronously before
+                 *                      subscribing.  Capped at the
+                 *                      current history size.
+                 * @return Non-zero handle on success, or @c 0 if the
+                 *         listener was empty or the logger is
+                 *         terminating.
+                 */
+                ListenerHandle installListener(LogListener listener, size_t replayCount = 0);
+
+                /**
+                 * @brief Removes a previously registered listener.
+                 *
+                 * Removal is processed on the worker thread; the call
+                 * blocks until the listener has been unregistered, so
+                 * it is safe to destroy any state captured by the
+                 * listener once this method returns.  Passing an
+                 * unknown handle is a no-op.
+                 */
+                void removeListener(ListenerHandle handle);
+
+                /**
+                 * @brief Sets the maximum number of entries kept for listener replay.
+                 *
+                 * The history ring is trimmed lazily as new entries
+                 * arrive: shrinking the size won't drop excess entries
+                 * until the next @ref log call processes them on the
+                 * worker thread.  A size of zero disables history
+                 * (listeners installed with @c replayCount > 0 simply
+                 * see no replay).
+                 */
+                void setHistorySize(size_t n) { _historySize.setValue(n); }
+
+                /** @brief Returns the configured history-ring size. */
+                size_t historySize() const { return _historySize.value(); }
+
+                /**
                  * @brief Blocks until all queued log commands have been processed.
                  * @param timeoutMs Maximum time to wait in milliseconds.  A value
                  *        of zero (the default) waits indefinitely.
@@ -341,19 +465,46 @@ class Logger {
                         std::shared_ptr<Promise<void>> promise;
                 };
 
+                struct CmdInstallListener {
+                        LogListener     listener;
+                        size_t          replayCount;
+                        std::shared_ptr<Promise<ListenerHandle>> promise;
+                };
+
+                struct CmdRemoveListener {
+                        ListenerHandle  handle;
+                        std::shared_ptr<Promise<void>> promise;
+                };
+
                 struct CmdTerminate {};
 
-                using Command = std::variant<LogEntry, CmdSetThreadName, CmdSetFile, CmdSetFormatter, CmdSync, CmdTerminate>;
+                using Command = std::variant<LogEntry, CmdSetThreadName, CmdSetFile,
+                        CmdSetFormatter, CmdSync, CmdInstallListener,
+                        CmdRemoveListener, CmdTerminate>;
+
+                struct ListenerEntry {
+                        ListenerHandle  handle;
+                        LogListener     fn;
+                };
+
+                struct HistoryEntry {
+                        LogEntry        entry;
+                        String          threadName;
+                };
 
                 std::thread             _thread;
                 Atomic<int>             _level;
                 Atomic<bool>            _consoleLogging;
                 Atomic<bool>            _terminating{false};
+                Atomic<size_t>          _historySize{DefaultHistorySize};
+                Atomic<uint64_t>        _nextListenerHandle{0};
                 Queue<Command>          _queue;
                 mutable Mutex           _formatterMutex;
                 LogFormatter            _fileFormatter;
                 LogFormatter            _consoleFormatter;
                 Map<uint64_t, String>   _threadNames;
+                List<ListenerEntry>     _listeners;     ///< Worker-thread only.
+                Deque<HistoryEntry>     _history;       ///< Worker-thread only.
 
                 void worker();
                 void writeLog(const LogEntry &cmd, class FileIODevice *logFile);

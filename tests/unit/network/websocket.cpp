@@ -66,10 +66,11 @@ struct WsServerFixture {
                 bool done = false;
                 onAccepted = std::move(handler);
                 thread.threadEventLoop()->postCallable([this, pattern, &done]() {
-                        server->routeWebSocket(pattern, [this](WebSocket *ws) {
-                                acceptedSocket = ws;
-                                if(onAccepted) onAccepted(ws);
-                        });
+                        server->routeWebSocket(pattern,
+                                [this](WebSocket *ws, const HttpRequest &) {
+                                        acceptedSocket = ws;
+                                        if(onAccepted) onAccepted(ws);
+                                });
                         Error err = server->listen(SocketAddress::localhost(0));
                         REQUIRE(err.isOk());
                         port = server->serverAddress().port();

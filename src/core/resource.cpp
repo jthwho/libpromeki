@@ -182,7 +182,7 @@ List<FilePath> Resource::listFolders(const String &path, Error *err) {
                 return result;
         }
         for(size_t i = 0; i < folder->child_count; ++i) {
-                result += makeChildPath(path, folder->children[i].name);
+                result += makeChildPath(path, folder->children[i]->name);
         }
         if(err != nullptr) *err = Error(Error::Ok);
         return result;
@@ -196,7 +196,7 @@ List<FilePath> Resource::listEntries(const String &path, Error *err) {
                 return result;
         }
         for(size_t i = 0; i < folder->child_count; ++i) {
-                result += makeChildPath(path, folder->children[i].name);
+                result += makeChildPath(path, folder->children[i]->name);
         }
         for(size_t i = 0; i < folder->file_count; ++i) {
                 result += makeChildPath(path, folder->files[i].name);

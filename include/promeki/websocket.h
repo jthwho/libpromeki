@@ -63,11 +63,12 @@ class HttpResponse;
  *
  * @par Usage (server)
  * @code
- * server.routeWebSocket("/echo", [](WebSocket *ws) {
- *     ws->textMessageReceivedSignal.connect([ws](String msg) {
- *         ws->sendTextMessage(msg);   // echo
+ * server.routeWebSocket("/echo",
+ *     [](WebSocket *ws, const HttpRequest &) {
+ *         ws->textMessageReceivedSignal.connect([ws](String msg) {
+ *             ws->sendTextMessage(msg);   // echo
+ *         });
  *     });
- * });
  * @endcode
  *
  * @par Limitations

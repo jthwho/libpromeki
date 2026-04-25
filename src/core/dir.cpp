@@ -61,7 +61,7 @@ List<FilePath> Dir::entryList() const {
                 const cirf_folder_t *f = Resource::findFolder(pathStr);
                 if(f == nullptr) return result;
                 for(size_t i = 0; i < f->child_count; ++i) {
-                        result += resourceChild(pathStr, f->children[i].name);
+                        result += resourceChild(pathStr, f->children[i]->name);
                 }
                 for(size_t i = 0; i < f->file_count; ++i) {
                         result += resourceChild(pathStr, f->files[i].name);
@@ -83,9 +83,9 @@ List<FilePath> Dir::entryList(const String &filter) const {
                 if(f == nullptr) return result;
                 const char *filterCstr = filter.str().c_str();
                 for(size_t i = 0; i < f->child_count; ++i) {
-                        if(fnmatch(filterCstr, f->children[i].name, 0) == 0) {
+                        if(fnmatch(filterCstr, f->children[i]->name, 0) == 0) {
                                 result += resourceChild(pathStr,
-                                                        f->children[i].name);
+                                                        f->children[i]->name);
                         }
                 }
                 for(size_t i = 0; i < f->file_count; ++i) {

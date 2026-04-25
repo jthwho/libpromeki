@@ -135,12 +135,12 @@ struct MemSpaceRegistry {
                                 size_t allocSize = (a.size + a.align - 1) & ~(a.align - 1);
                                 a.ptr = std::aligned_alloc(a.align, allocSize);
                                 PROMEKI_ASSERT(a.ptr != nullptr);
-                                promekiDebug("%p: system allocate %d (aligned %d), align %d", a.ptr, (int)a.size, (int)allocSize, (int)a.align);
+                                //promekiDebug("%p: system allocate %d (aligned %d), align %d", a.ptr, (int)a.size, (int)allocSize, (int)a.align);
                         },
                         .release = [](MemAllocation &a) -> void {
                                 // Wrapper guarantees: a.ptr != nullptr.
                                 PROMEKI_ASSERT(a.ptr != nullptr);
-                                promekiDebug("%p: system free", a.ptr);
+                                //promekiDebug("%p: system free", a.ptr);
                                 std::free(a.ptr);
                         },
                         .copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> bool {
@@ -174,21 +174,21 @@ struct MemSpaceRegistry {
                                 size_t allocSize = (a.size + a.align - 1) & ~(a.align - 1);
                                 a.ptr = std::aligned_alloc(a.align, allocSize);
                                 PROMEKI_ASSERT(a.ptr != nullptr);
-                                promekiDebug("%p: secure allocate %d (aligned %d), align %d", a.ptr, (int)a.size, (int)allocSize, (int)a.align);
+                                //promekiDebug("%p: secure allocate %d (aligned %d), align %d", a.ptr, (int)a.size, (int)allocSize, (int)a.align);
                                 Error err = promeki::secureLock(a.ptr, allocSize);
                                 if(err.isError()) {
-                                        promekiDebug("%p: secureLock failed (%s), buffer may be swapped to disk",
+                                        promekiWarn("%p: secureLock failed (%s), buffer may be swapped to disk",
                                                 a.ptr, err.desc().cstr());
                                 }
                         },
                         .release = [](MemAllocation &a) -> void {
                                 // Wrapper guarantees: a.ptr != nullptr.
                                 PROMEKI_ASSERT(a.ptr != nullptr);
-                                promekiDebug("%p: secure free", a.ptr);
+                                //promekiDebug("%p: secure free", a.ptr);
                                 promeki::secureZero(a.ptr, a.size);
                                 Error err = promeki::secureUnlock(a.ptr, a.size);
                                 if(err.isError()) {
-                                        promekiDebug("%p: secureUnlock failed (%s)", a.ptr, err.desc().cstr());
+                                        promekiWarn("%p: secureUnlock failed (%s)", a.ptr, err.desc().cstr());
                                 }
                                 std::free(a.ptr);
                         },

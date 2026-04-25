@@ -14,8 +14,15 @@
 #include <promeki/libraryoptions.h>
 #include <promeki/crashhandler.h>
 #include <promeki/signalhandler.h>
+#include <promeki/env.h>
+#include <promeki/socketaddress.h>
+#if PROMEKI_ENABLE_HTTP
+#include <promeki/debugserver.h>
+#endif
 
 PROMEKI_NAMESPACE_BEGIN
+
+const char *Application::DebugServerEnv = "PROMEKI_DEBUG_SERVER";
 
 Application::Data &Application::data() {
         static Data d;
@@ -39,10 +46,12 @@ Application::Application(int argc, char **argv) {
         if(LibraryOptions::instance().getAs<bool>(LibraryOptions::TerminationSignalHandler)) {
                 SignalHandler::install();
         }
+        maybeStartDebugServerFromEnv();
         return;
 }
 
 Application::~Application() {
+        stopDebugServer();
         SignalHandler::uninstall();
         CrashHandler::uninstall();
         delete data().mainThread;
@@ -171,5 +180,73 @@ int Application::exitCode() {
 int Application::exec() {
         return _eventLoop.exec();
 }
+
+#if PROMEKI_ENABLE_HTTP
+
+Error Application::startDebugServer(const SocketAddress &address) {
+        if(data().debugServer) {
+                if(data().debugServer->isListening()) return Error::AlreadyOpen;
+        } else {
+                data().debugServer = UniquePtr<DebugServer>::create();
+                data().debugServer->installDefaultModules();
+        }
+        return data().debugServer->listen(address);
+}
+
+Error Application::startDebugServer(uint16_t port) {
+        auto [addr, err] = DebugServer::parseSpec(String(":") + String::number(port));
+        if(err.isError()) return err;
+        return startDebugServer(addr);
+}
+
+void Application::stopDebugServer() {
+        if(!data().debugServer) return;
+        data().debugServer->close();
+        data().debugServer.clear();
+}
+
+DebugServer *Application::debugServer() {
+        return data().debugServer.get();
+}
+
+void Application::maybeStartDebugServerFromEnv() {
+        String spec = Env::get(DebugServerEnv);
+        if(spec.isEmpty()) return;
+        auto [addr, perr] = DebugServer::parseSpec(spec);
+        if(perr.isError()) {
+                promekiWarn("%s=\"%s\" is not a valid host:port spec — debug server disabled",
+                        DebugServerEnv, spec.cstr());
+                return;
+        }
+        Error err = startDebugServer(addr);
+        if(err.isError()) {
+                promekiWarn("Failed to start debug server on %s: %s",
+                        addr.toString().cstr(), err.name().cstr());
+                return;
+        }
+        promekiInfo("Debug server listening on %s", addr.toString().cstr());
+}
+
+#else  // !PROMEKI_ENABLE_HTTP
+
+Error Application::startDebugServer(const SocketAddress &) {
+        return Error::NotSupported;
+}
+
+Error Application::startDebugServer(uint16_t) {
+        return Error::NotSupported;
+}
+
+void Application::stopDebugServer() {
+}
+
+DebugServer *Application::debugServer() {
+        return nullptr;
+}
+
+void Application::maybeStartDebugServerFromEnv() {
+}
+
+#endif  // PROMEKI_ENABLE_HTTP
 
 PROMEKI_NAMESPACE_END

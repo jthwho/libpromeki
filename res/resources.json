@@ -14,6 +14,27 @@
                     "source": "./.PROMEKI/fonts/FiraCodeNerdFontMono-Regular.ttf"
                 }
             ]
+        },
+        {
+            "type": "folder",
+            "path": ".PROMEKI/debug",
+            "entries": [
+                {
+                    "type": "file",
+                    "path": "index.html",
+                    "source": "./.PROMEKI/debug/index.html"
+                },
+                {
+                    "type": "file",
+                    "path": "app.js",
+                    "source": "./.PROMEKI/debug/app.js"
+                },
+                {
+                    "type": "file",
+                    "path": "style.css",
+                    "source": "./.PROMEKI/debug/style.css"
+                }
+            ]
         }
     ]
 }

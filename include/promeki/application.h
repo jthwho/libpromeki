@@ -12,13 +12,17 @@
 
 #include <promeki/namespace.h>
 #include <promeki/eventloop.h>
+#include <promeki/error.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
+#include <promeki/uniqueptr.h>
 #include <promeki/uuid.h>
 
 PROMEKI_NAMESPACE_BEGIN
 class Thread;
 class IODevice;
+class DebugServer;
+class SocketAddress;
 PROMEKI_NAMESPACE_END
 
 PROMEKI_NAMESPACE_BEGIN
@@ -333,6 +337,67 @@ class Application {
                 static int exitCode();
 
                 /**
+                 * @brief Environment variable consulted at construction time.
+                 *
+                 * If set to a non-empty spec accepted by
+                 * @ref DebugServer::parseSpec (e.g. @c ":8085",
+                 * @c "127.0.0.1:8085", @c "0.0.0.0:8085"), the
+                 * @ref Application constructor calls
+                 * @ref startDebugServer with the parsed address.  Parse
+                 * or bind failures are logged at @c warn level and are
+                 * never fatal.
+                 */
+                static const char *DebugServerEnv;
+
+                /**
+                 * @brief Starts the embedded debug HTTP server on @p address.
+                 *
+                 * Constructs (if needed) the @ref DebugServer, calls
+                 * @ref DebugServer::installDefaultModules so the
+                 * standard URL space (@c /promeki/debug ...) is mounted,
+                 * and binds to @p address.  Calling this while the
+                 * debug server is already listening fails with
+                 * @ref Error::AlreadyOpen — call @ref stopDebugServer
+                 * first to rebind.
+                 *
+                 * The @ref DebugServer's @ref EventLoop affinity is
+                 * inherited from the calling thread at the moment of
+                 * the first @c startDebugServer call (typically the
+                 * main thread, when invoked from within or just after
+                 * @ref Application construction).
+                 */
+                static Error startDebugServer(const SocketAddress &address);
+
+                /**
+                 * @brief Convenience: starts the debug server on @p port at loopback.
+                 *
+                 * Equivalent to @ref startDebugServer with
+                 * @ref DebugServer::DefaultBindHost.  Pass an explicit
+                 * @ref SocketAddress to bind to other interfaces.
+                 */
+                static Error startDebugServer(uint16_t port);
+
+                /**
+                 * @brief Stops the debug server, if running.
+                 *
+                 * Tears down the @ref DebugServer and closes any
+                 * connected clients.  No-op if the debug server has
+                 * never been started.  The @ref DebugServer object
+                 * itself is destroyed — a subsequent
+                 * @ref startDebugServer constructs a fresh one.
+                 */
+                static void stopDebugServer();
+
+                /**
+                 * @brief Returns the active @ref DebugServer, or @c nullptr.
+                 *
+                 * Useful for tests and for applications that want to
+                 * mount additional routes alongside the default debug
+                 * modules.
+                 */
+                static DebugServer *debugServer();
+
+                /**
                  * @brief Runs the main event loop until quit() is called.
                  *
                  * Thin wrapper around @c mainEventLoop()->exec().  The
@@ -351,15 +416,18 @@ class Application {
 
         private:
                 struct Data {
-                        StringList         arguments;
-                        UUID               appUUID;
-                        String             appName;
-                        Thread             *mainThread = nullptr;
-                        int                exitCode = 0;
-                        bool               shouldQuit = false;
-                        QuitRequestHandler quitHandler;
+                        StringList              arguments;
+                        UUID                    appUUID;
+                        String                  appName;
+                        Thread                  *mainThread = nullptr;
+                        int                     exitCode = 0;
+                        bool                    shouldQuit = false;
+                        QuitRequestHandler      quitHandler;
+                        UniquePtr<DebugServer>  debugServer;
                 };
                 static Data &data();
+
+                static void maybeStartDebugServerFromEnv();
 
                 // The main-thread EventLoop.  Constructed as a member
                 // of Application so subsystems installed on the stack

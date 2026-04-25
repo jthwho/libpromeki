@@ -151,12 +151,20 @@ class HttpServer : public ObjectBase {
                  *
                  * Receives the freshly-constructed @ref WebSocket
                  * (already attached to the upgraded socket and in the
-                 * @ref WebSocket::Connected state).  Lifetime of the
-                 * WebSocket is owned by the application — the callback
-                 * is responsible for re-parenting or storing it
-                 * somewhere that outlives the connection.
+                 * @ref WebSocket::Connected state) along with the
+                 * @ref HttpRequest that triggered the upgrade — useful
+                 * for reading query parameters or path placeholders
+                 * negotiated during routing.  The request is a
+                 * snapshot taken at handshake time, so its body and
+                 * headers are stable for the duration of the call.
+                 *
+                 * Lifetime of the WebSocket is owned by the
+                 * application — the callback is responsible for
+                 * re-parenting or storing it somewhere that outlives
+                 * the connection.
                  */
-                using WebSocketHandler = std::function<void(WebSocket *socket)>;
+                using WebSocketHandler =
+                        std::function<void(WebSocket *socket, const HttpRequest &request)>;
 
                 /**
                  * @brief Registers a route that upgrades to WebSocket on @p pattern.

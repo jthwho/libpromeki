@@ -10,6 +10,7 @@
 #include <promeki/fileinfo.h>
 #include <promeki/url.h>
 #include <promeki/datetime.h>
+#include <promeki/resource.h>
 #include <promeki/stringlist.h>
 #include <promeki/iodevice.h>
 #include <cerrno>
@@ -151,6 +152,18 @@ String HttpFileHandler::resolveRequestPath(const HttpRequest &request) const {
 // ============================================================
 // ETag / Last-Modified helpers
 // ============================================================
+
+// Stable epoch for cirf-baked resources, which carry no real mtime.
+// Captured once at process start: a running server keeps issuing 304s
+// for unchanged resources, but a restart (which is when bundled
+// resources can have actually changed) invalidates client caches so
+// browsers re-fetch.  Without this, both Last-Modified and ETag would
+// be a fixed `0`/`1970-01-01` and a stale browser cache would survive
+// across rebuilds — exactly the case bitten in the debug UI.
+static int64_t resourceMtimeEpoch() {
+        static const int64_t kStart = static_cast<int64_t>(std::time(nullptr));
+        return kStart;
+}
 
 String HttpFileHandler::etagFor(int64_t size, int64_t mtimeEpoch) {
         // Weak ETag: stable across whole-file replaces but not
@@ -294,6 +307,70 @@ void HttpFileHandler::serve(const HttpRequest &request,
         if(full.isEmpty()) {
                 response.setStatus(HttpStatus::Forbidden);
                 response.setText("Forbidden");
+                return;
+        }
+
+        // Resource paths bypass the std::filesystem-backed FileInfo
+        // (which only knows about real on-disk entries) and consult
+        // the cirf-backed Resource registry.  Both kinds of input
+        // converge below at the same metadata variables (fileSize,
+        // mtimeEpoch).  Resource paths have no meaningful mtime, so
+        // we emit a stable zero — the etag still varies with size
+        // and content (the size is part of the cirf descriptor).
+        const bool isResource = Resource::isResourcePath(full);
+
+        if(isResource) {
+                // Strip any trailing slash that the FilePath join may
+                // have produced when the request was for a directory.
+                while(full.length() > 2 && full.endsWith(String("/"))) {
+                        full = full.left(full.length() - 1);
+                }
+                // Try the literal path first.  If it isn't a file but
+                // an index name is configured, retry with the index
+                // appended — that's the canonical "GET /dir/" → serve
+                // /dir/index.html behaviour.
+                if(Resource::findFile(full) == nullptr && !_indexFile.isEmpty()) {
+                        const String withIndex = full + "/" + _indexFile;
+                        if(Resource::findFile(withIndex) != nullptr) {
+                                full = withIndex;
+                        }
+                }
+                if(Resource::findFile(full) == nullptr) {
+                        response = HttpResponse::notFound();
+                        return;
+                }
+                const int64_t fileSize   = static_cast<int64_t>(Resource::size(full));
+                const int64_t mtimeEpoch = resourceMtimeEpoch();
+                const String  etag       = etagFor(fileSize, mtimeEpoch);
+                const String  lastMod    = httpDateFor(mtimeEpoch);
+                const String  mime       = mimeType(full);
+
+                if(request.header("If-None-Match") == etag) {
+                        response.setStatus(HttpStatus::NotModified);
+                        response.setHeader("ETag", etag);
+                        response.setHeader("Last-Modified", lastMod);
+                        return;
+                }
+
+                response.setHeader("ETag", etag);
+                response.setHeader("Last-Modified", lastMod);
+                response.setHeader("Accept-Ranges", "bytes");
+                if(serveRange(request, response, full, fileSize, mime)) return;
+
+                IODevice::Shared dev = IODevice::Shared::takeOwnership(new File(full));
+                File *f = static_cast<File *>(const_cast<IODevice *>(dev.ptr()));
+                Error err = f->open(IODevice::ReadOnly);
+                if(err.isError()) {
+                        response = HttpResponse::internalError("Could not open resource");
+                        return;
+                }
+                response.setStatus(HttpStatus::Ok);
+                if(m == HttpMethod::Head) {
+                        response.setHeader("Content-Type", mime);
+                        response.setHeader("Content-Length", String::number(fileSize));
+                        return;
+                }
+                response.setBodyStream(dev, fileSize, mime);
                 return;
         }
 

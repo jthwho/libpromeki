@@ -53,6 +53,8 @@ option(PROMEKI_BUILD_SDL        "Build the promeki-sdl library"    ${SDL3_FOUND}
 option(PROMEKI_BUILD_UTILS      "Build utility applications"       ON)
 option(PROMEKI_BUILD_DEMOS      "Build demonstration applications" ON)
 option(PROMEKI_BUILD_TESTS      "Build unit tests"                 ON)
+option(PROMEKI_RUN_TESTS_AFTER_BUILD
+    "Run each unit test as a POST_BUILD step after its exec is linked" ON)
 option(PROMEKI_BUILD_DOCS       "Build documentation"              OFF)
 option(PROMEKI_BUILD_BENCHMARKS "Build the promeki-bench utility"  ON)
 # Per-TU build statistics: wraps every compile with /usr/bin/time -v so
@@ -1205,6 +1207,8 @@ endif()
 # HTTP sources (subset of network; vendored llhttp parser)
 if(PROMEKI_ENABLE_HTTP)
     list(APPEND PROMEKI_HEADERS
+        include/promeki/debugmodules.h
+        include/promeki/debugserver.h
         include/promeki/httpclient.h
         include/promeki/httpconnection.h
         include/promeki/httpfilehandler.h
@@ -1219,6 +1223,8 @@ if(PROMEKI_ENABLE_HTTP)
         include/promeki/websocket.h
     )
     list(APPEND PROMEKI_SOURCES
+        src/network/debugmodules.cpp
+        src/network/debugserver.cpp
         src/network/httpclient.cpp
         src/network/httpconnection.cpp
         src/network/httpfilehandler.cpp
@@ -2126,6 +2132,7 @@ if(PROMEKI_BUILD_TESTS)
 
     if(PROMEKI_ENABLE_HTTP)
         list(APPEND UNITTEST_SOURCES
+            tests/unit/network/debugserver.cpp
             tests/unit/network/httpclient.cpp
             tests/unit/network/httpheaders.cpp
             tests/unit/network/httpmethod.cpp
@@ -2306,21 +2313,32 @@ if(PROMEKI_BUILD_TESTS)
         set_tests_properties(unittest-sdl PROPERTIES TIMEOUT 60)
     endif()
 
-    # Run tests as part of the normal build
-    set(PROMEKI_TEST_TARGETS unittest-promeki)
-    if(PROMEKI_BUILD_TUI)
-        list(APPEND PROMEKI_TEST_TARGETS unittest-tui)
-    endif()
-    if(PROMEKI_BUILD_SDL)
-        list(APPEND PROMEKI_TEST_TARGETS unittest-sdl)
-    endif()
+    # Run all unit tests sequentially after every test exec is built.
+    # The stamp-file pattern lets `add_custom_command(OUTPUT ...)` skip
+    # the ctest invocation when no test exec was relinked since the
+    # last run.  --parallel 1 is explicit so ctest stays serial even
+    # if CTEST_PARALLEL_LEVEL is set in the environment.
+    if(PROMEKI_RUN_TESTS_AFTER_BUILD)
+        set(PROMEKI_TEST_TARGETS unittest-promeki)
+        if(PROMEKI_BUILD_TUI)
+            list(APPEND PROMEKI_TEST_TARGETS unittest-tui)
+        endif()
+        if(PROMEKI_BUILD_SDL)
+            list(APPEND PROMEKI_TEST_TARGETS unittest-sdl)
+        endif()
 
-    add_custom_target(run-tests ALL
-        COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
-        DEPENDS ${PROMEKI_TEST_TARGETS}
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        COMMENT "Running unit tests"
-    )
+        set(PROMEKI_TESTS_STAMP ${CMAKE_BINARY_DIR}/CMakeFiles/run-tests.stamp)
+        add_custom_command(
+            OUTPUT ${PROMEKI_TESTS_STAMP}
+            COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --parallel 1
+            COMMAND ${CMAKE_COMMAND} -E touch ${PROMEKI_TESTS_STAMP}
+            DEPENDS ${PROMEKI_TEST_TARGETS}
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Running unit tests"
+            VERBATIM
+        )
+        add_custom_target(run-tests ALL DEPENDS ${PROMEKI_TESTS_STAMP})
+    endif()
 endif()
 
 # Custom Clean Targets #########################################################
@@ -2338,6 +2356,7 @@ if(PROMEKI_BUILD_TESTS)
         ${CMAKE_BINARY_DIR}/CMakeFiles/unittest-promeki.dir
         ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest-promeki
         ${CMAKE_BINARY_DIR}/CMakeFiles/run-tests.dir
+        ${CMAKE_BINARY_DIR}/CMakeFiles/run-tests.stamp
     )
 endif()
 
