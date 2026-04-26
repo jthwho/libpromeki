@@ -24,6 +24,7 @@ PROMEKI_REGISTER_MEDIAIO(MediaIOTask_Burn)
 MediaIO::FormatDesc MediaIOTask_Burn::formatDesc() {
         return {
                 "Burn",
+                "Burn-in (Timecode / Text)",
                 "Text burn-in overlay on video frames",
                 {},
                 false,  // canBeSource

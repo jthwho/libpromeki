@@ -35,6 +35,27 @@
                     "source": "./.PROMEKI/debug/style.css"
                 }
             ]
+        },
+        {
+            "type": "folder",
+            "path": ".PROMEKI/explorer",
+            "entries": [
+                {
+                    "type": "file",
+                    "path": "index.html",
+                    "source": "./.PROMEKI/explorer/index.html"
+                },
+                {
+                    "type": "file",
+                    "path": "app.js",
+                    "source": "./.PROMEKI/explorer/app.js"
+                },
+                {
+                    "type": "file",
+                    "path": "style.css",
+                    "source": "./.PROMEKI/explorer/style.css"
+                }
+            ]
         }
     ]
 }

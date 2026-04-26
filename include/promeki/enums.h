@@ -1505,6 +1505,36 @@ inline const MatrixCoefficients MatrixCoefficients::BT2020_NCL  {  9 };
 inline const MatrixCoefficients MatrixCoefficients::BT2020_CL   { 10 };
 inline const MatrixCoefficients MatrixCoefficients::SMPTE2085   { 11 };
 
+/**
+ * @brief Well-known Enum type for @ref MediaIOTask_NullPacing pacing strategy.
+ *
+ * Selects how the null-pacing sink times its frame consumption.
+ * Used as the value of @ref MediaConfig::NullPacingMode.
+ *
+ * - @c Wallclock — emit one frame per @c 1/TargetFps wall-clock
+ *                  interval; frames arriving inside an active interval
+ *                  are dropped (counted in @ref MediaIOStats::FramesDropped)
+ *                  rather than queued.  This is the default and the
+ *                  mode used by the demo "fake playback device".
+ * - @c Free      — drain every incoming frame at the upstream's
+ *                  natural rate.  Useful as a passthrough sink for
+ *                  measuring the upstream stage in isolation.
+ */
+class NullPacingMode : public TypedEnum<NullPacingMode> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("NullPacingMode", 0,
+                                { "Wallclock", 0 },
+                                { "Free",      1 });
+
+                using TypedEnum<NullPacingMode>::TypedEnum;
+
+                static const NullPacingMode Wallclock;
+                static const NullPacingMode Free;
+};
+
+inline const NullPacingMode NullPacingMode::Wallclock { 0 };
+inline const NullPacingMode NullPacingMode::Free      { 1 };
+
 /** @} */
 
 PROMEKI_NAMESPACE_END

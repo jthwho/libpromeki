@@ -48,6 +48,7 @@ static Error frameBridgeUrlToConfig(const Url &url, MediaIO::Config *outConfig) 
 MediaIO::FormatDesc MediaIOTask_FrameBridge::formatDesc() {
         MediaIO::FormatDesc desc{};
         desc.name = "FrameBridge";
+        desc.displayName = "Frame Bridge";
         desc.description = "Cross-process shared-memory frame transport";
         desc.extensions = {};
         desc.canBeSource = true;   // reads from bridge (consumer)

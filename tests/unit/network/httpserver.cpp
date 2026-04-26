@@ -318,6 +318,22 @@ TEST_CASE("HttpServer - exposeDatabase") {
                 CHECK(db.getAs<uint64_t>(kDbWidth) == 3840);
         }
 
+        SUBCASE("PUT out-of-range value -> 400 with validator detail") {
+                HttpHeaders extra;
+                extra.set("Content-Type", "application/json");
+                // Width spec is 1..8192; 99999 violates the range and
+                // must be rejected by the now-default Strict mode with
+                // the validator's specific error description in the
+                // body (rather than the old generic "Validation failed").
+                auto rsp = doRequest(fix.port, "PUT", "/cfg/Width",
+                        R"({"value":99999})", extra);
+                CHECK(rsp.status == 400);
+                CHECK(rsp.body.contains("Width"));
+                CHECK(rsp.body.contains("range"));
+                // Original value untouched.
+                CHECK(db.getAs<uint64_t>(kDbWidth) == 1920);
+        }
+
         SUBCASE("DELETE clears entry") {
                 auto rsp = doRequest(fix.port, "DELETE", "/cfg/Width");
                 CHECK(rsp.status == 204);

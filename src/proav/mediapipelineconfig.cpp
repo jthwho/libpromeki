@@ -181,8 +181,13 @@ MediaPipelineConfig MediaPipelineConfig::fromJson(const JsonObject &obj, Error *
                                 // Delegate per-entry coercion to VariantDatabase so
                                 // spec-driven type restoration happens uniformly
                                 // across every subclass.
-                                cj.forEach([&s](const String &key, const Variant &val) {
-                                        s.config.setFromJson(MediaConfig::ID(key), val);
+                                cj.forEach([&s, &good](const String &key, const Variant &val) {
+                                        Error serr = s.config.setFromJson(MediaConfig::ID(key), val);
+                                        if(serr.isError()) {
+                                                promekiWarn("MediaPipelineConfig::fromJson: stage '%s' config key '%s' rejected: %s",
+                                                            s.name.cstr(), key.cstr(), serr.desc().cstr());
+                                                good = false;
+                                        }
                                 });
                         }
                         if(sj.valueIsObject("metadata")) {

@@ -655,3 +655,43 @@ TEST_CASE("VideoEncoder::create with null config succeeds and skips configure") 
         CHECK(typed->configuredBitrate() == 0);
         delete enc;
 }
+
+// ===========================================================================
+// Invalid sentinel name round-trips losslessly
+// ===========================================================================
+//
+// VideoCodec() is a legitimate value used as a "no codec" sentinel.
+// Because Variant serializes it via toString() and parses back via
+// fromString → lookup, the "Invalid" sentinel name must be registered
+// so the round-trip is lossless and JSON-serialised defaults survive
+// a parse-back.
+
+TEST_CASE("VideoCodec: Invalid sentinel name round-trips through lookup") {
+        VideoCodec inv;
+        REQUIRE(!inv.isValid());
+        REQUIRE(inv.id() == VideoCodec::Invalid);
+        REQUIRE(inv.name() == "Invalid");
+
+        auto r = VideoCodec::lookup("Invalid");
+        CHECK(error(r).isOk());
+        CHECK(value(r).id() == VideoCodec::Invalid);
+
+        // A name that's genuinely missing still reports IdNotFound.
+        auto miss = VideoCodec::lookup("DefinitelyNotARealCodec");
+        CHECK(error(miss) == Error::IdNotFound);
+}
+
+TEST_CASE("VideoCodec: every registered ID round-trips through lookup by name") {
+        for(auto id : VideoCodec::registeredIDs()) {
+                VideoCodec vc(id);
+                CAPTURE(vc.name());
+                auto r = VideoCodec::lookup(vc.name());
+                CHECK(error(r).isOk());
+                CHECK(value(r).id() == id);
+        }
+        // Plus the Invalid sentinel.
+        VideoCodec inv;
+        auto r = VideoCodec::lookup(inv.name());
+        CHECK(error(r).isOk());
+        CHECK(value(r).id() == VideoCodec::Invalid);
+}

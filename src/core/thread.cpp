@@ -117,6 +117,12 @@ Thread *Thread::adoptCurrentThread() {
         t->_running.setValue(true);
         t->_nativeId.setValue(currentNativeId());
         t->_stdId.setValue(std::this_thread::get_id());
+        // Cache the calling thread's current EventLoop now so that
+        // cross-thread callers of threadEventLoop() (e.g. the signal
+        // watcher thread invoking Application::mainEventLoop() on a
+        // SIGINT) get a valid pointer without first having to be
+        // primed by a same-thread query.
+        t->_threadLoop = EventLoop::current();
         _currentThread = t;
         return t;
 }

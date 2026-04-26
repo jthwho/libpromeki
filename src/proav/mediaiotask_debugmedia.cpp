@@ -52,6 +52,7 @@ static Error debugMediaUrlToConfig(const Url &url, MediaIO::Config *outConfig) {
 MediaIO::FormatDesc MediaIOTask_DebugMedia::formatDesc() {
         MediaIO::FormatDesc desc;
         desc.name            = "PMDF";
+        desc.displayName     = "Debug Media (.pmdf)";
         desc.description     = "ProMEKI Debug Frame (.pmdf) — lossless Frame capture for debugging";
         desc.extensions      = {"pmdf"};
         desc.canBeSource     = true;

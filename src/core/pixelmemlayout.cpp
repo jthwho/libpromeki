@@ -1368,9 +1368,10 @@ struct PixelMemLayoutRegistry {
 
         void add(PixelMemLayout::Data d) {
                 PixelMemLayout::ID id = d.id;
-                if(d.id != PixelMemLayout::Invalid) {
-                        nameMap[d.name] = id;
-                }
+                // Register every name including the "Invalid" sentinel
+                // so a Variant String round-trip is lossless — see
+                // PixelMemLayout::registerData for the rationale.
+                nameMap[d.name] = id;
                 entries[id] = std::move(d);
         }
 };
@@ -1389,16 +1390,28 @@ const PixelMemLayout::Data *PixelMemLayout::lookupData(ID id) {
 
 void PixelMemLayout::registerData(Data &&data) {
         auto &reg = registry();
-        if(data.id != Invalid) {
-                reg.nameMap[data.name] = data.id;
-        }
+        // The "Invalid" sentinel name is registered too so a Variant
+        // String round-trip (PixelMemLayout() → "Invalid" →
+        // PixelMemLayout()) is lossless.  See PixelFormat::registerData
+        // for the rationale; the same self-consistency rule applies
+        // here.
+        reg.nameMap[data.name] = data.id;
         reg.entries[data.id] = std::move(data);
 }
 
 PixelMemLayout PixelMemLayout::lookup(const String &name) {
+        return lookup(name, nullptr);
+}
+
+PixelMemLayout PixelMemLayout::lookup(const String &name, Error *err) {
         auto &reg = registry();
         auto it = reg.nameMap.find(name);
-        return (it != reg.nameMap.end()) ? PixelMemLayout(it->second) : PixelMemLayout(Invalid);
+        if(it == reg.nameMap.end()) {
+                if(err != nullptr) *err = Error::IdNotFound;
+                return PixelMemLayout(Invalid);
+        }
+        if(err != nullptr) *err = Error::Ok;
+        return PixelMemLayout(it->second);
 }
 
 PixelMemLayout::IDList PixelMemLayout::registeredIDs() {

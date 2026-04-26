@@ -40,4 +40,14 @@ class Variant;
  */
 class VariantList;
 
+/**
+ * @brief String-keyed map of @ref Variant values.
+ *
+ * Full definition in @c variant.h.  Forward-declared here for the
+ * same reasons as @ref Variant — the full @c Map<String, Variant>
+ * instantiation is heavy and shouldn't be paid for by every header
+ * that simply needs to refer to the type.
+ */
+class VariantMap;
+
 PROMEKI_NAMESPACE_END

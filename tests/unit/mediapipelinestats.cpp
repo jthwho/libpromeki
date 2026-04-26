@@ -10,6 +10,7 @@
 #include <promeki/buffer.h>
 #include <promeki/bufferiodevice.h>
 #include <promeki/datastream.h>
+#include <promeki/framecount.h>
 #include <promeki/pipelinestats.h>
 
 using namespace promeki;
@@ -24,8 +25,8 @@ MediaIOStats makeStageStats(int64_t dropped,
                             double  peakLatency,
                             const String &err = String()) {
         MediaIOStats s;
-        s.set(MediaIOStats::FramesDropped,    dropped);
-        s.set(MediaIOStats::FramesRepeated,   repeated);
+        s.set(MediaIOStats::FramesDropped,    FrameCount(dropped));
+        s.set(MediaIOStats::FramesRepeated,   FrameCount(repeated));
         s.set(MediaIOStats::BytesPerSecond,   bytesPerSec);
         s.set(MediaIOStats::FramesPerSecond,  framesPerSec);
         s.set(MediaIOStats::AverageLatencyMs, avgLatency);
@@ -48,12 +49,13 @@ MediaPipelineStats makeSample() {
 TEST_CASE("MediaPipelineStats_SetAndGet") {
         MediaPipelineStats ps;
         MediaIOStats s;
-        s.set(MediaIOStats::FramesDropped, int64_t(5));
+        s.set(MediaIOStats::FramesDropped, FrameCount(5));
         ps.setStageStats("src", s);
 
         CHECK(ps.containsStage("src"));
         CHECK_FALSE(ps.containsStage("sink"));
-        CHECK(ps.stageStats("src").get(MediaIOStats::FramesDropped).get<int64_t>() == 5);
+        CHECK(ps.stageStats("src").get(MediaIOStats::FramesDropped).get<FrameCount>()
+                        == FrameCount(5));
         // Missing stage returns empty.
         CHECK(ps.stageStats("ghost").size() == 0);
 }
@@ -63,8 +65,8 @@ TEST_CASE("MediaPipelineStats_RecomputeAggregate") {
         const MediaIOStats &agg = ps.aggregate();
 
         // Sums of counters.
-        CHECK(agg.get(MediaIOStats::FramesDropped).get<int64_t>()  == 1);
-        CHECK(agg.get(MediaIOStats::FramesRepeated).get<int64_t>() == 2);
+        CHECK(agg.get(MediaIOStats::FramesDropped).get<FrameCount>()  == FrameCount(1));
+        CHECK(agg.get(MediaIOStats::FramesRepeated).get<FrameCount>() == FrameCount(2));
         // Sum of throughput.
         CHECK(agg.get(MediaIOStats::BytesPerSecond).get<double>()  == doctest::Approx(5000.0));
         CHECK(agg.get(MediaIOStats::FramesPerSecond).get<double>() == doctest::Approx(90.0));
@@ -132,7 +134,7 @@ TEST_CASE("MediaPipelineStats_Describe_NotEmpty") {
 
 TEST_CASE("MediaPipelineStats_PipelineBlockRoundTrip") {
         MediaPipelineStats ps = makeSample();
-        ps.pipeline().set(PipelineStats::FramesProduced, int64_t(100));
+        ps.pipeline().set(PipelineStats::FramesProduced, FrameCount(100));
         ps.pipeline().set(PipelineStats::WriteRetries,   int64_t(7));
         ps.pipeline().set(PipelineStats::PipelineErrors, int64_t(1));
         ps.pipeline().set(PipelineStats::State,          String("Running"));
@@ -143,7 +145,7 @@ TEST_CASE("MediaPipelineStats_PipelineBlockRoundTrip") {
                         MediaPipelineStats::fromJson(ps.toJson(), &err);
                 CHECK(err.isOk());
                 CHECK(round.pipeline().get(PipelineStats::FramesProduced)
-                                .get<int64_t>() == 100);
+                                .get<FrameCount>() == FrameCount(100));
                 CHECK(round.pipeline().get(PipelineStats::WriteRetries)
                                 .get<int64_t>() == 7);
                 CHECK(round.pipeline().get(PipelineStats::State)

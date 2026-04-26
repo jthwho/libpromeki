@@ -250,7 +250,13 @@ struct VideoCodecRegistry {
 
         void add(VideoCodec::Data d) {
                 VideoCodec::ID id = d.id;
-                if(id != VideoCodec::Invalid) nameMap[d.name] = id;
+                // Register every name including the "Invalid" sentinel
+                // so a Variant String round-trip (VideoCodec() →
+                // "Invalid" → VideoCodec()) is lossless.  See the
+                // PixelFormat::registerData rationale; the same
+                // self-consistency rule applies to every TypeRegistry
+                // type.
+                nameMap[d.name] = id;
                 entries[id] = std::move(d);
         }
 };
@@ -279,7 +285,10 @@ void VideoCodec::registerData(Data &&data) {
                 return;
         }
         auto &reg = registry();
-        if(data.id != Invalid) reg.nameMap[data.name] = data.id;
+        // Register every name including the "Invalid" sentinel so a
+        // Variant String round-trip is lossless — see add() / the
+        // PixelFormat::registerData rationale.
+        reg.nameMap[data.name] = data.id;
         reg.entries[data.id] = std::move(data);
 }
 
@@ -367,7 +376,11 @@ Result<VideoCodec> VideoCodec::fromString(const String &spec) {
 }
 
 String VideoCodec::toString() const {
-        if(!isValid()) return String();
+        // Always emit the registered name (including the "Invalid"
+        // sentinel) so a Variant String round-trip is lossless —
+        // returning empty here would force fromString back through
+        // its Error::Invalid early-return and trip spec validation
+        // for any default declared as setDefault(VideoCodec()).
         if(_backend.isValid()) {
                 String bn = _backend.name();
                 if(!bn.isEmpty()) return name() + ":" + bn;

@@ -6,15 +6,23 @@
  */
 
 #include <promeki/debugserver.h>
-#include <promeki/debugmodules.h>
+#include <promeki/httprequest.h>
+#include <promeki/httpresponse.h>
+#include <promeki/httpstatus.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-const String DebugServer::DefaultApiPrefix = "/promeki/debug/api";
-const String DebugServer::DefaultUiPrefix  = "/promeki/debug";
+const String DebugServer::DefaultApiPrefix = "/api";
 const String DebugServer::DefaultBindHost  = "127.0.0.1";
 
-DebugServer::DebugServer(ObjectBase *parent) : ObjectBase(parent) {
+DebugServer::DebugServer(ObjectBase *parent) :
+        ObjectBase(parent),
+        _api(_server, DefaultApiPrefix, this) {
+        _api.setTitle("Promeki Debug API");
+        _api.setDescription(
+                "Built-in diagnostic surface: build info, environment, "
+                "library options, memory stats, logger control, and "
+                "anything else mounted through this server's HttpApi.");
 }
 
 DebugServer::~DebugServer() {
@@ -46,14 +54,21 @@ SocketAddress DebugServer::serverAddress() const {
         return _server.serverAddress();
 }
 
-void DebugServer::installDefaultModules(const String &apiPrefix, const String &uiPrefix) {
-        installBuildInfoDebugRoutes(_server, apiPrefix);
-        installEnvDebugRoutes(_server, apiPrefix);
-        installLibraryOptionsDebugRoutes(_server, apiPrefix);
-        installMemoryDebugRoutes(_server, apiPrefix);
-        installLoggerDebugRoutes(_server, apiPrefix);
-        installDebugFrontendRoutes(_server, uiPrefix);
-        installDebugRootRedirect(_server, uiPrefix);
+void DebugServer::installDefaultModules() {
+        _api.installPromekiAPI();
+        _api.mount();
+
+        // Root redirect is exclusive to DebugServer — applications
+        // that wire the promeki API into their own server keep
+        // control of "/" themselves.  The redirect target is the
+        // debug UI's index page, which lives at <prefix>/promeki/.
+        const String uiTarget = _api.resolve("/promeki/");
+        _server.route("/", HttpMethod::Get,
+                [uiTarget](const HttpRequest &, HttpResponse &res) {
+                        res.setStatus(HttpStatus::Found);
+                        res.setHeader("Location", uiTarget);
+                        res.setText("");
+                });
 }
 
 Result<SocketAddress> DebugServer::parseSpec(const String &spec) {

@@ -694,6 +694,7 @@ class MediaIO : public ObjectBase {
                                 Error(const Url &url, Config *outConfig)>;
 
                         String              name;            ///< @brief Backend name (e.g. "MXF", "VideoDevice").
+                        String              displayName;     ///< @brief Human-readable label (e.g. "MJPEG Preview Stream"); empty falls back to @ref name in UIs / REST.
                         String              description;     ///< @brief Human-readable description.
                         StringList          extensions;      ///< @brief Supported file extensions (no dots).
                         bool                canBeSource;     ///< @brief Whether the backend can act as a source (provides frames).
@@ -1173,6 +1174,22 @@ class MediaIO : public ObjectBase {
                  *         is already adopted or @p task is null.
                  */
                 Error adoptTask(MediaIOTask *task);
+
+                /**
+                 * @brief Returns the adopted task pointer (may be @c nullptr).
+                 *
+                 * Non-owning view onto the @ref MediaIOTask installed by
+                 * @ref adoptTask or by the factory inside @ref create.
+                 * The returned pointer's lifetime is tied to the
+                 * @ref MediaIO instance and is invalidated by destruction
+                 * (or by a future re-adopt).  Callers that need to dispatch
+                 * backend-specific behaviour from the application layer
+                 * (for example wiring a HTTP route through to a registered
+                 * sink) read this and downcast to the concrete subclass
+                 * after verifying the registered backend type via
+                 * @ref MediaConfig::Type.
+                 */
+                MediaIOTask *task() const { return _task.get(); }
 
                 /** @brief Returns the configuration. */
                 const Config &config() const { return _config; }

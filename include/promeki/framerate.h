@@ -10,6 +10,7 @@
 
 #include <promeki/namespace.h>
 #include <promeki/duration.h>
+#include <promeki/list.h>
 #include <promeki/rational.h>
 #include <promeki/result.h>
 #include <promeki/string.h>
@@ -110,6 +111,29 @@ class FrameRate {
                         PROMEKI_WELL_KNOWN_FRAME_RATES
                 };
 #undef X
+
+                struct WellKnown;       ///< @brief See @ref FrameRate::WellKnown defined below.
+
+                /**
+                 * @brief Returns the canonical list of well-known frame rates.
+                 *
+                 * The list is sourced from the same internal table that
+                 * backs the @ref WellKnownRate enum and @ref fromString
+                 * parser, so it is deterministic and stable across calls
+                 * — UI consumers can cache the result.
+                 *
+                 * The order is the canonical broadcast / display
+                 * progression from slowest to fastest (23.98, 24, 25,
+                 * 29.97, 30, ..., 119.88, 120).  The internal enum table
+                 * lists rates in the opposite order for legacy reasons;
+                 * this method reverses that so the dropdown reads
+                 * naturally.
+                 *
+                 * @return List of (label, rate) pairs, one per well-known
+                 *         entry.  Never empty; never contains
+                 *         @ref FPS_Invalid.
+                 */
+                static List<WellKnown> wellKnownRates();
 
                 /** @brief Default constructor. Creates an invalid (zero) frame rate. */
                 FrameRate() = default;
@@ -316,6 +340,23 @@ class FrameRate {
 
         private:
                 RationalType    _fps;
+};
+
+/**
+ * @brief One named entry in @ref FrameRate::wellKnownRates.
+ *
+ * @c label is a human-readable form ("23.98", "29.97", "60", etc.)
+ * suitable for a dropdown UI; @c rate is the canonical FrameRate
+ * value.  The label is intentionally label-style (not just the
+ * numeric form) so future entries can carry context like "(NTSC)"
+ * without polluting the Rational printer.
+ *
+ * Defined out-of-line because the @c FrameRate field requires the
+ * enclosing class to be complete.
+ */
+struct FrameRate::WellKnown {
+        String     label;
+        FrameRate  rate;
 };
 
 PROMEKI_NAMESPACE_END

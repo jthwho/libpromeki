@@ -108,6 +108,7 @@ size_t payloadByteSize(const VideoPayload &vp) {
 MediaIO::FormatDesc MediaIOTask_Inspector::formatDesc() {
         return {
                 "Inspector",
+                "Frame Inspector",
                 "Inspect / validate frames flowing through a pipeline (sink-only).",
                 {},     // No file extensions — pure sink.
                 false,  // canBeSource

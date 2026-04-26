@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HTTP Explorer Demo</title>
+<!--
+  __API_BASE__ is replaced at request time by the demo's main.cpp
+  with whatever apiPrefix it picked.  Browsers resolve relative URLs
+  in the page (the <a href="..."> targets and the fetch() calls in
+  app.js) against this <base>, so the page survives moving the API
+  to any other prefix without source edits.
+
+  Static assets that live OUTSIDE the API base — style.css and
+  app.js — use absolute "/" paths so they bypass <base>.
+-->
+<base href="__API_BASE__/">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+        <h1>HTTP Explorer Demo</h1>
+        <span class="hint">a tiny libpromeki application showing the HttpApi surface</span>
+</header>
+
+<main>
+
+<section>
+        <h2>Browse the API</h2>
+        <ul class="link-grid">
+                <li><a href="index.html">Interactive Explorer</a>
+                        <span class="hint">forms generated from the OpenAPI doc</span></li>
+                <li><a href="_openapi">OpenAPI 3.1 doc</a>
+                        <span class="hint">JSON, importable into Swagger UI / Postman</span></li>
+                <li><a href="_catalog">Native catalog</a>
+                        <span class="hint">promeki-native JSON shape</span></li>
+                <li><a href="promeki/">Debug UI</a>
+                        <span class="hint">log stream, memory, library options</span></li>
+        </ul>
+</section>
+
+<section>
+        <h2>Echo</h2>
+        <p class="hint">Posts to <code>/api/demo/echo</code>.  Empty fields fall back to
+                <code>DemoConfig.Greeting</code> and <code>DemoConfig.Verbose</code>.</p>
+        <div class="row">
+                <label>Text <input id="echo-text" type="text" placeholder="(default greeting)"></label>
+                <label class="cb"><input id="echo-verbose" type="checkbox"> verbose</label>
+                <button id="echo-send" type="button">Send</button>
+        </div>
+        <pre id="echo-response" class="response">…</pre>
+</section>
+
+<section>
+        <h2>Config</h2>
+        <p class="hint">Read/write <code>DemoConfig</code> keys via the standard CRUD adapter.</p>
+        <table id="config-table" class="kv">
+                <thead><tr><th>Key</th><th>Value</th><th>Spec</th><th></th></tr></thead>
+                <tbody></tbody>
+        </table>
+        <button id="config-refresh" type="button">Refresh</button>
+</section>
+
+<section>
+        <h2>State</h2>
+        <p class="hint">Live values resolved through <code>VariantLookup&lt;DemoState&gt;</code>.
+                Each row hits <code>/api/demo/state/&lt;name&gt;</code>.</p>
+        <table id="state-table" class="kv">
+                <thead><tr><th>Path</th><th>Value</th></tr></thead>
+                <tbody></tbody>
+        </table>
+        <button id="state-refresh" type="button">Refresh</button>
+</section>
+
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>

@@ -31,6 +31,8 @@ MediaPipeline::MediaPipeline(ObjectBase *parent)
 MediaPipeline::~MediaPipeline() {
         // Best-effort tear down; errors are logged by close() itself.
         (void)close();
+        removeLoggerTap();
+        stopStatsTimer();
 }
 
 // ============================================================================
@@ -287,6 +289,13 @@ Error MediaPipeline::build(const MediaPipelineConfig &config, bool autoplan) {
         }
 
         _state = State::Built;
+        publishStateChanged();
+        if(autoplan) {
+                PipelineEvent ev;
+                ev.setKind(PipelineEvent::Kind::PlanResolved);
+                ev.setJsonPayload(_config.toJson());
+                publish(ev);
+        }
         return Error::Ok;
 }
 
@@ -358,8 +367,10 @@ Error MediaPipeline::open() {
                 }
                 opened.pushToBack(name);
                 stageOpenedSignal.emit(name);
+                publishStageState(name, String("Opened"));
         }
         _state = State::Open;
+        publishStateChanged();
         return Error::Ok;
 }
 
@@ -386,6 +397,7 @@ Error MediaPipeline::start() {
                                 [this, srcName]() { drainSource(srcName); }, this);
                 }
                 stageStartedSignal.emit(srcName);
+                publishStageState(srcName, String("Started"));
         }
 
         // Connect writeError for every stage that isn't a pure source
@@ -397,9 +409,12 @@ Error MediaPipeline::start() {
                 io->writeErrorSignal.connect(
                         [this, stageName](Error e) { onWriteError(stageName, e); }, this);
                 stageStartedSignal.emit(stageName);
+                publishStageState(stageName, String("Started"));
         }
 
         _state = State::Running;
+        publishStateChanged();
+        startStatsTimerIfNeeded();
         _cleanFinish = false;
         _framesProduced.setValue(0);
         _writeRetries.setValue(0);
@@ -433,10 +448,13 @@ Error MediaPipeline::stop() {
                 if(it->second != nullptr) {
                         (void)it->second->cancelPending();
                         stageStoppedSignal.emit(it->first);
+                        publishStageState(it->first, String("Stopped"));
                 }
         }
 
         _state = State::Stopped;
+        publishStateChanged();
+        stopStatsTimer();
         return Error::Ok;
 }
 
@@ -575,9 +593,17 @@ void MediaPipeline::initiateClose(bool clean) {
 }
 
 void MediaPipeline::timerEvent(TimerEvent *e) {
-        if(e != nullptr && e->timerId() == _closeWatchdogTimerId) {
+        if(e == nullptr) {
+                ObjectBase::timerEvent(e);
+                return;
+        }
+        if(e->timerId() == _closeWatchdogTimerId) {
                 _closeWatchdogTimerId = -1;
                 forceCloseRemaining();
+                return;
+        }
+        if(e->timerId() == _statsTimerId) {
+                emitStatsSnapshot();
                 return;
         }
         ObjectBase::timerEvent(e);
@@ -616,6 +642,7 @@ void MediaPipeline::onStageClosed(const String &stageName, Error err) {
         if(err.isError() && _closeError.isOk()) _closeError = err;
         _stagesAwaitingClosed.remove(stageName);
         stageClosedSignal.emit(stageName);
+        publishStageState(stageName, String("Closed"));
         if(_stagesAwaitingClosed.isEmpty() && _closing) {
                 finalizeClose();
         }
@@ -635,6 +662,8 @@ void MediaPipeline::finalizeClose() {
         // they observe @ref State::Closed, so flipping it here unblocks
         // them immediately.
         _state = State::Closed;
+        publishStateChanged();
+        stopStatsTimer();
         bool clean = _cleanFinish && _closeError.isOk();
         finishedSignal.emit(clean);
         closedSignal.emit(_closeError);
@@ -737,6 +766,14 @@ void MediaPipeline::drainSource(const String &srcName) {
                         if(err != Error::Cancelled) {
                                 _pipelineErrors.fetchAndAdd(1);
                                 pipelineErrorSignal.emit(srcName, err);
+                                PipelineEvent ev;
+                                ev.setKind(PipelineEvent::Kind::StageError);
+                                ev.setStageName(srcName);
+                                ev.setPayload(Variant(err.desc()));
+                                Metadata m;
+                                m.set(Metadata::ID(String("code")), err.name());
+                                ev.setMetadata(m);
+                                publish(ev);
                         }
                         initiateClose(/*clean=*/false);
                         return;
@@ -860,6 +897,14 @@ void MediaPipeline::onWriteError(const String &stageName, Error err) {
         if(err != Error::Cancelled) {
                 _pipelineErrors.fetchAndAdd(1);
                 pipelineErrorSignal.emit(stageName, err);
+                PipelineEvent ev;
+                ev.setKind(PipelineEvent::Kind::StageError);
+                ev.setStageName(stageName);
+                ev.setPayload(Variant(err.desc()));
+                Metadata m;
+                m.set(Metadata::ID(String("code")), err.name());
+                ev.setMetadata(m);
+                publish(ev);
         }
         initiateClose(/*clean=*/false);
 }
@@ -910,6 +955,190 @@ StringList MediaPipeline::describe() const {
         return out;
 }
 
+// ============================================================================
+// PipelineEvent dispatch
+// ============================================================================
+
+namespace {
+
+const char *stateName(MediaPipeline::State s) {
+        switch(s) {
+                case MediaPipeline::State::Empty:   return "Empty";
+                case MediaPipeline::State::Built:   return "Built";
+                case MediaPipeline::State::Open:    return "Open";
+                case MediaPipeline::State::Running: return "Running";
+                case MediaPipeline::State::Stopped: return "Stopped";
+                case MediaPipeline::State::Closed:  return "Closed";
+        }
+        return "Empty";
+}
+
+const char *logLevelName(Logger::LogLevel level) {
+        switch(level) {
+                case Logger::Force: return "Force";
+                case Logger::Debug: return "Debug";
+                case Logger::Info:  return "Info";
+                case Logger::Warn:  return "Warn";
+                case Logger::Err:   return "Err";
+        }
+        return "Info";
+}
+
+} // namespace
+
+int MediaPipeline::subscribe(EventCallback cb) {
+        if(!cb) {
+                promekiErr("MediaPipeline::subscribe: empty callback rejected.");
+                return -1;
+        }
+        EventLoop *loop = EventLoop::current();
+        if(loop == nullptr) {
+                promekiErr("MediaPipeline::subscribe: no EventLoop on calling thread.");
+                return -1;
+        }
+
+        bool firstSubscriber = false;
+        int id = -1;
+        {
+                Mutex::Locker lock(_subsMutex);
+                id = _nextSubId++;
+                Subscriber s;
+                s.id   = id;
+                s.fn   = std::move(cb);
+                s.loop = loop;
+                _subscribers.insert(id, s);
+                firstSubscriber = (_subscribers.size() == 1);
+        }
+        if(firstSubscriber) {
+                installLoggerTap();
+        }
+        return id;
+}
+
+void MediaPipeline::unsubscribe(int id) {
+        bool lastSubscriber = false;
+        {
+                Mutex::Locker lock(_subsMutex);
+                auto it = _subscribers.find(id);
+                if(it == _subscribers.end()) return;
+                _subscribers.remove(it);
+                lastSubscriber = _subscribers.isEmpty();
+        }
+        if(lastSubscriber) {
+                removeLoggerTap();
+        }
+}
+
+void MediaPipeline::publish(PipelineEvent ev) {
+        if(ev.timestamp().nanoseconds() == 0) {
+                ev.setTimestamp(TimeStamp::now());
+        }
+
+        promeki::List<Subscriber> snapshot;
+        {
+                Mutex::Locker lock(_subsMutex);
+                if(_subscribers.isEmpty()) return;
+                for(auto it = _subscribers.cbegin();
+                    it != _subscribers.cend(); ++it) {
+                        snapshot.pushToBack(it->second);
+                }
+        }
+
+        for(size_t i = 0; i < snapshot.size(); ++i) {
+                Subscriber &s = snapshot[i];
+                if(s.loop == nullptr || !s.fn) continue;
+                EventCallback fn = s.fn;
+                PipelineEvent copy = ev;
+                s.loop->postCallable([fn = std::move(fn), copy]() mutable {
+                        fn(copy);
+                });
+        }
+}
+
+void MediaPipeline::publishStateChanged() {
+        PipelineEvent ev;
+        ev.setKind(PipelineEvent::Kind::StateChanged);
+        ev.setPayload(Variant(String(stateName(_state))));
+        publish(ev);
+}
+
+void MediaPipeline::publishStageState(const String &stageName,
+                                      const String &transition) {
+        PipelineEvent ev;
+        ev.setKind(PipelineEvent::Kind::StageState);
+        ev.setStageName(stageName);
+        ev.setPayload(Variant(transition));
+        publish(ev);
+}
+
+void MediaPipeline::installLoggerTap() {
+        if(_loggerTap != 0) return;
+        EventLoop *ownerLoop = eventLoop();
+        if(ownerLoop == nullptr) return;
+        _loggerTap = Logger::defaultLogger().installListener(
+                [this, ownerLoop](const Logger::LogEntry &entry,
+                                  const String &threadName) {
+                        PipelineEvent ev;
+                        ev.setKind(PipelineEvent::Kind::Log);
+                        ev.setPayload(Variant(entry.msg));
+                        Metadata m;
+                        m.set(Metadata::ID(String("level")),
+                              String(logLevelName(entry.level)));
+                        if(entry.file != nullptr) {
+                                m.set(Metadata::ID(String("source")),
+                                      String(entry.file));
+                        }
+                        m.set(Metadata::ID(String("line")),
+                              static_cast<int64_t>(entry.line));
+                        if(!threadName.isEmpty()) {
+                                m.set(Metadata::ID(String("threadName")),
+                                      threadName);
+                        }
+                        ev.setMetadata(m);
+                        ownerLoop->postCallable([this, ev]() {
+                                publish(ev);
+                        });
+                }, 0);
+}
+
+void MediaPipeline::removeLoggerTap() {
+        if(_loggerTap == 0) return;
+        Logger::ListenerHandle h = _loggerTap;
+        _loggerTap = 0;
+        Logger::defaultLogger().removeListener(h);
+}
+
+void MediaPipeline::setStatsInterval(Duration interval) {
+        _statsInterval = interval;
+        stopStatsTimer();
+        if(_state == State::Running) startStatsTimerIfNeeded();
+}
+
+void MediaPipeline::startStatsTimerIfNeeded() {
+        if(_statsTimerId >= 0) return;
+        if(_statsInterval.nanoseconds() <= 0) return;
+        if(_state != State::Running) return;
+        int64_t ms = _statsInterval.milliseconds();
+        if(ms <= 0) ms = 1;
+        _statsTimerId = startTimer(static_cast<unsigned int>(ms),
+                                   /*singleShot=*/false);
+}
+
+void MediaPipeline::stopStatsTimer() {
+        if(_statsTimerId < 0) return;
+        stopTimer(_statsTimerId);
+        _statsTimerId = -1;
+}
+
+void MediaPipeline::emitStatsSnapshot() {
+        MediaPipelineStats snap = stats();
+        statsUpdatedSignal.emit(snap);
+        PipelineEvent ev;
+        ev.setKind(PipelineEvent::Kind::StatsUpdated);
+        ev.setJsonPayload(snap.toJson());
+        publish(ev);
+}
+
 MediaPipelineStats MediaPipeline::stats() {
         MediaPipelineStats out;
         for(auto it = _stages.begin(); it != _stages.end(); ++it) {
@@ -938,16 +1167,7 @@ MediaPipelineStats MediaPipeline::stats() {
         // current "one incoming route per stage" rule.
         pp.set(PipelineStats::PausedEdges, int64_t(0));
 
-        const char *stateStr = "Empty";
-        switch(_state) {
-                case State::Empty:   stateStr = "Empty";   break;
-                case State::Built:   stateStr = "Built";   break;
-                case State::Open:    stateStr = "Open";    break;
-                case State::Running: stateStr = "Running"; break;
-                case State::Stopped: stateStr = "Stopped"; break;
-                case State::Closed:  stateStr = "Closed";  break;
-        }
-        pp.set(PipelineStats::State, String(stateStr));
+        pp.set(PipelineStats::State, String(stateName(_state)));
 
         if(_uptimeStarted) {
                 pp.set(PipelineStats::UptimeMs, _uptime.elapsed());

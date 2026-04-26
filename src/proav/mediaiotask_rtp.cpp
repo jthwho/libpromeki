@@ -121,6 +121,7 @@ static bool probeSdpDevice(IODevice *device) {
 MediaIO::FormatDesc MediaIOTask_Rtp::formatDesc() {
         return {
                 "Rtp",
+                "RTP Stream",
                 "RTP video + audio + metadata reader / writer (MJPEG / JPEG XS / raw / L16 / JSON)",
                 {"sdp"}, // Extension match for readers: an SDP file
                          // on disk implies the Rtp reader.  Writers

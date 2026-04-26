@@ -942,3 +942,40 @@ TEST_CASE("PixelMemLayout: Invalid != valid") {
         PixelMemLayout v(PixelMemLayout::I_4x8);
         CHECK(inv != v);
 }
+
+// ============================================================================
+// Lookup by name covers every registered ID plus Invalid
+// ============================================================================
+//
+// The "Invalid" sentinel must round-trip via its registered name so a
+// Variant<PixelMemLayout> serialized through JSON can be parsed back
+// into the same sentinel value — the JSON path emits arg.name() and
+// reads back via lookup.
+
+TEST_CASE("PixelMemLayout: every registered ID round-trips through lookup by name") {
+        Error err;
+        for(auto id : PixelMemLayout::registeredIDs()) {
+                PixelMemLayout pf(id);
+                CAPTURE(pf.name());
+                PixelMemLayout found = PixelMemLayout::lookup(pf.name(), &err);
+                CHECK(err.isOk());
+                CHECK(found.id() == id);
+        }
+}
+
+TEST_CASE("PixelMemLayout: Invalid sentinel name round-trips through lookup") {
+        PixelMemLayout inv;
+        REQUIRE(inv.id() == PixelMemLayout::Invalid);
+        REQUIRE(inv.name() == "Invalid");
+
+        Error err;
+        PixelMemLayout ok = PixelMemLayout::lookup("Invalid", &err);
+        CHECK(err.isOk());
+        CHECK(ok.id() == PixelMemLayout::Invalid);
+
+        Error miss;
+        PixelMemLayout notFound = PixelMemLayout::lookup(
+                "DefinitelyNotARealMemLayout", &miss);
+        CHECK(miss == Error::IdNotFound);
+        CHECK(notFound.id() == PixelMemLayout::Invalid);
+}

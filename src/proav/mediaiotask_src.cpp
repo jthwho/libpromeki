@@ -67,6 +67,7 @@ bool srcBridge(const MediaDesc &from,
 MediaIO::FormatDesc MediaIOTask_SRC::formatDesc() {
         MediaIO::FormatDesc d;
         d.name              = "SRC";
+        d.displayName       = "Sample Rate Converter";
         d.description       = "Audio sample format converter";
         d.canBeSource       = false;
         d.canBeSink         = false;

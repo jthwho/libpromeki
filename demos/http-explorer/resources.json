@@ -1,0 +1,29 @@
+{
+    "metadata": {
+        "library": "http-explorer-demo",
+        "description": "Static UI assets for the HTTP Explorer demo, mounted at :/demo/explorer/"
+    },
+    "entries": [
+        {
+            "type": "folder",
+            "path": "explorer",
+            "entries": [
+                {
+                    "type": "file",
+                    "path": "index.html",
+                    "source": "./assets/index.html"
+                },
+                {
+                    "type": "file",
+                    "path": "app.js",
+                    "source": "./assets/app.js"
+                },
+                {
+                    "type": "file",
+                    "path": "style.css",
+                    "source": "./assets/style.css"
+                }
+            ]
+        }
+    ]
+}

@@ -34,6 +34,7 @@
 #include <promeki/stringlist.h>
 #include <promeki/color.h>
 #include <promeki/list.h>
+#include <promeki/map.h>
 #include <promeki/audiocodec.h>
 #include <promeki/audioformat.h>
 #include <promeki/colormodel.h>
@@ -627,6 +628,28 @@ class VariantList : public List<Variant> {
                 }
                 VariantList(const List<Variant> &other) : List<Variant>(other) {}
                 VariantList(List<Variant> &&other) : List<Variant>(std::move(other)) {}
+};
+
+/**
+ * @brief String-keyed map of @ref Variant values.
+ *
+ * Implemented as a thin subclass of @c Map<String, Variant> so that
+ * @c variant_fwd.h can declare it as an incomplete class — the same
+ * pattern used by @ref VariantList.  Used wherever a request needs
+ * to deliver a heterogeneous, named bag of values to a callee
+ * (RPC argument lists, dynamic config payloads, signal/slot
+ * cross-thread marshalling that already carries names alongside
+ * values).
+ */
+class VariantMap : public Map<String, Variant> {
+        public:
+                using Map<String, Variant>::Map;
+                VariantMap() = default;
+                VariantMap(std::initializer_list<std::pair<const String, Variant>> il) {
+                        for(const auto &kv : il) insert(kv.first, kv.second);
+                }
+                VariantMap(const Map<String, Variant> &other) : Map<String, Variant>(other) {}
+                VariantMap(Map<String, Variant> &&other) : Map<String, Variant>(std::move(other)) {}
 };
 
 // ---------------------------------------------------------------------------

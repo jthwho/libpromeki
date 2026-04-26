@@ -2018,9 +2018,10 @@ struct PixelFormatRegistry {
 
         void add(PixelFormat::Data d) {
                 PixelFormat::ID id = d.id;
-                if(d.id != PixelFormat::Invalid) {
-                        nameMap[d.name] = id;
-                }
+                // Register every name including the "Invalid" sentinel
+                // so a Variant String round-trip is lossless — see
+                // PixelFormat::registerData for the rationale.
+                nameMap[d.name] = id;
                 entries[id] = std::move(d);
         }
 };
@@ -2067,9 +2068,16 @@ static VideoRange autoDeriveVideoRange(const PixelFormat::Data &d) {
 
 void PixelFormat::registerData(Data &&data) {
         auto &reg = registry();
-        if(data.id != Invalid) {
-                reg.nameMap[data.name] = data.id;
-        }
+        // The "Invalid" sentinel name is registered too so a Variant
+        // String round-trip (PixelFormat() → "Invalid" → PixelFormat())
+        // is lossless — defaults that intentionally use Invalid as a
+        // pass-through marker (e.g. CSC's OutputPixelFormat) need to
+        // survive a JSON serialize-then-parse without the parse
+        // failing.  The error-aware @ref lookup overload still
+        // distinguishes a successful sentinel hit from a genuine miss
+        // for callers (like @ref VariantSpec::parseString) that need
+        // that distinction.
+        reg.nameMap[data.name] = data.id;
         // Fill in a reasonable videoRange default when the factory
         // didn't set one explicitly — the library ships a lot of
         // pre-existing factories that predate the field, and they all
@@ -2079,9 +2087,18 @@ void PixelFormat::registerData(Data &&data) {
 }
 
 PixelFormat PixelFormat::lookup(const String &name) {
+        return lookup(name, nullptr);
+}
+
+PixelFormat PixelFormat::lookup(const String &name, Error *err) {
         auto &reg = registry();
         auto it = reg.nameMap.find(name);
-        return (it != reg.nameMap.end()) ? PixelFormat(it->second) : PixelFormat(Invalid);
+        if(it == reg.nameMap.end()) {
+                if(err != nullptr) *err = Error::IdNotFound;
+                return PixelFormat(Invalid);
+        }
+        if(err != nullptr) *err = Error::Ok;
+        return PixelFormat(it->second);
 }
 
 PixelFormat::IDList PixelFormat::registeredIDs() {

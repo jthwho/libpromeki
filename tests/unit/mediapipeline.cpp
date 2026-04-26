@@ -10,15 +10,19 @@
 #include <thread>
 
 #include <doctest/doctest.h>
+#include <promeki/duration.h>
 #include <promeki/elapsedtimer.h>
 #include <promeki/eventloop.h>
 #include <promeki/framecount.h>
+#include <promeki/logger.h>
 #include <promeki/mediapipeline.h>
 #include <promeki/mediapipelineconfig.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/mediaio.h>
 #include <promeki/objectbase.tpp>
+#include <promeki/pipelineevent.h>
 #include <promeki/pipelinestats.h>
+#include <promeki/thread.h>
 #include <promeki/videoformat.h>
 
 using namespace promeki;
@@ -557,6 +561,229 @@ TEST_CASE("MediaPipeline_CloseFromRunningEmitsNoSpuriousError") {
         REQUIRE(pumpUntil(loop, [&]() { return closedCount.load() > 0; }));
         CHECK(errorCount.load() == 0);
         CHECK(cleanFinish.load() == true);
+}
+
+// ============================================================================
+// PipelineEvent subscription
+// ============================================================================
+
+namespace {
+
+struct EventCounts {
+        std::atomic<int> stateChanged{0};
+        std::atomic<int> stageState{0};
+        std::atomic<int> stageError{0};
+        std::atomic<int> statsUpdated{0};
+        std::atomic<int> planResolved{0};
+        std::atomic<int> log{0};
+        std::atomic<int> total{0};
+};
+
+void countEvent(EventCounts &counts, const PipelineEvent &ev) {
+        counts.total.fetch_add(1);
+        switch(ev.kind()) {
+                case PipelineEvent::Kind::StateChanged: counts.stateChanged.fetch_add(1); break;
+                case PipelineEvent::Kind::StageState:   counts.stageState.fetch_add(1); break;
+                case PipelineEvent::Kind::StageError:   counts.stageError.fetch_add(1); break;
+                case PipelineEvent::Kind::StatsUpdated: counts.statsUpdated.fetch_add(1); break;
+                case PipelineEvent::Kind::PlanResolved: counts.planResolved.fetch_add(1); break;
+                case PipelineEvent::Kind::Log:          counts.log.fetch_add(1); break;
+        }
+}
+
+} // namespace
+
+TEST_CASE("MediaPipeline_SubscribeReceivesStateAndStageEvents") {
+        EventLoop loop;
+        MediaPipeline p;
+
+        EventCounts counts;
+        const int subId = p.subscribe(
+                [&counts](const PipelineEvent &ev) { countEvent(counts, ev); });
+        REQUIRE(subId >= 0);
+
+        REQUIRE(p.build(makeTpgToCsc()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+
+        REQUIRE(pumpUntil(loop,
+                [&]() { return counts.stageState.load() >= 4; }, 1500));
+        CHECK(counts.stateChanged.load() >= 3); // Built, Open, Running
+        CHECK(counts.stageState.load() >= 4);   // 2 opened + 2 started
+
+        CHECK(p.stop().isOk());
+        REQUIRE(pumpUntil(loop,
+                [&]() { return counts.stageState.load() >= 6; }, 1500));
+
+        CHECK(p.close().isOk());
+        REQUIRE(pumpUntil(loop,
+                [&]() { return counts.stageState.load() >= 8; }, 1500));
+        CHECK(counts.stateChanged.load() >= 5);
+
+        p.unsubscribe(subId);
+}
+
+TEST_CASE("MediaPipeline_SubscribeBeforeBuildReceivesPlanResolved") {
+        EventLoop loop;
+        MediaPipeline p;
+        EventCounts counts;
+        const int subId = p.subscribe(
+                [&counts](const PipelineEvent &ev) { countEvent(counts, ev); });
+        REQUIRE(subId >= 0);
+
+        REQUIRE(p.build(makeTpgToCsc(), /*autoplan=*/true).isOk());
+        REQUIRE(pumpUntil(loop,
+                [&]() { return counts.planResolved.load() >= 1
+                            && counts.stateChanged.load() >= 1; }, 1500));
+        CHECK(counts.planResolved.load() == 1);
+
+        CHECK(p.close().isOk());
+        REQUIRE(pumpUntil(loop,
+                [&]() { return counts.stateChanged.load() >= 2; }, 1500));
+        p.unsubscribe(subId);
+}
+
+TEST_CASE("MediaPipeline_SetStatsIntervalEmitsTickEvents") {
+        EventLoop loop;
+        MediaPipeline p;
+        EventCounts counts;
+        const int subId = p.subscribe(
+                [&counts](const PipelineEvent &ev) { countEvent(counts, ev); });
+        REQUIRE(subId >= 0);
+
+        p.setStatsInterval(Duration::fromMilliseconds(50));
+        CHECK(p.statsInterval().milliseconds() == 50);
+
+        REQUIRE(p.build(makeTpgToCsc()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+
+        const bool got = pumpUntil(loop,
+                [&]() { return counts.statsUpdated.load() >= 2; }, 800);
+        CHECK(got);
+        const int duringRun = counts.statsUpdated.load();
+
+        CHECK(p.stop().isOk());
+        loop.processEvents();
+        std::this_thread::sleep_for(std::chrono::milliseconds(150));
+        loop.processEvents();
+        const int afterStop = counts.statsUpdated.load();
+        CHECK(afterStop == duringRun);
+
+        CHECK(p.close().isOk());
+        p.unsubscribe(subId);
+}
+
+TEST_CASE("MediaPipeline_UnsubscribeStopsEventsToThatSubscriber") {
+        EventLoop loop;
+        MediaPipeline p;
+
+        EventCounts countsA;
+        EventCounts countsB;
+        const int idA = p.subscribe(
+                [&countsA](const PipelineEvent &ev) { countEvent(countsA, ev); });
+        const int idB = p.subscribe(
+                [&countsB](const PipelineEvent &ev) { countEvent(countsB, ev); });
+        REQUIRE(idA >= 0);
+        REQUIRE(idB >= 0);
+
+        REQUIRE(p.build(makeTpgToCsc()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(pumpUntil(loop,
+                [&]() { return countsA.stageState.load() >= 2
+                            && countsB.stageState.load() >= 2; }, 1500));
+
+        const int aBaseline = countsA.total.load();
+        p.unsubscribe(idA);
+
+        REQUIRE(p.start().isOk());
+        REQUIRE(pumpUntil(loop,
+                [&]() { return countsB.stageState.load() >= 4; }, 1500));
+        CHECK(countsB.total.load() > aBaseline);
+        CHECK(countsA.total.load() == aBaseline);
+
+        CHECK(p.close().isOk());
+        loop.processEvents();
+        p.unsubscribe(idB);
+}
+
+TEST_CASE("MediaPipeline_SubscriberOnAnotherThreadReceivesOnThatThread") {
+        EventLoop loop;
+        MediaPipeline p;
+
+        Thread worker;
+        worker.start();
+        // Wait for the worker thread's EventLoop to come up.
+        ElapsedTimer t;
+        t.start();
+        while(worker.threadEventLoop() == nullptr && t.elapsed() < 1000) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        REQUIRE(worker.threadEventLoop() != nullptr);
+
+        std::atomic<int> received{0};
+        std::atomic<std::thread::id> deliveryThread;
+        deliveryThread.store(std::this_thread::get_id());
+
+        // Install the subscription from the worker thread so its EventLoop
+        // is the captured target.
+        std::atomic<int> subId{-1};
+        worker.threadEventLoop()->postCallable([&]() {
+                int id = p.subscribe([&](const PipelineEvent &) {
+                        deliveryThread.store(std::this_thread::get_id());
+                        received.fetch_add(1);
+                });
+                subId.store(id);
+        });
+        // Spin until the post has executed.
+        while(subId.load() < 0) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+
+        REQUIRE(p.build(makeTpgToCsc()).isOk());
+        REQUIRE(p.open().isOk());
+        REQUIRE(p.start().isOk());
+
+        // Wait for the worker thread to dispatch some events.
+        t.start();
+        while(received.load() < 2 && t.elapsed() < 1500) {
+                loop.processEvents();
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        CHECK(received.load() >= 2);
+        CHECK(deliveryThread.load() == worker.id());
+        CHECK(deliveryThread.load() != std::this_thread::get_id());
+
+        CHECK(p.close().isOk());
+        worker.threadEventLoop()->postCallable([&]() { p.unsubscribe(subId.load()); });
+        worker.quit();
+        worker.wait();
+}
+
+TEST_CASE("MediaPipeline_LogEntryMirroredAsLogEvent") {
+        EventLoop loop;
+        MediaPipeline p;
+        EventCounts counts;
+        std::atomic<bool> seenMessage{false};
+        const int subId = p.subscribe(
+                [&counts, &seenMessage](const PipelineEvent &ev) {
+                        countEvent(counts, ev);
+                        if(ev.kind() == PipelineEvent::Kind::Log) {
+                                if(ev.payload().get<String>().contains(
+                                        "pipeline-event-test-marker")) {
+                                        seenMessage.store(true);
+                                }
+                        }
+                });
+        REQUIRE(subId >= 0);
+
+        Logger::defaultLogger().log(Logger::Info, "test", 0,
+                String("pipeline-event-test-marker"));
+        Logger::defaultLogger().sync();
+        REQUIRE(pumpUntil(loop, [&]() { return seenMessage.load(); }, 1500));
+        CHECK(counts.log.load() >= 1);
+
+        p.unsubscribe(subId);
 }
 
 TEST_CASE("MediaPipeline_CloseOnClosedStateIsNoOp") {

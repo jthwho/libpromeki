@@ -8,10 +8,12 @@
 #include <doctest/doctest.h>
 #include <promeki/mediaio.h>
 #include <promeki/mediaconfig.h>
+#include <promeki/variantspec.h>
 #include <promeki/videoformat.h>
 #include <promeki/pixelformat.h>
 #include <promeki/framerate.h>
 #include <promeki/frame.h>
+#include <promeki/json.h>
 #include <promeki/mediapayload.h>
 #include <promeki/videopayload.h>
 #include <promeki/audiopayload.h>
@@ -109,4 +111,91 @@ TEST_CASE("MediaIO does not overwrite a producer-supplied pts") {
 
         io->close();
         delete io;
+}
+
+// ============================================================================
+// Structural invariant: defaultConfig round-trips losslessly through JSON
+//
+// Any value the library produces must round-trip cleanly through its
+// own JSON serialization and pass its own spec validation.  The
+// promeki-pipeline REST API turns this into a hard requirement: the
+// frontend GETs /api/types/<name>/defaults, then PUTs that JSON back
+// verbatim — if a single field comes back with the wrong Variant type
+// (because the toString → fromString round-trip lost its native form)
+// VariantDatabase::set logs a "fails spec" warning.  The bug that
+// motivated this test was CSC's `OutputPixelFormat: "Invalid"` default
+// failing to parse back into a PixelFormat because the Invalid sentinel
+// name wasn't in PixelFormat's nameMap.
+//
+// The check below visits every registered backend, JSON-serializes its
+// default config, and parses each entry back through setFromJson.  For
+// every key that has a spec we require:
+//   1. The parsed Variant's type matches the spec's declared type
+//      (i.e. the spec-driven coercion in setFromJson succeeded).
+//   2. The parsed Variant validates cleanly against the spec.
+// ============================================================================
+
+TEST_CASE("MediaIO: defaultConfig round-trips losslessly through JSON for every backend") {
+        auto formats = MediaIO::registeredFormats();
+        REQUIRE_FALSE(formats.isEmpty());
+        for(const auto &fd : formats) {
+                CAPTURE(fd.name);
+                if(!fd.configSpecs) continue;
+
+                MediaIO::Config def = MediaIO::defaultConfig(fd.name);
+                JsonObject json = def.toJson();
+                MediaIO::Config::SpecMap specs = fd.configSpecs();
+
+                // For each spec'd key the default produced, locate
+                // the JSON-emitted form, re-parse it through the
+                // exact spec the backend declared, and verify the
+                // round-trip.  This is the structural invariant the
+                // demo's REST PUT relies on: the JSON serialise +
+                // parse path must return values that satisfy the
+                // backend's own spec.
+                for(auto it = specs.cbegin(); it != specs.cend(); ++it) {
+                        const MediaConfig::ID &id = it->first;
+                        const VariantSpec    &sp = it->second;
+                        CAPTURE(id.name());
+
+                        if(!def.contains(id)) continue;
+                        Variant origVal = def.get(id);
+                        if(!origVal.isValid()) continue;
+
+                        // Pull the JSON-emitted form by name.  Use
+                        // forEach to capture the Variant (already
+                        // String-coerced for non-primitive types by
+                        // setFromVariant).
+                        Variant onWire;
+                        json.forEach([&id, &onWire](const String &key,
+                                                    const Variant &val) {
+                                if(key == id.name()) onWire = val;
+                        });
+                        REQUIRE(onWire.isValid());
+
+                        // Re-parse via the backend-declared spec —
+                        // exactly what applyQueryToConfig would do
+                        // for a query-string value, and what
+                        // setFromJson does for keys with a globally-
+                        // registered spec.  A successful round-trip
+                        // here means defaults will not trip
+                        // VariantDatabase::set's spec-validation
+                        // warning on the way back in.
+                        Variant parsed;
+                        if(onWire.type() == Variant::TypeString
+                           && !sp.acceptsType(Variant::TypeString)) {
+                                Error pe;
+                                parsed = sp.parseString(
+                                        onWire.get<String>(), &pe);
+                                CHECK(pe.isOk());
+                        } else {
+                                parsed = onWire;
+                        }
+                        CHECK(parsed.isValid());
+                        CHECK(sp.acceptsType(parsed.type()));
+                        Error verr;
+                        CHECK(sp.validate(parsed, &verr));
+                        CHECK(verr.isOk());
+                }
+        }
 }

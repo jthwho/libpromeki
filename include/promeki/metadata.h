@@ -767,6 +767,31 @@ class Metadata : public VariantDatabase<"Metadata"> {
                                 .setDescription("Average motion vector Y (codec-defined units)."));
 
                 // ============================================================
+                // Frontend layout hints
+                //
+                // Generic per-stage layout hints for graphical editors
+                // (the promeki-pipeline demo persists Vue Flow node
+                // positions through these).  Stored on
+                // @ref MediaPipelineConfig::Stage::metadata so they
+                // round-trip with the rest of the config.  The wire
+                // names use the @c "Frontend." prefix to namespace UI
+                // hints away from media metadata; the C++ identifiers
+                // drop the dot because identifiers cannot contain one.
+                // ============================================================
+
+                /// @brief X coordinate (pixels) of this stage in a graphical editor.
+                static inline const ID FrontendX = declareID("Frontend.X",
+                        VariantSpec().setType(Variant::TypeDouble)
+                                .setDefault(0.0)
+                                .setDescription("Frontend X coordinate (pixels) for graphical editors."));
+
+                /// @brief Y coordinate (pixels) of this stage in a graphical editor.
+                static inline const ID FrontendY = declareID("Frontend.Y",
+                        VariantSpec().setType(Variant::TypeDouble)
+                                .setDefault(0.0)
+                                .setDescription("Frontend Y coordinate (pixels) for graphical editors."));
+
+                // ============================================================
                 // Methods
                 // ============================================================
 

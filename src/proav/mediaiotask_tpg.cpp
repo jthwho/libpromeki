@@ -26,6 +26,7 @@ PROMEKI_REGISTER_MEDIAIO(MediaIOTask_TPG)
 MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
         return {
                 "TPG",
+                "Test Pattern Generator",
                 "Video/audio/timecode test pattern generator",
                 {},     // No file extensions — this is a generator
                 true,   // canBeSource

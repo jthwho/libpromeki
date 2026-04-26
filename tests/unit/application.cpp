@@ -7,7 +7,13 @@
 
 #include <doctest/doctest.h>
 #include <promeki/application.h>
+#include <promeki/eventloop.h>
 #include <promeki/iodevice.h>
+#include <promeki/thread.h>
+
+#include <atomic>
+#include <chrono>
+#include <thread>
 
 using namespace promeki;
 
@@ -152,6 +158,46 @@ TEST_CASE("Application: quit-request handler falls through on false") {
         CHECK(Application::exitCode() == 9);
 
         Application::setQuitRequestHandler(nullptr);
+}
+
+TEST_CASE("Application: mainEventLoop is reachable from a non-main thread before any same-thread query") {
+        // Regression: SIGINT delivery happens on the signal watcher
+        // thread.  If `Application::mainEventLoop` is queried from
+        // there before any same-thread caller has primed the cache,
+        // the adopted Thread must still surface the main EventLoop
+        // so that `Application::quit` can wake the loop.
+        char arg0[] = "test";
+        char *argv[] = { arg0 };
+        Application app(1, argv);
+
+        std::atomic<EventLoop *> seenLoop{nullptr};
+        std::thread other([&]() {
+                seenLoop.store(Application::mainEventLoop());
+        });
+        other.join();
+        CHECK(seenLoop.load() != nullptr);
+        CHECK(seenLoop.load() == Application::mainEventLoop());
+}
+
+TEST_CASE("Application: quit from another thread wakes the main EventLoop") {
+        // Regression: matches the SIGINT path — Application::quit
+        // invoked on a non-main thread must unblock
+        // mainEventLoop()->exec() in time for `Application::exec` to
+        // return.
+        char arg0[] = "test";
+        char *argv[] = { arg0 };
+        Application app(1, argv);
+
+        std::thread quitter([]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                Application::quit(7);
+        });
+
+        const int code = app.exec();
+        quitter.join();
+        CHECK(code == 7);
+        CHECK(Application::shouldQuit());
+        CHECK(Application::exitCode() == 7);
 }
 
 TEST_CASE("Application: quit-request handler cleared with nullptr") {

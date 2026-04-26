@@ -311,12 +311,14 @@ static Metadata imageFileDefaultMetadata() {
 }
 
 static MediaIO::FormatDesc buildFormatDesc(const String &name,
+                                           const String &displayName,
                                            const String &description,
                                            StringList extensions,
                                            bool canBeSource,
                                            bool canBeSink) {
         MediaIO::FormatDesc fd;
         fd.name            = name;
+        fd.displayName     = displayName;
         fd.description     = description;
         fd.extensions      = std::move(extensions);
         fd.canBeSource     = canBeSource;
@@ -335,8 +337,12 @@ MediaIO::FormatDesc MediaIOTask_ImageFile::buildFormatDescFor(const ImageFileIO 
         // The .imgseq sidecar is handled by this same task but is
         // not specific to any one backend — it gets its own
         // registration below (see @ref registerImageFileUmbrella),
-        // so per-backend FormatDescs never claim it.
+        // so per-backend FormatDescs never claim it.  Per-format
+        // entries use the backend's description as the display name —
+        // it already reads as a short human-readable label
+        // ("DPX (.dpx)" etc).
         return buildFormatDesc(io->mediaIoName(), io->description(),
+                               io->description(),
                                std::move(exts),
                                /*canBeSource*/ io->canLoad(),
                                /*canBeSink*/   io->canSave());
@@ -349,6 +355,7 @@ MediaIO::FormatDesc MediaIOTask_ImageFile::formatDesc() {
         // New code should prefer @ref MediaIO::registeredFormats and
         // filter on @c name.startsWith("ImgSeq").
         return buildFormatDesc(String("ImageFile"),
+                String("Image File"),
                 String("Single-image files and image sequences (DPX, Cineon, TGA, SGI, "
                        "PNM, PNG, JPEG, JPEG XS, RawYUV, .imgseq)"),
                 buildExtensions(), true, true);
@@ -1480,6 +1487,7 @@ int registerImageFileUmbrella() {
         // compatibility; new code should walk @ref MediaIO::registeredFormats
         // and pick up the per-backend entries.
         MediaIO::registerFormat(buildFormatDesc(String("ImageFile"),
+                String("Image File"),
                 String("Single-image files and image sequences (DPX, Cineon, TGA, SGI, "
                        "PNM, PNG, JPEG, JPEG XS, RawYUV, .imgseq)"),
                 buildExtensions(), true, true));
@@ -1490,6 +1498,7 @@ int registerImageFileUmbrella() {
         StringList seqExts;
         seqExts.pushToBack(String(kImgSeqExtension));
         MediaIO::registerFormat(buildFormatDesc(String("ImgSeq"),
+                String("Image Sequence (.imgseq)"),
                 String("ImgSeq JSON sidecar (points at an underlying image format)"),
                 std::move(seqExts), true, true));
         return 0;

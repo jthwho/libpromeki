@@ -8,6 +8,7 @@
 #include <promeki/httpconnection.h>
 #include <promeki/tcpsocket.h>
 #include <promeki/eventloop.h>
+#include <promeki/objectbase.tpp>
 #include <promeki/socketaddress.h>
 #include <promeki/url.h>
 #include <promeki/logger.h>
@@ -156,6 +157,12 @@ Error HttpConnection::start() {
 void HttpConnection::close() {
         if(_state == State::Closed) return;
         _state = State::Closed;
+
+        // Detach any async-stream readyRead hook before we let go of
+        // the body device — the signal target is `this`, and we're
+        // about to stop running the pump.
+        detachStreamReadyRead();
+        _streamSource = IODevice::Shared{};
 
         if(_loop != nullptr) {
                 if(_ioHandle >= 0) {
@@ -604,11 +611,13 @@ void HttpConnection::pumpWrite() {
                 }
                 if(cap == 0 && !_streamChunked) {
                         // Done with a fixed-length stream.
+                        detachStreamReadyRead();
                         _streamSource = IODevice::Shared{};
                         _writeQueue   = Buffer(0);
                         _writeOffset  = 0;
                 } else if(cap == 0 && _streamChunked) {
                         // Final 0-length chunk + trailer terminator.
+                        detachStreamReadyRead();
                         _writeQueue = Buffer(0);
                         appendCStr(_writeQueue, "0\r\n\r\n");
                         _writeOffset = 0;
@@ -620,15 +629,51 @@ void HttpConnection::pumpWrite() {
                         const int64_t got = dev->read(chunk, cap);
                         if(got < 0) {
                                 // Stream error: bail.
+                                detachStreamReadyRead();
                                 _streamSource = IODevice::Shared{};
                                 close();
                                 return;
                         }
                         if(got == 0) {
-                                // Stream exhausted before its declared
-                                // length — treat like a close on the
-                                // wire.  For chunked we still need the
+                                // Two distinct cases share read()==0:
+                                //
+                                //  (a) atEnd()==true: the device has
+                                //      no more bytes and never will —
+                                //      this is the end-of-stream
+                                //      condition the original
+                                //      pull-based loop assumed.
+                                //
+                                //  (b) atEnd()==false: the device is
+                                //      idle but the producer side
+                                //      hasn't yet handed it any
+                                //      bytes.  Park: unsubscribe from
+                                //      IoWrite, hook the device's
+                                //      readyRead signal, and re-enter
+                                //      pumpWrite when the producer
+                                //      enqueues more.  Default-impl
+                                //      atEnd() falls through to (a)
+                                //      so file-backed bodies preserve
+                                //      their old behaviour.
+                                if(!dev->atEnd()) {
+                                        attachStreamReadyRead();
+                                        if(_loop != nullptr && _ioHandle >= 0) {
+                                                _loop->removeIoSource(_ioHandle);
+                                                const int fd = _socket->socketDescriptor();
+                                                _ioHandle = _loop->addIoSource(fd,
+                                                        EventLoop::IoRead,
+                                                        [this](int f, uint32_t e) {
+                                                                onIoReady(f, e);
+                                                        });
+                                        }
+                                        _writeQueue  = Buffer(0);
+                                        _writeOffset = 0;
+                                        _streamParked = true;
+                                        return;
+                                }
+                                // Stream exhausted with declared EOF.
+                                // For chunked we still need the
                                 // 0-length terminator.
+                                detachStreamReadyRead();
                                 _writeQueue = Buffer(0);
                                 _writeOffset = 0;
                                 if(_streamChunked) appendCStr(_writeQueue, "0\r\n\r\n");
@@ -679,6 +724,55 @@ void HttpConnection::pumpWrite() {
         } else {
                 close();
         }
+}
+
+// ============================================================
+// Async-read parking
+// ============================================================
+
+void HttpConnection::attachStreamReadyRead() {
+        if(_streamReadyReadConnected) return;
+        if(!_streamSource.isValid())  return;
+        IODevice *dev = const_cast<IODevice *>(_streamSource.ptr());
+        // Use the ObjectBase-aware overload: when the producer emits
+        // from a different thread, the slot is marshalled onto this
+        // connection's EventLoop instead of running inline on the
+        // producer thread.
+        _streamReadyReadSlotId = dev->readyReadSignal.connect(
+                [this]() { onStreamReadyRead(); },
+                this);
+        _streamReadyReadConnected = true;
+}
+
+void HttpConnection::detachStreamReadyRead() {
+        if(!_streamReadyReadConnected) return;
+        if(_streamSource.isValid()) {
+                IODevice *dev = const_cast<IODevice *>(_streamSource.ptr());
+                dev->readyReadSignal.disconnect(_streamReadyReadSlotId);
+        }
+        _streamReadyReadConnected = false;
+        _streamReadyReadSlotId    = 0;
+}
+
+void HttpConnection::onStreamReadyRead() {
+        // We were parked because a previous read() returned 0 with
+        // atEnd()==false.  Wake the pump: re-arm IoWrite so the next
+        // tick can drain whatever new bytes the producer pushed.
+        if(_state != State::Writing || !_streamParked) return;
+        _streamParked = false;
+        if(_loop != nullptr && _ioHandle >= 0 && _socket != nullptr) {
+                _loop->removeIoSource(_ioHandle);
+                const int fd = _socket->socketDescriptor();
+                _ioHandle = _loop->addIoSource(fd,
+                        EventLoop::IoRead | EventLoop::IoWrite,
+                        [this](int f, uint32_t e) { onIoReady(f, e); });
+        }
+        // Don't recurse into pumpWrite here — the device's read()
+        // may not yet have anything (the wake was advisory) and the
+        // IoWrite re-arm above will fire pumpWrite via onIoReady on
+        // the next tick anyway.  But for an immediate-availability
+        // case we get one less RTT by trying right now.
+        pumpWrite();
 }
 
 void HttpConnection::completeProtocolUpgrade() {

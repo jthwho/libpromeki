@@ -140,18 +140,34 @@ Variant parseAsType(Variant::Type type, Enum::Type enumType,
                 case Variant::TypeString:
                         return Variant(str);
                 case Variant::TypeSize2D: {
+                        // A successful parse yields a valid Variant of
+                        // type TypeSize2D regardless of whether the
+                        // resulting size is geometrically valid (W>0
+                        // and H>0).  Defaults frequently start at 0x0
+                        // as an "unset" marker, and the JSON
+                        // round-trip for those defaults must not be
+                        // rejected at the parse stage — the spec's
+                        // own validate() (or a higher-level open()
+                        // check) is the right place for geometric
+                        // validation.
                         auto r = Size2Du32::fromString(str);
-                        if(r.second().isError() || !r.first().isValid()) break;
+                        if(r.second().isError()) break;
                         return Variant(r.first());
                 }
                 case Variant::TypeFrameRate: {
+                        // See the TypeSize2D rationale above — a
+                        // syntactically successful parse is a parse
+                        // success, even if the value happens to be
+                        // FrameRate() or 0/0.  Don't conflate parse
+                        // success with semantic validity.
                         auto r = FrameRate::fromString(str);
-                        if(r.second().isError() || !r.first().isValid()) break;
+                        if(r.second().isError()) break;
                         return Variant(r.first());
                 }
                 case Variant::TypeVideoFormat: {
+                        // See the TypeSize2D rationale above.
                         auto r = VideoFormat::fromString(str);
-                        if(r.second().isError() || !r.first().isValid()) break;
+                        if(r.second().isError()) break;
                         return Variant(r.first());
                 }
                 case Variant::TypeRational: {
@@ -198,13 +214,21 @@ Variant parseAsType(Variant::Type type, Enum::Type enumType,
                         return Variant(c);
                 }
                 case Variant::TypePixelFormat: {
-                        PixelFormat pd = PixelFormat::lookup(str);
-                        if(!pd.isValid()) break;
+                        // Use the error-aware lookup so the canonical
+                        // "Invalid" sentinel name still parses cleanly
+                        // — defaults that intentionally use Invalid as
+                        // a pass-through marker (CSC's
+                        // OutputPixelFormat) need to round-trip through
+                        // JSON without the parse failing.
+                        Error pe;
+                        PixelFormat pd = PixelFormat::lookup(str, &pe);
+                        if(pe.isError()) break;
                         return Variant(pd);
                 }
                 case Variant::TypePixelMemLayout: {
-                        PixelMemLayout pf = PixelMemLayout::lookup(str);
-                        if(!pf.isValid()) break;
+                        Error pe;
+                        PixelMemLayout pf = PixelMemLayout::lookup(str, &pe);
+                        if(pe.isError()) break;
                         return Variant(pf);
                 }
                 case Variant::TypeColorModel: {
@@ -229,6 +253,15 @@ Variant parseAsType(Variant::Type type, Enum::Type enumType,
                 }
                 case Variant::TypeEnum: {
                         if(!enumType.isValid()) break;
+                        // Canonical empty form "::" maps back to a
+                        // typeless / unset Enum — defaults declared
+                        // as setDefault(Enum()) (e.g. V4l2AutoExposure
+                        // for "use device default") emit "::" via
+                        // Enum::toString and need to round-trip
+                        // through JSON cleanly.  validate() honours
+                        // this by accepting an invalid Enum when an
+                        // enumType is set.
+                        if(str == "::") return Variant(Enum());
                         Enum e(enumType, str);
                         if(e.hasListedValue()) return Variant(e);
                         // Fall back to fully qualified "TypeName::ValueName".
@@ -255,8 +288,15 @@ Variant parseAsType(Variant::Type type, Enum::Type enumType,
                 }
 #if PROMEKI_ENABLE_NETWORK
                 case Variant::TypeSocketAddress: {
+                        // SocketAddress() (null) serializes to an empty
+                        // String, so accept that as the canonical
+                        // sentinel form — defaults that mark "no
+                        // destination configured" must round-trip
+                        // through JSON.  A non-empty string still has
+                        // to parse successfully.
+                        if(str.isEmpty()) return Variant(SocketAddress());
                         auto r = SocketAddress::fromString(str);
-                        if(r.second().isError() || r.first().isNull()) break;
+                        if(r.second().isError()) break;
                         return Variant(r.first());
                 }
 #endif
@@ -327,9 +367,13 @@ bool VariantSpec::validate(const Variant &value, Error *err) const {
 
         // 3. Enum type check — applies to both Enum and EnumList values,
         //    since EnumList pins every element to a single Enum::Type.
+        //    A typeless Enum() is treated as "unset" and accepted when
+        //    an enumType is declared, so defaults like
+        //    setDefault(Enum()) (used to mean "use the backend's own
+        //    fallback") survive a JSON round-trip.
         if(_enumType.isValid() && value.type() == Variant::TypeEnum) {
                 Enum e = value.get<Enum>();
-                if(e.type() != _enumType) {
+                if(e.isValid() && e.type() != _enumType) {
                         if(err) *err = Error::InvalidArgument;
                         return false;
                 }

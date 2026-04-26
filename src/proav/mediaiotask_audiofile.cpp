@@ -54,6 +54,7 @@ static bool probeAudioDevice(IODevice *device) {
 MediaIO::FormatDesc MediaIOTask_AudioFile::formatDesc() {
         return {
                 "AudioFile",
+                "Audio File",
                 "Audio file formats via libsndfile (WAV, BWF, AIFF, OGG)",
                 {"wav", "bwf", "aiff", "aif", "ogg"},
                 true,   // canBeSource

@@ -30,6 +30,24 @@ static StructDatabase<FrameRate::WellKnownRate, WellKnownFrameRate> db = {
 };
 #undef X
 
+List<FrameRate::WellKnown> FrameRate::wellKnownRates() {
+        // The internal db is populated by PROMEKI_WELL_KNOWN_FRAME_RATES,
+        // which lists entries from fastest to slowest with FPS_Invalid
+        // first.  Build the public list in the opposite order so the
+        // resulting dropdown reads naturally from low to high (23.98 →
+        // 120) and skip the invalid sentinel.
+        List<FrameRate::WellKnown> out;
+        const auto &all = db.database();
+        for(auto it = all.crbegin(); it != all.crend(); ++it) {
+                if(it->first == FPS_Invalid) continue;
+                FrameRate::WellKnown entry;
+                entry.label = it->second.name;
+                entry.rate  = FrameRate(it->first);
+                out.pushToBack(entry);
+        }
+        return out;
+}
+
 FrameRate::FrameRate(WellKnownRate rate) {
     const WellKnownFrameRate &item = db.get(rate);
     if(item.id != FPS_Invalid) {
@@ -53,6 +71,16 @@ FrameRate::WellKnownRate FrameRate::wellKnownRate() const {
 
 
 Result<FrameRate> FrameRate::fromString(const String &str) {
+        // Canonical sentinel forms — the default-constructed
+        // FrameRate() carries a 0/1 Rational, which Rational::toString
+        // emits as "0/1".  An empty input from JSON tooling also
+        // routes here.  Accept both so defaults declared as
+        // setDefault(FrameRate()) survive a toString → fromString
+        // round-trip cleanly.
+        if(str.isEmpty() || str == "0/0" || str == "0/1") {
+                return makeResult(FrameRate());
+        }
+
         // Try well-known rate names first
         for(const auto &pair : db.database()) {
                 if(pair.second.name == str) {

@@ -484,11 +484,103 @@ TEST_CASE("VariantDatabase: setFromJson falls back to raw value when no spec") {
         using DB = VariantDatabase<"SpecAdhocTag">;
 
         DB db;
-        db.setFromJson(DB::ID("ad.int"), Variant(int64_t(7)));
-        db.setFromJson(DB::ID("ad.str"), Variant(String("raw")));
+        CHECK(db.setFromJson(DB::ID("ad.int"), Variant(int64_t(7))).isOk());
+        CHECK(db.setFromJson(DB::ID("ad.str"), Variant(String("raw"))).isOk());
 
         CHECK(db.get(DB::ID("ad.int")).get<int64_t>() == 7);
         CHECK(db.get(DB::ID("ad.str")).get<String>() == "raw");
+}
+
+TEST_CASE("VariantDatabase: default validation mode is Strict") {
+        // The default constructor must hand back a Strict-mode database
+        // so HTTP / JSON / config loaders that lean on the default
+        // refuse out-of-spec values automatically rather than silently
+        // storing them with a warning.
+        using DB = VariantDatabase<"DefaultStrictTag">;
+        DB db;
+        CHECK(db.validation() == SpecValidation::Strict);
+}
+
+TEST_CASE("VariantDatabase: set surfaces validator error in Strict mode") {
+        // A spec with a numeric range should reject out-of-range
+        // values and report Error::OutOfRange via the new err
+        // out-param.
+        using DB = VariantDatabase<"StrictRangeTag">;
+        const DB::ID rangedId = DB::declareID("ranged",
+                VariantSpec().setType(Variant::TypeS32)
+                        .setDefault(int32_t(50))
+                        .setRange(int32_t(1), int32_t(100))
+                        .setDescription("Ranged int."));
+
+        DB db;
+        REQUIRE(db.validation() == SpecValidation::Strict);
+
+        Error err;
+        CHECK(db.set(rangedId, int32_t(50), &err));
+        CHECK(err.isOk());
+
+        Error rangeErr;
+        CHECK_FALSE(db.set(rangedId, int32_t(200), &rangeErr));
+        CHECK(rangeErr == Error::OutOfRange);
+        // Original value must remain intact after the rejected write.
+        CHECK(db.get(rangedId).get<int32_t>() == 50);
+}
+
+TEST_CASE("VariantDatabase: setFromJson surfaces parseString failure for unparseable strings") {
+        // Spec wants Size2D, JSON delivers a non-parseable string —
+        // the spec-driven coercion attempt must surface the
+        // VariantSpec::parseString error (ConversionFailed) rather
+        // than falling back to storing the raw string (which would
+        // itself fail spec validation under Strict mode and leave
+        // the failure invisible to callers).
+        using DB = VariantDatabase<"ParseFailTag">;
+        const DB::ID sizeId = DB::declareID("size",
+                VariantSpec().setType(Variant::TypeSize2D)
+                        .setDefault(Size2Du32())
+                        .setDescription("Image size."));
+
+        DB db;
+        Error err = db.setFromJson(sizeId, Variant(String("not-a-size")));
+        CHECK(err.isError());
+        CHECK(err == Error::ConversionFailed);
+        CHECK_FALSE(db.contains(sizeId));
+}
+
+TEST_CASE("VariantDatabase: setFromJson returns Error::Invalid on Strict spec rejection") {
+        // The wire value parses fine and matches the spec's type but
+        // violates the declared range — Strict mode must surface the
+        // validator's specific Error code (OutOfRange) all the way
+        // back out through setFromJson.
+        using DB = VariantDatabase<"StrictRejectTag">;
+        const DB::ID id = DB::declareID("port",
+                VariantSpec().setType(Variant::TypeS32)
+                        .setDefault(int32_t(8080))
+                        .setRange(int32_t(1), int32_t(65535))
+                        .setDescription("TCP port."));
+
+        DB db;
+        Error err = db.setFromJson(id, Variant(int32_t(99999)));
+        CHECK(err == Error::OutOfRange);
+        CHECK_FALSE(db.contains(id));
+}
+
+TEST_CASE("VariantDatabase: setFromJson returns Ok in Warn mode even when validator complains") {
+        // In Warn mode the value is stored despite the validator's
+        // protest, so the caller-facing return must be Ok — anything
+        // else would be a contract violation against existing Warn
+        // semantics.
+        using DB = VariantDatabase<"WarnModeTag">;
+        const DB::ID id = DB::declareID("warn.port",
+                VariantSpec().setType(Variant::TypeS32)
+                        .setDefault(int32_t(8080))
+                        .setRange(int32_t(1), int32_t(65535))
+                        .setDescription("TCP port."));
+
+        DB db;
+        db.setValidation(SpecValidation::Warn);
+        Error err = db.setFromJson(id, Variant(int32_t(99999)));
+        CHECK(err.isOk());
+        CHECK(db.get(id).get<int32_t>() == 99999);
 }
 
 // ============================================================================

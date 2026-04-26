@@ -100,6 +100,7 @@ bool framesyncBridge(const MediaDesc &from,
 MediaIO::FormatDesc MediaIOTask_FrameSync::formatDesc() {
         MediaIO::FormatDesc d;
         d.name              = "FrameSync";
+        d.displayName       = "Frame Rate Sync";
         d.description       = "Frame synchroniser — resyncs media to a target clock cadence";
         d.canBeSource       = false;
         d.canBeSink         = false;

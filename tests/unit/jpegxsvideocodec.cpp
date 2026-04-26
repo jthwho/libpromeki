@@ -149,14 +149,20 @@ TEST_CASE("JpegXsVideoEncoder_Defaults") {
 }
 
 TEST_CASE("JpegXsVideoEncoder_Clamping") {
+        // Like JpegVideoEncoder_QualityClamping above: the BPP and
+        // decomposition specs declare ranges that the default-Strict
+        // database refuses to violate, so to exercise the encoder's
+        // own defensive clamp we relax the config to Warn first.
         JpegXsVideoEncoder enc;
         auto setBpp = [&](int v) {
                 MediaConfig cfg;
+                cfg.setValidation(SpecValidation::Warn);
                 cfg.set(MediaConfig::JpegXsBpp, v);
                 enc.configure(cfg);
         };
         auto setDecomposition = [&](int v) {
                 MediaConfig cfg;
+                cfg.setValidation(SpecValidation::Warn);
                 cfg.set(MediaConfig::JpegXsDecomposition, v);
                 enc.configure(cfg);
         };

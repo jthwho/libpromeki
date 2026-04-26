@@ -330,6 +330,61 @@ TEST_CASE("MediaPipelineConfig_JsonRoundTrip") {
         CHECK(round == orig);
 }
 
+TEST_CASE("MediaPipelineConfig_FrontendCoordsRoundTrip") {
+        // The promeki-pipeline demo persists Vue Flow node positions on
+        // each Stage's metadata using the Frontend.X / Frontend.Y IDs
+        // declared on Metadata.  Confirm those keys round-trip cleanly
+        // through MediaPipelineConfig::toJson / fromJson alongside the
+        // rest of the per-stage metadata.
+        MediaPipelineConfig cfg;
+
+        MediaPipelineConfig::Stage src;
+        src.name = "src";
+        src.type = "TPG";
+        src.mode = MediaIO::Source;
+        src.metadata.set(Metadata::FrontendX, 124.5);
+        src.metadata.set(Metadata::FrontendY, 64.0);
+        cfg.addStage(src);
+
+        MediaPipelineConfig::Stage sink;
+        sink.name = "sink";
+        sink.type = "NullPacing";
+        sink.mode = MediaIO::Sink;
+        sink.metadata.set(Metadata::FrontendX, 480.0);
+        sink.metadata.set(Metadata::FrontendY, 96.5);
+        cfg.addStage(sink);
+
+        cfg.addRoute("src", "sink");
+
+        JsonObject j = cfg.toJson();
+
+        // Round-trip from String form (what the wire actually carries)
+        // so we exercise Variant::parseString through setFromJson.
+        const String text = j.toString(0);
+        Error perr;
+        JsonObject reparsed = JsonObject::parse(text, &perr);
+        REQUIRE(perr.isOk());
+
+        Error ferr;
+        MediaPipelineConfig round = MediaPipelineConfig::fromJson(reparsed, &ferr);
+        CHECK(ferr.isOk());
+        CHECK(round == cfg);
+
+        // Spot-check the recovered values come back as doubles.
+        const auto *srcStage  = round.findStage("src");
+        const auto *sinkStage = round.findStage("sink");
+        REQUIRE(srcStage  != nullptr);
+        REQUIRE(sinkStage != nullptr);
+        CHECK(srcStage->metadata.get(Metadata::FrontendX).get<double>()
+                == doctest::Approx(124.5));
+        CHECK(srcStage->metadata.get(Metadata::FrontendY).get<double>()
+                == doctest::Approx(64.0));
+        CHECK(sinkStage->metadata.get(Metadata::FrontendX).get<double>()
+                == doctest::Approx(480.0));
+        CHECK(sinkStage->metadata.get(Metadata::FrontendY).get<double>()
+                == doctest::Approx(96.5));
+}
+
 TEST_CASE("MediaPipelineConfig_JsonRoundTrip_FromString") {
         MediaPipelineConfig orig = makeSample();
         const String text = orig.toJson().toString(2);

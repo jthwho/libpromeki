@@ -7,17 +7,22 @@
 
 #pragma once
 
+#include <functional>
 #include <promeki/atomic.h>
+#include <promeki/duration.h>
 #include <promeki/elapsedtimer.h>
 #include <promeki/error.h>
 #include <promeki/frame.h>
 #include <promeki/list.h>
+#include <promeki/logger.h>
 #include <promeki/map.h>
 #include <promeki/mediaio.h>
 #include <promeki/mediapipelineconfig.h>
 #include <promeki/mediapipelinestats.h>
+#include <promeki/mutex.h>
 #include <promeki/namespace.h>
 #include <promeki/objectbase.h>
+#include <promeki/pipelineevent.h>
 #include <promeki/set.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
@@ -336,6 +341,92 @@ class MediaPipeline : public ObjectBase {
                  */
                 PROMEKI_SIGNAL(closed, Error);
 
+                /**
+                 * @brief Emitted on every periodic stats tick once
+                 *        @ref setStatsInterval has been configured with
+                 *        a non-zero interval and the pipeline is
+                 *        @ref State::Running.
+                 *
+                 * Carries a snapshot from @ref stats.  Subscribers that
+                 * use @ref subscribe receive the same snapshot wrapped
+                 * in a @ref PipelineEvent::Kind::StatsUpdated event;
+                 * this signal is provided for direct consumers that
+                 * prefer the typed payload.
+                 * @signal
+                 */
+                PROMEKI_SIGNAL(statsUpdated, MediaPipelineStats);
+
+                // ------------------------------------------------------------
+                // Event subscription
+                // ------------------------------------------------------------
+
+                /**
+                 * @brief Callback signature for @ref subscribe.
+                 *
+                 * Invoked on the subscriber's @ref EventLoop with each
+                 * @ref PipelineEvent the pipeline produces.
+                 */
+                using EventCallback = std::function<void(const PipelineEvent &)>;
+
+                /**
+                 * @brief Registers @p cb to receive every future @ref PipelineEvent.
+                 *
+                 * The subscriber's @ref EventLoop is captured at the call
+                 * site (@ref EventLoop::current).  Each event is dispatched
+                 * by posting a callable onto that loop, so callbacks always
+                 * run on the subscriber's thread regardless of which thread
+                 * triggered the underlying pipeline transition.
+                 *
+                 * Subscriptions can be installed in any pipeline state and
+                 * survive across @ref build / @ref open / @ref start /
+                 * @ref stop / @ref close cycles.  The first subscription
+                 * lazily installs a @ref Logger listener so subsequent
+                 * @c promekiInfo / @c promekiWarn / @c promekiErr calls
+                 * are mirrored as @ref PipelineEvent::Kind::Log events;
+                 * the listener is removed when the last subscriber leaves.
+                 *
+                 * @param cb Callback invoked once per event.  An empty
+                 *           callback is rejected and yields @c -1.
+                 * @return Non-negative subscription id usable with
+                 *         @ref unsubscribe, or @c -1 when @p cb was
+                 *         empty or no @ref EventLoop is available on
+                 *         the calling thread.
+                 */
+                int subscribe(EventCallback cb);
+
+                /**
+                 * @brief Removes a subscription previously installed via @ref subscribe.
+                 *
+                 * Unknown ids are silently ignored.  Removing the last
+                 * subscriber tears down the associated @ref Logger
+                 * listener.
+                 *
+                 * @param id Subscription id returned by @ref subscribe.
+                 */
+                void unsubscribe(int id);
+
+                /**
+                 * @brief Configures the periodic stats tick.
+                 *
+                 * When @p interval is @c Duration::zero (default) the tick
+                 * is disabled and neither @ref statsUpdated nor
+                 * @ref PipelineEvent::Kind::StatsUpdated fires.  A
+                 * positive @p interval is rounded up to the nearest
+                 * millisecond and starts a millisecond-precision timer
+                 * on this object's @ref EventLoop while the pipeline is
+                 * @ref State::Running.  The timer is stopped during
+                 * @ref stop / @ref close and restarted on the next
+                 * @ref start when @p interval is still non-zero.
+                 *
+                 * Safe to call from any state.
+                 *
+                 * @param interval Tick interval (zero disables).
+                 */
+                void setStatsInterval(Duration interval);
+
+                /** @brief Returns the configured stats tick interval. */
+                Duration statsInterval() const { return _statsInterval; }
+
         private:
                 // One record per outgoing route.  Back-pressure is
                 // driven entirely by @ref MediaIO::writesAccepted
@@ -372,9 +463,54 @@ class MediaPipeline : public ObjectBase {
                         bool                     upstreamDone = false;
                 };
 
+                struct Subscriber {
+                        int             id;
+                        EventCallback   fn;
+                        EventLoop       *loop;
+                };
+
                 Error destroyStages();
                 Error topologicallySort(promeki::List<String> &order) const;
                 MediaIO *instantiateStage(const MediaPipelineConfig::Stage &s);
+
+                /**
+                 * @brief Stamps @p ev with the current timestamp (when missing)
+                 *        and dispatches a copy to every active subscriber on
+                 *        their respective EventLoop.
+                 *
+                 * Subscriber list is snapshotted under @ref _subsMutex, then
+                 * dispatch happens outside the lock so callbacks may install
+                 * or remove subscriptions without deadlocking.
+                 */
+                void publish(PipelineEvent ev);
+
+                /**
+                 * @brief Builds a @ref PipelineEvent for the current pipeline
+                 *        @ref State and publishes it.
+                 */
+                void publishStateChanged();
+
+                /**
+                 * @brief Builds and publishes a stage-state event with the
+                 *        canonical stage transition name.
+                 */
+                void publishStageState(const String &stageName,
+                                       const String &transition);
+
+                /** @brief Lazy install of the @ref Logger listener tap. */
+                void installLoggerTap();
+
+                /** @brief Removes the @ref Logger listener tap. */
+                void removeLoggerTap();
+
+                /** @brief Starts the stats tick if the interval is non-zero and we are running. */
+                void startStatsTimerIfNeeded();
+
+                /** @brief Stops the stats tick if it is currently armed. */
+                void stopStatsTimer();
+
+                /** @brief Emits a stats snapshot (signal + PipelineEvent). */
+                void emitStatsSnapshot();
 
                 void drainSource(const String &srcName);
                 void onWriteError(const String &stageName, Error err);
@@ -486,6 +622,24 @@ class MediaPipeline : public ObjectBase {
                 // outgoing sink edge and close each sink once its count
                 // crosses the cap at the next safe cut point.
                 int64_t                               _frameCountLimit = 0;
+
+                // Event subscription bookkeeping.  _subsMutex guards
+                // _subscribers and the logger-listener handle so
+                // subscribe / unsubscribe / publish can race with each
+                // other across threads safely.  The actual dispatch in
+                // publish() snapshots the list under the lock and
+                // releases before invoking callbacks so a callback may
+                // (un)subscribe re-entrantly without deadlocking.
+                mutable Mutex                         _subsMutex;
+                promeki::Map<int, Subscriber>         _subscribers;
+                int                                   _nextSubId = 0;
+                Logger::ListenerHandle                _loggerTap = 0;
+
+                // Stats tick.  _statsInterval is the user-configured
+                // wall-clock cadence; _statsTimerId is the active timer
+                // id (negative when no timer is armed).
+                Duration                              _statsInterval;
+                int                                   _statsTimerId = -1;
 };
 
 PROMEKI_NAMESPACE_END

@@ -1343,3 +1343,61 @@ TEST_CASE("PixelFormat: every compressed format has a valid VideoCodec") {
                 CHECK(pd.videoCodec().id() != VideoCodec::Invalid);
         }
 }
+
+// ============================================================================
+// Invalid sentinel name round-trips losslessly
+// ============================================================================
+//
+// PixelFormat() is a legitimate Variant value used as a "pass-through"
+// sentinel by configs like CSC's OutputPixelFormat.  Because Variant
+// serializes a PixelFormat as its name() and parses back via lookup,
+// the "Invalid" sentinel name must be registered so the round-trip is
+// lossless — otherwise defaults the library produces fail to parse
+// back through the JSON path and trip spec validation in
+// VariantDatabase::set.
+
+TEST_CASE("PixelFormat: Invalid sentinel name round-trips through lookup") {
+        PixelFormat invPd;
+        REQUIRE(!invPd.isValid());
+        REQUIRE(invPd.id() == PixelFormat::Invalid);
+        REQUIRE(invPd.name() == "Invalid");
+
+        // Plain lookup hits the registered sentinel so the wrapper
+        // round-trips by name even though isValid() is false.
+        PixelFormat found = PixelFormat::lookup("Invalid");
+        CHECK(found.id() == PixelFormat::Invalid);
+
+        // Error-aware overload distinguishes "found Invalid" from
+        // "name not found": Ok for the canonical sentinel,
+        // IdNotFound for a genuinely missing name.
+        Error err;
+        PixelFormat ok = PixelFormat::lookup("Invalid", &err);
+        CHECK(err.isOk());
+        CHECK(ok.id() == PixelFormat::Invalid);
+
+        Error miss;
+        PixelFormat notFound = PixelFormat::lookup(
+                "DefinitelyNotARealPixelFormat", &miss);
+        CHECK(miss == Error::IdNotFound);
+        CHECK(notFound.id() == PixelFormat::Invalid);
+}
+
+TEST_CASE("PixelFormat: lookup-by-name covers every registered ID and Invalid") {
+        // Combined coverage: every registered ID plus the Invalid
+        // sentinel must round-trip name -> ID without error.  This
+        // is the structural invariant the JSON / CLI parse paths
+        // rely on; a regression here breaks the
+        // defaultConfig-as-JSON round-trip the demo exercises.
+        Error err;
+        for(auto id : PixelFormat::registeredIDs()) {
+                PixelFormat pd(id);
+                CAPTURE(pd.name());
+                PixelFormat found = PixelFormat::lookup(pd.name(), &err);
+                CHECK(err.isOk());
+                CHECK(found.id() == id);
+        }
+        PixelFormat inv;
+        PixelFormat back = PixelFormat::lookup(inv.name(), &err);
+        CHECK(err.isOk());
+        CHECK(back.id() == PixelFormat::Invalid);
+}

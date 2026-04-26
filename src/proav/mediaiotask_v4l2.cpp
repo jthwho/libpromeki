@@ -542,6 +542,7 @@ static void v4l2PrintControls(const String &devPath) {
 MediaIO::FormatDesc MediaIOTask_V4L2::formatDesc() {
         return {
                 "V4L2",
+                "V4L2 Capture",
                 "V4L2 video capture with optional ALSA audio (Linux)",
                 {},     // No file extensions — device source
                 true,   // canBeSource
@@ -567,8 +568,28 @@ MediaIO::FormatDesc MediaIOTask_V4L2::formatDesc() {
                         // Audio
                         s(MediaConfig::AudioRate,       48000.0f);
                         s(MediaConfig::AudioChannels,   int32_t(2));
-                        // Camera controls (all default to -1 = "don't touch")
+                        // Camera controls — for the integer-typed
+                        // controls the convention is "-1 = don't
+                        // touch".  The two Enum-typed controls
+                        // (V4l2AutoExposure, V4l2PowerLineFreq) keep
+                        // the global spec's @c Enum() default (which
+                        // means "use device default") rather than
+                        // taking int32_t(-1) — overriding with an int
+                        // would violate the spec's @c TypeEnum
+                        // constraint and break the round-trip through
+                        // JSON.
                         for(int i = 0; i < ControlMapCount; i++) {
+                                const VariantSpec *gs = MediaConfig::spec(
+                                        controlMap[i].configId);
+                                if(gs != nullptr
+                                   && gs->acceptsType(Variant::TypeEnum)
+                                   && !gs->acceptsType(Variant::TypeS32)) {
+                                        // Pull in the global spec
+                                        // unchanged — its setDefault
+                                        // is already typed correctly.
+                                        specs.insert(controlMap[i].configId, *gs);
+                                        continue;
+                                }
                                 s(controlMap[i].configId, int32_t(-1));
                         }
                         return specs;

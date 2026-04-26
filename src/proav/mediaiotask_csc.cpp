@@ -152,6 +152,7 @@ bool cscBridge(const MediaDesc &from,
 MediaIO::FormatDesc MediaIOTask_CSC::formatDesc() {
         MediaIO::FormatDesc d;
         d.name              = "CSC";
+        d.displayName       = "Color Space Converter";
         d.description       = "Color space converter (uncompressed pixel format conversion)";
         d.canBeSource       = false;
         d.canBeSink         = false;

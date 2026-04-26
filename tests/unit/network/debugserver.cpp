@@ -11,7 +11,6 @@
 #include <doctest/doctest.h>
 #include <promeki/application.h>
 #include <promeki/debugserver.h>
-#include <promeki/debugmodules.h>
 #include <promeki/httpserver.h>
 #include <promeki/httprequest.h>
 #include <promeki/httpresponse.h>
@@ -233,7 +232,7 @@ TEST_CASE("DebugServer_DefaultModulesMountUnderApiPrefix") {
         f.listenOnAnyPort();
 
         SUBCASE("build endpoint returns real build info") {
-                DbgResponse r = hit(f.port, "GET", "/promeki/debug/api/build");
+                DbgResponse r = hit(f.port, "GET", "/api/promeki/build");
                 CHECK(r.status == 200);
                 CHECK(r.body.contains("\"name\""));
                 CHECK(r.body.contains("\"version\""));
@@ -246,7 +245,7 @@ TEST_CASE("DebugServer_DefaultModulesMountUnderApiPrefix") {
                 // Set a marker var so we have something deterministic
                 // to scan for.
                 Env::set("PROMEKI_DEBUG_TEST_MARKER", "marker-value");
-                DbgResponse r = hit(f.port, "GET", "/promeki/debug/api/env");
+                DbgResponse r = hit(f.port, "GET", "/api/promeki/env");
                 CHECK(r.status == 200);
                 CHECK(r.body.contains("PROMEKI_DEBUG_TEST_MARKER"));
                 CHECK(r.body.contains("marker-value"));
@@ -254,7 +253,7 @@ TEST_CASE("DebugServer_DefaultModulesMountUnderApiPrefix") {
         }
 
         SUBCASE("options endpoint exposes LibraryOptions schema") {
-                DbgResponse r = hit(f.port, "GET", "/promeki/debug/api/options/_schema");
+                DbgResponse r = hit(f.port, "GET", "/api/promeki/options/_schema");
                 CHECK(r.status == 200);
                 // CrashHandler is a well-known LibraryOptions key.
                 CHECK(r.body.contains("CrashHandler"));
@@ -262,12 +261,12 @@ TEST_CASE("DebugServer_DefaultModulesMountUnderApiPrefix") {
 
         SUBCASE("options endpoint is read-only") {
                 // A PUT against the read-only mount should yield 405.
-                DbgResponse r = hit(f.port, "PUT", "/promeki/debug/api/options/CrashHandler");
+                DbgResponse r = hit(f.port, "PUT", "/api/promeki/options/CrashHandler");
                 CHECK(r.status == 405);
         }
 
         SUBCASE("memory endpoint reports registered MemSpaces") {
-                DbgResponse r = hit(f.port, "GET", "/promeki/debug/api/memory");
+                DbgResponse r = hit(f.port, "GET", "/api/promeki/memspace");
                 CHECK(r.status == 200);
                 CHECK(r.body.contains("\"spaces\""));
                 // The System space is always registered.
@@ -276,7 +275,7 @@ TEST_CASE("DebugServer_DefaultModulesMountUnderApiPrefix") {
         }
 
         SUBCASE("logger endpoint reports current state") {
-                DbgResponse r = hit(f.port, "GET", "/promeki/debug/api/logger");
+                DbgResponse r = hit(f.port, "GET", "/api/promeki/log");
                 CHECK(r.status == 200);
                 CHECK(r.body.contains("\"level\""));
                 CHECK(r.body.contains("\"levelName\""));
@@ -287,7 +286,7 @@ TEST_CASE("DebugServer_DefaultModulesMountUnderApiPrefix") {
                 Logger &logger = Logger::defaultLogger();
                 int saved = logger.level();
                 DbgResponse r = hitWithBody(f.port, "PUT",
-                        "/promeki/debug/api/logger/level", "{\"level\":3}");
+                        "/api/promeki/log/level", "{\"level\":3}");
                 CHECK(r.status == 200);
                 logger.sync();
                 CHECK(logger.level() == Logger::Warn);
@@ -297,45 +296,45 @@ TEST_CASE("DebugServer_DefaultModulesMountUnderApiPrefix") {
 
         SUBCASE("logger level rejects out-of-range values") {
                 DbgResponse r = hitWithBody(f.port, "PUT",
-                        "/promeki/debug/api/logger/level", "{\"level\":99}");
+                        "/api/promeki/log/level", "{\"level\":99}");
                 CHECK(r.status == 400);
         }
 
         SUBCASE("unknown debug channel returns 404") {
                 DbgResponse r = hitWithBody(f.port, "PUT",
-                        "/promeki/debug/api/logger/debug/no-such-channel-xyz",
+                        "/api/promeki/log/debug/no-such-channel-xyz",
                         "{\"enabled\":true}");
                 CHECK(r.status == 404);
         }
 
         SUBCASE("frontend root (trailing slash) serves baked index.html") {
-                DbgResponse r = hit(f.port, "GET", "/promeki/debug/");
+                DbgResponse r = hit(f.port, "GET", "/api/promeki/");
                 CHECK(r.status == 200);
                 CHECK(r.body.contains("</html>"));
         }
 
         SUBCASE("frontend without trailing slash redirects to canonical form") {
-                DbgResponse r = hit(f.port, "GET", "/promeki/debug");
+                DbgResponse r = hit(f.port, "GET", "/api/promeki");
                 CHECK(r.status == 302);
-                CHECK(r.location == String(DebugServer::DefaultUiPrefix) + "/");
+                CHECK(r.location == String("/api/promeki/"));
         }
 
         SUBCASE("frontend serves baked app.js") {
-                DbgResponse r = hit(f.port, "GET", "/promeki/debug/app.js");
+                DbgResponse r = hit(f.port, "GET", "/api/promeki/app.js");
                 CHECK(r.status == 200);
                 CHECK(r.body.contains("apiBase"));
         }
 
         SUBCASE("frontend serves baked style.css") {
-                DbgResponse r = hit(f.port, "GET", "/promeki/debug/style.css");
+                DbgResponse r = hit(f.port, "GET", "/api/promeki/style.css");
                 CHECK(r.status == 200);
                 CHECK(r.contentType.contains("css"));
         }
 
-        SUBCASE("root path redirects to UI prefix") {
+        SUBCASE("root path redirects to debug UI") {
                 DbgResponse r = hit(f.port, "GET", "/");
                 CHECK(r.status == 302);
-                CHECK(r.location == DebugServer::DefaultUiPrefix);
+                CHECK(r.location == String("/api/promeki/"));
         }
 }
 
@@ -567,7 +566,7 @@ TEST_CASE("DebugServer_WebSocket_LogStream_DeliversReplayAndLive") {
         });
 
         const String url = String::sprintf(
-                "ws://127.0.0.1:%u/promeki/debug/api/logger/stream?replay=4", f.port);
+                "ws://127.0.0.1:%u/api/promeki/log/stream?replay=4", f.port);
         REQUIRE(client.connect(url).isOk());
         REQUIRE(waitForFor(2000, [&]() { return cap.connected.load(); }));
 
@@ -614,7 +613,7 @@ TEST_CASE("DebugServer_WebSocket_LogStream_DefaultReplayWhenAbsent") {
         });
 
         const String url = String::sprintf(
-                "ws://127.0.0.1:%u/promeki/debug/api/logger/stream", f.port);
+                "ws://127.0.0.1:%u/api/promeki/log/stream", f.port);
         REQUIRE(client.connect(url).isOk());
         REQUIRE(waitForFor(2000, [&]() { return cap.connected.load(); }));
         // Don't assert on message count — the test thread doesn't log

@@ -24,6 +24,7 @@ PROMEKI_REGISTER_MEDIAIO(MediaIOTask_RawBitstream)
 MediaIO::FormatDesc MediaIOTask_RawBitstream::formatDesc() {
         return {
                 "RawBitstream",
+                "Raw Bitstream",
                 "Raw elementary-stream sink (H.264 / HEVC Annex-B — writes packet payloads verbatim)",
                 {"h264", "h265", "hevc", "bit"},
                 false,  // canBeSource (reading needs a NAL parser; follow-up)

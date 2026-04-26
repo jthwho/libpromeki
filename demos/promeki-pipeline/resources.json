@@ -1,0 +1,18 @@
+{
+    "metadata": {
+        "library": "promeki-pipeline",
+        "description": "Embedded frontend and asset bundle for the promeki-pipeline demo, exposed under :/promeki-pipeline/."
+    },
+    "entries": [
+        {
+            "type": "file",
+            "path": "index.html",
+            "source": "./frontend-dist/index.html"
+        },
+        {
+            "type": "glob",
+            "pattern": "./frontend-dist/assets/*",
+            "target": "assets/"
+        }
+    ]
+}

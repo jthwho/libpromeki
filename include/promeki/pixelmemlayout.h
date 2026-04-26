@@ -10,6 +10,7 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/list.h>
+#include <promeki/error.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -354,10 +355,37 @@ class PixelMemLayout {
 
                 /**
                  * @brief Looks up a pixel format by name.
+                 *
+                 * Returns @c PixelMemLayout(Invalid) on miss.  Callers
+                 * that need to distinguish a successful lookup of the
+                 * @c "Invalid" sentinel from a genuine name miss should
+                 * use the @ref lookup(const String &, Error *) overload —
+                 * the sentinel name is registered so a String round-trip
+                 * is lossless.
+                 *
                  * @param name The format name to search for.
                  * @return A PixelMemLayout wrapping the found format, or Invalid if not found.
                  */
                 static PixelMemLayout lookup(const String &name);
+
+                /**
+                 * @brief Looks up a pixel format by name with explicit
+                 *        error reporting.
+                 *
+                 * Differs from @ref lookup(const String &) in that the
+                 * canonical sentinel name @c "Invalid" reports
+                 * @c Error::Ok rather than being indistinguishable from
+                 * a miss.  This is the round-trip-safe entry point used
+                 * by the JSON / CLI parse paths.
+                 *
+                 * @param name The format name to search for.
+                 * @param err  Optional error output: @c Error::Ok on hit
+                 *             (including the @c "Invalid" sentinel),
+                 *             @c Error::IdNotFound on miss.
+                 * @return A PixelMemLayout wrapping the found format.
+                 *         @c PixelMemLayout(Invalid) on miss.
+                 */
+                static PixelMemLayout lookup(const String &name, Error *err);
 
                 /**
                  * @brief Constructs a PixelMemLayout for the given ID.

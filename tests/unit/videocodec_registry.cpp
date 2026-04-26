@@ -141,7 +141,10 @@ TEST_CASE("VideoCodec: default ctor is invalid") {
         CHECK(c.encoderSupportedInputs().isEmpty());
         CHECK(c.decoderSupportedOutputs().isEmpty());
         CHECK(c.compressedPixelFormats().isEmpty());
-        CHECK(c.toString().isEmpty());
+        // toString() emits the registered "Invalid" sentinel name so
+        // a Variant String round-trip is lossless — see
+        // VideoCodec::toString in videocodec.cpp.
+        CHECK(c.toString() == "Invalid");
 }
 
 TEST_CASE("VideoCodec: equality compares both Data pointer and pinned backend") {
@@ -256,9 +259,11 @@ TEST_CASE("VideoCodec::fromString: known codec + unknown backend is an error") {
         CHECK(error(res).isError());
 }
 
-TEST_CASE("VideoCodec::toString: invalid codec returns empty; unpinned returns name") {
+TEST_CASE("VideoCodec::toString: invalid codec returns the 'Invalid' sentinel; unpinned returns name") {
+        // The Invalid sentinel name is registered so a Variant
+        // String round-trip is lossless — see videocodec.cpp.
         VideoCodec invalid;
-        CHECK(invalid.toString().isEmpty());
+        CHECK(invalid.toString() == "Invalid");
 
         VideoCodec unpinned(VideoCodec::H264);
         CHECK(unpinned.toString() == "H264");

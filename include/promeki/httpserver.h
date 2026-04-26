@@ -382,9 +382,11 @@ void HttpServer::exposeDatabase(const String &mountPath,
                         body.forEach([&](const String &k, const Variant &val) {
                                 if(k == "value") captured = val;
                         });
-                        if(!db.setFromJson(id, captured)) {
+                        Error serr = db.setFromJson(id, captured);
+                        if(serr.isError()) {
                                 res = HttpResponse::badRequest(
-                                        "Validation failed for key: " + name);
+                                        String("Validation failed for key '") +
+                                        name + "': " + serr.desc());
                                 return;
                         }
                         JsonObject out;

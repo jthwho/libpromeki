@@ -43,35 +43,35 @@ This document describes the `MediaPipeline` class — a data-driven pipeline bui
 New shareable data object that describes a complete pipeline. Round-trips through `DataStream` and `JsonObject`.
 
 **Files:**
-- [ ] `include/promeki/mediapipelineconfig.h`
-- [ ] `src/proav/mediapipelineconfig.cpp`
-- [ ] `tests/mediapipelineconfig.cpp`
+- [x] `include/promeki/mediapipelineconfig.h`
+- [x] `src/proav/mediapipelineconfig.cpp`
+- [x] `tests/mediapipelineconfig.cpp`
 
 **Shape:**
-- [ ] `List<StageConfig> stages` — one entry per MediaIO instance
-- [ ] `List<Route> routes` — explicit `from` → `to` edges referencing stages by name
-- [ ] `Metadata metadata` — pipeline-wide metadata (name, author, description)
+- [x] `List<StageConfig> stages` — one entry per MediaIO instance
+- [x] `List<Route> routes` — explicit `from` → `to` edges referencing stages by name
+- [x] `Metadata metadata` — pipeline-wide metadata (name, author, description)
 
 **`StageConfig`** — describes one MediaIO instance:
-- [ ] `String name` — unique identifier used by routes; also used in error messages
-- [ ] `String type` — MediaIO format name (e.g. `"TPG"`, `"QuickTime"`, `"RtpVideo"`, `"ImageFile"`, `"Converter"`)
-- [ ] `MediaIO::Mode mode` — Reader / Writer / ReadWrite
-- [ ] `MediaConfig config` — full `VariantDatabase` passed to `MediaIO::create`
+- [x] `String name` — unique identifier used by routes; also used in error messages
+- [x] `String type` — MediaIO format name (e.g. `"TPG"`, `"QuickTime"`, `"RtpVideo"`, `"ImageFile"`, `"Converter"`)
+- [x] `MediaIO::Mode mode` — Reader / Writer / ReadWrite
+- [x] `MediaConfig config` — full `VariantDatabase` passed to `MediaIO::create`
 
 **`Route`** — describes one frame-flow edge:
-- [ ] `String from` — source stage name
-- [ ] `String to` — sink stage name
-- [ ] `String fromTrack = ""` — optional source sub-stream selector (video/audio/timecode) for future multi-output stages
-- [ ] `String toTrack = ""` — optional sink sub-stream selector
+- [x] `String from` — source stage name
+- [x] `String to` — sink stage name
+- [x] `String fromTrack = ""` — optional source sub-stream selector (video/audio/timecode) for future multi-output stages
+- [x] `String toTrack = ""` — optional sink sub-stream selector
 
 **Operations:**
-- [ ] `Error validate() const` — checks that all route endpoints reference existing stage names, detects cycles, verifies every non-source stage has at least one incoming route, verifies every non-sink stage has at least one outgoing route
-- [ ] `JsonObject toJson() const`
-- [ ] `static Result<MediaPipelineConfig> fromJson(const JsonObject &obj)`
-- [ ] `Error saveToFile(const FilePath &path) const` — writes JSON
-- [ ] `static Result<MediaPipelineConfig> loadFromFile(const FilePath &path)` — reads JSON
-- [ ] DataStream operators via the existing `VariantDatabase` framework
-- [ ] Doctest: round-trip through JSON, round-trip through DataStream, validation errors, cycle detection
+- [x] `Error validate() const` — checks that all route endpoints reference existing stage names, detects cycles, verifies every non-source stage has at least one incoming route, verifies every non-sink stage has at least one outgoing route
+- [x] `JsonObject toJson() const`
+- [x] `static Result<MediaPipelineConfig> fromJson(const JsonObject &obj)`
+- [x] `Error saveToFile(const FilePath &path) const` — writes JSON
+- [x] `static Result<MediaPipelineConfig> loadFromFile(const FilePath &path)` — reads JSON
+- [x] DataStream operators via the existing `VariantDatabase` framework
+- [x] Doctest: round-trip through JSON, round-trip through DataStream, validation errors, cycle detection
 
 ### JSON Representation
 
@@ -128,24 +128,24 @@ A pipeline that pulls the TPG, runs it through a colorspace converter, and fans 
 ## MediaPipeline Class
 
 **Files:**
-- [ ] `include/promeki/mediapipeline.h`
-- [ ] `src/proav/mediapipeline.cpp`
-- [ ] `tests/mediapipeline.cpp`
+- [x] `include/promeki/mediapipeline.h`
+- [x] `src/proav/mediapipeline.cpp`
+- [x] `tests/mediapipeline.cpp`
 - [ ] `docs/mediapipeline.dox` (authoring guide + JSON schema + worked examples)
 
 **Class responsibilities:**
-- [ ] Derive from `ObjectBase`, `PROMEKI_OBJECT`
-- [ ] Owns a `MediaPipelineConfig`
-- [ ] Owns one `MediaIO *` per stage (map keyed by stage name)
-- [ ] `Error build(const MediaPipelineConfig &config)` — validates config, instantiates each MediaIO via `MediaIO::create`, calls `adoptTask()` for backends that require external construction (SDLPlayer), stores stages in topological order
-- [ ] `Error open(unsigned int timeoutMs = 0)` — opens every stage in topological order; on any failure closes all already-opened stages and returns the error
-- [ ] `Error close(unsigned int timeoutMs = 0)` — closes every stage in reverse topological order
-- [ ] `Error start(unsigned int timeoutMs = 0)` — begins frame movement; connects signals (see below) and kicks off source-stage reads
-- [ ] `Error stop(unsigned int timeoutMs = 0)` — stops frame movement, cancels pending MediaIO commands
-- [ ] `MediaIO *stage(const String &name) const` — direct access for tests or dynamic re-config
-- [ ] `List<String> stageNames() const`
-- [ ] `MediaPipelineConfig config() const`
-- [ ] Accessors for pipeline-wide stats (aggregated from each stage's `MediaIOStats`)
+- [x] Derive from `ObjectBase`, `PROMEKI_OBJECT`
+- [x] Owns a `MediaPipelineConfig`
+- [x] Owns one `MediaIO *` per stage (map keyed by stage name)
+- [x] `Error build(const MediaPipelineConfig &config)` — validates config, instantiates each MediaIO via `MediaIO::create`, calls `adoptTask()` for backends that require external construction (SDLPlayer), stores stages in topological order
+- [x] `Error open(unsigned int timeoutMs = 0)` — opens every stage in topological order; on any failure closes all already-opened stages and returns the error
+- [x] `Error close(unsigned int timeoutMs = 0)` — closes every stage in reverse topological order
+- [x] `Error start(unsigned int timeoutMs = 0)` — begins frame movement; connects signals (see below) and kicks off source-stage reads
+- [x] `Error stop(unsigned int timeoutMs = 0)` — stops frame movement, cancels pending MediaIO commands
+- [x] `MediaIO *stage(const String &name) const` — direct access for tests or dynamic re-config
+- [x] `List<String> stageNames() const`
+- [x] `MediaPipelineConfig config() const`
+- [x] Accessors for pipeline-wide stats (aggregated from each stage's `MediaIOStats`)
 
 **Signal plumbing:**
 - [ ] For each route `from → to`: connect `from->frameReadySignal` to a slot that calls `to->writeFrame(frame, /*block=*/false)`; if `writeFrame` returns `Error::TryAgain`, emit a back-pressure signal and leave the frame pending on the producer until the consumer emits `frameWanted`
@@ -224,8 +224,8 @@ Multiple stages may hold references to the same `Buffer::Ptr` (shared via `Share
 - [x] `Audio::ensureExclusive()` / `Audio::isExclusive()` — superseded by `MediaPayload::ensureExclusive()` / `isExclusive()` on the base class (Phase 4v)
 - [x] `MemSpace::Stats` — per-space atomic counters, `stats()` / `statsSnapshot()` / `resetStats()`, peak/live/max-alloc tracking, `statsReport()` / `logStats()` / `logAllStats()`, wired into `mediaplay --memstats`
 - [ ] `MemSpacePool` — recycling `MemSpace` for fixed-size buffers, optional pre-allocation, LIFO recycle stack, pool hit/miss metrics
-- [ ] `MediaPipelineConfig` data object (JSON + DataStream round-trip)
-- [ ] `MediaPipeline` class (build/open/start/stop/close, signal plumbing, fan-out, validation)
+- [x] `MediaPipelineConfig` data object (JSON + DataStream round-trip)
+- [x] `MediaPipeline` class (build/open/start/stop/close, signal plumbing, fan-out, validation)
 - [ ] `docs/mediapipeline.dox` — authoring guide, JSON schema, worked examples
-- [ ] Integration tests covering fan-out, converter pass-through, error propagation, cancellation, JSON round-trip, stats aggregation
+- [x] Integration tests covering fan-out, converter pass-through, error propagation, cancellation, JSON round-trip, stats aggregation
 - [ ] Migration of `mediaplay` to build its pipeline via `MediaPipeline::build()` from a config composed from CLI options

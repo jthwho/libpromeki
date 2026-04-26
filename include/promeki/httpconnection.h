@@ -224,6 +224,15 @@ class HttpConnection : public ObjectBase {
                 bool                    _streamChunked = false;
                 bool                    _keepAlive = true;
 
+                // Async-read parking: when the body IODevice returns
+                // read()==0 with atEnd()==false, the pump unsubscribes
+                // from IoWrite and waits on the device's readyRead
+                // signal.  _streamReadyReadSlotId is the slot id from
+                // Signal::connect — non-negative while parked.
+                size_t                  _streamReadyReadSlotId = 0;
+                bool                    _streamReadyReadConnected = false;
+                bool                    _streamParked = false;
+
                 // Protocol upgrade.  When the response carries an
                 // upgrade hook (HttpResponse::upgradeHook()) and is a
                 // 101 Switching Protocols, _pendingUpgradeHook is set
@@ -254,6 +263,15 @@ class HttpConnection : public ObjectBase {
                 void enqueueResponse(HttpResponse response);
                 void scheduleStreamPump();
                 void completeProtocolUpgrade();
+
+                // Async-read parking: hook the stream's readyRead so
+                // pumpWrite resumes when the producer pushes more
+                // bytes; detach when the stream finishes or the
+                // connection closes.  Both are no-ops if the stream
+                // isn't a sequential async device.
+                void attachStreamReadyRead();
+                void detachStreamReadyRead();
+                void onStreamReadyRead();
 
                 void flushPendingHeaderPair();
                 void resetForNextRequest();

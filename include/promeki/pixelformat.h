@@ -10,6 +10,7 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/list.h>
+#include <promeki/error.h>
 #include <promeki/fourcc.h>
 #include <promeki/colormodel.h>
 #include <promeki/pixelmemlayout.h>
@@ -472,10 +473,39 @@ class PixelFormat {
 
                 /**
                  * @brief Looks up a pixel description by name.
+                 *
+                 * Returns @c PixelFormat(Invalid) on miss.  Callers that
+                 * need to distinguish a successful lookup of the @c "Invalid"
+                 * sentinel from a genuine name miss should use the
+                 * @ref lookup(const String &, Error *) overload — the
+                 * sentinel name is registered so a String round-trip
+                 * (toString → fromString → toString) is lossless.
+                 *
                  * @param name The description name to search for.
                  * @return A PixelFormat wrapping the found description, or Invalid if not found.
                  */
                 static PixelFormat lookup(const String &name);
+
+                /**
+                 * @brief Looks up a pixel description by name with explicit
+                 *        error reporting.
+                 *
+                 * Differs from @ref lookup(const String &) in that the
+                 * canonical sentinel name @c "Invalid" reports
+                 * @c Error::Ok rather than being indistinguishable from a
+                 * miss.  This is the round-trip-safe entry point used by
+                 * the JSON / CLI parse paths so any value the library
+                 * produces (including @c PixelFormat()) can be parsed
+                 * back into the same Variant.
+                 *
+                 * @param name The description name to search for.
+                 * @param err  Optional error output: @c Error::Ok on hit
+                 *             (including the @c "Invalid" sentinel),
+                 *             @c Error::IdNotFound on miss.
+                 * @return A PixelFormat wrapping the found description.
+                 *         @c PixelFormat(Invalid) on miss.
+                 */
+                static PixelFormat lookup(const String &name, Error *err);
 
                 /**
                  * @brief Constructs a PixelFormat for the given ID.

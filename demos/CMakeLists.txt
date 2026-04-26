@@ -22,5 +22,7 @@ if(NOT TARGET promeki::promeki)
 endif()
 
 add_subdirectory(crashtest)
+add_subdirectory(http-explorer)
 add_subdirectory(tui-demo)
 add_subdirectory(tui-event-test)
+add_subdirectory(promeki-pipeline)

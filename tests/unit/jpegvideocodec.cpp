@@ -139,8 +139,17 @@ TEST_CASE("JpegVideoEncoder_Defaults") {
 }
 
 TEST_CASE("JpegVideoEncoder_QualityClamping") {
+        // The spec on JpegQuality declares a 1-100 range, so a Strict
+        // database refuses to store 0 or 200 in the first place.  This
+        // test specifically exercises the encoder's defensive clamp,
+        // which only fires when an out-of-range value still reaches it
+        // (e.g. from a config built in Warn mode, or constructed by a
+        // backend that doesn't share the spec).  Drop into Warn so the
+        // out-of-range values land in the config and travel through to
+        // configure().
         JpegVideoEncoder enc;
         MediaConfig cfg;
+        cfg.setValidation(SpecValidation::Warn);
         cfg.set(MediaConfig::JpegQuality, 0);
         enc.configure(cfg);
         CHECK(enc.quality() == 1);

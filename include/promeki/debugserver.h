@@ -14,6 +14,7 @@
 #include <promeki/socketaddress.h>
 #include <promeki/string.h>
 #include <promeki/httpserver.h>
+#include <promeki/httpapi.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -21,22 +22,32 @@ PROMEKI_NAMESPACE_BEGIN
  * @brief Convenience wrapper that mounts the standard set of debug modules.
  * @ingroup network
  *
- * @ref DebugServer is intentionally thin: it owns one @ref HttpServer
- * and exposes a one-call helper (@ref installDefaultModules) that
- * stitches together every installer in @ref debugmodules.h under a
- * canonical @c "/promeki/debug" mount.  Applications that want to
- * cherry-pick which diagnostics they expose — or attach them to their
- * own user-facing server — can skip this class and call the installer
- * functions directly on any @ref HttpServer.
+ * @ref DebugServer is intentionally thin: it owns one @ref HttpServer,
+ * one @ref HttpApi attached to it, and exposes a one-call helper
+ * (@ref installDefaultModules) that stitches together every installer
+ * in @ref debugmodules.h under the canonical @c "/api" base prefix.
+ * Applications that want to cherry-pick which diagnostics they expose
+ * — or attach them to their own user-facing server — can skip this
+ * class and call the installer functions directly on any
+ * @ref HttpApi.
  *
- * The default API prefix is @c "/promeki/debug/api" and the default UI
- * prefix is @c "/promeki/debug" so the URL space looks like:
+ * Because the debug routes are registered through the embedded
+ * @ref HttpApi, every endpoint shows up in the api explorer, the
+ * @c /_catalog JSON list, and the @c /_openapi document
+ * automatically — the debug API is itself self-describing.
+ *
+ * The base prefix defaults to @c "/api", which lays out the URL space
+ * as follows:
  *
  * @verbatim
- * /                        → 302 redirect to /promeki/debug
- * /promeki/debug           → debug UI (Phase 5)
- * /promeki/debug/api/build → build info (Phase 3)
- * /promeki/debug/api/env   → environment snapshot (Phase 3)
+ * /                  → 302 redirect to /api/promeki/
+ * /api/               → built-in interactive API explorer
+ * /api/_catalog      → promeki-native API catalog
+ * /api/_openapi      → OpenAPI 3.1 doc covering the registered API
+ * /api/promeki/      → debug UI index.html
+ * /api/promeki/build → build info JSON
+ * /api/promeki/env   → environment snapshot
+ * /api/promeki/log   → logger control
  * ...
  * @endverbatim
  *
@@ -61,11 +72,8 @@ PROMEKI_NAMESPACE_BEGIN
 class DebugServer : public ObjectBase {
         PROMEKI_OBJECT(DebugServer, ObjectBase)
         public:
-                /** @brief Default mount path for the JSON API. */
+                /** @brief Default base prefix for the API surface. */
                 static const String DefaultApiPrefix;
-
-                /** @brief Default mount path for the debug frontend. */
-                static const String DefaultUiPrefix;
 
                 /** @brief Default loopback bind address ("127.0.0.1"). */
                 static const String DefaultBindHost;
@@ -107,16 +115,36 @@ class DebugServer : public ObjectBase {
                 const HttpServer &httpServer() const { return _server; }
 
                 /**
-                 * @brief Mounts every standard debug module.
+                 * @brief Returns the embedded @ref HttpApi.
                  *
-                 * Wires the API installers under @p apiPrefix, the
-                 * frontend installer under @p uiPrefix, and a 302
-                 * redirect from @c "/" to @p uiPrefix.  Safe to call
-                 * exactly once before @ref listen — calling it twice
-                 * registers duplicate routes.
+                 * Use this to register additional self-describing
+                 * endpoints alongside the standard debug modules — they
+                 * will share the same catalog, OpenAPI document, and
+                 * explorer UI.
                  */
-                void installDefaultModules(const String &apiPrefix = DefaultApiPrefix,
-                                           const String &uiPrefix  = DefaultUiPrefix);
+                HttpApi &httpApi() { return _api; }
+
+                /** @copydoc httpApi */
+                const HttpApi &httpApi() const { return _api; }
+
+                /**
+                 * @brief Mounts the full promeki debug surface.
+                 *
+                 * Calls @ref HttpApi::installPromekiAPI to install
+                 * every debug installer under @c \<prefix>/promeki/,
+                 * mounts the API's interactive explorer at
+                 * @c \<prefix>/ alongside @c /_catalog and
+                 * @c /_openapi, and adds a 302 redirect from @c "/"
+                 * to the debug UI at @c \<prefix>/promeki/.
+                 *
+                 * The root redirect is exclusive to @ref DebugServer:
+                 * applications that install the promeki API into
+                 * their own server (via @ref HttpApi::installPromekiAPI)
+                 * keep control of @c "/" themselves.
+                 *
+                 * Safe to call exactly once before @ref listen.
+                 */
+                void installDefaultModules();
 
                 /**
                  * @brief Parses an environment-variable spec into a SocketAddress.
@@ -134,6 +162,7 @@ class DebugServer : public ObjectBase {
 
         private:
                 HttpServer      _server;
+                HttpApi         _api;
 };
 
 PROMEKI_NAMESPACE_END

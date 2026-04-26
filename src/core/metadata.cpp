@@ -61,7 +61,12 @@ Metadata Metadata::fromJson(const JsonObject &json, Error *err) {
                 // serialized rich types (Timecode, UMID, DateTime, ...)
                 // come back as their proper Variant kind instead of a raw
                 // TypeString that fails spec validation.
-                ret.setFromJson(ID(key), val);
+                Error serr = ret.setFromJson(ID(key), val);
+                if(serr.isError()) {
+                        promekiWarn("Metadata::fromJson() key '%s' rejected: %s",
+                                    key.cstr(), serr.desc().cstr());
+                        good = false;
+                }
         });
         if(err) *err = good ? Error::Ok : Error::Invalid;
         return ret;

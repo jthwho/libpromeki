@@ -895,6 +895,7 @@ set(PROMEKI_HEADERS
     include/promeki/ansistream.h
     include/promeki/application.h
     include/promeki/array.h
+    include/promeki/asyncbufferqueue.h
     include/promeki/atomic.h
     include/promeki/audiolevel.h
     include/promeki/benchmark.h
@@ -1024,6 +1025,7 @@ set(PROMEKI_SOURCES
     src/core/ansistream.cpp
     src/core/application.cpp
     src/core/array.cpp
+    src/core/asyncbufferqueue.cpp
     src/core/audiolevel.cpp
     src/core/benchmark.cpp
     src/core/benchmarkrunner.cpp
@@ -1207,8 +1209,8 @@ endif()
 # HTTP sources (subset of network; vendored llhttp parser)
 if(PROMEKI_ENABLE_HTTP)
     list(APPEND PROMEKI_HEADERS
-        include/promeki/debugmodules.h
         include/promeki/debugserver.h
+        include/promeki/httpapi.h
         include/promeki/httpclient.h
         include/promeki/httpconnection.h
         include/promeki/httpfilehandler.h
@@ -1225,6 +1227,7 @@ if(PROMEKI_ENABLE_HTTP)
     list(APPEND PROMEKI_SOURCES
         src/network/debugmodules.cpp
         src/network/debugserver.cpp
+        src/network/httpapi.cpp
         src/network/httpclient.cpp
         src/network/httpconnection.cpp
         src/network/httpfilehandler.cpp
@@ -1274,6 +1277,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/mediapipelineconfig.h
         include/promeki/mediapipelineplanner.h
         include/promeki/mediapipelinestats.h
+        include/promeki/pipelineevent.h
         include/promeki/pipelinestats.h
         include/promeki/mediapayload.h
         include/promeki/videopayload.h
@@ -1343,6 +1347,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/mediapipelineconfig.cpp
         src/proav/mediapipelineplanner.cpp
         src/proav/mediapipelinestats.cpp
+        src/proav/pipelineevent.cpp
         src/proav/pipelinestats.cpp
         src/proav/mediapayload.cpp
         src/proav/uncompressedvideopayload.cpp
@@ -1358,6 +1363,8 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/mediaiotask_rawbitstream.cpp
         src/proav/mediaiotask_imagefile.cpp
         src/proav/mediaiotask_inspector.cpp
+        src/proav/mediaiotask_mjpegstream.cpp
+        src/proav/mediaiotask_nullpacing.cpp
         src/proav/mediaiotask_quicktime.cpp
         src/proav/mediaiotask_rtp.cpp
         src/proav/mediaiotask_tpg.cpp
@@ -1957,6 +1964,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/ansistream.cpp
         tests/unit/application.cpp
         tests/unit/array.cpp
+        tests/unit/asyncbufferqueue.cpp
         tests/unit/atomic.cpp
         tests/unit/audiocodec.cpp
         tests/unit/audioformat.cpp
@@ -2133,7 +2141,9 @@ if(PROMEKI_BUILD_TESTS)
     if(PROMEKI_ENABLE_HTTP)
         list(APPEND UNITTEST_SOURCES
             tests/unit/network/debugserver.cpp
+            tests/unit/network/httpapi.cpp
             tests/unit/network/httpclient.cpp
+            tests/unit/network/httpconnection_async.cpp
             tests/unit/network/httpheaders.cpp
             tests/unit/network/httpmethod.cpp
             tests/unit/network/httpstatus.cpp
@@ -2189,6 +2199,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/mediapipelineplanner.cpp
             tests/unit/mediapipelinestats.cpp
             tests/unit/mediapipeline.cpp
+            tests/unit/pipelineevent.cpp
             tests/unit/mediaiotask_csc.cpp
             tests/unit/mediaiotask_src.cpp
             tests/unit/mediaiotask_burn.cpp
@@ -2199,6 +2210,8 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/mediaiotask_videoencoder.cpp
             tests/unit/mediaiotask_videodecoder.cpp
             tests/unit/mediaiotask_inspector.cpp
+            tests/unit/mediaiotask_mjpegstream.cpp
+            tests/unit/mediaiotask_nullpacing.cpp
             tests/unit/mediaiotask_quicktime.cpp
             tests/unit/mediaiotask_rtp.cpp
             tests/unit/paintengine.cpp
@@ -2256,6 +2269,16 @@ if(PROMEKI_BUILD_TESTS)
         )
     endif()
 
+    # The pipeline demo's REST/WS test exercises the static-library
+    # split in demos/promeki-pipeline directly, so it only goes in
+    # when the demo target was actually configured (which itself
+    # requires the network + proav stacks).
+    if(PROMEKI_BUILD_DEMOS AND PROMEKI_ENABLE_NETWORK AND PROMEKI_ENABLE_PROAV)
+        list(APPEND UNITTEST_SOURCES
+            tests/unit/promeki_pipeline_api.cpp
+        )
+    endif()
+
     add_executable(unittest-promeki ${UNITTEST_SOURCES})
     target_compile_definitions(unittest-promeki PRIVATE
         $<$<OR:$<CONFIG:Debug>,$<CONFIG:DevRelease>>:PROMEKI_DEBUG_ENABLE>
@@ -2263,6 +2286,9 @@ if(PROMEKI_BUILD_TESTS)
     )
     target_include_directories(unittest-promeki PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
     target_link_libraries(unittest-promeki PRIVATE promeki)
+    if(PROMEKI_BUILD_DEMOS AND PROMEKI_ENABLE_NETWORK AND PROMEKI_ENABLE_PROAV)
+        target_link_libraries(unittest-promeki PRIVATE promeki-pipeline-core)
+    endif()
     add_test(NAME unittest-promeki COMMAND unittest-promeki)
     set_tests_properties(unittest-promeki PROPERTIES TIMEOUT 60)
 

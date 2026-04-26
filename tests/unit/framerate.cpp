@@ -237,9 +237,20 @@ TEST_CASE("FrameRate: wellKnownRate matches via reduced rational") {
 }
 
 TEST_CASE("FrameRate: fromString invalid") {
-        SUBCASE("empty string") {
+        SUBCASE("empty string round-trips back to FrameRate()") {
+                // Empty input is the canonical sentinel form for an
+                // invalid / unset FrameRate (the JSON-emitted form
+                // for setDefault(FrameRate())) — it parses
+                // successfully into FrameRate() so defaults
+                // round-trip cleanly through JSON.
                 auto [fr, e] = FrameRate::fromString("");
-                CHECK(e.isError());
+                CHECK(e.isOk());
+                CHECK(!fr.isValid());
+        }
+        SUBCASE("'0/1' round-trips back to FrameRate()") {
+                auto [fr, e] = FrameRate::fromString("0/1");
+                CHECK(e.isOk());
+                CHECK(!fr.isValid());
         }
         SUBCASE("garbage string") {
                 auto [fr, e] = FrameRate::fromString("not_a_rate");
@@ -453,4 +464,68 @@ TEST_CASE("FrameRate: cumulativeTicks on bad inputs returns 0") {
         CHECK(fps.cumulativeTicks(0, 100) == 0);
         CHECK(fps.cumulativeTicks(-1, 100) == 0);
         CHECK(fps.cumulativeTicks(90000, -1) == 0);
+}
+
+// ============================================================================
+// wellKnownRates() — public list of WellKnown entries used by UIs.
+// ============================================================================
+
+TEST_CASE("FrameRate: wellKnownRates() returns a non-empty list") {
+        const auto rates = FrameRate::wellKnownRates();
+        CHECK(rates.size() > 0);
+        // The list must never include the FPS_Invalid sentinel.
+        for(size_t i = 0; i < rates.size(); ++i) {
+                CHECK(rates[i].rate.isValid());
+                CHECK_FALSE(rates[i].label.isEmpty());
+        }
+}
+
+TEST_CASE("FrameRate: wellKnownRates() contains specific known entries") {
+        const auto rates = FrameRate::wellKnownRates();
+
+        // Helper to find an entry by label.
+        auto findByLabel = [&](const String &lbl) -> const FrameRate::WellKnown * {
+                for(size_t i = 0; i < rates.size(); ++i) {
+                        if(rates[i].label == lbl) return &rates[i];
+                }
+                return nullptr;
+        };
+
+        const FrameRate::WellKnown *fps24 = findByLabel("24");
+        REQUIRE(fps24 != nullptr);
+        CHECK(fps24->rate == FrameRate(FrameRate::FPS_24));
+
+        const FrameRate::WellKnown *fps25 = findByLabel("25");
+        REQUIRE(fps25 != nullptr);
+        CHECK(fps25->rate == FrameRate(FrameRate::FPS_25));
+
+        const FrameRate::WellKnown *fps2997 = findByLabel("29.97");
+        REQUIRE(fps2997 != nullptr);
+        CHECK(fps2997->rate.numerator() == 30000);
+        CHECK(fps2997->rate.denominator() == 1001);
+}
+
+TEST_CASE("FrameRate: wellKnownRates() entries round-trip through fromString") {
+        const auto rates = FrameRate::wellKnownRates();
+        for(size_t i = 0; i < rates.size(); ++i) {
+                // Each entry's canonical rational toString must parse
+                // back to an equal FrameRate.
+                const String wireForm = rates[i].rate.toString();
+                auto [parsed, e] = FrameRate::fromString(wireForm);
+                CHECK_FALSE(e.isError());
+                CHECK(parsed == rates[i].rate);
+
+                // The label form must also parse back to the same rate.
+                auto [byLabel, e2] = FrameRate::fromString(rates[i].label);
+                CHECK_FALSE(e2.isError());
+                CHECK(byLabel == rates[i].rate);
+        }
+}
+
+TEST_CASE("FrameRate: wellKnownRates() is in ascending rate order") {
+        const auto rates = FrameRate::wellKnownRates();
+        REQUIRE(rates.size() >= 2);
+        for(size_t i = 1; i < rates.size(); ++i) {
+                CHECK(rates[i - 1].rate.toDouble() < rates[i].rate.toDouble());
+        }
 }

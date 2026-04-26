@@ -36,7 +36,7 @@ PROMEKI_NAMESPACE_BEGIN
 enum class SpecValidation {
         None,   ///< @brief No validation — values are stored unconditionally.
         Warn,   ///< @brief Log a warning for out-of-spec values, but store them.
-        Strict  ///< @brief Reject out-of-spec values (set returns false).
+        Strict  ///< @brief Reject out-of-spec values (set returns false).  This is the default.
 };
 
 /**
@@ -286,7 +286,7 @@ class VariantDatabase {
                 // Construction
                 // ============================================================
 
-                /** @brief Constructs an empty database with Warn validation. */
+                /** @brief Constructs an empty database with Strict validation. */
                 VariantDatabase() = default;
 
                 /**
@@ -313,14 +313,21 @@ class VariantDatabase {
                  *    strings stay strings), and
                  *  - @ref VariantSpec::parseString succeeds.
                  *
-                 * Any failure falls back to @ref set with the raw
-                 * value so the regular validation path still warns.
+                 * Returns @ref Error::ParseFailed when spec-driven
+                 * coercion was attempted but the string couldn't be
+                 * parsed back into the spec's native type.  Otherwise
+                 * delegates to @ref set, which surfaces the
+                 * validator's @ref Error code (e.g. @ref Error::Invalid,
+                 * @ref Error::OutOfRange, @ref Error::InvalidArgument)
+                 * when the database is in Strict mode.
                  *
                  * @param id    The entry identifier.
                  * @param value The JSON-decoded value to store.
-                 * @return The result of the underlying @ref set call.
+                 * @return @ref Error::Ok on success, or a specific
+                 *         error code describing why the value was
+                 *         rejected.
                  */
-                bool setFromJson(ID id, const Variant &value) {
+                Error setFromJson(ID id, const Variant &value) {
                         if(value.type() == Variant::TypeString) {
                                 const VariantSpec *sp = spec(id);
                                 if(sp != nullptr
@@ -329,11 +336,22 @@ class VariantDatabase {
                                         Variant parsed = sp->parseString(
                                                 value.get<String>(), &pe);
                                         if(pe.isOk()) {
-                                                return set(id, std::move(parsed));
+                                                Error err;
+                                                set(id, std::move(parsed), &err);
+                                                return err;
                                         }
+                                        // String didn't parse into the
+                                        // spec's native type; report
+                                        // that rather than falling back
+                                        // to storing the raw string,
+                                        // which would itself fail spec
+                                        // validation under Strict mode.
+                                        return pe;
                                 }
                         }
-                        return set(id, value);
+                        Error err;
+                        set(id, value, &err);
+                        return err;
                 }
 
                 /**
@@ -395,11 +413,18 @@ class VariantDatabase {
                  *
                  * @param id    The entry identifier.
                  * @param value The value to store.
+                 * @param err   Optional out-param: receives @ref Error::Ok
+                 *              on success, or the specific @ref Error code
+                 *              the validator returned (e.g.
+                 *              @ref Error::Invalid, @ref Error::OutOfRange,
+                 *              @ref Error::InvalidArgument) when Strict
+                 *              mode rejected the value.  Always set to
+                 *              @ref Error::Ok in Warn or None mode.
                  * @return True if the value was stored.  False only in Strict
                  *         mode when validation fails.
                  */
-                bool set(ID id, const Variant &value) {
-                        if(!validateOnSet(id, value)) return false;
+                bool set(ID id, const Variant &value, Error *err = nullptr) {
+                        if(!validateOnSet(id, value, err)) return false;
                         _data.insert(id.id(), value);
                         return true;
                 }
@@ -408,10 +433,11 @@ class VariantDatabase {
                  * @brief Sets the value for the given ID (move overload).
                  * @param id    The entry identifier.
                  * @param value The value to move-store.
+                 * @param err   Optional out-param; see the const-ref overload.
                  * @return True if the value was stored.
                  */
-                bool set(ID id, Variant &&value) {
-                        if(!validateOnSet(id, value)) return false;
+                bool set(ID id, Variant &&value, Error *err = nullptr) {
+                        if(!validateOnSet(id, value, err)) return false;
                         _data.insert(id.id(), std::move(value));
                         return true;
                 }
@@ -887,7 +913,7 @@ class VariantDatabase {
 
         private:
                 Map<uint64_t, Variant>  _data;
-                SpecValidation          _validation = SpecValidation::Warn;
+                SpecValidation          _validation = SpecValidation::Strict;
 
                 /**
                  * @brief Thread-safe spec registry for this Tag's ID namespace.
@@ -932,18 +958,30 @@ class VariantDatabase {
                  *
                  * Called by set() when validation is enabled.  Returns true
                  * if the value should be stored, false if Strict mode rejects it.
+                 *
+                 * @param id    The entry identifier.
+                 * @param value The value to validate.
+                 * @param err   Optional out-param: receives the specific
+                 *              @ref Error code from the spec when
+                 *              validation fails (and Strict mode rejects),
+                 *              or @ref Error::Ok otherwise.  In Warn mode
+                 *              the validator's error is logged but @p err
+                 *              is still cleared to @ref Error::Ok because
+                 *              the value will be stored.
                  */
-                bool validateOnSet(ID id, const Variant &value) {
+                bool validateOnSet(ID id, const Variant &value, Error *err = nullptr) {
+                        if(err) *err = Error::Ok;
                         if(_validation == SpecValidation::None) return true;
                         const VariantSpec *s = specRegistry().find(id.id());
                         if(!s) return true;
-                        Error err;
-                        if(!s->validate(value, &err)) {
+                        Error verr;
+                        if(!s->validate(value, &verr)) {
                                 if(_validation == SpecValidation::Warn) {
                                         promekiWarn("VariantDatabase: value for '%s' fails spec (%s)",
-                                                    id.name().cstr(), err.name().cstr());
+                                                    id.name().cstr(), verr.name().cstr());
                                         return true;
                                 }
+                                if(err) *err = verr;
                                 return false; // Strict: reject
                         }
                         return true;

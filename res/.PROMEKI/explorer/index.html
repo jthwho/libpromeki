@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Promeki API Explorer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+        <h1 id="api-title">Promeki API</h1>
+        <span id="api-version" class="version"></span>
+        <span id="api-status" class="status">loading…</span>
+</header>
+
+<div id="layout">
+        <aside id="sidebar">
+                <input id="filter" type="text" placeholder="filter endpoints…" autocomplete="off">
+                <ul id="endpoint-list"></ul>
+        </aside>
+
+        <main id="endpoint-panel">
+                <p class="hint">Select an endpoint from the sidebar.</p>
+        </main>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

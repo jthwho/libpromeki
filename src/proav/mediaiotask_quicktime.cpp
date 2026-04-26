@@ -116,6 +116,7 @@ bool probeQuickTimeDevice(IODevice *device) {
 MediaIO::FormatDesc MediaIOTask_QuickTime::formatDesc() {
         return {
                 "QuickTime",
+                "QuickTime / MOV",
                 "QuickTime / ISO-BMFF container files (.mov, .mp4, .m4v)",
                 {"mov", "qt", "mp4", "m4v"},
                 true,    // canBeSource

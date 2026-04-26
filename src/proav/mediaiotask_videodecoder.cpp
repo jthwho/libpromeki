@@ -63,6 +63,7 @@ bool videoDecoderBridge(const MediaDesc &from,
 MediaIO::FormatDesc MediaIOTask_VideoDecoder::formatDesc() {
         MediaIO::FormatDesc d;
         d.name              = "VideoDecoder";
+        d.displayName       = "Video Decoder";
         d.description       = "Generic video decoder stage (picks a VideoDecoder via VideoCodec)";
         d.canBeSource       = false;
         d.canBeSink         = false;

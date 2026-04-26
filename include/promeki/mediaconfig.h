@@ -580,6 +580,105 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                         "in Dir::temp()."));
 
                 // ============================================================
+                // NullPacing sink (MediaIOTask_NullPacing)
+                // ============================================================
+
+                /// @brief Enum @ref NullPacingMode — pacing strategy for the
+                /// @ref MediaIOTask_NullPacing sink.
+                ///
+                /// @c Wallclock (default) consumes one frame per
+                /// @c 1/NullPacingTargetFps wall-clock interval and
+                /// drops anything arriving inside the same interval.
+                /// @c Free drains incoming frames at whatever rate the
+                /// upstream feeds.  See @ref NullPacingMode for the
+                /// detailed semantics.
+                PROMEKI_DECLARE_ID(NullPacingMode,
+                        VariantSpec().setType(Variant::TypeEnum)
+                                .setDefault(promeki::NullPacingMode::Wallclock)
+                                .setEnumType(promeki::NullPacingMode::Type)
+                                .setDescription(
+                                        "Pacing strategy for the NullPacing sink "
+                                        "(Wallclock = drop-between-ticks, Free = "
+                                        "drain at upstream rate)."));
+
+                /// @brief Rational — target sink rate for the
+                /// @ref MediaIOTask_NullPacing sink, in frames per
+                /// second.  Default @c 0/1 means "follow the source
+                /// descriptor": the sink reads the frame rate from the
+                /// upstream @ref MediaDesc cached at @c open() time.
+                /// Ignored in @ref NullPacingMode::Free mode.
+                PROMEKI_DECLARE_ID(NullPacingTargetFps,
+                        VariantSpec().setType(Variant::TypeRational)
+                                .setDefault(Rational<int>(0, 1))
+                                .setDescription(
+                                        "Target frame-consumption rate for the "
+                                        "NullPacing sink (frames per second).  "
+                                        "0/1 = follow the source descriptor."));
+
+                /// @brief bool — when true, the @ref MediaIOTask_NullPacing
+                /// sink emits a per-frame debug log entry showing the
+                /// measured period and jitter (interval since the
+                /// previous consumption minus the configured period).
+                /// Default false.  Useful for demos and pacing
+                /// diagnostics; intentionally noisy when enabled.
+                PROMEKI_DECLARE_ID(NullPacingBurnTimings,
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(false)
+                                .setDescription(
+                                        "NullPacing sink logs per-frame jitter / "
+                                        "period at debug level when true."));
+
+                // ============================================================
+                // MJPEG stream sink (MediaIOTask_MjpegStream)
+                // ============================================================
+
+                /// @brief Rational — maximum encode rate for the
+                /// @ref MediaIOTask_MjpegStream sink, in frames per
+                /// second.  Frames arriving inside @c 1/MjpegMaxFps of
+                /// the previously-encoded frame are dropped before
+                /// JPEG encoding so the sink can throttle a fast
+                /// upstream to a preview-friendly rate.  Default
+                /// @c 15/1.  The sentinel @c 0/1 disables the rate
+                /// gate entirely (every frame is encoded).
+                PROMEKI_DECLARE_ID(MjpegMaxFps,
+                        VariantSpec().setType(Variant::TypeRational)
+                                .setDefault(Rational<int>(15, 1))
+                                .setDescription(
+                                        "Maximum encode rate for the MjpegStream "
+                                        "sink (frames per second).  0/1 = no rate "
+                                        "limit."));
+
+                /// @brief int — JPEG quality (1-100) used by the
+                /// @ref MediaIOTask_MjpegStream sink when encoding
+                /// frames.  Default @c 80.  Forwarded verbatim to
+                /// @ref JpegVideoEncoder via @ref MediaConfig::JpegQuality
+                /// at session creation.
+                PROMEKI_DECLARE_ID(MjpegQuality,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(80))
+                                .setMin(int32_t(1))
+                                .setMax(int32_t(100))
+                                .setDescription(
+                                        "JPEG quality used by the MjpegStream "
+                                        "sink (1-100)."));
+
+                /// @brief int — depth of the latest-N ring of
+                /// encoded frames retained by the
+                /// @ref MediaIOTask_MjpegStream sink.  Subscribers
+                /// always receive the newest frame; the ring keeps
+                /// recent history so freshly-attached subscribers can
+                /// be primed with the latest frame without waiting for
+                /// the next encode.  Default @c 1, range 1-16.
+                PROMEKI_DECLARE_ID(MjpegMaxQueueFrames,
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(1))
+                                .setMin(int32_t(1))
+                                .setMax(int32_t(16))
+                                .setDescription(
+                                        "Latest-N ring depth for the MjpegStream "
+                                        "sink (1-16)."));
+
+                // ============================================================
                 // CSC (MediaIOTask_CSC)
                 // ============================================================
 

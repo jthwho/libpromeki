@@ -171,6 +171,17 @@ JsonObject MediaPipelineStats::toJson() const {
 
 MediaPipelineStats MediaPipelineStats::fromJson(const JsonObject &obj, Error *err) {
         MediaPipelineStats s;
+        bool good = true;
+
+        auto applyEntry = [&good](auto &db, const String &context,
+                                  const String &key, const Variant &val) {
+                Error serr = db.setFromJson(typename std::decay_t<decltype(db)>::ID(key), val);
+                if(serr.isError()) {
+                        promekiWarn("MediaPipelineStats::fromJson: %s key '%s' rejected: %s",
+                                    context.cstr(), key.cstr(), serr.desc().cstr());
+                        good = false;
+                }
+        };
 
         if(obj.valueIsObject("perStage")) {
                 const JsonObject perStageJson = obj.getObject("perStage");
@@ -182,26 +193,28 @@ MediaPipelineStats MediaPipelineStats::fromJson(const JsonObject &obj, Error *er
                         if(!perStageJson.valueIsObject(name)) return;
                         JsonObject nested = perStageJson.getObject(name);
                         MediaIOStats stats;
-                        nested.forEach([&stats](const String &key, const Variant &val) {
-                                stats.setFromJson(MediaIOStats::ID(key), val);
+                        nested.forEach([&](const String &key, const Variant &val) {
+                                applyEntry(stats,
+                                           String("perStage[") + name + "]",
+                                           key, val);
                         });
                         s._perStage.insert(name, stats);
                 });
         }
         if(obj.valueIsObject("aggregate")) {
                 JsonObject agg = obj.getObject("aggregate");
-                agg.forEach([&s](const String &key, const Variant &val) {
-                        s._aggregate.setFromJson(MediaIOStats::ID(key), val);
+                agg.forEach([&](const String &key, const Variant &val) {
+                        applyEntry(s._aggregate, String("aggregate"), key, val);
                 });
         }
         if(obj.valueIsObject("pipeline")) {
                 JsonObject pp = obj.getObject("pipeline");
-                pp.forEach([&s](const String &key, const Variant &val) {
-                        s._pipeline.setFromJson(PipelineStats::ID(key), val);
+                pp.forEach([&](const String &key, const Variant &val) {
+                        applyEntry(s._pipeline, String("pipeline"), key, val);
                 });
         }
 
-        if(err) *err = Error::Ok;
+        if(err) *err = good ? Error::Ok : Error::Invalid;
         return s;
 }
 

@@ -3,9 +3,35 @@
  * @copyright Howard Logic. All rights reserved.
  *
  * See LICENSE file in the project root folder for license information.
+ *
+ * Internal-only implementation of the @c installPromekiDebugModules
+ * helper called by @ref HttpApi::installPromekiAPI.  The individual
+ * per-module installers are file-static here because the promeki API
+ * is intentionally all-or-nothing — applications that want
+ * fine-grained control over what they expose should register their
+ * own bespoke endpoints instead.
+ *
+ * URL layout (every endpoint sits under @c \<api.prefix()>/promeki/):
+ *
+ * @verbatim
+ *   /promeki/                ← debug UI index.html
+ *   /promeki/build           ← build info JSON
+ *   /promeki/env             ← environment snapshot
+ *   /promeki/options         ← LibraryOptions VariantDatabase
+ *   /promeki/memspace        ← MemSpace stats
+ *   /promeki/log             ← logger status / level / channels
+ *   /promeki/log/stream      ← live log WebSocket
+ * @endverbatim
+ *
+ * Each JSON installer registers its routes through @ref HttpApi::route
+ * with paths relative to the api's prefix (e.g. @c "/promeki/build")
+ * — the api resolves them to the absolute path on the underlying
+ * server.  The static debug-frontend mount goes directly through the
+ * underlying @ref HttpServer because it isn't a JSON endpoint and
+ * doesn't belong in the catalog.
  */
 
-#include <promeki/debugmodules.h>
+#include <promeki/httpapi.h>
 #include <promeki/httpserver.h>
 #include <promeki/httpfilehandler.h>
 #include <promeki/httprequest.h>
@@ -25,13 +51,37 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+namespace {
+
+// Every promeki-side route nests under "/promeki/" relative to the
+// HttpApi's prefix.  Centralising the suffix keeps the URL layout
+// consistent across modules and makes it trivial to rename later.
+constexpr const char *kPromekiSubpath = "/promeki";
+
+String promekiPath(const String &leaf) {
+        // leaf is expected to start with "/" — empty leaf yields the
+        // bare "/promeki" path used by the static UI.
+        return String(kPromekiSubpath) + leaf;
+}
+
 // ============================================================
 // Build info
 // ============================================================
 
-void installBuildInfoDebugRoutes(HttpServer &server, const String &apiPrefix) {
-        const String route = apiPrefix + "/build";
-        server.route(route, HttpMethod::Get,
+void installBuildInfoDebugRoutes(HttpApi &api) {
+        HttpApi::Endpoint ep;
+        ep.path    = promekiPath("/build");
+        ep.method  = HttpMethod::Get;
+        ep.title   = "Build info";
+        ep.summary = "Compiled-in build identification, runtime info, "
+                     "feature flags, and the human-readable banner.";
+        ep.tags    = {"promeki/debug"};
+        ep.response = VariantSpec().setDescription(
+                "Object with name/version/repoIdent/date/time/hostname/"
+                "type/betaVersion/rcVersion/platform/features/runtime/"
+                "debug/lines fields.");
+
+        api.route(ep,
                 [](const HttpRequest &, HttpResponse &res) {
                         const BuildInfo *info = getBuildInfo();
                         JsonObject body;
@@ -51,9 +101,6 @@ void installBuildInfoDebugRoutes(HttpServer &server, const String &apiPrefix) {
                         body.set("runtime",  runtimeInfoString());
                         body.set("debug",    debugStatusString());
 
-                        // Mirror the human-readable banner under "lines"
-                        // so a UI can display the same multi-line block
-                        // the logger emits at startup.
                         const StringList lines = buildInfoStrings();
                         JsonArray arr;
                         for(const auto &line : lines) arr.add(line);
@@ -67,9 +114,19 @@ void installBuildInfoDebugRoutes(HttpServer &server, const String &apiPrefix) {
 // Environment variables
 // ============================================================
 
-void installEnvDebugRoutes(HttpServer &server, const String &apiPrefix) {
-        const String route = apiPrefix + "/env";
-        server.route(route, HttpMethod::Get,
+void installEnvDebugRoutes(HttpApi &api) {
+        HttpApi::Endpoint ep;
+        ep.path    = promekiPath("/env");
+        ep.method  = HttpMethod::Get;
+        ep.title   = "Environment";
+        ep.summary = "Snapshot of every environment variable visible to "
+                     "the running process.";
+        ep.tags    = {"promeki/debug"};
+        ep.response = VariantSpec().setDescription(
+                "Free-form object: keys are environment variable names, "
+                "values are their string contents.");
+
+        api.route(ep,
                 [](const HttpRequest &, HttpResponse &res) {
                         JsonObject body;
                         const Map<String, String> entries = Env::list();
@@ -84,16 +141,16 @@ void installEnvDebugRoutes(HttpServer &server, const String &apiPrefix) {
 // Library options (read-only via VariantDatabase)
 // ============================================================
 
-void installLibraryOptionsDebugRoutes(HttpServer &server, const String &apiPrefix) {
-        const String mount = apiPrefix + "/options";
-        server.exposeDatabase(mount, LibraryOptions::instance(), /*readOnly=*/true);
+void installLibraryOptionsDebugRoutes(HttpApi &api) {
+        api.exposeDatabase(promekiPath("/options"),
+                           "Library options",
+                           LibraryOptions::instance(),
+                           /*readOnly=*/true);
 }
 
 // ============================================================
 // Memory stats
 // ============================================================
-
-namespace {
 
 JsonObject memSpaceToJson(MemSpace::ID id) {
         MemSpace ms(id);
@@ -119,11 +176,19 @@ JsonObject memSpaceToJson(MemSpace::ID id) {
         return out;
 }
 
-}  // namespace
+void installMemSpaceDebugRoutes(HttpApi &api) {
+        HttpApi::Endpoint ep;
+        ep.path    = promekiPath("/memspace");
+        ep.method  = HttpMethod::Get;
+        ep.title   = "Memory stats";
+        ep.summary = "Per-MemSpace allocation statistics: alloc/release "
+                     "counts and bytes, plus live/peak tallies.";
+        ep.tags    = {"promeki/debug"};
+        ep.response = VariantSpec().setDescription(
+                "Object with a single \"spaces\" array; each entry covers "
+                "one registered MemSpace.");
 
-void installMemoryDebugRoutes(HttpServer &server, const String &apiPrefix) {
-        const String route = apiPrefix + "/memory";
-        server.route(route, HttpMethod::Get,
+        api.route(ep,
                 [](const HttpRequest &, HttpResponse &res) {
                         JsonObject body;
                         JsonArray spaces;
@@ -138,8 +203,6 @@ void installMemoryDebugRoutes(HttpServer &server, const String &apiPrefix) {
 // ============================================================
 // Logger control
 // ============================================================
-
-namespace {
 
 JsonObject loggerStatusJson() {
         Logger &logger = Logger::defaultLogger();
@@ -163,10 +226,6 @@ JsonObject loggerStatusJson() {
         body.set("debugChannels", channels);
         return body;
 }
-
-}  // namespace
-
-namespace {
 
 JsonObject logEntryToJson(const Logger::LogEntry &entry, const String &threadName) {
         JsonObject body;
@@ -194,11 +253,6 @@ void attachLogWebSocket(WebSocket *ws, size_t replayCount) {
         EventLoop *wsLoop = EventLoop::current();
         ObjectBasePtr<WebSocket> wsPtr(ws);
 
-        // Install the listener.  The lambda body runs on the logger
-        // worker thread; it serializes the entry once and posts the
-        // formatted string to wsLoop for transmission.  Posting (not
-        // sending directly) is required because WebSocket send paths
-        // mutate event-loop state and must run on the owning loop.
         Logger::ListenerHandle handle =
                 Logger::defaultLogger().installListener(
                         [wsPtr, wsLoop](const Logger::LogEntry &entry,
@@ -213,98 +267,143 @@ void attachLogWebSocket(WebSocket *ws, size_t replayCount) {
                                 });
                         }, replayCount);
 
-        // Tear down on disconnect.  removeListener() blocks until the
-        // worker thread acknowledges removal — which is exactly when
-        // the last in-flight listener invocation has completed and
-        // posted its (final) callable to wsLoop.  Subsequent posts to
-        // wsLoop find an invalid wsPtr (after delete) and skip.
         ws->disconnectedSignal.connect([handle, ws, wsLoop]() {
                 Logger::defaultLogger().removeListener(handle);
-                // Defer the delete onto wsLoop so any callable the
-                // listener posted before removeListener returned drains
-                // first.  postCallable preserves FIFO order on the loop.
                 wsLoop->postCallable([ws]() { delete ws; });
         });
 }
 
-}  // namespace
+void installLogDebugRoutes(HttpApi &api) {
+        const String base       = promekiPath("/log");
+        const String levelRel   = base + "/level";
+        const String debugRel   = base + "/debug/{name}";
+        const String wsRel      = base + "/stream";
 
-void installLoggerDebugRoutes(HttpServer &server, const String &apiPrefix) {
-        const String statusRoute = apiPrefix + "/logger";
-        const String levelRoute  = apiPrefix + "/logger/level";
-        const String debugRoute  = apiPrefix + "/logger/debug/{name}";
-        const String wsRoute     = apiPrefix + "/logger/stream";
+        // GET /log — full snapshot.
+        {
+                HttpApi::Endpoint ep;
+                ep.path    = base;
+                ep.method  = HttpMethod::Get;
+                ep.title   = "Logger status";
+                ep.summary = "Current log level, console logging flag, "
+                             "history size, and all registered debug "
+                             "channels.";
+                ep.tags    = {"promeki/debug", "log"};
+                ep.response = VariantSpec().setDescription(
+                        "Logger status object.");
+                api.route(ep,
+                        [](const HttpRequest &, HttpResponse &res) {
+                                res.setJson(loggerStatusJson());
+                        });
+        }
 
-        // GET /logger — full snapshot.
-        server.route(statusRoute, HttpMethod::Get,
-                [](const HttpRequest &, HttpResponse &res) {
-                        res.setJson(loggerStatusJson());
-                });
+        // PUT /log/level — body { "level": <int> }.
+        {
+                HttpApi::Endpoint ep;
+                ep.path    = levelRel;
+                ep.method  = HttpMethod::Put;
+                ep.title   = "Set log level";
+                ep.summary = "Updates the minimum log level "
+                             "(0=Force..4=Err).";
+                ep.tags    = {"promeki/debug", "log"};
+                ep.params  = { HttpApi::Param{
+                        .name = "level", .in = HttpApi::ParamIn::Body,
+                        .required = true,
+                        .spec = VariantSpec()
+                                .setType(Variant::TypeS32)
+                                .setRange(static_cast<int>(Logger::Force),
+                                          static_cast<int>(Logger::Err))
+                                .setDescription("New minimum log level."),
+                } };
+                ep.response = VariantSpec().setDescription(
+                        "Updated logger status object.");
+                api.route(ep,
+                        [](const HttpRequest &req, HttpResponse &res) {
+                                Error perr;
+                                JsonObject body = req.bodyAsJson(&perr);
+                                if(perr.isError()) {
+                                        res = HttpResponse::badRequest("Body must be JSON");
+                                        return;
+                                }
+                                Error gerr;
+                                int64_t level = body.getInt("level", &gerr);
+                                if(gerr.isError()) {
+                                        res = HttpResponse::badRequest(
+                                                "Body must contain integer \"level\"");
+                                        return;
+                                }
+                                if(level < Logger::Force || level > Logger::Err) {
+                                        res = HttpResponse::badRequest(
+                                                "level must be in [0,4]");
+                                        return;
+                                }
+                                Logger::defaultLogger().setLogLevel(
+                                        static_cast<Logger::LogLevel>(level));
+                                res.setJson(loggerStatusJson());
+                        });
+        }
 
-        // PUT /logger/level — body { "level": <int> } sets the
-        // minimum log level.  Out-of-range values are rejected so the
-        // caller doesn't accidentally clamp to Force or push above Err.
-        server.route(levelRoute, HttpMethod::Put,
-                [](const HttpRequest &req, HttpResponse &res) {
-                        Error perr;
-                        JsonObject body = req.bodyAsJson(&perr);
-                        if(perr.isError()) {
-                                res = HttpResponse::badRequest("Body must be JSON");
-                                return;
-                        }
-                        Error gerr;
-                        int64_t level = body.getInt("level", &gerr);
-                        if(gerr.isError()) {
-                                res = HttpResponse::badRequest(
-                                        "Body must contain integer \"level\"");
-                                return;
-                        }
-                        if(level < Logger::Force || level > Logger::Err) {
-                                res = HttpResponse::badRequest(
-                                        "level must be in [0,4]");
-                                return;
-                        }
-                        Logger::defaultLogger().setLogLevel(
-                                static_cast<Logger::LogLevel>(level));
-                        res.setJson(loggerStatusJson());
-                });
+        // PUT /log/debug/{name} — body { "enabled": <bool> }.
+        {
+                HttpApi::Endpoint ep;
+                ep.path    = debugRel;
+                ep.method  = HttpMethod::Put;
+                ep.title   = "Toggle debug channel";
+                ep.summary = "Enables or disables every PROMEKI_DEBUG site "
+                             "with the given name.";
+                ep.tags    = {"promeki/debug", "log"};
+                ep.params  = {
+                        HttpApi::Param{
+                                .name = "name", .in = HttpApi::ParamIn::Path,
+                                .required = true,
+                                .spec = VariantSpec()
+                                        .setType(Variant::TypeString)
+                                        .setDescription("Channel name."),
+                        },
+                        HttpApi::Param{
+                                .name = "enabled", .in = HttpApi::ParamIn::Body,
+                                .required = true,
+                                .spec = VariantSpec()
+                                        .setType(Variant::TypeBool)
+                                        .setDescription("New enabled flag."),
+                        },
+                };
+                ep.response = VariantSpec().setDescription(
+                        "Updated logger status object.");
+                api.route(ep,
+                        [](const HttpRequest &req, HttpResponse &res) {
+                                const String name = req.pathParam("name");
+                                if(name.isEmpty()) {
+                                        res = HttpResponse::badRequest("Missing channel name");
+                                        return;
+                                }
+                                Error perr;
+                                JsonObject body = req.bodyAsJson(&perr);
+                                if(perr.isError()) {
+                                        res = HttpResponse::badRequest("Body must be JSON");
+                                        return;
+                                }
+                                Error gerr;
+                                bool enabled = body.getBool("enabled", &gerr);
+                                if(gerr.isError()) {
+                                        res = HttpResponse::badRequest(
+                                                "Body must contain boolean \"enabled\"");
+                                        return;
+                                }
+                                if(!Logger::setDebugChannel(name, enabled)) {
+                                        res = HttpResponse::notFound(
+                                                String("Unknown debug channel: ") + name);
+                                        return;
+                                }
+                                res.setJson(loggerStatusJson());
+                        });
+        }
 
-        // PUT /logger/debug/{name} — body { "enabled": <bool> }
-        // toggles every PROMEKI_DEBUG site bearing that name.
-        server.route(debugRoute, HttpMethod::Put,
-                [](const HttpRequest &req, HttpResponse &res) {
-                        const String name = req.pathParam("name");
-                        if(name.isEmpty()) {
-                                res = HttpResponse::badRequest("Missing channel name");
-                                return;
-                        }
-                        Error perr;
-                        JsonObject body = req.bodyAsJson(&perr);
-                        if(perr.isError()) {
-                                res = HttpResponse::badRequest("Body must be JSON");
-                                return;
-                        }
-                        Error gerr;
-                        bool enabled = body.getBool("enabled", &gerr);
-                        if(gerr.isError()) {
-                                res = HttpResponse::badRequest(
-                                        "Body must contain boolean \"enabled\"");
-                                return;
-                        }
-                        if(!Logger::setDebugChannel(name, enabled)) {
-                                res = HttpResponse::notFound(
-                                        String("Unknown debug channel: ") + name);
-                                return;
-                        }
-                        res.setJson(loggerStatusJson());
-                });
-
-        // WS /logger/stream — streams every future log entry as a
-        // JSON text frame.  Optional `?replay=<n>` delivers the last
-        // n history entries before subscribing; absent or unparseable
-        // values use a sane default and large values are clamped to
-        // the configured history size by the listener itself.
-        server.routeWebSocket(wsRoute,
+        // WS /log/stream — WebSocket upgrade.  Not catalogued as a
+        // GET endpoint because the catalog/OpenAPI surfaces don't
+        // model WebSocket upgrades — clients learn about it via the
+        // module documentation.
+        api.server().routeWebSocket(api.resolve(wsRel),
                 [](WebSocket *ws, const HttpRequest &req) {
                         const String replayStr = req.queryValue("replay");
                         size_t replay = 100;
@@ -324,20 +423,23 @@ void installLoggerDebugRoutes(HttpServer &server, const String &apiPrefix) {
 // Frontend
 // ============================================================
 
-void installDebugFrontendRoutes(HttpServer &server, const String &uiPrefix) {
-        // Mount the baked-in :/.PROMEKI/debug/ resource folder under
-        // the UI prefix.  HttpFileHandler understands cirf-style
-        // resource paths transparently, so this works whether the
-        // running binary serves the assets from the compiled-in
-        // resource set or from an on-disk override.
-        const String greedy = uiPrefix + "/{path:*}";
-        const String trailing = uiPrefix + "/";
+void installDebugFrontendRoutes(HttpApi &api) {
+        // Static UI bundle baked into cirf at :/.PROMEKI/debug/.
+        // Goes onto the underlying HttpServer (not the api) because
+        // it isn't a JSON endpoint — it shouldn't appear in the
+        // catalog.  The router's longest-literal scoring guarantees
+        // explicit JSON routes (e.g. /promeki/build) win over this
+        // static catch-all.
+        HttpServer &server = api.server();
+        const String base     = api.resolve(promekiPath(""));
+        const String greedy   = base + "/{path:*}";
+        const String trailing = base + "/";
         auto handler = HttpFileHandler::Ptr::takeOwnership(
                 new HttpFileHandler(Dir(":/.PROMEKI/debug")));
-        // Bare uiPrefix (no trailing slash) redirects to the
+        // Bare base path (no trailing slash) redirects to the
         // canonical trailing-slash form so relative asset URLs in
         // index.html resolve correctly in the browser.
-        server.route(uiPrefix, HttpMethod::Get,
+        server.route(base, HttpMethod::Get,
                 [trailing](const HttpRequest &, HttpResponse &res) {
                         res.setStatus(HttpStatus::Found);
                         res.setHeader("Location", trailing);
@@ -346,17 +448,21 @@ void installDebugFrontendRoutes(HttpServer &server, const String &uiPrefix) {
         server.route(greedy, HttpMethod::Get, handler);
 }
 
+}  // namespace
+
 // ============================================================
-// Root redirect
+// Single public entry point.  Declared (not in any header) at the
+// top of httpapi.cpp.  All-or-nothing on purpose — the bundled
+// debug UI assumes the full surface is present.
 // ============================================================
 
-void installDebugRootRedirect(HttpServer &server, const String &uiPrefix) {
-        server.route("/", HttpMethod::Get,
-                [uiPrefix](const HttpRequest &, HttpResponse &res) {
-                        res.setStatus(HttpStatus::Found);
-                        res.setHeader("Location", uiPrefix);
-                        res.setText("");
-                });
+void installPromekiDebugModules(HttpApi &api) {
+        installBuildInfoDebugRoutes(api);
+        installEnvDebugRoutes(api);
+        installLibraryOptionsDebugRoutes(api);
+        installMemSpaceDebugRoutes(api);
+        installLogDebugRoutes(api);
+        installDebugFrontendRoutes(api);
 }
 
 PROMEKI_NAMESPACE_END

@@ -1,5 +1,6 @@
-// libpromeki debug frontend.  Lives at /promeki/debug/, talks JSON to
-// /promeki/debug/api/* and a WebSocket at /promeki/debug/api/logger/stream.
+// libpromeki debug frontend.  Lives at <apiBase>/promeki/, talks JSON
+// to sibling endpoints (/build, /env, /options, /memspace, /log) and
+// a WebSocket at /log/stream.
 //
 //   Tabs:
 //     Log     — live WebSocket-driven log stream (newest at top), client-side
@@ -11,7 +12,11 @@
 
 (function() {
 
-const apiBase = location.pathname.replace(/\/$/, '') + '/api';
+// API endpoints are siblings of this UI's directory: the page is
+// served at <apiBase>/promeki/ so apiBase is location.pathname with
+// the trailing slash trimmed.  Fetches are then made with paths like
+// "/build", "/log", "/memspace" relative to apiBase.
+const apiBase = location.pathname.replace(/\/$/, '');
 const wsScheme = location.protocol === 'https:' ? 'wss:' : 'ws:';
 
 // ============================================================
@@ -368,7 +373,7 @@ async function refreshMemory() {
         memoryInFlight = true;
         const target = $('memory-grid');
         try {
-                const data = await getJson('/memory');
+                const data = await getJson('/memspace');
                 const spaces = Array.isArray(data.spaces) ? data.spaces : [];
                 const now = Date.now();
                 const namesKey = spaces.map(s => s.name).join('|');
@@ -585,7 +590,7 @@ const connStatus = $('conn-status');
 let socket = null;
 let reconnectAttempt = 0;
 function connectStream() {
-        const url = wsScheme + '//' + location.host + apiBase + '/logger/stream?replay=200';
+        const url = wsScheme + '//' + location.host + apiBase + '/log/stream?replay=200';
         socket = new WebSocket(url);
         socket.addEventListener('open', () => {
                 reconnectAttempt = 0;
@@ -645,7 +650,7 @@ function closeChannelsModal() {
 async function refreshChannels() {
         const grid = $('channels-grid');
         try {
-                const status = await getJson('/logger');
+                const status = await getJson('/log');
                 loggerChannels = Array.isArray(status.debugChannels) ? status.debugChannels : [];
                 renderChannels();
         } catch (e) {
@@ -697,7 +702,7 @@ function renderChannels() {
 async function toggleChannel(ch, cb) {
         const target = cb.checked;
         try {
-                const r = await fetch(apiBase + '/logger/debug/' + encodeURIComponent(ch.name), {
+                const r = await fetch(apiBase + '/log/debug/' + encodeURIComponent(ch.name), {
                         method: 'PUT',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({ enabled: target }),
@@ -723,7 +728,7 @@ async function bulkToggleVisible(enabled) {
                 if (!cb || cb.checked === enabled) continue;
                 cb.checked = enabled;
                 promises.push(
-                        fetch(apiBase + '/logger/debug/' + encodeURIComponent(name), {
+                        fetch(apiBase + '/log/debug/' + encodeURIComponent(name), {
                                 method: 'PUT',
                                 headers: {'Content-Type': 'application/json'},
                                 body: JSON.stringify({ enabled: enabled }),
